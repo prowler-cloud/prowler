@@ -4,9 +4,10 @@ import json
 import logging
 import os
 import time
+import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from urllib.parse import urljoin
 
@@ -15,102 +16,22 @@ from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
-from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain
-from celery.result import AsyncResult
-from config.custom_logging import BackendLogger
-from config.env import env
-from config.settings.social_login import (
-    GITHUB_OAUTH_CALLBACK_URL,
-    GOOGLE_OAUTH_CALLBACK_URL,
-)
-from dj_rest_auth.registration.views import SocialLoginView
-from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, StringAgg
-from django.contrib.postgres.search import SearchQuery
-from django.db import transaction
-from django.db.models import (
-    Case,
-    CharField,
-    Count,
-    DecimalField,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Max,
-    Min,
-    Prefetch,
-    Q,
-    QuerySet,
-    Subquery,
-    Sum,
-    Value,
-    When,
-    Window,
-)
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, QueryDict
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.dateparse import parse_date
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_control
-from django_celery_beat.models import PeriodicTask
-from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiResponse,
-    extend_schema,
-    extend_schema_view,
-)
-from drf_spectacular.views import SpectacularAPIView
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from rest_framework import permissions, status
-from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    MethodNotAllowed,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-)
-from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
-from rest_framework_json_api import filters as jsonapi_filters
-from rest_framework_json_api.views import RelationshipView, Response
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    reaggregate_all_finding_group_summaries_task,
-    refresh_lighthouse_provider_models_task,
-)
-
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
 from api.base_views import BaseRLSViewSet, BaseTenantViewset, BaseUserViewset
 from api.compliance import (
+    COMPLIANCE_WARMED,
+    COMPLIANCE_WARMING_STARTED,
     PROWLER_COMPLIANCE_OVERVIEW_TEMPLATE,
     get_compliance_frameworks,
+    get_prowler_provider_compliance,
 )
 from api.constants import SEVERITY_ORDER
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import (
+    ComplianceWarmingError,
     TaskFailedException,
     UpstreamAccessDeniedError,
     UpstreamAuthenticationError,
@@ -166,6 +87,7 @@ from api.models import (
     FindingGroupDailySummary,
     Integration,
     Invitation,
+    InvitationRoleRelationship,
     LighthouseConfiguration,
     LighthouseProviderConfiguration,
     LighthouseProviderModels,
@@ -212,7 +134,13 @@ from api.utils import (
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import (
+    DisablePaginationMixin,
+    JsonApiFilterMixin,
+    PaginateByPkMixin,
+    ProviderFilterParamsMixin,
+    TaskManagementMixin,
+)
 from api.v1.serializers import (
     AttackPathsCartographySchemaSerializer,
     AttackPathsCustomQueryRunRequestSerializer,
@@ -306,12 +234,105 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain, states
+from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
+from config.env import env
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from config.version import RELEASE_ID
+from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
+from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    DecimalField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+    When,
+    Window,
+)
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.dateparse import parse_date
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
+from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAssumeRoleError,
     AWSCredentialsError,
 )
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
+)
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
+from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
+from rest_framework_json_api.views import RelationshipView, Response
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -414,7 +435,7 @@ class SchemaView(SpectacularAPIView):
 
     def get(self, request, *args, **kwargs):
         spectacular_settings.TITLE = "Prowler API"
-        spectacular_settings.VERSION = "1.24.0"
+        spectacular_settings.VERSION = RELEASE_ID
         spectacular_settings.DESCRIPTION = (
             "Prowler API specification.\n\nThis file is auto-generated."
         )
@@ -745,7 +766,10 @@ class TenantFinishACSView(FinishACSView):
         try:
             check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
             with rls_transaction(str(check.tenant_id)):
-                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+                saml_config = SAMLConfiguration.objects.select_related("tenant").get(
+                    tenant_id=str(check.tenant_id)
+                )
+                tenant = saml_config.tenant
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )
@@ -765,6 +789,15 @@ class TenantFinishACSView(FinishACSView):
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
+        requested_domain = organization_slug.lower()
+        configured_domain = saml_config.email_domain.lower()
+        email_domain = user.email.rsplit("@", 1)[-1].lower()
+        if configured_domain != requested_domain or email_domain != configured_domain:
+            logger.error("SAML email domain does not match requested organization")
+            self._rollback_saml_user(request)
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
+
         extra = social_account.extra_data
         user.first_name = (
             extra.get("firstName", [""])[0] if extra.get("firstName") else ""
@@ -778,67 +811,70 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        email_domain = user.email.split("@")[-1]
-        tenant = (
-            SAMLConfiguration.objects.using(MainRouter.admin_db)
-            .get(email_domain=email_domain)
-            .tenant
-        )
-
+        # Only remap roles when the IdP provides a userType attribute.
+        # Without it, the user's current roles are left untouched.
         role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+            extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
-        role = (
-            Role.objects.using(MainRouter.admin_db)
-            .filter(name=role_name, tenant=tenant)
-            .first()
-        )
-
-        # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
-        remaining_manage_account_users = (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(role__manage_account=True, tenant_id=tenant.id)
-            .exclude(user_id=user_id)
-            .values("user")
-            .distinct()
-            .count()
-        )
-        user_has_manage_account = (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
-            .exists()
-        )
-        role_manage_account = role.manage_account if role else False
-        would_remove_last_manage_account = (
-            user_has_manage_account
-            and remaining_manage_account_users == 0
-            and not role_manage_account
-        )
-
-        if not would_remove_last_manage_account:
-            if role is None:
-                role = Role.objects.using(MainRouter.admin_db).create(
-                    name=role_name,
-                    tenant=tenant,
-                    manage_users=False,
-                    manage_account=False,
-                    manage_billing=False,
-                    manage_providers=False,
-                    manage_integrations=False,
-                    manage_scans=False,
-                    unlimited_visibility=False,
+        if role_name:
+            with transaction.atomic(using=MainRouter.admin_db):
+                role = (
+                    Role.objects.using(MainRouter.admin_db)
+                    .filter(name=role_name, tenant=tenant)
+                    .first()
                 )
-            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-                user=user,
-                tenant_id=tenant.id,
-            ).delete()
-            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                user=user,
-                role=role,
-                tenant_id=tenant.id,
-            )
+
+                # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+                remaining_manage_account_users = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(role__manage_account=True, tenant_id=tenant.id)
+                    .exclude(user_id=user_id)
+                    .values("user")
+                    .distinct()
+                    .count()
+                )
+                user_has_manage_account = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(
+                        role__manage_account=True,
+                        tenant_id=tenant.id,
+                        user_id=user_id,
+                    )
+                    .exists()
+                )
+                role_manage_account = role.manage_account if role else False
+                would_remove_last_manage_account = (
+                    user_has_manage_account
+                    and remaining_manage_account_users == 0
+                    and not role_manage_account
+                )
+
+                if not would_remove_last_manage_account:
+                    if role is None:
+                        # Roles auto-created from userType get read-only access:
+                        # visibility over all providers, no management permissions
+                        role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
+                            name=role_name,
+                            tenant=tenant,
+                            defaults={
+                                "manage_users": False,
+                                "manage_account": False,
+                                "manage_billing": False,
+                                "manage_providers": False,
+                                "manage_integrations": False,
+                                "manage_scans": False,
+                                "unlimited_visibility": True,
+                            },
+                        )
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                        user=user,
+                        tenant_id=tenant.id,
+                    ).delete()
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user,
+                        role=role,
+                        tenant_id=tenant.id,
+                    )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -1327,9 +1363,11 @@ class MembershipViewSet(BaseTenantViewset):
     ),
     destroy=extend_schema(
         summary="Delete tenant memberships",
-        description="Delete the membership details of users in a tenant. You need to be one of the owners to delete a "
-        "membership that is not yours. If you are the last owner of a tenant, you cannot delete your own "
-        "membership.",
+        description="Delete a user's membership from a tenant. This action: (1) removes the membership, "
+        "(2) revokes all refresh tokens for the expelled user, (3) removes their role grants for this tenant, "
+        "(4) cleans up orphaned roles, and (5) deletes the user account if this was their last membership. "
+        "You must be a tenant owner to delete another user's membership. The last owner of a tenant cannot "
+        "delete their own membership.",
         tags=["Tenant"],
     ),
 )
@@ -1338,6 +1376,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     http_method_names = ["get", "delete"]
     serializer_class = MembershipSerializer
     queryset = Membership.objects.none()
+    filterset_class = MembershipFilter
     # Authorization is handled by get_requesting_membership (owner/member checks),
     # not by RBAC, since the target tenant differs from the JWT tenant.
     required_permissions = []
@@ -1395,7 +1434,84 @@ class TenantMembersViewSet(BaseTenantViewset):
                     "You do not have permission to delete this membership."
                 )
 
-        membership_to_delete.delete()
+        user_to_check_id = membership_to_delete.user_id
+        tenant_id = membership_to_delete.tenant_id
+        # All writes run on the admin connection so that the uncommitted
+        # membership delete is visible to the subsequent "other memberships"
+        # check. Splitting the delete and the check across the default
+        # (prowler_user, RLS) and admin connections caused the admin side to
+        # miss the just-deleted row and leave the User row orphaned.
+        with transaction.atomic(using=MainRouter.admin_db):
+            Membership.objects.using(MainRouter.admin_db).filter(
+                id=membership_to_delete.id
+            ).delete()
+
+            # Remove role grants for this user in this tenant to prevent
+            # orphaned permissions that could allow access after expulsion
+            deleted_role_relationships = UserRoleRelationship.objects.using(
+                MainRouter.admin_db
+            ).filter(user_id=user_to_check_id, tenant_id=tenant_id)
+
+            # Collect role IDs that might become orphaned after deletion
+            role_ids_to_check = list(
+                deleted_role_relationships.values_list("role_id", flat=True)
+            )
+
+            # Delete the user role relationships for this tenant
+            deleted_role_relationships.delete()
+
+            # Clean up orphaned roles that have no remaining user or invitation relationships
+            if role_ids_to_check:
+                for role_id in role_ids_to_check:
+                    has_user_relationships = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    has_invitation_relationships = (
+                        InvitationRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(role_id=role_id)
+                        .exists()
+                    )
+
+                    if not has_user_relationships and not has_invitation_relationships:
+                        Role.objects.using(MainRouter.admin_db).filter(
+                            id=role_id
+                        ).delete()
+
+            # Revoke any refresh tokens the expelled user still holds so they
+            # cannot mint fresh access tokens. This must happen before the
+            # User row is deleted, because OutstandingToken.user is
+            # on_delete=SET_NULL in djangorestframework-simplejwt 5.5.1
+            # (see rest_framework_simplejwt/token_blacklist/models.py): once
+            # the user row is gone, user_id becomes NULL and we can no longer
+            # look up that user's outstanding tokens. Access tokens already
+            # issued remain valid until SIMPLE_JWT["ACCESS_TOKEN_LIFETIME"]
+            # expires.
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                    ],
+                    ignore_conflicts=True,
+                )
+
+            has_other_memberships = (
+                Membership.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_to_check_id)
+                .exists()
+            )
+            if not has_other_memberships:
+                User.objects.using(MainRouter.admin_db).filter(
+                    id=user_to_check_id
+                ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
@@ -1758,7 +1874,42 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             200: OpenApiResponse(
                 description="CSV file containing the compliance report"
             ),
-            404: OpenApiResponse(description="Compliance report not found"),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, or the scan has no reports yet"
+            ),
+        },
+        request=None,
+    ),
+    compliance_ocsf=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve compliance report as OCSF JSON",
+        description=(
+            "Download a specific compliance report as an OCSF JSON file. "
+            "Only universal frameworks that declare an output configuration "
+            "produce this artifact (currently 'dora_2022_2554', 'csa_ccm_4.0' "
+            "and 'cis_controls_8.1'); any other framework returns 404."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name="name",
+                type=str,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description="The compliance report name, like 'dora_2022_2554'",
+            ),
+        ],
+        responses={
+            200: OpenApiResponse(
+                description="OCSF JSON file containing the compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="Compliance report not found, the framework does "
+                "not provide an OCSF export, or the scan has no reports yet"
+            ),
         },
         request=None,
     ),
@@ -1838,6 +1989,27 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
             ),
         },
     ),
+    cis=extend_schema(
+        tags=["Scan"],
+        summary="Retrieve CIS Benchmark compliance report",
+        description="Download the CIS Benchmark compliance report as a PDF file. "
+        "When a provider ships multiple CIS versions, the report is generated "
+        "for the highest available version.",
+        request=None,
+        responses={
+            200: OpenApiResponse(
+                description="PDF file containing the CIS compliance report"
+            ),
+            202: OpenApiResponse(description="The task is in progress"),
+            401: OpenApiResponse(
+                description="API key missing or user not Authenticated"
+            ),
+            403: OpenApiResponse(description="There is a problem with credentials"),
+            404: OpenApiResponse(
+                description="The scan has no CIS reports, or the CIS report generation task has not started yet"
+            ),
+        },
+    ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
@@ -1880,32 +2052,23 @@ class ScanViewSet(BaseRLSViewSet):
         return queryset.select_related("provider", "task")
 
     def get_serializer_class(self):
-        if self.action == "create":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ScanCreateSerializer
-        elif self.action == "partial_update":
+        if self.action == "partial_update":
             return ScanUpdateSerializer
-        elif self.action == "report":
+
+        action_defaults = {
+            "create": ScanCreateSerializer,
+            "report": ScanReportSerializer,
+            "compliance": ScanComplianceReportSerializer,
+            "compliance_ocsf": ScanComplianceReportSerializer,
+        }
+        response_only_actions = {"threatscore", "ens", "nis2", "csa", "cis"}
+
+        if self.action in action_defaults or self.action in response_only_actions:
             if hasattr(self, "response_serializer_class"):
                 return self.response_serializer_class
-            return ScanReportSerializer
-        elif self.action == "compliance":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-            return ScanComplianceReportSerializer
-        elif self.action == "threatscore":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "ens":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "nis2":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
-        elif self.action == "csa":
-            if hasattr(self, "response_serializer_class"):
-                return self.response_serializer_class
+            if self.action in action_defaults:
+                return action_defaults[self.action]
+
         return super().get_serializer_class()
 
     def partial_update(self, request, *args, **kwargs):
@@ -1944,12 +2107,17 @@ class ScanViewSet(BaseRLSViewSet):
         if scan_instance.state == StateChoices.EXECUTING and scan_instance.task:
             task = scan_instance.task
         else:
-            try:
-                task = Task.objects.get(
+            # A scan can have several `scan-report` tasks (e.g. re-runs); take the
+            # most recent one. `.first()` also avoids `MultipleObjectsReturned`.
+            task = (
+                Task.objects.filter(
                     task_runner_task__task_name="scan-report",
                     task_runner_task__task_kwargs__contains=str(scan_instance.id),
                 )
-            except Task.DoesNotExist:
+                .order_by("-inserted_at")
+                .first()
+            )
+            if task is None:
                 return None
 
         self.response_serializer_class = TaskSerializer
@@ -1968,24 +2136,38 @@ class ScanViewSet(BaseRLSViewSet):
             },
         )
 
-    def _load_file(self, path_pattern, s3=False, bucket=None, list_objects=False):
+    def _load_file(
+        self,
+        path_pattern,
+        s3=False,
+        bucket=None,
+        list_objects=False,
+        content_type=None,
+    ):
         """
-        Loads a binary file (e.g., ZIP or CSV) and returns its content and filename.
+        Resolve a report file location and return the bytes (filesystem) or a redirect (S3).
 
         Depending on the input parameters, this method supports loading:
-        - From S3 using a direct key.
-        - From S3 by listing objects under a prefix and matching suffix.
-        - From the local filesystem using glob pattern matching.
+        - From S3 using a direct key, returns a 302 to a short-lived presigned URL.
+        - From S3 by listing objects under a prefix and matching suffix, returns a 302 to a short-lived presigned URL.
+        - From the local filesystem using glob pattern matching, returns the file bytes.
+
+        The S3 branch never streams bytes through the worker; this prevents gunicorn
+        worker timeouts on large reports.
 
         Args:
             path_pattern (str): The key or glob pattern representing the file location.
             s3 (bool, optional): Whether the file is stored in S3. Defaults to False.
             bucket (str, optional): The name of the S3 bucket, required if `s3=True`. Defaults to None.
             list_objects (bool, optional): If True and `s3=True`, list objects by prefix to find the file. Defaults to False.
+            content_type (str, optional): On the S3 branch, forwarded as `ResponseContentType`
+                so the presigned download advertises the same Content-Type the API used to send.
+                Ignored on the filesystem branch.
 
         Returns:
-            tuple[bytes, str]: A tuple containing the file content as bytes and the filename if successful.
-            Response: A DRF `Response` object with an appropriate status and error detail if an error occurs.
+            tuple[bytes, str]: For the filesystem branch, the file content and filename.
+            HttpResponseRedirect: For the S3 branch on success, a 302 redirect to a presigned `GetObject` URL.
+            Response: For any error path, a DRF `Response` with an appropriate status and detail.
         """
         if s3:
             try:
@@ -2010,47 +2192,72 @@ class ScanViewSet(BaseRLSViewSet):
                         status=status.HTTP_502_BAD_GATEWAY,
                     )
                 contents = resp.get("Contents", [])
-                keys = []
+                matches = []
                 for obj in contents:
                     key = obj["Key"]
                     key_basename = os.path.basename(key)
                     if any(ch in suffix for ch in ("*", "?", "[")):
                         if fnmatch.fnmatch(key_basename, suffix):
-                            keys.append(key)
+                            matches.append(obj)
                     elif key_basename == suffix:
-                        keys.append(key)
+                        matches.append(obj)
                     elif key.endswith(suffix):
                         # Backward compatibility if suffix already includes directories
-                        keys.append(key)
-                if not keys:
+                        matches.append(obj)
+                if not matches:
                     return Response(
                         {
                             "detail": f"No compliance file found for name '{os.path.splitext(suffix)[0]}'."
                         },
                         status=status.HTTP_404_NOT_FOUND,
                     )
-                # path_pattern here is prefix, but in compliance we build correct suffix check before
-                key = keys[0]
+                # Return the most recently modified match (latest report) when
+                # several files share the prefix/suffix. `list_objects_v2` always
+                # returns `LastModified`; the fallback keeps ordering deterministic
+                # if it is ever absent.
+                key = max(matches, key=lambda o: (o.get("LastModified", ""), o["Key"]))[
+                    "Key"
+                ]
             else:
-                # path_pattern is exact key
+                # path_pattern is exact key; HEAD before presigning to preserve the 404 contract.
                 key = path_pattern
-            try:
-                s3_obj = client.get_object(Bucket=bucket, Key=key)
-            except ClientError as e:
-                code = e.response.get("Error", {}).get("Code")
-                if code == "NoSuchKey":
+                try:
+                    client.head_object(Bucket=bucket, Key=key)
+                except ClientError as e:
+                    code = e.response.get("Error", {}).get("Code")
+                    if code in ("NoSuchKey", "404"):
+                        return Response(
+                            {
+                                "detail": "The scan has no reports, or the report generation task has not started yet."
+                            },
+                            status=status.HTTP_404_NOT_FOUND,
+                        )
                     return Response(
-                        {
-                            "detail": "The scan has no reports, or the report generation task has not started yet."
-                        },
-                        status=status.HTTP_404_NOT_FOUND,
+                        {"detail": "There is a problem with credentials."},
+                        status=status.HTTP_403_FORBIDDEN,
                     )
-                return Response(
-                    {"detail": "There is a problem with credentials."},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-            content = s3_obj["Body"].read()
+
             filename = os.path.basename(key)
+            # escape quotes and strip CR/LF so a malformed key cannot break out of the header
+            safe_filename = (
+                filename.replace("\\", "\\\\")
+                .replace('"', '\\"')
+                .replace("\r", "")
+                .replace("\n", "")
+            )
+            params = {
+                "Bucket": bucket,
+                "Key": key,
+                "ResponseContentDisposition": f'attachment; filename="{safe_filename}"',
+            }
+            if content_type:
+                params["ResponseContentType"] = content_type
+            url = client.generate_presigned_url(
+                "get_object",
+                Params=params,
+                ExpiresIn=300,
+            )
+            return HttpResponseRedirect(url)
         else:
             files = glob.glob(path_pattern)
             if not files:
@@ -2060,7 +2267,9 @@ class ScanViewSet(BaseRLSViewSet):
                     },
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            filepath = files[0]
+            # Return the most recently modified match (latest report) when the
+            # pattern resolves to several files.
+            filepath = max(files, key=os.path.getmtime)
             with open(filepath, "rb") as f:
                 content = f.read()
             filename = os.path.basename(filepath)
@@ -2093,31 +2302,31 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             loader = self._load_file(
-                key_prefix, s3=True, bucket=bucket, list_objects=False
+                key_prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=False,
+                content_type="application/x-zip-compressed",
             )
         else:
             loader = self._load_file(scan.output_location, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
         return self._serve_file(content, filename, "application/x-zip-compressed")
 
-    @action(
-        detail=True,
-        methods=["get"],
-        url_path="compliance/(?P<name>[^/]+)",
-        url_name="compliance",
-    )
-    def compliance(self, request, pk=None, name=None):
-        scan = self.get_object()
-        if name not in get_compliance_frameworks(scan.provider.provider):
-            return Response(
-                {"detail": f"Compliance '{name}' not found."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+    def _serve_compliance_artifact(self, scan, name, file_extension, content_type):
+        """Resolve and serve a per-framework compliance artifact from disk/S3.
 
+        Shared by the CSV and OCSF compliance download actions. Both are
+        path-based (no query params) on purpose: ``get_object`` runs
+        ``filter_queryset``, which triggers JSON:API's
+        ``QueryParameterValidationFilter`` and 400s on any non-JSON:API
+        query param, so a ``?format=`` / ``?type=`` selector is not viable
+        here — the format is encoded in the route instead.
+        """
         running_resp = self._get_task_status(scan)
         if running_resp:
             return running_resp
@@ -2134,19 +2343,111 @@ class ScanViewSet(BaseRLSViewSet):
             bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
             key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
             prefix = os.path.join(
-                os.path.dirname(key_prefix), "compliance", f"{name}.csv"
+                os.path.dirname(key_prefix), "compliance", f"{name}.{file_extension}"
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type=content_type,
+            )
         else:
             base = os.path.dirname(scan.output_location)
-            pattern = os.path.join(base, "compliance", f"*_{name}.csv")
+            pattern = os.path.join(base, "compliance", f"*_{name}.{file_extension}")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
-        return self._serve_file(content, filename, "text/csv")
+        return self._serve_file(content, filename, content_type)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)",
+        url_name="compliance",
+    )
+    def compliance(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return self._serve_compliance_artifact(scan, name, "csv", "text/csv")
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="compliance/(?P<name>[^/]+)/ocsf",
+        url_name="compliance-ocsf",
+    )
+    def compliance_ocsf(self, request, pk=None, name=None):
+        scan = self.get_object()
+        if name not in get_compliance_frameworks(scan.provider.provider):
+            return Response(
+                {"detail": f"Compliance '{name}' not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        universal_bulk = get_prowler_provider_compliance(scan.provider.provider)
+        framework_obj = universal_bulk.get(name)
+        if not (framework_obj and getattr(framework_obj, "outputs", None)):
+            return Response(
+                {"detail": f"Compliance '{name}' does not provide an OCSF export."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return self._serve_compliance_artifact(
+            scan, name, "ocsf.json", "application/json"
+        )
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_name="cis",
+    )
+    def cis(self, request, pk=None):
+        scan = self.get_object()
+        running_resp = self._get_task_status(scan)
+        if running_resp:
+            return running_resp
+
+        if not scan.output_location:
+            return Response(
+                {
+                    "detail": "The scan has no reports, or the CIS report generation task has not started yet."
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if scan.output_location.startswith("s3://"):
+            bucket = env.str("DJANGO_OUTPUT_S3_AWS_OUTPUT_BUCKET", "")
+            key_prefix = scan.output_location.removeprefix(f"s3://{bucket}/")
+            prefix = os.path.join(
+                os.path.dirname(key_prefix),
+                "cis",
+                "*_cis_report.pdf",
+            )
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
+        else:
+            base = os.path.dirname(scan.output_location)
+            pattern = os.path.join(base, "cis", "*_cis_report.pdf")
+            loader = self._load_file(pattern, s3=False)
+
+        if isinstance(loader, HttpResponseBase):
+            return loader
+
+        content, filename = loader
+        return self._serve_file(content, filename, "application/pdf")
 
     @action(
         detail=True,
@@ -2176,13 +2477,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "threatscore",
                 "*_threatscore_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "threatscore", "*_threatscore_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2216,13 +2523,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "ens",
                 "*_ens_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "ens", "*_ens_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2255,13 +2568,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "nis2",
                 "*_nis2_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "nis2", "*_nis2_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2294,13 +2613,19 @@ class ScanViewSet(BaseRLSViewSet):
                 "csa",
                 "*_csa_report.pdf",
             )
-            loader = self._load_file(prefix, s3=True, bucket=bucket, list_objects=True)
+            loader = self._load_file(
+                prefix,
+                s3=True,
+                bucket=bucket,
+                list_objects=True,
+                content_type="application/pdf",
+            )
         else:
             base = os.path.dirname(scan.output_location)
             pattern = os.path.join(base, "csa", "*_csa_report.pdf")
             loader = self._load_file(pattern, s3=False)
 
-        if isinstance(loader, Response):
+        if isinstance(loader, HttpResponseBase):
             return loader
 
         content, filename = loader
@@ -2309,28 +2634,45 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+
+        # Broker publish is deferred to on_commit so the worker cannot read
+        # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
+        pre_task_id = str(uuid.uuid4())
+
         with transaction.atomic():
             scan = input_serializer.save()
-        with transaction.atomic():
-            task = perform_scan_task.apply_async(
-                kwargs={
-                    "tenant_id": self.request.tenant_id,
-                    "scan_id": str(scan.id),
-                    "provider_id": str(scan.provider_id),
-                    # Disabled for now
-                    # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-                },
+            scan.task_id = pre_task_id
+            scan.save(update_fields=["task_id"])
+
+            attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id=self.request.tenant_id,
+                scan_id=str(scan.id),
+                provider_id=str(scan.provider_id),
             )
 
-        attack_paths_db_utils.create_attack_paths_scan(
-            tenant_id=self.request.tenant_id,
-            scan_id=str(scan.id),
-            provider_id=str(scan.provider_id),
-        )
+            task_result, _ = TaskResult.objects.get_or_create(
+                task_id=pre_task_id,
+                defaults={"status": states.PENDING, "task_name": "scan-perform"},
+            )
+            prowler_task, _ = Task.objects.update_or_create(
+                id=pre_task_id,
+                tenant_id=self.request.tenant_id,
+                defaults={"task_runner_task": task_result},
+            )
 
-        prowler_task = Task.objects.get(id=task.id)
-        scan.task_id = task.id
-        scan.save(update_fields=["task_id"])
+            scan_kwargs = {
+                "tenant_id": self.request.tenant_id,
+                "scan_id": str(scan.id),
+                "provider_id": str(scan.provider_id),
+                # Disabled for now
+                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
+            }
+
+            transaction.on_commit(
+                lambda: perform_scan_task.apply_async(
+                    kwargs=scan_kwargs, task_id=pre_task_id
+                )
+            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
@@ -2534,13 +2876,22 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        active_sink_backend = django_settings.ATTACK_PATHS_SINK_DATABASE
 
         latest_per_provider = queryset.annotate(
+            active_sink_rank=Case(
+                When(sink_backend=active_sink_backend, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
             latest_scan_rank=Window(
                 expression=RowNumber(),
                 partition_by=[F("provider_id")],
-                order_by=[F("inserted_at").desc()],
-            )
+                order_by=[
+                    F("active_sink_rank").asc(),
+                    F("inserted_at").desc(),
+                ],
+            ),
         ).filter(latest_scan_rank=1)
 
         page = self.paginate_queryset(latest_per_provider)
@@ -2567,7 +2918,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        queries = get_queries_for_provider(
+            attack_paths_scan.provider.provider,
+            is_migrated=attack_paths_scan.is_migrated,
+        )
 
         if not queries:
             return Response(
@@ -2600,7 +2955,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-        query_definition = get_query_by_id(serializer.validated_data["id"])
+        # TODO: drop the is_migrated argument after Neptune cutover
+        query_definition = get_query_by_id(
+            serializer.validated_data["id"],
+            is_migrated=attack_paths_scan.is_migrated,
+        )
         if (
             query_definition is None
             or query_definition.provider != attack_paths_scan.provider.provider
@@ -2626,9 +2985,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         result_nodes = len(graph.get("nodes", []))
         result_relationships = len(graph.get("relationships", []))
@@ -2694,9 +3053,9 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
-        graph_database.clear_cache(database_name)
 
         query_length = len(serializer.validated_data["query"])
         result_nodes = len(graph.get("nodes", []))
@@ -2751,7 +3110,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         provider_id = str(attack_paths_scan.provider_id)
 
         schema = attack_paths_views_helpers.get_cartography_schema(
-            database_name, provider_id
+            database_name, provider_id, attack_paths_scan
         )
         if not schema:
             return Response(
@@ -3009,9 +3368,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3023,7 +3380,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3033,7 +3390,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -3077,7 +3434,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3147,7 +3504,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3506,6 +3863,16 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             return queryset
         return super().filter_queryset(queryset)
 
+    def _optimize_tags_loading(self, queryset):
+        """Prefetch resource tags to avoid N+1 queries when serializing findings"""
+        return queryset.prefetch_related(
+            Prefetch(
+                "resources__tags",
+                queryset=ResourceTag.objects.filter(tenant_id=self.request.tenant_id),
+                to_attr="prefetched_tags",
+            )
+        )
+
     def list(self, request, *args, **kwargs):
         filtered_queryset = self.filter_queryset(self.get_queryset())
         return self.paginate_by_pk(
@@ -3564,9 +3931,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3578,7 +3943,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3588,7 +3953,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -4216,15 +4581,19 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan.",
+        summary="List compliance overviews",
+        description=(
+            "Retrieve compliance overview data for a scan. When provider filters "
+            "are provided, the endpoint uses the latest completed scan for each "
+            "matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4239,19 +4608,23 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
         summary="Retrieve metadata values from compliance overviews",
-        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
-        "filtering.",
+        description=(
+            "Fetch unique metadata values from compliance overviews. This is useful "
+            "for dynamic filtering. When provider filters are provided, metadata is "
+            "computed from the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4266,19 +4639,24 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     requirements=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance requirements overview for a scan",
-        description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
-        "framework. This endpoint provides requirement-level details and aggregates status across regions.",
+        summary="List compliance requirements overview",
+        description=(
+            "Retrieve a detailed overview of compliance requirements, grouped by "
+            "compliance framework. This endpoint provides requirement-level details "
+            "and aggregates status across regions. When provider filters are provided, "
+            "the endpoint uses the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
             OpenApiParameter(
                 name="filter[compliance_id]",
@@ -4315,6 +4693,16 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 location=OpenApiParameter.QUERY,
                 description="Compliance framework ID to get attributes for.",
             ),
+            OpenApiParameter(
+                name="filter[scan_id]",
+                required=False,
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Scan ID used to resolve the provider for "
+                "multi-provider universal frameworks (e.g. CSA CCM), so "
+                "the returned check IDs match the scan's provider. When omitted, "
+                "the first provider that declares the framework is used.",
+            ),
         ],
         responses={
             200: OpenApiResponse(
@@ -4327,7 +4715,10 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
-class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
+class ComplianceOverviewViewSet(
+    ProviderFilterParamsMixin, BaseRLSViewSet, TaskManagementMixin
+):
+    jsonapi_filter_replace_dots = True
     pagination_class = ComplianceOverviewPagination
     queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
@@ -4341,28 +4732,22 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ComplianceRequirementOverview.objects.none()
+
         role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
 
-        if unlimited_visibility:
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id
-                )
-            )
-        else:
-            providers = Provider.objects.filter(
-                provider_groups__in=role.provider_groups.all()
-            ).distinct()
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id, scan__provider__in=providers
-                )
-            )
+        base_queryset = ComplianceRequirementOverview.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
 
-        return base_queryset
+        if unlimited_visibility:
+            return base_queryset
+
+        return base_queryset.filter(scan__provider__in=get_providers(role))
 
     def get_serializer_class(self):
         if hasattr(self, "response_serializer_class"):
@@ -4399,6 +4784,72 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             summaries = summaries.filter(scan__provider__in=providers)
 
         return summaries
+
+    def _validate_scan_selection(self, scan_id, has_provider_filters):
+        if scan_id and has_provider_filters:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Use either filter[scan_id] or provider filters.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if scan_id:
+            self._validate_uuid_filter_values("scan_id", [scan_id])
+            return
+
+        if has_provider_filters:
+            return
+
+        raise ValidationError(
+            [
+                {
+                    "detail": "This query parameter is required unless a provider filter is provided.",
+                    "status": 400,
+                    "source": {"pointer": "filter[scan_id]"},
+                    "code": "required",
+                }
+            ]
+        )
+
+    def _latest_scan_ids_for_provider_filters(self):
+        role = get_role(self.request.user, self.request.tenant_id)
+        scans = Scan.all_objects.filter(
+            tenant_id=self.request.tenant_id,
+            state=StateChoices.COMPLETED,
+        )
+
+        if not getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
+            scans = scans.filter(provider__in=get_providers(role))
+
+        provider_filters = self._extract_provider_filters_from_params(
+            validate_uuids=True,
+            include_dot_aliases=True,
+        )
+        if provider_filters:
+            scans = scans.filter(**provider_filters)
+
+        return list(
+            scans.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
+        if latest_scan_ids is None:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
+        # Provider filters stay on the filterset for OpenAPI docs, but runtime
+        # filtering happens on Scan first so compliance queries use scan IDs.
+        return self._apply_filterset(
+            queryset,
+            self.filterset_class,
+            exclude_keys=self.PROVIDER_FILTER_KEYS | {"scan_id"},
+        )
 
     def _get_compliance_template(self, *, provider=None, scan_id=None):
         """Return the compliance template for the given provider or scan."""
@@ -4515,6 +4966,36 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def _task_response_for_latest_provider_scans(self, latest_scan_ids):
+        for scan_id in latest_scan_ids:
+            task_response = self._task_response_if_running(str(scan_id))
+            if task_response:
+                return task_response
+        return None
+
+    def _latest_provider_scan_ids_without_data(self, latest_scan_ids):
+        data_presence_queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
+        scan_ids_with_data = {
+            str(scan_id)
+            for scan_id in data_presence_queryset.values_list(
+                "scan_id", flat=True
+            ).distinct()
+        }
+        return [
+            scan_id
+            for scan_id in latest_scan_ids
+            if str(scan_id) not in scan_ids_with_data
+        ]
+
+    def _task_response_for_latest_provider_scans_without_data(
+        self,
+        latest_scan_ids,
+    ):
+        scan_ids_to_check = self._latest_provider_scan_ids_without_data(
+            latest_scan_ids,
+        )
+        return self._task_response_for_latest_provider_scans(scan_ids_to_check)
+
     def _list_with_region_filter(self, scan_id, region_filter):
         """
         Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
@@ -4555,8 +5036,25 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         return Response(data)
 
+    def _list_with_latest_provider_filters(self):
+        latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self._filtered_queryset_for_latest_provider_scans(latest_scan_ids)
+        data = self._aggregate_compliance_overview(queryset)
+        task_response = self._task_response_for_latest_provider_scans_without_data(
+            latest_scan_ids,
+        )
+        if task_response:
+            return task_response
+
+        return Response(data)
+
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        if has_provider_filters:
+            return self._list_with_latest_provider_filters()
 
         # Specific scan requested - use optimized summaries with region support
         region_filter = request.query_params.get(
@@ -4602,33 +5100,34 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
             )
+        else:
+            queryset = self._apply_filterset(self.get_queryset(), self.filterset_class)
+
         regions = list(
-            self.get_queryset()
-            .filter(scan_id=scan_id)
-            .values_list("region", flat=True)
-            .order_by("region")
-            .distinct()
+            queryset.values_list("region", flat=True).order_by("region").distinct()
         )
         result = {"regions": regions}
 
-        if regions:
-            serializer = self.get_serializer(data=result)
-            serializer.is_valid(raise_exception=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                latest_scan_ids,
+            )
+        elif not regions:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
 
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
+        if has_provider_filters and task_response:
             return task_response
 
         serializer = self.get_serializer(data=result)
@@ -4638,19 +5137,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="requirements")
     def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         compliance_id = request.query_params.get("filter[compliance_id]")
 
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
+        self._validate_scan_selection(scan_id, has_provider_filters)
 
         if not compliance_id:
             raise ValidationError(
@@ -4663,7 +5153,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     }
                 ]
             )
-        filtered_queryset = self.filter_queryset(self.get_queryset())
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            filtered_queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
+            )
+        else:
+            filtered_queryset = self._apply_filterset(
+                self.get_queryset(), self.filterset_class
+            )
 
         all_requirements = filtered_queryset.values(
             "requirement_id",
@@ -4722,17 +5221,33 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 requirements_summary, many=True
             )
 
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                latest_scan_ids,
+            )
+        elif not requirements_summary:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
+
+        if has_provider_filters and task_response:
+            return task_response
+
         if requirements_summary:
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
-            return task_response
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=["get"], url_name="attributes")
     def attributes(self, request):
+        # While the background warm-up is in progress, refuse immediately
+        # instead of falling through to the slow cold load on the request
+        # thread (which would trip the Gunicorn worker timeout). `is_set()` is
+        # a non-blocking flag read, so this never touches the loader.
+        if COMPLIANCE_WARMING_STARTED.is_set() and not COMPLIANCE_WARMED.is_set():
+            raise ComplianceWarmingError()
+
         compliance_id = request.query_params.get("filter[compliance_id]")
         if not compliance_id:
             raise ValidationError(
@@ -4748,7 +5263,51 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         provider_type = None
 
-        # If we couldn't determine from database, try each provider type
+        # When a scan is provided, resolve the provider from it. Multi-provider
+        # universal frameworks (e.g. CSA CCM) share a single compliance_id
+        # across providers but expose different checks per provider, so the
+        # metadata (and therefore the check IDs the UI uses to fetch findings)
+        # must be returned for the scan's provider. Without this, the endpoint
+        # falls back to the first provider that declares the framework and
+        # returns its check IDs, leaving azure/gcp/... requirements with no
+        # matching findings.
+        scan_id = request.query_params.get("filter[scan_id]")
+        if "filter[scan_id]" in request.query_params:
+            # An explicit scan_id is authoritative: fail closed instead of
+            # falling back to another provider. Otherwise an invalid, empty
+            # (filter[scan_id]=) or inaccessible scan would silently return the
+            # first provider's check IDs, recreating the multi-provider mismatch
+            # this endpoint fixes.
+            if not scan_id:
+                raise NotFound(detail=f"Scan '{scan_id}' not found.")
+
+            # Tenant isolation is already enforced by Postgres RLS on the
+            # connection (see BaseRLSViewSet). Scope the lookup by provider
+            # group as well so a user with limited visibility can't resolve
+            # another provider's scan and read its compliance metadata, mirroring
+            # the RBAC scoping get_queryset() applies to the rest of the ViewSet.
+            role = get_role(request.user, request.tenant_id)
+            if getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
+                scan_queryset = Scan.objects.filter(tenant_id=request.tenant_id)
+            else:
+                scan_queryset = Scan.objects.filter(provider__in=get_providers(role))
+
+            try:
+                scan = scan_queryset.select_related("provider").get(id=scan_id)
+            except (Scan.DoesNotExist, DjangoValidationError, ValueError):
+                raise NotFound(detail=f"Scan '{scan_id}' not found.")
+
+            provider_type = scan.provider.provider
+            if compliance_id not in get_compliance_frameworks(provider_type):
+                raise NotFound(
+                    detail=(
+                        f"Compliance framework '{compliance_id}' is not "
+                        f"available for scan '{scan_id}'."
+                    )
+                )
+
+        # Fall back to the first provider that declares the framework. Keeps the
+        # endpoint working for provider-agnostic callers that omit the scan.
         if not provider_type:
             for pt in Provider.ProviderChoices.values:
                 if compliance_id in get_compliance_frameworks(pt):
@@ -4916,7 +5475,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-class OverviewViewSet(BaseRLSViewSet):
+class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
     queryset = ScanSummary.objects.all()
     http_method_names = ["get"]
     ordering = ["-inserted_at"]
@@ -5033,18 +5592,6 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
-    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        exclude_keys = exclude_keys or set()
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            if normalized_key not in exclude_keys:
-                normalized.setlist(normalized_key, values)
-        return normalized
-
     def _ensure_allowed_providers(self):
         """Populate allowed providers for RBAC-aware queries once per request."""
         if getattr(self, "_providers_initialized", False):
@@ -5064,15 +5611,6 @@ class OverviewViewSet(BaseRLSViewSet):
             return queryset.filter(**provider_filter)
         return queryset
 
-    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
-        normalized_params = self._normalize_jsonapi_params(
-            self.request.query_params, exclude_keys=set(exclude_keys or [])
-        )
-        filterset = filterset_class(normalized_params, queryset=queryset)
-        if not filterset.is_valid():
-            raise ValidationError(filterset.errors)
-        return filterset.qs
-
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
         queryset = Scan.all_objects.filter(
@@ -5085,40 +5623,6 @@ class OverviewViewSet(BaseRLSViewSet):
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
-
-    def _extract_provider_filters_from_params(self):
-        """Extract and validate provider filters from query params."""
-        params = self.request.query_params
-        filters = {}
-        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
-
-        provider_id = params.get("filter[provider_id]")
-        if provider_id:
-            filters["provider_id"] = provider_id
-
-        provider_id_in = params.get("filter[provider_id__in]")
-        if provider_id_in:
-            filters["provider_id__in"] = provider_id_in.split(",")
-
-        provider_type = params.get("filter[provider_type]")
-        if provider_type:
-            if provider_type not in valid_provider_types:
-                raise ValidationError(
-                    {"provider_type": f"Invalid choice: {provider_type}"}
-                )
-            filters["provider__provider"] = provider_type
-
-        provider_type_in = params.get("filter[provider_type__in]")
-        if provider_type_in:
-            types = provider_type_in.split(",")
-            invalid = [t for t in types if t not in valid_provider_types]
-            if invalid:
-                raise ValidationError(
-                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
-                )
-            filters["provider__provider__in"] = types
-
-        return filters
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5190,15 +5694,11 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         providers_qs = Provider.objects.filter(tenant_id=tenant_id)
 
+        self._ensure_allowed_providers()
         if hasattr(self, "allowed_providers"):
-            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
-            if not allowed_ids:
-                overview = []
-                return Response(
-                    self.get_serializer(overview, many=True).data,
-                    status=status.HTTP_200_OK,
-                )
-            providers_qs = providers_qs.filter(id__in=allowed_ids)
+            providers_qs = providers_qs.filter(
+                id__in=self.allowed_providers.values("id")
+            )
 
         overview = (
             providers_qs.values("provider")
@@ -5414,28 +5914,40 @@ class OverviewViewSet(BaseRLSViewSet):
                 description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
             ),
             OpenApiParameter(
-                name="provider_id",
+                name="filter[provider_id]",
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
                 description="Filter by specific provider ID",
             ),
             OpenApiParameter(
-                name="provider_id__in",
+                name="filter[provider_id__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider IDs (comma-separated UUIDs)",
             ),
             OpenApiParameter(
-                name="provider_type",
+                name="filter[provider_type]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by provider type (aws, azure, gcp, etc.)",
             ),
             OpenApiParameter(
-                name="provider_type__in",
+                name="filter[provider_type__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider types (comma-separated)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_groups]",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider group ID",
+            ),
+            OpenApiParameter(
+                name="filter[provider_groups__in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider group IDs (comma-separated UUIDs)",
             ),
         ],
     )
@@ -5778,6 +6290,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset, CategoryOverviewFilter, exclude_keys=provider_filter_keys
@@ -5847,6 +6361,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset,
@@ -6897,7 +7413,7 @@ SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
     ),
     retrieve=extend_schema(exclude=True),
 )
-class FindingGroupViewSet(BaseRLSViewSet):
+class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
     """
     ViewSet for Finding Groups - aggregates findings by check_id.
 
@@ -6913,6 +7429,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     queryset = FindingGroupDailySummary.objects.all()
     serializer_class = FindingGroupSerializer
     filterset_class = FindingGroupFilter
+    jsonapi_filter_replace_dots = True
     filter_backends = [
         jsonapi_filters.QueryParameterValidationFilter,
         jsonapi_filters.OrderingFilter,
@@ -6962,18 +7479,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             queryset = queryset.filter(scan__provider_id__in=providers)
 
         return queryset
-
-    def _normalize_jsonapi_params(self, query_params):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            # Convert JSON:API dot notation to Django double underscore
-            normalized_key = normalized_key.replace(".", "__")
-            normalized.setlist(normalized_key, values)
-        return normalized
 
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
@@ -7078,9 +7583,29 @@ class FindingGroupViewSet(BaseRLSViewSet):
             severity_order=Max("severity_order"),
             pass_count=Sum("pass_count"),
             fail_count=Sum("fail_count"),
+            manual_count=Sum("manual_count"),
+            pass_muted_count=Sum("pass_muted_count"),
+            fail_muted_count=Sum("fail_muted_count"),
+            manual_muted_count=Sum("manual_muted_count"),
             muted_count=Sum("muted_count"),
+            # The group is muted only if every contributing daily summary is
+            # itself fully muted. BoolAnd returns False as soon as one row has
+            # at least one actionable finding.
+            muted=BoolAnd("muted"),
             new_count=Sum("new_count"),
             changed_count=Sum("changed_count"),
+            new_fail_count=Sum("new_fail_count"),
+            new_fail_muted_count=Sum("new_fail_muted_count"),
+            new_pass_count=Sum("new_pass_count"),
+            new_pass_muted_count=Sum("new_pass_muted_count"),
+            new_manual_count=Sum("new_manual_count"),
+            new_manual_muted_count=Sum("new_manual_muted_count"),
+            changed_fail_count=Sum("changed_fail_count"),
+            changed_fail_muted_count=Sum("changed_fail_muted_count"),
+            changed_pass_count=Sum("changed_pass_count"),
+            changed_pass_muted_count=Sum("changed_pass_muted_count"),
+            changed_manual_count=Sum("changed_manual_count"),
+            changed_manual_muted_count=Sum("changed_manual_muted_count"),
             resources_total=Sum("resources_total"),
             resources_fail=Sum("resources_fail"),
             impacted_providers_str=StringAgg(
@@ -7106,39 +7631,94 @@ class FindingGroupViewSet(BaseRLSViewSet):
             output_field=IntegerField(),
         )
 
-        return queryset.values("check_id").annotate(
-            severity_order=Max(severity_case),
-            pass_count=Count("id", filter=Q(status="PASS", muted=False)),
-            fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
-            muted_count=Count("id", filter=Q(muted=True)),
-            new_count=Count("id", filter=Q(delta="new", muted=False)),
-            changed_count=Count("id", filter=Q(delta="changed", muted=False)),
-            resources_total=Count("resources__id", distinct=True),
-            resources_fail=Count(
-                "resources__id",
-                distinct=True,
-                filter=Q(status="FAIL", muted=False),
-            ),
-            impacted_providers_str=StringAgg(
-                Cast("scan__provider__provider", CharField()),
-                delimiter=",",
-                distinct=True,
-                default="",
-            ),
-            agg_first_seen_at=Min("first_seen_at"),
-            agg_last_seen_at=Max("inserted_at"),
-            agg_failing_since=Min(
-                "first_seen_at", filter=Q(status="FAIL", muted=False)
-            ),
-            check_title=Coalesce(
-                Max(KeyTextTransform("checktitle", "check_metadata")),
-                Max(KeyTextTransform("CheckTitle", "check_metadata")),
-                Max(KeyTextTransform("Checktitle", "check_metadata")),
-            ),
-            check_description=Coalesce(
-                Max(KeyTextTransform("description", "check_metadata")),
-                Max(KeyTextTransform("Description", "check_metadata")),
-            ),
+        # `check_title` / `check_description` are intentionally NOT resolved
+        # here. They live in the large JSONB `check_metadata` blob (TOASTed),
+        # so reading them per finding row is very expensive, and pulling them
+        # in via a correlated subquery makes Django add the subquery to GROUP
+        # BY, which re-evaluates it once per input row. They are identical for
+        # every finding of a `check_id`, so `_post_process_aggregation` fills
+        # them from the summary table's plain columns in a single batched
+        # lookup scoped to the paginated page.
+
+        # `pass_count`, `fail_count` and `manual_count` only count non-muted
+        # findings. Muted findings are tracked separately via the
+        # `*_muted_count` fields.
+        return (
+            queryset.values("check_id")
+            .annotate(
+                severity_order=Max(severity_case),
+                pass_count=Count("id", filter=Q(status="PASS", muted=False)),
+                fail_count=Count("id", filter=Q(status="FAIL", muted=False)),
+                manual_count=Count("id", filter=Q(status="MANUAL", muted=False)),
+                pass_muted_count=Count("id", filter=Q(status="PASS", muted=True)),
+                fail_muted_count=Count("id", filter=Q(status="FAIL", muted=True)),
+                manual_muted_count=Count("id", filter=Q(status="MANUAL", muted=True)),
+                muted_count=Count("id", filter=Q(muted=True)),
+                nonmuted_count=Count("id", filter=Q(muted=False)),
+                new_count=Count("id", filter=Q(delta="new", muted=False)),
+                changed_count=Count("id", filter=Q(delta="changed", muted=False)),
+                new_fail_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=False)
+                ),
+                new_fail_muted_count=Count(
+                    "id", filter=Q(delta="new", status="FAIL", muted=True)
+                ),
+                new_pass_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=False)
+                ),
+                new_pass_muted_count=Count(
+                    "id", filter=Q(delta="new", status="PASS", muted=True)
+                ),
+                new_manual_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=False)
+                ),
+                new_manual_muted_count=Count(
+                    "id", filter=Q(delta="new", status="MANUAL", muted=True)
+                ),
+                changed_fail_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=False)
+                ),
+                changed_fail_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="FAIL", muted=True)
+                ),
+                changed_pass_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=False)
+                ),
+                changed_pass_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="PASS", muted=True)
+                ),
+                changed_manual_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=False)
+                ),
+                changed_manual_muted_count=Count(
+                    "id", filter=Q(delta="changed", status="MANUAL", muted=True)
+                ),
+                resources_total=Count("resources__id", distinct=True),
+                resources_fail=Count(
+                    "resources__id",
+                    distinct=True,
+                    filter=Q(status="FAIL", muted=False),
+                ),
+                impacted_providers_str=StringAgg(
+                    Cast("scan__provider__provider", CharField()),
+                    delimiter=",",
+                    distinct=True,
+                    default="",
+                ),
+                agg_first_seen_at=Min("first_seen_at"),
+                agg_last_seen_at=Max("inserted_at"),
+                agg_failing_since=Min(
+                    "first_seen_at", filter=Q(status="FAIL", muted=False)
+                ),
+            )
+            .annotate(
+                # Group is muted only if it has zero non-muted findings.
+                muted=Case(
+                    When(nonmuted_count=0, then=Value(True)),
+                    default=Value(False),
+                    output_field=BooleanField(),
+                ),
+            )
         )
 
     def _split_computed_aggregate_filters(
@@ -7150,6 +7730,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
             "status__in",
             "severity",
             "severity__in",
+            "muted",
             "include_muted",
         }
         finding_params = QueryDict(mutable=True)
@@ -7165,14 +7746,17 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     def _get_latest_findings_per_provider(self, filtered_queryset):
         """Keep only findings from each provider's most recent completed scan."""
-        latest_scan_ids = (
+        # Materialize to a literal IN list. Left as a subquery, Postgres can't
+        # estimate the match count and picks a serial nested loop on
+        # resource_finding_mappings when one scan dominates findings
+        latest_scan_ids = list(
             Scan.objects.filter(
                 tenant_id=self.request.tenant_id,
                 state=StateChoices.COMPLETED,
             )
             .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
-            .values("id")
+            .values_list("id", flat=True)
         )
         return filtered_queryset.filter(scan_id__in=latest_scan_ids)
 
@@ -7181,11 +7765,41 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Post-process aggregation results to add computed fields.
 
         - Converts severity integer back to string
-        - Computes aggregated status (FAIL > PASS > MUTED)
+        - Computes aggregated status (FAIL > PASS > MANUAL); the orthogonal
+          ``muted`` boolean is already on the row from the SQL aggregation
         - Converts provider string to list
+        - Fills check_title / check_description for the findings path
         """
+        rows = list(aggregated_data)
+
+        # The findings-aggregation path omits check_title / check_description
+        # (they sit in TOASTed JSONB; see _aggregate_findings). Fill them from
+        # the summary table's plain columns in one query scoped to this page.
+        # The summary-aggregation path already carries them, so skip it there.
+        if rows and "check_title" not in rows[0]:
+            check_ids = [row["check_id"] for row in rows]
+            role = get_role(self.request.user, self.request.tenant_id)
+            summaries = FindingGroupDailySummary.objects.filter(
+                tenant_id=self.request.tenant_id,
+                check_id__in=check_ids,
+            )
+            # Scope to the user's providers, mirroring get_queryset(), so titles
+            # are read only from providers the user can see.
+            if not role.unlimited_visibility:
+                summaries = summaries.filter(provider__in=get_providers(role))
+            metadata_by_check = {
+                item["check_id"]: item
+                for item in summaries.order_by("check_id", "-inserted_at")
+                .distinct("check_id")
+                .values("check_id", "check_title", "check_description")
+            }
+            for row in rows:
+                metadata = metadata_by_check.get(row["check_id"], {})
+                row["check_title"] = metadata.get("check_title")
+                row["check_description"] = metadata.get("check_description")
+
         results = []
-        for row in aggregated_data:
+        for row in rows:
             # Convert severity order back to string
             severity_order = row.get("severity_order", 1)
             row["severity"] = SEVERITY_ORDER_REVERSE.get(
@@ -7199,13 +7813,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
             if "agg_failing_since" in row:
                 row["failing_since"] = row.pop("agg_failing_since")
 
-            # Compute aggregated status
+            # Drop the helper count we use to derive `muted` in the
+            # finding-level aggregation path.
+            row.pop("nonmuted_count", None)
+
+            # Muted findings are treated as resolved/accepted, so they do not
+            # contribute to a failing status. A group is FAIL only when there
+            # is at least one non-muted FAIL; otherwise any pass (muted or
+            # not) or any muted fail makes the group PASS. Only groups whose
+            # findings are exclusively MANUAL fall through to MANUAL.
             if row.get("fail_count", 0) > 0:
                 row["status"] = "FAIL"
-            elif row.get("pass_count", 0) > 0:
+            elif (
+                row.get("pass_count", 0) > 0
+                or row.get("pass_muted_count", 0) > 0
+                or row.get("fail_muted_count", 0) > 0
+            ):
                 row["status"] = "PASS"
             else:
-                row["status"] = "MUTED"
+                row["status"] = "MANUAL"
 
             # Convert provider string to list
             providers_str = row.pop("impacted_providers_str", "") or ""
@@ -7219,13 +7845,31 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
     _FINDING_GROUP_SORT_MAP = {
         "check_id": "check_id",
-        "check_title": "check_title",
         "severity": "severity_order",
+        "status": "status_order",
+        "muted": "muted",
+        "delta": "delta_order",
         "fail_count": "fail_count",
         "pass_count": "pass_count",
+        "manual_count": "manual_count",
         "muted_count": "muted_count",
+        "pass_muted_count": "pass_muted_count",
+        "fail_muted_count": "fail_muted_count",
+        "manual_muted_count": "manual_muted_count",
         "new_count": "new_count",
+        "new_fail_count": "new_fail_count",
+        "new_fail_muted_count": "new_fail_muted_count",
+        "new_pass_count": "new_pass_count",
+        "new_pass_muted_count": "new_pass_muted_count",
+        "new_manual_count": "new_manual_count",
+        "new_manual_muted_count": "new_manual_muted_count",
         "changed_count": "changed_count",
+        "changed_fail_count": "changed_fail_count",
+        "changed_fail_muted_count": "changed_fail_muted_count",
+        "changed_pass_count": "changed_pass_count",
+        "changed_pass_muted_count": "changed_pass_muted_count",
+        "changed_manual_count": "changed_manual_count",
+        "changed_manual_muted_count": "changed_manual_muted_count",
         "resources_total": "resources_total",
         "resources_fail": "resources_fail",
         "first_seen_at": "agg_first_seen_at",
@@ -7236,6 +7880,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_MAP = {
         "status": "status_order",
         "severity": "severity_order",
+        "delta": "delta_order",
         "first_seen_at": "first_seen_at",
         "last_seen_at": "last_seen_at",
         "resource.uid": "resource_uid",
@@ -7276,7 +7921,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
         return ordering
 
     def _apply_aggregated_computed_filters(self, queryset, computed_params: QueryDict):
-        """Apply computed filters (status/severity) on aggregated finding-group rows."""
+        """Apply computed filters (status/severity/muted) on aggregated finding-group rows."""
         if not computed_params:
             return queryset
 
@@ -7285,14 +7930,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 aggregated_status=Case(
                     When(fail_count__gt=0, then=Value("FAIL")),
                     When(pass_count__gt=0, then=Value("PASS")),
-                    default=Value("MUTED"),
+                    When(pass_muted_count__gt=0, then=Value("PASS")),
+                    When(fail_muted_count__gt=0, then=Value("PASS")),
+                    default=Value("MANUAL"),
                     output_field=CharField(),
                 )
             )
 
-        # Exclude fully-muted groups by default unless include_muted is set
-        if "include_muted" not in computed_params:
-            queryset = queryset.exclude(fail_count=0, pass_count=0, muted_count__gt=0)
+        # Exclude fully-muted groups by default unless the caller has opted in
+        # via either `include_muted` or an explicit `muted` filter (the latter
+        # gives the caller direct control over the column).
+        if "include_muted" not in computed_params and "muted" not in computed_params:
+            queryset = queryset.exclude(muted=True)
 
         filterset = FindingGroupAggregatedComputedFilter(
             computed_params, queryset=queryset
@@ -7301,6 +7950,25 @@ class FindingGroupViewSet(BaseRLSViewSet):
             raise ValidationError(filterset.errors)
 
         return filterset.qs
+
+    def _resolve_finding_ids(self, filtered_queryset):
+        """
+        Materialize and request-cache the finding_ids list used to anchor
+        RFM lookups.
+
+        Turning `finding_id__in=Subquery(findings_qs)` into `finding_id__in=
+        [uuid, ...]` nudges PostgreSQL out of a Merge Semi Join that ends up
+        reading hundreds of thousands of RFM index entries just to post-
+        filter tenant_id. Caching on the ViewSet instance (one instance per
+        request) avoids duplicating the findings round-trip when several
+        helpers build different RFM querysets from the same filtered set.
+        """
+        cached = getattr(self, "_finding_ids_cache", None)
+        if cached is not None and cached[0] is filtered_queryset:
+            return cached[1]
+        finding_ids = list(filtered_queryset.order_by().values_list("id", flat=True))
+        self._finding_ids_cache = (filtered_queryset, finding_ids)
+        return finding_ids
 
     def _build_resource_mapping_queryset(
         self, filtered_queryset, resource_ids=None, tenant_id: str | None = None
@@ -7311,10 +7979,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
         Starting from ResourceFindingMapping avoids scanning all mappings
         before applying check_id/date filters on findings.
         """
-        finding_ids = filtered_queryset.order_by().values("id")
+        finding_ids = self._resolve_finding_ids(filtered_queryset)
 
         mapping_queryset = ResourceFindingMapping.objects.filter(
-            finding_id__in=Subquery(finding_ids)
+            finding_id__in=finding_ids
         )
         if tenant_id:
             mapping_queryset = mapping_queryset.filter(tenant_id=tenant_id)
@@ -7347,18 +8015,14 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 provider_type=Max("resource__provider__provider"),
                 provider_uid=Max("resource__provider__uid"),
                 provider_alias=Max("resource__provider__alias"),
+                # status_order considers ALL findings (muted or not) so it
+                # surfaces FAIL/PASS/MANUAL based on the underlying check
+                # outcome. Whether the resource is actionable is signalled by
+                # the orthogonal `muted` flag below.
                 status_order=Max(
                     Case(
-                        When(
-                            finding__status="FAIL",
-                            finding__muted=False,
-                            then=Value(3),
-                        ),
-                        When(
-                            finding__status="PASS",
-                            finding__muted=False,
-                            then=Value(2),
-                        ),
+                        When(finding__status="FAIL", then=Value(3)),
+                        When(finding__status="PASS", then=Value(2)),
                         default=Value(1),
                         output_field=IntegerField(),
                     )
@@ -7372,8 +8036,26 @@ class FindingGroupViewSet(BaseRLSViewSet):
                         output_field=IntegerField(),
                     )
                 ),
+                delta_order=Max(
+                    Case(
+                        When(
+                            finding__delta="new",
+                            finding__muted=False,
+                            then=Value(2),
+                        ),
+                        When(
+                            finding__delta="changed",
+                            finding__muted=False,
+                            then=Value(1),
+                        ),
+                        default=Value(0),
+                        output_field=IntegerField(),
+                    )
+                ),
                 first_seen_at=Min("finding__first_seen_at"),
                 last_seen_at=Max("finding__inserted_at"),
+                # True only if every finding for this resource+check is muted.
+                muted=BoolAnd("finding__muted"),
                 # Max() on muted_reason / check_metadata is safe because
                 # all findings for the same resource+check share identical
                 # values (mute rules and metadata are applied per-check).
@@ -7381,6 +8063,12 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 resource_group=Max(
                     KeyTextTransform("resourcegroup", "finding__check_metadata")
                 ),
+                # Most recent matching Finding for this (resource, check):
+                # Finding.id is a UUIDv7 (time-ordered in its high 48 bits).
+                # Cast to text first because PostgreSQL has no built-in
+                # `max(uuid)` aggregate; on the canonical lowercase form a
+                # lexicographic Max() still resolves to the latest snapshot.
+                finding_id=Max(Cast("finding__id", output_field=CharField())),
             )
             .filter(resource_id__isnull=False)
         )
@@ -7389,8 +8077,8 @@ class FindingGroupViewSet(BaseRLSViewSet):
     _RESOURCE_SORT_ANNOTATIONS = {
         "status_order": lambda: Max(
             Case(
-                When(finding__status="FAIL", finding__muted=False, then=Value(3)),
-                When(finding__status="PASS", finding__muted=False, then=Value(2)),
+                When(finding__status="FAIL", then=Value(3)),
+                When(finding__status="PASS", then=Value(2)),
                 default=Value(1),
                 output_field=IntegerField(),
             )
@@ -7401,6 +8089,22 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     When(finding__severity=severity, then=Value(order))
                     for severity, order in SEVERITY_ORDER.items()
                 ],
+                output_field=IntegerField(),
+            )
+        ),
+        "delta_order": lambda: Max(
+            Case(
+                When(
+                    finding__delta="new",
+                    finding__muted=False,
+                    then=Value(2),
+                ),
+                When(
+                    finding__delta="changed",
+                    finding__muted=False,
+                    then=Value(1),
+                ),
+                default=Value(0),
                 output_field=IntegerField(),
             )
         ),
@@ -7437,6 +8141,53 @@ class FindingGroupViewSet(BaseRLSViewSet):
             .order_by(*ordering)
         )
 
+    def _orphan_findings_queryset(self, filtered_queryset, finding_ids=None):
+        """Findings in the filtered set with no ResourceFindingMapping entries."""
+        orphan_qs = filtered_queryset.filter(
+            ~Exists(ResourceFindingMapping.objects.filter(finding_id=OuterRef("pk")))
+        )
+        if finding_ids is not None:
+            orphan_qs = orphan_qs.filter(id__in=finding_ids)
+        return orphan_qs
+
+    def _has_orphan_findings(self, filtered_queryset) -> bool:
+        """Return True if any finding in the filtered set has no resource mapping."""
+        return self._orphan_findings_queryset(filtered_queryset).exists()
+
+    def _orphan_aggregation_values(self, orphan_queryset):
+        """Raw rows for orphan findings; resource payload synthesized from metadata.
+
+        check_metadata is stored with lowercase keys (see
+        `prowler.lib.outputs.finding.Finding.get_metadata`) and
+        `Finding.resource_groups` is already denormalized at ingest time.
+        """
+        return orphan_queryset.annotate(
+            _provider_type=F("scan__provider__provider"),
+            _provider_uid=F("scan__provider__uid"),
+            _provider_alias=F("scan__provider__alias"),
+            _svc=KeyTextTransform("servicename", "check_metadata"),
+            _region=KeyTextTransform("region", "check_metadata"),
+            _rtype=KeyTextTransform("resourcetype", "check_metadata"),
+            _rgroup=F("resource_groups"),
+        ).values(
+            "id",
+            "uid",
+            "status",
+            "severity",
+            "delta",
+            "muted",
+            "muted_reason",
+            "first_seen_at",
+            "inserted_at",
+            "_provider_type",
+            "_provider_uid",
+            "_provider_alias",
+            "_svc",
+            "_region",
+            "_rtype",
+            "_rgroup",
+        )
+
     def _post_process_resources(self, resource_data):
         """Convert resource aggregation rows to API output."""
         results = []
@@ -7448,11 +8199,23 @@ class FindingGroupViewSet(BaseRLSViewSet):
             elif status_order == 2:
                 status = "PASS"
             else:
-                status = "MUTED"
+                status = "MANUAL"
+
+            delta_order = row.get("delta_order", 0)
+            if delta_order == 2:
+                delta = "new"
+            elif delta_order == 1:
+                delta = "changed"
+            else:
+                delta = None
+
+            resource_id = row["resource_id"]
+            finding_id = str(row["finding_id"]) if row.get("finding_id") else None
 
             results.append(
                 {
-                    "resource_id": row["resource_id"],
+                    "row_id": resource_id,
+                    "resource_id": resource_id,
                     "resource_uid": row["resource_uid"],
                     "resource_name": row["resource_name"],
                     "resource_service": row["resource_service"],
@@ -7465,10 +8228,52 @@ class FindingGroupViewSet(BaseRLSViewSet):
                     "severity": SEVERITY_ORDER_REVERSE.get(
                         severity_order, "informational"
                     ),
+                    "delta": delta,
                     "first_seen_at": row["first_seen_at"],
                     "last_seen_at": row["last_seen_at"],
+                    "muted": bool(row.get("muted", False)),
                     "muted_reason": row.get("muted_reason"),
                     "resource_group": row.get("resource_group", ""),
+                    "finding_id": finding_id,
+                }
+            )
+
+        return results
+
+    def _post_process_orphans(self, orphan_rows):
+        """Convert orphan finding rows into the same API shape as mapping rows."""
+        results = []
+        for row in orphan_rows:
+            status_val = row["status"]
+            status = status_val if status_val in ("FAIL", "PASS") else "MANUAL"
+
+            muted = bool(row["muted"])
+            delta_val = row.get("delta")
+            delta = delta_val if delta_val in ("new", "changed") and not muted else None
+
+            finding_id = str(row["id"])
+
+            results.append(
+                {
+                    "row_id": finding_id,
+                    "resource_id": None,
+                    "resource_uid": row["uid"],
+                    "resource_name": row["uid"],
+                    "resource_service": row["_svc"] or "",
+                    "resource_region": row["_region"] or "",
+                    "resource_type": row["_rtype"] or "",
+                    "provider_type": row["_provider_type"],
+                    "provider_uid": row["_provider_uid"],
+                    "provider_alias": row["_provider_alias"],
+                    "status": status,
+                    "severity": row["severity"],
+                    "delta": delta,
+                    "first_seen_at": row["first_seen_at"],
+                    "last_seen_at": row["inserted_at"],
+                    "muted": muted,
+                    "muted_reason": row.get("muted_reason"),
+                    "resource_group": row["_rgroup"] or "",
+                    "finding_id": finding_id,
                 }
             )
 
@@ -7529,7 +8334,27 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 sort_param, self._FINDING_GROUP_SORT_MAP
             )
             if ordering:
-                aggregated_queryset = aggregated_queryset.order_by(*ordering)
+                if any(field.lstrip("-") == "status_order" for field in ordering):
+                    aggregated_queryset = aggregated_queryset.annotate(
+                        status_order=Case(
+                            When(fail_count__gt=0, then=Value(3)),
+                            When(pass_count__gt=0, then=Value(2)),
+                            When(pass_muted_count__gt=0, then=Value(2)),
+                            When(fail_muted_count__gt=0, then=Value(2)),
+                            default=Value(1),
+                            output_field=IntegerField(),
+                        )
+                    )
+
+                expanded_ordering = []
+                for field in ordering:
+                    if field.lstrip("-") == "delta_order":
+                        sign = "-" if field.startswith("-") else ""
+                        expanded_ordering.append(f"{sign}new_count")
+                        expanded_ordering.append(f"{sign}changed_count")
+                    else:
+                        expanded_ordering.append(field)
+                aggregated_queryset = aggregated_queryset.order_by(*expanded_ordering)
         else:
             aggregated_queryset = aggregated_queryset.order_by(
                 "-fail_count", "-severity_order", "check_id"
@@ -7554,41 +8379,65 @@ class FindingGroupViewSet(BaseRLSViewSet):
     def _paginated_resource_response(
         self, request, filtered_queryset, resource_ids, tenant_id
     ):
-        """Paginate and return resources.
+        """Paginate and return resources, appending orphan findings when present.
 
-        Without sort: paginate lightweight resource IDs first, aggregate only the page.
-        With sort: build a lightweight ordering subquery (resource_id + sort keys),
-        paginate that, then aggregate full details only for the page.
+        Hot path (no orphans, or resource filter applied): resources come from
+        ResourceFindingMapping aggregation. Untouched pre-existing behaviour.
+
+        Orphan fallback: findings without a mapping (e.g. IaC) are appended
+        after mapping rows as synthesised resource-like rows so they remain
+        visible in the UI without paying the aggregation cost on the hot path.
         """
         sort_param = request.query_params.get("sort")
-
+        ordering = None
         if sort_param:
-            ordering = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
-            if ordering:
-                if "resource_id" not in {field.lstrip("-") for field in ordering}:
-                    ordering.append("resource_id")
+            validated = self._validate_sort_fields(sort_param, self._RESOURCE_SORT_MAP)
+            ordering = validated if validated else None
 
-                # Phase 1: lightweight aggregation with only sort keys, paginate
-                ordering_qs = self._build_resource_ordering_queryset(
-                    filtered_queryset,
-                    resource_ids=resource_ids,
-                    tenant_id=tenant_id,
-                    ordering=ordering,
-                )
-                page = self.paginate_queryset(ordering_qs)
-                if page is not None:
-                    page_ids = [row["resource_id"] for row in page]
-                    resource_data = self._build_resource_aggregation(
-                        filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
-                    )
-                    # Re-sort to match the page ordering
-                    id_order = {rid: idx for idx, rid in enumerate(page_ids)}
-                    results = self._post_process_resources(resource_data)
-                    results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
-                    serializer = FindingGroupResourceSerializer(results, many=True)
-                    return self.get_paginated_response(serializer.data)
+        # Resource filters can only match findings with resources; skip orphan
+        # detection entirely when they are present.
+        if resource_ids is not None:
+            return self._mapping_paginated_response(
+                request, filtered_queryset, resource_ids, tenant_id, ordering
+            )
 
-                page_ids = [row["resource_id"] for row in ordering_qs]
+        # Serve the mapping response directly and piggyback on the paginator
+        # count to detect orphan-only groups, instead of paying a separate
+        # has_mappings.exists() semi-join over ResourceFindingMapping on
+        # every non-IaC request. TODO: once the ephemeral resources strategy
+        # is decided, mixed groups should route to _combined_paginated_response.
+        response = self._mapping_paginated_response(
+            request, filtered_queryset, resource_ids, tenant_id, ordering
+        )
+
+        page = getattr(self.paginator, "page", None)
+        mapping_total = page.paginator.count if page is not None else None
+        if mapping_total == 0:
+            # Pure orphan group (e.g. IaC): synthesize resource-like rows.
+            return self._combined_paginated_response(
+                request, filtered_queryset, tenant_id, ordering
+            )
+
+        return response
+
+    def _mapping_paginated_response(
+        self, request, filtered_queryset, resource_ids, tenant_id, ordering
+    ):
+        """Mapping-only paginated response (original fast path)."""
+        if ordering:
+            if "resource_id" not in {field.lstrip("-") for field in ordering}:
+                ordering.append("resource_id")
+
+            # Phase 1: lightweight aggregation with only sort keys, paginate
+            ordering_qs = self._build_resource_ordering_queryset(
+                filtered_queryset,
+                resource_ids=resource_ids,
+                tenant_id=tenant_id,
+                ordering=ordering,
+            )
+            page = self.paginate_queryset(ordering_qs)
+            if page is not None:
+                page_ids = [row["resource_id"] for row in page]
                 resource_data = self._build_resource_aggregation(
                     filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
                 )
@@ -7596,10 +8445,18 @@ class FindingGroupViewSet(BaseRLSViewSet):
                 results = self._post_process_resources(resource_data)
                 results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
                 serializer = FindingGroupResourceSerializer(results, many=True)
-                return Response(serializer.data)
+                return self.get_paginated_response(serializer.data)
 
-        # No sort (or only empty sort fragments): paginate lightweight resource IDs
-        # first, aggregate only the page.
+            page_ids = [row["resource_id"] for row in ordering_qs]
+            resource_data = self._build_resource_aggregation(
+                filtered_queryset, resource_ids=page_ids, tenant_id=tenant_id
+            )
+            id_order = {rid: idx for idx, rid in enumerate(page_ids)}
+            results = self._post_process_resources(resource_data)
+            results.sort(key=lambda r: id_order.get(r["resource_id"], 0))
+            serializer = FindingGroupResourceSerializer(results, many=True)
+            return Response(serializer.data)
+
         mapping_qs = self._build_resource_mapping_queryset(
             filtered_queryset, resource_ids=resource_ids, tenant_id=tenant_id
         )
@@ -7627,6 +8484,95 @@ class FindingGroupViewSet(BaseRLSViewSet):
         serializer = FindingGroupResourceSerializer(results, many=True)
         return Response(serializer.data)
 
+    def _combined_paginated_response(
+        self, request, filtered_queryset, tenant_id, ordering
+    ):
+        """Mapping rows + orphan findings appended at end.
+
+        Orphans sit after mapping rows regardless of sort. This keeps the
+        mapping-only code path intact for checks that have no orphans (the
+        common case) and avoids paying UNION/coalesce costs there.
+        """
+        mapping_qs = self._build_resource_mapping_queryset(
+            filtered_queryset, resource_ids=None, tenant_id=tenant_id
+        )
+        mapping_count = mapping_qs.values("resource_id").distinct().count()
+
+        orphan_ids = list(
+            self._orphan_findings_queryset(filtered_queryset)
+            .order_by("id")
+            .values_list("id", flat=True)
+        )
+        orphan_count = len(orphan_ids)
+        total = mapping_count + orphan_count
+
+        # Paginate a simple [0..total) index sequence so DRF produces proper
+        # links/meta; then slice mapping / orphan sources accordingly.
+        page = self.paginate_queryset(range(total))
+        page_indices = list(page) if page is not None else list(range(total))
+
+        mapping_indices = [i for i in page_indices if i < mapping_count]
+        orphan_positions = [
+            i - mapping_count for i in page_indices if i >= mapping_count
+        ]
+
+        mapping_results = []
+        if mapping_indices:
+            start = mapping_indices[0]
+            stop = mapping_indices[-1] + 1
+            if ordering:
+                ordering_fields = list(ordering)
+                if "resource_id" not in {
+                    field.lstrip("-") for field in ordering_fields
+                }:
+                    ordering_fields.append("resource_id")
+                ordered_qs = self._build_resource_ordering_queryset(
+                    filtered_queryset,
+                    resource_ids=None,
+                    tenant_id=tenant_id,
+                    ordering=ordering_fields,
+                )
+                slice_rids = [row["resource_id"] for row in ordered_qs[start:stop]]
+            else:
+                slice_rids = list(
+                    mapping_qs.values_list("resource_id", flat=True)
+                    .distinct()
+                    .order_by("resource_id")[start:stop]
+                )
+            if slice_rids:
+                resource_data = self._build_resource_aggregation(
+                    filtered_queryset,
+                    resource_ids=slice_rids,
+                    tenant_id=tenant_id,
+                )
+                rows_by_rid = {row["resource_id"]: row for row in resource_data}
+                ordered_rows = [
+                    rows_by_rid[rid] for rid in slice_rids if rid in rows_by_rid
+                ]
+                mapping_results = self._post_process_resources(ordered_rows)
+
+        orphan_results = []
+        if orphan_positions:
+            slice_fids = [orphan_ids[pos] for pos in orphan_positions]
+            raw_rows = list(
+                self._orphan_aggregation_values(
+                    self._orphan_findings_queryset(
+                        filtered_queryset, finding_ids=slice_fids
+                    )
+                )
+            )
+            rows_by_fid = {row["id"]: row for row in raw_rows}
+            ordered_rows = [
+                rows_by_fid[fid] for fid in slice_fids if fid in rows_by_fid
+            ]
+            orphan_results = self._post_process_orphans(ordered_rows)
+
+        results = mapping_results + orphan_results
+        serializer = FindingGroupResourceSerializer(results, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
+
     def list(self, request, *args, **kwargs):
         """
         List finding groups with aggregation and filtering.
@@ -7652,9 +8598,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         This endpoint returns finding groups without requiring date filters,
         automatically using the latest available data per check_id.
-        All other filters (provider_id, provider_type, check_id) are still supported.
+        Provider, provider group, check, and computed filters are still supported.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(detail=False, methods=["get"], url_name="latest")
     def latest(self, request):
@@ -7756,10 +8703,13 @@ class FindingGroupViewSet(BaseRLSViewSet):
         tenant_id = request.tenant_id
         queryset = self._get_finding_queryset()
 
-        # Get latest completed scan for each provider
+        # Order by -completed_at (matching the /latest summary path and the
+        # daily summary upsert keyed on midnight(completed_at)) so that
+        # overlapping scans do not make /resources and /latest read from
+        # different scans and report diverging counts.
         latest_scan_ids = (
             Scan.objects.filter(tenant_id=tenant_id, state=StateChoices.COMPLETED)
-            .order_by("provider_id", "-inserted_at")
+            .order_by("provider_id", "-completed_at", "-inserted_at")
             .distinct("provider_id")
             .values_list("id", flat=True)
         )

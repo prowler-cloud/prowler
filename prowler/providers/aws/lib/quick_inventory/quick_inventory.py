@@ -30,10 +30,12 @@ def quick_inventory(provider: AwsProvider, args):
             ec2_client = provider.session.current_session.client(
                 "ec2", region_name=provider.identity.profile_region
             )
+            excluded_regions = getattr(provider, "_excluded_regions", set())
             # Get all the available regions
             provider.identity.audited_regions = [
                 region["RegionName"]
                 for region in ec2_client.describe_regions()["Regions"]
+                if region["RegionName"] not in excluded_regions
             ]
 
         with alive_bar(
@@ -54,9 +56,7 @@ def quick_inventory(provider: AwsProvider, args):
                 try:
                     # Scan IAM only once
                     if not iam_was_scanned:
-                        global_resources.extend(
-                            get_iam_resources(provider.session.current_session)
-                        )
+                        global_resources.extend(get_iam_resources(provider))
                         iam_was_scanned = True
 
                     # Get regional S3 buckets since none-tagged buckets are not supported by the resourcegroupstaggingapi
@@ -310,8 +310,8 @@ def create_output(resources: list, provider: AwsProvider, args):
             if args.output_bucket:
                 output_bucket = args.output_bucket
                 bucket_session = provider.session.current_session
-            # Check if -D was input
-            elif args.output_bucket_no_assume:
+            # The outer condition guarantees -D was input when -B was not
+            else:
                 output_bucket = args.output_bucket_no_assume
                 bucket_session = provider.session.original_session
 
@@ -373,9 +373,9 @@ def get_regional_buckets(provider: AwsProvider, region: str) -> list:
     return regional_buckets
 
 
-def get_iam_resources(session) -> list:
+def get_iam_resources(provider: AwsProvider) -> list:
     iam_resources = []
-    iam_client = session.client("iam")
+    iam_client = provider.session.current_session.client("iam")
     try:
         get_roles_paginator = iam_client.get_paginator("list_roles")
         for page in get_roles_paginator.paginate():

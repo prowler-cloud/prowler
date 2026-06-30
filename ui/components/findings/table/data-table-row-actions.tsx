@@ -13,7 +13,9 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isFindingGroupMuted } from "@/lib/findings-groups";
 
+import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 export interface FindingRowData {
@@ -28,7 +30,9 @@ export interface FindingRowData {
   rowType?: string;
   checkId?: string;
   checkTitle?: string;
+  muted?: boolean;
   mutedCount?: number;
+  resourcesFail?: number;
   resourcesTotal?: number;
 }
 
@@ -38,15 +42,27 @@ export interface FindingRowData {
  */
 function extractRowInfo(data: FindingRowData) {
   if (data.rowType === "group") {
-    const allMuted =
-      (data.mutedCount ?? 0) > 0 && data.mutedCount === data.resourcesTotal;
+    const isMuted = isFindingGroupMuted({
+      muted: data.muted,
+      mutedCount: data.mutedCount ?? 0,
+      resourcesFail: data.resourcesFail ?? 0,
+      resourcesTotal: data.resourcesTotal ?? 0,
+    });
+
     return {
-      isMuted: allMuted,
+      isMuted,
+      canMute: canMuteFindingGroup({
+        resourcesFail: data.resourcesFail ?? 0,
+        resourcesTotal: data.resourcesTotal ?? 0,
+        muted: data.muted,
+        mutedCount: data.mutedCount ?? 0,
+      }),
       title: data.checkTitle || "Security Finding",
     };
   }
   return {
     isMuted: data.attributes?.muted ?? false,
+    canMute: !(data.attributes?.muted ?? false),
     title: data.attributes?.check_metadata?.checktitle || "Security Finding",
   };
 }
@@ -64,8 +80,12 @@ export function DataTableRowActions<T extends FindingRowData>({
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
+  const [mutePreparationError, setMutePreparationError] = useState<
+    string | null
+  >(null);
 
-  const { isMuted, title: findingTitle } = extractRowInfo(finding);
+  const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
@@ -103,15 +123,45 @@ export function DataTableRowActions<T extends FindingRowData>({
     return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
 
+  const handleMuteModalOpenChange = (
+    nextOpen: boolean | ((previousOpen: boolean) => boolean),
+  ) => {
+    const resolvedOpen =
+      typeof nextOpen === "function" ? nextOpen(isMuteModalOpen) : nextOpen;
+    setIsMuteModalOpen(resolvedOpen);
+
+    if (!resolvedOpen) {
+      setIsPreparingMuteModal(false);
+      setMutePreparationError(null);
+      setResolvedIds([]);
+    }
+  };
+
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
 
     if (resolveMuteIds) {
+      setResolvedIds([]);
+      setMutePreparationError(null);
+      setIsPreparingMuteModal(true);
+      setIsMuteModalOpen(true);
       setIsResolving(true);
-      const ids = await resolveMuteIds(displayIds);
-      setResolvedIds(ids);
-      setIsResolving(false);
-      if (ids.length > 0) setIsMuteModalOpen(true);
+      try {
+        const ids = await resolveMuteIds(displayIds);
+        setResolvedIds(ids);
+        setMutePreparationError(
+          ids.length === 0
+            ? "No findings could be resolved for this group. Try refreshing the page and trying again."
+            : null,
+        );
+      } catch {
+        setMutePreparationError(
+          "We couldn't prepare this mute action. Please try again.",
+        );
+      } finally {
+        setIsPreparingMuteModal(false);
+        setIsResolving(false);
+      }
     } else {
       // Regular findings — IDs are already valid finding UUIDs
       setResolvedIds(displayIds);
@@ -146,10 +196,12 @@ export function DataTableRowActions<T extends FindingRowData>({
 
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
-        onOpenChange={setIsMuteModalOpen}
+        onOpenChange={handleMuteModalOpenChange}
         findingIds={resolvedIds}
         onComplete={handleMuteComplete}
         isBulkOperation={finding.rowType === "group"}
+        isPreparing={isPreparingMuteModal}
+        preparationError={mutePreparationError}
       />
 
       <div className="flex items-center justify-end">
@@ -165,7 +217,7 @@ export function DataTableRowActions<T extends FindingRowData>({
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={isMuted || isResolving}
+            disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
           {!isGroup && (

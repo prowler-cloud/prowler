@@ -1,6 +1,7 @@
 from typing import List
 
 from prowler.lib.check.models import Check, CheckReportVercel
+from prowler.providers.vercel.lib.billing import plan_reason_suffix
 from prowler.providers.vercel.services.team.team_client import team_client
 
 
@@ -40,6 +41,7 @@ class team_directory_sync_enabled(Check):
                 report.status_extended = (
                     f"Team {team.name} does not have directory sync (SCIM) enabled. "
                     f"User provisioning and deprovisioning must be managed manually."
+                    f"{plan_reason_suffix(team.billing_plan, {'hobby', 'pro'}, 'directory sync (SCIM) is only available on Vercel Enterprise plans.')}"
                 )
 
             findings.append(report)

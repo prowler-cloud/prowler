@@ -1,4 +1,5 @@
 import {
+  BellRing,
   CloudCog,
   Cog,
   GitBranch,
@@ -7,6 +8,7 @@ import {
   Puzzle,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
@@ -29,9 +31,17 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
+  // Passed in (not read here) so the island isn't read during SSR — that would
+  // cause a hydration mismatch. See useRuntimeConfig.
+  apiDocsUrl?: string | null;
 }
 
-export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({
+  pathname,
+  apiDocsUrl = null,
+}: MenuListOptions): GroupProps[] => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
   return [
     {
       groupLabel: "",
@@ -74,7 +84,6 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Attack Paths",
           icon: GitBranch,
           active: pathname.startsWith("/attack-paths"),
-          highlight: true,
         },
       ],
     },
@@ -107,12 +116,30 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           label: "Configuration",
           icon: Settings,
           submenus: [
-            { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            { href: "/providers", label: "Providers", icon: CloudCog },
+            {
+              href: "/alerts",
+              label: "Alerts",
+              icon: BellRing,
+              active: isCloudEnv && pathname.startsWith("/alerts"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             {
               href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
               active: pathname === "/mutelist",
+            },
+            {
+              href: "/scan-configurations",
+              label: "Scan Configuration",
+              icon: SlidersHorizontal,
+              active: isCloudEnv && pathname.startsWith("/scan-configurations"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
             },
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
@@ -153,26 +180,30 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: DocIcon,
             },
             {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              href: isCloudEnv
+                ? "https://api.prowler.com/api/v1/docs"
+                : (apiDocsUrl ?? ""),
               target: "_blank",
               label: "API reference",
               icon: APIdocIcon,
             },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
+            ...(isCloudEnv
+              ? [
+                  {
+                    href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+                    target: "_blank",
+                    label: "Support Desk",
+                    icon: MessageCircleQuestion,
+                  },
+                ]
+              : [
+                  {
+                    href: "https://github.com/prowler-cloud/prowler/issues",
+                    target: "_blank",
+                    label: "Community Support",
+                    icon: GithubIcon,
+                  },
+                ]),
           ],
           defaultOpen: false,
         },

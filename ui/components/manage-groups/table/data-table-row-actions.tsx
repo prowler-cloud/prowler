@@ -41,15 +41,15 @@ export function DataTableRowActions<ProviderProps>({
         <ActionDropdown>
           <ActionDropdownItem
             icon={<Pencil />}
-            label="Edit Account Group"
+            label="Edit Provider Group"
             onSelect={() =>
-              router.push(`/providers?tab=account-groups&groupId=${groupId}`)
+              router.push(`/providers?tab=provider-groups&groupId=${groupId}`)
             }
           />
           <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<Trash2 />}
-              label="Delete Account Group"
+              label="Delete Provider Group"
               destructive
               onSelect={() => setIsDeleteOpen(true)}
             />

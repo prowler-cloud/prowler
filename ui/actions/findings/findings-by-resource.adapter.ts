@@ -57,6 +57,8 @@ export interface ResourceDrawerFinding {
   resourceRegion: string;
   resourceType: string;
   resourceGroup: string;
+  resourceDetails: string | null;
+  resourceMetadata: Record<string, unknown> | string | null;
   // Provider
   providerType: ProviderType;
   providerAlias: string;
@@ -165,16 +167,18 @@ type IncludedDict = Record<string, IncludedItem>;
  * then resolves each finding's resource and provider relationships.
  */
 interface JsonApiResponse {
-  data: FindingApiItem[];
+  data: FindingApiItem | FindingApiItem[];
   included?: Record<string, unknown>[];
 }
 
 function isJsonApiResponse(value: unknown): value is JsonApiResponse {
+  const data = (value as { data?: unknown })?.data;
+
   return (
     value !== null &&
     typeof value === "object" &&
     "data" in value &&
-    Array.isArray((value as { data: unknown }).data)
+    (Array.isArray(data) || (data !== null && typeof data === "object"))
   );
 }
 
@@ -188,8 +192,11 @@ export function adaptFindingsByResourceResponse(
   const resourcesDict = createDict("resources", apiResponse) as IncludedDict;
   const scansDict = createDict("scans", apiResponse) as IncludedDict;
   const providersDict = createDict("providers", apiResponse) as IncludedDict;
+  const findings = Array.isArray(apiResponse.data)
+    ? apiResponse.data
+    : [apiResponse.data];
 
-  return apiResponse.data.map((item) => {
+  return findings.map((item) => {
     const attrs = item.attributes;
     const meta = (attrs.check_metadata || {}) as Record<string, unknown>;
     const remediationRaw = meta.remediation as
@@ -255,6 +262,14 @@ export function adaptFindingsByResourceResponse(
       resourceRegion: (resourceAttrs.region as string | undefined) || "-",
       resourceType: (resourceAttrs.type as string | undefined) || "-",
       resourceGroup: (meta.resourcegroup as string | undefined) || "-",
+      resourceDetails:
+        (resourceAttrs.details as string | null | undefined) ?? null,
+      resourceMetadata:
+        (resourceAttrs.metadata as
+          | Record<string, unknown>
+          | string
+          | null
+          | undefined) ?? null,
       // Provider
       providerType: ((providerAttrs.provider as string | undefined) ||
         "aws") as ProviderType,

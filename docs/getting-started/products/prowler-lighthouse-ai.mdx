@@ -59,6 +59,10 @@ Prowler Lighthouse AI is powerful, but there are limitations:
 - **NextJS session dependence**: If your Prowler application session expires or logs out, Lighthouse AI will error out. Refresh and log back in to continue.
 - **Response quality**: The response quality depends on the selected LLM provider and model. Choose models with strong tool-calling capabilities for best results. We recommend `gpt-5` model from OpenAI.
 
+## Architecture
+
+![Prowler Lighthouse Architecture](/images/lighthouse-architecture.png)
+
 ## Extending Lighthouse AI
 
 Lighthouse AI retrieves data through Prowler MCP. To add new capabilities, extend the Prowler MCP Server with additional tools and Lighthouse AI discovers them automatically.

@@ -125,6 +125,15 @@ class Intune(M365Service):
                 request_configuration=request_configuration
             )
             settings = getattr(device_management, "settings", None)
+            secure_by_default = getattr(settings, "secure_by_default", None)
+
+            # Some tenants/API responses omit nested settings when $select is used.
+            # Retry without query parameters before concluding the value is unavailable.
+            if settings is None or secure_by_default is None:
+                device_management = await self.client.device_management.get()
+                settings = getattr(device_management, "settings", None)
+                secure_by_default = getattr(settings, "secure_by_default", None)
+
             if settings is None:
                 return (
                     IntuneSettings(secure_by_default=None),
@@ -132,9 +141,7 @@ class Intune(M365Service):
                 )
 
             return (
-                IntuneSettings(
-                    secure_by_default=getattr(settings, "secure_by_default", None)
-                ),
+                IntuneSettings(secure_by_default=secure_by_default),
                 None,
             )
         except Exception as error:

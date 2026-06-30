@@ -13,6 +13,7 @@ class GoogleWorkspaceService:
         provider: GoogleworkspaceProvider,
     ):
         self.provider = provider
+        self.domain_resource = provider.domain_resource
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
         self.credentials = provider.session.credentials
@@ -40,6 +41,27 @@ class GoogleWorkspaceService:
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
+
+    def _is_customer_level_policy(self, policy: dict) -> bool:
+        """Check if a policy applies at the customer (domain-wide) level.
+
+        The Cloud Identity Policy API typically scopes all policies to an OU;
+        absence of orgUnit is treated as customer-level as a safety net.
+        The root OU is equivalent to customer-level. This method accepts
+        policies with no orgUnit or policies targeting the root OU,
+        and rejects group-targeted and sub-OU policies.
+        """
+        policy_query = policy.get("policyQuery", {})
+        if policy_query.get("group"):
+            return False
+        org_unit = policy_query.get("orgUnit")
+        if not org_unit:
+            return True
+        # Accept root OU as customer-level
+        root_id = getattr(self.provider.identity, "root_org_unit_id", None)
+        if root_id and org_unit == f"orgUnits/{root_id}":
+            return True
+        return False
 
     def _handle_api_error(self, error, context: str, resource_name: str = ""):
         """

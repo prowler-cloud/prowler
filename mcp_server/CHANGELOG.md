@@ -2,11 +2,47 @@
 
 All notable changes to the **Prowler MCP Server** are documented in this file.
 
-## [0.6.0] (Prowler UNRELEASED)
+## [0.7.2] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- Preserve authorization header in HTTP mode [(#11366)](https://github.com/prowler-cloud/prowler/pull/11366)
+
+---
+
+## [0.7.1] (Prowler v5.28.0)
+
+### 🔐 Security
+
+- `fastmcp` from 2.14.0 to 3.2.4 for GHSA-5h2m-4q8j-pqpj, GHSA-rww4-4w9c-7733, and GHSA-vv7q-7jx5-f767, which also pulls fixed `jaraco.context`, `python-multipart`, `starlette`, and drops the vulnerable `lupa`/`urllib3` transitive deps [(#11284)](https://github.com/prowler-cloud/prowler/pull/11284)
+
+---
+
+## [0.7.0] (Prowler v5.27.0)
+
+### 🚀 Added
+
+- Finding Groups tools [(#11140)](https://github.com/prowler-cloud/prowler/pull/11140)
+
+### 🔐 Security
+
+- `cryptography` from 46.0.1 to 47.0.0 (transitive) for CVE-2026-39892 and CVE-2026-26007 / CVE-2026-34073 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
+## [0.6.0] (Prowler v5.23.0)
 
 ### 🚀 Added
 
 - Resource events tool to get timeline for a resource (who, what, when) [(#10412)](https://github.com/prowler-cloud/prowler/pull/10412)
+
+### 🔄 Changed
+
+- Pin `httpx` dependency to exact version for reproducible installs [(#10593)](https://github.com/prowler-cloud/prowler/pull/10593)
+
+### 🔐 Security
+
+- `authlib` bumped from 1.6.5 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
 
 ---
 
@@ -15,6 +51,8 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 ### 🚀 Added
 
 - Attack Path tool to get Neo4j DB schema [(#10321)](https://github.com/prowler-cloud/prowler/pull/10321)
+
+---
 
 ## [0.4.0] (Prowler v5.19.0)
 

@@ -26,6 +26,11 @@ class repository_default_branch_requires_conversation_resolution(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not require conversation resolution on default branch ({repo.default_branch.name})."
+                if (
+                    repo.default_branch.conversation_resolution_source
+                    == "ruleset_not_active"
+                ):
+                    report.status_extended = f"Repository {repo.name} has conversation resolution configured in a ruleset on default branch ({repo.default_branch.name}), but the ruleset is not active."
 
                 if repo.default_branch.conversation_resolution:
                     report.status = "PASS"

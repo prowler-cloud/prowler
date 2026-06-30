@@ -15,6 +15,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   labeler:
     runs-on: ubuntu-latest
@@ -25,12 +27,12 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
       - name: Apply labels to PR
-        uses: actions/labeler@634933edcd8ababfe52f92936142cc22ac488b1b # v6.0.1
+        uses: actions/labeler@f27b608878404679385c85cfa523b85ccb86e213 # v6.1.0
         with:
           sync-labels: true
 
@@ -44,7 +46,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
           egress-policy: audit
 
@@ -60,7 +62,7 @@ jobs:
             "Alan-TheGentleman"
             "alejandrobailo"
             "amitsharm"
-            "andoniaf"
+            # "andoniaf"
             "cesararroba"
             "danibarranqueroo"
             "HugoPBrito"
@@ -76,6 +78,7 @@ jobs:
             "StylusFrost"
             "toniblyx"
             "davidm4r"
+            "pfe-nazaries"
           )
 
           echo "Checking if $AUTHOR is a member of prowler-cloud organization"

@@ -1,3 +1,4 @@
+import asyncio
 from enum import Enum
 from typing import Optional
 
@@ -6,6 +7,15 @@ from pydantic.v1 import BaseModel
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
+
+SYSTEM_MAILBOX_TYPES = {
+    "DiscoveryMailbox",
+    "ArbitrationMailbox",
+    "AuditLogMailbox",
+    "MonitoringMailbox",
+    "AuxAuditLogMailbox",
+    "SystemMailbox",
+}
 
 
 class Exchange(M365Service):
@@ -33,6 +43,7 @@ class Exchange(M365Service):
         self.role_assignment_policies = []
         self.mailbox_audit_properties = []
         self.shared_mailboxes = []
+        self.mailboxes = None
 
         if self.powershell:
             if self.powershell.connect_exchange_online():
@@ -45,7 +56,52 @@ class Exchange(M365Service):
                 self.role_assignment_policies = self._get_role_assignment_policies()
                 self.mailbox_audit_properties = self._get_mailbox_audit_properties()
                 self.shared_mailboxes = self._get_shared_mailboxes()
+                self.mailboxes = self._get_mailboxes()
             self.powershell.close()
+
+        # Fetch license count via Graph API
+        created_loop = False
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if loop.is_closed():
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            created_loop = True
+
+        if not loop.is_running():
+            total_paid_licenses = loop.run_until_complete(
+                self._get_total_paid_licenses()
+            )
+
+            if created_loop:
+                asyncio.set_event_loop(None)
+                loop.close()
+
+            if self.organization_config is not None:
+                self.organization_config.total_paid_licenses = total_paid_licenses
+
+    async def _get_total_paid_licenses(self) -> Optional[int]:
+        """Fetch total paid license count from Microsoft Graph subscribed SKUs."""
+        logger.info("Microsoft365 - Getting total paid license count...")
+        try:
+            subscribed_skus = await self.client.subscribed_skus.get()
+            total = 0
+            for sku in getattr(subscribed_skus, "value", []) or []:
+                prepaid_units = getattr(sku, "prepaid_units", None)
+                if prepaid_units:
+                    enabled = getattr(prepaid_units, "enabled", 0) or 0
+                    total += enabled
+            return total
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
 
     def _get_organization_config(self):
         logger.info("Microsoft365 - Getting Exchange Organization configuration...")
@@ -73,6 +129,9 @@ class Exchange(M365Service):
                     ),
                     mailtips_large_audience_threshold=organization_configuration.get(
                         "MailTipsLargeAudienceThreshold", 25
+                    ),
+                    delayed_delicensing_enabled=organization_configuration.get(
+                        "DelayedDelicensingEnabled", False
                     ),
                 )
         except Exception as error:
@@ -307,8 +366,68 @@ class Exchange(M365Service):
             )
         return shared_mailboxes
 
+    def _get_mailboxes(self) -> Optional[list["Mailbox"]]:
+        """
+        Get all recipient-facing mailboxes from Exchange Online.
+
+        Retrieves mailboxes of types UserMailbox, SharedMailbox, RoomMailbox
+        and EquipmentMailbox. System-managed mailbox types are excluded as
+        they are controlled by Microsoft and are not subject to domain policy.
+
+        Returns:
+            list[Mailbox]: List of mailboxes with their primary SMTP address
+                and recipient type details. Returns ``None`` when the
+                underlying PowerShell cmdlet raises, so callers can
+                distinguish "PowerShell unavailable" from "empty tenant".
+        """
+        logger.info("Microsoft365 - Getting mailboxes...")
+        mailboxes = []
+        try:
+            mailboxes_data = self.powershell.get_mailboxes()
+            if not mailboxes_data:
+                return mailboxes
+            # PowerShell can return a single dict instead of a list when only
+            # one result is returned; normalize to a list for uniform handling.
+            if isinstance(mailboxes_data, dict):
+                mailboxes_data = [mailboxes_data]
+            for mailbox in mailboxes_data:
+                if mailbox:
+                    recipient_type = mailbox.get("RecipientTypeDetails", "")
+                    if recipient_type in SYSTEM_MAILBOX_TYPES:
+                        continue
+                    mailboxes.append(
+                        Mailbox(
+                            identity=mailbox.get("Identity", ""),
+                            name=mailbox.get("DisplayName", ""),
+                            primary_smtp_address=mailbox.get("PrimarySmtpAddress", ""),
+                            recipient_type_details=recipient_type,
+                        )
+                    )
+            return mailboxes
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
 
 class Organization(BaseModel):
+    """
+    Model for Exchange Online organization configuration.
+
+    Attributes:
+        name: Organization display name.
+        guid: Organization unique identifier.
+        audit_disabled: Whether auditing is disabled for the organization.
+        oauth_enabled: Whether OAuth 2.0 (Modern Authentication) is enabled.
+        mailtips_enabled: Whether MailTips are enabled.
+        mailtips_external_recipient_enabled: Whether MailTips for external recipients are enabled.
+        mailtips_group_metrics_enabled: Whether MailTips group metrics are enabled.
+        mailtips_large_audience_threshold: Threshold for large audience MailTips.
+        delayed_delicensing_enabled: Whether Delicensing Resiliency is enabled.
+        total_paid_licenses: Total paid licenses in the tenant, or None if unknown.
+    """
+
     name: str
     guid: str
     audit_disabled: bool
@@ -317,6 +436,8 @@ class Organization(BaseModel):
     mailtips_external_recipient_enabled: bool
     mailtips_group_metrics_enabled: bool
     mailtips_large_audience_threshold: int
+    delayed_delicensing_enabled: bool = False
+    total_paid_licenses: Optional[int] = None
 
 
 class MailboxAuditConfig(BaseModel):
@@ -431,3 +552,22 @@ class SharedMailbox(BaseModel):
     user_principal_name: str
     external_directory_object_id: str
     identity: str
+
+
+class Mailbox(BaseModel):
+    """
+    Model for an Exchange Online recipient-facing mailbox.
+
+    Attributes:
+        identity: The unique identity of the mailbox in Exchange.
+        name: Display name of the mailbox.
+        primary_smtp_address: The primary SMTP address used for outbound mail
+            and the From: header. This is the address the check evaluates.
+        recipient_type_details: The mailbox type (e.g., UserMailbox,
+            SharedMailbox, RoomMailbox, EquipmentMailbox).
+    """
+
+    identity: str
+    name: str
+    primary_smtp_address: str
+    recipient_type_details: str

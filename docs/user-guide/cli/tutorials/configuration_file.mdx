@@ -2,6 +2,8 @@
 title: "Configuration File"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
 
 ```
@@ -10,14 +12,20 @@ prowler/config/config.yaml
 
 Additionally, you can input a custom configuration file using the `--config-file` argument.
 
+<Note>
+Numeric thresholds enforce hard limits. A value outside the accepted range is dropped with a warning and the check falls back to its built-in default. See [Configuration Value Limits](/developer-guide/configurable-checks#configuration-value-limits) for the exact range of every bounded option (max-days caps, percentages, counts, etc.).
+</Note>
+
 ## AWS
 
 ### Configurable Checks
+
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
 | Check Name                                                    | Value                                            | Type            |
 |---------------------------------------------------------------|--------------------------------------------------|-----------------|
 | `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
+| `acmpca_certificate_authority_pqc_key_algorithm`              | `acmpca_pqc_key_algorithms`                      | List of Strings |
 | `appstream_fleet_maximum_session_duration`                    | `max_session_duration_seconds`                   | Integer         |
 | `appstream_fleet_session_disconnect_timeout`                  | `max_disconnect_timeout_in_seconds`              | Integer         |
 | `appstream_fleet_session_idle_disconnect_timeout`             | `max_idle_disconnect_timeout_in_seconds`         | Integer         |
@@ -55,7 +63,11 @@ The following list includes all the AWS checks with configurable variables that 
 | `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
 | `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
 | `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
+| `rolesanywhere_trust_anchor_pqc_pki`                          | `rolesanywhere_pqc_pca_key_algorithms`           | List of Strings |
+| `cloudfront_distributions_pqc_tls_enabled`                    | `cloudfront_pqc_min_protocol_versions`           | List of Strings |
+| `apigateway_domain_name_pqc_tls_enabled`                      | `apigateway_pqc_tls_allowed_policies`            | List of Strings |
 | `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
+| `iam_user_access_not_stale_to_sagemaker`                      | `max_unused_sagemaker_access_days`               | Integer         |
 | `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
 | `iam_user_console_access_unused`                              | `max_console_access_days`                        | Integer         |
 | `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
@@ -66,6 +78,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
 | `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
 | `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
+| `transfer_server_pqc_ssh_kex_enabled`                        | `transfer_pqc_ssh_allowed_policies`              | List of Strings |
 | `dynamodb_table_cross_account_access`                         | `trusted_account_ids`                            | List of Strings |
 | `eventbridge_bus_cross_account_access`                        | `trusted_account_ids`                            | List of Strings |
 | `eventbridge_schema_registry_cross_account_access`            | `trusted_account_ids`                            | List of Strings |
@@ -74,6 +87,32 @@ The following list includes all the AWS checks with configurable variables that 
 | `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
 | `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
 | `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
+
+
+### Validating Discovered Secrets
+
+<VersionBadge version="5.32.0" />
+
+By default, the secret-scanning checks run fully offline: secrets are detected but never sent anywhere. Setting `secrets_validate` to `True` additionally confirms whether each discovered secret is live by authenticating with it against the corresponding provider API. The discovered secret itself serves as the credential, so Prowler requires no additional permissions to validate it.
+
+`secrets_validate` applies to every AWS secret-scanning check listed above (those that accept `secrets_ignore_patterns`). The `--scan-secrets-validate` CLI flag is provider-wide: it also enables validation for the secret-scanning checks of other providers, such as the OpenStack metadata checks.
+
+To enable validation through the configuration file, set the value under the `aws` section:
+
+```yaml
+aws:
+  secrets_validate: True
+```
+
+To enable validation for a single scan (any provider), use Prowler CLI:
+
+```
+prowler aws --scan-secrets-validate
+```
+
+<Warning>
+Secret validation makes outbound network calls that authenticate with each discovered secret. The credential is exercised against the provider, so the call appears in the audited account's logs and can trigger its monitoring (for example, AWS CloudTrail records the validation request). Validation stays disabled by default so that scans remain fully offline.
+</Warning>
 
 
 ## Azure
@@ -90,6 +129,7 @@ The following list includes all the Azure checks with configurable variables tha
 | `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
 | `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
 | `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
+| `storage_smb_channel_encryption_with_secure_algorithm`        | `recommended_smb_channel_encryption_algorithms`  | List of Strings |
 | `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
 | `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
 | `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
@@ -157,6 +197,16 @@ The following list includes all the Vercel checks with configurable variables th
 | `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
 | `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
 
+## Okta
+
+### Configurable Checks
+The following list includes all the Okta checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                                    | Value                              | Type    |
+|---------------------------------------------------------------|------------------------------------|---------|
+| `application_admin_console_session_idle_timeout_15min`        | `okta_admin_console_idle_timeout_max_minutes` | Integer |
+| `signon_global_session_idle_timeout_15min`                    | `okta_max_session_idle_minutes`    | Integer |
+
 ## Config YAML File Structure
 
 <Note>
@@ -186,6 +236,8 @@ aws:
   max_unused_access_keys_days: 45
   # aws.iam_user_console_access_unused --> CIS recommends 45 days
   max_console_access_days: 45
+  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
+  max_unused_sagemaker_access_days: 90
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
@@ -520,6 +572,18 @@ azure:
     [
       "1.2",
       "1.3"
+    ]
+
+  # Azure Storage
+  # azure.storage_smb_channel_encryption_with_secure_algorithm
+  # List of SMB channel encryption algorithms allowed on file shares. A storage
+  # account passes only if every enabled algorithm is in this list. Defaults to
+  # the value required by CIS (AES-256-GCM only, excluding weaker AES-128 ciphers).
+  recommended_smb_channel_encryption_algorithms:
+    [
+      "AES-256-GCM",
+      # "AES-128-CCM",
+      # "AES-128-GCM",
     ]
 
   # Azure Virtual Machines

@@ -1,5 +1,11 @@
 import { format, parseISO } from "date-fns";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import { formatLocalTimeWithZone } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 interface DateWithTimeProps {
@@ -13,7 +19,7 @@ export const DateWithTime = ({
   showTime = true,
   inline = false,
 }: DateWithTimeProps) => {
-  if (!dateTime) return <span>--</span>;
+  if (!dateTime) return <span>-</span>;
 
   try {
     const date = parseISO(dateTime);
@@ -24,34 +30,55 @@ export const DateWithTime = ({
     }
 
     const formattedDate = format(date, "MMM dd, yyyy");
-    const formattedTime = format(date, "h:mma");
-    const timezone =
-      Intl.DateTimeFormat()
-        .resolvedOptions()
-        .timeZone.split("/")
-        .pop()
-        ?.substring(0, 3)
-        .toUpperCase() || "";
+    const timeWithZone = formatLocalTimeWithZone(dateTime);
 
-    return (
+    const fullText =
+      showTime && timeWithZone
+        ? `${formattedDate} ${timeWithZone}`
+        : formattedDate;
+
+    const content = (
       <div
         className={cn(
           "gap-1",
           inline
-            ? "inline-flex flex-row flex-wrap items-center"
+            ? "inline-flex flex-row items-center overflow-hidden"
             : "flex flex-col",
         )}
       >
-        <span className="text-text-neutral-primary text-sm whitespace-nowrap">
+        <span
+          className={cn(
+            "text-text-neutral-primary text-sm whitespace-nowrap",
+            inline && "truncate",
+          )}
+        >
           {formattedDate}
         </span>
-        {showTime && (
-          <span className="text-text-neutral-tertiary text-xs font-medium whitespace-nowrap">
-            {formattedTime} {timezone}
+        {showTime && timeWithZone && (
+          <span
+            className={cn(
+              "text-text-neutral-tertiary text-xs font-medium whitespace-nowrap",
+              inline && "truncate",
+            )}
+          >
+            {timeWithZone}
           </span>
         )}
       </div>
     );
+
+    if (inline) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="min-w-0 overflow-hidden">{content}</div>
+          </TooltipTrigger>
+          <TooltipContent>{fullText}</TooltipContent>
+        </Tooltip>
+      );
+    }
+
+    return content;
   } catch {
     return <span>-</span>;
   }

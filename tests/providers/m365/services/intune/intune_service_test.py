@@ -349,6 +349,60 @@ def test_intune_get_settings_null_settings():
     assert settings.secure_by_default is None
 
 
+def test_intune_get_settings_retries_without_select_when_settings_missing():
+    """Test _get_settings retries without $select when settings are omitted."""
+    intune = Intune.__new__(Intune)
+
+    selected_response = SimpleNamespace(settings=None)
+    full_response = SimpleNamespace(settings=SimpleNamespace(secure_by_default=True))
+
+    mock_client = mock.MagicMock()
+    mock_client.device_management.get = AsyncMock(
+        side_effect=[selected_response, full_response]
+    )
+
+    intune.client = mock_client
+
+    loop = asyncio.new_event_loop()
+    try:
+        settings, error = loop.run_until_complete(intune._get_settings())
+    finally:
+        loop.close()
+
+    assert error is None
+    assert settings is not None
+    assert settings.secure_by_default is True
+    assert mock_client.device_management.get.await_count == 2
+
+
+def test_intune_get_settings_retries_without_select_when_value_missing():
+    """Test _get_settings retries without $select when secure_by_default is omitted."""
+    intune = Intune.__new__(Intune)
+
+    selected_response = SimpleNamespace(
+        settings=SimpleNamespace(secure_by_default=None)
+    )
+    full_response = SimpleNamespace(settings=SimpleNamespace(secure_by_default=False))
+
+    mock_client = mock.MagicMock()
+    mock_client.device_management.get = AsyncMock(
+        side_effect=[selected_response, full_response]
+    )
+
+    intune.client = mock_client
+
+    loop = asyncio.new_event_loop()
+    try:
+        settings, error = loop.run_until_complete(intune._get_settings())
+    finally:
+        loop.close()
+
+    assert error is None
+    assert settings is not None
+    assert settings.secure_by_default is False
+    assert mock_client.device_management.get.await_count == 2
+
+
 def test_intune_get_settings_exception():
     """Test _get_settings handles exceptions gracefully."""
     intune = Intune.__new__(Intune)

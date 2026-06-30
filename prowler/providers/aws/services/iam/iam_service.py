@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from time import sleep
 from typing import Optional
 
 from botocore.client import ClientError
@@ -92,10 +93,19 @@ class IAM(AWSService):
         self._get_access_keys_metadata()
         self.last_accessed_services = {}
         self._get_last_accessed_services()
+        self.role_last_accessed_services = {}
+        if (
+            "iam_role_access_not_stale_to_bedrock"
+            in provider.audit_metadata.expected_checks
+        ):
+            self._get_role_last_accessed_services()
         self.user_temporary_credentials_usage = {}
         self._get_user_temporary_credentials_usage()
         self.organization_features = []
         self._list_organizations_features()
+        # ListRoles does not echo PermissionsBoundary; backfill via GetRole.
+        if self.roles:
+            self.__threading_call__(self._get_role_permissions_boundary, self.roles)
         # List missing tags
         self.__threading_call__(self._list_tags, self.users)
         self.__threading_call__(self._list_tags, self.roles)
@@ -126,6 +136,7 @@ class IAM(AWSService):
                                 arn=role["Arn"],
                                 assume_role_policy=role["AssumeRolePolicyDocument"],
                                 is_service_role=is_service_role(role),
+                                permissions_boundary=role.get("PermissionsBoundary"),
                             )
                         )
         except ClientError as error:
@@ -448,6 +459,34 @@ class IAM(AWSService):
                     logger.error(
                         f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                     )
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_role_permissions_boundary(self, role):
+        """Backfill ``role.permissions_boundary`` via ``GetRole``.
+
+        ``ListRoles`` does not return ``PermissionsBoundary`` in practice, so
+        the value is fetched per role and stored on the ``Role`` model.
+
+        Args:
+            role: The ``Role`` instance to enrich.
+        """
+        try:
+            response = self.client.get_role(RoleName=role.name)
+            role.permissions_boundary = response.get("Role", {}).get(
+                "PermissionsBoundary"
+            )
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "NoSuchEntity":
+                logger.warning(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            else:
+                logger.error(
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
         except Exception as error:
             logger.error(
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -901,6 +940,74 @@ class IAM(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_role_last_accessed_services(self):
+        """Retrieve service last accessed details for all IAM roles.
+
+        Uses a fire-all-then-collect pattern: all generate calls are
+        submitted first so the jobs run server-side in parallel, then
+        results are collected in a second pass.
+        """
+        logger.info("IAM - Getting Role Last Accessed Services ...")
+        try:
+            if self.roles is None:
+                return
+
+            # Phase 1: fire all generate requests
+            pending_jobs = []
+            for role in self.roles:
+                try:
+                    details = self.client.generate_service_last_accessed_details(
+                        Arn=role.arn
+                    )
+                    pending_jobs.append((role.name, role.arn, details["JobId"]))
+                except ClientError as error:
+                    if error.response["Error"]["Code"] == "NoSuchEntity":
+                        logger.warning(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+            # Phase 2: collect results
+            max_retries = 60
+            for role_name, role_arn, job_id in pending_jobs:
+                try:
+                    retries = 0
+                    response = self.client.get_service_last_accessed_details(
+                        JobId=job_id
+                    )
+                    while response["JobStatus"] == "IN_PROGRESS":
+                        retries += 1
+                        if retries > max_retries:
+                            logger.warning(
+                                f"{self.region} -- Timeout waiting for service last accessed details for role {role_name}"
+                            )
+                            break
+                        sleep(1)
+                        response = self.client.get_service_last_accessed_details(
+                            JobId=job_id
+                        )
+                    if response["JobStatus"] == "COMPLETED":
+                        self.role_last_accessed_services[(role_name, role_arn)] = (
+                            response.get("ServicesLastAccessed", [])
+                        )
+
+                except Exception as error:
+                    logger.error(
+                        f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _get_access_keys_metadata(self):
         logger.info("IAM - Getting Access Keys Metadata ...")
         try:
@@ -1064,6 +1171,7 @@ class Role(BaseModel):
     is_service_role: bool
     attached_policies: list[dict] = []
     inline_policies: list[str] = []
+    permissions_boundary: Optional[dict] = None
     tags: Optional[list]
 
 

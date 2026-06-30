@@ -8,9 +8,8 @@ import {
   Server,
   Shield,
 } from "lucide-react";
-import { useEffect, useState, useTransition } from "react";
+import { useState } from "react";
 
-import { getResourceEvents } from "@/actions/resources";
 import {
   Alert,
   AlertDescription,
@@ -25,6 +24,8 @@ import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { cn } from "@/lib/utils";
 import { ResourceEventProps } from "@/types";
 
+import { useResourceEventsTimeline } from "./use-resource-events-timeline";
+
 interface EventsTimelineProps {
   resourceId?: string;
   isAwsProvider: boolean;
@@ -34,58 +35,16 @@ export const EventsTimeline = ({
   resourceId,
   isAwsProvider,
 }: EventsTimelineProps) => {
-  const [events, setEvents] = useState<ResourceEventProps[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [errorStatus, setErrorStatus] = useState<number | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [includeReadEvents, setIncludeReadEvents] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [isPending, startTransition] = useTransition();
-
-  useEffect(() => {
-    if (!isAwsProvider || !resourceId) return;
-
-    let cancelled = false;
-
-    setError(null);
-    setErrorStatus(null);
-    setHasFetched(false);
-
-    startTransition(async () => {
-      try {
-        const response = await getResourceEvents(resourceId, {
-          includeReadEvents,
-        });
-
-        if (cancelled) return;
-
-        if (!response) {
-          setError("Failed to fetch events. Please try again.");
-          return;
-        }
-
-        if (response.error) {
-          setError(response.error);
-          setErrorStatus(response.status || null);
-          return;
-        }
-
-        setEvents(response.data || []);
-        setExpandedRows(new Set());
-      } catch (err) {
-        if (cancelled) return;
-        console.error("Error fetching events:", err);
-        setError("An unexpected error occurred.");
-      } finally {
-        if (!cancelled) setHasFetched(true);
-      }
+  const { events, error, errorStatus, hasFetched, isPending } =
+    useResourceEventsTimeline({
+      resourceId,
+      isAwsProvider,
+      includeReadEvents,
+      retryCount,
     });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [resourceId, includeReadEvents, isAwsProvider, retryCount]);
 
   const toggleRow = (eventId: string) => {
     setExpandedRows((prev) => {

@@ -1,19 +1,28 @@
 import asyncio
 import json
 from asyncio import gather
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
+from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
     RunHuntingQueryPostRequestBody,
 )
-from pydantic.v1 import BaseModel
+from msgraph.generated.users.users_request_builder import UsersRequestBuilder
+from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
+
+# Sentinel identifiers used in Conditional Access ``conditions.users``
+# collections that do not correspond to real directory objects and must not be
+# resolved against Graph. Shared by the resolver below and the check that reads
+# its result.
+CONDITIONAL_ACCESS_SENTINEL_IDS = {"All", "None", "GuestsOrExternalUsers"}
 
 
 class Entra(M365Service):
@@ -36,6 +45,7 @@ class Entra(M365Service):
         user_accounts_status (dict): Dictionary of user account statuses.
         oauth_apps (dict): Dictionary of OAuth applications from Defender XDR.
         authentication_method_configurations (dict): Dictionary of authentication method configurations.
+        service_principals (dict): Dictionary of service principals with credentials and role assignments.
     """
 
     def __init__(self, provider: M365Provider):
@@ -71,6 +81,8 @@ class Entra(M365Service):
             )
 
         self.tenant_domain = provider.identity.tenant_domain
+        self.tenant_id = getattr(provider.identity, "tenant_id", None)
+        self.user_registration_details_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -83,6 +95,8 @@ class Entra(M365Service):
                 self._get_oauth_apps(),
                 self._get_directory_sync_settings(),
                 self._get_authentication_method_configurations(),
+                self._get_service_principals(),
+                self._get_app_registrations(),
             )
         )
 
@@ -98,7 +112,26 @@ class Entra(M365Service):
         self.authentication_method_configurations: Dict[
             str, AuthenticationMethodConfiguration
         ] = attributes[9]
+        self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
+        self.app_registrations: Dict[str, "AppRegistration"] = attributes[11]
         self.user_accounts_status = {}
+
+        # Resolve directory-object identifiers referenced by Conditional Access
+        # policies. This runs as a separate phase because it depends on the
+        # main gather having populated ``conditional_access_policies`` first.
+        # The result is cached on the instance so sync checks can read it
+        # without issuing Graph calls of their own. ``unresolved`` holds ids
+        # confirmed deleted (HTTP 404); ``errored`` holds ids whose lookup
+        # failed for any other reason (5xx, throttling, permission) and could
+        # therefore be neither confirmed present nor confirmed deleted.
+        self.unresolved_directory_object_references: Set[Tuple[str, str]]
+        self.errored_directory_object_references: Set[Tuple[str, str]]
+        (
+            self.unresolved_directory_object_references,
+            self.errored_directory_object_references,
+        ) = loop.run_until_complete(
+            self._resolve_directory_object_references(self.conditional_access_policies)
+        )
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -264,6 +297,20 @@ class Entra(M365Service):
                                     [],
                                 )
                             ],
+                            included_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "include_guests_or_external_users",
+                                    None,
+                                )
+                            ),
+                            excluded_guests_or_external_users=self._parse_guests_or_external_users(
+                                getattr(
+                                    policy.conditions.users,
+                                    "exclude_guests_or_external_users",
+                                    None,
+                                )
+                            ),
                         ),
                         client_app_types=[
                             ClientAppType(client_app_type)
@@ -330,6 +377,57 @@ class Entra(M365Service):
                         ),
                         authentication_flows=self._parse_authentication_flows(
                             raw_auth_flows_map.get(policy.id)
+                        ),
+                        device_conditions=DeviceConditions(
+                            device_filter_mode=(
+                                DeviceFilterMode(
+                                    getattr(
+                                        getattr(
+                                            getattr(
+                                                policy.conditions,
+                                                "devices",
+                                                None,
+                                            ),
+                                            "device_filter",
+                                            None,
+                                        ),
+                                        "mode",
+                                        None,
+                                    )
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                and getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "mode",
+                                    None,
+                                )
+                                else None
+                            ),
+                            device_filter_rule=(
+                                getattr(
+                                    getattr(
+                                        getattr(policy.conditions, "devices", None),
+                                        "device_filter",
+                                        None,
+                                    ),
+                                    "rule",
+                                    None,
+                                )
+                                if getattr(
+                                    getattr(policy.conditions, "devices", None),
+                                    "device_filter",
+                                    None,
+                                )
+                                else None
+                            ),
                         ),
                     ),
                     grant_controls=GrantControls(
@@ -547,6 +645,56 @@ class Entra(M365Service):
         return AuthenticationFlows(transfer_methods=transfer_methods)
 
     @staticmethod
+    def _parse_guests_or_external_users(
+        sdk_obj,
+    ) -> "GuestsOrExternalUsers | None":
+        """Parse guest or external user conditions from the MS Graph SDK object.
+
+        The SDK deserializes ``guestOrExternalUserTypes`` via
+        ``get_collection_of_enum_values``, returning a list of SDK enum members.
+
+        Args:
+            sdk_obj: A ``ConditionalAccessGuestsOrExternalUsers`` SDK object, or ``None``.
+
+        Returns:
+            A ``GuestsOrExternalUsers`` model instance, or ``None`` if the input is absent.
+        """
+        if sdk_obj is None:
+            return None
+
+        raw_types = getattr(sdk_obj, "guest_or_external_user_types", None) or []
+        raw_membership_kind = getattr(
+            getattr(sdk_obj, "external_tenants", None),
+            "membership_kind",
+            None,
+        )
+        membership_kind = None
+        if raw_membership_kind is not None:
+            raw_membership_kind = getattr(
+                raw_membership_kind,
+                "value",
+                raw_membership_kind,
+            )
+            try:
+                membership_kind = ExternalTenantsMembershipKind(raw_membership_kind)
+            except ValueError:
+                logger.warning(
+                    f"Unknown external tenants membership kind: {raw_membership_kind}"
+                )
+
+        guest_types: list[GuestOrExternalUserType] = []
+        for raw_type in raw_types:
+            try:
+                guest_types.append(GuestOrExternalUserType(raw_type.value))
+            except (ValueError, AttributeError):
+                logger.warning(f"Unknown guest or external user type: {raw_type}")
+
+        return GuestsOrExternalUsers(
+            guest_or_external_user_types=guest_types,
+            external_tenants_membership_kind=membership_kind,
+        )
+
+    @staticmethod
     def _parse_app_management_restrictions(restrictions):
         """Parse credential restrictions from the Graph API response into AppManagementRestrictions."""
         if not restrictions:
@@ -666,6 +814,16 @@ class Entra(M365Service):
                             features, "seamless_sso_enabled", False
                         )
                         or False,
+                        block_soft_match_enabled=getattr(
+                            features, "block_soft_match_enabled", False
+                        )
+                        or False,
+                        block_cloud_object_takeover_through_hard_match_enabled=getattr(
+                            features,
+                            "block_cloud_object_takeover_through_hard_match_enabled",
+                            False,
+                        )
+                        or False,
                     )
                 )
         except ODataError as error:
@@ -691,7 +849,30 @@ class Entra(M365Service):
         logger.info("Entra - Getting users...")
         users = {}
         try:
-            users_response = await self.client.users.get()
+            # Microsoft Graph's /users endpoint omits accountEnabled, userType and
+            # onPremisesSyncEnabled from the default property set, so we must request
+            # them explicitly via $select. Without this, disabled guest users surface
+            # as account_enabled=True (Pydantic default) and user_type=None, which
+            # bypasses the guest/disabled filters in checks like
+            # entra_users_mfa_capable (CIS 5.2.3.4). See issue #10921.
+            query_parameters = (
+                UsersRequestBuilder.UsersRequestBuilderGetQueryParameters(
+                    select=[
+                        "id",
+                        "displayName",
+                        "userType",
+                        "accountEnabled",
+                        "onPremisesSyncEnabled",
+                        "employeeHireDate",
+                    ],
+                )
+            )
+            request_configuration = RequestConfiguration(
+                query_parameters=query_parameters,
+            )
+            users_response = await self.client.users.get(
+                request_configuration=request_configuration,
+            )
             directory_roles = await self.client.directory_roles.get()
 
             async def fetch_role_members(directory_role):
@@ -710,11 +891,26 @@ class Entra(M365Service):
                 for member in members:
                     user_roles_map.setdefault(member.id, []).append(role_template_id)
 
-            registration_details = await self._get_user_registration_details()
+            registration_details, self.user_registration_details_error = (
+                await self._get_user_registration_details()
+            )
 
             while users_response:
                 for user in getattr(users_response, "value", []) or []:
                     reg_info = registration_details.get(user.id, {})
+                    # Prefer Microsoft Graph as the source of truth for
+                    # accountEnabled: it covers every directory user including
+                    # guests, whereas EXO's Get-User only returns mail-enabled
+                    # accounts and silently drops disabled guests. Fall back to
+                    # the EXO PowerShell value only when Graph does not return a
+                    # value (e.g. older tenants or permission-restricted reads).
+                    graph_account_enabled = getattr(user, "account_enabled", None)
+                    if graph_account_enabled is None:
+                        account_enabled = not self.user_accounts_status.get(
+                            user.id, {}
+                        ).get("AccountDisabled", False)
+                    else:
+                        account_enabled = bool(graph_account_enabled)
                     users[user.id] = User(
                         id=user.id,
                         name=user.display_name,
@@ -723,12 +919,12 @@ class Entra(M365Service):
                         ),
                         directory_roles_ids=user_roles_map.get(user.id, []),
                         is_mfa_capable=reg_info.get("is_mfa_capable", False),
-                        account_enabled=not self.user_accounts_status.get(
-                            user.id, {}
-                        ).get("AccountDisabled", False),
+                        account_enabled=account_enabled,
                         authentication_methods=reg_info.get(
                             "authentication_methods", []
                         ),
+                        user_type=getattr(user, "user_type", None),
+                        employee_hire_date=getattr(user, "employee_hire_date", None),
                     )
 
                 next_link = getattr(users_response, "odata_next_link", None)
@@ -741,18 +937,24 @@ class Entra(M365Service):
             )
         return users
 
-    async def _get_user_registration_details(self):
+    async def _get_user_registration_details(
+        self,
+    ) -> Tuple[Dict[str, Dict[str, Any]], Optional[str]]:
         """Retrieve user authentication method registration details.
 
         Fetches registration details from the Microsoft Graph API, including
         MFA capability and the specific authentication methods each user has registered.
 
         Returns:
-            dict: A dictionary mapping user IDs to their registration details,
-                where each value is a dict with 'is_mfa_capable' (bool) and
-                'authentication_methods' (list of str).
+            A tuple containing:
+            - A dictionary mapping user IDs to their registration details,
+              where each value is a dict with 'is_mfa_capable' (bool) and
+              'authentication_methods' (list of str), or an empty dict if
+              retrieval fails.
+            - An error message string if there was an access error, None otherwise.
         """
         registration_details = {}
+        error_message = None
         try:
             registration_builder = (
                 self.client.reports.authentication_methods.user_registration_details
@@ -777,16 +979,25 @@ class Entra(M365Service):
                     next_link
                 ).get()
 
-        except Exception as error:
-            if (
-                error.__class__.__name__ == "ODataError"
-                and error.__dict__.get("response_status_code", None) == 403
-            ):
+        except ODataError as error:
+            error_code = getattr(error.error, "code", None) if error.error else None
+            if error_code == "Authorization_RequestDenied":
+                error_message = "Insufficient privileges to read user registration details. Required permission: AuditLog.Read.All"
+                logger.error(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error_message}"
+                )
+            else:
                 logger.error(
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                error_message = str(error)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            error_message = f"Failed to retrieve user registration details: {error}"
 
-        return registration_details
+        return registration_details, error_message
 
     async def _get_oauth_apps(self) -> Optional[Dict[str, "OAuthApp"]]:
         """
@@ -939,6 +1150,382 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_service_principals(self):
+        """Retrieve service principals owned by the audited tenant.
+
+        Fetches all service principals from Microsoft Graph and keeps only the
+        ones whose ``appOwnerOrganizationId`` matches the audited tenant. Skips
+        Microsoft first-party service principals and multi-tenant ISV apps
+        consented from other publishers: their credentials live in the
+        publisher's tenant, not this one, so they are out of scope for any
+        check that evaluates secret hygiene or role assignments managed by the
+        customer.
+
+        Returns:
+            Dict[str, ServicePrincipal]: Customer-owned service principals
+                keyed by service principal ID.
+        """
+        logger.info("Entra - Getting service principals...")
+        service_principals = {}
+        tenant_id_normalized = str(self.tenant_id).lower() if self.tenant_id else None
+        try:
+            sp_response = await self.client.service_principals.get()
+
+            # Build a map of service principal IDs to their data
+            while sp_response:
+                for sp in getattr(sp_response, "value", []) or []:
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    app_owner_org_id = str(raw_owner).lower() if raw_owner else None
+                    if (
+                        tenant_id_normalized
+                        and app_owner_org_id != tenant_id_normalized
+                    ):
+                        # Skip Microsoft first-party SPs and consented
+                        # multi-tenant ISV apps; the customer cannot manage
+                        # their credentials.
+                        continue
+
+                    password_credentials = []
+                    for cred in getattr(sp, "password_credentials", []) or []:
+                        password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+
+                    key_credentials = []
+                    for cred in getattr(sp, "key_credentials", []) or []:
+                        key_credentials.append(
+                            KeyCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                            )
+                        )
+
+                    service_principals[sp.id] = ServicePrincipal(
+                        id=sp.id,
+                        name=getattr(sp, "display_name", "") or "",
+                        app_id=getattr(sp, "app_id", "") or "",
+                        app_owner_organization_id=app_owner_org_id,
+                        password_credentials=password_credentials,
+                        key_credentials=key_credentials,
+                    )
+
+                next_link = getattr(sp_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sp_response = await self.client.service_principals.with_url(
+                    next_link
+                ).get()
+
+            # Fold in credentials registered on the parent Application objects.
+            # Microsoft Graph stores secrets and certificates added through
+            # "Certificates & secrets" on /applications, not on the service
+            # principal itself, so /servicePrincipals.passwordCredentials is
+            # almost always empty for normal app registrations. Joining via
+            # appId is required for the check to see those credentials.
+            #
+            # Index service principals by app_id once so the join below is
+            # O(N+M) instead of scanning all SPs for every Application page.
+            service_principals_by_app_id = {
+                sp.app_id: sp for sp in service_principals.values() if sp.app_id
+            }
+            # Remember each SP's parent application object ID so the owner
+            # lookup below can address it directly without re-walking
+            # /applications.
+            application_object_id_by_sp_id: Dict[str, str] = {}
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    if not app_id:
+                        continue
+                    target_sp = service_principals_by_app_id.get(app_id)
+                    if target_sp is None:
+                        continue
+
+                    app_object_id = getattr(app, "id", None)
+                    if app_object_id:
+                        application_object_id_by_sp_id[target_sp.id] = app_object_id
+
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        target_sp.password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+                    for cred in getattr(app, "key_credentials", []) or []:
+                        target_sp.key_credentials.append(
+                            KeyCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                            )
+                        )
+
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(next_link).get()
+
+            # Identify permanent Tier 0 directory role assignments via the unified
+            # role management endpoint. ``directoryRoles/{id}/members`` mixes
+            # permanent direct assignments with PIM-activated temporary ones, so
+            # using it would mark just-in-time elevations as "permanent" and emit
+            # false positives. ``roleManagement/directory/roleAssignments``
+            # exposes only the durable, statically-assigned principals, which is
+            # exactly what the Tier 0 check needs.
+            role_assignments_response = (
+                await self.client.role_management.directory.role_assignments.get()
+            )
+            while role_assignments_response:
+                for assignment in getattr(role_assignments_response, "value", []) or []:
+                    principal_id = getattr(assignment, "principal_id", None)
+                    role_definition_id = getattr(assignment, "role_definition_id", None)
+                    if (
+                        principal_id in service_principals
+                        and role_definition_id in TIER_0_ROLE_TEMPLATE_IDS
+                    ):
+                        service_principals[
+                            principal_id
+                        ].directory_role_template_ids.append(role_definition_id)
+
+                next_link = getattr(role_assignments_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                role_assignments_response = await self.client.role_management.directory.role_assignments.with_url(
+                    next_link
+                ).get()
+
+            # Resolve owners only for service principals that hold a permanent
+            # Tier 0 directory role. Owner ownership of the SP object or its
+            # parent app registration is a credential-rotation escalation path
+            # outside PIM and Conditional Access; fetching owners for every
+            # consented SP would multiply Graph traffic for no benefit.
+            for sp in service_principals.values():
+                if not sp.directory_role_template_ids:
+                    continue
+                try:
+                    sp_owners_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        ).owners.get()
+                    )
+                    sp.sp_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(sp_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+                app_object_id = application_object_id_by_sp_id.get(sp.id)
+                if not app_object_id:
+                    continue
+                try:
+                    app_owners_response = (
+                        await self.client.applications.by_application_id(
+                            app_object_id
+                        ).owners.get()
+                    )
+                    sp.app_owner_ids = [
+                        getattr(owner, "id", None)
+                        for owner in (getattr(app_owners_response, "value", []) or [])
+                        if getattr(owner, "id", None)
+                    ]
+                except Exception as error:
+                    logger.error(
+                        f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return service_principals
+
+    async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
+        """Retrieve application registrations from Microsoft Entra.
+
+        Fetches every application object and its password credentials (client
+        secrets) across all pages. Customer-owned applications should
+        authenticate using certificates, federated identity credentials, or
+        managed identities, so any entry in ``passwordCredentials`` is reported
+        by the related check.
+
+        Returns:
+            Dict[str, AppRegistration]: Application registrations keyed by the
+                application object ID.
+        """
+        logger.info("Entra - Getting app registrations...")
+        app_registrations: Dict[str, AppRegistration] = {}
+        try:
+            app_response = await self.client.applications.get()
+            while app_response:
+                for app in getattr(app_response, "value", []) or []:
+                    app_id = getattr(app, "app_id", None)
+                    object_id = getattr(app, "id", None)
+                    if not app_id or not object_id:
+                        continue
+
+                    password_credentials = []
+                    for cred in getattr(app, "password_credentials", []) or []:
+                        password_credentials.append(
+                            PasswordCredential(
+                                key_id=str(getattr(cred, "key_id", "")),
+                                display_name=getattr(cred, "display_name", None),
+                                start_date_time=getattr(cred, "start_date_time", None),
+                                end_date_time=getattr(cred, "end_date_time", None),
+                            )
+                        )
+
+                    app_registrations[object_id] = AppRegistration(
+                        id=object_id,
+                        app_id=app_id,
+                        name=getattr(app, "display_name", "") or "",
+                        password_credentials=password_credentials,
+                    )
+
+                next_link = getattr(app_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                app_response = await self.client.applications.with_url(next_link).get()
+
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return app_registrations
+
+    async def _resolve_directory_object_references(
+        self,
+        policies: Dict[str, "ConditionalAccessPolicy"],
+    ) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
+        """Resolve every user/group/role identifier referenced by CA policies.
+
+        Walks the inclusion/exclusion collections of every loaded Conditional
+        Access policy, deduplicates the resulting identifiers per type, and
+        queries Microsoft Graph for each one. Identifiers that return HTTP 404
+        are reported as deleted. Non-404 errors (5xx, throttling, permission,
+        transient network failures) are reported as unresolvable: they must not
+        be flagged as deletions, but they must also not be silently treated as
+        clean resolutions, so the downstream check surfaces them as MANUAL.
+
+        The sentinel values ``All``, ``None``, and ``GuestsOrExternalUsers``
+        are not directory identifiers and are excluded before any Graph call.
+
+        Args:
+            policies: Conditional Access policies keyed by policy ID.
+
+        Returns:
+            Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]: A pair of
+                ``(type, identifier)`` sets. The first holds identifiers that
+                failed to resolve via Graph with HTTP 404 (deleted); the second
+                holds identifiers whose lookup failed for any other reason and
+                could be neither confirmed present nor confirmed deleted.
+        """
+        logger.info(
+            "Entra - Resolving directory-object references in Conditional "
+            "Access policies..."
+        )
+
+        ids_by_type: Dict[str, Set[str]] = {
+            "user": set(),
+            "group": set(),
+            "role": set(),
+        }
+
+        for policy in policies.values():
+            if not getattr(policy, "conditions", None):
+                continue
+            user_conditions = getattr(policy.conditions, "user_conditions", None)
+            if user_conditions is None:
+                continue
+            for ident in (user_conditions.included_users or []) + (
+                user_conditions.excluded_users or []
+            ):
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
+                    ids_by_type["user"].add(ident)
+            for ident in (user_conditions.included_groups or []) + (
+                user_conditions.excluded_groups or []
+            ):
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
+                    ids_by_type["group"].add(ident)
+            for ident in (user_conditions.included_roles or []) + (
+                user_conditions.excluded_roles or []
+            ):
+                if ident and ident not in CONDITIONAL_ACCESS_SENTINEL_IDS:
+                    ids_by_type["role"].add(ident)
+
+        unresolved: Set[Tuple[str, str]] = set()
+        errored: Set[Tuple[str, str]] = set()
+
+        # Resolve types in parallel; within a type, walk identifiers serially
+        # to keep concurrent Graph calls bounded and avoid throttling.
+        await gather(
+            self._resolve_identifiers_for_type(
+                "user", ids_by_type["user"], unresolved, errored
+            ),
+            self._resolve_identifiers_for_type(
+                "group", ids_by_type["group"], unresolved, errored
+            ),
+            self._resolve_identifiers_for_type(
+                "role", ids_by_type["role"], unresolved, errored
+            ),
+        )
+        return unresolved, errored
+
+    async def _resolve_identifiers_for_type(
+        self,
+        type_: str,
+        identifiers: Set[str],
+        unresolved: Set[Tuple[str, str]],
+        errored: Set[Tuple[str, str]],
+    ) -> None:
+        """Resolve a set of identifiers of a given type, mutating the result sets.
+
+        Only HTTP 404 (or ``Request_ResourceNotFound``) responses add to
+        ``unresolved``. Every other error (5xx, throttling, permission, or an
+        unexpected exception) is logged and added to ``errored`` so the check
+        can report it as unverified instead of silently treating it as clean.
+        """
+        for identifier in identifiers:
+            try:
+                if type_ == "user":
+                    await self.client.users.by_user_id(identifier).get()
+                elif type_ == "group":
+                    await self.client.groups.by_group_id(identifier).get()
+                elif type_ == "role":
+                    await self.client.role_management.directory.role_definitions.by_unified_role_definition_id(
+                        identifier
+                    ).get()
+                else:
+                    continue
+            except ODataError as error:
+                status_code = getattr(error, "response_status_code", None)
+                error_code = getattr(error.error, "code", None) if error.error else None
+                if status_code == 404 or error_code == "Request_ResourceNotFound":
+                    unresolved.add((type_, identifier))
+                else:
+                    errored.add((type_, identifier))
+                    logger.warning(
+                        f"Entra - Could not resolve {type_} '{identifier}' for "
+                        f"Conditional Access reference check: "
+                        f"{error.__class__.__name__}: {error}"
+                    )
+            except Exception as error:
+                errored.add((type_, identifier))
+                logger.warning(
+                    f"Entra - Unexpected error resolving {type_} '{identifier}' "
+                    f"for Conditional Access reference check: "
+                    f"{error.__class__.__name__}: {error}"
+                )
+
 
 class ConditionalAccessPolicyState(Enum):
     ENABLED = "enabled"
@@ -957,13 +1544,58 @@ class ApplicationsConditions(BaseModel):
     included_user_actions: List[UserAction]
 
 
+class GuestOrExternalUserType(Enum):
+    """Guest or external user types for Conditional Access policies.
+
+    Reference: https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessguestsorexternalusers
+    """
+
+    NONE = "none"
+    INTERNAL_GUEST = "internalGuest"
+    B2B_COLLABORATION_GUEST = "b2bCollaborationGuest"
+    B2B_COLLABORATION_MEMBER = "b2bCollaborationMember"
+    B2B_DIRECT_CONNECT_USER = "b2bDirectConnectUser"
+    OTHER_EXTERNAL_USER = "otherExternalUser"
+    SERVICE_PROVIDER = "serviceProvider"
+
+
+class ExternalTenantsMembershipKind(Enum):
+    """External tenant scope for guest or external user conditions."""
+
+    ALL = "all"
+    ENUMERATED = "enumerated"
+    UNKNOWN_FUTURE_VALUE = "unknownFutureValue"
+
+
+# All guest/external user types that represent actual guest or external users.
+ALL_GUEST_USER_TYPES = {
+    GuestOrExternalUserType.INTERNAL_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_GUEST,
+    GuestOrExternalUserType.B2B_COLLABORATION_MEMBER,
+    GuestOrExternalUserType.B2B_DIRECT_CONNECT_USER,
+    GuestOrExternalUserType.OTHER_EXTERNAL_USER,
+    GuestOrExternalUserType.SERVICE_PROVIDER,
+}
+
+
+class GuestsOrExternalUsers(BaseModel):
+    """Model representing guest or external user conditions in Conditional Access policies."""
+
+    guest_or_external_user_types: List[GuestOrExternalUserType] = []
+    external_tenants_membership_kind: Optional[ExternalTenantsMembershipKind] = None
+
+
 class UsersConditions(BaseModel):
+    """Model representing user conditions for Conditional Access policies."""
+
     included_groups: List[str]
     excluded_groups: List[str]
     included_users: List[str]
     excluded_users: List[str]
     included_roles: List[str]
     excluded_roles: List[str]
+    included_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
+    excluded_guests_or_external_users: Optional[GuestsOrExternalUsers] = None
 
 
 class RiskLevel(Enum):
@@ -992,11 +1624,39 @@ class InsiderRiskLevel(Enum):
     ELEVATED = "elevated"
 
 
+class DeviceFilterMode(Enum):
+    """Mode for device filter in Conditional Access policies."""
+
+    INCLUDE = "include"
+    EXCLUDE = "exclude"
+
+
+class DeviceConditions(BaseModel):
+    """Model representing device conditions for Conditional Access policies."""
+
+    device_filter_mode: Optional[DeviceFilterMode] = None
+    device_filter_rule: Optional[str] = None
+
+
 class PlatformConditions(BaseModel):
     """Model representing platform conditions for Conditional Access policies."""
 
     include_platforms: List[str] = []
     exclude_platforms: List[str] = []
+
+    @validator("include_platforms", "exclude_platforms", pre=True)
+    @classmethod
+    def normalize_platforms(cls, values):  # noqa: vulture
+        if not values:
+            return []
+
+        normalized = []
+        for platform in values:
+            value = getattr(platform, "value", platform)
+            if isinstance(value, str) and value:
+                normalized.append(value.lower())
+
+        return normalized
 
 
 class TransferMethod(Enum):
@@ -1013,6 +1673,8 @@ class AuthenticationFlows(BaseModel):
 
 
 class Conditions(BaseModel):
+    """Model representing conditions for Conditional Access policies."""
+
     application_conditions: Optional[ApplicationsConditions]
     user_conditions: Optional[UsersConditions]
     client_app_types: Optional[List[ClientAppType]]
@@ -1021,6 +1683,7 @@ class Conditions(BaseModel):
     insider_risk_levels: Optional[InsiderRiskLevel] = None
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
+    device_conditions: Optional[DeviceConditions] = None
 
 
 class PersistentBrowser(BaseModel):
@@ -1131,6 +1794,8 @@ class DirectorySyncSettings(BaseModel):
     id: str
     password_sync_enabled: bool = False
     seamless_sso_enabled: bool = False
+    block_soft_match_enabled: bool = False
+    block_cloud_object_takeover_through_hard_match_enabled: bool = False
 
 
 class AuthenticationMethodConfiguration(BaseModel):
@@ -1218,6 +1883,10 @@ class User(BaseModel):
         account_enabled: Whether the user account is enabled.
         authentication_methods: List of authentication method types registered by the user
             (e.g., 'fido2SecurityKey', 'microsoftAuthenticatorPush', 'mobilePhone').
+        user_type: The user account type as reported by Microsoft Graph
+            (typically 'Member' or 'Guest'). ``None`` when Microsoft Graph does not
+            return the property; checks must not assume a default in that case.
+        employee_hire_date: The user's hire date as reported by Microsoft Graph.
     """
 
     id: str
@@ -1227,6 +1896,8 @@ class User(BaseModel):
     is_mfa_capable: bool = False
     account_enabled: bool = True
     authentication_methods: List[str] = []
+    user_type: Optional[str] = None
+    employee_hire_date: Optional[datetime] = None
 
 
 class InvitationsFrom(Enum):
@@ -1290,3 +1961,122 @@ class OAuthApp(BaseModel):
     is_admin_consented: bool = False
     last_used_time: Optional[str] = None
     app_origin: str = ""
+
+
+class PasswordCredential(BaseModel):
+    """Model representing a password credential (client secret) on a service principal.
+
+    Attributes:
+        key_id: The unique identifier of the credential.
+        display_name: The optional display name of the credential.
+        start_date_time: The time at which the credential becomes valid.
+            ``None`` when the API does not report it.
+        end_date_time: The expiration time of the credential. ``None`` indicates
+            the secret has no recorded expiry and is treated as active.
+    """
+
+    key_id: str
+    display_name: Optional[str] = None
+    start_date_time: Optional[datetime] = None
+    end_date_time: Optional[datetime] = None
+
+    def is_active(self, now: Optional[datetime] = None) -> bool:
+        """Return ``True`` when the credential has not expired.
+
+        A credential with no ``end_date_time`` is assumed to be active, matching
+        the behavior of the Microsoft Graph API when the field is omitted.
+        """
+        if self.end_date_time is None:
+            return True
+        reference = now or datetime.now(timezone.utc)
+        return self.end_date_time > reference
+
+
+class KeyCredential(BaseModel):
+    """Model representing a key credential (certificate) on a service principal.
+
+    Attributes:
+        key_id: The unique identifier of the credential.
+        display_name: The optional display name of the credential.
+    """
+
+    key_id: str
+    display_name: Optional[str] = None
+
+
+# Control Plane (Tier 0) role template IDs.
+#
+# Roles included grant tenant-wide control over identity, authentication, or the
+# directory itself, so a credential compromise on any of them is equivalent to a
+# tenant takeover. References:
+#   https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/privileged-roles-permissions
+#   https://learn.microsoft.com/en-us/security/privileged-access-workstations/privileged-access-access-model
+TIER_0_ROLE_TEMPLATE_IDS = {
+    "62e90394-69f5-4237-9190-012177145e10",  # Global Administrator
+    "e8611ab8-c189-46e8-94e1-60213ab1f814",  # Privileged Role Administrator
+    "7be44c8a-adaf-4e2a-84d6-ab2649e08a13",  # Privileged Authentication Administrator
+    "9b895d92-2cd3-44c7-9d02-a6ac2d5ea5c3",  # Application Administrator
+    "158c047a-c907-4556-b7ef-446551a6b5f7",  # Cloud Application Administrator
+    "c4e39bd9-1100-46d3-8c65-fb160da0071f",  # Authentication Administrator
+    "0526716b-113d-4c15-b2c8-68e3c22b9f80",  # Authentication Policy Administrator
+    "b1be1c3e-b65d-4f19-8427-f6fa0d97feb9",  # Conditional Access Administrator
+    "8329153b-31d0-4727-b945-745eb3bc5f31",  # Domain Name Administrator
+    "be2f45a1-457d-42af-a067-6ec1fa63bc45",  # External Identity Provider Administrator
+    "8ac3fc64-6eca-42ea-9e69-59f4c7b60eb2",  # Hybrid Identity Administrator
+    "194ae4cb-b126-40b2-bd5b-6091b380977d",  # Security Administrator
+    "fe930be7-5e62-47db-91af-98c3a49a38b1",  # User Administrator
+    "d29b2b05-8046-44ba-8758-1e26182fcf32",  # Directory Synchronization Accounts
+    "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8",  # Partner Tier2 Support
+}
+
+
+class ServicePrincipal(BaseModel):
+    """Model representing a Microsoft Entra ID service principal.
+
+    Attributes:
+        id: The service principal's unique identifier.
+        name: The service principal's display name.
+        app_id: The application ID associated with the service principal.
+        app_owner_organization_id: Tenant ID of the application's publisher.
+            For customer-owned apps this matches the audited tenant; the
+            service-layer fetch uses this to filter out Microsoft first-party
+            and third-party multi-tenant service principals that the customer
+            cannot manage credentials for.
+        password_credentials: List of password credentials (client secrets).
+        key_credentials: List of key credentials (certificates).
+        directory_role_template_ids: List of directory role template IDs permanently
+            assigned to this service principal.
+        sp_owner_ids: Principal IDs that own the service principal object.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment, to keep Graph traffic bounded.
+        app_owner_ids: Principal IDs that own the parent app registration.
+            Populated only for service principals that hold a permanent Tier 0
+            directory role assignment.
+    """
+
+    id: str
+    name: str
+    app_id: str = ""
+    app_owner_organization_id: Optional[str] = None
+    password_credentials: List[PasswordCredential] = []
+    key_credentials: List[KeyCredential] = []
+    directory_role_template_ids: List[str] = []
+    sp_owner_ids: List[str] = []
+    app_owner_ids: List[str] = []
+
+
+class AppRegistration(BaseModel):
+    """Model representing a Microsoft Entra ID application registration.
+
+    Attributes:
+        id: The application object's unique identifier.
+        app_id: The application (client) ID.
+        name: The application's display name.
+        password_credentials: List of password credentials (client secrets)
+            registered on the application.
+    """
+
+    id: str
+    app_id: str = ""
+    name: str = ""
+    password_credentials: List[PasswordCredential] = []

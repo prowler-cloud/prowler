@@ -1,5 +1,7 @@
 from prowler.lib.check.compliance_models import (
+    ASDEssentialEight_Requirement_Attribute,
     AWS_Well_Architected_Requirement_Attribute,
+    CCC_Requirement_Attribute,
     CIS_Requirement_Attribute,
     Compliance,
     Compliance_Requirement,
@@ -14,6 +16,7 @@ from prowler.lib.check.compliance_models import (
     Mitre_Requirement_Attribute_Azure,
     Mitre_Requirement_Attribute_GCP,
     Prowler_ThreatScore_Requirement_Attribute,
+    STIG_Requirement_Attribute,
 )
 
 CIS_1_4_AWS = Compliance(
@@ -126,7 +129,7 @@ CIS_2_0_GCP = Compliance(
     Description="This CIS Benchmark is the product of a community consensus process and consists of secure configuration guidelines developed for Google Cloud Computing Platform",
     Requirements=[
         Compliance_Requirement(
-            Checks=["apikeys_key_exits"],
+            Checks=["apikeys_key_exits", "service_test_check_id"],
             Id="2.13",
             Description="Ensure That Microsoft Defender for Databases Is Set To 'On'",
             Attributes=[
@@ -175,7 +178,7 @@ CIS_1_8_KUBERNETES = Compliance(
     Description="This CIS Kubernetes Benchmark provides prescriptive guidance for establishing a secure configuration posture for Kubernetes v1.27.",
     Requirements=[
         Compliance_Requirement(
-            Checks=["apiserver_always_pull_images_plugin"],
+            Checks=["apiserver_always_pull_images_plugin", "service_test_check_id"],
             Id="1.1.3",
             Description="Ensure that the controller manager pod specification file permissions are set to 600 or more restrictive",
             Attributes=[
@@ -257,6 +260,7 @@ CIS_4_0_M365 = Compliance(
         Compliance_Requirement(
             Checks=[
                 "mfa_delete_enabled",
+                "service_test_check_id",
             ],
             Id="2.1.3",
             Description="Ensure MFA Delete is enabled on S3 buckets",
@@ -334,6 +338,7 @@ MITRE_ATTACK_AWS = Compliance(
                 "inspector2_active_findings_exist",
                 "awslambda_function_not_publicly_accessible",
                 "ec2_instance_public_ip",
+                "service_test_check_id",
             ],
         ),
         Mitre_Requirement(
@@ -410,6 +415,7 @@ MITRE_ATTACK_AZURE = Compliance(
                 "defender_ensure_notify_emails_to_owners",
                 "defender_ensure_system_updates_are_applied",
                 "defender_ensure_wdatp_is_enabled",
+                "service_test_check_id",
             ],
         ),
         Mitre_Requirement(
@@ -465,6 +471,7 @@ MITRE_ATTACK_GCP = Compliance(
                 "compute_instance_public_ip",
                 "compute_public_address_shodan",
                 "kms_key_not_publicly_accessible",
+                "service_test_check_id",
             ],
         ),
         Mitre_Requirement(
@@ -512,7 +519,7 @@ ENS_RD2022_AWS = Compliance(
                     Dependencias=[],
                 )
             ],
-            Checks=["cloudtrail_log_file_validation_enabled"],
+            Checks=["cloudtrail_log_file_validation_enabled", "service_test_check_id"],
         ),
         Compliance_Requirement(
             Id="op.exp.8.aws.ct.4",
@@ -560,7 +567,7 @@ ENS_RD2022_AZURE = Compliance(
                     Dependencias=[],
                 )
             ],
-            Checks=["cloudtrail_log_file_validation_enabled"],
+            Checks=["cloudtrail_log_file_validation_enabled", "service_test_check_id"],
         ),
         Compliance_Requirement(
             Id="op.exp.8.azure.ct.4",
@@ -607,7 +614,7 @@ ENS_RD2022_GCP = Compliance(
                     Dependencias=[],
                 )
             ],
-            Checks=["cloudtrail_log_file_validation_enabled"],
+            Checks=["cloudtrail_log_file_validation_enabled", "service_test_check_id"],
         ),
         Compliance_Requirement(
             Id="op.exp.8.gcp.ct.4",
@@ -664,7 +671,10 @@ AWS_WELL_ARCHITECTED = Compliance(
                     ImplementationGuidanceUrl="https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/sec_securely_operate_multi_accounts.html#implementation-guidance.",
                 )
             ],
-            Checks=["organizations_account_part_of_organizations"],
+            Checks=[
+                "organizations_account_part_of_organizations",
+                "service_test_check_id",
+            ],
         ),
         Compliance_Requirement(
             Id="SEC01-BP02",
@@ -707,7 +717,7 @@ ISO27001_2013_AWS = Compliance(
                     Check_Summary="Setup Encryption at rest for RDS instances",
                 )
             ],
-            Checks=["rds_instance_storage_encrypted"],
+            Checks=["rds_instance_storage_encrypted", "service_test_check_id"],
         ),
         Compliance_Requirement(
             Id="A.10.2",
@@ -757,6 +767,7 @@ NIST_800_53_REVISION_4_AWS = Compliance(
                 "rds_instance_integration_cloudwatch_logs",
                 "redshift_cluster_audit_logging",
                 "securityhub_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -813,6 +824,7 @@ KISA_ISMSP_AWS = Compliance(
             Checks=[
                 "cloudwatch_log_metric_filter_authentication_failures",
                 "cognito_user_pool_mfa_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -870,6 +882,7 @@ PROWLER_THREATSCORE_AWS = Compliance(
             ],
             Checks=[
                 "iam_root_mfa_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -914,6 +927,7 @@ PROWLER_THREATSCORE_AZURE = Compliance(
             ],
             Checks=[
                 "iam_root_mfa_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -958,6 +972,7 @@ PROWLER_THREATSCORE_GCP = Compliance(
             ],
             Checks=[
                 "iam_root_mfa_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -1002,6 +1017,7 @@ PROWLER_THREATSCORE_M365 = Compliance(
             ],
             Checks=[
                 "iam_root_mfa_enabled",
+                "service_test_check_id",
             ],
         ),
         Compliance_Requirement(
@@ -1016,6 +1032,271 @@ PROWLER_THREATSCORE_M365 = Compliance(
                     AdditionalInformation="A hardware MFA has a smaller attack surface compared to a virtual MFA. Unlike a virtual MFA, which relies on a mobile device that may be vulnerable to malware or compromise, a hardware MFA operates independently, reducing exposure to potential security threats.",
                     LevelOfRisk=3,
                     Weight=10,
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+
+# CCC fixtures cover the three providers Prowler ships catalogs for. Each
+# fixture has one auto-evaluated requirement (with Checks) and one manual
+# requirement (Checks=[]) so test suites can exercise both paths.
+CCC_AWS_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="AWS",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for AWS",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials or generating temporary session tokens.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
+        ),
+    ],
+)
+
+CCC_AZURE_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="Azure",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for Azure",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
+        ),
+    ],
+)
+
+CCC_GCP_FIXTURE = Compliance(
+    Framework="CCC",
+    Name="Common Cloud Controls Catalog (CCC)",
+    Provider="GCP",
+    Version="v2025.10",
+    Description="Common Cloud Controls Catalog (CCC) for GCP",
+    Requirements=[
+        Compliance_Requirement(
+            Checks=["service_test_check_id"],
+            Id="CCC.Core.CN01.AR01",
+            Description="When a port is exposed for non-SSH network traffic, all traffic MUST include a TLS handshake AND be encrypted using TLS 1.3 or higher.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Data",
+                    FamilyDescription="The Data control family ensures the confidentiality, integrity, availability, and sovereignty of data across its lifecycle.",
+                    Section="CCC.Core.CN01 Encrypt Data for Transmission",
+                    SubSection="",
+                    SubSectionObjective="Ensure that all communications are encrypted in transit to protect data integrity and confidentiality.",
+                    Applicability=["tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="Most cloud services enable TLS 1.3 by default.",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "CCM", "Identifiers": ["CEK-03", "CEK-04"]}
+                    ],
+                )
+            ],
+        ),
+        Compliance_Requirement(
+            Checks=[],
+            Id="CCC.IAM.CN01.AR01",
+            Description="When an identity policy for a non-administrative principal is evaluated, it MUST NOT grant permissions for creating credentials.",
+            Attributes=[
+                CCC_Requirement_Attribute(
+                    FamilyName="Identity and Access Management",
+                    FamilyDescription="Controls that restrict who can access and modify IAM resources.",
+                    Section="CCC.IAM.CN01 Restrict IAM User Credentials Creation",
+                    SubSection="",
+                    SubSectionObjective="Prevent non-administrative principals from creating new long-lived credentials.",
+                    Applicability=["tlp-clear", "tlp-green", "tlp-amber", "tlp-red"],
+                    Recommendation="",
+                    SectionThreatMappings=[
+                        {"ReferenceId": "CCC", "Identifiers": ["CCC.IAM.TH03"]}
+                    ],
+                    SectionGuidelineMappings=[
+                        {"ReferenceId": "NIST-CSF", "Identifiers": ["PR.AA-05"]}
+                    ],
+                )
+            ],
+        ),
+    ],
+)
+
+ASD_ESSENTIAL_EIGHT_AWS = Compliance(
+    Framework="ASD-Essential-Eight",
+    Name="ASD Essential Eight Maturity Model - Maturity Level One (AWS)",
+    Version="Nov 2023",
+    Provider="AWS",
+    Description="Literal mapping of the Australian Signals Directorate (ASD) Essential Eight Maturity Model ML1 to AWS infrastructure checks.",
+    Requirements=[
+        Compliance_Requirement(
+            Id="E8-1.8",
+            Description="Online services that are no longer supported by vendors are removed.",
+            Attributes=[
+                ASDEssentialEight_Requirement_Attribute(
+                    Section="1 Patch applications",
+                    MaturityLevel="ML1",
+                    AssessmentStatus="Automated",
+                    CloudApplicability="full",
+                    MitigatedThreats=[
+                        "Use of unsupported software",
+                        "Long-tail vulnerability accumulation",
+                    ],
+                    Description="Detect and remove unsupported AWS-hosted online services (Lambda runtimes, RDS engines, EKS, Fargate, Kafka, OpenSearch).",
+                    RationaleStatement="Unsupported services no longer receive security patches.",
+                    ImpactStatement="",
+                    RemediationProcedure="Migrate Lambda off deprecated runtimes; remove RDS Extended Support; upgrade EKS.",
+                    AuditProcedure="Run all listed checks.",
+                    AdditionalInformation="ASD Essential Eight ML1 - Patch applications - clause 8.",
+                    References="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model",
+                )
+            ],
+            Checks=["service_test_check_id"],
+        ),
+        Compliance_Requirement(
+            Id="E8-6.1",
+            Description="Microsoft Office macros are disabled for users that do not have a demonstrated business requirement.",
+            Attributes=[
+                ASDEssentialEight_Requirement_Attribute(
+                    Section="6 Restrict Microsoft Office macros",
+                    MaturityLevel="ML1",
+                    AssessmentStatus="Manual",
+                    CloudApplicability="non-applicable",
+                    MitigatedThreats=["Macro-based malware delivery"],
+                    Description="Endpoint / Microsoft 365 control. Out of AWS infrastructure scope.",
+                    RationaleStatement="Most users never need Office macros.",
+                    ImpactStatement="",
+                    RemediationProcedure="Disable macros via Group Policy / Intune / M365 admin policies.",
+                    AuditProcedure="Manual review of M365 macro policy.",
+                    AdditionalInformation="ASD Essential Eight ML1 - Restrict Microsoft Office macros - clause 1. Out of AWS infrastructure scope.",
+                    References="https://www.cyber.gov.au/resources-business-and-government/essential-cyber-security/essential-eight/essential-eight-maturity-model",
+                )
+            ],
+            Checks=[],
+        ),
+    ],
+)
+
+OKTA_IDAAS_STIG_OKTA = Compliance(
+    Framework="Okta-IDaaS-STIG",
+    Name="DISA Okta Identity as a Service (IDaaS) STIG V1R2",
+    Version="1R2",
+    Provider="Okta",
+    Description="Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).",
+    Requirements=[
+        Compliance_Requirement(
+            Id="OKTA-APP-000020",
+            Name="Okta must log out a session after a 15-minute period of inactivity.",
+            Description="A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the information system.",
+            Attributes=[
+                STIG_Requirement_Attribute(
+                    Section="CAT II (Medium)",
+                    Severity="medium",
+                    RuleID="SV-273186r1098825_rule",
+                    StigID="OKTA-APP-000020",
+                    CCI=["CCI-000057", "CCI-001133"],
+                    CheckText="Verify the Global Session Policy logs out a session after 15 minutes of inactivity.",
+                    FixText="From the Admin Console configure the Global Session Policy idle timeout to 15 minutes.",
+                )
+            ],
+            Checks=["signon_global_session_idle_timeout_15min"],
+        ),
+        Compliance_Requirement(
+            Id="OKTA-APP-000650",
+            Name="Okta must enforce a minimum 15-character password length.",
+            Description="The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised.",
+            Attributes=[
+                STIG_Requirement_Attribute(
+                    Section="CAT II (Medium)",
+                    Severity="medium",
+                    RuleID="SV-273209r1098894_rule",
+                    StigID="OKTA-APP-000650",
+                    CCI=["CCI-000205"],
+                    CheckText="Verify the password policy enforces a minimum length of 15 characters.",
+                    FixText="From the Admin Console set the minimum password length to 15 characters.",
                 )
             ],
             Checks=[],

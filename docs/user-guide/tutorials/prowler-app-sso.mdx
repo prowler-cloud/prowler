@@ -75,7 +75,7 @@ Choose a Method:
         <Info>
         **IdP Configuration**
 
-        The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra).
+        The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, Google Workspace, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application. For SSO integration with Azure AD / Entra ID, see our [Entra ID configuration instructions](/user-guide/tutorials/prowler-app-sso-entra). For Google Workspace, see our [Google Workspace configuration instructions](/user-guide/tutorials/prowler-app-sso-google-workspace).
 
         </Info>
 
@@ -87,8 +87,8 @@ Choose a Method:
         |----------------|---------------------------------------------------------------------------------------------------------|----------|
         | `firstName`    | The user's first name.                                                                                  | Yes      |
         | `lastName`     | The user's last name.                                                                                   | Yes      |
-        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler App creates a new role with that name without permissions. If `userType` is not defined, the user is assigned the `no_permissions` role. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
-        | `companyName`  | The user's company name. This is automatically populated if the IdP sends an `organization` attribute. | No       |
+        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler App creates a new role with that name with read-only access (visibility over all providers, no management permissions). If `userType` is not defined, the user's existing roles are left unchanged. Role permissions can be edited in the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
+        | `organization` | The user's company name.                                                                                | No       |
 
         <Info>
         **IdP Attribute Mapping**
@@ -140,7 +140,7 @@ Choose a Method:
             ![Okta User Profile — First Name and Last Name](/images/prowler-app/saml/okta-user-profile-name.png)
 
             * **Organization** (`organization`): Maps to the company name displayed in Prowler App. This attribute is optional.
-            * **User type** (`userType`): Determines the Prowler role assigned to the user. This attribute is **case-sensitive** and must match the exact name of an existing role in Prowler App.
+            * **User type** (`userType`): Determines the Prowler role assigned to the user. This attribute is **case-sensitive**: if it matches the exact name of an existing role in Prowler App the user receives that role; if no role with that name exists, a new one is created with read-only access.
 
             ![Okta User Profile — User Type and Organization](/images/prowler-app/saml/okta-user-profile-attributes.png)
 
@@ -152,14 +152,10 @@ Choose a Method:
             The `userType` attribute controls which Prowler role is assigned to the user:
 
             * If a role with the specified name already exists in Prowler App, the user automatically receives that role.
-            * If the role does not exist, Prowler App creates a new role with that exact name but without any permissions, preventing the user from performing any actions.
-            * If `userType` is not defined in the user's Okta profile, the user is assigned the `no_permissions` role.
+            * If the role does not exist, Prowler App creates a new role with that exact name with read-only access: the user can see all providers and their findings but cannot manage anything. A Prowler administrator (a user whose role includes the "Manage Account" permission) can adjust its permissions afterward through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
+            * If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler App are left unchanged.
 
-            In all cases where the resulting role has no permissions, a Prowler administrator (a user whose role includes the "Manage Account" permission) must configure the appropriate permissions through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
-
-            This behavior is intentional: by defaulting to no permissions, Prowler App ensures that a misconfiguration in Okta cannot inadvertently grant elevated access.
-
-            **Example:** To assign the `IT` role to a user, set the `userType` value to `IT` in Okta. If a role named `IT` already exists in Prowler App, the user receives it automatically upon login. If it does not exist, Prowler App creates a new role called `IT` without permissions, and a Prowler administrator must configure the desired permissions for it.
+            **Example:** To assign the `IT` role to a user, set the `userType` value to `IT` in Okta. If a role named `IT` already exists in Prowler App, the user receives it automatically upon login. If it does not exist, Prowler App creates a new role called `IT` with read-only access, and a Prowler administrator can adjust its permissions as needed.
 
             </Warning>
 

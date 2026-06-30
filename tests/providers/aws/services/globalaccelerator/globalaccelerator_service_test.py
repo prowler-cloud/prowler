@@ -55,27 +55,27 @@ class Test_GlobalAccelerator_Service:
     # Test GlobalAccelerator Service
     def test_service(self):
         # GlobalAccelerator client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
         globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.service == "globalaccelerator"
 
     # Test GlobalAccelerator Client
     def test_client(self):
         # GlobalAccelerator client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
         globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.client.__class__.__name__ == "GlobalAccelerator"
 
     # Test GlobalAccelerator Session
     def test__get_session__(self):
         # GlobalAccelerator client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
         globalaccelerator = GlobalAccelerator(aws_provider)
         assert globalaccelerator.session.__class__.__name__ == "Session"
 
     def test_list_accelerators(self):
         # GlobalAccelerator client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
         globalaccelerator = GlobalAccelerator(aws_provider)
 
         accelerator_name = "TestAccelerator"
@@ -99,7 +99,7 @@ class Test_GlobalAccelerator_Service:
 
     def test_list_tags(self):
         # GlobalAccelerator client for this test class
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_WEST_2])
         globalaccelerator = GlobalAccelerator(aws_provider)
 
         assert len(globalaccelerator.accelerators) == 1

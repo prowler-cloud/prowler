@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Container, CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -25,11 +25,16 @@ import {
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
 
+import { canMuteFindingResource } from "./finding-resource-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
-import { NotificationIndicator } from "./notification-indicator";
+import {
+  type DeltaType,
+  NotificationIndicator,
+} from "./notification-indicator";
 
 const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const resource = row.original;
+  const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -61,6 +66,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
 
+    // Single resource: findingId is already a real finding UUID
+    if (displayIds.length === 1) {
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+      return;
+    }
+
+    // Multi-select: resolve through context
     if (resolveMuteIds) {
       setIsResolving(true);
       const ids = await resolveMuteIds(displayIds);
@@ -81,7 +94,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 
   return (
     <>
-      {!resource.isMuted && (
+      {canMute && (
         <MuteFindingsModal
           isOpen={isMuteModalOpen}
           onOpenChange={setIsMuteModalOpen}
@@ -111,7 +124,7 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
               )
             }
             label={isResolving ? "Resolving..." : getMuteLabel()}
-            disabled={resource.isMuted || isResolving}
+            disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
           <ActionDropdownItem
@@ -171,14 +184,16 @@ export function getColumnFindingResources({
       cell: ({ row }) => (
         <div className="flex items-center gap-2">
           <NotificationIndicator
+            delta={row.original.delta as DeltaType | undefined}
             isMuted={row.original.isMuted}
             mutedReason={row.original.mutedReason}
+            showDeltaWhenMuted
           />
           <CornerDownRight className="text-text-neutral-tertiary h-4 w-4 shrink-0" />
           <Checkbox
             size="sm"
             checked={!!rowSelection[row.id]}
-            disabled={row.original.isMuted}
+            disabled={!canMuteFindingResource(row.original)}
             onCheckedChange={(checked) => row.toggleSelected(checked === true)}
             onClick={(e) => e.stopPropagation()}
             aria-label="Select resource"
@@ -188,7 +203,20 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Resource — name + uid (EntityInfo with resource icon)
+    // Status
+    {
+      id: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => {
+        return (
+          <StatusFindingBadge status={row.original.status as FindingStatus} />
+        );
+      },
+      enableSorting: false,
+    },
+    // Resource — name + uid
     {
       id: "resource",
       header: ({ column }) => (
@@ -197,51 +225,26 @@ export function getColumnFindingResources({
       cell: ({ row }) => (
         <div className="max-w-[240px]">
           <EntityInfo
-            nameIcon={<Container className="size-4" />}
-            entityAlias={row.original.resourceGroup}
+            entityAlias={row.original.resourceName}
             entityId={row.original.resourceUid}
           />
         </div>
       ),
       enableSorting: false,
     },
-    // Status
+    // Provider — alias + uid (same style as Resource)
     {
-      id: "status",
+      id: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const rawStatus = row.original.status;
-        const status =
-          rawStatus === "MUTED" ? "FAIL" : (rawStatus as FindingStatus);
-        return <StatusFindingBadge status={status} />;
-      },
-      enableSorting: false,
-    },
-    // Service
-    {
-      id: "service",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Service" />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
-          {row.original.service}
-        </p>
-      ),
-      enableSorting: false,
-    },
-    // Region
-    {
-      id: "region",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Region" />
-      ),
-      cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
-          {row.original.region}
-        </p>
+        <div className="max-w-[240px]">
+          <EntityInfo
+            entityAlias={row.original.providerAlias}
+            entityId={row.original.providerUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
@@ -254,20 +257,29 @@ export function getColumnFindingResources({
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
       enableSorting: false,
     },
-    // Account — alias + uid (EntityInfo with provider logo)
+    // Service
     {
-      id: "account",
+      id: "service",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account" />
+        <DataTableColumnHeader column={column} title="Service" />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[240px]">
-          <EntityInfo
-            cloudProvider={row.original.providerType}
-            entityAlias={row.original.providerAlias}
-            entityId={row.original.providerUid}
-          />
-        </div>
+        <InfoField label="Service" variant="compact">
+          {row.original.service || "-"}
+        </InfoField>
+      ),
+      enableSorting: false,
+    },
+    // Region
+    {
+      id: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => (
+        <InfoField label="Region" variant="compact">
+          {row.original.region || "-"}
+        </InfoField>
       ),
       enableSorting: false,
     },

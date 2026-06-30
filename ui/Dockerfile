@@ -1,9 +1,10 @@
+# Keep in sync with ui/.nvmrc.
 FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-# Enable corepack for pnpm
-RUN corepack enable
+# Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
+RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -13,8 +14,9 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts ./scripts
+ENV NODE_OPTIONS=--max-old-space-size=4096
 RUN corepack install && pnpm install --frozen-lockfile
 
 
@@ -34,12 +36,8 @@ RUN corepack install
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
-ARG NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID
-ENV NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID=${NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID}
-ARG NEXT_PUBLIC_API_BASE_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-ARG NEXT_PUBLIC_API_DOCS_URL
-ENV NEXT_PUBLIC_API_DOCS_URL=${NEXT_PUBLIC_API_DOCS_URL}
+
+# GTM / API base+docs URLs are runtime container env (prod stage), not build ARGs.
 
 RUN pnpm run build
 
@@ -76,6 +74,12 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Runtime configuration is read by `node server.js` at container start and is
+# NOT baked into the image. Supply it via your orchestrator (docker-compose,
+# Helm/K8s):
+#   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
+#   - optional: UI_API_DOCS_URL, UI_GOOGLE_TAG_MANAGER_ID, UI_SENTRY_DSN, UI_SENTRY_ENVIRONMENT
+#   - reserved: POSTHOG_KEY, POSTHOG_HOST, REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 CMD ["node", "server.js"]

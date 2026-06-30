@@ -1,5 +1,6 @@
 from mock import patch
 
+from prowler.providers.aws.config import BOTO3_USER_AGENT_EXTRA
 from prowler.providers.aws.lib.service.service import AWSService
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_ARN,
@@ -78,7 +79,9 @@ class TestAWSService:
     def test_AWSService_non_global_service_uses_profile_region(self):
         """Non-global services should use the profile region when available."""
         service_name = "s3"
-        provider = set_mocked_aws_provider(profile_region=AWS_REGION_EU_WEST_1)
+        provider = set_mocked_aws_provider(
+            audited_regions=[], profile_region=AWS_REGION_EU_WEST_1
+        )
         service = AWSService(service_name, provider)
 
         assert service.region == AWS_REGION_EU_WEST_1
@@ -186,6 +189,15 @@ class TestAWSService:
             service.get_unknown_arn(resource_type="bucket")
             == f"arn:{service.audited_partition}:{service_name}::{AWS_ACCOUNT_NUMBER}:bucket/unknown"
         )
+
+    def test_AWSService_clients_carry_user_agent_extra(self):
+        provider = set_mocked_aws_provider()
+
+        service = AWSService("s3", provider)
+        ad_hoc_client = service.session.client("ec2", AWS_REGION_US_EAST_1)
+
+        assert BOTO3_USER_AGENT_EXTRA in service.client._client_config.user_agent_extra
+        assert BOTO3_USER_AGENT_EXTRA in ad_hoc_client._client_config.user_agent_extra
 
     def test_AWSService_get_unknown_arn_resource_type_set_region(self):
         service_name = "s3"

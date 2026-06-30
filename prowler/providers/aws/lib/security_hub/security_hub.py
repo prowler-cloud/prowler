@@ -148,6 +148,13 @@ class SecurityHub:
                 regions=regions,
             )
             self._session = aws_setup_session._session.current_session
+        # Only install the Prowler default config when the caller-supplied
+        # session does not already carry one — overwriting would drop the
+        # provider's retries_max_attempts value.
+        if aws_session and self._session._session.get_default_client_config() is None:
+            self._session._session.set_default_client_config(
+                AwsProvider.set_session_config(retries_max_attempts)
+            )
         self._aws_account_id = aws_account_id
         if not aws_partition:
             aws_partition = AwsProvider.validate_credentials(
@@ -235,7 +242,7 @@ class SecurityHub:
 
         Args:
             region (str): AWS region to check.
-            session (Session): AWS session object.
+            session (Session): AWS session object. Expected to carry the Prowler default client config.
             aws_account_id (str): AWS account ID.
             aws_partition (str): AWS partition.
 
@@ -539,6 +546,9 @@ class SecurityHub:
                     aws_session_token=assumed_role_credentials.aws_session_token,
                     region_name=aws_region,
                     profile_name=profile,
+                )
+                session._session.set_default_client_config(
+                    AwsProvider.set_session_config(None)
                 )
 
             all_regions = AwsProvider.get_available_aws_service_regions(

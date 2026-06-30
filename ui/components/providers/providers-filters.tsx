@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 
 import { ProviderTypeSelector } from "@/app/(prowler)/_overview/_components/provider-type-selector";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   MultiSelect,
   MultiSelectContent,
@@ -18,25 +19,40 @@ import { EntityInfo } from "@/components/ui/entities/entity-info";
 import { useUrlFilters } from "@/hooks/use-url-filters";
 import { isConnectionStatus, isGroupFilterEntity } from "@/lib/helper-filters";
 import { FilterEntity, FilterOption, ProviderEntity } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import {
   GroupFilterEntity,
   ProviderConnectionStatus,
   ProviderProps,
 } from "@/types/providers";
 
+function isNonEmptyString(value: string | null | undefined): value is string {
+  return Boolean(value);
+}
+
 interface ProvidersFiltersProps {
   filters: FilterOption[];
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   actions?: ReactNode;
 }
 
 export const ProvidersFilters = ({
   filters,
   providers,
+  providerGroups = [],
   actions,
 }: ProvidersFiltersProps) => {
   const { updateFilter } = useUrlFilters();
   const searchParams = useSearchParams();
+
+  const buildSearchConfig = (filter: FilterOption) => {
+    const label = filter.labelCheckboxGroup.toLowerCase();
+    return {
+      placeholder: `Search ${label}...`,
+      emptyMessage: `No ${label} found.`,
+    };
+  };
 
   const sortedFilters = [...filters].sort((a, b) => {
     if (a.index !== undefined && b.index !== undefined)
@@ -107,10 +123,42 @@ export const ProvidersFilters = ({
     );
   };
 
+  const getSearchKeywords = (
+    entity: FilterEntity | undefined,
+    value: string,
+    displayLabel: string,
+  ): string[] => {
+    if (!entity) {
+      return [displayLabel, value];
+    }
+
+    if (isConnectionStatus(entity)) {
+      return [displayLabel, value, (entity as ProviderConnectionStatus).label];
+    }
+
+    if (isGroupFilterEntity(entity)) {
+      return [displayLabel, value, (entity as GroupFilterEntity).name].filter(
+        isNonEmptyString,
+      );
+    }
+
+    const providerEntity = entity as ProviderEntity;
+    return [
+      displayLabel,
+      value,
+      providerEntity.alias,
+      providerEntity.uid,
+      providerEntity.provider,
+    ].filter(isNonEmptyString);
+  };
+
   return (
     <div className="flex flex-wrap items-center gap-4">
       <div className="min-w-[200px] flex-1 md:max-w-[280px]">
         <ProviderTypeSelector providers={providers} />
+      </div>
+      <div className="max-w-[240px] min-w-[180px] flex-1">
+        <ProviderGroupSelector groups={providerGroups} />
       </div>
       {sortedFilters.map((filter) => {
         const selectedValues = getSelectedValues(filter);
@@ -121,9 +169,14 @@ export const ProvidersFilters = ({
               onValuesChange={(values) => pushDropdownFilter(filter, values)}
             >
               <MultiSelectTrigger size="default">
-                <MultiSelectValue placeholder={filter.labelCheckboxGroup} />
+                <MultiSelectValue
+                  placeholder={`All ${filter.labelCheckboxGroup}`}
+                />
               </MultiSelectTrigger>
-              <MultiSelectContent search={false}>
+              <MultiSelectContent
+                search={buildSearchConfig(filter)}
+                width={filter.width ?? "default"}
+              >
                 <MultiSelectSelectAll>Select All</MultiSelectSelectAll>
                 <MultiSelectSeparator />
                 {filter.values.map((value) => {
@@ -136,6 +189,7 @@ export const ProvidersFilters = ({
                       key={value}
                       value={value}
                       badgeLabel={getBadgeLabel(entity, displayLabel)}
+                      keywords={getSearchKeywords(entity, value, displayLabel)}
                     >
                       {entity ? renderEntityContent(entity) : displayLabel}
                     </MultiSelectItem>

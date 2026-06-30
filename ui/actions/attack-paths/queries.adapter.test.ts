@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   ATTACK_PATH_QUERY_IDS,
-  type AttackPathCartographySchemaAttributes,
   type AttackPathQuery,
 } from "@/types/attack-paths";
 
@@ -22,20 +22,9 @@ const presetQuery: AttackPathQuery = {
 };
 
 describe("buildAttackPathQueries", () => {
-  it("prepends a custom query with a schema documentation link", () => {
-    // Given
-    const schema: AttackPathCartographySchemaAttributes = {
-      id: "aws-0.129.0",
-      provider: "aws",
-      cartography_version: "0.129.0",
-      schema_url:
-        "https://github.com/cartography-cncf/cartography/blob/0.129.0/docs/root/modules/aws/schema.md",
-      raw_schema_url:
-        "https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.129.0/docs/root/modules/aws/schema.md",
-    };
-
+  it("prepends a custom query that links to the Prowler documentation", () => {
     // When
-    const result = buildAttackPathQueries([presetQuery], schema);
+    const result = buildAttackPathQueries([presetQuery]);
 
     // Then
     expect(result[0]).toMatchObject({
@@ -44,8 +33,8 @@ describe("buildAttackPathQueries", () => {
         name: "Custom openCypher query",
         short_description: "Write and run your own read-only query",
         documentation_link: {
-          text: "Cartography schema used by Prowler for AWS graphs",
-          link: schema.schema_url,
+          text: "Learn how to write custom openCypher queries",
+          link: DOCS_URLS.ATTACK_PATHS_CUSTOM_QUERIES,
         },
       },
     });

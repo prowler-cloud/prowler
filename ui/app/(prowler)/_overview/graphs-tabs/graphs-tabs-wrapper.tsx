@@ -1,6 +1,7 @@
 import { Skeleton } from "@heroui/skeleton";
 import { Suspense } from "react";
 
+import { SkeletonTableNewFindings } from "@/components/overview/new-findings-table/table";
 import { SearchParamsProps } from "@/types";
 
 import { GraphsTabsClient } from "./_components/graphs-tabs-client";
@@ -17,6 +18,10 @@ const LoadingFallback = () => (
     <Skeleton className="bg-bg-neutral-tertiary h-[457px] w-full rounded" />
   </div>
 );
+
+const TAB_FALLBACKS: Partial<Record<TabId, React.ReactNode>> = {
+  findings: <SkeletonTableNewFindings />,
+};
 
 type GraphComponent = React.ComponentType<{ searchParams: SearchParamsProps }>;
 
@@ -38,9 +43,10 @@ export const GraphsTabsWrapper = async ({
   const tabsContent = Object.fromEntries(
     GRAPH_TABS.map((tab) => {
       const Component = GRAPH_COMPONENTS[tab.id];
+      const fallback = TAB_FALLBACKS[tab.id] ?? <LoadingFallback />;
       return [
         tab.id,
-        <Suspense key={tab.id} fallback={<LoadingFallback />}>
+        <Suspense key={tab.id} fallback={fallback}>
           <Component searchParams={searchParams} />
         </Suspense>,
       ];

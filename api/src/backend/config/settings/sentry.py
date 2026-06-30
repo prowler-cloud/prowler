@@ -1,5 +1,4 @@
 import sentry_sdk
-
 from config.env import env
 
 IGNORED_EXCEPTIONS = [
@@ -76,6 +75,8 @@ IGNORED_EXCEPTIONS = [
     # PowerShell Errors in User Authentication
     "Microsoft Teams User Auth connection failed: Please check your permissions and try again.",
     "Exchange Online User Auth connection failed: Please check your permissions and try again.",
+    # ASGI: Client disconnected before the response finished (health-check probes on /health/live)
+    "RequestAborted",
 ]
 
 
@@ -120,6 +121,7 @@ sentry_sdk.init(
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
     before_send=before_send,
     send_default_pii=True,
+    traces_sample_rate=env.float("DJANGO_SENTRY_TRACES_SAMPLE_RATE", default=0.02),
     _experiments={
         # Set continuous_profiling_auto_start to True
         # to automatically start the profiler on when

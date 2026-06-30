@@ -46,7 +46,7 @@ Each framework type has a specific Pydantic model in `compliance_models.py`:
 
 ## File Naming Convention
 
-```
+```text
 {framework}_{version}_{provider}.json
 ```
 

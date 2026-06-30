@@ -14,8 +14,10 @@ import { ImageProviderBadge } from "./image-provider-badge";
 import { KS8ProviderBadge } from "./ks8-provider-badge";
 import { M365ProviderBadge } from "./m365-provider-badge";
 import { MongoDBAtlasProviderBadge } from "./mongodbatlas-provider-badge";
+import { OktaProviderBadge } from "./okta-provider-badge";
 import { OpenStackProviderBadge } from "./openstack-provider-badge";
 import { OracleCloudProviderBadge } from "./oraclecloud-provider-badge";
+import { VercelProviderBadge } from "./vercel-provider-badge";
 
 export {
   AlibabaCloudProviderBadge,
@@ -30,8 +32,10 @@ export {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 };
 
 // Map provider display names to their icon components
@@ -50,4 +54,6 @@ export const PROVIDER_BADGE_BY_NAME: Record<string, FC<IconSvgProps>> = {
   "Alibaba Cloud": AlibabaCloudProviderBadge,
   Cloudflare: CloudflareProviderBadge,
   OpenStack: OpenStackProviderBadge,
+  Vercel: VercelProviderBadge,
+  Okta: OktaProviderBadge,
 };

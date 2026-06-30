@@ -3,9 +3,11 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import { OVERVIEW_FILTER_PARAM } from "@/actions/overview/overview-filters";
 import { getSeverityTrendsByTimeRange } from "@/actions/overview/severity-trends";
 import { LineChart } from "@/components/graphs/line-chart";
 import { LineConfig, LineDataPoint } from "@/components/graphs/types";
+import { applyFailNonMutedFilters } from "@/lib";
 import {
   SEVERITY_LEVELS,
   SEVERITY_LINE_CONFIGS,
@@ -41,10 +43,16 @@ export const FindingSeverityOverTime = ({
 
   const getActiveProviderFilters = (): Record<string, string> => {
     const filters: Record<string, string> = {};
-    const providerType = searchParams.get("filter[provider_type__in]");
-    const providerId = searchParams.get("filter[provider_id__in]");
-    if (providerType) filters["filter[provider_type__in]"] = providerType;
-    if (providerId) filters["filter[provider_id__in]"] = providerId;
+    const providerType = searchParams.get(OVERVIEW_FILTER_PARAM.PROVIDER_TYPE);
+    const providerId = searchParams.get(OVERVIEW_FILTER_PARAM.PROVIDER_ID);
+    const providerGroups = searchParams.get(
+      OVERVIEW_FILTER_PARAM.PROVIDER_GROUPS,
+    );
+    if (providerType)
+      filters[OVERVIEW_FILTER_PARAM.PROVIDER_TYPE] = providerType;
+    if (providerId) filters[OVERVIEW_FILTER_PARAM.PROVIDER_ID] = providerId;
+    if (providerGroups)
+      filters[OVERVIEW_FILTER_PARAM.PROVIDER_GROUPS] = providerGroups;
     return filters;
   };
 
@@ -57,11 +65,8 @@ export const FindingSeverityOverTime = ({
   }) => {
     const params = new URLSearchParams();
 
-    // Always filter by FAIL status since this chart shows failed findings
-    params.set("filter[status__in]", "FAIL");
-
-    // Exclude muted findings
-    params.set("filter[muted]", "false");
+    // Show active failing findings only for this chart's drill-down.
+    applyFailNonMutedFilters(params);
 
     // Add scan_ids filter
     if (

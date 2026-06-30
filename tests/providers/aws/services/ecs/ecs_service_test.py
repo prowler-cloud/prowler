@@ -122,27 +122,27 @@ def mock_generate_regional_clients(provider, service):
 class Test_ECS_Service:
     # Test ECS Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
         assert ecs.service == "ecs"
 
     # Test ECS client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
         for reg_client in ecs.regional_clients.values():
             assert reg_client.__class__.__name__ == "ECS"
 
     # Test ECS session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
         assert ecs.session.__class__.__name__ == "Session"
 
     # Test list ECS task definitions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_task_definitions(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
 
         task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
@@ -156,7 +156,7 @@ class Test_ECS_Service:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS task definitions
     def test_describe_task_definitions(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
 
         task_arn = "arn:aws:ecs:eu-west-1:123456789012:task-definition/test_cluster_1/test_ecs_task:1"
@@ -204,7 +204,7 @@ class Test_ECS_Service:
     # Test list ECS clusters
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_clusters(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
 
         cluster_arn1 = "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1"
@@ -217,7 +217,7 @@ class Test_ECS_Service:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS clusters
     def test_describe_clusters(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
 
         cluster_arn1 = "arn:aws:ecs:eu-west-1:123456789012:cluster/test_cluster_1"
@@ -237,7 +237,7 @@ class Test_ECS_Service:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test describe ECS services
     def test_describe_services(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecs = ECS(aws_provider)
 
         service_arn = (

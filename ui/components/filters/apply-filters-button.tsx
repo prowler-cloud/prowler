@@ -1,7 +1,5 @@
 "use client";
 
-import { Check } from "lucide-react";
-
 import { Button } from "@/components/shadcn";
 import { cn } from "@/lib/utils";
 
@@ -10,7 +8,7 @@ export interface ApplyFiltersButtonProps {
   hasChanges: boolean;
   /** Number of filter keys that have pending changes */
   changeCount: number;
-  /** Called when the user clicks "Apply Filters" */
+  /** Called when the user clicks "Apply Changes" */
   onApply: () => void;
   /** Called when the user clicks the discard (Undo) action */
   onDiscard: () => void;
@@ -19,7 +17,7 @@ export interface ApplyFiltersButtonProps {
 }
 
 /**
- * Displays an "Apply Filters" button with an optional discard action.
+ * Displays an "Apply Changes" button with an optional discard action.
  *
  * - Shows the count of pending changes when `hasChanges` is true.
  * - The apply button is disabled (and visually muted) when there are no changes.
@@ -34,10 +32,10 @@ export const ApplyFiltersButton = ({
   className,
 }: ApplyFiltersButtonProps) => {
   const label =
-    changeCount > 0 ? `Apply Filters (${changeCount})` : "Apply Filters";
+    changeCount > 0 ? `Apply Changes (${changeCount})` : "Apply Changes";
 
   return (
-    <div className={cn("flex items-center gap-1", className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <Button
         variant="default"
         size="sm"
@@ -45,13 +43,12 @@ export const ApplyFiltersButton = ({
         onClick={onApply}
         aria-label={label}
       >
-        <Check className="size-4" />
         {label}
       </Button>
 
       {hasChanges && (
         <Button
-          variant="ghost"
+          variant="outline"
           size="sm"
           onClick={onDiscard}
           aria-label="Undo pending filter changes"

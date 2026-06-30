@@ -1,15 +1,15 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_key_expiration_set_in_non_rbac",
-  "CheckTitle": "Key Vault without RBAC authorization has expiration date set for all enabled keys",
+  "CheckTitle": "Key in non-RBAC Key Vault has expiration date set",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "microsoft.keyvault/vaults",
+  "ResourceType": "microsoft.keyvault/vaults/keys",
   "ResourceGroup": "security",
-  "Description": "**Azure Key Vaults** using access **policies (non-RBAC)** are assessed to confirm all **enabled keys** have an `expiration` (`exp`) defined. The finding highlights keys in these vaults that lack a set lifetime.",
+  "Description": "Each **enabled key** in an **Azure Key Vault** using **access policies (non-RBAC)** is assessed to confirm it has an `expiration` (`exp`) attribute defined.",
   "Risk": "Non-expiring keys enable indefinite use, degrading **confidentiality** and **integrity**. Stale or compromised keys can decrypt data, forge signatures, and maintain persistence. Absent lifetimes weaken rotation discipline and impede timely revocation, increasing exposure to cryptographic and operational drift.",
   "RelatedUrl": "",
   "AdditionalURLs": [

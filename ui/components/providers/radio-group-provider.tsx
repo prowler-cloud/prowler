@@ -21,8 +21,10 @@ import {
   KS8ProviderBadge,
   M365ProviderBadge,
   MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
   OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "../icons/providers-badge";
 import { FormMessage } from "../ui/form";
 
@@ -96,6 +98,16 @@ const PROVIDERS = [
     value: "openstack",
     label: "OpenStack",
     badge: OpenStackProviderBadge,
+  },
+  {
+    value: "vercel",
+    label: "Vercel",
+    badge: VercelProviderBadge,
+  },
+  {
+    value: "okta",
+    label: "Okta",
+    badge: OktaProviderBadge,
   },
 ] as const;
 

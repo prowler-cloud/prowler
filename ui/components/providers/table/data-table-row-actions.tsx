@@ -1,16 +1,30 @@
 "use client";
 
 import { Row } from "@tanstack/react-table";
-import { KeyRound, Pencil, Rocket, Trash2 } from "lucide-react";
+import {
+  CalendarClock,
+  KeyRound,
+  Pencil,
+  Rocket,
+  Timer,
+  Trash2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
-import { ProviderWizardModal } from "@/components/providers/wizard";
+import { getSchedule } from "@/actions/schedules";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
+  ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import {
+  EDIT_SCAN_SCHEDULE_STATE,
+  EditScanScheduleModal,
+  type EditScanScheduleState,
+} from "@/components/scans/schedule/edit-scan-schedule-modal";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
@@ -20,6 +34,8 @@ import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
+import { getScanScheduleCapability } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import {
@@ -29,6 +45,12 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+  type ScanScheduleProvider,
+  type ScheduleApiResponse,
+} from "@/types/schedules";
 
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
@@ -42,8 +64,21 @@ interface DataTableRowActionsProps {
   isRowSelected: boolean;
   /** IDs of all selected providers that have credentials (testable) */
   testableProviderIds: string[];
+  /** IDs of all selected providers that can receive schedule updates. */
+  selectedScheduleProviderIds?: string[];
+  /** Visible selected providers used as modal reference rows. */
+  selectedScheduleProviders?: ScanScheduleProvider[];
   /** Callback to clear the row selection after bulk operation */
   onClearSelection: () => void;
+  onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  /**
+   * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
+   * decision). The prowler-cloud overlay injects a billing-aware capability so
+   * only subscribed Cloud accounts can open the advanced schedule editor (which
+   * talks to the new schedule API).
+   */
+  capability?: ScanScheduleCapability;
 }
 
 function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
@@ -60,32 +95,59 @@ function collectTestableChildProviderIds(rows: ProvidersTableRow[]): string[] {
   return ids;
 }
 
+function collectChildScheduleProviders(
+  rows: ProvidersTableRow[],
+): ScanScheduleProvider[] {
+  const providers: ScanScheduleProvider[] = [];
+
+  for (const row of rows) {
+    if (row.rowType === PROVIDERS_ROW_TYPE.PROVIDER) {
+      providers.push({
+        providerId: row.id,
+        providerType: row.attributes.provider,
+        providerUid: row.attributes.uid,
+        providerAlias: row.attributes.alias,
+      });
+      continue;
+    }
+
+    providers.push(...collectChildScheduleProviders(row.subRows));
+  }
+
+  return providers;
+}
+
 interface OrgGroupDropdownActionsProps {
   rowData: ProvidersOrganizationRow;
   loading: boolean;
+  canEditSchedule: boolean;
   hasSelection: boolean;
   testableProviderIds: string[];
   childTestableIds: string[];
+  scheduleProviderCount: number;
   onClearSelection: () => void;
   onBulkTest: (ids: string[]) => Promise<void>;
   onTestChildConnections: () => Promise<void>;
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  onOpenScheduleEditor: () => void;
 }
 
 function OrgGroupDropdownActions({
   rowData,
   loading,
+  canEditSchedule,
   hasSelection,
   testableProviderIds,
   childTestableIds,
+  scheduleProviderCount,
   onClearSelection,
   onBulkTest,
   onTestChildConnections,
+  onOpenOrganizationWizard,
+  onOpenScheduleEditor,
 }: OrgGroupDropdownActionsProps) {
   const [isDeleteOrgOpen, setIsDeleteOrgOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
-  const [isOrgWizardOpen, setIsOrgWizardOpen] = useState(false);
-  const [orgWizardData, setOrgWizardData] =
-    useState<OrgWizardInitialData | null>(null);
 
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
@@ -97,7 +159,7 @@ function OrgGroupDropdownActions({
     targetPhase: OrgWizardInitialData["targetPhase"],
     intent?: OrgWizardInitialData["intent"],
   ) => {
-    setOrgWizardData({
+    onOpenOrganizationWizard({
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -105,33 +167,25 @@ function OrgGroupDropdownActions({
       targetPhase,
       intent,
     });
-    setIsOrgWizardOpen(true);
   };
 
   return (
     <>
       {isOrgKind && (
-        <>
-          <Modal
-            open={isEditNameOpen}
-            onOpenChange={setIsEditNameOpen}
-            title="Edit Organization Name"
-          >
-            <EditNameForm
-              currentValue={rowData.name}
-              label="Name"
-              successMessage="The organization name was updated successfully."
-              helperText="If left blank, Prowler will use the name stored in AWS."
-              setIsOpen={setIsEditNameOpen}
-              onSave={(name) => updateOrganizationName(rowData.id, name)}
-            />
-          </Modal>
-          <ProviderWizardModal
-            open={isOrgWizardOpen}
-            onOpenChange={setIsOrgWizardOpen}
-            orgInitialData={orgWizardData ?? undefined}
+        <Modal
+          open={isEditNameOpen}
+          onOpenChange={setIsEditNameOpen}
+          title="Edit Organization Name"
+        >
+          <EditNameForm
+            currentValue={rowData.name}
+            label="Name"
+            successMessage="The organization name was updated successfully."
+            helperText="If left blank, Prowler will use the name stored in AWS."
+            setIsOpen={setIsEditNameOpen}
+            onSave={(name) => updateOrganizationName(rowData.id, name)}
           />
-        </>
+        </Modal>
       )}
       <Modal
         open={isDeleteOrgOpen}
@@ -169,6 +223,14 @@ function OrgGroupDropdownActions({
               />
             </>
           )}
+          {isOrgKind && canEditSchedule && (
+            <ActionDropdownItem
+              icon={<CalendarClock />}
+              label="Edit Scan Schedule"
+              onSelect={() => onOpenScheduleEditor()}
+              disabled={scheduleProviderCount === 0}
+            />
+          )}
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : `Test Connections (${testCount})`}
@@ -204,13 +266,25 @@ export function DataTableRowActions({
   hasSelection,
   isRowSelected,
   testableProviderIds,
+  selectedScheduleProviderIds = [],
+  selectedScheduleProviders = [],
   onClearSelection,
+  onOpenProviderWizard,
+  onOpenOrganizationWizard,
+  capability,
 }: DataTableRowActionsProps) {
+  const canEditSchedule =
+    (capability ?? getScanScheduleCapability(isCloud())) ===
+    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
+  const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
+    kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
+  });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   const rowData = row.original;
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
@@ -221,11 +295,23 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  const scheduleProvider: ScanScheduleProvider | undefined = provider
+    ? {
+        providerId,
+        providerType,
+        providerUid,
+        providerAlias,
+      }
+    : undefined;
 
   const orgGroupKind = isOrganizationRow ? rowData.groupKind : null;
   const childTestableIds = isOrganizationRow
     ? collectTestableChildProviderIds(rowData.subRows)
     : [];
+  const childScheduleProviders = isOrganizationRow
+    ? collectChildScheduleProviders(rowData.subRows)
+    : [];
+  const childScheduleProviderIds = isOrganizationRow ? rowData.providerIds : [];
 
   const handleBulkTest = async (ids: string[]) => {
     if (ids.length === 0) return;
@@ -289,41 +375,128 @@ export function DataTableRowActions({
     await handleBulkTest(childTestableIds);
   };
 
+  const openScheduleEditor = async (
+    targetProviders: ScanScheduleProvider[] = scheduleProvider
+      ? [scheduleProvider]
+      : [],
+    targetProviderIds: string[] = targetProviders.map(
+      (target) => target.providerId,
+    ),
+  ) => {
+    const targetProviderId = targetProviderIds[0];
+
+    if (!targetProviderId) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message: "Provider ID is not available.",
+      });
+      setIsScheduleOpen(true);
+      return;
+    }
+
+    setScheduleState({ kind: EDIT_SCAN_SCHEDULE_STATE.LOADING });
+    setIsScheduleOpen(true);
+
+    const response = (await getSchedule(targetProviderId)) as
+      | ScheduleApiResponse
+      | { error?: string };
+
+    if (!response || ("error" in response && response.error)) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message:
+          response && "error" in response && response.error
+            ? response.error
+            : "Failed to load scan schedule.",
+      });
+      return;
+    }
+
+    setScheduleState({
+      kind: EDIT_SCAN_SCHEDULE_STATE.LOADED,
+      schedule: "data" in response ? response.data : null,
+    });
+  };
+
   // When this row is part of the selection, only show "Test Connection"
   if (hasSelection && isRowSelected) {
     const bulkCount =
       testableProviderIds.length > 1 ? ` (${testableProviderIds.length})` : "";
+    const selectedScheduleProviderCount = selectedScheduleProviderIds.length;
 
     return (
-      <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown>
-          <ActionDropdownItem
-            icon={<Rocket />}
-            label={loading ? "Testing..." : `Test Connection${bulkCount}`}
-            onSelect={(e) => {
-              e.preventDefault();
-              handleTestConnection();
-            }}
-            disabled={testableProviderIds.length === 0 || loading}
-          />
-        </ActionDropdown>
-      </div>
+      <>
+        <EditScanScheduleModal
+          open={isScheduleOpen}
+          onOpenChange={setIsScheduleOpen}
+          providers={selectedScheduleProviders}
+          providerIds={selectedScheduleProviderIds}
+          targetName="Selected providers"
+          state={scheduleState}
+          onSaved={onClearSelection}
+        />
+        <div className="relative flex items-center justify-end gap-2">
+          <ActionDropdown>
+            {canEditSchedule && selectedScheduleProviderCount > 0 && (
+              <ActionDropdownItem
+                icon={<CalendarClock />}
+                label={`Edit Scan Schedule (${selectedScheduleProviderCount})`}
+                onSelect={() =>
+                  void openScheduleEditor(
+                    selectedScheduleProviders,
+                    selectedScheduleProviderIds,
+                  )
+                }
+              />
+            )}
+            <ActionDropdownItem
+              icon={<Rocket />}
+              label={loading ? "Testing..." : `Test Connection${bulkCount}`}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTestConnection();
+              }}
+              disabled={testableProviderIds.length === 0 || loading}
+            />
+          </ActionDropdown>
+        </div>
+      </>
     );
   }
 
   // Organization / Organization Unit row actions
   if (isProvidersOrganizationRow(rowData) && orgGroupKind) {
     return (
-      <OrgGroupDropdownActions
-        rowData={rowData}
-        loading={loading}
-        hasSelection={hasSelection}
-        testableProviderIds={testableProviderIds}
-        childTestableIds={childTestableIds}
-        onClearSelection={onClearSelection}
-        onBulkTest={handleBulkTest}
-        onTestChildConnections={handleTestChildConnections}
-      />
+      <>
+        <EditScanScheduleModal
+          open={isScheduleOpen}
+          onOpenChange={setIsScheduleOpen}
+          providers={childScheduleProviders}
+          providerIds={childScheduleProviderIds}
+          targetName={rowData.name}
+          targetId={rowData.externalId ?? undefined}
+          state={scheduleState}
+        />
+        <OrgGroupDropdownActions
+          rowData={rowData}
+          loading={loading}
+          canEditSchedule={canEditSchedule}
+          hasSelection={hasSelection}
+          testableProviderIds={testableProviderIds}
+          childTestableIds={childTestableIds}
+          scheduleProviderCount={childScheduleProviderIds.length}
+          onClearSelection={onClearSelection}
+          onBulkTest={handleBulkTest}
+          onTestChildConnections={handleTestChildConnections}
+          onOpenOrganizationWizard={onOpenOrganizationWizard}
+          onOpenScheduleEditor={() =>
+            void openScheduleEditor(
+              childScheduleProviders,
+              childScheduleProviderIds,
+            )
+          }
+        />
+      </>
     );
   }
 
@@ -369,21 +542,12 @@ export function DataTableRowActions({
           <DeleteForm providerId={providerId} setIsOpen={setIsDeleteOpen} />
         )}
       </Modal>
-      <ProviderWizardModal
-        open={isWizardOpen}
-        onOpenChange={setIsWizardOpen}
-        initialData={{
-          providerId,
-          providerType,
-          providerUid,
-          providerAlias,
-          secretId: providerSecretId,
-          mode: providerSecretId
-            ? PROVIDER_WIZARD_MODE.UPDATE
-            : PROVIDER_WIZARD_MODE.ADD,
-        }}
+      <EditScanScheduleModal
+        open={isScheduleOpen}
+        onOpenChange={setIsScheduleOpen}
+        provider={scheduleProvider}
+        state={scheduleState}
       />
-
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -392,9 +556,40 @@ export function DataTableRowActions({
             onSelect={() => setIsEditOpen(true)}
           />
           <ActionDropdownItem
+            icon={<Timer />}
+            label="View Scan Jobs"
+            onSelect={() => {
+              // Same key the scans filter bar binds to (`provider__in`, by id) so
+              // the provider is pre-selected and the filter works on every tab,
+              // including Scheduled (whose endpoint only accepts provider id).
+              const params = new URLSearchParams({
+                "filter[provider__in]": providerId,
+              });
+              router.push(`/scans?${params.toString()}`);
+            }}
+          />
+          {canEditSchedule && (
+            <ActionDropdownItem
+              icon={<CalendarClock />}
+              label="Edit Scan Schedule"
+              onSelect={() => void openScheduleEditor()}
+            />
+          )}
+          <ActionDropdownItem
             icon={<KeyRound />}
-            label="Update Credentials"
-            onSelect={() => setIsWizardOpen(true)}
+            label={hasSecret ? "Update Credentials" : "Add Credentials"}
+            onSelect={() =>
+              onOpenProviderWizard({
+                providerId,
+                providerType,
+                providerUid,
+                providerAlias,
+                secretId: providerSecretId,
+                mode: providerSecretId
+                  ? PROVIDER_WIZARD_MODE.UPDATE
+                  : PROVIDER_WIZARD_MODE.ADD,
+              })
+            }
           />
           <ActionDropdownItem
             icon={<Rocket />}

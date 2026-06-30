@@ -9,20 +9,20 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class TrustedAdvisor(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
-        super().__init__("support", provider)
+        # Support API is not available in China Partition
+        # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
+        partition = provider.identity.partition
+        if partition == "aws":
+            support_region = "us-east-1"
+        elif partition == "aws-cn":
+            support_region = None
+        else:
+            support_region = "us-gov-west-1"
+        super().__init__("support", provider, region=support_region)
         self.account_arn_template = f"arn:{self.audited_partition}:trusted-advisor:{self.region}:{self.audited_account}:account"
         self.checks = []
         self.premium_support = PremiumSupport(enabled=False)
-        # Support API is not available in China Partition
-        # But only in us-east-1 or us-gov-west-1 https://docs.aws.amazon.com/general/latest/gr/awssupport.html
         if self.audited_partition != "aws-cn":
-            if self.audited_partition == "aws":
-                support_region = "us-east-1"
-            else:
-                support_region = "us-gov-west-1"
-            self.client = self.session.client(self.service, region_name=support_region)
-            self.client.region = support_region
             self._describe_services()
             if getattr(self.premium_support, "enabled", False):
                 self._describe_trusted_advisor_checks()
@@ -34,13 +34,13 @@ class TrustedAdvisor(AWSService):
             for check in self.client.describe_trusted_advisor_checks(language="en").get(
                 "checks", []
             ):
-                check_arn = f"arn:{self.audited_partition}:trusted-advisor:{self.client.region}:{self.audited_account}:check/{check['id']}"
+                check_arn = f"arn:{self.audited_partition}:trusted-advisor:{self.region}:{self.audited_account}:check/{check['id']}"
                 self.checks.append(
                     Check(
                         id=check["id"],
                         name=check["name"],
                         arn=check_arn,
-                        region=self.client.region,
+                        region=self.region,
                     )
                 )
         except ClientError as error:
@@ -50,22 +50,22 @@ class TrustedAdvisor(AWSService):
                 == "Amazon Web Services Premium Support Subscription is required to use this service."
             ):
                 logger.warning(
-                    f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
                 logger.error(
-                    f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
             logger.error(
-                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_trusted_advisor_check_result(self):
         logger.info("TrustedAdvisor - Describing Check Result...")
         try:
             for check in self.checks:
-                if check.region == self.client.region:
+                if check.region == self.region:
                     try:
                         response = self.client.describe_trusted_advisor_check_result(
                             checkId=check.id
@@ -78,11 +78,11 @@ class TrustedAdvisor(AWSService):
                             == "InvalidParameterValueException"
                         ):
                             logger.warning(
-                                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                             )
         except Exception as error:
             logger.error(
-                f"{self.client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
     def _describe_services(self):

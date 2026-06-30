@@ -25,7 +25,12 @@ If you prefer the former verbose output, use: `--verbose`. This allows seeing mo
 
 ## Report Generation
 
-By default, Prowler generates CSV, JSON-OCSF, and HTML reports. To generate a JSON-ASFF report (used by AWS Security Hub), specify `-M` or `--output-modes`:
+By default, Prowler generates CSV, JSON-OCSF, and HTML reports. Additional provider-specific formats are available:
+
+* **JSON-ASFF** (AWS only): Used by AWS Security Hub
+* **SARIF** (IaC only): Used by GitHub Code Scanning
+
+To specify output formats, use the `-M` or `--output-modes` flag:
 
 ```console
 prowler <provider> -M csv json-asff json-ocsf html

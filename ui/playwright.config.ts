@@ -113,6 +113,20 @@ export default defineConfig({
       name: "sign-up",
       testMatch: "sign-up.spec.ts",
     },
+    // This project runs the invitation accept smart router test suite
+    // Tests run unauthenticated (no auth setup dependency)
+    {
+      name: "invitation-accept",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /invitation-accept\/.*\.spec\.ts/,
+    },
+    // This project runs the runtime public-config data island test suite
+    // Tests run unauthenticated (no auth setup dependency)
+    {
+      name: "runtime-config",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /runtime-config\/.*\.spec\.ts/,
+    },
     // This project runs the scans test suite
     {
       name: "scans",
@@ -139,8 +153,9 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000,
     env: {
-      NEXT_PUBLIC_API_BASE_URL:
-        process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api/v1",
+      UI_API_BASE_URL:
+        process.env.UI_API_BASE_URL || "http://localhost:8080/api/v1",
+      AUTH_URL: process.env.AUTH_URL || "http://localhost:3000",
       AUTH_SECRET: process.env.AUTH_SECRET || "fallback-ci-secret-for-testing",
       AUTH_TRUST_HOST: process.env.AUTH_TRUST_HOST || "true",
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || "http://localhost:3000",

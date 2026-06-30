@@ -11,11 +11,12 @@
 Use these skills for detailed patterns on-demand:
 
 ### Generic Skills (Any Project)
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
 | `react-19` | No useMemo/useCallback, React Compiler | [SKILL.md](skills/react-19/SKILL.md) |
-| `nextjs-15` | App Router, Server Actions, streaming | [SKILL.md](skills/nextjs-15/SKILL.md) |
+| `nextjs-16` | App Router, Server Actions, proxy.ts, streaming | [SKILL.md](skills/nextjs-16/SKILL.md) |
 | `tailwind-4` | cn() utility, no var() in className | [SKILL.md](skills/tailwind-4/SKILL.md) |
 | `playwright` | Page Object Model, MCP workflow, selectors | [SKILL.md](skills/playwright/SKILL.md) |
 | `pytest` | Fixtures, mocking, markers, parametrize | [SKILL.md](skills/pytest/SKILL.md) |
@@ -28,6 +29,7 @@ Use these skills for detailed patterns on-demand:
 | `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
 ### Prowler-Specific Skills
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |
@@ -49,6 +51,7 @@ Use these skills for detailed patterns on-demand:
 | `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
 | `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
+| `prowler-tour` | Keep product-tour definitions aligned with the UI | [SKILL.md](skills/prowler-tour/SKILL.md) |
 | `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
@@ -60,12 +63,17 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
 | Adding DRF pagination or permissions | `django-drf` |
+| Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
+| Adding indexes or constraints to database tables | `django-migration-psql` |
 | Adding new providers | `prowler-provider` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Adding services to existing providers | `prowler-provider` |
+| Adding, updating, or removing a tour definition (*.tour.ts) | `prowler-tour` |
 | After creating/modifying a skill | `skill-sync` |
-| App Router / Server Actions | `nextjs-15` |
+| App Router / Server Actions | `nextjs-16` |
+| Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
 | Building AI chat features | `ai-sdk-5` |
+| Changing button labels or section headings on a tour-covered page | `prowler-tour` |
 | Committing changes | `prowler-commit` |
 | Configuring MCP servers in agentic workflows | `gh-aw` |
 | Create PR that requires changelog entry | `prowler-changelog` |
@@ -78,13 +86,16 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating a git commit | `prowler-commit` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
+| Creating or reviewing Django migrations | `django-migration-psql` |
 | Creating/modifying Prowler UI components | `prowler-ui` |
 | Creating/modifying models, views, serializers | `prowler-api` |
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Debugging gh-aw compilation errors | `gh-aw` |
+| Editing a UI file containing data-tour-id attributes | `prowler-tour` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | Fixing bug | `tdd` |
+| Fixing compliance JSON bugs (duplicate IDs, empty Section, stale refs) | `prowler-compliance` |
 | General Prowler development questions | `prowler` |
 | Implementing JSON:API endpoints | `django-drf` |
 | Implementing feature | `tdd` |
@@ -98,10 +109,14 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
 | Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
+| Renaming or removing a data-tour-id attribute value | `prowler-tour` |
+| Restructuring routes or layouts covered by a tour | `prowler-tour` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
+| Running makemigrations or pgmakemigrations | `django-migration-psql` |
+| Syncing compliance framework with upstream catalog | `prowler-compliance` |
 | Testing RLS tenant isolation | `prowler-test-api` |
 | Testing hooks or utilities | `vitest` |
 | Troubleshoot why a skill is missing from AGENTS.md auto-invoke | `skill-sync` |
@@ -129,6 +144,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Writing React components | `react-19` |
 | Writing TypeScript types/interfaces | `typescript` |
 | Writing Vitest tests | `vitest` |
+| Writing data backfill or data migration | `django-migration-psql` |
 | Writing documentation | `prowler-docs` |
 | Writing unit tests for UI | `vitest` |
 
@@ -140,9 +156,9 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 | Component | Location | Tech Stack |
 |-----------|----------|------------|
-| SDK | `prowler/` | Python 3.10+, Poetry |
+| SDK | `prowler/` | Python 3.10+, uv |
 | API | `api/` | Django 5.1, DRF, Celery |
-| UI | `ui/` | Next.js 15, React 19, Tailwind 4 |
+| UI | `ui/` | Next.js 16, React 19, Tailwind 4 |
 | MCP Server | `mcp_server/` | FastMCP, Python 3.12+ |
 | Dashboard | `dashboard/` | Dash, Plotly |
 
@@ -152,13 +168,13 @@ Prowler is an open-source cloud security assessment tool supporting AWS, Azure, 
 
 ```bash
 # Setup
-poetry install --with dev
-poetry run pre-commit install
+uv sync
+uv run prek install
 
 # Code quality
-poetry run make lint
-poetry run make format
-poetry run pre-commit run --all-files
+uv run make lint
+uv run make format
+uv run prek run --all-files
 ```
 
 ---

@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import {
   Select,
   SelectContent,
@@ -7,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
+import { getScanEntityLabel } from "@/lib/helper-filters";
 import { ProviderType, ScanProps } from "@/types";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";
@@ -29,6 +31,7 @@ export const ScanSelector = ({
   onSelectionChange,
 }: SelectScanComplianceDataProps) => {
   const selectedScan = scans.find((item) => item.id === selectedScanId);
+  const triggerLabel = selectedScan ? getScanEntityLabel(selectedScan) : "";
 
   return (
     <Select
@@ -39,21 +42,28 @@ export const ScanSelector = ({
         }
       }}
     >
-      <SelectTrigger className="w-full max-w-[360px]">
+      <SelectTrigger className="w-full">
         <SelectValue placeholder="Select a scan">
           {selectedScan ? (
-            <ComplianceScanInfo scan={selectedScan} />
+            <>
+              <span className="text-text-neutral-secondary shrink-0 text-xs">
+                Scan:
+              </span>
+              <Badge variant="tag" className="truncate">
+                {triggerLabel}
+              </Badge>
+            </>
           ) : (
             "Select a scan"
           )}
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="max-w-[360px]">
+      <SelectContent>
         {scans.map((scan) => (
           <SelectItem
             key={scan.id}
             value={scan.id}
-            className="data-[state=checked]:bg-bg-neutral-tertiary"
+            className="data-[state=checked]:bg-bg-neutral-tertiary [&_svg:not([class*='size-'])]:size-6"
           >
             <ComplianceScanInfo scan={scan} />
           </SelectItem>

@@ -36,7 +36,8 @@
   },
   "Categories": [
     "identity-access",
-    "secrets"
+    "secrets",
+    "ec2-imdsv1"
   ],
   "DependsOn": [],
   "RelatedTo": [],

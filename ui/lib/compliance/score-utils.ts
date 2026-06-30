@@ -53,3 +53,9 @@ export function getScoreLabel(score: number): string {
   if (score >= SCORE_THRESHOLDS.WARNING) return "Moderate Risk";
   return "Critical Risk";
 }
+
+export function getScoreIndicatorClass(variant: ScoreColorVariant): string {
+  if (variant === "danger") return "bg-bg-fail";
+  if (variant === "warning") return "bg-bg-warning";
+  return "bg-bg-pass";
+}

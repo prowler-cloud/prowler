@@ -201,7 +201,7 @@
       "Id": "1.10",
       "Description": "Ensure KMS Encryption Keys Are Rotated Within a Period of 90 Days",
       "Checks": [
-        "kms_key_rotation_enabled"
+        "kms_key_rotation_max_90_days"
       ],
       "Attributes": [
         {
@@ -914,7 +914,7 @@
       ]
     },
     {
-      "Id": "3.1",
+      "Id": "3.10",
       "Description": "Use Identity Aware Proxy (IAP) to Ensure Only Traffic From Google IP Addresses are 'Allowed'",
       "Checks": [],
       "Attributes": [
@@ -1132,7 +1132,7 @@
       ]
     },
     {
-      "Id": "4.1",
+      "Id": "4.10",
       "Description": "Ensure That App Engine Applications Enforce HTTPS Connections",
       "Checks": [],
       "Attributes": [

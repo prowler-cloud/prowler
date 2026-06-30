@@ -7,6 +7,19 @@ import { cn } from "@/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 
+export function InfoTooltip({ content }: { content: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-pointer items-center">
+          <InfoIcon className="text-bg-data-info size-3" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{content}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export const INFO_FIELD_VARIANTS = {
   default: "default",
   simple: "simple",
@@ -38,16 +51,7 @@ export function InfoField({
     <span className="flex items-center gap-1">
       {label}
       {inline && ":"}
-      {tooltipContent && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex cursor-pointer items-center">
-              <InfoIcon className="text-bg-data-info size-3" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{tooltipContent}</TooltipContent>
-        </Tooltip>
-      )}
+      {tooltipContent && <InfoTooltip content={tooltipContent} />}
     </span>
   );
 

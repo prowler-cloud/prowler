@@ -3,8 +3,9 @@
 import { useState } from "react";
 
 import { Badge, Button, Card } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
-import { DateWithTime, InfoField } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/ui/entities";
 import { EditTenantForm } from "@/components/users/forms";
 import { DeleteTenantForm } from "@/components/users/forms/delete-tenant-form";
 import { SwitchTenantForm } from "@/components/users/forms/switch-tenant-form";

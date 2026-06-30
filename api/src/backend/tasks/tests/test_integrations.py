@@ -1,7 +1,12 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.models import Integration
+from api.utils import prowler_integration_connection_test
 from django.db import OperationalError
+from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
+from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
     get_s3_client_from_integration,
     get_security_hub_client_from_integration,
@@ -9,12 +14,6 @@ from tasks.jobs.integrations import (
     upload_s3_integration,
     upload_security_hub_integration,
 )
-
-from api.db_router import READ_REPLICA_ALIAS, MainRouter
-from api.models import Integration
-from api.utils import prowler_integration_connection_test
-from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
-from prowler.providers.common.models import Connection
 
 
 @pytest.mark.django_db
@@ -264,10 +263,9 @@ class TestS3IntegrationUploads:
 
     def test_s3_integration_rejects_invalid_output_directory_characters(self):
         """Test that S3 integration validation rejects invalid characters."""
-        from rest_framework.exceptions import ValidationError
-
         from api.models import Integration
         from api.v1.serializers import BaseWriteIntegrationSerializer
+        from rest_framework.exceptions import ValidationError
 
         integration_type = Integration.IntegrationChoices.AMAZON_S3
         providers = []
@@ -290,10 +288,9 @@ class TestS3IntegrationUploads:
 
     def test_s3_integration_rejects_empty_output_directory(self):
         """Test that S3 integration validation rejects empty directories."""
-        from rest_framework.exceptions import ValidationError
-
         from api.models import Integration
         from api.v1.serializers import BaseWriteIntegrationSerializer
+        from rest_framework.exceptions import ValidationError
 
         integration_type = Integration.IntegrationChoices.AMAZON_S3
         providers = []

@@ -73,7 +73,9 @@
     {
       "Id": "1.1.4",
       "Description": "Ensure that when a proposed code change is updated, previous approvals are declined, and new approvals are required.",
-      "Checks": [],
+      "Checks": [
+        "repository_default_branch_dismisses_stale_reviews"
+      ],
       "Attributes": [
         {
           "Section": "1 Source Code",
