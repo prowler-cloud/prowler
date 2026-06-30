@@ -377,4 +377,17 @@ override-dependencies = ["okta==3.4.2"]
 # (e.g. mock_sensitive_args in tests/lib/cli/redact_test.py)
 # - view   : DRF BasePermission.has_object_permission(self, request, view, obj)
 # framework-required signature param in skills/django-drf template assets
-ignore_names = ["mock_*", "view"]
+ignore_names = [
+  "Prefix",
+  "backfill_scan_metadata_fixture",
+  "create_provider_group_relationship",
+  "expected_scanner_args",
+  "field_to_check",
+  "finding_groups_title_variants_fixture",
+  "latest_scan_finding_with_categories",
+  "mock_*",
+  "provider_compliance_scores_fixture",
+  "scan_summaries_fixture",
+  "tenant_compliance_summary_fixture",
+  "view"
+]
