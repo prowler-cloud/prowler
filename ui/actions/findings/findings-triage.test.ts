@@ -219,6 +219,38 @@ describe("findings triage actions", () => {
     );
   });
 
+  it("should send an empty body when clearing an existing note", async () => {
+    // Given
+    const { updateFindingTriage } = await importActions();
+    handleApiResponseMock.mockResolvedValue({ data: { id: "note-1" } });
+
+    // When
+    await updateFindingTriage({
+      findingId: "finding-snapshot-id",
+      findingUid: "finding/stable/uid",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
+      note: "",
+    });
+
+    // Then
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.test/api/v1/finding-triages/triage-1/notes/note-1",
+      expect.objectContaining({
+        method: "PATCH",
+        body: JSON.stringify({
+          data: {
+            type: "finding-triage-notes",
+            attributes: {
+              body: "",
+            },
+          },
+        }),
+      }),
+    );
+  });
+
   it("should update an existing note and send status-only triage patch", async () => {
     // Given
     const { updateFindingTriage } = await importActions();

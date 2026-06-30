@@ -25,7 +25,6 @@ export function buildFindingTriageUpdateInput({
   const shouldUpdateExistingNote =
     triage.notesCount > 0 &&
     triage.noteId !== null &&
-    trimmedNote.length > 0 &&
     trimmedNote !== triage.noteBody;
   const shouldIncludeStatus =
     isManualStatus(selectedStatus) && (statusChanged || shouldCreateFirstNote);

@@ -125,7 +125,7 @@ describe("buildFindingTriageUpdateInput", () => {
     });
   });
 
-  it("should not update an existing note when the body is cleared", () => {
+  it("should send an empty note when an existing note is cleared", () => {
     // Given
     const triage = makeTriageDetail();
 
@@ -137,6 +137,14 @@ describe("buildFindingTriageUpdateInput", () => {
     });
 
     // Then
-    expect(result).toBeNull();
+    expect(result).toEqual({
+      findingId: "finding-1",
+      findingUid: "prowler-finding-uid-1",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
+      isMuted: false,
+      note: "",
+    });
   });
 });

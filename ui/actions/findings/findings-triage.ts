@@ -232,7 +232,7 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
     triagePath = `/findings/${encodePathSegment(findingUid)}/triage`;
   }
 
-  if (input.note && input.notesCount > 0 && input.noteId) {
+  if (input.note !== undefined && input.notesCount > 0 && input.noteId) {
     const noteResult = await patchJsonApi(
       `${triagePath}/notes/${input.noteId}`,
       buildFindingTriageNoteBody(input.note),
@@ -251,7 +251,7 @@ export async function updateFindingTriage(input: UpdateFindingTriageInput) {
     triagePath,
     buildFindingTriageBody({
       status: input.status,
-      note: input.notesCount === 0 ? input.note : undefined,
+      note: input.notesCount === 0 && input.note ? input.note : undefined,
     }),
   );
   await createMuteRuleOrRollback(input, findingUid);

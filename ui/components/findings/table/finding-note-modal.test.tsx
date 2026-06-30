@@ -200,7 +200,7 @@ describe("FindingNoteModal", () => {
     });
   });
 
-  it("should not submit when an existing note is cleared and status is unchanged", async () => {
+  it("should send an empty body when an existing note is cleared", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -212,7 +212,15 @@ describe("FindingNoteModal", () => {
     await user.click(screen.getByRole("button", { name: "Save changes" }));
 
     // Then
-    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+    expect(onTriageUpdateAction).toHaveBeenCalledWith({
+      findingId: "finding-1",
+      findingUid: "prowler-finding-uid-1",
+      triageId: "triage-1",
+      notesCount: 1,
+      noteId: "note-1",
+      isMuted: false,
+      note: "",
+    });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
