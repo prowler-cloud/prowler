@@ -1,0 +1,208 @@
+---
+title: 'Scan Configuration'
+---
+
+Scan Configuration lets you override Prowler's built-in scan defaults per tenant and per provider, directly from Prowler App — without editing files or redeploying. Each configuration is a small YAML document that changes how specific checks behave (thresholds, allowed values, retention windows, and so on), and you attach it to the cloud providers that should use it on their next scan.
+
+<Note>
+Scan Configuration is a **Prowler Cloud-only** feature. The open-source API does not expose the `scan-configurations` endpoints, so the menu item and provider actions described here only appear in Prowler Cloud.
+</Note>
+
+## What Is a Scan Configuration?
+
+Every Prowler scan reads a set of tunable values documented in [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml) — for example, how many days an access key can stay unused before it's flagged, or the minimum retention period for a storage bucket. A Scan Configuration is a **partial override** of those defaults:
+
+- You include **only** the keys you want to change. Everything else falls back to Prowler's built-in defaults.
+- It is stored per tenant and applied to the **providers you attach** to it.
+- A provider can be attached to **at most one** Scan Configuration at a time.
+- Changes take effect on the provider's **next scan** — they do not re-run past scans.
+
+This is different from the [Mutelist](/user-guide/tutorials/prowler-app-mute-findings), which hides findings. A Scan Configuration changes how the checks themselves evaluate your resources.
+
+## Where to Find It
+
+In Prowler Cloud, open **Configuration → Scan** in the sidebar, or go directly to `/scans/config`. The page lists every Scan Configuration in your tenant, with search by name and a filter by provider.
+
+<Note>
+The page lives under the Scans area (`/scans/config`), mirroring how Lighthouse AI keeps its settings at `/lighthouse/config`. The sidebar item is labeled **Scan** because it already sits inside the **Configuration** group.
+</Note>
+
+## Creating a Scan Configuration
+
+<Steps>
+  <Step title="Open the editor">
+    On the **Scan** page, click **New Scan Configuration**.
+  </Step>
+  <Step title="Name it">
+    Give the configuration a descriptive **Name** (3–100 characters), e.g. `stricter-iam-aws`. Names must be unique within your tenant.
+  </Step>
+  <Step title="Write the YAML overrides">
+    In the **Configuration (YAML)** field, add only the keys you want to override, grouped by provider. The editor is pre-filled with a representative default placeholder you can use as a starting point.
+  </Step>
+  <Step title="Attach providers (optional)">
+    Under **Attach to providers**, pick the providers that should use this configuration. This is optional — you can save without any provider and attach them later.
+  </Step>
+  <Step title="Save">
+    Click **Save**. The server validates the configuration values and, if everything is valid, stores it and attaches the selected providers.
+  </Step>
+</Steps>
+
+### YAML structure
+
+The YAML follows the structure of `config.yaml`: a mapping keyed by provider, with each provider section holding the keys you want to override.
+
+```yaml
+aws:
+  max_unused_access_keys_days: 30
+  max_console_access_days: 30
+  max_security_group_rules: 25
+
+azure:
+  defender_attack_path_minimal_risk_level: "Critical"
+
+gcp:
+  storage_min_retention_days: 30
+```
+
+Scan Configuration works for **every provider Prowler scans** — you key your overrides by provider using the same section names as `config.yaml`. Each provider below ships a configuration schema, so its values are checked on save (ranges, enums, and types):
+
+| Provider | Section key |
+| --- | --- |
+| AWS | `aws` |
+| Azure | `azure` |
+| Google Cloud | `gcp` |
+| Kubernetes | `kubernetes` |
+| Microsoft 365 | `m365` |
+| GitHub | `github` |
+| MongoDB Atlas | `mongodbatlas` |
+| Cloudflare | `cloudflare` |
+| Vercel | `vercel` |
+| Okta | `okta` |
+| Alibaba Cloud | `alibabacloud` |
+| OpenStack | `openstack` |
+
+Sections that aren't listed here — those contributed by third-party check plugins, or providers that don't yet ship tunable defaults — are **accepted as-is** and applied without server-side value validation.
+
+<Tip>
+You don't need to fill in every provider — include only the sections and keys you actually want to change. The placeholder shown in the editor is just an example; if you leave the field with only the placeholder (greyed-out) text, nothing is saved.
+</Tip>
+
+## How Validation Works
+
+Validation happens in two layers, mirroring the Advanced Mutelist editor:
+
+1. **Client-side (live): YAML syntax only.** As you type, the editor checks that the text parses to a valid YAML mapping. If it doesn't, you'll see an `Invalid YAML format` message and the **Save** button is disabled. When the syntax is valid, it shows **Valid YAML format**.
+2. **Server-side (on save): configuration values.** When you click Save (or Update), the API validates the actual values — ranges, enums, and types — against Prowler's schema. Any problems are returned and shown **inline beneath the field**, for both create and edit.
+
+For example, `azure.defender_attack_path_minimal_risk_level` only accepts `Low`, `Medium`, `High`, or `Critical`. Saving any other value returns an inline error like:
+
+```
+azure.defender_attack_path_minimal_risk_level: Input should be 'Low', 'Medium', 'High' or 'Critical'
+```
+
+<Warning>
+"Valid YAML format" confirms only that the document is **syntactically** correct — it does **not** mean the values are valid. Value validation (ranges and enums) is performed by the server when you save.
+
+Be careful with indentation. A line like `azure: defender_attack_path_minimal_risk_level: Critical` (no newline/indent after `azure:`) is *valid YAML*, but it parses to a single top-level key named `azure:defender_attack_path_minimal_risk_level` instead of the nested `azure` section — so the value is never applied. Always nest provider keys:
+
+```yaml
+azure:
+  defender_attack_path_minimal_risk_level: "Critical"
+```
+</Warning>
+
+<Info>
+Unknown top-level sections and unknown keys inside a known provider section are **tolerated** (accepted without error) for backward compatibility with third-party check plugins. This means typos in section or key names won't be rejected on save — double-check your structure against `config.yaml`.
+</Info>
+
+## Attaching Providers
+
+A Scan Configuration only has an effect once it's attached to one or more providers. There are two ways to manage attachments.
+
+### From the Scan Config editor
+
+In the **Attach to providers** field, select the providers that should use this configuration. Providers already attached to **another** configuration are hidden from the selector, since each provider can belong to only one configuration at a time.
+
+### From the provider's row menu
+
+You can also manage a provider's configuration from **Providers**:
+
+<Steps>
+  <Step title="Open the provider menu">
+    On the **Providers** page, open the **⋮** menu on a provider row.
+  </Step>
+  <Step title="Choose the scan-config action">
+    Click **Edit Scan Configuration**.
+  </Step>
+  <Step title="Pick a configuration">
+    In the dialog, choose an existing configuration from the dropdown to associate it, pick a different one to move the provider, or select **Default** to detach it. **Default** means the provider uses Prowler's built-in scan defaults from the SDK (no custom configuration), and it's always available — even if no custom configurations exist yet. Then click **Save**.
+  </Step>
+</Steps>
+
+<Note>
+This dialog only **associates or disassociates** an existing configuration. To create or edit the configuration's YAML, use the **Scan Config** view (a link is provided in the dialog).
+</Note>
+
+<Info>
+Because a provider can belong to only one configuration, associating a provider that is already attached elsewhere **moves** it to the new configuration automatically — it is removed from the previous one.
+</Info>
+
+## Editing and Deleting
+
+On the **Scan Config** page, open the **⋮** menu on a configuration row:
+
+- **Edit:** Choose **Edit** to open the editor, change its name, YAML, or attached providers, and click **Update**. Editing the YAML always happens here, never from the provider row.
+- **Delete:** Choose **Delete** (in the danger zone) and confirm. Providers that were attached fall back to Prowler's built-in scan defaults on their next scan.
+
+## How It's Applied
+
+When a scan runs for a provider:
+
+1. If the provider is attached to a Scan Configuration, Prowler applies that configuration's overrides on top of the built-in defaults.
+2. If it isn't attached to any, the built-in defaults from `config.yaml` are used.
+
+Overrides are merged key by key: any value you don't set keeps its default.
+
+## Common Examples
+
+**Stricter IAM hygiene for AWS:**
+
+```yaml
+aws:
+  max_unused_access_keys_days: 30
+  max_console_access_days: 30
+  max_unused_sagemaker_access_days: 45
+```
+
+**Raise Azure Defender attack-path sensitivity:**
+
+```yaml
+azure:
+  defender_attack_path_minimal_risk_level: "Critical"
+```
+
+**Tighten GCP storage retention and key rotation:**
+
+```yaml
+gcp:
+  storage_min_retention_days: 30
+  secretmanager_max_rotation_days: 30
+```
+
+## Troubleshooting
+
+<Note>
+**Save is disabled.** The YAML has a syntax error (or the field is empty). Fix the `Invalid YAML format` message shown beneath the editor.
+</Note>
+
+<Note>
+**An inline error appears after saving.** The server rejected a value (out of range or not an allowed enum). The message names the exact path, e.g. `aws.max_unused_access_keys_days: ...`. Correct the value and save again.
+</Note>
+
+<Note>
+**A provider doesn't appear in the selector.** It's already attached to another Scan Configuration. Detach it there first, or use the provider row menu to move it.
+</Note>
+
+<Note>
+**My override doesn't seem to apply.** Check indentation (provider keys must be nested under their section) and key spelling — unknown keys are silently accepted. Compare against [`config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml).
+</Note>
