@@ -126,6 +126,7 @@
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-import-findings",
               "user-guide/tutorials/prowler-alerts",
+              "user-guide/tutorials/prowler-app-scan-configuration",
               {
                 "group": "Mutelist",
                 "expanded": true,
