@@ -39,7 +39,7 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
 - Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
-- OCI provider secrets can now omit `region` and `regions`, while legacy single-region and explicit multi-region filters remain supported [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
+- OCI provider secrets can now omit `region` and `regions`; existing OCI secrets are migrated to remove stored region filters, so migrated providers discover and scan all subscribed regions by default while legacy single-region and explicit multi-region filters remain supported for new payloads [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 - Gunicorn keep-alive timeout now exceeds the load balancer idle timeout, stopping 502s from reused connections [(#11647)](https://github.com/prowler-cloud/prowler/pull/11647)
 - API runs under the Uvicorn worker so keep-alive outlives the load balancer idle timeout, fixing Gunicorn's intermittent 502s [(#11663)](https://github.com/prowler-cloud/prowler/pull/11663)
 - SAML logins no longer wipe a user's roles when the IdP does not send the `userType` attribute; existing roles are kept, and when `userType` names a role that does not exist it is now created with read-only access (visibility over all providers, no management permissions) instead of no permissions at all [(#11520)](https://github.com/prowler-cloud/prowler/pull/11520)
