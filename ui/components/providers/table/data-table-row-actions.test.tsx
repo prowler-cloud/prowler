@@ -48,7 +48,19 @@ vi.mock("../forms/edit-name-form", () => ({
 }));
 
 vi.mock("../scan-config/manage-scan-config-modal", () => ({
-  ManageScanConfigModal: () => null,
+  ManageScanConfigModal: ({
+    open,
+    currentConfigId,
+  }: {
+    open: boolean;
+    currentConfigId: string | null;
+  }) =>
+    open ? (
+      <div
+        data-testid="manage-scan-config-modal"
+        data-current-config-id={currentConfigId ?? ""}
+      />
+    ) : null,
 }));
 
 vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({

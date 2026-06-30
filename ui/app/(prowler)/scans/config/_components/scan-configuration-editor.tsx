@@ -22,6 +22,7 @@ import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
+import { cn } from "@/lib/utils";
 import {
   convertToYaml,
   defaultScanConfigurationYaml,
@@ -218,7 +219,7 @@ function ScanConfigurationForm({
           placeholder={defaultScanConfigurationYaml}
           rows={14}
           aria-invalid={!!configError || !yamlSyntax.isValid}
-          className={fontMono.className + " text-sm"}
+          className={cn(fontMono.className, "text-sm")}
           {...form.register("configuration", {
             // A server-side validation error becomes stale the moment the user
             // edits the YAML — clear it so it can't linger next to the live

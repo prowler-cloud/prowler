@@ -62,6 +62,14 @@ export function ManageScanConfigModal({
       return;
     }
 
+    const reportError = (description: string) => {
+      toast({
+        variant: "destructive",
+        title: "Oops! Something went wrong",
+        description,
+      });
+    };
+
     setIsSaving(true);
     try {
       let result;
@@ -72,7 +80,16 @@ export function ManageScanConfigModal({
           return;
         }
         const current = scanConfigs.find((c) => c.id === currentConfigId);
-        const next = (current?.attributes.providers ?? []).filter(
+        // Bail if we don't have the current config loaded: sending a full
+        // provider_ids replacement off a synthetic empty list would clear every
+        // other provider attached to this configuration.
+        if (!current) {
+          reportError(
+            "This scan configuration is no longer available. Refresh and try again.",
+          );
+          return;
+        }
+        const next = current.attributes.providers.filter(
           (id) => id !== providerId,
         );
         result = await setScanConfigurationProviders(currentConfigId, next);
@@ -80,8 +97,16 @@ export function ManageScanConfigModal({
         // Attach: add this provider to the chosen config. The backend moves it
         // off any other config automatically (one config per provider).
         const target = scanConfigs.find((c) => c.id === selected);
+        // Same guard as the detach path: never replace provider_ids based on a
+        // config we don't actually have.
+        if (!target) {
+          reportError(
+            "This scan configuration is no longer available. Refresh and try again.",
+          );
+          return;
+        }
         const next = Array.from(
-          new Set([...(target?.attributes.providers ?? []), providerId]),
+          new Set([...target.attributes.providers, providerId]),
         );
         result = await setScanConfigurationProviders(selected, next);
       }
@@ -94,15 +119,16 @@ export function ManageScanConfigModal({
         onSaved();
         onOpenChange(false);
       } else {
-        toast({
-          variant: "destructive",
-          title: "Oops! Something went wrong",
-          description:
-            result?.errors?.general ||
+        reportError(
+          result?.errors?.general ||
             result?.errors?.provider_ids ||
             "Failed to update the Scan Configuration. Please try again.",
-        });
+        );
       }
+    } catch {
+      // An invocation-level failure (transport/framework) rejects instead of
+      // returning an error object — surface it instead of failing silently.
+      reportError("Failed to update the Scan Configuration. Please try again.");
     } finally {
       setIsSaving(false);
     }

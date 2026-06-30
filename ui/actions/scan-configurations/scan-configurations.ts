@@ -21,6 +21,10 @@ const SCAN_CONFIGURATION_PATH = "/scans/config";
 // injection).
 const scanConfigurationIdSchema = z.uuid();
 
+// Provider IDs are UUIDs too. Validate the whole array at the action boundary so
+// a malformed/crafted id fails here instead of relying on API-side validation.
+const providerIdsSchema = z.array(z.uuid());
+
 const parseConfiguration = (value: string): Record<string, unknown> => {
   // Backend (YamlOrJsonField) accepts either a YAML string or a JSON object.
   // We parse client-side so failures surface as form errors, not 500s.
@@ -38,10 +42,14 @@ const collectProviderIds = (formData: FormData): string[] => {
     .filter(Boolean);
 };
 
+interface ApiErrorSource {
+  pointer?: string;
+}
+
 interface ApiError {
   detail?: string;
   title?: string;
-  source?: { pointer?: string };
+  source?: ApiErrorSource;
 }
 
 // Route each JSON:API error to the matching form field via its `source.pointer`
@@ -270,6 +278,11 @@ export const setScanConfigurationProviders = async (
     return { errors: { general: "Invalid Scan Configuration ID" } };
   }
   const validId = idResult.data;
+  const providerIdsResult = providerIdsSchema.safeParse(providerIds);
+  if (!providerIdsResult.success) {
+    return { errors: { provider_ids: "Invalid provider ID" } };
+  }
+  const validProviderIds = providerIdsResult.data;
   const headers = await getAuthHeaders({ contentType: true });
 
   try {
@@ -280,7 +293,7 @@ export const setScanConfigurationProviders = async (
       data: {
         type: "scan-configurations" as const,
         id: validId,
-        attributes: { provider_ids: providerIds },
+        attributes: { provider_ids: validProviderIds },
       },
     };
     const response = await fetch(url.toString(), {

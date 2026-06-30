@@ -113,10 +113,13 @@ describe("getMenuList", () => {
     process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
 
     // When
-    const scanConfig = getMenuList({ pathname: "/scans/config" })
-      .flatMap((group) => group.menus)
+    const menus = getMenuList({ pathname: "/scans/config" }).flatMap(
+      (group) => group.menus,
+    );
+    const scanConfig = menus
       .flatMap((menu) => menu.submenus ?? [])
       .find((submenu) => submenu.label === "Scan");
+    const scans = menus.find((menu) => menu.label === "Scans");
 
     // Then
     expect(scanConfig).toEqual(
@@ -126,6 +129,9 @@ describe("getMenuList", () => {
         highlight: true,
       }),
     );
+    // The top-level Scans item uses an exact-match active rule, so it must stay
+    // inactive on the `/scans/config` sub-route.
+    expect(scans).toEqual(expect.objectContaining({ active: false }));
   });
 
   it("should remove the new highlight from Attack Paths", () => {

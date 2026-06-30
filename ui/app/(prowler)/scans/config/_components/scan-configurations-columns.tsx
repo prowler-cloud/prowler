@@ -66,7 +66,9 @@ export const createScanConfigurationsColumns = (
     header: () => null,
     cell: ({ row }) => (
       <div className="relative flex items-center justify-end gap-2">
-        <ActionDropdown>
+        <ActionDropdown
+          ariaLabel={`Open actions menu for ${row.original.attributes.name}`}
+        >
           <ActionDropdownItem
             icon={<Pencil />}
             label="Edit"
