@@ -171,6 +171,59 @@ class TestInitializeProwlerProvider:
             key="value", mutelist_content={"key": "value"}
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_normalizes_regions_list(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": ["us-phoenix-1", "us-ashburn-1"]}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            region={"us-phoenix-1", "us-ashburn-1"}
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_preserves_legacy_region_string(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"region": "us-ashburn-1"}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            region={"us-ashburn-1"}
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -183,6 +236,68 @@ class TestProwlerProviderConnectionTest:
         prowler_provider_connection_test(provider)
         mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
             key="value", provider_id="1234567890", raise_on_exception=False
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_deterministic_region_string(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": ["us-phoenix-1", "us-ashburn-1"]}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            region="us-ashburn-1",
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_ignores_empty_regions_list(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {"regions": []}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_direct_credentials_without_region(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region="us-ashburn-1",
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
         )
 
     @pytest.mark.django_db
@@ -379,6 +494,29 @@ class TestGetProwlerProviderKwargs:
 
         expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
         assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_oraclecloud_without_region_keeps_secret_regionless(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        assert result == secret_dict
+        assert "region" not in result
+        assert "regions" not in result
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):
         provider_uid = "provider_uid"
