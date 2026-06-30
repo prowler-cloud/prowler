@@ -119,7 +119,13 @@ function ChatComposer({
         textareaSize="lg"
         className="min-h-[104px] flex-1"
         onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
+          // Ignore Enter while an IME composition is active so confirming an
+          // East Asian candidate doesn't submit the message prematurely.
+          if (
+            event.key === "Enter" &&
+            !event.shiftKey &&
+            !event.nativeEvent.isComposing
+          ) {
             event.preventDefault();
             void onSubmitText(input);
           }

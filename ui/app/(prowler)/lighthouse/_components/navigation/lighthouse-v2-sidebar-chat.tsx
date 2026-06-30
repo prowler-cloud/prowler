@@ -31,9 +31,14 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   const [search, setSearch] = useState("");
 
   const refreshSessions = async () => {
-    const result = await getLighthouseV2Sessions();
-    if ("data" in result) {
-      setSessions(result.data);
+    try {
+      const result = await getLighthouseV2Sessions();
+      if ("data" in result) {
+        setSessions(result.data);
+      }
+    } catch {
+      // Best-effort refresh: swallow transport-level failures so a rejected
+      // server action never escapes the mount effect as an unhandled error.
     }
   };
 
@@ -52,11 +57,15 @@ export function LighthouseV2SidebarChat({ isOpen }: { isOpen: boolean }) {
   };
 
   const handleArchiveSession = async (sessionId: string) => {
-    const result = await archiveLighthouseV2Session(sessionId);
-    if ("data" in result) {
-      setSessions((current) =>
-        current.filter((session) => session.id !== sessionId),
-      );
+    try {
+      const result = await archiveLighthouseV2Session(sessionId);
+      if ("data" in result) {
+        setSessions((current) =>
+          current.filter((session) => session.id !== sessionId),
+        );
+      }
+    } catch {
+      // Archiving is recoverable from the sidebar; ignore transient failures.
     }
   };
 

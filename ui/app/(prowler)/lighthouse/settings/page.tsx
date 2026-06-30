@@ -1,5 +1,3 @@
-import { Spacer } from "@heroui/spacer";
-
 import {
   getLighthouseV2Configurations,
   getLighthouseV2SupportedProviders,
@@ -45,7 +43,7 @@ export default async function LighthouseSettingsPage() {
   return (
     <ContentLayout title="Settings">
       <LLMProvidersTable />
-      <Spacer y={8} />
+      <div className="h-8" aria-hidden="true" />
       <LighthouseSettings />
     </ContentLayout>
   );

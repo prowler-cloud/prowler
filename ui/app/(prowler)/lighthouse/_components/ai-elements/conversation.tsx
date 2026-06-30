@@ -41,7 +41,10 @@ export const ConversationContent = ({
   const { contentRef, scrollRef } = context;
 
   return (
-    <div ref={scrollRef} className={cn("h-full w-full", scrollClassName)}>
+    <div
+      ref={scrollRef}
+      className={cn("h-full min-h-0 w-full overflow-y-auto", scrollClassName)}
+    >
       <div
         ref={contentRef}
         className={cn("flex flex-col gap-8 p-4", className)}

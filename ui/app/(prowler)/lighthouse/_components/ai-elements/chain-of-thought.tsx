@@ -59,11 +59,19 @@ export function ChainOfThought({
 
   const chainOfThoughtContext = { isOpen, setIsOpen };
 
+  // One Collapsible root wraps both header and content so CollapsibleTrigger and
+  // CollapsibleContent share Radix's ARIA/id wiring; the context only carries
+  // `isOpen` for presentational bits like the header chevron.
   return (
     <ChainOfThoughtContext.Provider value={chainOfThoughtContext}>
-      <div className={cn("not-prose w-full space-y-4", className)} {...props}>
+      <Collapsible
+        open={isOpen}
+        onOpenChange={setIsOpen}
+        className={cn("not-prose w-full space-y-4", className)}
+        {...props}
+      >
         {children}
-      </div>
+      </Collapsible>
     </ChainOfThoughtContext.Provider>
   );
 }
@@ -77,37 +85,42 @@ export function ChainOfThoughtHeader({
   children,
   ...props
 }: ChainOfThoughtHeaderProps) {
-  const { isOpen, setIsOpen } = useChainOfThought();
+  const { isOpen } = useChainOfThought();
 
   return (
-    <Collapsible onOpenChange={setIsOpen} open={isOpen}>
-      <CollapsibleTrigger
+    <CollapsibleTrigger
+      className={cn(
+        "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
+        className,
+      )}
+      {...props}
+    >
+      <BrainIcon className="size-4" />
+      <span className="flex-1 text-left">{children ?? "Chain of Thought"}</span>
+      <ChevronDownIcon
         className={cn(
-          "text-muted-foreground hover:text-foreground flex w-full items-center gap-2 text-sm transition-colors",
-          className,
+          "size-4 transition-transform",
+          isOpen ? "rotate-180" : "rotate-0",
         )}
-        {...props}
-      >
-        <BrainIcon className="size-4" />
-        <span className="flex-1 text-left">
-          {children ?? "Chain of Thought"}
-        </span>
-        <ChevronDownIcon
-          className={cn(
-            "size-4 transition-transform",
-            isOpen ? "rotate-180" : "rotate-0",
-          )}
-        />
-      </CollapsibleTrigger>
-    </Collapsible>
+      />
+    </CollapsibleTrigger>
   );
 }
+
+export const CHAIN_OF_THOUGHT_STATUS = {
+  COMPLETE: "complete",
+  ACTIVE: "active",
+  PENDING: "pending",
+} as const;
+
+export type ChainOfThoughtStatus =
+  (typeof CHAIN_OF_THOUGHT_STATUS)[keyof typeof CHAIN_OF_THOUGHT_STATUS];
 
 export type ChainOfThoughtStepProps = ComponentProps<"div"> & {
   icon?: LucideIcon;
   label: ReactNode;
   description?: ReactNode;
-  status?: "complete" | "active" | "pending";
+  status?: ChainOfThoughtStatus;
 };
 
 export function ChainOfThoughtStep({
@@ -115,7 +128,7 @@ export function ChainOfThoughtStep({
   icon: Icon = DotIcon,
   label,
   description,
-  status = "complete",
+  status = CHAIN_OF_THOUGHT_STATUS.COMPLETE,
   children,
   ...props
 }: ChainOfThoughtStepProps) {
@@ -191,21 +204,17 @@ export function ChainOfThoughtContent({
   children,
   ...props
 }: ChainOfThoughtContentProps) {
-  const { isOpen } = useChainOfThought();
-
   return (
-    <Collapsible open={isOpen}>
-      <CollapsibleContent
-        className={cn(
-          "mt-2 space-y-3",
-          "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </CollapsibleContent>
-    </Collapsible>
+    <CollapsibleContent
+      className={cn(
+        "mt-2 space-y-3",
+        "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 text-popover-foreground data-[state=closed]:animate-out data-[state=open]:animate-in outline-none",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </CollapsibleContent>
   );
 }
 

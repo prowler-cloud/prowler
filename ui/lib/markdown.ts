@@ -59,12 +59,15 @@ export function escapeAngleBracketPlaceholders(text: string): string {
         return part;
       }
 
-      // For regular text outside code, wrap placeholders in backticks.
+      // For regular text outside code, escape placeholders as HTML entities so
+      // they render as plain `<bucket_name>` text. Raw HTML parsing is disabled
+      // in both chat renderers, so entities are enough — and avoid the code-span
+      // styling that wrapping in backticks would force.
       return part.replace(/<([a-zA-Z][a-zA-Z0-9_-]*)>/g, (match, tagName) => {
         if (htmlTags.has(tagName.toLowerCase())) {
           return match;
         }
-        return `\`<${tagName}>\``;
+        return `&lt;${tagName}&gt;`;
       });
     })
     .join("");

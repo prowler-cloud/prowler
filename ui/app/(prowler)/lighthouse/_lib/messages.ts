@@ -21,6 +21,10 @@ export function getTextContent(content: unknown): string {
   return "";
 }
 
+// Monotonic counter guaranteeing unique optimistic ids even when two messages
+// are built within the same millisecond (toISOString alone is ms-granular).
+let optimisticMessageCounter = 0;
+
 // Builds a client-only message shown immediately after submit, before the
 // backend echoes the persisted message back through the stream/refresh.
 export function buildOptimisticMessage(
@@ -28,7 +32,8 @@ export function buildOptimisticMessage(
   text: string,
 ): LighthouseV2Message {
   const now = new Date().toISOString();
-  const id = `optimistic-${role}-${now}`;
+  optimisticMessageCounter += 1;
+  const id = `optimistic-${role}-${now}-${optimisticMessageCounter}`;
   return {
     id,
     role,
