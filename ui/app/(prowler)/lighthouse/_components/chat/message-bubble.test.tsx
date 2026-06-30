@@ -11,7 +11,23 @@ import {
 import { MessageBubble } from "./message-bubble";
 
 vi.mock("streamdown", () => ({
-  Streamdown: ({ children }: { children: ReactNode }) => <>{children}</>,
+  Streamdown: ({ children }: { children: ReactNode }) => {
+    const text = String(children);
+    if (text.includes("very-wide-header")) {
+      return (
+        <table>
+          <caption>Wide markdown table</caption>
+          <tbody>
+            <tr>
+              <td>{text}</td>
+            </tr>
+          </tbody>
+        </table>
+      );
+    }
+
+    return <>{children}</>;
+  },
   defaultRehypePlugins: { katex: undefined, harden: undefined },
 }));
 
@@ -38,6 +54,38 @@ describe("MessageBubble", () => {
 
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
+  });
+
+  it("should keep wide assistant tables inside the message width", () => {
+    // Given
+    const wideTableMessage = buildAssistantMessage([
+      textPart(
+        "part-1",
+        "| very-wide-header | another-wide-header |\n| --- | --- |\n| very-long-cell-value-that-should-not-resize-the-message | value |",
+      ),
+    ]);
+
+    // When
+    render(<MessageBubble message={wideTableMessage} />);
+
+    // Then
+    const table = screen.getByRole("table", {
+      name: "Wide markdown table",
+    });
+    const markdown = table.closest(".lighthouse-markdown");
+    if (!(markdown instanceof HTMLElement)) {
+      throw new Error("Expected markdown wrapper around assistant table");
+    }
+
+    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
+    expect(markdown.parentElement).toHaveClass("min-w-0");
+    expect(markdown.parentElement?.parentElement).toHaveClass(
+      "min-w-0",
+      "max-w-full",
+    );
+    expect(markdown.parentElement?.parentElement?.parentElement).toHaveClass(
+      "min-w-0",
+    );
   });
 });
 

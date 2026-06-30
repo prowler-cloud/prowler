@@ -12,7 +12,7 @@ export function MessageMarkdown({
   isStreaming?: boolean;
 }) {
   return (
-    <div className="lighthouse-markdown">
+    <div className="lighthouse-markdown max-w-full min-w-0 overflow-x-auto">
       <Streamdown
         parseIncompleteMarkdown
         shikiTheme={["github-light", "github-dark"]}

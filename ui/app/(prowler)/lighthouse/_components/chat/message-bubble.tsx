@@ -43,20 +43,20 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
   return (
     <article
       className={cn(
-        "group flex gap-3",
+        "group flex min-w-0 gap-3",
         isUser ? "justify-end" : "justify-start",
       )}
     >
       {!isUser && <Bot className="text-text-neutral-tertiary mt-1 size-5" />}
       <div
         className={cn(
-          "flex max-w-[min(760px,85%)] flex-col gap-1",
+          "flex max-w-[min(760px,85%)] min-w-0 flex-col gap-1",
           isUser ? "items-end" : "items-start",
         )}
       >
         <div
           className={cn(
-            "rounded-[8px] px-4 py-3 text-sm",
+            "max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm",
             isUser
               ? "bg-button-primary text-black"
               : "bg-bg-neutral-tertiary text-text-neutral-primary",
@@ -87,7 +87,7 @@ function AssistantParts({ parts }: { parts: LighthouseV2Part[] }) {
   const groups = groupAssistantParts(parts);
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       {groups.map((group) =>
         group.type === ASSISTANT_PART_GROUP_TYPE.TOOL_CALL ? (
           <ToolCalls key={group.id} parts={group.parts} />

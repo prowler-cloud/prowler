@@ -51,9 +51,9 @@ export function StreamingAssistantMessage({
     Boolean(streamState.activeTaskId) || streamState.toolCalls.length > 0;
 
   return (
-    <article className="flex justify-start gap-3">
+    <article className="flex min-w-0 justify-start gap-3">
       <Bot className="text-text-neutral-tertiary mt-1 size-5" />
-      <div className="bg-bg-neutral-tertiary text-text-neutral-primary max-w-[min(760px,85%)] rounded-[8px] px-4 py-3 text-sm">
+      <div className="bg-bg-neutral-tertiary text-text-neutral-primary max-w-[min(760px,85%)] min-w-0 rounded-[8px] px-4 py-3 text-sm">
         {streamState.activityItems.length > 0 ? (
           <StreamingActivityGroups streamState={streamState} />
         ) : (
@@ -74,7 +74,7 @@ function StreamingActivityGroups({
     streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED;
 
   return (
-    <div className="space-y-3">
+    <div className="min-w-0 space-y-3">
       {groups.map((group) =>
         group.type === STREAMING_ACTIVITY_GROUP_TYPE.TOOL_CALL ? (
           <StreamingToolCallGroup key={group.id} toolCalls={group.toolCalls} />
