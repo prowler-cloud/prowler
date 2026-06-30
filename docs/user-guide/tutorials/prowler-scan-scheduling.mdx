@@ -5,12 +5,12 @@ description: 'Create, edit, and monitor recurring scans in Prowler Cloud and Pro
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
 
-<VersionBadge version="5.32.0" />
+<VersionBadge version="5.31.0" />
 
 Scan Scheduling lets Prowler run recurring scans for connected providers. Use it to keep findings, compliance results, and resource inventory up to date without launching every scan manually.
 
 <Note>
-Advanced scan scheduling is available in Prowler Cloud for accounts with a paid subscription. Prowler App and non-Cloud deployments support daily recurring scans during provider launch. Trial or onboarding accounts can launch manual scans only.
+Custom scan scheduling is available only in Prowler Cloud for accounts with a paid subscription. Prowler App and other open-source deployments support daily recurring scans every 24 hours, tied to the time when the provider was created. Trial or onboarding accounts can launch manual scans only.
 </Note>
 
 ## Prerequisites
@@ -19,11 +19,11 @@ Before creating or editing Scan Schedules, ensure that:
 
 * At least one provider is connected.
 * The user role includes the **Manage Scans** permission. See [RBAC Administrative Permissions](/user-guide/tutorials/prowler-app-rbac#rbac-administrative-permissions) for details.
-* Advanced recurring schedules require a Prowler Cloud paid subscription.
+* Custom recurring schedules require a Prowler Cloud paid subscription.
 
 ## Schedule Options
 
-Prowler Cloud supports these recurring schedule options:
+Prowler Cloud accounts with a paid subscription support these custom recurring schedule options:
 
 | Schedule Option | Description |
 |-----------------|-------------|
@@ -111,7 +111,7 @@ To edit a schedule from this tab, open the row actions menu and click **Edit Sca
 
 | Account Type | Available Scan Actions |
 |--------------|------------------------|
-| Prowler Cloud paid subscription | Run scans now, create advanced recurring schedules, edit schedules, remove schedules, and optionally launch an initial scan after saving. |
+| Prowler Cloud paid subscription | Run scans now, create custom recurring schedules, edit schedules, remove schedules, and optionally launch an initial scan after saving. |
 | Prowler Cloud trial or onboarding | Run manual scans only. Recurring schedules are unavailable. |
 | Prowler Cloud over the scan limit | Scan and schedule actions are blocked until billing is updated. |
-| Prowler App or non-Cloud deployments | Run manual scans and create daily recurring schedules during provider launch. Advanced cadence controls are unavailable. |
+| Prowler App or other open-source deployments | Run manual scans and create daily recurring schedules every 24 hours during provider launch. The daily schedule is tied to the provider creation time, and custom cadence controls are unavailable. |
