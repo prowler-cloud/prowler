@@ -271,7 +271,10 @@ class Repository(GithubService):
                 elif rule_type == "required_signatures":
                     bucket.add("require_signed_commits")
                 elif rule_type == "required_status_checks":
-                    bucket.add("status_checks")
+                    # Only enforced when at least one status check is configured;
+                    # an empty list (or just strict policy) requires nothing.
+                    if params.get("required_status_checks"):
+                        bucket.add("status_checks")
                 elif rule_type == "non_fast_forward":
                     # Presence of the rule disallows force pushes.
                     bucket.add("allow_force_pushes")

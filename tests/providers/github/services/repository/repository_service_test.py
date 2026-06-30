@@ -731,7 +731,7 @@ class Test_Repository_BranchProtectionRulesets:
                         {
                             "type": "required_status_checks",
                             "parameters": {
-                                "required_status_checks": [],
+                                "required_status_checks": [{"context": "ci/build"}],
                                 "strict_required_status_checks_policy": True,
                             },
                         }
@@ -745,6 +745,34 @@ class Test_Repository_BranchProtectionRulesets:
 
         assert repos[1].default_branch.status_checks is True
         assert repos[1].default_branch.status_checks_source == "ruleset"
+
+    def test_ruleset_required_status_checks_without_configured_checks(self):
+        # A required_status_checks rule with an empty list enforces nothing, so it
+        # must not be treated as a passing status-checks requirement.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [],
+                                "strict_required_status_checks_policy": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.status_checks is False
+        assert repos[1].default_branch.status_checks_source is None
 
     def test_ruleset_deletion_disables_branch_deletion(self):
         repo = self._build_repo(
