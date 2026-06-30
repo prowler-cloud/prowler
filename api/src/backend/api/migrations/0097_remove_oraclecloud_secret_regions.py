@@ -1,10 +1,9 @@
 import json
 
+from api.db_utils import rls_transaction
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.db import migrations
-
-from api.db_utils import rls_transaction
 
 
 def remove_oraclecloud_secret_regions(apps, schema_editor):

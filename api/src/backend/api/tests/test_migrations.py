@@ -2,9 +2,8 @@ from importlib import import_module
 from types import SimpleNamespace
 
 import pytest
-from django.apps import apps
-
 from api.models import ProviderSecret
+from django.apps import apps
 
 
 @pytest.mark.django_db
