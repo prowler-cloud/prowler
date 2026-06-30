@@ -442,13 +442,16 @@ describe("LighthouseV2ChatPage", () => {
     const recordCurrentUrl = () => {
       notifiedUrls.push(`${window.location.pathname}${window.location.search}`);
     };
-    window.addEventListener(
-      LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
-      recordCurrentUrl,
-    );
-    renderPage();
 
     try {
+      // Register inside the try so a throw in renderPage() can't leak the
+      // listener into later tests (the finally only runs if we entered the try).
+      window.addEventListener(
+        LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+        recordCurrentUrl,
+      );
+      renderPage();
+
       // When
       await user.type(
         screen.getByRole("textbox", { name: "Message" }),

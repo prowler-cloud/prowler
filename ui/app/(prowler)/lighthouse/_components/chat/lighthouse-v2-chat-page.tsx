@@ -67,6 +67,7 @@ interface LighthouseV2ChatPageProps {
   initialActiveTaskId?: string | null;
   initialStreamUrl?: string;
   initialPrompt?: string;
+  initialError?: string;
 }
 
 export function LighthouseV2ChatPage({
@@ -78,6 +79,7 @@ export function LighthouseV2ChatPage({
   initialActiveTaskId,
   initialStreamUrl,
   initialPrompt,
+  initialError,
 }: LighthouseV2ChatPageProps) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const initialPromptSentRef = useRef(false);
@@ -96,7 +98,7 @@ export function LighthouseV2ChatPage({
   );
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
-  const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(initialError ?? null);
   const [blockedByConflict, setBlockedByConflict] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lastSubmittedText, setLastSubmittedText] = useState<string | null>(

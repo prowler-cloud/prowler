@@ -58,34 +58,50 @@ export default async function AIChatbot({
         const result = await getLighthouseV2SupportedModels(
           configuration.providerType,
         );
-        return [
-          configuration.providerType,
-          "data" in result ? result.data : [],
-        ] as const satisfies readonly [
-          LighthouseV2ProviderType,
-          LighthouseV2SupportedModel[],
-        ];
+        return [configuration.providerType, result] as const;
       }),
     );
-    const modelsByProvider = Object.fromEntries(modelsEntries) as Record<
-      LighthouseV2ProviderType,
-      LighthouseV2SupportedModel[]
-    >;
+    const modelsByProvider = Object.fromEntries(
+      modelsEntries.map(([providerType, result]) => [
+        providerType,
+        "data" in result ? result.data : [],
+      ]),
+    ) as Record<LighthouseV2ProviderType, LighthouseV2SupportedModel[]>;
+    // Surface (rather than silently swallow to []) providers whose models
+    // failed to load, so an empty model list reads as a real backend failure.
+    const failedModelProviders = modelsEntries
+      .filter(([, result]) => !("data" in result))
+      .map(([providerType]) => providerType);
+    const modelsError =
+      failedModelProviders.length > 0
+        ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
+        : undefined;
+
     const [initialMessages, activeSession] = activeSessionId
       ? await Promise.all([
           getLighthouseV2Messages(activeSessionId),
           getLighthouseV2Session(activeSessionId),
         ])
       : [{ data: [] }, undefined];
+    // Treat the ?session= id as valid when its messages load (you can't fetch
+    // messages for a non-existent session, so this is the authoritative
+    // "session exists" check). A stale/deleted id fails here and is dropped so
+    // the client starts fresh instead of sending against a dead session. The
+    // session-metadata read stays best-effort — it only supplies activeTaskId,
+    // so a flaky metadata read must NOT discard an otherwise-valid session.
+    const sessionLoaded = Boolean(activeSessionId) && "data" in initialMessages;
+    const validSessionId = sessionLoaded ? activeSessionId : undefined;
+    const chatMessages =
+      sessionLoaded && "data" in initialMessages ? initialMessages.data : [];
     const initialActiveTaskId =
-      activeSession && "data" in activeSession
+      sessionLoaded && activeSession && "data" in activeSession
         ? (activeSession.data.activeTaskId ?? null)
         : null;
     const initialStreamUrl =
-      activeSessionId && initialActiveTaskId
-        ? buildLighthouseV2StreamUrl(activeSessionId)
+      validSessionId && initialActiveTaskId
+        ? buildLighthouseV2StreamUrl(validSessionId)
         : undefined;
-    const chatRouteKey = activeSessionId ?? initialPrompt ?? "new";
+    const chatRouteKey = validSessionId ?? initialPrompt ?? "new";
 
     return (
       <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
@@ -96,13 +112,12 @@ export default async function AIChatbot({
             configurations={configurations}
             modelsByProvider={modelsByProvider}
             supportedProviders={supportedProviders}
-            initialSessionId={activeSessionId}
-            initialMessages={
-              "data" in initialMessages ? initialMessages.data : []
-            }
+            initialSessionId={validSessionId}
+            initialMessages={chatMessages}
             initialActiveTaskId={initialActiveTaskId}
             initialStreamUrl={initialStreamUrl}
             initialPrompt={initialPrompt}
+            initialError={modelsError}
           />
         </div>
       </ContentLayout>

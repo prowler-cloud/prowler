@@ -49,6 +49,11 @@ export type LighthouseV2StreamActivityItem =
   | LighthouseV2StreamTextActivityItem
   | LighthouseV2StreamToolCallActivityItem;
 
+export interface LighthouseV2StreamError {
+  code: string;
+  detail: string;
+}
+
 export interface LighthouseV2StreamState {
   status: LighthouseV2StreamStatus;
   activeTaskId: string | null;
@@ -56,10 +61,7 @@ export interface LighthouseV2StreamState {
   toolCalls: LighthouseV2ToolCallState[];
   activityItems: LighthouseV2StreamActivityItem[];
   messageId?: string;
-  error?: {
-    code: string;
-    detail: string;
-  };
+  error?: LighthouseV2StreamError;
 }
 
 export function createInitialLighthouseV2StreamState(
@@ -151,9 +153,12 @@ export function reduceLighthouseV2Event(
         },
       };
     case LIGHTHOUSE_V2_SSE_EVENT.DISCONNECT:
+      // Clear the task gate so the UI can recover: keeping activeTaskId set
+      // leaves canSend false and makes the Retry button a no-op.
       return {
         ...state,
         status: LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED,
+        activeTaskId: null,
       };
   }
 }

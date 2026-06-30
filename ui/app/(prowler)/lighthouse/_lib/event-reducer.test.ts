@@ -132,7 +132,7 @@ describe("event-reducer", () => {
     expect(next.activeTaskId).toBeNull();
   });
 
-  it("should mark disconnect as recoverable", () => {
+  it("should clear the task gate on disconnect so retry can recover", () => {
     // Given
     const state = createInitialLighthouseV2StreamState("task-1");
 
@@ -141,6 +141,8 @@ describe("event-reducer", () => {
 
     // Then
     expect(next.status).toBe("disconnected");
-    expect(next.activeTaskId).toBe("task-1");
+    // activeTaskId must be cleared: leaving it set keeps canSend false and
+    // makes the Retry button a no-op after a dropped SSE connection.
+    expect(next.activeTaskId).toBeNull();
   });
 });
