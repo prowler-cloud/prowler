@@ -48,16 +48,6 @@ export const OracleCloudCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <WizardInputField
-        control={control}
-        name={ProviderCredentialFields.OCI_REGION}
-        type="text"
-        label="Region"
-        labelPlacement="inside"
-        placeholder="e.g. us-ashburn-1"
-        variant="bordered"
-        isRequired
-      />
       <WizardTextareaField
         control={control}
         name={ProviderCredentialFields.OCI_KEY_CONTENT}

@@ -315,7 +315,6 @@ export type OCICredentials = {
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
   [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
   [ProviderCredentialFields.OCI_TENANCY]: string;
-  [ProviderCredentialFields.OCI_REGION]: string;
   [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
