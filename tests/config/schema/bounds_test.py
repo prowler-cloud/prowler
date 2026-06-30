@@ -70,6 +70,18 @@ INT_BOUND_CASES = [
     ("vercel", "stale_invitation_threshold_days", 7, 365),
     ("vercel", "max_owner_percentage", 1, 50),
     ("vercel", "max_owners", 1, 1000),
+    # Okta
+    ("okta", "okta_max_session_idle_minutes", 1, 1440),
+    ("okta", "okta_max_session_lifetime_minutes", 1, 43200),
+    ("okta", "okta_admin_console_idle_timeout_max_minutes", 1, 1440),
+    ("okta", "okta_user_inactivity_max_days", 1, 3650),
+    # Alibaba Cloud
+    ("alibabacloud", "max_cluster_check_days", 1, 365),
+    ("alibabacloud", "max_console_access_days", 30, 180),
+    ("alibabacloud", "min_log_retention_days", 1, 3650),
+    ("alibabacloud", "min_rds_audit_retention_days", 1, 3650),
+    # OpenStack
+    ("openstack", "image_sharing_threshold", 1, 1000),
 ]
 
 
