@@ -69,14 +69,6 @@ Lighthouse AI on Prowler Cloud supports OpenAI, Amazon Bedrock, and OpenAI-compa
 
 OpenAI (GPT models, including the default GPT-5.5), Amazon Bedrock (Claude, Llama, Titan, and others), and any OpenAI-compatible service such as OpenRouter.
 
-**Why don't some models appear in the list?**
-
-Lighthouse AI requires models that support text input, text output, and tool calling. Models without these capabilities, such as image, speech, or embedding models, are filtered out automatically and do not appear in the model selector.
-
-**Is my security data shared with the LLM provider?**
-
-Only the minimal data needed to answer a query is shared. Lighthouse AI reads security findings and remediation details when a question requires them, and resource metadata such as names, tags, and account or project IDs may be sent to the configured provider based on the query. Provider credentials are stored encrypted, are used only server-side, and are never sent to the LLM provider. Lighthouse AI can access only the data the signed-in user is allowed to view.
-
 **Can Lighthouse AI change my cloud environment?**
 
 No. Lighthouse AI has read-only access to security data and no tools to modify resources, even when the connected cloud credentials would allow changes.
