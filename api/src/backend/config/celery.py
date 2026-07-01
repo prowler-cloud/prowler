@@ -82,6 +82,14 @@ celery_app.conf.task_annotations = {
 
 celery_app.autodiscover_tasks(["api"])
 
+# Protect the ECS task from scale-in / rolling-deploy termination while a
+# long-running task (e.g. a scan) is in flight. No-op unless running on ECS
+# with DJANGO_ECS_TASK_PROTECTION enabled. Registered for the worker only; the
+# step is never started in non-worker processes that import this app.
+from config.ecs_task_protection import ECSTaskProtectionStep  # noqa: E402
+
+celery_app.steps["worker"].add(ECSTaskProtectionStep)
+
 
 class RLSTask(Task):
     def apply_async(
