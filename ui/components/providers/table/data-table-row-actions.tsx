@@ -46,7 +46,11 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
-import { ScanConfigurationData } from "@/types/scan-configurations";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -80,6 +84,8 @@ interface DataTableRowActionsProps {
    * provider's config from the row menu (Cloud-only feature). Empty in OSS.
    */
   scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
+  currentScanConfigId?: string | null;
   /**
    * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
    * decision). The prowler-cloud overlay injects a billing-aware capability so
@@ -280,6 +286,8 @@ export function DataTableRowActions({
   onOpenProviderWizard,
   onOpenOrganizationWizard,
   scanConfigs = [],
+  scanConfigStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  currentScanConfigId = null,
   capability,
 }: DataTableRowActionsProps) {
   const canEditSchedule =
@@ -305,12 +313,10 @@ export function DataTableRowActions({
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
-  // The scan config this provider is currently attached to, if any.
-  const currentScanConfig = provider
-    ? (scanConfigs.find((c) =>
-        (c.attributes.providers || []).includes(providerId),
-      ) ?? null)
-    : null;
+  const isCloudProvider = isCloud() && Boolean(provider);
+  const canManageScanConfig =
+    isCloudProvider &&
+    scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE;
   const scheduleProvider: ScanScheduleProvider | undefined = provider
     ? {
         providerId,
@@ -564,14 +570,14 @@ export function DataTableRowActions({
         provider={scheduleProvider}
         state={scheduleState}
       />
-      {isCloud() && provider && (
+      {canManageScanConfig && provider && (
         <ManageScanConfigModal
           open={isScanConfigOpen}
           onOpenChange={setIsScanConfigOpen}
           providerId={providerId}
           providerLabel={providerAlias || providerUid}
           scanConfigs={scanConfigs}
-          currentConfigId={currentScanConfig?.id ?? null}
+          currentConfigId={currentScanConfigId}
           onSaved={() => router.refresh()}
         />
       )}
@@ -602,13 +608,22 @@ export function DataTableRowActions({
               onSelect={() => void openScheduleEditor()}
             />
           )}
-          {isCloud() && (
+          {canManageScanConfig && (
             <ActionDropdownItem
               icon={<SlidersHorizontal />}
               label="Edit Scan Configuration"
               onSelect={() => setIsScanConfigOpen(true)}
             />
           )}
+          {isCloudProvider &&
+            scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE && (
+              <ActionDropdownItem
+                icon={<SlidersHorizontal />}
+                label="Scan Configuration unavailable"
+                description="Try again later."
+                disabled
+              />
+            )}
           <ActionDropdownItem
             icon={<KeyRound />}
             label={hasSecret ? "Update Credentials" : "Add Credentials"}

@@ -9,6 +9,7 @@ import {
   PROVIDERS_ROW_TYPE,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import type { ScanConfigurationData } from "@/types/scan-configurations";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const { checkConnectionProviderMock, getScheduleMock, pushMock } = vi.hoisted(
@@ -198,6 +199,18 @@ const createOuRow = () =>
     },
   }) as unknown as Row<ProvidersTableRow>;
 
+const scanConfig: ScanConfigurationData = {
+  type: "scan-configurations",
+  id: "config-1",
+  attributes: {
+    inserted_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    name: "Strict AWS",
+    configuration: {},
+    providers: ["provider-1"],
+  },
+};
+
 describe("DataTableRowActions", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -375,6 +388,64 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
+  });
+
+  it("opens scan config management with the precomputed current config id", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        scanConfigs={[scanConfig]}
+        currentScanConfigId="config-1"
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByText("Edit Scan Configuration"));
+
+    // Then
+    expect(screen.getByTestId("manage-scan-config-modal")).toHaveAttribute(
+      "data-current-config-id",
+      "config-1",
+    );
+  });
+
+  it("shows scan config management as unavailable when scan configs failed to load", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        scanConfigStatus="unavailable"
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    const item = screen
+      .getByText("Scan Configuration unavailable")
+      .closest("[role='menuitem']");
+    expect(item).toHaveAttribute("aria-disabled", "true");
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {

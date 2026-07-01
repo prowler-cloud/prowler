@@ -53,7 +53,7 @@ export function ManageScanConfigModal({
           The key resets it again if the attached config changes mid-open. */}
       {open && (
         <ManageScanConfigForm
-          key={formProps.currentConfigId ?? DEFAULT_VALUE}
+          key={`${formProps.providerId}:${formProps.currentConfigId ?? DEFAULT_VALUE}`}
           onOpenChange={onOpenChange}
           {...formProps}
         />

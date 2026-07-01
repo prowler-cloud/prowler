@@ -43,4 +43,13 @@ describe("providers page", () => {
     expect(source).toContain("NEXT_PUBLIC_IS_CLOUD_ENV");
     expect(source).toContain("{isCloudEnvironment && <CliImportBanner");
   });
+
+  it("does not collapse scan config loading failures into an empty list", () => {
+    const currentDir = path.dirname(fileURLToPath(import.meta.url));
+    const pagePath = path.join(currentDir, "page.tsx");
+    const source = readFileSync(pagePath, "utf8");
+
+    expect(source).toContain("SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE");
+    expect(source).not.toContain("catch {\n    return [];");
+  });
 });

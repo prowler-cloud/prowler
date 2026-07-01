@@ -30,7 +30,10 @@ import {
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
 import type { ProvidersTableRow } from "@/types/providers-table";
-import type { ScanConfigurationData } from "@/types/scan-configurations";
+import type {
+  ScanConfigurationData,
+  ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 const addProviderFlow = getFlowById("add-provider")!;
@@ -60,6 +63,7 @@ interface ProvidersAccountsViewProps {
   /** All scan configurations in the tenant, for the provider row's associate/
    * disassociate action (Cloud-only). */
   scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
   isScanLimitReached?: boolean;
 }
 
@@ -72,6 +76,7 @@ export function ProvidersAccountsView({
   rows,
   scanScheduleCapability,
   scanConfigs,
+  scanConfigStatus,
   isScanLimitReached,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
@@ -163,6 +168,7 @@ export function ProvidersAccountsView({
             rows={rows}
             scanScheduleCapability={scanScheduleCapability}
             scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
             onOpenProviderWizard={openProviderWizard}
             onOpenOrganizationWizard={openOrganizationWizard}
           />
