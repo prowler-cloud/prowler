@@ -3,12 +3,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Icon } from "@iconify/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { authenticate } from "@/actions/auth";
 import { initiateSamlAuth } from "@/actions/integrations/saml";
 import { AuthDivider } from "@/components/auth/oss/auth-divider";
+import { TOTPVerifyForm } from "@/components/auth/totp-verify-form";
 import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
@@ -33,6 +34,7 @@ export const SignInForm = ({
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const [mfaState, setMfaState] = useState<{ email: string; password: string; tenantId?: string } | null>(null);
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -124,6 +126,12 @@ export const SignInForm = ({
 
     if (result?.message === "Success") {
       router.push(callbackUrl);
+    } else if (result?.message === "mfa_required" && result?.mfaData) {
+      setMfaState({
+        email: result.mfaData.email,
+        password: data.password,
+        tenantId: result.mfaData.tenantId,
+      });
     } else if (result?.errors && "credentials" in result.errors) {
       const message = result.errors.credentials ?? "Invalid email or password";
 
@@ -141,6 +149,19 @@ export const SignInForm = ({
   };
 
   const title = isSamlMode ? "Sign in with SAML SSO" : "Sign in";
+
+  if (mfaState) {
+    return (
+      <AuthLayout title="Two-Factor Authentication">
+        <TOTPVerifyForm
+          email={mfaState.email}
+          password={mfaState.password}
+          tenantId={mfaState.tenantId}
+          callbackUrl={callbackUrl}
+        />
+      </AuthLayout>
+    );
+  }
 
   return (
     <AuthLayout title={title}>
