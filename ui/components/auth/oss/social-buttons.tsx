@@ -61,21 +61,24 @@ export const SocialButtons = ({
             asChild={!isGoogleDisabled}
             disabled={isGoogleDisabled}
           >
-            <a
-              href={isGoogleDisabled ? undefined : googleUrl}
-              aria-disabled={isGoogleDisabled}
-              className="flex items-center gap-2"
-            >
-              <Icon
-                icon={
-                  isGoogleOAuthEnabled
-                    ? "flat-color-icons:google"
-                    : "simple-icons:google"
-                }
-                width={24}
-              />
-              Continue with Google
-            </a>
+            {isGoogleDisabled ? (
+              <span className="flex items-center gap-2">
+                <Icon
+                  icon={
+                    isGoogleOAuthEnabled
+                      ? "flat-color-icons:google"
+                      : "simple-icons:google"
+                  }
+                  width={24}
+                />
+                Continue with Google
+              </span>
+            ) : (
+              <a href={googleUrl} className="flex items-center gap-2">
+                <Icon icon="flat-color-icons:google" width={24} />
+                Continue with Google
+              </a>
+            )}
           </Button>
         </span>
       </Tooltip>
@@ -104,14 +107,17 @@ export const SocialButtons = ({
             asChild={!isGithubDisabled}
             disabled={isGithubDisabled}
           >
-            <a
-              href={isGithubDisabled ? undefined : githubUrl}
-              aria-disabled={isGithubDisabled}
-              className="flex items-center gap-2"
-            >
-              <Icon icon="simple-icons:github" width={24} />
-              Continue with Github
-            </a>
+            {isGithubDisabled ? (
+              <span className="flex items-center gap-2">
+                <Icon icon="simple-icons:github" width={24} />
+                Continue with Github
+              </span>
+            ) : (
+              <a href={githubUrl} className="flex items-center gap-2">
+                <Icon icon="simple-icons:github" width={24} />
+                Continue with Github
+              </a>
+            )}
           </Button>
         </span>
       </Tooltip>

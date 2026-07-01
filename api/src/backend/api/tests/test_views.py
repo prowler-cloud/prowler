@@ -8342,16 +8342,14 @@ class TestInvitationViewSet:
             expires_at=self.TOMORROW,
         )
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         assert not Membership.objects.filter(
             user__email__iexact=user.email, tenant=tenant
         ).exists()
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
         assert response.status_code == status.HTTP_201_CREATED
         invitation.refresh_from_db()
@@ -8377,17 +8375,12 @@ class TestInvitationViewSet:
         )
         Membership.objects.create(user=user, tenant=tenant)
 
-        data = {
-            "data": {
-                "type": "invitations",
-                "attributes": {"invitation_token": invitation.token},
-            },
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
             reverse("invitation-accept"),
             data=data,
-            content_type=API_JSON_CONTENT_TYPE,
+            format="vnd.api+json",
         )
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -8401,12 +8394,10 @@ class TestInvitationViewSet:
         )
 
     def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
-        data = {
-            "invitation_token": "invalid_token",
-        }
+        data = {"invitation_token": "invalid_token"}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -8420,12 +8411,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_410_GONE
@@ -8461,12 +8450,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -8484,12 +8471,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -13513,7 +13498,7 @@ class TestSAMLInitiateAPIView:
         url = reverse("api_saml_initiate")
         payload = {"email_domain": saml_setup["email"]}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_302_FOUND
         assert (
@@ -13532,7 +13517,7 @@ class TestSAMLInitiateAPIView:
             "callback_url": callback_url,
         }
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_302_FOUND
         query_params = parse_qs(urlparse(response.url).query)
@@ -13547,7 +13532,7 @@ class TestSAMLInitiateAPIView:
             "callback_url": "https://attacker.example/invitation",
         }
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_302_FOUND
         query_params = parse_qs(urlparse(response.url).query)
@@ -13557,7 +13542,7 @@ class TestSAMLInitiateAPIView:
         url = reverse("api_saml_initiate")
         payload = {"email_domain": "user@unauthorized.com"}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()["errors"]["detail"] == "Unauthorized domain."
