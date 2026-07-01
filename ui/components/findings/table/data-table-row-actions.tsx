@@ -14,8 +14,16 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
+import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
+import type { FindingTriageContext } from "./finding-note-modal";
+import { FindingNoteActionItem } from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 export interface FindingRowData {
@@ -26,6 +34,20 @@ export interface FindingRowData {
       checktitle?: string;
     };
   };
+  triage?: FindingTriageSummary;
+  relationships?: {
+    resource?: {
+      attributes?: {
+        name?: string;
+      };
+    };
+    provider?: {
+      attributes?: {
+        alias?: string;
+        provider?: string;
+      };
+    };
+  };
   // Flat shape for FindingGroupRow
   rowType?: string;
   checkId?: string;
@@ -34,6 +56,12 @@ export interface FindingRowData {
   mutedCount?: number;
   resourcesFail?: number;
   resourcesTotal?: number;
+}
+
+function getOptionalText(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0 && value !== "-"
+    ? value
+    : undefined;
 }
 
 /**
@@ -70,11 +98,19 @@ function extractRowInfo(data: FindingRowData) {
 interface DataTableRowActionsProps<T extends FindingRowData> {
   row: Row<T>;
   onMuteComplete?: (findingIds: string[]) => void;
+  findingContext?: FindingTriageContext;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 export function DataTableRowActions<T extends FindingRowData>({
   row,
   onMuteComplete,
+  findingContext,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
@@ -86,6 +122,18 @@ export function DataTableRowActions<T extends FindingRowData>({
   >(null);
 
   const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
+  const resolvedFindingContext = findingContext ?? {
+    title: findingTitle,
+    resource: getOptionalText(
+      finding.relationships?.resource?.attributes?.name,
+    ),
+    provider: getOptionalText(
+      finding.relationships?.provider?.attributes?.alias,
+    ),
+    providerType: getOptionalText(
+      finding.relationships?.provider?.attributes?.provider,
+    ) as ProviderType | undefined,
+  };
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
@@ -204,8 +252,19 @@ export function DataTableRowActions<T extends FindingRowData>({
         preparationError={mutePreparationError}
       />
 
-      <div className="flex items-center justify-end">
+      <div
+        className="flex items-center justify-end"
+        onClick={(event) => event.stopPropagation()}
+      >
         <ActionDropdown ariaLabel="Finding actions">
+          {!isGroup && (
+            <FindingNoteActionItem
+              triage={finding.triage}
+              findingContext={resolvedFindingContext}
+              onTriageUpdateAction={onTriageUpdateAction}
+              onTriageNoteLoadAction={onTriageNoteLoadAction}
+            />
+          )}
           <ActionDropdownItem
             icon={
               isMuted ? (
