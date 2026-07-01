@@ -1,0 +1,106 @@
+{
+  "Framework": "GDPR",
+  "Name": "GDPR compliance framework",
+  "Version": "",
+  "Provider": "Azure",
+  "Description": "The General Data Protection Regulation (GDPR) is a new European privacy law that became enforceable on May 25, 2018. The GDPR replaces the EU Data Protection Directive, also known as Directive 95/46/EC. It's intended to harmonize data protection laws throughout the European Union (EU). It does this by applying a single data protection law that's binding throughout each EU member state.",
+  "Requirements": [
+    {
+      "Id": "article_25",
+      "Name": "Article 25 Data protection by design and by default",
+      "Description": "To obtain the latest version of the official guide, please visit https://gdpr-info.eu/art-25-gdpr/. Taking into account the state of the art, the cost of implementation and the nature, scope, context and purposes of processing as well as the risks of varying likelihood and severity for rights and freedoms of natural persons posed by the processing, the controller shall, both at the time of the determination of the means for processing and at the time of the processing itself, implement appropriate technical and organisational measures, such as pseudonymisation, which are designed to implement data-protection principles, such as data minimisation, in an effective manner and to integrate the necessary safeguards into the processing in order to meet the requirements of this Regulation and protect the rights of data subjects. The controller shall implement appropriate technical and organisational measures for ensuring that, by default, only personal data which are necessary for each specific purpose of the processing are processed. That obligation applies to the amount of personal data collected, the extent of their processing, the period of their storage and their accessibility. In particular, such measures shall ensure that by default personal data are not made accessible without the individual's intervention to an indefinite number of natural persons. An approved certification mechanism pursuant to Article 42 may be used as an element to demonstrate compliance with the requirements set out in paragraphs 1 and 2 of this Article.",
+      "Attributes": [
+        {
+          "ItemId": "article_25",
+          "Section": "Article 25 Data protection by design and by default",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "entra_privileged_user_has_mfa",
+        "entra_non_privileged_user_has_mfa",
+        "entra_user_with_vm_access_has_mfa",
+        "entra_conditional_access_policy_require_mfa_for_admin_portals",
+        "entra_conditional_access_policy_require_mfa_for_management_api",
+        "entra_global_admin_in_less_than_five_users",
+        "entra_policy_guest_invite_only_for_admin_roles",
+        "iam_role_user_access_admin_restricted",
+        "iam_custom_role_has_permissions_to_administer_resource_locks",
+        "monitor_diagnostic_settings_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "network_watcher_enabled",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "monitor_alert_create_policy_assignment",
+        "monitor_alert_delete_policy_assignment",
+        "monitor_alert_create_update_nsg",
+        "monitor_alert_delete_nsg",
+        "storage_key_rotation_90_days",
+        "keyvault_key_rotation_enabled"
+      ]
+    },
+    {
+      "Id": "article_30",
+      "Name": "Article 30 Records of processing activities",
+      "Description": " To obtain the latest version of the official guide, please visit https://www.privacy-regulation.eu/en/article-30-records-of-processing-activities-GDPR.htm. Each controller and, where applicable, the controller's representative, shall maintain a record of processing activities under its responsibility. That record shall contain all of the following information like the name and contact details of the controller and where applicable, the joint controller, the controller's representative and the data protection officer, the purposes of the processing etc. Each processor and where applicable, the processor's representative shall maintain a record of all categories of processing activities carried out on behalf of a controller, containing the name and contact details of the processor or processors and of each controller on behalf of which the processor is acting, and, where applicable of the controller's or the processor's representative, and the data protection officer, where applicable, transfers of personal data to a third country or an international organisation, including the identification of that third country or international organisation and, in the case of transfers referred to in the second subparagraph of Article 49(1), the documentation of suitable safeguards. The records referred to in paragraphs 1 and 2 shall be in writing, including in electronic form. The controller or the processor and, where applicable, the controller's or the processor's representative, shall make the record available to the supervisory authority on request. The obligations referred to in paragraphs 1 and 2 shall not apply to an enterprise or an organisation employing fewer than 250 persons unless the processing it carries out is likely to result in a risk to the rights and freedoms of data subjects, the processing is not occasional, or the processing includes special categories of data as referred to in Article 9(1) or personal data relating to criminal convictions and offences referred to in Article 10.",
+      "Attributes": [
+        {
+          "ItemId": "article_30",
+          "Section": "Article 30 Records of processing activities",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "monitor_diagnostic_settings_exists",
+        "monitor_diagnostic_setting_with_appropriate_categories",
+        "monitor_storage_account_with_activity_logs_is_private",
+        "network_flow_log_captured_sent",
+        "network_flow_log_more_than_90_days",
+        "keyvault_logging_enabled",
+        "app_http_logs_enabled",
+        "mysql_flexible_server_audit_log_enabled",
+        "mysql_flexible_server_audit_log_connection_activated",
+        "postgresql_flexible_server_log_connections_on",
+        "postgresql_flexible_server_log_disconnections_on",
+        "postgresql_flexible_server_log_checkpoints_on",
+        "postgresql_flexible_server_log_retention_days_greater_3"
+      ]
+    },
+    {
+      "Id": "article_32",
+      "Name": "Article 32 Security of processing",
+      "Description": " To obtain the latest version of the official guide, please visit https://gdpr-info.eu/art-32-gdpr/. Taking into account the state of the art, the costs of implementation and the nature, scope, context and purposes of processing as well as the risk of varying likelihood and severity for the rights and freedoms of natural persons, the controller and the processor shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk, including inter alia as appropriate. In assessing the appropriate level of security account shall be taken in particular of the risks that are presented by processing, in particular from accidental or unlawful destruction, loss, alteration, unauthorised disclosure of, or access to personal data transmitted, stored or otherwise processed. Adherence to an approved code of conduct as referred to in Article 40 or an approved certification mechanism as referred to in Article 42 may be used as an element by which to demonstrate compliance with the requirements set out in paragraph 1 of this Article. The controller and processor shall take steps to ensure that any natural person acting under the authority of the controller or the processor who has access to personal data does not process them except on instructions from the controller, unless he or she is required to do so by Union or Member State law.",
+      "Attributes": [
+        {
+          "ItemId": "article_32",
+          "Section": "Article 32 Security of processing",
+          "Service": "azure"
+        }
+      ],
+      "Checks": [
+        "storage_ensure_encryption_with_customer_managed_keys",
+        "storage_infrastructure_encryption_is_enabled",
+        "storage_ensure_minimum_tls_version_12",
+        "storage_secure_transfer_required_is_enabled",
+        "storage_blob_public_access_level_is_disabled",
+        "storage_default_network_access_rule_is_denied",
+        "sqlserver_tde_encryption_enabled",
+        "sqlserver_tde_encrypted_with_cmk",
+        "sqlserver_recommended_minimal_tls_version",
+        "mysql_flexible_server_ssl_connection_enabled",
+        "mysql_flexible_server_minimum_tls_version_12",
+        "postgresql_flexible_server_enforce_ssl_enabled",
+        "vm_ensure_attached_disks_encrypted_with_cmk",
+        "vm_ensure_unattached_disks_encrypted_with_cmk",
+        "vm_backup_enabled",
+        "vm_sufficient_daily_backup_retention_period",
+        "keyvault_recoverable",
+        "keyvault_non_rbac_secret_expiration_set",
+        "keyvault_rbac_secret_expiration_set",
+        "app_ensure_http_is_redirected_to_https",
+        "app_minimum_tls_version_12",
+        "databricks_workspace_cmk_encryption_enabled"
+      ]
+    }
+  ]
+}
