@@ -197,11 +197,20 @@ class Test_apigateway_restapi_no_secrets_in_stage_variables:
             uri="http://test.com",
         )
         apigw.create_deployment(restApiId=api_id, stageName="prod")
+        # A safe variable is added alongside the secret so the secret is not the
+        # only variable present. This guards the line-number -> variable-name
+        # mapping against an off-by-one that would otherwise still point at the
+        # single variable and pass unnoticed.
         # A syntactically valid JSON Web Token that Kingfisher flags as a secret.
         apigw.update_stage(
             restApiId=api_id,
             stageName="prod",
             patchOperations=[
+                {
+                    "op": "replace",
+                    "path": "/variables/environment",
+                    "value": "production",
+                },
                 {
                     "op": "replace",
                     "path": "/variables/api_token",
@@ -240,6 +249,9 @@ class Test_apigateway_restapi_no_secrets_in_stage_variables:
             assert "test-api" in result[0].status_extended
             assert "prod" in result[0].status_extended
             assert "in variable api_token" in result[0].status_extended
+            # The secret must be attributed to the correct variable, not the
+            # safe one that precedes it.
+            assert "in variable environment" not in result[0].status_extended
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_id == "test-api/prod"
 
