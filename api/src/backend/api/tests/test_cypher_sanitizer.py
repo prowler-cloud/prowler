@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 import pytest
 from api.attack_paths.cypher_sanitizer import (
+    inject_label,
     inject_provider_label,
     validate_custom_query,
 )
@@ -19,6 +20,13 @@ def _inject(cypher: str) -> str:
         "api.attack_paths.cypher_sanitizer.get_provider_label", return_value=LABEL
     ):
         return inject_provider_label(cypher, PROVIDER_ID)
+
+
+def test_generic_inject_label_reuses_provider_injection_pipeline():
+    result = inject_label("MATCH (n:AWSRole)--(m) RETURN n, m", "_Tenant_test")
+
+    assert "(n:AWSRole:_Tenant_test)" in result
+    assert "(m:_Tenant_test)" in result
 
 
 # ---------------------------------------------------------------------------
