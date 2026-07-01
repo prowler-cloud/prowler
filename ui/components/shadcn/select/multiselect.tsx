@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckIcon, ChevronDown, XIcon } from "lucide-react";
+import { ChevronDown, XIcon } from "lucide-react";
 import {
   type ComponentPropsWithoutRef,
   createContext,
@@ -411,12 +411,12 @@ export function MultiSelectItem({
       disabled={disabled}
       aria-disabled={disabled}
       data-disabled={disabled ? "true" : undefined}
+      data-state={isSelected ? "checked" : "unchecked"}
       value={value}
       keywords={keywords}
       data-slot="multiselect-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary my-1 flex w-full cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
-        isSelected && "bg-slate-100 dark:bg-slate-800/50",
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary data-[state=checked]:bg-button-tertiary/10 data-[state=checked]:text-text-neutral-primary data-[state=checked]:hover:bg-button-tertiary/15 data-[state=checked]:focus:bg-button-tertiary/15 data-[selected=true]:data-[state=checked]:bg-button-tertiary/15 my-1 flex w-full cursor-pointer items-center gap-3 overflow-hidden rounded-lg px-4 py-3 text-sm outline-hidden select-none first:mt-0 last:mb-0 hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         disabled && "cursor-not-allowed opacity-50 hover:bg-transparent",
         className,
       )}
@@ -429,12 +429,6 @@ export function MultiSelectItem({
       <span className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden whitespace-nowrap">
         {children}
       </span>
-      <CheckIcon
-        className={cn(
-          "text-bg-button-secondary size-5 shrink-0",
-          isSelected ? "opacity-100" : "opacity-0",
-        )}
-      />
     </CommandItem>
   );
 }

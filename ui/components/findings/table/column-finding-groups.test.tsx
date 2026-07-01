@@ -107,7 +107,6 @@ vi.mock("@/components/shadcn/select/select", () => ({
     <div>{children}</div>
   ),
   SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SelectStatusDot: () => <span data-testid="select-status-dot" />,
   SelectTrigger: ({
     children,
     disabled,

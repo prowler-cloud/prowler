@@ -83,6 +83,43 @@ describe("MultiSelect", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("uses a selected background instead of a check icon for active items", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <MultiSelect values={["aws-prod"]} onValuesChange={() => {}}>
+        <MultiSelectTrigger>
+          <MultiSelectValue placeholder="Select accounts" />
+        </MultiSelectTrigger>
+        <MultiSelectContent search={false}>
+          <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
+          <MultiSelectItem value="azure-dev">Development Azure</MultiSelectItem>
+        </MultiSelectContent>
+      </MultiSelect>,
+    );
+
+    // When
+    await user.click(screen.getByRole("combobox"));
+
+    // Then
+    const selectedItem = screen.getByRole("option", {
+      name: "Production AWS",
+    });
+    expect(selectedItem).toHaveAttribute("data-state", "checked");
+    expect(selectedItem).toHaveClass(
+      "data-[state=checked]:bg-button-tertiary/10",
+    );
+    expect(selectedItem).not.toHaveClass(
+      "data-[state=checked]:bg-bg-neutral-tertiary",
+    );
+    expect(selectedItem).toHaveClass(
+      "data-[state=checked]:hover:bg-button-tertiary/15",
+    );
+    expect(selectedItem).toHaveClass("hover:bg-slate-200");
+    expect(selectedItem).toHaveClass("dark:hover:bg-slate-700/50");
+    expect(selectedItem.querySelector("svg")).toBeNull();
+  });
+
   it("filters items without crashing when search is enabled", async () => {
     const user = userEvent.setup();
 

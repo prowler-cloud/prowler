@@ -1,7 +1,7 @@
 "use client";
 
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { ComponentProps, type WheelEvent } from "react";
 
 import { cn } from "@/lib/utils";
@@ -9,35 +9,6 @@ import { cn } from "@/lib/utils";
 const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
   event.stopPropagation();
 };
-
-type SelectStatusTone = "warning" | "attention" | "info" | "success" | "risk";
-
-const selectStatusToneClasses = {
-  warning:
-    "border-border-neutral-tertiary bg-transparent text-text-warning-primary [&_svg]:text-text-warning-primary",
-  attention:
-    "border-border-neutral-tertiary bg-transparent text-text-warning-primary [&_svg]:text-text-warning-primary",
-  info: "border-border-neutral-tertiary bg-transparent text-button-tertiary [&_svg]:text-button-tertiary",
-  success:
-    "border-border-neutral-tertiary bg-transparent text-text-success-primary [&_svg]:text-text-success-primary",
-  risk: "border-border-neutral-tertiary bg-transparent text-text-neutral-secondary [&_svg]:text-text-neutral-secondary",
-} as const satisfies Record<SelectStatusTone, string>;
-
-const selectStatusItemToneClasses = {
-  warning: "text-text-warning-primary [&_svg]:text-text-warning-primary",
-  attention: "text-text-warning-primary [&_svg]:text-text-warning-primary",
-  info: "text-button-tertiary [&_svg]:text-button-tertiary",
-  success: "text-text-success-primary [&_svg]:text-text-success-primary",
-  risk: "text-text-neutral-secondary [&_svg]:text-text-neutral-secondary",
-} as const satisfies Record<SelectStatusTone, string>;
-
-const selectStatusDotClasses = {
-  warning: "bg-bg-warning",
-  attention: "bg-bg-warning",
-  info: "bg-bg-data-info",
-  success: "bg-bg-pass",
-  risk: "bg-bg-data-muted",
-} as const satisfies Record<SelectStatusTone, string>;
 
 function Select({
   allowDeselect = false,
@@ -80,23 +51,18 @@ function SelectTrigger({
   className,
   size = "default",
   iconSize = "default",
-  variant = "default",
-  tone,
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default" | "status-table" | "status-modal";
+  size?: "sm" | "default";
   iconSize?: "sm" | "default";
-  variant?: "default" | "status";
-  tone?: SelectStatusTone;
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 data-[size=status-modal]:h-8 data-[size=status-modal]:w-auto data-[size=status-modal]:min-w-28 data-[size=status-modal]:border-0 data-[size=status-modal]:bg-transparent data-[size=status-modal]:px-2 data-[size=status-modal]:py-0 data-[size=status-modal]:shadow-none data-[size=status-modal]:hover:bg-transparent data-[size=status-modal]:focus-visible:ring-0 data-[size=status-modal]:focus-visible:ring-offset-0 data-[size=status-table]:h-8 data-[size=status-table]:w-fit data-[size=status-table]:max-w-40 data-[size=status-table]:min-w-0 data-[size=status-table]:px-3 data-[size=status-table]:py-0 data-[size=status-table]:text-xs data-[size=status-table]:font-semibold *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
-        variant === "status" && tone && selectStatusToneClasses[tone],
+        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
         className,
       )}
       {...props}
@@ -189,18 +155,14 @@ function SelectLabel({
 
 function SelectItem({
   className,
-  tone,
   children,
   ...props
-}: ComponentProps<typeof SelectPrimitive.Item> & {
-  tone?: SelectStatusTone;
-}) {
+}: ComponentProps<typeof SelectPrimitive.Item>) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary hover:bg-bg-neutral-tertiary relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-12 pl-4 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
-        tone && selectStatusItemToneClasses[tone],
+        "focus:bg-accent focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-bg-button-secondary text-bg-button-secondary data-[state=checked]:bg-button-tertiary/10 data-[state=checked]:text-text-neutral-primary data-[state=checked]:hover:bg-button-tertiary/15 data-[state=checked]:focus:bg-button-tertiary/15 relative flex w-full cursor-pointer items-center gap-2 rounded-lg py-3 pr-4 pl-4 text-sm outline-hidden select-none hover:bg-slate-200 data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 dark:hover:bg-slate-700/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-5",
         className,
       )}
       {...props}
@@ -210,19 +172,7 @@ function SelectItem({
           {children}
         </span>
       </SelectPrimitive.ItemText>
-      <SelectPrimitive.ItemIndicator asChild>
-        <CheckIcon className="text-bg-button-secondary absolute right-4 size-5" />
-      </SelectPrimitive.ItemIndicator>
     </SelectPrimitive.Item>
-  );
-}
-
-function SelectStatusDot({ tone }: { tone: SelectStatusTone }) {
-  return (
-    <span
-      className={cn(selectStatusDotClasses[tone], "size-2 rounded-full")}
-      aria-hidden="true"
-    />
   );
 }
 
@@ -284,8 +234,6 @@ export {
   SelectScrollDownButton,
   SelectScrollUpButton,
   SelectSeparator,
-  SelectStatusDot,
-  type SelectStatusTone,
   SelectTrigger,
   SelectValue,
 };
