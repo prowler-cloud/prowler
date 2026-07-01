@@ -1,7 +1,11 @@
 import json
 
 from prowler.lib.check.models import Check, Check_Report_AWS
-from prowler.lib.utils.utils import detect_secrets_scan
+from prowler.lib.utils.utils import (
+    SecretsScanError,
+    annotate_verified_secrets,
+    detect_secrets_scan_batch,
+)
 from prowler.providers.aws.services.apigateway.apigateway_client import (
     apigateway_client,
 )
@@ -15,11 +19,33 @@ class apigateway_restapi_no_secrets_in_stage_variables(Check):
         secrets_ignore_patterns = apigateway_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        for rest_api in apigateway_client.rest_apis:
-            for stage in rest_api.stages:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource=rest_api
-                )
+        validate = apigateway_client.audit_config.get("secrets_validate", False)
+
+        # Collect one payload per stage (its variables) and scan them all in
+        # batched Kingfisher invocations instead of one subprocess per stage.
+        # Findings are keyed by (rest_api index, stage index).
+        def payloads():
+            for api_index, rest_api in enumerate(apigateway_client.rest_apis):
+                for stage_index, stage in enumerate(rest_api.stages):
+                    if stage.variables:
+                        yield (api_index, stage_index), json.dumps(
+                            stage.variables, indent=2
+                        )
+
+        scan_error = None
+        try:
+            batch_results = detect_secrets_scan_batch(
+                payloads(),
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
+            )
+        except SecretsScanError as error:
+            batch_results = {}
+            scan_error = error
+
+        for api_index, rest_api in enumerate(apigateway_client.rest_apis):
+            for stage_index, stage in enumerate(rest_api.stages):
+                report = Check_Report_AWS(metadata=self.metadata(), resource=rest_api)
                 report.resource_arn = stage.arn
                 report.resource_id = f"{rest_api.name}/{stage.name}"
                 report.status = "PASS"
@@ -29,19 +55,23 @@ class apigateway_restapi_no_secrets_in_stage_variables(Check):
                 )
 
                 if stage.variables:
-                    detect_secrets_output = detect_secrets_scan(
-                        data=json.dumps(stage.variables, indent=2),
-                        excluded_secrets=secrets_ignore_patterns,
-                        detect_secrets_plugins=apigateway_client.audit_config.get(
-                            "detect_secrets_plugins",
-                        ),
-                    )
+                    if scan_error:
+                        report.status = "MANUAL"
+                        report.status_extended = (
+                            f"Could not scan stage variables of API Gateway REST API "
+                            f"{rest_api.name} stage {stage.name} for secrets: "
+                            f"{scan_error}; manual review is required."
+                        )
+                        findings.append(report)
+                        continue
 
+                    detect_secrets_output = batch_results.get((api_index, stage_index))
                     if detect_secrets_output:
+                        variable_names = list(stage.variables.keys())
                         secrets_string = ", ".join(
                             [
                                 f"{secret['type']} in variable "
-                                f"{list(stage.variables.keys())[secret['line_number'] - 2]}"
+                                f"{variable_names[secret['line_number'] - 2]}"
                                 for secret in detect_secrets_output
                             ]
                         )
@@ -52,6 +82,7 @@ class apigateway_restapi_no_secrets_in_stage_variables(Check):
                             f"found in stage variables of API Gateway REST API "
                             f"{rest_api.name} stage {stage.name} -> {secrets_string}."
                         )
+                        annotate_verified_secrets(report, detect_secrets_output)
 
                 findings.append(report)
 
