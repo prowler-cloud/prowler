@@ -562,6 +562,7 @@ class TestAzureProviderValidateResourceGroups:
         provider._identity = MagicMock()
         provider._identity.subscriptions = subscriptions or {str(uuid4()): "Sub"}
         provider._session = MagicMock()
+        provider._region_config = MagicMock()
         return provider
 
     @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")

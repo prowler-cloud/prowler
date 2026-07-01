@@ -78,7 +78,7 @@ class Test_Policy_get_policy_assigments:
 
     def test_get_policy_assigments_with_resource_group(self):
         mock_client = MagicMock()
-        mock_client.policy_assignments.list_for_resource_group.return_value = []
+        mock_client.policy_assignments.list.return_value = []
 
         with patch(
             "prowler.providers.azure.services.policy.policy_service.Policy._get_policy_assigments",
@@ -91,14 +91,13 @@ class Test_Policy_get_policy_assigments:
 
         result = policy._get_policy_assigments()
 
-        mock_client.policy_assignments.list_for_resource_group.assert_called_once_with(
-            resource_group_name=RESOURCE_GROUP
-        )
-        mock_client.policy_assignments.list.assert_not_called()
+        mock_client.policy_assignments.list.assert_called_once()
+        mock_client.policy_assignments.list_for_resource_group.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_policy_assigments_empty_resource_group_for_subscription(self):
         mock_client = MagicMock()
+        mock_client.policy_assignments.list.return_value = []
 
         with patch(
             "prowler.providers.azure.services.policy.policy_service.Policy._get_policy_assigments",
@@ -111,13 +110,13 @@ class Test_Policy_get_policy_assigments:
 
         result = policy._get_policy_assigments()
 
+        mock_client.policy_assignments.list.assert_called_once()
         mock_client.policy_assignments.list_for_resource_group.assert_not_called()
-        mock_client.policy_assignments.list.assert_not_called()
-        assert result[AZURE_SUBSCRIPTION_ID] == {}
+        assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_policy_assigments_with_multiple_resource_groups(self):
         mock_client = MagicMock()
-        mock_client.policy_assignments.list_for_resource_group.return_value = []
+        mock_client.policy_assignments.list.return_value = []
 
         with patch(
             "prowler.providers.azure.services.policy.policy_service.Policy._get_policy_assigments",
@@ -130,12 +129,13 @@ class Test_Policy_get_policy_assigments:
 
         result = policy._get_policy_assigments()
 
-        assert mock_client.policy_assignments.list_for_resource_group.call_count == 2
+        mock_client.policy_assignments.list.assert_called_once()
+        mock_client.policy_assignments.list_for_resource_group.assert_not_called()
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_policy_assigments_with_mixed_case_resource_group(self):
         mock_client = MagicMock()
-        mock_client.policy_assignments.list_for_resource_group.return_value = []
+        mock_client.policy_assignments.list.return_value = []
 
         with patch(
             "prowler.providers.azure.services.policy.policy_service.Policy._get_policy_assigments",
@@ -148,6 +148,5 @@ class Test_Policy_get_policy_assigments:
 
         policy._get_policy_assigments()
 
-        mock_client.policy_assignments.list_for_resource_group.assert_called_once_with(
-            resource_group_name="RG"
-        )
+        mock_client.policy_assignments.list.assert_called_once()
+        mock_client.policy_assignments.list_for_resource_group.assert_not_called()

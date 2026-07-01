@@ -222,13 +222,17 @@ class Network(AzureService):
     def _get_virtual_networks(self):
         logger.info("Network - Getting Virtual Networks...")
         virtual_networks = {}
-        for subscription, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                virtual_networks[subscription] = []
-                vnet_list = client.virtual_networks.list_all()
-                for vnet in vnet_list:
+                virtual_networks[subscription_id] = []
+                virtual_networks_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.virtual_networks.list_all,
+                    client.virtual_networks.list,
+                )
+                for virtual_network in virtual_networks_list:
                     subnets = []
-                    for subnet in getattr(vnet, "subnets", []) or []:
+                    for subnet in getattr(virtual_network, "subnets", []) or []:
                         nsg = getattr(subnet, "network_security_group", None)
                         subnets.append(
                             VNetSubnet(
@@ -237,20 +241,20 @@ class Network(AzureService):
                                 nsg_id=getattr(nsg, "id", None) if nsg else None,
                             )
                         )
-                    virtual_networks[subscription].append(
+                    virtual_networks[subscription_id].append(
                         VirtualNetwork(
-                            id=vnet.id,
-                            name=vnet.name,
-                            location=vnet.location,
+                            id=virtual_network.id,
+                            name=virtual_network.name,
+                            location=virtual_network.location,
                             enable_ddos_protection=getattr(
-                                vnet, "enable_ddos_protection", False
+                                virtual_network, "enable_ddos_protection", False
                             ),
                             subnets=subnets,
                         )
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return virtual_networks
 

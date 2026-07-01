@@ -106,6 +106,7 @@ class Test_Databricks_get_workspaces:
         mock_workspace.location = "eastus"
         mock_workspace.parameters = None
         mock_workspace.encryption = None
+        mock_workspace.public_network_access = None
 
         mock_client = MagicMock()
         mock_client.workspaces = MagicMock()
@@ -134,6 +135,7 @@ class Test_Databricks_get_workspaces:
         mock_workspace.location = "eastus"
         mock_workspace.parameters = None
         mock_workspace.encryption = None
+        mock_workspace.public_network_access = None
 
         mock_client = MagicMock()
         mock_client.workspaces = MagicMock()
