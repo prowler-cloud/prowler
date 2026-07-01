@@ -71,7 +71,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Check workflow file timestamps
@@ -140,7 +140,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Checkout repository
@@ -875,7 +875,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact
@@ -987,7 +987,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent artifacts
@@ -1096,7 +1096,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Add eyes reaction for immediate feedback
@@ -1169,7 +1169,7 @@ jobs:
           egress-policy: audit
 
       - name: Setup Scripts
-        uses: github/gh-aw/actions/setup@4d44d0e89851a877f4ddc0cb6c0197e42b1016c5 # v0.73.0
+        uses: github/gh-aw/actions/setup@a3624368c4e7d877586ff2784b61de73405e2cdd # v0.80.9
         with:
           destination: /opt/gh-aw/actions
       - name: Download agent output artifact
