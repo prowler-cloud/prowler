@@ -731,6 +731,27 @@ okta:
   # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
   # with an explicit risk acceptance.
   okta_admin_console_idle_timeout_max_minutes: 15
+  # Okta API rate limiting
+  # Max retries on HTTP 429. The Okta SDK sleeps until the X-Rate-Limit-Reset
+  # window before each retry, so raising this lets scans ride out more rate-limit
+  # windows on busy orgs instead of failing with partial data. SDK default is 2.
+  okta_max_retries: 5
+  # Per-request timeout in seconds. In the Okta SDK this value plays a DUAL role:
+  # it is both the per-HTTP-call socket timeout AND the total wall-clock budget
+  # across the whole retry+backoff loop. It defaults to 300 (not 0) because it is
+  # the only effective hang guard, and 300s is the smallest value that still lets
+  # all okta_max_retries rate-limit waits (~60s Okta reset windows) complete
+  # without being cut short. Keep it roughly >= okta_max_retries * 60 if you
+  # raise okta_max_retries.
+  okta_request_timeout: 300
+  # Maximum aggregate Okta API requests per second. Prowler paces all requests
+  # through a shared limiter so scans stay under Okta's rate limits proactively,
+  # rather than relying on the 429 retry above as a safety net. Okta enforces
+  # limits per endpoint, so this is a deliberately simple global cap; lower it if
+  # scans still hit limits, raise it to scan faster. Set to 0 to disable. Valid
+  # range: 0 or 0.1..100 — non-zero rates below 0.1 are rejected because they
+  # would make a scan impractically slow.
+  okta_requests_per_second: 4
   # Okta Users
   # okta.user_inactivity_automation_35d_enabled
   # Maximum number of days a user can stay inactive before the

@@ -359,7 +359,8 @@
                 "group": "Okta",
                 "pages": [
                   "user-guide/providers/okta/getting-started-okta",
-                  "user-guide/providers/okta/authentication"
+                  "user-guide/providers/okta/authentication",
+                  "user-guide/providers/okta/retry-configuration"
                 ]
               },
               {
