@@ -6,14 +6,16 @@ import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
-const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
+export const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
   "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
-const kubeconfigContainsExecAuthentication = (value: string): boolean => {
+export const kubeconfigContainsExecAuthentication = (
+  value: string,
+): boolean => {
   try {
     const parsed = yaml.load(value);
 
