@@ -368,7 +368,7 @@ jobs:
           no-changelog
 
     - name: Create draft release
-      uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
+      uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
       with:
         tag_name: ${{ env.PROWLER_VERSION }}
         name: Prowler ${{ env.PROWLER_VERSION }}
