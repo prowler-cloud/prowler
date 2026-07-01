@@ -1,7 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { ComponentProps, forwardRef } from "react";
+import { ComponentProps } from "react";
 
 import { fontMono } from "@/config/fonts";
 import { cn } from "@/lib/utils";
@@ -21,10 +21,17 @@ const textareaVariants = cva(
         sm: "min-h-12 px-3 py-2 text-xs",
         lg: "min-h-24 px-5 py-4",
       },
+      font: {
+        sans: "",
+        // `fontMono.className` is a next/font class resolved at build time,
+        // so it's as stable as the other variant classes above.
+        mono: fontMono.className,
+      },
     },
     defaultVariants: {
       variant: "default",
       textareaSize: "default",
+      font: "sans",
     },
   },
 );
@@ -32,31 +39,30 @@ const textareaVariants = cva(
 export interface TextareaProps
   extends Omit<ComponentProps<"textarea">, "size">,
     VariantProps<typeof textareaVariants> {
-  /**
-   * Font family. `mono` renders the value in the design system's monospace
-   * face — use it for code/YAML/config input. `fontMono.className` is a
-   * generated next/font class, so it lives here rather than in the cva variants.
-   */
-  font?: "sans" | "mono";
+  ref?: React.Ref<HTMLTextAreaElement>;
 }
 
-const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant, textareaSize, font = "sans", ...props }, ref) => {
-    return (
-      <textarea
-        ref={ref}
-        data-slot="textarea"
-        className={cn(
-          textareaVariants({ variant, textareaSize }),
-          font === "mono" && fontMono.className,
-          className,
-        )}
-        {...props}
-      />
-    );
-  },
-);
+export const Textarea = ({
+  className,
+  variant,
+  textareaSize,
+  font,
+  ref,
+  ...props
+}: TextareaProps) => {
+  return (
+    <textarea
+      ref={ref}
+      data-slot="textarea"
+      className={cn(
+        textareaVariants({ variant, textareaSize, font }),
+        className,
+      )}
+      {...props}
+    />
+  );
+};
 
 Textarea.displayName = "Textarea";
 
-export { Textarea, textareaVariants };
+export { textareaVariants };

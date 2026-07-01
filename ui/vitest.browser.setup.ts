@@ -5,6 +5,7 @@
 // the graph nodes, blocking Playwright clicks. Pull the stylesheet directly
 // so the test bundle gets the same CSS the production page receives.
 import "@/styles/globals.css";
+import "./__tests__/mocks/next-font-google";
 
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
 

@@ -99,6 +99,11 @@ export default defineConfig(() => {
         "next/image",
         "next/cache",
         "next/server",
+        // Mocked in vitest.browser.setup.ts, but vi.mock still resolves the
+        // real module to register the intercept. Pre-bundle it up front so
+        // Vite doesn't discover it mid-run and reload a test file underneath
+        // itself.
+        "next/font/google",
         "next-auth",
         "next-auth/react",
         "next-auth/providers/credentials",

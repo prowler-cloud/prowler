@@ -323,6 +323,7 @@ export function ScanConfigurationEditor({
       }}
       title={isEdit ? "Edit Scan Configuration" : "New Scan Configuration"}
       size="2xl"
+      scrollable
     >
       <ScanConfigurationForm
         key={config?.id ?? "new"}
