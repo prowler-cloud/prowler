@@ -10,6 +10,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Scan task now checks the ingest Neo4j database and configured graph sink before starting graph ingestion [(#11743)](https://github.com/prowler-cloud/prowler/pull/11743)
 - Disable PowerShell telemetry in the API container image [(#11746)](https://github.com/prowler-cloud/prowler/pull/11746)
 
+### 🐞 Fixed
+
+- Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
+
 ---
 
 ## [1.32.2] (Prowler UNRELEASED)

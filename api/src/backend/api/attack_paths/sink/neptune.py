@@ -27,6 +27,11 @@ import neo4j
 import neo4j.exceptions
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
+from api.attack_paths.sink.drop import (
+    delete_batches,
+    node_delete_query,
+    relationship_delete_queries,
+)
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
 from botocore.session import Session as BotoSession
@@ -296,78 +301,37 @@ class NeptuneSink(SinkDatabase):
                 "Opened Neptune writer session for provider graph drop (provider=%s)",
                 provider_id,
             )
-            while True:
-                next_batch = relationship_batches + 1
-                logger.info(
-                    "Deleting relationship batch from Neptune sink "
-                    "(provider=%s, batch=%s, total_rels=%s, elapsed=%.3fs)",
-                    provider_id,
-                    next_batch,
-                    deleted_relationships,
-                    time.perf_counter() - drop_t0,
+            for phase, query in relationship_delete_queries(provider_label):
+                deleted_relationships, phase_batches = delete_batches(
+                    session=session,
+                    logger=logger,
+                    log_target="Neptune sink",
+                    provider_id=provider_id,
+                    query=query,
+                    phase=phase,
+                    count_key="deleted_rels_count",
+                    total_key="rels",
+                    deleted_key="deleted_rels",
+                    initial_total=deleted_relationships,
+                    batch_size=BATCH_SIZE,
+                    drop_t0=drop_t0,
                 )
-                result = session.run(
-                    f"""
-                    MATCH (:`{provider_label}`)-[r]-()
-                    WITH DISTINCT r LIMIT $batch_size
-                    DELETE r
-                    RETURN COUNT(r) AS deleted_rels_count
-                    """,
-                    {"batch_size": BATCH_SIZE},
-                )
-                record = result.single()
-                deleted_rels = (record["deleted_rels_count"] if record else 0) or 0
-                if deleted_rels == 0:
-                    break
-                relationship_batches += 1
-                deleted_relationships += deleted_rels
-                logger.info(
-                    "Deleted relationship batch from Neptune sink "
-                    "(provider=%s, batch=%s, deleted_rels=%s, total_rels=%s, "
-                    "elapsed=%.3fs)",
-                    provider_id,
-                    relationship_batches,
-                    deleted_rels,
-                    deleted_relationships,
-                    time.perf_counter() - drop_t0,
-                )
+                relationship_batches += phase_batches
 
-            deleted_nodes = 0
-            while True:
-                next_batch = node_batches + 1
-                logger.info(
-                    "Deleting node batch from Neptune sink "
-                    "(provider=%s, batch=%s, total_nodes=%s, elapsed=%.3fs)",
-                    provider_id,
-                    next_batch,
-                    deleted_nodes,
-                    time.perf_counter() - drop_t0,
-                )
-                result = session.run(
-                    f"""
-                    MATCH (n:`{PROVIDER_RESOURCE_LABEL}`:`{provider_label}`)
-                    WITH n LIMIT $batch_size
-                    DELETE n
-                    RETURN COUNT(n) AS deleted_nodes_count
-                    """,
-                    {"batch_size": BATCH_SIZE},
-                )
-                record = result.single()
-                deleted = (record["deleted_nodes_count"] if record else 0) or 0
-                if deleted == 0:
-                    break
-                node_batches += 1
-                deleted_nodes += deleted
-                logger.info(
-                    "Deleted node batch from Neptune sink "
-                    "(provider=%s, batch=%s, deleted_nodes=%s, total_nodes=%s, "
-                    "elapsed=%.3fs)",
-                    provider_id,
-                    node_batches,
-                    deleted,
-                    deleted_nodes,
-                    time.perf_counter() - drop_t0,
-                )
+            deleted_nodes, node_batches = delete_batches(
+                session=session,
+                logger=logger,
+                log_target="Neptune sink",
+                provider_id=provider_id,
+                query=node_delete_query(provider_label, PROVIDER_RESOURCE_LABEL),
+                phase="node",
+                count_key="deleted_nodes_count",
+                total_key="nodes",
+                deleted_key="deleted_nodes",
+                initial_total=0,
+                batch_size=BATCH_SIZE,
+                drop_t0=drop_t0,
+            )
 
         logger.info(
             "Finished dropping provider graph from Neptune sink "
