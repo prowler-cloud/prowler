@@ -10,6 +10,7 @@ hierarchy; sink-internal behavior is exercised in `test_sink.py`.
 from unittest.mock import MagicMock, patch
 
 import api.attack_paths.database as db_module
+import pytest
 
 
 class TestDatabaseNameHelper:
@@ -70,6 +71,71 @@ class TestExecuteReadQueryRoutes:
         sink_backend_stub.execute_read_query.assert_called_once_with(
             "db-tenant-abc", "MATCH (n) RETURN n", None
         )
+
+
+class TestScanDatabaseAvailability:
+    def test_verify_scan_databases_available_checks_ingest_and_sink(self):
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            db_module.verify_scan_databases_available()
+
+        mock_ingest.get_driver.return_value.verify_connectivity.assert_called_once_with()
+        mock_get_driver.return_value.verify_connectivity.assert_called_once_with()
+
+    def test_verify_scan_databases_available_raises_when_ingest_is_down(self):
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver"),
+        ):
+            mock_ingest.get_driver.return_value.verify_connectivity.side_effect = (
+                RuntimeError("ingest down")
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "Attack Paths graph database unavailable before scan start" in str(
+            exc.value
+        )
+        assert "ingest Neo4j: ingest down" in str(exc.value)
+
+    def test_verify_scan_databases_available_raises_when_sink_is_down(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+
+        with (
+            patch("api.attack_paths.database.ingest"),
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            mock_get_driver.return_value.verify_connectivity.side_effect = RuntimeError(
+                "writer down"
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "sink neptune: writer down" in str(exc.value)
+
+    def test_verify_scan_databases_available_reports_both_failures(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+
+        with (
+            patch("api.attack_paths.database.ingest") as mock_ingest,
+            patch("api.attack_paths.database.get_driver") as mock_get_driver,
+        ):
+            mock_ingest.get_driver.return_value.verify_connectivity.side_effect = (
+                RuntimeError("ingest down")
+            )
+            mock_get_driver.return_value.verify_connectivity.side_effect = RuntimeError(
+                "sink down"
+            )
+
+            with pytest.raises(RuntimeError) as exc:
+                db_module.verify_scan_databases_available()
+
+        assert "ingest Neo4j: ingest down" in str(exc.value)
+        assert "sink neo4j: sink down" in str(exc.value)
 
 
 class TestSinkOperationsDelegation:
