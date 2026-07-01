@@ -37,8 +37,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
-          # zizmor: ignore[artipacked]
-          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+          persist-credentials: false # No write token in the untrusted PR-head tree; public repo so base fetch/changed-files work unauthenticated
 
       - name: Fetch PR base ref for tj-actions/changed-files
         env:

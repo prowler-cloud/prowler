@@ -7,6 +7,8 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔄 Changed
 
 - Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`), Cartography's (bumped to 0.138.1) per-scan ingest database stays on Neo4j [(#11524)](https://github.com/prowler-cloud/prowler/pull/11524)
+- Attack Paths: Scan task now checks the ingest Neo4j database and configured graph sink before starting graph ingestion [(#11743)](https://github.com/prowler-cloud/prowler/pull/11743)
+- Disable PowerShell telemetry in the API container image [(#11746)](https://github.com/prowler-cloud/prowler/pull/11746)
 
 ---
 

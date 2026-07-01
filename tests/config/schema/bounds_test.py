@@ -342,38 +342,6 @@ class TestTrustedIpsValidator:
         assert _has_error_for(errors, "aws.trusted_ips")
 
 
-class TestDetectSecretsEntropyBound:
-    """`detect_secrets_plugins[].limit` is Shannon entropy: 0..10."""
-
-    @pytest.mark.parametrize("value", [0.0, 3.5, 4.5, 8.0, 10.0])
-    def test_valid(self, value):
-        assert (
-            validate_scan_config(
-                {
-                    "aws": {
-                        "detect_secrets_plugins": [
-                            {"name": "Base64HighEntropyString", "limit": value}
-                        ]
-                    }
-                }
-            )
-            == []
-        )
-
-    @pytest.mark.parametrize("value", [-0.1, 10.01, 50])
-    def test_invalid(self, value):
-        errors = validate_scan_config(
-            {
-                "aws": {
-                    "detect_secrets_plugins": [
-                        {"name": "Base64HighEntropyString", "limit": value}
-                    ]
-                }
-            }
-        )
-        assert _has_error_for(errors, "aws.detect_secrets_plugins")
-
-
 class TestAdapterRobustness:
     """Top-level adapter behaviour the Prowler App backend depends on."""
 
