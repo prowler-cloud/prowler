@@ -121,7 +121,7 @@ You can also manage a provider's configuration from **Providers**:
     Click **Edit Scan Configuration**.
   </Step>
   <Step title="Pick a configuration">
-    In the dialog, choose an existing configuration from the dropdown to associate it, pick a different one to move the provider, or select **Default** to detach it. **Default** means the provider uses Prowler's built-in scan defaults from the SDK (no custom configuration), and it's always available even if no custom configurations exist yet. Then click **Save**.
+    In the dialog, choose an existing configuration from the dropdown to associate it, pick a different one to move the provider, or select **Default** to detach it. **Default** means the provider uses the built-in defaults from `config.yaml` (no custom configuration), and it's always available even if no custom configurations exist yet. Then click **Save**.
   </Step>
 </Steps>
 
@@ -138,14 +138,14 @@ Because a provider can belong to only one configuration, associating a provider 
 On the **Scan Config** page, open the **⋮** menu on a configuration row:
 
 - **Edit:** Choose **Edit** to open the editor, change its name, YAML, or attached providers, and click **Update**. Editing the YAML always happens here, never from the provider row.
-- **Delete:** Choose **Delete** (in the danger zone) and confirm. Providers that were attached fall back to Prowler's built-in scan defaults on their next scan.
+- **Delete:** Choose **Delete** (in the danger zone) and confirm. Providers that were attached fall back to the built-in defaults from `config.yaml` on their next scan.
 
 ## How It's Applied
 
 When a scan runs for a provider:
 
 1. If the provider is attached to a Scan Configuration **and that configuration has a section for the provider's type** (e.g. `aws` for an AWS provider), Prowler uses that section **in place of** `config.yaml` for that provider's scan.
-2. If the provider is attached to a Scan Configuration, but that configuration **has no section for the provider's type** (for example, a configuration that only defines an `aws` section, attached to a GCP provider), the scan falls back to the built-in SDK defaults for that provider, exactly as if no Scan Configuration were attached at all.
+2. If the provider is attached to a Scan Configuration, but that configuration **has no section for the provider's type** (for example, a configuration that only defines an `aws` section, attached to a GCP provider), the scan falls back to the built-in defaults from `config.yaml` for that provider, exactly as if no Scan Configuration were attached at all.
 3. If the provider isn't attached to any Scan Configuration, the built-in defaults from `config.yaml` are used.
 
 <Warning>
