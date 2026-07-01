@@ -258,6 +258,7 @@ export function FindingsGroupDrillDown({
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
+        onTriageUpdate={drawer.patchTriageUpdate}
       />
     </FindingsSelectionContext.Provider>
   );

@@ -7,12 +7,13 @@ import { canMuteFindingResource } from "@/components/findings/table/finding-reso
 import { useResourceDetailDrawer } from "@/components/findings/table/resource-detail-drawer";
 import { useFindingGroupResources } from "@/hooks/use-finding-group-resources";
 import { applyDefaultMutedFilter } from "@/lib";
-import { FindingGroupRow, FindingResourceRow } from "@/types";
 import {
-  FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES,
-  FINDING_TRIAGE_STATUS_LABELS,
-  type UpdateFindingTriageInput,
-} from "@/types/findings-triage";
+  applyOptimisticTriageSummaryUpdate,
+  getOptimisticTriageMutedReason,
+  shouldMarkFindingMutedForTriageUpdate,
+} from "@/lib/finding-triage";
+import { FindingGroupRow, FindingResourceRow } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 interface UseFindingGroupResourceStateOptions {
   group: FindingGroupRow;
@@ -73,11 +74,7 @@ export function useFindingGroupResourceState({
         return resource;
       }
 
-      const shouldMarkMuted =
-        optimistic.status &&
-        FINDING_TRIAGE_MUTELIST_SHORTCUT_STATUS_VALUES.some(
-          (status) => status === optimistic.status,
-        );
+      const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(optimistic);
       const shouldSetTriageMuteReason =
         shouldMarkMuted && optimistic.isMuted !== true;
 
@@ -85,24 +82,9 @@ export function useFindingGroupResourceState({
         ...resource,
         isMuted: shouldMarkMuted ? true : resource.isMuted,
         mutedReason: shouldSetTriageMuteReason
-          ? `Finding triage status changed to ${FINDING_TRIAGE_STATUS_LABELS[optimistic.status!]}.`
+          ? getOptimisticTriageMutedReason(optimistic.status!)
           : resource.mutedReason,
-        triage: {
-          ...resource.triage,
-          ...(optimistic.status
-            ? {
-                status: optimistic.status,
-                label: FINDING_TRIAGE_STATUS_LABELS[optimistic.status],
-                isMuted: shouldMarkMuted ? true : resource.triage.isMuted,
-              }
-            : {}),
-          ...(optimistic.note
-            ? {
-                hasVisibleNote: true,
-                notesCount: Math.max(resource.triage.notesCount, 1),
-              }
-            : {}),
-        },
+        triage: applyOptimisticTriageSummaryUpdate(resource.triage, optimistic),
       };
     });
 

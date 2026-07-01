@@ -375,6 +375,7 @@ export function InlineResourceContainer({
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
+        onTriageUpdate={drawer.patchTriageUpdate}
       />
     </FindingsSelectionContext.Provider>
   );
