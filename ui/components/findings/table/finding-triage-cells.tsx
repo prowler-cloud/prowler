@@ -148,7 +148,9 @@ export function FindingTriageStatusCell({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="inline-flex">{control}</span>
+        {/* Block-level so the tooltip wrapper doesn't add inline baseline spacing
+            that would push the compact "Triage" label below the sibling columns. */}
+        <span className="flex">{control}</span>
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
