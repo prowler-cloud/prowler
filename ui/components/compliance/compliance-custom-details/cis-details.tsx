@@ -16,9 +16,7 @@ interface CISDetailsProps {
 }
 
 export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
-  const processReferences = (
-    references: string | number | boolean | string[] | object[] | undefined,
-  ): string[] => {
+  const processReferences = (references: unknown): string[] => {
     if (typeof references !== "string") return [];
 
     // Use regex to extract all URLs that start with https://
