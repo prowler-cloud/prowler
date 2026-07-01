@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
@@ -27,6 +27,22 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("@/components/shadcn/dropdown", () => ({
+  ActionDropdownItem: ({
+    label,
+    onSelect,
+    disabled,
+  }: {
+    label: ReactNode;
+    onSelect?: () => void;
+    disabled?: boolean;
+  }) => (
+    <button disabled={disabled} onClick={onSelect}>
+      {label}
+    </button>
+  ),
+}));
+
 beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, "hasPointerCapture", {
     configurable: true,
@@ -49,7 +65,7 @@ import {
 } from "@/types/findings-triage";
 
 import {
-  FindingNotesCell,
+  FindingNoteActionItem,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 
@@ -72,11 +88,11 @@ function makeTriageSummary(
 }
 
 describe("finding triage cells", () => {
-  it("should open the Note modal from table notes with the current status preselected", async () => {
+  it("should open the Note modal from the note action with the current status preselected", async () => {
     // Given
     const user = userEvent.setup();
     render(
-      <FindingNotesCell
+      <FindingNoteActionItem
         triage={makeTriageSummary({
           status: FINDING_TRIAGE_STATUS.REMEDIATING,
           label: "Remediating",
@@ -92,7 +108,9 @@ describe("finding triage cells", () => {
     await user.click(addNoteButton);
 
     // Then
-    expect(screen.getByRole("dialog", { name: "Note" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Triage Note" }),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveTextContent("Remediating");
@@ -119,6 +137,56 @@ describe("finding triage cells", () => {
 
     // Then
     expect(onRowClick).not.toHaveBeenCalled();
+  });
+
+  it("should render status picker with fixed width and colored options", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.REMEDIATING,
+          label: "Remediating",
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+
+    // When
+    await user.click(statusControl);
+
+    // Then
+    expect(statusControl.parentElement).toHaveClass("w-20");
+    expect(within(statusControl).getByText("Remediating")).toHaveClass(
+      "text-bg-data-info",
+    );
+    expect(
+      within(screen.getByRole("option", { name: "Open" })).getByText("Open"),
+    ).toHaveClass("text-text-error-primary");
+    expect(
+      within(screen.getByRole("option", { name: "Under Review" })).getByText(
+        "Under Review",
+      ),
+    ).toHaveClass("text-bg-data-kubernetes");
+    expect(
+      within(screen.getByRole("option", { name: "Remediating" })).getByText(
+        "Remediating",
+      ),
+    ).toHaveClass("text-bg-data-info");
+    expect(
+      within(screen.getByRole("option", { name: "Risk Accepted" })).getByText(
+        "Risk Accepted",
+      ),
+    ).toHaveClass("text-bg-pass");
+    expect(
+      within(screen.getByRole("option", { name: "False Positive" })).getByText(
+        "False Positive",
+      ),
+    ).toHaveClass("text-text-neutral-secondary");
   });
 
   it("should disable table status mutation when no update handler is wired", async () => {
@@ -150,7 +218,7 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     render(
-      <FindingNotesCell
+      <FindingNoteActionItem
         triage={makeTriageSummary({ hasVisibleNote: true })}
         findingContext={{ title: "S3 bucket allows public reads" }}
         onTriageUpdateAction={vi.fn()}
@@ -158,7 +226,7 @@ describe("finding triage cells", () => {
     );
 
     const existingNoteButton = screen.getByRole("button", {
-      name: "Note exists",
+      name: "Open note",
     });
 
     // When
@@ -167,7 +235,7 @@ describe("finding triage cells", () => {
     // Then
     expect(existingNoteButton).toBeDisabled();
     expect(
-      screen.queryByRole("dialog", { name: "Note" }),
+      screen.queryByRole("dialog", { name: "Triage Note" }),
     ).not.toBeInTheDocument();
   });
 
@@ -179,7 +247,7 @@ describe("finding triage cells", () => {
       noteBody: "Loaded existing note",
     });
     render(
-      <FindingNotesCell
+      <FindingNoteActionItem
         triage={makeTriageSummary({ hasVisibleNote: true, notesCount: 1 })}
         findingContext={{ title: "S3 bucket allows public reads" }}
         onTriageUpdateAction={vi.fn()}
@@ -188,13 +256,15 @@ describe("finding triage cells", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Note exists" }));
+    await user.click(screen.getByRole("button", { name: "Open note" }));
 
     // Then
     expect(onTriageNoteLoadAction).toHaveBeenCalledWith(
       expect.objectContaining({ triageId: "triage-1", notesCount: 1 }),
     );
-    expect(await screen.findByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(
+      await screen.findByRole("dialog", { name: "Triage Note" }),
+    ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toHaveValue(
       "Loaded existing note",
     );
@@ -204,7 +274,7 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     render(
-      <FindingNotesCell
+      <FindingNoteActionItem
         triage={makeTriageSummary({
           canEdit: false,
           hasVisibleNote: false,
@@ -218,7 +288,7 @@ describe("finding triage cells", () => {
     await user.click(screen.getByRole("button", { name: "Add note" }));
 
     // Then
-    expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByRole("dialog", { name: "Triage Note" })).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
     expect(
@@ -230,7 +300,7 @@ describe("finding triage cells", () => {
     // Given
     const user = userEvent.setup();
     render(
-      <FindingNotesCell
+      <FindingNoteActionItem
         triage={makeTriageSummary({ hasVisibleNote: false, canEdit: true })}
         findingContext={{ title: "S3 bucket allows public reads" }}
       />,
@@ -244,7 +314,34 @@ describe("finding triage cells", () => {
     // Then
     expect(addNoteButton).toBeDisabled();
     expect(
-      screen.queryByRole("dialog", { name: "Note" }),
+      screen.queryByRole("dialog", { name: "Triage Note" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("should expose a screen-reader error when an existing note cannot load", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageNoteLoadAction = vi
+      .fn()
+      .mockRejectedValue(new Error("load failed"));
+    render(
+      <FindingNoteActionItem
+        triage={makeTriageSummary({ hasVisibleNote: true, notesCount: 1 })}
+        findingContext={{ title: "S3 bucket allows public reads" }}
+        onTriageUpdateAction={vi.fn()}
+        onTriageNoteLoadAction={onTriageNoteLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Open note" }));
+
+    // Then
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Could not load the existing note.",
+    );
+    expect(
+      screen.queryByRole("dialog", { name: "Triage Note" }),
     ).not.toBeInTheDocument();
   });
 

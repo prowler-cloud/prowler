@@ -121,7 +121,7 @@ describe("FindingNoteModal", () => {
     expect(screen.queryByText("AWS")).not.toBeInTheDocument();
   });
 
-  it("should open with title Note and current status preselected", () => {
+  it("should open with title Triage Note and current status preselected", () => {
     // Given / When
     renderNoteModal({
       triage: makeTriageDetail({
@@ -131,7 +131,7 @@ describe("FindingNoteModal", () => {
     });
 
     // Then
-    const dialog = screen.getByRole("dialog", { name: "Note" });
+    const dialog = screen.getByRole("dialog", { name: "Triage Note" });
     expect(dialog).toBeInTheDocument();
     expect(within(dialog).getByText("S3 bucket allows public reads"));
     expect(
@@ -240,7 +240,9 @@ describe("FindingNoteModal", () => {
     expect(
       await screen.findByText("Could not update the note. Please try again."),
     ).toBeVisible();
-    expect(screen.getByRole("dialog", { name: "Note" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("dialog", { name: "Triage Note" }),
+    ).toBeInTheDocument();
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 

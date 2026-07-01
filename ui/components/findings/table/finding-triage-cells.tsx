@@ -3,7 +3,7 @@
 import { MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
-import { Button } from "@/components/shadcn";
+import { ActionDropdownItem } from "@/components/shadcn/dropdown";
 import {
   Tooltip,
   TooltipContent,
@@ -155,7 +155,7 @@ export function FindingTriageStatusCell({
   );
 }
 
-export function FindingNotesCell({
+export function FindingNoteActionItem({
   triage,
   findingContext = { title: "Finding" },
   onTriageUpdateAction,
@@ -175,7 +175,7 @@ export function FindingNotesCell({
   const triageIdentity = `${triage.findingId}:${triage.triageId ?? "virtual"}`;
 
   return (
-    <FindingNotesCellContent
+    <FindingNoteActionItemContent
       key={triageIdentity}
       triage={triage}
       findingContext={findingContext}
@@ -185,7 +185,7 @@ export function FindingNotesCell({
   );
 }
 
-function FindingNotesCellContent({
+function FindingNoteActionItemContent({
   triage,
   findingContext,
   onTriageUpdateAction,
@@ -216,6 +216,42 @@ function FindingNotesCellContent({
     Boolean(onTriageNoteLoadAction) &&
     !isLoadingNote;
   const disabledCopy = getDisabledCopy({ triage, hasUpdateHandler });
+  const canOpenNoteModal = triage.hasVisibleNote
+    ? canOpenExistingNoteModal
+    : canOpenNewNoteModal;
+  const label = isLoadingNote
+    ? "Loading note..."
+    : triage.hasVisibleNote
+      ? "Open note"
+      : "Add note";
+
+  const handleNoteSelect = async () => {
+    if (!canOpenNoteModal) {
+      return;
+    }
+
+    if (!triage.hasVisibleNote) {
+      setIsNoteModalOpen(true);
+      return;
+    }
+
+    if (!onTriageNoteLoadAction) {
+      return;
+    }
+
+    setLoadError(null);
+    setIsLoadingNote(true);
+
+    try {
+      const note = await onTriageNoteLoadAction(triage);
+      setLoadedNote(note);
+      setIsNoteModalOpen(true);
+    } catch {
+      setLoadError("Could not load the existing note.");
+    } finally {
+      setIsLoadingNote(false);
+    }
+  };
 
   const noteModal = isNoteModalOpen ? (
     <FindingNoteModal
@@ -227,70 +263,27 @@ function FindingNotesCellContent({
     />
   ) : null;
 
-  if (triage.hasVisibleNote) {
-    return (
-      <>
-        <Button
-          type="button"
-          variant="bare-success"
-          size="icon-xs"
-          aria-label="Note exists"
-          title={
-            canOpenExistingNoteModal
-              ? "Open note"
-              : "Existing note cannot be loaded from the table."
-          }
-          disabled={!canOpenExistingNoteModal}
-          onClick={async (event) => {
-            event.stopPropagation();
-            if (!canOpenExistingNoteModal || !onTriageNoteLoadAction) {
-              return;
-            }
-
-            setLoadError(null);
-            setIsLoadingNote(true);
-
-            try {
-              const note = await onTriageNoteLoadAction(triage);
-              setLoadedNote(note);
-              setIsNoteModalOpen(true);
-            } catch {
-              setLoadError("Could not load the existing note.");
-            } finally {
-              setIsLoadingNote(false);
-            }
-          }}
-        >
-          <MessageSquareText className="size-4" aria-hidden="true" />
-        </Button>
-        {loadError && (
-          <span className="sr-only" role="alert">
-            {loadError}
-          </span>
-        )}
-        {noteModal}
-      </>
-    );
-  }
-
   return (
     <>
-      <Button
-        type="button"
-        variant="link"
-        size="link-inline"
-        disabled={!canOpenNewNoteModal}
-        title={disabledCopy}
-        onClick={(event) => {
-          event.stopPropagation();
-          if (canOpenNewNoteModal) {
-            setIsNoteModalOpen(true);
-          }
+      <ActionDropdownItem
+        icon={<MessageSquareText className="size-5" />}
+        label={label}
+        disabled={!canOpenNoteModal}
+        title={
+          triage.hasVisibleNote && !canOpenExistingNoteModal
+            ? "Existing note cannot be loaded from the table."
+            : disabledCopy
+        }
+        onSelect={(event) => {
+          event.preventDefault();
+          void handleNoteSelect();
         }}
-      >
-        <MessageSquareText className="size-4" aria-hidden="true" />
-        <span>Add note</span>
-      </Button>
+      />
+      {loadError && (
+        <span className="sr-only" role="alert">
+          {loadError}
+        </span>
+      )}
       {noteModal}
     </>
   );

@@ -8,10 +8,9 @@ import {
   Select,
   SelectContent,
   SelectItem,
-  SelectStatusDot,
-  type SelectStatusTone,
   SelectTrigger,
 } from "@/components/shadcn/select/select";
+import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_ORIGIN,
@@ -28,27 +27,19 @@ export type FindingTriageUpdateHandler = (
   input: UpdateFindingTriageInput,
 ) => void | Promise<void>;
 
-const TRIAGE_STATUS_TONE = {
-  open: "warning",
-  under_review: "attention",
-  remediating: "info",
-  resolved: "success",
-  risk_accepted: "risk",
-  false_positive: "risk",
-  reopened: "warning",
-} as const satisfies Record<FindingTriageStatus, SelectStatusTone>;
+const TRIAGE_STATUS_TEXT_CLASS = {
+  open: "text-text-error-primary",
+  under_review: "text-bg-data-kubernetes",
+  remediating: "text-bg-data-info",
+  resolved: "text-bg-pass",
+  risk_accepted: "text-bg-pass",
+  false_positive: "text-text-neutral-secondary",
+  reopened: "text-text-error-primary",
+} as const satisfies Record<FindingTriageStatus, string>;
 
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
 const MUTELIST_CONFIRMATION_COPY =
   "Changing to this triage status will mute the finding.";
-
-export function FindingTriageStatusDot({
-  status,
-}: {
-  status: FindingTriageStatus;
-}) {
-  return <SelectStatusDot tone={TRIAGE_STATUS_TONE[status]} />;
-}
 
 function TriageStatusPicker({
   disabled,
@@ -72,22 +63,19 @@ function TriageStatusPicker({
       <SelectTrigger
         aria-label="Triage status"
         disabled={disabled}
-        size="status-table"
+        size="sm"
         iconSize="sm"
-        variant="status"
-        tone={TRIAGE_STATUS_TONE[value]}
       >
-        <span className="truncate">{FINDING_TRIAGE_STATUS_LABELS[value]}</span>
+        <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[value])}>
+          {FINDING_TRIAGE_STATUS_LABELS[value]}
+        </span>
       </SelectTrigger>
       <SelectContent>
         {FINDING_TRIAGE_MANUAL_STATUS_VALUES.map((status) => (
-          <SelectItem
-            key={status}
-            value={status}
-            tone={TRIAGE_STATUS_TONE[status]}
-          >
-            <SelectStatusDot tone={TRIAGE_STATUS_TONE[status]} />
-            <span>{FINDING_TRIAGE_STATUS_LABELS[status]}</span>
+          <SelectItem key={status} value={status}>
+            <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[status])}>
+              {FINDING_TRIAGE_STATUS_LABELS[status]}
+            </span>
           </SelectItem>
         ))}
       </SelectContent>
@@ -179,11 +167,13 @@ export function FindingTriageStatusControl(
 
   return (
     <>
-      <TriageStatusPicker
-        disabled={!canMutateFromTable}
-        value={triage.status}
-        onValueChange={handleTableValueChange}
-      />
+      <div className="w-20">
+        <TriageStatusPicker
+          disabled={!canMutateFromTable}
+          value={triage.status}
+          onValueChange={handleTableValueChange}
+        />
+      </div>
       {tableUpdateError && (
         <span className="sr-only" role="alert">
           {tableUpdateError}

@@ -18,7 +18,6 @@ import type { ProviderType } from "@/types/providers";
 
 import {
   FindingTriageStatusControl,
-  FindingTriageStatusDot,
   type FindingTriageUpdateHandler,
 } from "./finding-triage-status-control";
 import { buildFindingTriageUpdateInput } from "./finding-triage-submit";
@@ -100,7 +99,12 @@ export function FindingNoteModal({
   };
 
   return (
-    <Modal open={open} onOpenChange={onOpenChange} title="Note" size="lg">
+    <Modal
+      open={open}
+      onOpenChange={onOpenChange}
+      title="Triage Note"
+      size="lg"
+    >
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex items-center gap-4">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
@@ -130,7 +134,6 @@ export function FindingNoteModal({
           <span className="text-text-neutral-primary text-sm font-semibold">
             Status:
           </span>
-          <FindingTriageStatusDot status={selectedStatus} />
           <FindingTriageStatusControl
             origin={FINDING_TRIAGE_ORIGIN.MODAL}
             triage={triage}
@@ -158,24 +161,23 @@ export function FindingNoteModal({
         )}
 
         <div className="space-y-2">
-          <div className="relative">
-            <Textarea
-              id="finding-triage-note"
-              aria-label="Note text"
-              value={note}
-              maxLength={triage.maxNoteLength}
-              disabled={!canSubmit}
-              textareaSize="lg"
-              className="min-h-48 pb-10"
-              onChange={(event) => setNote(event.target.value)}
-            />
-            <p className="text-text-neutral-tertiary absolute right-4 bottom-4 text-xs">
+          <Textarea
+            id="finding-triage-note"
+            aria-label="Note text"
+            value={note}
+            maxLength={triage.maxNoteLength}
+            disabled={!canSubmit}
+            textareaSize="lg"
+            onChange={(event) => setNote(event.target.value)}
+          />
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-text-neutral-tertiary text-xs">
+              {triage.privacyCopy}
+            </p>
+            <p className="text-text-neutral-tertiary shrink-0 text-xs">
               {note.length}/{triage.maxNoteLength}
             </p>
           </div>
-          <p className="text-text-neutral-tertiary text-xs">
-            {triage.privacyCopy}
-          </p>
         </div>
 
         <div className="flex w-full justify-end gap-3">
