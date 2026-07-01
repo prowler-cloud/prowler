@@ -12,6 +12,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 - CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
 
+### 🐞 Fixed
+
+- Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
 ---
 
 ## [1.31.1] (Prowler v5.31.1)
