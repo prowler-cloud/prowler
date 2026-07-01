@@ -46,7 +46,8 @@ export async function GET(req: Request) {
     const { access, refresh } = data.data.attributes;
 
     try {
-      const redirectPath = callbackPath;
+      // Invitation tokens are accepted during the social token exchange.
+      const redirectPath = invitationToken ? "/" : callbackPath;
       const result = await signIn("social-oauth", {
         accessToken: access,
         refreshToken: refresh,
