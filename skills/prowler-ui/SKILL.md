@@ -79,8 +79,10 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ### Scope Rule (ABSOLUTE)
 
-- Used 2+ places → `lib/` or `types/` or `hooks/` (components go in `components/{domain}/`)
+- Used by unrelated features → `lib/` or `types/` or `hooks/` (components go in `components/{domain}/`)
+- Used by 2+ files in the same feature/domain → keep it inside that feature/domain, e.g. `_lib/`, `_hooks/`, or local `types.ts`
 - Used 1 place → keep local in feature directory
+- **Feature/domain ownership beats raw usage count**: sharing between sibling files does not automatically make a helper global
 - **This determines ALL folder structure decisions**
 
 ## Project Structure
@@ -241,6 +243,27 @@ import { severityLabel } from "@/types/findings";
 ```
 
 If a helper doesn't exist and will be used in 2+ places, add it to `ui/lib/` or `ui/types/` and reuse it. Keep local only if used in exactly one place.
+
+## Error State Replacement Checklist (REQUIRED)
+
+When replacing UI error-state logic, remove legacy state fields and branches that the new contract can no longer produce.
+
+Before finishing the change, check:
+
+- [ ] Are there flags, union members, buttons, or handlers that are now unreachable?
+- [ ] Does the UI still render an action for an error case the new API contract cannot emit?
+- [ ] Does retry appear only for errors where repeating the same action can help?
+- [ ] Are error mappers matching specific status/code/detail or field pointers rather than broad payload-level pointers?
+- [ ] Are negative tests present for over-broad mapper/type-guard matches?
+
+```typescript
+// ❌ BAD: old branch kept after new mapper never returns needsSignOut
+if (state.needsSignOut) return <SignInWithDifferentAccount />;
+
+// ✅ GOOD: remove unreachable state and render only reachable actions
+{state.canRetry && <Button onClick={retry}>Retry</Button>}
+<Button asChild><Link href="/sign-in">Go to Sign In</Link></Button>
+```
 
 ## Derived State Rule (REQUIRED)
 
