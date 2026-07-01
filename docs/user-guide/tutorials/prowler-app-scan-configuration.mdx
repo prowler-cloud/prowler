@@ -18,6 +18,7 @@ Every Prowler scan reads a set of tunable values documented in [`prowler/config/
 
 - You include **only** the keys you want to change. Everything else falls back to Prowler's built-in defaults.
 - It is stored per tenant and applied to the **providers you attach** to it.
+- **Attaching a provider is optional at creation time.** You can save a Scan Configuration with no providers attached and associate them later, either from the configuration's editor or from the **Providers** page (see [Attaching Providers](#attaching-providers)). It has no effect on any scan until at least one provider is attached.
 - A provider can be attached to **at most one** Scan Configuration at a time.
 - Changes take effect on the provider's **next scan** — they do not re-run past scans.
 
@@ -40,7 +41,7 @@ In Prowler Cloud, open **Configuration → Scan** in the sidebar, or go directly
     In the **Configuration (YAML)** field, add only the keys you want to override, grouped by provider. The editor is pre-filled with a representative default placeholder you can use as a starting point.
   </Step>
   <Step title="Attach providers (optional)">
-    Under **Attach to providers**, pick the providers that should use this configuration. This is optional — you can save without any provider and attach them later.
+    Under **Attach to providers**, pick the providers that should use this configuration. This is optional — you can save without any provider and attach them later, either by editing this configuration or from the **Providers** page (see [Attaching Providers](#attaching-providers)).
   </Step>
   <Step title="Save">
     Click **Save**. The server validates the configuration values and, if everything is valid, stores it and attaches the selected providers.
@@ -158,10 +159,15 @@ On the **Scan Config** page, open the **⋮** menu on a configuration row:
 
 When a scan runs for a provider:
 
-1. If the provider is attached to a Scan Configuration, Prowler applies that configuration's overrides on top of the built-in defaults.
-2. If it isn't attached to any, the built-in defaults from `config.yaml` are used.
+1. If the provider is attached to a Scan Configuration **and that configuration has a section for the provider's type** (e.g. `aws` for an AWS provider), Prowler applies that section's overrides on top of the built-in defaults.
+2. If the provider is attached to a Scan Configuration, but that configuration **has no section for the provider's type** — for example, a configuration that only defines `aws` overrides, attached to a GCP provider — the scan falls back to the built-in SDK defaults for that provider, exactly as if no Scan Configuration were attached at all.
+3. If the provider isn't attached to any Scan Configuration, the built-in defaults from `config.yaml` are used.
 
 Overrides are merged key by key: any value you don't set keeps its default.
+
+<Tip>
+A single Scan Configuration can hold sections for several provider types at once (see [YAML Structure](#yaml-structure)) and be attached to providers of different types. Each provider only ever picks up the section matching its own type — the rest of the YAML is ignored for that provider.
+</Tip>
 
 ## Common Examples
 
