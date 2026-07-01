@@ -33,6 +33,13 @@ interface ModalProps {
   size?: ModalSize;
   className?: string;
   onOpenAutoFocus?: (event: Event) => void;
+  /**
+   * Cap the dialog at 90dvh and scroll overflowing content, instead of
+   * letting it grow past the viewport. Opt-in per modal (e.g. for content
+   * whose height depends on user input) rather than a DS-wide default, so
+   * existing modals keep their current sizing.
+   */
+  scrollable?: boolean;
 }
 
 export const Modal = ({
@@ -44,6 +51,7 @@ export const Modal = ({
   size = "xl",
   className,
   onOpenAutoFocus = preventInitialAutoFocus,
+  scrollable = false,
 }: ModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -51,6 +59,7 @@ export const Modal = ({
         onOpenAutoFocus={onOpenAutoFocus}
         className={cn(
           "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
+          scrollable && "max-h-[90dvh] overflow-y-auto",
           SIZE_CLASSES[size],
           className,
         )}

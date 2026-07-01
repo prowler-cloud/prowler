@@ -12,6 +12,19 @@ export interface ScanConfigurationData {
   attributes: ScanConfigurationAttributes;
 }
 
+export const SCAN_CONFIGURATION_LIST_STATUS = {
+  AVAILABLE: "available",
+  UNAVAILABLE: "unavailable",
+} as const;
+
+export type ScanConfigurationListStatus =
+  (typeof SCAN_CONFIGURATION_LIST_STATUS)[keyof typeof SCAN_CONFIGURATION_LIST_STATUS];
+
+export interface ScanConfigurationListState {
+  status: ScanConfigurationListStatus;
+  data: ScanConfigurationData[];
+}
+
 export interface ScanConfigurationListResponse {
   data: ScanConfigurationData[];
 }

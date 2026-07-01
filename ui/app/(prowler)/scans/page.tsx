@@ -221,7 +221,7 @@ export default async function Scans({
 
   return (
     <ContentLayout
-      title="Scan Jobs"
+      title="Scans"
       icon="lucide:timer"
       onboardingAction={onboardingAction}
     >

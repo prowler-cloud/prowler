@@ -20,6 +20,11 @@ import {
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import type {
   ScanScheduleCapability,
   ScanScheduleProvider,
@@ -113,6 +118,9 @@ export function getColumnProviders(
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
   scanScheduleCapability?: ScanScheduleCapability,
+  scanConfigs: ScanConfigurationData[] = [],
+  scanConfigStatus: ScanConfigurationListStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  scanConfigIdByProviderId: ReadonlyMap<string, string> = new Map(),
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -315,6 +323,9 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         const hasSelection = Object.values(rowSelection).some(Boolean);
+        const currentScanConfigId = isProvidersOrganizationRow(row.original)
+          ? null
+          : (scanConfigIdByProviderId.get(row.original.id) ?? null);
 
         return (
           <DataTableRowActions
@@ -327,6 +338,9 @@ export function getColumnProviders(
             onClearSelection={onClearSelection}
             onOpenProviderWizard={onOpenProviderWizard}
             onOpenOrganizationWizard={onOpenOrganizationWizard}
+            scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
+            currentScanConfigId={currentScanConfigId}
             capability={scanScheduleCapability}
           />
         );
