@@ -31,7 +31,7 @@ import type {
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
-  FindingNotesCell,
+  FindingNoteActionItem,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
@@ -41,7 +41,19 @@ import {
   NotificationIndicator,
 } from "./notification-indicator";
 
-const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
+const ResourceRowActions = ({
+  row,
+  findingTitle,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  row: Row<FindingResourceRow>;
+  findingTitle?: string;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
+}) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
@@ -122,6 +134,17 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <ActionDropdown ariaLabel="Resource actions">
+          <FindingNoteActionItem
+            triage={resource.triage}
+            findingContext={{
+              title: findingTitle || resource.checkId,
+              resource: resource.resourceName,
+              provider: resource.providerAlias,
+              providerType: resource.providerType,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+            onTriageNoteLoadAction={onTriageNoteLoadAction}
+          />
           <ActionDropdownItem
             icon={
               resource.isMuted ? (
@@ -295,7 +318,9 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Region" variant="compact">
-          {row.original.region || "-"}
+          <span className="block truncate whitespace-nowrap">
+            {row.original.region || "-"}
+          </span>
         </InfoField>
       ),
       enableSorting: false,
@@ -308,7 +333,7 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Last seen" variant="compact">
-          <DateWithTime dateTime={row.original.lastSeenAt} inline />
+          <DateWithTime dateTime={row.original.lastSeenAt} />
         </InfoField>
       ),
       enableSorting: false,
@@ -343,32 +368,19 @@ export function getColumnFindingResources({
       ),
       enableSorting: false,
     },
-    // Notes
+    // Actions column — utility actions are kept last.
     {
-      id: "notes",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Notes" />
-      ),
+      id: "actions",
+      size: 56,
+      header: () => <div className="w-10" />,
       cell: ({ row }) => (
-        <FindingNotesCell
-          triage={row.original.triage}
-          findingContext={{
-            title: findingTitle || row.original.checkId,
-            resource: row.original.resourceName,
-            provider: row.original.providerAlias,
-            providerType: row.original.providerType,
-          }}
+        <ResourceRowActions
+          row={row}
+          findingTitle={findingTitle}
           onTriageUpdateAction={onTriageUpdateAction}
           onTriageNoteLoadAction={onTriageNoteLoadAction}
         />
       ),
-      enableSorting: false,
-    },
-    // Actions column — utility actions are kept last.
-    {
-      id: "actions",
-      header: () => <div className="w-10" />,
-      cell: ({ row }) => <ResourceRowActions row={row} />,
       enableSorting: false,
     },
   ];

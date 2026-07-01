@@ -73,7 +73,19 @@ vi.mock("@/components/shadcn/dropdown", () => ({
 }));
 
 vi.mock("@/components/shadcn/info-field/info-field", () => ({
-  InfoField: () => null,
+  InfoField: ({
+    children,
+    label,
+  }: {
+    children: ReactNode;
+    label: string;
+    variant?: string;
+  }) => (
+    <div>
+      <span>{label}</span>
+      <div>{children}</div>
+    </div>
+  ),
 }));
 
 vi.mock("@/components/shadcn/spinner/spinner", () => ({
@@ -86,7 +98,6 @@ vi.mock("@/components/shadcn/select/select", () => ({
     <div>{children}</div>
   ),
   SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-  SelectStatusDot: () => <span data-testid="select-status-dot" />,
   SelectTrigger: ({
     children,
     disabled,
@@ -114,7 +125,13 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 }));
 
 vi.mock("@/components/ui/entities", () => ({
-  DateWithTime: () => null,
+  DateWithTime: ({
+    dateTime,
+    inline,
+  }: {
+    dateTime: string | null;
+    inline?: boolean;
+  }) => <time data-inline={inline ? "true" : "false"}>{dateTime ?? "-"}</time>,
 }));
 
 vi.mock("@/components/ui/entities/entity-info", () => ({
@@ -213,8 +230,74 @@ function makeResource(
   };
 }
 
+function getColumnIds(columns: ReturnType<typeof getColumnFindingResources>) {
+  return columns.map(
+    (column) =>
+      (column as { id?: string; accessorKey?: string }).id ??
+      (column as { id?: string; accessorKey?: string }).accessorKey,
+  );
+}
+
+function renderResourceActionsCell({
+  resource = makeResource(),
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  resource?: FindingResourceRow;
+  onTriageUpdateAction?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onTriageUpdateAction"];
+  onTriageNoteLoadAction?: Parameters<
+    typeof getColumnFindingResources
+  >[0]["onTriageNoteLoadAction"];
+} = {}) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+    onTriageUpdateAction,
+    onTriageNoteLoadAction,
+  });
+
+  const actionsColumn = columns.find(
+    (col) => (col as { id?: string }).id === "actions",
+  );
+  if (!actionsColumn?.cell) {
+    throw new Error("actions column not found");
+  }
+  const CellComponent = actionsColumn.cell as (props: {
+    row: { original: FindingResourceRow };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource } })}</div>);
+}
+
+function renderResourceColumnCell({
+  columnId,
+  resource = makeResource(),
+}: {
+  columnId: string;
+  resource?: FindingResourceRow;
+}) {
+  const columns = getColumnFindingResources({
+    rowSelection: {},
+    selectableRowCount: 1,
+  });
+
+  const column = columns.find(
+    (col) => (col as { id?: string }).id === columnId,
+  );
+  if (!column?.cell) {
+    throw new Error(`${columnId} column not found`);
+  }
+  const CellComponent = column.cell as (props: {
+    row: { original: FindingResourceRow };
+  }) => ReactNode;
+
+  render(<div>{CellComponent({ row: { original: resource } })}</div>);
+}
+
 describe("column-finding-resources", () => {
-  it("should render actions as the last visible column after Triage and Notes", () => {
+  it("should render actions as the last visible column after Triage without Notes", () => {
     // Given
     const columns = getColumnFindingResources({
       rowSelection: {},
@@ -222,14 +305,14 @@ describe("column-finding-resources", () => {
     });
 
     // When
-    const columnIds = columns.map(
-      (column) =>
-        (column as { id?: string; accessorKey?: string }).id ??
-        (column as { id?: string; accessorKey?: string }).accessorKey,
-    );
+    const columnIds = getColumnIds(columns);
 
     // Then
-    expect(columnIds.slice(-3)).toEqual(["triage", "notes", "actions"]);
+    expect(columnIds.slice(-2)).toEqual(["triage", "actions"]);
+    expect(columnIds).not.toContain("notes");
+    expect(
+      (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
+    ).toBe(56);
   });
 
   it("should render the current triage status label", () => {
@@ -270,37 +353,18 @@ describe("column-finding-resources", () => {
     ).toHaveTextContent("Remediating");
   });
 
-  it("should render note presence only without exposing note preview metadata", () => {
+  it("should render Open note in resource actions without exposing note preview metadata", () => {
     // Given
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: true }),
+      }),
+      onTriageUpdateAction: vi.fn(),
+      onTriageNoteLoadAction: vi.fn(),
     });
-    const notesColumn = columns.find(
-      (col) => (col as { id?: string }).id === "notes",
-    );
-    if (!notesColumn?.cell) {
-      throw new Error("notes column not found");
-    }
-    const CellComponent = notesColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    // When
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource({
-              triage: makeTriageSummary({ hasVisibleNote: true }),
-            }),
-          },
-        })}
-      </div>,
-    );
 
     // Then
-    expect(screen.getByLabelText("Note exists")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Open note" })).toBeEnabled();
     expect(screen.queryByText("Sensitive note body")).not.toBeInTheDocument();
     expect(screen.queryByText(/author/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/timestamp/i)).not.toBeInTheDocument();
@@ -308,32 +372,11 @@ describe("column-finding-resources", () => {
 
   it("should disable Add note when no update handler is wired", () => {
     // Given
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: false }),
+      }),
     });
-    const notesColumn = columns.find(
-      (col) => (col as { id?: string }).id === "notes",
-    );
-    if (!notesColumn?.cell) {
-      throw new Error("notes column not found");
-    }
-    const CellComponent = notesColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    // When
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource({
-              triage: makeTriageSummary({ hasVisibleNote: false }),
-            }),
-          },
-        })}
-      </div>,
-    );
 
     // Then
     expect(screen.getByRole("button", { name: "Add note" })).toBeDisabled();
@@ -341,33 +384,12 @@ describe("column-finding-resources", () => {
 
   it("should enable Add note when an update handler is wired", () => {
     // Given
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({ hasVisibleNote: false }),
+      }),
       onTriageUpdateAction: vi.fn(),
     });
-    const notesColumn = columns.find(
-      (col) => (col as { id?: string }).id === "notes",
-    );
-    if (!notesColumn?.cell) {
-      throw new Error("notes column not found");
-    }
-    const CellComponent = notesColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    // When
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource({
-              triage: makeTriageSummary({ hasVisibleNote: false }),
-            }),
-          },
-        })}
-      </div>,
-    );
 
     // Then
     expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
@@ -375,36 +397,15 @@ describe("column-finding-resources", () => {
 
   it("should enable Add note for Cloud-only rows so users can open the billing upsell modal", () => {
     // Given
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
+    renderResourceActionsCell({
+      resource: makeResource({
+        triage: makeTriageSummary({
+          canEdit: false,
+          hasVisibleNote: false,
+          disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+        }),
+      }),
     });
-    const notesColumn = columns.find(
-      (col) => (col as { id?: string }).id === "notes",
-    );
-    if (!notesColumn?.cell) {
-      throw new Error("notes column not found");
-    }
-    const CellComponent = notesColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    // When
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource({
-              triage: makeTriageSummary({
-                canEdit: false,
-                hasVisibleNote: false,
-                disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
-              }),
-            }),
-          },
-        })}
-      </div>,
-    );
 
     // Then
     expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
@@ -560,6 +561,34 @@ describe("column-finding-resources", () => {
 
     expect(screen.getByText("my-bucket")).toBeInTheDocument();
     expect(screen.getByText("arn:aws:s3:::my-bucket")).toBeInTheDocument();
+  });
+
+  it("should keep resource region on a single truncated line", () => {
+    // Given
+    renderResourceColumnCell({
+      columnId: "region",
+      resource: makeResource({ region: "ap-southeast-2" }),
+    });
+
+    // Then
+    expect(screen.getByText("ap-southeast-2")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+  });
+
+  it("should allow resource Last seen to render as a two-line date cell", () => {
+    // Given
+    renderResourceColumnCell({
+      columnId: "lastSeen",
+      resource: makeResource({ lastSeenAt: "2024-02-03T04:05:06Z" }),
+    });
+
+    // Then
+    expect(screen.getByText("2024-02-03T04:05:06Z")).toHaveAttribute(
+      "data-inline",
+      "false",
+    );
   });
 
   it("should open Send to Jira modal with finding UUID directly", async () => {
