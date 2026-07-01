@@ -14,6 +14,7 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
+import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
@@ -56,12 +57,6 @@ export interface FindingRowData {
   mutedCount?: number;
   resourcesFail?: number;
   resourcesTotal?: number;
-}
-
-function getOptionalText(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0 && value !== "-"
-    ? value
-    : undefined;
 }
 
 /**

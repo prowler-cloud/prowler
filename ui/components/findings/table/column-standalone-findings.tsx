@@ -10,6 +10,7 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { getRegionFlag } from "@/lib/region-flags";
+import { getOptionalText } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
 import type {
   FindingTriageLoadedNote,
@@ -142,14 +143,8 @@ export function getStandaloneFindingColumns({
       cell: ({ row }) => {
         const name = getResourceData(row, "name");
         const uid = getResourceData(row, "uid");
-        const entityAlias =
-          typeof name === "string" && name.trim().length > 0 && name !== "-"
-            ? name
-            : undefined;
-        const entityId =
-          typeof uid === "string" && uid.trim().length > 0 && uid !== "-"
-            ? uid
-            : undefined;
+        const entityAlias = getOptionalText(name);
+        const entityId = getOptionalText(uid);
 
         return (
           <div className="max-w-[240px]">
@@ -283,18 +278,11 @@ export function getStandaloneFindingColumns({
             row={row}
             findingContext={{
               title: row.original.attributes.check_metadata.checktitle,
-              resource:
-                typeof resourceName === "string" && resourceName !== "-"
-                  ? resourceName
-                  : undefined,
-              provider:
-                typeof providerAlias === "string" && providerAlias !== "-"
-                  ? providerAlias
-                  : undefined,
-              providerType:
-                typeof providerType === "string" && providerType !== "-"
-                  ? (providerType as ProviderType)
-                  : undefined,
+              resource: getOptionalText(resourceName),
+              provider: getOptionalText(providerAlias),
+              providerType: getOptionalText(providerType) as
+                | ProviderType
+                | undefined,
             }}
             onTriageUpdateAction={onTriageUpdateAction}
             onTriageNoteLoadAction={onTriageNoteLoadAction}
