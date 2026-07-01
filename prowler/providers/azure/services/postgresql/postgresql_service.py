@@ -218,7 +218,7 @@ class PostgreSQL(AzureService):
         client = self.clients[subscription]
         try:
             log_retention_days = client.configurations.get(
-                resouce_group_name, server_name, "log_retention_days"
+                resouce_group_name, server_name, "logfiles.retention_days"
             )
             log_retention_days = log_retention_days.value
         except Exception:
