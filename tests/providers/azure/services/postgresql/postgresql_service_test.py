@@ -364,3 +364,68 @@ class Test_PostgreSQL_Service_Resilience:
 
         names = [server.name for server in servers[AZURE_SUBSCRIPTION_ID]]
         assert names == ["ok"]
+
+    def test_log_retention_days_queries_flexible_server_parameter(self):
+        # Regression: log retention on Flexible Server is exposed through the
+        # "logfiles.retention_days" parameter. The old code queried the retired
+        # Single Server name "log_retention_days", which does not exist on
+        # Flexible Server, so the lookup failed and the check always reported
+        # FAIL. Assert the correct parameter name is queried and its value used.
+        server = _make_server("srv")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [server]
+        server_details = MagicMock()
+        server_details.location = "westeurope"
+        mock_client.servers.get.return_value = server_details
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+
+        requested_keys = []
+
+        def configurations_get(resource_group, server_name, key):
+            requested_keys.append(key)
+            if key == "logfiles.retention_days":
+                return MagicMock(value="7")
+            return MagicMock(value="ON")
+
+        mock_client.configurations.get.side_effect = configurations_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        assert "logfiles.retention_days" in requested_keys
+        assert "log_retention_days" not in requested_keys
+        collected = servers[AZURE_SUBSCRIPTION_ID][0]
+        assert collected.log_retention_days == "7"
+
+    def test_missing_log_retention_config_still_collects_server(self):
+        # When "logfiles.retention_days" is absent the Azure SDK raises
+        # ResourceNotFoundError; that must yield log_retention_days=None without
+        # dropping the server from collection.
+        server = _make_server("srv")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [server]
+        server_details = MagicMock()
+        server_details.location = "westeurope"
+        mock_client.servers.get.return_value = server_details
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+
+        def configurations_get(resource_group, server_name, key):
+            if key == "logfiles.retention_days":
+                raise ResourceNotFoundError(
+                    "(ConfigurationNotExists) The configuration "
+                    "'logfiles.retention_days' does not exist."
+                )
+            return MagicMock(value="ON")
+
+        mock_client.configurations.get.side_effect = configurations_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        collected = servers[AZURE_SUBSCRIPTION_ID]
+        assert [s.name for s in collected] == ["srv"]
+        assert collected[0].log_retention_days is None

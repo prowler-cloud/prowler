@@ -217,11 +217,16 @@ class PostgreSQL(AzureService):
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         try:
+            # Flexible Server exposes log file retention through the
+            # ``logfiles.retention_days`` server parameter. ``log_retention_days``
+            # is the (now retired) Single Server parameter name and does not exist
+            # on Flexible Server, so querying it raised ResourceNotFoundError and
+            # the check always reported FAIL.
             log_retention_days = client.configurations.get(
-                resouce_group_name, server_name, "log_retention_days"
+                resouce_group_name, server_name, "logfiles.retention_days"
             )
             log_retention_days = log_retention_days.value
-        except Exception:
+        except ResourceNotFoundError:
             log_retention_days = None
         return log_retention_days
 
