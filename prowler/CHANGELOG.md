@@ -32,6 +32,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- GitHub `repository_has_codeowners_file` check no longer flags archived repositories, since they are read-only and cannot be updated without first being unarchived, making the finding not actionable [(#11735)](https://github.com/prowler-cloud/prowler/pull/11735)
 - Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Key the `cloudwatch_log_group_no_secrets_in_logs` secret scan by log group ARN instead of name, so same-named log groups and streams in different regions no longer collide and reuse each other's findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
