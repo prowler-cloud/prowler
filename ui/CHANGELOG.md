@@ -11,6 +11,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 - Surface an "invalid scan configuration" note on compliance requirements that fail solely because the applied scan config does not meet them [(#11695)](https://github.com/prowler-cloud/prowler/pull/11695)
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 - CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+- NCSC Cyber Essentials 3.3 compliance support with its dedicated mapper, details panel, and icon [(#11588)](https://github.com/prowler-cloud/prowler/pull/11588)
 
 ---
 
