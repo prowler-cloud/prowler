@@ -31,8 +31,8 @@ import {
   type FindingTriageUpdateHandler,
 } from "./finding-triage-status-control";
 
-const CLOUD_ONLY_TOOLTIP_COPY = "This feature is only in Cloud.";
-const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
+export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
+export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 
 const getDisabledCopy = ({
   triage,

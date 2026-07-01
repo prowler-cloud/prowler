@@ -184,6 +184,10 @@ import {
 } from "@/types/findings-triage";
 
 import { getColumnFindingResources } from "./column-finding-resources";
+import {
+  CLOUD_ONLY_TOOLTIP_COPY,
+  EDITING_UNAVAILABLE_COPY,
+} from "./finding-triage-cells";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,
@@ -450,9 +454,7 @@ describe("column-finding-resources", () => {
     expect(
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
-    expect(
-      screen.getByText("Editing is currently unavailable."),
-    ).toBeInTheDocument();
+    expect(screen.getByText(EDITING_UNAVAILABLE_COPY)).toBeInTheDocument();
   });
 
   it("should disable non-paying Cloud triage control with only-in-Cloud tooltip copy", () => {
@@ -491,9 +493,7 @@ describe("column-finding-resources", () => {
     expect(
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
-    expect(
-      screen.getByText("This feature is only in Cloud."),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
   });
 
   it("should pass delta to NotificationIndicator for resource rows", () => {
