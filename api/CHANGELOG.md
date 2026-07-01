@@ -10,6 +10,10 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Scan task now checks the ingest Neo4j database and configured graph sink before starting graph ingestion [(#11743)](https://github.com/prowler-cloud/prowler/pull/11743)
 - Disable PowerShell telemetry in the API container image [(#11746)](https://github.com/prowler-cloud/prowler/pull/11746)
 
+### 🐞 Fixed
+
+- Invited users now keep their invitation context when completing authentication with Google, GitHub, or SAML, so the invitation is accepted during login [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
 ---
 
 ## [1.32.2] (Prowler UNRELEASED)
