@@ -312,6 +312,11 @@
   .lighthouse-markdown p + ol {
     margin-top: 0.25rem;
   }
+
+  .lighthouse-markdown table {
+    min-width: 100%;
+    width: max-content;
+  }
 }
 
 /* ===== UTILITY LAYER ===== */

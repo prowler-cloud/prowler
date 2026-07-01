@@ -1,7 +1,7 @@
 "use server";
 
 import { getLatestFindings } from "@/actions/findings/findings";
-import { LighthouseBanner } from "@/components/lighthouse/banner";
+import { LighthouseBanner } from "@/components/lighthouse-v1/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";

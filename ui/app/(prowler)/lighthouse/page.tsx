@@ -3,10 +3,25 @@ import { redirect } from "next/navigation";
 import {
   getLighthouseProvidersConfig,
   isLighthouseConfigured,
-} from "@/actions/lighthouse/lighthouse";
+} from "@/actions/lighthouse-v1/lighthouse";
+import {
+  getLighthouseV2Configurations,
+  getLighthouseV2Messages,
+  getLighthouseV2Session,
+  getLighthouseV2SupportedModels,
+  getLighthouseV2SupportedProviders,
+} from "@/app/(prowler)/lighthouse/_actions";
+import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
+import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
+import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
+import type {
+  LighthouseV2ProviderType,
+  LighthouseV2SupportedModel,
+} from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseIcon } from "@/components/icons/Icons";
-import { Chat } from "@/components/lighthouse";
+import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/ui";
+import { isCloud } from "@/lib/shared/env";
 
 export const dynamic = "force-dynamic";
 
@@ -18,11 +33,101 @@ export default async function AIChatbot({
   const params = await searchParams;
   const initialPrompt =
     typeof params.prompt === "string" ? params.prompt : undefined;
+  const activeSessionId =
+    typeof params.session === "string" ? params.session : undefined;
+
+  if (isCloud()) {
+    const [configurationsResult, supportedProvidersResult] = await Promise.all([
+      getLighthouseV2Configurations(),
+      getLighthouseV2SupportedProviders(),
+    ]);
+    const configurations =
+      "data" in configurationsResult ? configurationsResult.data : [];
+    const supportedProviders =
+      "data" in supportedProvidersResult ? supportedProvidersResult.data : [];
+    const connectedConfigurations = configurations.filter(
+      (configuration) => configuration.connected === true,
+    );
+
+    if (connectedConfigurations.length === 0) {
+      return redirect("/lighthouse/settings");
+    }
+
+    const modelsEntries = await Promise.all(
+      configurations.map(async (configuration) => {
+        const result = await getLighthouseV2SupportedModels(
+          configuration.providerType,
+        );
+        return [configuration.providerType, result] as const;
+      }),
+    );
+    const modelsByProvider = Object.fromEntries(
+      modelsEntries.map(([providerType, result]) => [
+        providerType,
+        "data" in result ? result.data : [],
+      ]),
+    ) as Record<LighthouseV2ProviderType, LighthouseV2SupportedModel[]>;
+    // Surface (rather than silently swallow to []) providers whose models
+    // failed to load, so an empty model list reads as a real backend failure.
+    const failedModelProviders = modelsEntries
+      .filter(([, result]) => !("data" in result))
+      .map(([providerType]) => providerType);
+    const modelsError =
+      failedModelProviders.length > 0
+        ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
+        : undefined;
+
+    const [initialMessages, activeSession] = activeSessionId
+      ? await Promise.all([
+          getLighthouseV2Messages(activeSessionId),
+          getLighthouseV2Session(activeSessionId),
+        ])
+      : [{ data: [] }, undefined];
+    // Treat the ?session= id as valid when its messages load (you can't fetch
+    // messages for a non-existent session, so this is the authoritative
+    // "session exists" check). A stale/deleted id fails here and is dropped so
+    // the client starts fresh instead of sending against a dead session. The
+    // session-metadata read stays best-effort — it only supplies activeTaskId,
+    // so a flaky metadata read must NOT discard an otherwise-valid session.
+    const sessionLoaded = Boolean(activeSessionId) && "data" in initialMessages;
+    const validSessionId = sessionLoaded ? activeSessionId : undefined;
+    const chatMessages =
+      sessionLoaded && "data" in initialMessages ? initialMessages.data : [];
+    const initialActiveTaskId =
+      sessionLoaded && activeSession && "data" in activeSession
+        ? (activeSession.data.activeTaskId ?? null)
+        : null;
+    const initialStreamUrl =
+      validSessionId && initialActiveTaskId
+        ? buildLighthouseV2StreamUrl(validSessionId)
+        : undefined;
+    const chatRouteKey = validSessionId ?? initialPrompt ?? "new";
+
+    return (
+      <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
+        <LighthouseV2NavigationModeSync />
+        <div className="h-[calc(100dvh-6.5rem)] min-h-0">
+          <LighthouseV2ChatPage
+            key={chatRouteKey}
+            configurations={configurations}
+            modelsByProvider={modelsByProvider}
+            supportedProviders={supportedProviders}
+            initialSessionId={validSessionId}
+            initialMessages={chatMessages}
+            initialActiveTaskId={initialActiveTaskId}
+            initialStreamUrl={initialStreamUrl}
+            initialPrompt={initialPrompt}
+            initialError={modelsError}
+          />
+        </div>
+      </ContentLayout>
+    );
+  }
 
   const hasConfig = await isLighthouseConfigured();
 
   if (!hasConfig) {
-    return redirect("/lighthouse/config");
+    return redirect("/lighthouse/settings");
   }
 
   // Fetch provider configuration with default models
@@ -30,7 +135,7 @@ export default async function AIChatbot({
 
   // Handle errors or missing configuration
   if (providersConfig.errors || !providersConfig.providers) {
-    return redirect("/lighthouse/config");
+    return redirect("/lighthouse/settings");
   }
 
   return (

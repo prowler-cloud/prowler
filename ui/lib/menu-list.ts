@@ -65,17 +65,21 @@ export const getMenuList = ({
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
-          active: pathname === "/lighthouse",
-        },
-      ],
-    },
+    ...(isCloudEnv
+      ? []
+      : [
+          {
+            groupLabel: "",
+            menus: [
+              {
+                href: "/lighthouse",
+                label: "Lighthouse AI",
+                icon: LighthouseIcon,
+                active: pathname === "/lighthouse",
+              },
+            ],
+          },
+        ]),
     {
       groupLabel: "",
       menus: [
@@ -144,7 +148,7 @@ export const getMenuList = ({
             { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
