@@ -1,5 +1,6 @@
 import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
+import type { ReactNode } from "react";
 
 import { Button } from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
@@ -11,12 +12,16 @@ export const SocialButtons = ({
   callbackUrl = "/",
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
+  isDisabled = false,
+  disabledTooltipContent,
 }: {
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   callbackUrl?: string;
   isGoogleOAuthEnabled?: boolean;
   isGithubOAuthEnabled?: boolean;
+  isDisabled?: boolean;
+  disabledTooltipContent?: ReactNode;
 }) => {
   const googleUrl = googleAuthUrl
     ? appendCallbackState(googleAuthUrl, callbackUrl)
@@ -24,31 +29,43 @@ export const SocialButtons = ({
   const githubUrl = githubAuthUrl
     ? appendCallbackState(githubAuthUrl, callbackUrl)
     : undefined;
+  const isGoogleDisabled = isDisabled || !isGoogleOAuthEnabled || !googleUrl;
+  const isGithubDisabled = isDisabled || !isGithubOAuthEnabled || !githubUrl;
+  const socialDisabledTooltip =
+    disabledTooltipContent || "Social login is currently unavailable.";
 
   return (
     <>
       <Tooltip
         content={
-          <div className="flex-inline text-small">
-            Social Login with Google is not enabled.{" "}
-            <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
-              Read the docs
-            </CustomLink>
-          </div>
+          isGoogleOAuthEnabled ? (
+            socialDisabledTooltip
+          ) : (
+            <div className="flex-inline text-small">
+              Social Login with Google is not enabled.{" "}
+              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
+                Read the docs
+              </CustomLink>
+            </div>
+          )
         }
         placement="top"
         shadow="sm"
-        isDisabled={isGoogleOAuthEnabled}
+        isDisabled={!isGoogleDisabled}
         className="w-96"
       >
         <span>
           <Button
             variant="outline"
             className="w-full"
-            asChild={isGoogleOAuthEnabled}
-            disabled={!isGoogleOAuthEnabled}
+            asChild={!isGoogleDisabled}
+            disabled={isGoogleDisabled}
           >
-            <a href={googleUrl} className="flex items-center gap-2">
+            <a
+              href={isGoogleDisabled ? undefined : googleUrl}
+              aria-disabled={isGoogleDisabled}
+              className="flex items-center gap-2"
+            >
               <Icon
                 icon={
                   isGoogleOAuthEnabled
@@ -64,26 +81,34 @@ export const SocialButtons = ({
       </Tooltip>
       <Tooltip
         content={
-          <div className="flex-inline text-small">
-            Social Login with Github is not enabled.{" "}
-            <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
-              Read the docs
-            </CustomLink>
-          </div>
+          isGithubOAuthEnabled ? (
+            socialDisabledTooltip
+          ) : (
+            <div className="flex-inline text-small">
+              Social Login with Github is not enabled.{" "}
+              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
+                Read the docs
+              </CustomLink>
+            </div>
+          )
         }
         placement="top"
         shadow="sm"
-        isDisabled={isGithubOAuthEnabled}
+        isDisabled={!isGithubDisabled}
         className="w-96"
       >
         <span>
           <Button
             variant="outline"
             className="w-full"
-            asChild={isGithubOAuthEnabled}
-            disabled={!isGithubOAuthEnabled}
+            asChild={!isGithubDisabled}
+            disabled={isGithubDisabled}
           >
-            <a href={githubUrl} className="flex items-center gap-2">
+            <a
+              href={isGithubDisabled ? undefined : githubUrl}
+              aria-disabled={isGithubDisabled}
+              className="flex items-center gap-2"
+            >
               <Icon icon="simple-icons:github" width={24} />
               Continue with Github
             </a>

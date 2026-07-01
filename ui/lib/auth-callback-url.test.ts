@@ -46,6 +46,16 @@ describe("auth callback URL helpers", () => {
 
       expect(result).toBe("/");
     });
+
+    it("should reject protocol-relative callback URLs", () => {
+      const params = new URLSearchParams({
+        state: "//attacker.example/phishing",
+      });
+
+      const result = getSafeCallbackPath(params);
+
+      expect(result).toBe("/");
+    });
   });
 
   describe("when reading invitation tokens", () => {

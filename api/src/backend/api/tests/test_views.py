@@ -58,7 +58,11 @@ from api.models import (
 )
 from api.rls import Tenant
 from api.v1.serializers import TokenSerializer
-from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from api.v1.views import (
+    ComplianceOverviewViewSet,
+    CustomSAMLLoginView,
+    TenantFinishACSView,
+)
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -8373,10 +8377,17 @@ class TestInvitationViewSet:
         )
         Membership.objects.create(user=user, tenant=tenant)
 
+        data = {
+            "data": {
+                "type": "invitations",
+                "attributes": {"invitation_token": invitation.token},
+            },
+        }
+
         response = authenticated_client.post(
             reverse("invitation-accept"),
-            data={"invitation_token": invitation.token},
-            format="json",
+            data=data,
+            content_type=API_JSON_CONTENT_TYPE,
         )
 
         assert response.status_code == status.HTTP_201_CREATED
@@ -13469,6 +13480,26 @@ class TestSAMLTokenValidation:
         # Second use: should fail (already deleted)
         response2 = authenticated_client.post(f"{url}?id={saml_token.id}")
         assert response2.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.django_db
+class TestCustomSAMLLoginView:
+    def test_dispatch_clears_stale_callback_url_when_request_has_none(self):
+        request = RequestFactory().get("/api/v1/saml/login/testtenant/")
+        request.session = {
+            "saml_callback_url": "/invitation/accept?invitation_token=old-token"
+        }
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.LoginView.dispatch",
+            return_value=JsonResponse({}),
+        ):
+            response = CustomSAMLLoginView.as_view()(
+                request, organization_slug="testtenant"
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "saml_callback_url" not in request.session
 
 
 @pytest.mark.django_db

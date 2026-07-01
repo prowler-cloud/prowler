@@ -80,8 +80,14 @@ export const SignUpForm = ({
     name: "password",
     defaultValue: "",
   });
+  const termsAccepted = useWatch({
+    control: form.control,
+    name: "termsAndConditions",
+    defaultValue: false,
+  });
 
   const isLoading = form.formState.isSubmitting;
+  const isSocialAuthDisabled = Boolean(isCloudEnv && !termsAccepted);
 
   const onSubmit = async (data: SignUpFormData) => {
     const newUser = await createNewUser(data);
@@ -258,6 +264,8 @@ export const SignUpForm = ({
               callbackUrl={callbackUrl}
               isGoogleOAuthEnabled={isGoogleOAuthEnabled}
               isGithubOAuthEnabled={isGithubOAuthEnabled}
+              isDisabled={isSocialAuthDisabled}
+              disabledTooltipContent="Accept the Terms of Service to continue."
             />
           </div>
         </>

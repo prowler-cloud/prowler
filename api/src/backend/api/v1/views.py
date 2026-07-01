@@ -686,6 +686,7 @@ class CustomSAMLLoginView(LoginView):
         This approach maintains security while providing better UX.
         """
         callback_url = _safe_callback_path(request.GET.get("callback_url"))
+        request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
         if callback_url:
             request.session[SAML_CALLBACK_SESSION_KEY] = callback_url
         if request.method == "GET":
