@@ -10,7 +10,7 @@ import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
-import { readEnv } from "@/lib/runtime-env";
+import { readGatedEnv } from "@/lib/integrations";
 
 import { Providers } from "../providers";
 
@@ -42,8 +42,8 @@ export default async function AuthLayout({
   // <RuntimePublicConfig/> island's own connection() call).
   await connection();
 
-  // Server-side runtime read. Empty/unset id ⇒ GoogleTagManager is not mounted
-  const gtmId = readEnv(
+  const gtmId = readGatedEnv(
+    "UI_GOOGLE_TAG_MANAGER_ENABLE",
     "UI_GOOGLE_TAG_MANAGER_ID",
     "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
   );
