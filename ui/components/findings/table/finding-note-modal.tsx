@@ -1,6 +1,6 @@
 "use client";
 
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
@@ -56,6 +56,7 @@ export function FindingNoteModal({
   const [note, setNote] = useState(triage.noteBody);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const noteTextareaRef = useRef<HTMLTextAreaElement>(null);
   const canSubmit =
     triage.canEdit && Boolean(onTriageUpdateAction) && !isSubmitting;
   const isCloudOnly =
@@ -67,6 +68,17 @@ export function FindingNoteModal({
     isMutelistShortcutStatus(selectedStatus);
   const shouldShowRemediatingInfo =
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
+  // Opened from a dropdown item: move focus into the dialog on mount so Radix's
+  // aria-hidden is not applied to the still-focused dropdown that opened it.
+  const handleOpenAutoFocus = (event: Event) => {
+    const textarea = noteTextareaRef.current;
+    if (textarea && !textarea.disabled) {
+      event.preventDefault();
+      textarea.focus();
+    }
+    // Otherwise let Radix auto-focus the first control inside the dialog.
+  };
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -102,6 +114,7 @@ export function FindingNoteModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
+      onOpenAutoFocus={handleOpenAutoFocus}
       title="Add Triage Note"
       size="lg"
     >
@@ -162,6 +175,7 @@ export function FindingNoteModal({
 
         <div className="space-y-2">
           <Textarea
+            ref={noteTextareaRef}
             id="finding-triage-note"
             aria-label="Note text"
             value={note}

@@ -49,6 +49,8 @@ export const Modal = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onOpenAutoFocus={onOpenAutoFocus}
+        // Radix requires an accessible description; opt out explicitly when none is provided.
+        {...(description ? {} : { "aria-describedby": undefined })}
         className={cn(
           "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
           SIZE_CLASSES[size],
