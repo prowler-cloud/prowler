@@ -176,6 +176,29 @@ class Test_AWS_Enums:
         assert _validate({"ecr_repository_vulnerability_minimum_severity": level}) == {}
 
 
+class Test_AWS_Secrets_Ignore_Files:
+    def test_valid_file_patterns_round_trip(self):
+        files = ["*.deps.json", "vendor/*.js"]
+        assert _validate({"secrets_ignore_files": files}) == {
+            "secrets_ignore_files": files
+        }
+
+    def test_empty_list_is_valid(self):
+        assert _validate({"secrets_ignore_files": []}) == {"secrets_ignore_files": []}
+
+    def test_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert aws_properties["secrets_ignore_files"] == {
+            "anyOf": [
+                {"items": {"type": "string"}, "type": "array"},
+                {"type": "null"},
+            ],
+            "default": None,
+            "title": "Secrets Ignore Files",
+        }
+
+
 class Test_AWS_Booleans:
     @pytest.mark.parametrize(
         "key",

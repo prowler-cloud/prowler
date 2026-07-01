@@ -426,6 +426,7 @@ class AWSProviderConfig(ProviderConfigBase):
 
     # --- Secrets ---------------------------------------------------------
     secrets_ignore_patterns: Optional[list[str]] = None
+    secrets_ignore_files: Optional[list[str]] = None
     secrets_validate: Optional[bool] = Field(
         default=None,
         description=(
