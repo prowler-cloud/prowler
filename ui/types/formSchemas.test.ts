@@ -197,4 +197,26 @@ users:
       }),
     );
   });
+
+  it("accepts malformed kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "apiVersion: [",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts non-mapping kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "[]",
+    });
+
+    expect(result.success).toBe(true);
+  });
 });
