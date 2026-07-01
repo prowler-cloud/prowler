@@ -102,7 +102,7 @@ export function FindingNoteModal({
     <Modal
       open={open}
       onOpenChange={onOpenChange}
-      title="Triage Note"
+      title="Add Triage Note"
       size="lg"
     >
       <form className="flex flex-col gap-5" onSubmit={handleSubmit}>

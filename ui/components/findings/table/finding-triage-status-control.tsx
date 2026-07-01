@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { type ComponentProps, useState } from "react";
 
 import { Button } from "@/components/shadcn";
+import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Select,
@@ -27,9 +28,13 @@ export type FindingTriageUpdateHandler = (
   input: UpdateFindingTriageInput,
 ) => void | Promise<void>;
 
+type TriageStatusPickerSize = NonNullable<
+  ComponentProps<typeof SelectTrigger>["size"]
+>;
+
 const TRIAGE_STATUS_TEXT_CLASS = {
   open: "text-text-error-primary",
-  under_review: "text-bg-data-kubernetes",
+  under_review: "text-text-warning-primary",
   remediating: "text-bg-data-info",
   resolved: "text-bg-pass",
   risk_accepted: "text-bg-pass",
@@ -43,10 +48,12 @@ const MUTELIST_CONFIRMATION_COPY =
 
 function TriageStatusPicker({
   disabled,
+  size = "sm",
   value,
   onValueChange,
 }: {
   disabled: boolean;
+  size?: TriageStatusPickerSize;
   value: FindingTriageStatus;
   onValueChange: (status: FindingTriageManualStatus) => void;
 }) {
@@ -63,7 +70,7 @@ function TriageStatusPicker({
       <SelectTrigger
         aria-label="Triage status"
         disabled={disabled}
-        size="sm"
+        size={size}
         iconSize="sm"
       >
         <span className={cn("truncate", TRIAGE_STATUS_TEXT_CLASS[value])}>
@@ -167,13 +174,16 @@ export function FindingTriageStatusControl(
 
   return (
     <>
-      <div className="w-20">
-        <TriageStatusPicker
-          disabled={!canMutateFromTable}
-          value={triage.status}
-          onValueChange={handleTableValueChange}
-        />
-      </div>
+      <InfoField label="Triage" variant="compact">
+        <div className="w-32">
+          <TriageStatusPicker
+            disabled={!canMutateFromTable}
+            size="xs"
+            value={triage.status}
+            onValueChange={handleTableValueChange}
+          />
+        </div>
+      </InfoField>
       {tableUpdateError && (
         <span className="sr-only" role="alert">
           {tableUpdateError}

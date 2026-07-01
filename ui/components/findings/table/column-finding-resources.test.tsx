@@ -370,7 +370,7 @@ describe("column-finding-resources", () => {
     expect(screen.queryByText(/timestamp/i)).not.toBeInTheDocument();
   });
 
-  it("should disable Add note when no update handler is wired", () => {
+  it("should disable Add Triage Note when no update handler is wired", () => {
     // Given
     renderResourceActionsCell({
       resource: makeResource({
@@ -379,10 +379,12 @@ describe("column-finding-resources", () => {
     });
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeDisabled();
   });
 
-  it("should enable Add note when an update handler is wired", () => {
+  it("should enable Add Triage Note when an update handler is wired", () => {
     // Given
     renderResourceActionsCell({
       resource: makeResource({
@@ -392,10 +394,12 @@ describe("column-finding-resources", () => {
     });
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
   });
 
-  it("should enable Add note for Cloud-only rows so users can open the billing upsell modal", () => {
+  it("should enable Add Triage Note for Cloud-only rows so users can open the billing upsell modal", () => {
     // Given
     renderResourceActionsCell({
       resource: makeResource({
@@ -408,7 +412,9 @@ describe("column-finding-resources", () => {
     });
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
   });
 
   it("should disable editable triage control when no update handler is wired", () => {

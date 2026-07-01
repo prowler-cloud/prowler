@@ -103,13 +103,15 @@ describe("finding triage cells", () => {
     );
 
     // When
-    const addNoteButton = screen.getByRole("button", { name: "Add note" });
-    expect(addNoteButton).toHaveTextContent("Add note");
+    const addNoteButton = screen.getByRole("button", {
+      name: "Add Triage Note",
+    });
+    expect(addNoteButton).toHaveTextContent("Add Triage Note");
     await user.click(addNoteButton);
 
     // Then
     expect(
-      screen.getByRole("dialog", { name: "Triage Note" }),
+      screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("combobox", { name: "Triage status" }),
@@ -145,8 +147,8 @@ describe("finding triage cells", () => {
     render(
       <FindingTriageStatusCell
         triage={makeTriageSummary({
-          status: FINDING_TRIAGE_STATUS.REMEDIATING,
-          label: "Remediating",
+          status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          label: "Under Review",
         })}
         onTriageUpdateAction={vi.fn()}
       />,
@@ -160,9 +162,15 @@ describe("finding triage cells", () => {
     await user.click(statusControl);
 
     // Then
-    expect(statusControl.parentElement).toHaveClass("w-20");
-    expect(within(statusControl).getByText("Remediating")).toHaveClass(
-      "text-bg-data-info",
+    expect(screen.getByText("Triage").parentElement).toHaveClass(
+      "text-text-neutral-secondary",
+      "text-[10px]",
+      "whitespace-nowrap",
+    );
+    expect(statusControl.parentElement).toHaveClass("w-32");
+    expect(statusControl).toHaveAttribute("data-size", "xs");
+    expect(within(statusControl).getByText("Under Review")).toHaveClass(
+      "text-text-warning-primary",
     );
     expect(
       within(screen.getByRole("option", { name: "Open" })).getByText("Open"),
@@ -171,7 +179,7 @@ describe("finding triage cells", () => {
       within(screen.getByRole("option", { name: "Under Review" })).getByText(
         "Under Review",
       ),
-    ).toHaveClass("text-bg-data-kubernetes");
+    ).toHaveClass("text-text-warning-primary");
     expect(
       within(screen.getByRole("option", { name: "Remediating" })).getByText(
         "Remediating",
@@ -235,7 +243,7 @@ describe("finding triage cells", () => {
     // Then
     expect(existingNoteButton).toBeDisabled();
     expect(
-      screen.queryByRole("dialog", { name: "Triage Note" }),
+      screen.queryByRole("dialog", { name: "Add Triage Note" }),
     ).not.toBeInTheDocument();
   });
 
@@ -263,14 +271,14 @@ describe("finding triage cells", () => {
       expect.objectContaining({ triageId: "triage-1", notesCount: 1 }),
     );
     expect(
-      await screen.findByRole("dialog", { name: "Triage Note" }),
+      await screen.findByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toHaveValue(
       "Loaded existing note",
     );
   });
 
-  it("should open a disabled billing upsell modal for Cloud-only Add note", async () => {
+  it("should open a disabled billing upsell modal for Cloud-only Add Triage Note", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -285,10 +293,12 @@ describe("finding triage cells", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Add note" }));
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
 
     // Then
-    expect(screen.getByRole("dialog", { name: "Triage Note" })).toBeVisible();
+    expect(
+      screen.getByRole("dialog", { name: "Add Triage Note" }),
+    ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
     expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
     expect(
@@ -296,7 +306,7 @@ describe("finding triage cells", () => {
     ).toHaveAttribute("href", "https://prowler.com/pricing");
   });
 
-  it("should disable Add note when no update handler is wired", async () => {
+  it("should disable Add Triage Note when no update handler is wired", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -306,7 +316,9 @@ describe("finding triage cells", () => {
       />,
     );
 
-    const addNoteButton = screen.getByRole("button", { name: "Add note" });
+    const addNoteButton = screen.getByRole("button", {
+      name: "Add Triage Note",
+    });
 
     // When
     await user.click(addNoteButton);
@@ -314,7 +326,7 @@ describe("finding triage cells", () => {
     // Then
     expect(addNoteButton).toBeDisabled();
     expect(
-      screen.queryByRole("dialog", { name: "Triage Note" }),
+      screen.queryByRole("dialog", { name: "Add Triage Note" }),
     ).not.toBeInTheDocument();
   });
 
@@ -341,7 +353,7 @@ describe("finding triage cells", () => {
       "Could not load the existing note.",
     );
     expect(
-      screen.queryByRole("dialog", { name: "Triage Note" }),
+      screen.queryByRole("dialog", { name: "Add Triage Note" }),
     ).not.toBeInTheDocument();
   });
 

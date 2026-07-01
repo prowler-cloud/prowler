@@ -20,6 +20,30 @@ beforeAll(() => {
 });
 
 describe("Select", () => {
+  it("supports an extra-small trigger size", () => {
+    // Given / When
+    render(
+      <Select value="open">
+        <SelectTrigger aria-label="Compact status" size="xs">
+          Open
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="open">Open</SelectItem>
+        </SelectContent>
+      </Select>,
+    );
+
+    // Then
+    const trigger = screen.getByRole("combobox", { name: "Compact status" });
+    expect(trigger).toHaveAttribute("data-size", "xs");
+    expect(trigger).toHaveClass(
+      "data-[size=xs]:h-8",
+      "data-[size=xs]:px-3",
+      "data-[size=xs]:py-0",
+      "data-[size=xs]:text-xs",
+    );
+  });
+
   it("uses a selected background instead of a check icon for the active item", async () => {
     // Given
     const user = userEvent.setup();

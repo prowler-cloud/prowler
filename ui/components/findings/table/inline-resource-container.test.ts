@@ -30,6 +30,16 @@ describe("inline resource container", () => {
     );
   });
 
+  it("top-aligns compact labeled resource cells so their labels line up", () => {
+    expect(source).toContain("COMPACT_LABELED_COLUMN_IDS");
+    expect(source).toContain('"service"');
+    expect(source).toContain('"region"');
+    expect(source).toContain('"lastSeen"');
+    expect(source).toContain('"failingFor"');
+    expect(source).toContain('"triage"');
+    expect(source).toContain("align-top");
+  });
+
   it("keeps the loading skeleton actions cell as the last visible resource column", () => {
     const triageCommentIndex = source.indexOf("{/* Triage */}");
     const actionsCommentIndex = source.indexOf("{/* Actions */}");

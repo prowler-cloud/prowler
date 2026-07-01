@@ -205,7 +205,7 @@ describe("column-standalone-findings", () => {
       screen.getByRole("button", { name: /triage status/i }),
     ).toHaveTextContent("Remediating");
     expect(
-      screen.getByRole("button", { name: "Add note" }),
+      screen.getByRole("button", { name: "Add Triage Note" }),
     ).toBeInTheDocument();
   });
 

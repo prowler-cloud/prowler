@@ -252,7 +252,7 @@ describe("DataTableRowActions", () => {
     ).toBeDisabled();
   });
 
-  it("shows Add note for editable findings without a note", () => {
+  it("shows Add Triage Note for editable findings without a note", () => {
     // Given / When
     render(
       <DataTableRowActions
@@ -262,7 +262,9 @@ describe("DataTableRowActions", () => {
     );
 
     // Then
-    expect(screen.getByRole("button", { name: "Add note" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
   });
 
   it("loads an existing note before opening the note modal", async () => {
@@ -311,7 +313,7 @@ describe("DataTableRowActions", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Add note" }));
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
 
     // Then
     expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();

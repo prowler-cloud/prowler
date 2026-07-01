@@ -10,6 +10,22 @@ const stopWheelPropagation = (event: WheelEvent<HTMLElement>) => {
   event.stopPropagation();
 };
 
+const SELECT_TRIGGER_SIZES = {
+  XS: "xs",
+  SM: "sm",
+  DEFAULT: "default",
+} as const;
+
+const SELECT_TRIGGER_ICON_SIZES = {
+  SM: "sm",
+  DEFAULT: "default",
+} as const;
+
+type SelectTriggerSize =
+  (typeof SELECT_TRIGGER_SIZES)[keyof typeof SELECT_TRIGGER_SIZES];
+type SelectTriggerIconSize =
+  (typeof SELECT_TRIGGER_ICON_SIZES)[keyof typeof SELECT_TRIGGER_ICON_SIZES];
+
 function Select({
   allowDeselect = false,
   ...props
@@ -49,20 +65,20 @@ function SelectValue({
 
 function SelectTrigger({
   className,
-  size = "default",
-  iconSize = "default",
+  size = SELECT_TRIGGER_SIZES.DEFAULT,
+  iconSize = SELECT_TRIGGER_ICON_SIZES.DEFAULT,
   children,
   ...props
 }: ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default";
-  iconSize?: "sm" | "default";
+  size?: SelectTriggerSize;
+  iconSize?: SelectTriggerIconSize;
 }) {
   return (
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       data-size={size}
       className={cn(
-        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
+        "group border-border-input-primary bg-bg-input-primary text-bg-button-secondary data-[placeholder]:text-bg-button-secondary [&_svg:not([class*='text-'])]:text-bg-button-secondary aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive hover:bg-bg-neutral-tertiary active:bg-border-neutral-tertiary dark:bg-input/30 dark:hover:bg-input/50 focus-visible:border-border-input-primary-press focus-visible:ring-border-input-primary-press flex w-full items-center justify-between gap-2 overflow-hidden rounded-lg border px-4 py-3 text-sm whitespace-nowrap shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-1 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 has-[>svg]:px-3 data-[size=default]:h-[52px] data-[size=sm]:h-10 data-[size=xs]:h-8 data-[size=xs]:gap-1.5 data-[size=xs]:px-3 data-[size=xs]:py-0 data-[size=xs]:text-xs *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 dark:focus-visible:ring-slate-400 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-6",
         className,
       )}
       {...props}
@@ -72,7 +88,7 @@ function SelectTrigger({
         <ChevronDownIcon
           className={cn(
             "text-bg-button-secondary shrink-0 opacity-70 transition-transform duration-200 group-data-[state=open]:rotate-180",
-            iconSize === "sm" ? "size-4" : "size-6",
+            iconSize === SELECT_TRIGGER_ICON_SIZES.SM ? "size-4" : "size-6",
           )}
           aria-hidden="true"
         />

@@ -223,7 +223,7 @@ function FindingNoteActionItemContent({
     ? "Loading note..."
     : triage.hasVisibleNote
       ? "Open note"
-      : "Add note";
+      : "Add Triage Note";
 
   const handleNoteSelect = async () => {
     if (!canOpenNoteModal) {

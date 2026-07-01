@@ -58,13 +58,21 @@ interface InlineResourceContainerProps {
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
 const ACTIONS_COLUMN_ID = "actions";
+const COMPACT_LABELED_COLUMN_IDS = new Set([
+  "service",
+  "region",
+  "lastSeen",
+  "failingFor",
+  "triage",
+]);
 const STICKY_RESOURCE_ACTION_CELL_CLASS =
   "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary";
 
 const getResourceCellClassName = (columnId: string) =>
-  columnId === ACTIONS_COLUMN_ID
-    ? STICKY_RESOURCE_ACTION_CELL_CLASS
-    : undefined;
+  cn(
+    COMPACT_LABELED_COLUMN_IDS.has(columnId) && "align-top",
+    columnId === ACTIONS_COLUMN_ID && STICKY_RESOURCE_ACTION_CELL_CLASS,
+  );
 
 function ResourceSkeletonRow({
   isEmptyStateSized = false,
