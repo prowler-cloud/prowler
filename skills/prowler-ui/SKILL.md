@@ -44,9 +44,9 @@ HeroUI 2.8.4 (LEGACY - do not add new components)
 
 Applies to ALL UI work. The design system is the single source of truth — reuse it exactly, extend it deliberately.
 
-- **Reuse first, never reinvent.** Before building anything, search `components/shadcn/` and existing scans/providers UI. Do NOT create a custom component, modal wrapper, or primitive when an equivalent already exists.
+- **Reuse first, never reinvent.** Before building anything, search `components/shadcn/` and existing usages in the codebase for an equivalent. Do NOT create a custom component, modal wrapper, or primitive when one already exists.
 - **Use exactly the defined variants/styles — no more, no less.** At the call site, drive appearance through the component's `variant`/`size`/`tone` props. Never add ad-hoc visual `className` (color, opacity, hover/focus/disabled, spacing-for-looks) to shared controls (`Button`, `SelectTrigger`, `SelectItem`, `Modal`, badges…), and never skip the correct semantic variant.
-- **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`. Inspect scans/providers usage before writing new UI.
+- **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`.
 - **Colors**: reuse existing semantic tokens from `ui/styles/globals.css`. No raw Tailwind color utilities (e.g. `bg-blue-950/40`), no hex. If no token fits, STOP and ask the design owner — do not invent or near-duplicate tokens.
 - **Need a genuinely new variant/token?** That is a design-system change: add it to the shared component API (with design sign-off), then consume it. It is never a call-site decision.
 
