@@ -7,6 +7,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🚀 Added
 
 - Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
+- FedRAMP 20x Key Security Indicators (`FedRAMP-20x-KSI`, compliance stems `fedramp_20x_ksi_{aws,azure,gcp,kubernetes,m365}`) aligned to FedRAMP Consolidated Rules for 2026 version `2026.06.24.01` (46 indicators from [FedRAMP/rules](https://github.com/FedRAMP/rules); Class A uses a seven-KSI subset per FRC-CLA-MFR while Classes B/C apply the full catalog) [(#11701)](https://github.com/prowler-cloud/prowler/pull/11701)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `entra_conditional_access_policy_groups_management_restricted` check for M365 provider, verifying every security group referenced by an enabled or report-only Conditional Access policy is management-restricted or role-assignable [(#11342)](https://github.com/prowler-cloud/prowler/pull/11342)
@@ -47,6 +48,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 ### 🔄 Changed
 
 - AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+
+### ⚠️ Removed
+
+- Phase One pilot FedRAMP 20x KSI Low frameworks (`FedRAMP-20x-KSI-Low` / `fedramp_20x_ksi_low_{aws,azure,gcp}`, version `25.05C` with category-level requirements). Use `fedramp_20x_ksi_{provider}` (`FedRAMP-20x-KSI`, `2026.06.24.01`) instead. Breaking change for CLI `--compliance fedramp_20x_ksi_low_*` and stored API `compliance_id` values.
 
 ---
 

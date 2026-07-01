@@ -1,0 +1,902 @@
+{
+  "Framework": "FedRAMP-20x-KSI",
+  "Name": "FedRAMP 20x Key Security Indicators (KSIs) \u2014 Consolidated Rules 2026.06.24.01",
+  "Version": "2026.06.24.01",
+  "Provider": "AWS",
+  "Description": "FedRAMP 20x Key Security Indicators (KSIs) from the FedRAMP Consolidated Rules for 2026 (version 2026.06.24.01, source FedRAMP/rules@7b9b5ea354714660eae63a40bae2833845915a11). KSIs are outcome-oriented indicators for Security Decision Record evidence; they are not a substitute for FedRAMP Rules (FRR) program obligations. FedRAMP 20x Class A certifications mandate a subset of seven KSIs via FRC-CLA-MFR; Classes B and C apply the full KSI catalog within Minimum Assessment Scope with class-varying automation expectations (FRC-CSX-*). Five indicators use varies_by_class (optional on B, required on C): KSI-CNA-EIS, KSI-MLA-ALA, KSI-SVC-PRR, KSI-SVC-RUD, KSI-SVC-VCM. Generated for provider AWS.",
+  "Requirements": [
+    {
+      "Id": "ksi-ced-rat",
+      "Name": "KSI-CED-RAT: Reviewing All Training",
+      "Description": "The effectiveness of relevant cybersecurity education and training is persistently reviewed, including at least general training for all employees, role-specific training for employees in high risk roles, training for development and engineering staff on secure software delivery, and training for staff involved with incident response or disaster recovery.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-ced-rat",
+          "Section": "KSI-CED: Cybersecurity Education",
+          "SubSection": "KSI-CED-RAT: Reviewing All Training",
+          "SubGroup": "cp-3, ir-2, ps-6, at-2, at-2.2, at-2.3, at-3.5, at-4, ir-2.3, at-3, sr-11.1",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-cmt-lmc",
+      "Name": "KSI-CMT-LMC: Logging Changes",
+      "Description": "Modifications to the cloud service offering are logged and monitored.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt-lmc",
+          "Section": "KSI-CMT: Change Management",
+          "SubSection": "KSI-CMT-LMC: Logging Changes",
+          "SubGroup": "au-2, cm-3, cm-3.2, cm-4.2, cm-6, cm-8.3, ma-2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_multi_region_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "cloudwatch_changes_to_network_acls_alarm_configured",
+        "cloudwatch_changes_to_network_gateways_alarm_configured",
+        "cloudwatch_changes_to_network_route_tables_alarm_configured",
+        "cloudwatch_changes_to_vpcs_alarm_configured",
+        "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+        "cloudwatch_log_metric_filter_aws_organizations_changes",
+        "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+        "cloudwatch_log_metric_filter_policy_changes",
+        "cloudwatch_log_metric_filter_security_group_changes",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-cmt-rmv",
+      "Name": "KSI-CMT-RMV: Redeploying vs Modifying",
+      "Description": "Changes to machine-based information resources are executed through the redeployment of version controlled resources rather than direct modification wherever reasonable.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt-rmv",
+          "Section": "KSI-CMT: Change Management",
+          "SubSection": "KSI-CMT-RMV: Redeploying vs Modifying",
+          "SubGroup": "cm-2, cm-3, cm-5, cm-6, cm-7, cm-8.1, si-3",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_older_than_specific_days"
+      ]
+    },
+    {
+      "Id": "ksi-cmt-rvp",
+      "Name": "KSI-CMT-RVP: Reviewing Change Procedures",
+      "Description": "The effectiveness of documented change management procedures is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt-rvp",
+          "Section": "KSI-CMT: Change Management",
+          "SubSection": "KSI-CMT-RVP: Reviewing Change Procedures",
+          "SubGroup": "cm-3, cm-3.2, cm-3.4, cm-5, cm-7.1, cm-9",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_managed_by_ssm"
+      ]
+    },
+    {
+      "Id": "ksi-cmt-vtd",
+      "Name": "KSI-CMT-VTD: Validating Throughout Deployment",
+      "Description": "Persistent testing and validation of changes throughout deployment is automated.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cmt-vtd",
+          "Section": "KSI-CMT: Change Management",
+          "SubSection": "KSI-CMT-VTD: Validating Throughout Deployment",
+          "SubGroup": "cm-3, cm-3.2, cm-4.2, si-2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "ksi-cna-dfp",
+      "Name": "KSI-CNA-DFP: Defining Functionality and Privileges",
+      "Description": "The functionality and privileges for infrastructure and services are strictly defined.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-dfp",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-DFP: Defining Functionality and Privileges",
+          "SubGroup": "cm-2, si-3",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_instance_imdsv2_enabled",
+        "ec2_instance_older_than_specific_days"
+      ]
+    },
+    {
+      "Id": "ksi-cna-eis",
+      "Name": "KSI-CNA-EIS: Enforcing Intended State",
+      "Description": "Automated services are used to persistently assess the security of all machine-based information resources and automatically enforce their intended operational state.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-eis",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-EIS: Enforcing Intended State",
+          "SubGroup": "ca-2.1, ca-7.1",
+          "Service": "aws",
+          "Comment": "Varies by FedRAMP 20x certification class: optional on Class B, required on Class C."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-cna-ibp",
+      "Name": "KSI-CNA-IBP: Implementing Best Practices",
+      "Description": "The use and configuration of third-party machine-based information resources is persistently compared against the original provider's best practices and guidance.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-ibp",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-IBP: Implementing Best Practices",
+          "SubGroup": "ac-17.3, cm-2, pl-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "eks_cluster_uses_a_supported_version"
+      ]
+    },
+    {
+      "Id": "ksi-cna-mat",
+      "Name": "KSI-CNA-MAT: Minimizing Attack Surface",
+      "Description": "Machine-based information resources are persistently reviewed to ensure they have a minimal attack surface and that lateral movement is minimized if compromised.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-mat",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-MAT: Minimizing Attack Surface",
+          "SubGroup": "ac-17.3, ac-18.1, ac-18.3, ac-20.1, ca-9, sc-7.3, sc-7.4, sc-7.5, sc-7.8, sc-8, sc-10, si-10, si-11, si-16",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "eks_cluster_not_publicly_accessible",
+        "eks_cluster_private_nodes_enabled",
+        "ec2_instance_public_ip",
+        "vpc_peering_routing_tables_with_least_privilege"
+      ]
+    },
+    {
+      "Id": "ksi-cna-ofa",
+      "Name": "KSI-CNA-OFA: Optimizing for Availability",
+      "Description": "Machine-based information resources are persistently reviewed to ensure they are appropriately optimized for high availability and rapid recovery.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-ofa",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-OFA: Optimizing for Availability",
+          "SubGroup": null,
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "autoscaling_group_multiple_az",
+        "autoscaling_group_multiple_instance_types",
+        "autoscaling_group_capacity_rebalance_enabled",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_table_deletion_protection_enabled",
+        "elb_cross_zone_load_balancing_enabled",
+        "elbv2_is_in_multiple_az",
+        "rds_instance_multi_az",
+        "rds_cluster_multi_az"
+      ]
+    },
+    {
+      "Id": "ksi-cna-rnt",
+      "Name": "KSI-CNA-RNT: Restricting Network Traffic",
+      "Description": "Machine-based information resources are persistently reviewed to ensure they are appropriately configured to limit inbound and outbound network traffic.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-rnt",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-RNT: Restricting Network Traffic",
+          "SubGroup": "ac-17.3, ca-9, cm-7.1, sc-7.5, si-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ec2_networkacl_allow_ingress_any_port",
+        "ec2_securitygroup_default_restrict_traffic",
+        "ec2_securitygroup_allow_ingress_from_internet_to_any_port"
+      ]
+    },
+    {
+      "Id": "ksi-cna-rvp",
+      "Name": "KSI-CNA-RVP: Reviewing Protections",
+      "Description": "The effectiveness of protection against denial of service attacks and other unwanted activity for machine-based information resources is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-rvp",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-RVP: Reviewing Protections",
+          "SubGroup": "sc-5, si-8, si-8.2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "elbv2_waf_acl_attached"
+      ]
+    },
+    {
+      "Id": "ksi-cna-uln",
+      "Name": "KSI-CNA-ULN: Using Logical Networking",
+      "Description": "Logical networking and related capabilities are used and persistently reviewed to enforce traffic flow controls.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-cna-uln",
+          "Section": "KSI-CNA: Cloud Native Architecture",
+          "SubSection": "KSI-CNA-ULN: Using Logical Networking",
+          "SubGroup": "ac-12, ac-17.3, ca-9, sc-4, sc-7, sc-7.7, sc-8, sc-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "eks_cluster_network_policy_enabled",
+        "elbv2_waf_acl_attached"
+      ]
+    },
+    {
+      "Id": "ksi-iam-aam",
+      "Name": "KSI-IAM-AAM: Automating Account Management",
+      "Description": "The lifecycle and privileges of all accounts, roles, and groups are securely managed using automation.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-aam",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-AAM: Automating Account Management",
+          "SubGroup": "ac-2.2, ac-2.3, ac-2.13, ac-6.7, ia-4.4, ia-12, ia-12.2, ia-12.3, ia-12.5",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_no_root_access_key",
+        "iam_user_accesskey_unused",
+        "iam_user_console_access_unused",
+        "organizations_delegated_administrators"
+      ]
+    },
+    {
+      "Id": "ksi-iam-apm",
+      "Name": "KSI-IAM-APM: Adopting Passwordless Methods",
+      "Description": "Secure passwordless methods are used for user authentication and authorization when feasible, otherwise strong passwords with phishing-resistant MFA is used.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-apm",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-APM: Adopting Passwordless Methods",
+          "SubGroup": "ac-3, ia-5.1, ia-5.2, ia-5.6, ia-6, ac-2, ia-2, ia-2.1, ia-2.2, ia-2.8, ia-5, ia-8, sc-23",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_password_policy_expires_passwords_within_90_days_or_less",
+        "iam_password_policy_lowercase",
+        "iam_password_policy_minimum_length_14",
+        "iam_password_policy_number",
+        "iam_password_policy_reuse_24",
+        "iam_password_policy_symbol",
+        "iam_password_policy_uppercase",
+        "iam_root_hardware_mfa_enabled",
+        "iam_root_mfa_enabled",
+        "iam_user_hardware_mfa_enabled",
+        "iam_user_mfa_enabled_console_access"
+      ]
+    },
+    {
+      "Id": "ksi-iam-elp",
+      "Name": "KSI-IAM-ELP: Ensuring Least Privilege",
+      "Description": "Identity and access management measures are used and persistently reviewed to ensure each user or device can only access the resources they need.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-elp",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-ELP: Ensuring Least Privilege",
+          "SubGroup": "ac-2.5, ac-2.6, ac-3, ac-4, ac-6, ac-12, ac-14, ac-17, ac-17.1, ac-17.2, ac-17.3, ac-20, ac-20.1, cm-2.7, cm-9, ia-2, ia-3, ia-4, ia-4.4, ia-5.2, ia-5.6, ia-11, ps-2, ps-3, ps-4, ps-5, ps-6, sc-4, sc-20, sc-21, sc-22, sc-23, sc-39, si-3",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "organizations_scp_check_deny_regions",
+        "organizations_opt_out_ai_services_policy"
+      ]
+    },
+    {
+      "Id": "ksi-iam-jit",
+      "Name": "KSI-IAM-JIT: Authorizing Just-in-Time",
+      "Description": "A least-privileged, role and attribute-based, and just-in-time security authorization model is used and persistently reviewed for all user and non-user accounts and services.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-jit",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-JIT: Authorizing Just-in-Time",
+          "SubGroup": "ac-2, ac-2.1, ac-2.2, ac-2.3, ac-2.4, ac-2.6, ac-3, ac-4, ac-5, ac-6, ac-6.1, ac-6.2, ac-6.5, ac-6.7, ac-6.9, ac-6.10, ac-7, ac-20.1, ac-17, au-9.4, cm-5, cm-7, cm-7.2, cm-7.5, cm-9, ia-4, ia-4.4, ia-7, ps-2, ps-3, ps-4, ps-5, ps-6, ps-9, ra-5.5, sc-2, sc-23, sc-39",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_administrator_access_with_mfa",
+        "iam_aws_attached_policy_no_administrative_privileges",
+        "iam_customer_attached_policy_no_administrative_privileges",
+        "iam_inline_policy_no_administrative_privileges",
+        "iam_no_custom_policy_permissive_role_assumption",
+        "iam_policy_attached_only_to_group_or_roles",
+        "iam_policy_no_full_access_to_cloudtrail",
+        "iam_policy_no_full_access_to_kms"
+      ]
+    },
+    {
+      "Id": "ksi-iam-snu",
+      "Name": "KSI-IAM-SNU: Securing Non-User Authentication",
+      "Description": "Appropriately secure authentication methods are used and persistently reviewed for non-user accounts and services.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-snu",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-SNU: Securing Non-User Authentication",
+          "SubGroup": "ac-2, ac-2.2, ac-4, ac-6.5, ia-3, ia-5.2, ra-5.5",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "iam_rotate_access_key_90_days",
+        "iam_user_two_active_access_key"
+      ]
+    },
+    {
+      "Id": "ksi-iam-sus",
+      "Name": "KSI-IAM-SUS: Responding to Suspicious Activity",
+      "Description": "Accounts with privileged access are disabled or otherwise secured in response to suspicious activity.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-iam-sus",
+          "Section": "KSI-IAM: Identity and Access Management",
+          "SubSection": "KSI-IAM-SUS: Responding to Suspicious Activity",
+          "SubGroup": "ac-2, ac-2.1, ac-2.3, ac-2.13, ac-7, ps-4, ps-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "ksi-inr-aar",
+      "Name": "KSI-INR-AAR: Generating After Action Reports",
+      "Description": "Incident after action reports are generated and lessons learned are persistently incorporated.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr-aar",
+          "Section": "KSI-INR: Incident Response",
+          "SubSection": "KSI-INR-AAR: Generating After Action Reports",
+          "SubGroup": "ir-3, ir-4, ir-4.1, ir-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_ec2_malware_protection_enabled",
+        "guardduty_eks_audit_log_enabled",
+        "guardduty_is_enabled",
+        "guardduty_eks_runtime_monitoring_enabled",
+        "guardduty_lambda_protection_enabled",
+        "guardduty_rds_protection_enabled",
+        "guardduty_s3_protection_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-inr-rir",
+      "Name": "KSI-INR-RIR: Reviewing Incident Response Procedures",
+      "Description": "The effectiveness of documented incident response procedures is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr-rir",
+          "Section": "KSI-INR: Incident Response",
+          "SubSection": "KSI-INR-RIR: Reviewing Incident Response Procedures",
+          "SubGroup": "ir-4, ir-4.1, ir-6, ir-6.1, ir-6.3, ir-7, ir-7.1, ir-8, ir-8.1, si-4.5",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "securityhub_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-inr-rpi",
+      "Name": "KSI-INR-RPI: Reviewing Past Incidents",
+      "Description": "Past incidents are persistently reviewed for patterns or vulnerabilities that were not previously apparent or identified.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-inr-rpi",
+          "Section": "KSI-INR: Incident Response",
+          "SubSection": "KSI-INR-RPI: Reviewing Past Incidents",
+          "SubGroup": "ir-3, ir-4, ir-4.1, ir-5, ir-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "guardduty_centrally_managed",
+        "inspector2_is_enabled",
+        "inspector2_active_findings_exist"
+      ]
+    },
+    {
+      "Id": "ksi-mla-ala",
+      "Name": "KSI-MLA-ALA: Authorizing Log Access",
+      "Description": "A least-privileged, role and attribute-based, and just-in-time access authorization model is used and persistently reviewed for access to log data based on organizationally defined data sensitivity.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-ala",
+          "Section": "KSI-MLA: Monitoring, Logging, and Auditing",
+          "SubSection": "KSI-MLA-ALA: Authorizing Log Access",
+          "SubGroup": "si-11",
+          "Service": "aws",
+          "Comment": "Varies by FedRAMP 20x certification class: optional on Class B, required on Class C."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-mla-evc",
+      "Name": "KSI-MLA-EVC: Evaluating Configurations",
+      "Description": "The configuration of machine-based information resources, especially infrastructure as code, is persistently evaluated and tested.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-evc",
+          "Section": "KSI-MLA: Monitoring, Logging, and Auditing",
+          "SubSection": "KSI-MLA-EVC: Evaluating Configurations",
+          "SubGroup": "ca-7, cm-2, cm-6, si-7.7",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "config_recorder_using_aws_service_role"
+      ]
+    },
+    {
+      "Id": "ksi-mla-let",
+      "Name": "KSI-MLA-LET: Logging Event Types",
+      "Description": "A list of information resources and event types that will be logged, monitored, and audited is maintained and persistently reviewed to ensure these activities occur.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-let",
+          "Section": "KSI-MLA: Monitoring, Logging, and Auditing",
+          "SubSection": "KSI-MLA-LET: Logging Event Types",
+          "SubGroup": "ac-2.4, ac-6.9, ac-17.1, ac-20.1, au-2, au-7.1, au-12, si-4.4, si-4.5, si-7.7",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "inspector2_is_enabled",
+        "config_recorder_all_regions_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla-osm",
+      "Name": "KSI-MLA-OSM: Operating SIEM Capability",
+      "Description": "A Security Information and Event Management (SIEM) or similar system(s) is used and persistently reviewed for centralized, tamper-resistant logging of events, activities, and changes.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-osm",
+          "Section": "KSI-MLA: Monitoring, Logging, and Auditing",
+          "SubSection": "KSI-MLA-OSM: Operating SIEM Capability",
+          "SubGroup": "ac-17.1, ac-20.1, au-2, au-3, au-3.1, au-4, au-5, au-6.1, au-6.3, au-7, au-7.1, au-8, au-9, au-11, ir-4.1, si-4.2, si-4.4, si-7.7",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "cloudtrail_cloudwatch_logging_enabled",
+        "cloudtrail_kms_encryption_enabled",
+        "cloudtrail_log_file_validation_enabled",
+        "cloudtrail_multi_region_enabled",
+        "cloudwatch_log_group_kms_encryption_enabled",
+        "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-mla-rvl",
+      "Name": "KSI-MLA-RVL: Reviewing Logs",
+      "Description": "Logs are persistently reviewed and audited.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-mla-rvl",
+          "Section": "KSI-MLA: Monitoring, Logging, and Auditing",
+          "SubSection": "KSI-MLA-RVL: Reviewing Logs",
+          "SubGroup": "ac-2.4, ac-6.9, au-2, au-6, au-6.1, si-4, si-4.4",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_logging_enabled",
+        "cloudtrail_s3_dataevents_read_enabled",
+        "cloudtrail_s3_dataevents_write_enabled",
+        "ecs_cluster_container_insights_enabled",
+        "eks_control_plane_logging_all_types_enabled",
+        "elb_logging_enabled",
+        "elbv2_logging_enabled",
+        "opensearch_service_domains_cloudwatch_logging_enabled",
+        "rds_instance_enhanced_monitoring_enabled",
+        "rds_instance_integration_cloudwatch_logs",
+        "redshift_cluster_audit_logging",
+        "s3_bucket_server_access_logging_enabled",
+        "vpc_flow_logs_enabled",
+        "wafv2_webacl_logging_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-piy-giv",
+      "Name": "KSI-PIY-GIV: Generating Inventories",
+      "Description": "Authoritative sources are used to automatically generate real-time inventories of all information resources when needed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy-giv",
+          "Section": "KSI-PIY: Policy and Inventory",
+          "SubSection": "KSI-PIY-GIV: Generating Inventories",
+          "SubGroup": "cm-2.2, cm-7.5, cm-8, cm-8.1, cm-12, cm-12.1, cp-2.8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ec2_instance_managed_by_ssm",
+        "organizations_account_part_of_organizations",
+        "organizations_delegated_administrators"
+      ]
+    },
+    {
+      "Id": "ksi-piy-res",
+      "Name": "KSI-PIY-RES: Reviewing Executive Support",
+      "Description": "Executive support for achieving the provider's security goals is persistently reviewed and demonstrated.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy-res",
+          "Section": "KSI-PIY: Policy and Inventory",
+          "SubSection": "KSI-PIY-RES: Reviewing Executive Support",
+          "SubGroup": null,
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-piy-ris",
+      "Name": "KSI-PIY-RIS: Reviewing Investments in Security",
+      "Description": "The effectiveness of the provider's investments in achieving security goals is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy-ris",
+          "Section": "KSI-PIY: Policy and Inventory",
+          "SubSection": "KSI-PIY-RIS: Reviewing Investments in Security",
+          "SubGroup": "ac-5, ca-2, cp-2.1, cp-4.1, ir-3.2, pm-3, sa-2, sa-3, sr-2.1",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    },
+    {
+      "Id": "ksi-piy-rsd",
+      "Name": "KSI-PIY-RSD: Reviewing Security in the SDLC",
+      "Description": "The effectiveness of building security and privacy considerations into the Software Development Lifecycle and aligning with CISA Secure By Design principles is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy-rsd",
+          "Section": "KSI-PIY: Policy and Inventory",
+          "SubSection": "KSI-PIY-RSD: Reviewing Security in the SDLC",
+          "SubGroup": "ac-5, au-3.3, cm-3.4, pl-8, pm-7, sa-3, sa-8, sc-4, sc-18, si-10, si-11, si-16",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-piy-rvd",
+      "Name": "KSI-PIY-RVD: Reviewing Vulnerability Disclosures",
+      "Description": "The effectiveness of the provider's vulnerability disclosure program is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-piy-rvd",
+          "Section": "KSI-PIY: Policy and Inventory",
+          "SubSection": "KSI-PIY-RVD: Reviewing Vulnerability Disclosures",
+          "SubGroup": "ra-5.11",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-rpl-abo",
+      "Name": "KSI-RPL-ABO: Aligning Backups with Objectives",
+      "Description": "The alignment of machine-based information resource backups with defined recovery objectives is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl-abo",
+          "Section": "KSI-RPL: Recovery Planning",
+          "SubSection": "KSI-RPL-ABO: Aligning Backups with Objectives",
+          "SubGroup": "cm-2.3, cp-6, cp-9, cp-10, cp-10.2, si-12",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_vaults_encrypted",
+        "backup_recovery_point_encrypted",
+        "dlm_ebs_snapshot_lifecycle_policy_exists",
+        "dynamodb_tables_pitr_enabled",
+        "dynamodb_table_deletion_protection_enabled",
+        "efs_have_backup_enabled",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "rds_instance_backup_enabled",
+        "rds_instance_deletion_protection",
+        "rds_cluster_deletion_protection",
+        "rds_snapshots_encrypted",
+        "redshift_cluster_automated_snapshot"
+      ]
+    },
+    {
+      "Id": "ksi-rpl-arp",
+      "Name": "KSI-RPL-ARP: Aligning Recovery Plan",
+      "Description": "The alignment of recovery plans with defined recovery objectives is persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl-arp",
+          "Section": "KSI-RPL: Recovery Planning",
+          "SubSection": "KSI-RPL-ARP: Aligning Recovery Plan",
+          "SubGroup": "cp-2, cp-2.1, cp-2.3, cp-4.1, cp-6, cp-6.1, cp-6.3, cp-7, cp-7.1, cp-7.2, cp-7.3, cp-8, cp-8.1, cp-8.2, cp-10, cp-10.2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "backup_plans_exist",
+        "backup_reportplans_exist",
+        "backup_vaults_exist"
+      ]
+    },
+    {
+      "Id": "ksi-rpl-rro",
+      "Name": "KSI-RPL-RRO: Reviewing Recovery Objectives",
+      "Description": "The desired Recovery Time Objectives (RTO) and Recovery Point Objectives (RPO) are defined and persistently reviewed for alignment with the provider's business needs and capabilities.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl-rro",
+          "Section": "KSI-RPL: Recovery Planning",
+          "SubSection": "KSI-RPL-RRO: Reviewing Recovery Objectives",
+          "SubGroup": "cp-2.3, cp-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-rpl-trc",
+      "Name": "KSI-RPL-TRC: Testing Recovery Capabilities",
+      "Description": "The capability to recover from incidents and contingencies aligned with defined recovery objectives is persistently tested.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-rpl-trc",
+          "Section": "KSI-RPL: Recovery Planning",
+          "SubSection": "KSI-RPL-TRC: Testing Recovery Capabilities",
+          "SubGroup": "cp-2.1, cp-2.3, cp-4, cp-4.1, cp-6, cp-6.1, cp-9.1, cp-10, ir-3, ir-3.2",
+          "Service": "aws"
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-scr-mit",
+      "Name": "KSI-SCR-MIT: Mitigating Supply Chain Risk",
+      "Description": "Persistently identify, review, and mitigate potential supply chain risks.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-scr-mit",
+          "Section": "KSI-SCR: Supply Chain Risk",
+          "SubSection": "KSI-SCR-MIT: Mitigating Supply Chain Risk",
+          "SubGroup": "ac-20, ra-3.1, sa-9, sa-10, sa-11, sa-15.3, sa-22, si-7.1, sr-5, sr-6, ca-7.4, sc-18",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "ecr_registry_scan_images_on_push_enabled",
+        "ecr_repositories_lifecycle_policy_enabled",
+        "ecr_repositories_not_publicly_accessible",
+        "ecr_repositories_scan_vulnerabilities_in_latest_image",
+        "ecr_repositories_tag_immutability"
+      ]
+    },
+    {
+      "Id": "ksi-scr-mon",
+      "Name": "KSI-SCR-MON: Monitoring Supply Chain Risk",
+      "Description": "Third party software information resources are automatically monitored for upstream vulnerabilities using mechanisms that may include contractual notification requirements or active monitoring services.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-scr-mon",
+          "Section": "KSI-SCR: Supply Chain Risk",
+          "SubSection": "KSI-SCR-MON: Monitoring Supply Chain Risk",
+          "SubGroup": "ac-20, ca-3, ir-6.3, ps-7, ra-5, sa-9, si-5, sr-5, sr-6, sr-8",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "inspector2_active_findings_exist",
+        "inspector2_is_enabled",
+        "awslambda_function_using_supported_runtimes",
+        "ssm_managed_compliant_patching",
+        "guardduty_no_high_severity_findings"
+      ]
+    },
+    {
+      "Id": "ksi-svc-acm",
+      "Name": "KSI-SVC-ACM: Automating Configuration Management",
+      "Description": "The configuration of machine-based information resources is managed using automation and persistently reviewed for drift.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-acm",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-ACM: Automating Configuration Management",
+          "SubGroup": "ac-2.4, cm-2, cm-2.2, cm-2.3, cm-6, cm-7.1, pl-9, pl-10, sa-5, si-5, sr-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "config_recorder_all_regions_enabled",
+        "ec2_instance_managed_by_ssm",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "ksi-svc-asm",
+      "Name": "KSI-SVC-ASM: Automating Secret Management",
+      "Description": "Management, protection, and regular rotation of digital keys, certificates, and other secrets is automated and persistently reviewed.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-asm",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-ASM: Automating Secret Management",
+          "SubGroup": "ac-17.2, ia-5.2, ia-5.6, sc-12, sc-17",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "apigateway_restapi_cache_encrypted",
+        "cloudtrail_kms_encryption_enabled",
+        "dynamodb_accelerator_cluster_encryption_enabled",
+        "dynamodb_tables_kms_cmk_encryption_enabled",
+        "ec2_ebs_volume_encryption",
+        "ec2_ebs_default_encryption",
+        "efs_encryption_at_rest_enabled",
+        "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+        "elasticache_redis_cluster_auto_minor_version_upgrades",
+        "fsx_file_system_copy_tags_to_backups_enabled",
+        "kinesis_stream_encrypted_at_rest",
+        "kms_cmk_rotation_enabled",
+        "kms_key_not_publicly_accessible",
+        "rds_instance_storage_encrypted",
+        "rds_cluster_storage_encrypted",
+        "redshift_cluster_automatic_upgrades",
+        "s3_bucket_default_encryption",
+        "sagemaker_notebook_instance_encryption_enabled",
+        "sns_topics_kms_encryption_at_rest_enabled",
+        "sqs_queues_server_side_encryption_enabled"
+      ]
+    },
+    {
+      "Id": "ksi-svc-eis",
+      "Name": "KSI-SVC-EIS: Evaluating and Improving Security",
+      "Description": "Information resources are persistently evaluated for opportunities to improve security and those improvements are persistently made.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-eis",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-EIS: Evaluating and Improving Security",
+          "SubGroup": "cm-7.1, cm-12.1, ma-2, pl-8, sc-7, sc-39, si-2.2, si-4, sr-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "trustedadvisor_premium_support_plan_subscribed"
+      ]
+    },
+    {
+      "Id": "ksi-svc-prr",
+      "Name": "KSI-SVC-PRR: Preventing Residual Risk",
+      "Description": "Plans, procedures, and the state of information resources are persistently reviewed after making changes to limit and remove unwanted residual elements that would likely negatively affect the confidentiality, integrity, or availability of federal customer data.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-prr",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-PRR: Preventing Residual Risk",
+          "SubGroup": "sc-4",
+          "Service": "aws",
+          "Comment": "Varies by FedRAMP 20x certification class: optional on Class B, required on Class C."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-svc-rud",
+      "Name": "KSI-SVC-RUD: Removing Unwanted Data",
+      "Description": "Unwanted federal customer data is removed promptly when requested by an agency in alignment with customer agreements, including from backups if appropriate; this typically applies when a customer spills information or when a customer seeks to remove information from a service due to a change in usage.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-rud",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-RUD: Removing Unwanted Data",
+          "SubGroup": "si-12.3, si-18.4",
+          "Service": "aws",
+          "Comment": "Varies by FedRAMP 20x certification class: optional on Class B, required on Class C."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-svc-sin",
+      "Name": "KSI-SVC-SIN: Securing Information",
+      "Description": "Information is encrypted or otherwise secured from unwanted access or modification.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-sin",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-SIN: Securing Information",
+          "SubGroup": "ac-1, ac-17.2, cp-9.8, sc-8, sc-8.1, sc-13, sc-20, sc-21, sc-22, sc-23, sc-28, sc-28.1",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "elbv2_ssl_listeners",
+        "s3_bucket_secure_transport_policy"
+      ]
+    },
+    {
+      "Id": "ksi-svc-vcm",
+      "Name": "KSI-SVC-VCM: Validating Communications",
+      "Description": "The authenticity and integrity of communications between machine-based information resources is persistently validated using automation.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-vcm",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-VCM: Validating Communications",
+          "SubGroup": "sc-23, si-7.1",
+          "Service": "aws",
+          "Comment": "Varies by FedRAMP 20x certification class: optional on Class B, required on Class C."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "ksi-svc-vri",
+      "Name": "KSI-SVC-VRI: Validating Resource Integrity",
+      "Description": "Use cryptographic methods to validate the integrity of machine-based information resources.",
+      "Attributes": [
+        {
+          "ItemId": "ksi-svc-vri",
+          "Section": "KSI-SVC: Service Configuration",
+          "SubSection": "KSI-SVC-VRI: Validating Resource Integrity",
+          "SubGroup": "cm-2.2, cm-8.3, sc-13, sc-23, si-7, si-7.1, sr-10",
+          "Service": "aws"
+        }
+      ],
+      "Checks": [
+        "acm_certificates_expiration_check"
+      ]
+    }
+  ]
+}
