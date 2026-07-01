@@ -282,6 +282,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Okta provider with OAuth 2.0 authentication and `signon_global_session_idle_timeout_15min` check [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
 - `sagemaker_domain_sso_configured` check for AWS provider [(#11094)](https://github.com/prowler-cloud/prowler/pull/11094)
 - Scaleway provider with `iam_api_keys_no_root_owned` check [(#11166)](https://github.com/prowler-cloud/prowler/pull/11166)
+- NCSC Cyber Essentials v3.1 compliance framework for Azure provider covering all 5 control themes (Firewalls, Secure Configuration, Security Update Management, User Access Control, Malware Protection) with 22 requirements mapped to 74 existing Azure checks [(#11586)](https://github.com/prowler-cloud/prowler/pull/11586)
 
 ### 🔄 Changed
 
