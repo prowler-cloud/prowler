@@ -8356,6 +8356,39 @@ class TestInvitationViewSet:
         ).exists()
         assert invitation.state == Invitation.State.ACCEPTED.value
 
+    def test_invitations_accept_invitation_existing_membership(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+    ):
+        *_, tenant = tenants_fixture
+        user = create_test_user
+
+        invitation = Invitation.objects.create(
+            tenant=tenant,
+            email=TEST_USER,
+            inviter=user,
+            expires_at=self.TOMORROW,
+        )
+        Membership.objects.create(user=user, tenant=tenant)
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"),
+            data={"invitation_token": invitation.token},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.ACCEPTED.value
+        assert (
+            Membership.objects.filter(
+                user__email__iexact=user.email, tenant=tenant
+            ).count()
+            == 1
+        )
+
     def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
         data = {
             "invitation_token": "invalid_token",
@@ -13458,6 +13491,37 @@ class TestSAMLInitiateAPIView:
         )
         assert "SAMLRequest" not in response.url
 
+    def test_valid_email_domain_preserves_safe_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": callback_url,
+        }
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert query_params["callback_url"] == [callback_url]
+
+    def test_valid_email_domain_rejects_external_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": "https://attacker.example/invitation",
+        }
+
+        response = authenticated_client.post(url, data=payload, format="json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert "callback_url" not in query_params
+
     def test_invalid_email_domain(self, authenticated_client):
         url = reverse("api_saml_initiate")
         payload = {"email_domain": "user@unauthorized.com"}
@@ -13645,7 +13709,8 @@ class TestTenantFinishACSView:
             )
         )
         request.user = user
-        request.session = {}
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        request.session = {"saml_callback_url": callback_url}
 
         with (
             patch(
@@ -13687,6 +13752,7 @@ class TestTenantFinishACSView:
         assert parsed_url.netloc == expected_callback_host
         query_params = parse_qs(parsed_url.query)
         assert "id" in query_params
+        assert query_params["callbackUrl"] == [callback_url]
 
         token_id = query_params["id"][0]
         token_obj = SAMLToken.objects.get(id=token_id)

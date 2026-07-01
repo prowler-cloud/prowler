@@ -9,6 +9,7 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.utils import accept_invitation_for_user
 from django.db import transaction
 
 
@@ -19,6 +20,22 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
             return User.objects.get(email=email)
         except User.DoesNotExist:
             return None
+
+    @staticmethod
+    def _get_invitation_token(request):
+        for source_name in ("data", "POST"):
+            data = getattr(request, source_name, None) or {}
+            if not hasattr(data, "get"):
+                continue
+            invitation_token = data.get("invitation_token")
+            if invitation_token:
+                return invitation_token
+
+        wrapped_request = getattr(request, "_request", None)
+        if wrapped_request and wrapped_request is not request:
+            return ProwlerSocialAccountAdapter._get_invitation_token(wrapped_request)
+
+        return None
 
     def pre_social_login(self, request, sociallogin):
         # Link existing accounts with the same email address
@@ -83,29 +100,38 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                     user.name = social_account_name
                     user.save(using=MainRouter.admin_db)
 
-                tenant = Tenant.objects.using(MainRouter.admin_db).create(
-                    name=f"{user.email.split('@')[0]} default tenant"
-                )
-                with rls_transaction(str(tenant.id)):
-                    Membership.objects.using(MainRouter.admin_db).create(
-                        user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
-                    )
-                    role = Role.objects.using(MainRouter.admin_db).create(
-                        name="admin",
-                        tenant_id=tenant.id,
-                        manage_users=True,
-                        manage_account=True,
-                        manage_billing=True,
-                        manage_providers=True,
-                        manage_integrations=True,
-                        manage_scans=True,
-                        unlimited_visibility=True,
-                    )
-                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                invitation_token = self._get_invitation_token(request)
+                if invitation_token:
+                    invitation, _ = accept_invitation_for_user(
                         user=user,
-                        role=role,
-                        tenant_id=tenant.id,
+                        invitation_token=invitation_token,
                     )
+                    request.prowler_invitation_token = invitation_token
+                    request.prowler_invitation_tenant_id = str(invitation.tenant_id)
+                else:
+                    tenant = Tenant.objects.using(MainRouter.admin_db).create(
+                        name=f"{user.email.split('@')[0]} default tenant"
+                    )
+                    with rls_transaction(str(tenant.id)):
+                        Membership.objects.using(MainRouter.admin_db).create(
+                            user=user, tenant=tenant, role=Membership.RoleChoices.OWNER
+                        )
+                        role = Role.objects.using(MainRouter.admin_db).create(
+                            name="admin",
+                            tenant_id=tenant.id,
+                            manage_users=True,
+                            manage_account=True,
+                            manage_billing=True,
+                            manage_providers=True,
+                            manage_integrations=True,
+                            manage_scans=True,
+                            unlimited_visibility=True,
+                        )
+                        UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                            user=user,
+                            role=role,
+                            tenant_id=tenant.id,
+                        )
             else:
                 request.session["saml_user_created"] = str(user.id)
 
