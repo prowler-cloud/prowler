@@ -1,9 +1,8 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { ComponentProps } from "react";
+import type { ComponentProps, Ref } from "react";
 
-import { fontMono } from "@/config/fonts";
 import { cn } from "@/lib/utils";
 
 const textareaVariants = cva(
@@ -23,9 +22,7 @@ const textareaVariants = cva(
       },
       font: {
         sans: "",
-        // `fontMono.className` is a next/font class resolved at build time,
-        // so it's as stable as the other variant classes above.
-        mono: fontMono.className,
+        mono: "font-mono",
       },
     },
     defaultVariants: {
@@ -39,7 +36,7 @@ const textareaVariants = cva(
 export interface TextareaProps
   extends Omit<ComponentProps<"textarea">, "size">,
     VariantProps<typeof textareaVariants> {
-  ref?: React.Ref<HTMLTextAreaElement>;
+  ref?: Ref<HTMLTextAreaElement>;
 }
 
 export const Textarea = ({

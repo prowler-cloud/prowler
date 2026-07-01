@@ -1,5 +1,4 @@
 import "@testing-library/jest-dom/vitest";
-import "./__tests__/mocks/next-font-google";
 
 class MockStorage implements Storage {
   private readonly store = new Map<string, string>();
