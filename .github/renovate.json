@@ -23,6 +23,10 @@
   "prConcurrentLimit": 20,
   "prHourlyLimit": 10,
   "vulnerabilityAlerts": {
+    "labels": [
+      "dependencies",
+      "security"
+    ],
     "prHourlyLimit": 0,
     "prConcurrentLimit": 0
   },
