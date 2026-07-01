@@ -60,6 +60,7 @@ class exchange_application_access_policy_restricts_mailbox_apps(Check):
             policy.app_id.lower()
             for policy in application_access_policies
             if getattr(policy, "app_id", None)
+            and getattr(policy, "access_right", None) == "RestrictAccess"
         }
 
         service_principals = (
