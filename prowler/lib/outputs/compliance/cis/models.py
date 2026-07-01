@@ -148,6 +148,7 @@ class KubernetesCISModel(BaseModel):
     Provider: str
     Description: str
     Context: str
+    ClusterUID: str
     Namespace: str
     AssessmentDate: str
     Requirements_Id: str
