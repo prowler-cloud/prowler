@@ -423,6 +423,53 @@ describe("finding triage cells", () => {
     ).toHaveTextContent("Under Review");
   });
 
+  it("should not resurrect a stale optimistic status after the server later returns the previous status", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn().mockResolvedValue(undefined);
+    const { rerender } = render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When: user optimistically moves Open -> Under Review and it succeeds.
+    await user.click(screen.getByRole("combobox", { name: "Triage status" }));
+    await user.click(screen.getByRole("option", { name: "Under Review" }));
+    await waitFor(() => expect(onTriageUpdateAction).toHaveBeenCalled());
+
+    // And: fresh props converge on the optimistic status (server confirmed).
+    rerender(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+          label: "Under Review",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // When: a later refetch legitimately returns the previous status again.
+    rerender(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.OPEN,
+          label: "Open",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    // Then: the real server status wins; the stale optimistic value is gone.
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toHaveTextContent("Open");
+  });
+
   it("should refresh the visible table status when triage props change", () => {
     // Given
     const { rerender } = render(

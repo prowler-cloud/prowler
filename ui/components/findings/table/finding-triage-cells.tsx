@@ -78,6 +78,17 @@ export function FindingTriageStatusCell({
     status: FindingTriageStatus;
   } | null>(null);
 
+  // Retire the optimistic status once the server converges or the row changes, so a stale value can't resurface.
+  if (
+    optimisticStatus &&
+    (!triage ||
+      optimisticStatus.findingId !== triage.findingId ||
+      optimisticStatus.triageId !== triage.triageId ||
+      triage.status === optimisticStatus.status)
+  ) {
+    setOptimisticStatus(null);
+  }
+
   const optimisticMatchesCurrentTriage =
     Boolean(triage) &&
     optimisticStatus?.findingId === triage?.findingId &&
