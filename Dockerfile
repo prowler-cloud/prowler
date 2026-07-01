@@ -1,4 +1,4 @@
-FROM python:3.12.13-slim-bookworm@sha256:76d4b7b6305788c6b4c6a19d6a22a3921bf802e9af4d5e1e5bd771208dba74bf AS build
+FROM python:3.14.6-slim-bookworm@sha256:4ff4b92a68355dbdb52584ab3391dff8d371a61d4e063468bfd0130e3189c6d9 AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
