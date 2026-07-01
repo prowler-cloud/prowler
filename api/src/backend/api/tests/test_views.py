@@ -1490,13 +1490,13 @@ class TestProviderViewSet:
             ("provider_groups", ["provider-groups"]),
         ],
     )
+    @pytest.mark.usefixtures("create_provider_group_relationship")
     def test_providers_list_include(
         self,
         include_values,
         expected_resources,
         authenticated_client,
         providers_fixture,
-        create_provider_group_relationship,
     ):
         response = authenticated_client.get(
             reverse("provider-list"), {"include": include_values}
@@ -2897,7 +2897,24 @@ class TestProviderSecretViewSet:
                 Provider.ProviderChoices.KUBERNETES.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
-                    "kubeconfig_content": "kubeconfig-content",
+                    "kubeconfig_content": """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      token: test-token
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+""",
                 },
             ),
             # M365 client secret credentials
@@ -3541,7 +3558,7 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.parametrize(
-        "scan_json_payload, expected_scanner_args",
+        "scan_json_payload, _expected_scanner_args",
         [
             # Case 1: No scanner_args in payload (should use provider's scanner_args)
             (
@@ -3590,7 +3607,7 @@ class TestScanViewSet:
         mock_task_get,
         authenticated_client,
         scan_json_payload,
-        expected_scanner_args,
+        _expected_scanner_args,
         providers_fixture,
         tasks_fixture,
     ):
@@ -4069,7 +4086,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         presigned_url = (
@@ -4175,7 +4192,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.TaskSerializer",
-            lambda *args, **kwargs: type("S", (), {"data": dummy}),
+            lambda *_args, **_kwargs: type("S", (), {"data": dummy}),
         )
 
         framework = get_compliance_frameworks(scan.provider.provider)[0]
@@ -4233,7 +4250,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         match_key = "path/compliance/mitre_attack_aws.csv"
@@ -4244,6 +4261,7 @@ class TestScanViewSet:
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {"Contents": [{"Key": match_key}]}
 
             def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
@@ -4275,7 +4293,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
@@ -4283,6 +4301,7 @@ class TestScanViewSet:
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {
                     "Contents": [
                         {
@@ -4356,11 +4375,12 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {"Contents": []}
 
             def get_object(self, Bucket, Key):
@@ -4546,7 +4566,7 @@ class TestScanViewSet:
             inserted_at=base + timedelta(hours=1)
         )
 
-        mock_task_serializer.side_effect = lambda instance, *a, **k: SimpleNamespace(
+        mock_task_serializer.side_effect = lambda instance, *_a, **_k: SimpleNamespace(
             data={"id": str(instance.id), "state": StateChoices.EXECUTING}
         )
 
@@ -6278,9 +6298,8 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_resources_metadata_retrieve(
-        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
-    ):
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_resources_metadata_retrieve(self, authenticated_client, resources_fixture):
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-metadata"),
@@ -6300,8 +6319,9 @@ class TestResourceViewSet:
         assert set(data["data"]["attributes"]["types"]) == expected_resource_types
         assert set(data["data"]["attributes"]["groups"]) == expected_groups
 
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
     def test_resources_metadata_resource_filter_retrieve(
-        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+        self, authenticated_client, resources_fixture
     ):
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
@@ -7611,9 +7631,8 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_metadata_retrieve(
-        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
-    ):
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
@@ -7636,8 +7655,9 @@ class TestFindingViewSet:
         )
         # assert data["data"]["attributes"]["tags"] == expected_tags
 
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
     def test_findings_metadata_resource_filter_retrieve(
-        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
+        self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
@@ -7806,9 +7826,8 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "security"}
 
-    def test_findings_metadata_latest_categories(
-        self, authenticated_client, latest_scan_finding_with_categories
-    ):
+    @pytest.mark.usefixtures("latest_scan_finding_with_categories")
+    def test_findings_metadata_latest_categories(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-metadata_latest"),
         )
@@ -7816,9 +7835,8 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "iam"}
 
-    def test_findings_metadata_latest_groups(
-        self, authenticated_client, latest_scan_finding_with_categories
-    ):
+    @pytest.mark.usefixtures("latest_scan_finding_with_categories")
+    def test_findings_metadata_latest_groups(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-metadata_latest"),
         )
@@ -10521,9 +10539,8 @@ class TestOverviewViewSet:
         response = authenticated_client.put(reverse("overview-list"))
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_overview_providers_list(
-        self, authenticated_client, scan_summaries_fixture, resources_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_providers_list(self, authenticated_client, resources_fixture):
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
@@ -10534,10 +10551,10 @@ class TestOverviewViewSet:
         # Aggregated resources include all AWS providers present in the tenant
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overview_providers_aggregates_same_provider_type(
         self,
         authenticated_client,
-        scan_summaries_fixture,
         resources_fixture,
         providers_fixture,
         tenants_fixture,
@@ -10588,10 +10605,10 @@ class TestOverviewViewSet:
         assert attributes["findings"]["muted"] == 7
         assert attributes["resources"]["total"] == 4
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overview_providers_count(
         self,
         authenticated_client,
-        scan_summaries_fixture,
         resources_fixture,
         providers_fixture,
         tenants_fixture,
@@ -11057,15 +11074,15 @@ class TestOverviewViewSet:
         assert data[0]["id"] == str(snapshot1.id)
         assert data[0]["attributes"]["overall_score"] == "55.55"
 
-    def test_overview_services_list_no_required_filters(
-        self, authenticated_client, scan_summaries_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_list_no_required_filters(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-services"))
         assert response.status_code == status.HTTP_200_OK
         # Should return services from latest scans
         assert len(response.json()["data"]) == 2
 
-    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_regions_list(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-regions"), {"filter[inserted_at]": TODAY}
         )
@@ -11091,7 +11108,8 @@ class TestOverviewViewSet:
         assert regions["aws:region2"]["fail"] == 1
         assert regions["aws:region2"]["muted"] == 3
 
-    def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_list(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-services"), {"filter[inserted_at]": TODAY}
         )
@@ -11739,9 +11757,8 @@ class TestOverviewViewSet:
         assert results_by_type["internet-exposed"]["total_findings"] == 10
         assert results_by_type["internet-exposed"]["failed_findings"] == 5
 
-    def test_overview_services_region_filter(
-        self, authenticated_client, scan_summaries_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_region_filter(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-services"),
             {"filter[region]": "region1"},
@@ -11809,7 +11826,7 @@ class TestOverviewViewSet:
         assert "gcp-service" not in service_ids
 
     @pytest.mark.parametrize(
-        "status_filter,field_to_check",
+        "status_filter,_field_to_check",
         [
             ("FAIL", "fail"),
             ("PASS", "_pass"),
@@ -11821,7 +11838,7 @@ class TestOverviewViewSet:
         tenants_fixture,
         providers_fixture,
         status_filter,
-        field_to_check,
+        _field_to_check,
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -12461,8 +12478,9 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["new_failed_findings"] == 5
         assert data[0]["attributes"]["resources_count"] == 10
 
+    @pytest.mark.usefixtures("tenant_compliance_summary_fixture")
     def test_compliance_watchlist_no_filters_uses_tenant_summary(
-        self, authenticated_client, tenant_compliance_summary_fixture
+        self, authenticated_client
     ):
         response = authenticated_client.get(reverse("overview-compliance-watchlist"))
         assert response.status_code == status.HTTP_200_OK
@@ -12482,10 +12500,10 @@ class TestOverviewViewSet:
         assert by_id["gdpr_aws"]["requirements_failed"] == 0
         assert by_id["gdpr_aws"]["total_requirements"] == 7
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_with_provider_filter_uses_provider_scores(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
     ):
         provider1 = providers_fixture[0]
@@ -12502,9 +12520,8 @@ class TestOverviewViewSet:
         assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
         assert by_id["aws_cis_2.0"]["total_requirements"] == 3
 
-    def test_compliance_watchlist_fail_dominant_logic(
-        self, authenticated_client, provider_compliance_scores_fixture
-    ):
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
+    def test_compliance_watchlist_fail_dominant_logic(self, authenticated_client):
         response = authenticated_client.get(
             f"{reverse('overview-compliance-watchlist')}?filter[provider_type]=aws"
         )
@@ -12519,10 +12536,10 @@ class TestOverviewViewSet:
         assert aws_cis["requirements_manual"] == 1
         assert aws_cis["total_requirements"] == 3
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_provider_id_in_filter(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
     ):
         provider1, provider2, *_ = providers_fixture
@@ -12535,10 +12552,10 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) >= 1
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_provider_groups_filter(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
         provider_groups_fixture,
         tenants_fixture,
@@ -18090,10 +18107,10 @@ class TestFindingGroupViewSet:
         ],
         ids=["summary_path", "finding_level_path"],
     )
+    @pytest.mark.usefixtures("finding_groups_title_variants_fixture")
     def test_check_title_icontains_includes_all_title_variants(
         self,
         authenticated_client,
-        finding_groups_title_variants_fixture,
         extra_filters,
     ):
         """
