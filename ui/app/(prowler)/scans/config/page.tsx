@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getAllProviders } from "@/actions/providers";
+import { getProviders } from "@/actions/providers";
 import { listScanConfigurations } from "@/actions/scan-configurations";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
@@ -18,10 +18,14 @@ export default async function ScanConfigPage() {
   // rendering a false "no scan configurations" empty table during SSR.
   const [configs, providersResponse] = await Promise.all([
     listScanConfigurations(),
-    getAllProviders({}),
+    getProviders({ pageSize: 100 }),
   ]);
 
-  const richProviders = providersResponse?.data ?? [];
+  if (!providersResponse) {
+    throw new Error("Failed to load Providers for Scan Configuration.");
+  }
+
+  const richProviders = providersResponse.data;
 
   return (
     <ContentLayout title="Configuration" icon="lucide:sliders">
