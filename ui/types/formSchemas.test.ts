@@ -150,3 +150,51 @@ describe("addCredentialsFormSchema - okta", () => {
     );
   });
 });
+
+describe("addCredentialsFormSchema - kubernetes", () => {
+  const BASE_KUBERNETES_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-kubernetes-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "kubernetes",
+  } as const;
+
+  it("accepts kubeconfig content without exec authentication", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      token: test-token`,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("reports kubeconfig exec authentication on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1
+        command: kubectl`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+      }),
+    );
+  });
+});

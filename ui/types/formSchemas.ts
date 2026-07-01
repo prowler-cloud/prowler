@@ -1,9 +1,37 @@
+import yaml from "js-yaml";
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
+
+const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
+  "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.";
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const kubeconfigContainsExecAuthentication = (value: string): boolean => {
+  try {
+    const parsed = yaml.load(value);
+
+    if (!isRecord(parsed) || !Array.isArray(parsed.users)) {
+      return false;
+    }
+
+    return parsed.users.some((userEntry) => {
+      if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
+        return false;
+      }
+
+      return "exec" in userEntry.user;
+    });
+  } catch {
+    return false;
+  }
+};
 
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -207,7 +235,13 @@ export const addCredentialsFormSchema = (
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .min(1, "Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required")
+                    .refine(
+                      (value) => !kubeconfigContainsExecAuthentication(value),
+                      {
+                        error: KUBECONFIG_EXEC_AUTHENTICATION_ERROR,
+                      },
+                    ),
                 }
               : providerType === "m365"
                 ? {
