@@ -19,6 +19,9 @@ export const DOCS_URLS = {
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
+// Prowler Cloud billing/subscription management page.
+export const BILLING_URL = "https://cloud.prowler.com/billing";
+
 // AWS Console URL for creating a new StackSet.
 // Hardcoded to us-east-1 — StackSets are typically managed from this region.
 // Users in AWS GovCloud or China partitions would need different URLs.
