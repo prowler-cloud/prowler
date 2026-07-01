@@ -5,12 +5,28 @@ name: UI - E2E Tests (Optimized)
 # critical paths are changed or if impact analysis fails.
 
 on:
-  pull_request:
+  push:
     branches:
       - master
       - "v5.*"
     paths:
       - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/workflows/test-impact-analysis.yml'
+      - '.github/test-impact.yml'
+      - 'ui/**'
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+    branches:
+      - master
+      - "v5.*"
+    paths:
+      - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/workflows/test-impact-analysis.yml'
       - '.github/test-impact.yml'
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
@@ -19,14 +35,41 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
-  # First, analyze which tests need to run
-  impact-analysis:
-    if: github.repository == 'prowler-cloud/prowler'
+  # Trusted PR authors get the opt-in label automatically. This job does not
+  # check out or execute PR code; it only calls the GitHub API for trusted users.
+  auto-label-trusted-pr:
+    if: |
+      github.event_name == 'pull_request' &&
+      (github.event.action == 'opened' || github.event.action == 'reopened') &&
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association) &&
+      !contains(github.event.pull_request.labels.*.name, 'run-ui-e2e')
+    runs-on: ubuntu-latest
     permissions:
-      contents: read
+      issues: write
+    steps:
+      - name: Add UI E2E opt-in label
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
+        with:
+          script: |
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              labels: ['run-ui-e2e'],
+            });
+
+  # UI E2E consumes cloud credentials, so PR runs require explicit maintainer opt-in.
+  # On protected branch pushes, run independently of PR labels.
+  impact-analysis:
+    if: |
+      github.repository == 'prowler-cloud/prowler' &&
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association))
     uses: ./.github/workflows/test-impact-analysis.yml
 
   # Run E2E tests based on impact analysis
@@ -34,8 +77,12 @@ jobs:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)) &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
+    environment: ui-e2e-cloud
     env:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
@@ -136,8 +183,8 @@ jobs:
 
       - name: Add AWS credentials for testing
         run: |
-          echo "AWS_ACCESS_KEY_ID=${{ secrets.E2E_AWS_PROVIDER_ACCESS_KEY }}" >> .env
-          echo "AWS_SECRET_ACCESS_KEY=${{ secrets.E2E_AWS_PROVIDER_SECRET_KEY }}" >> .env
+          echo "AWS_ACCESS_KEY_ID=${E2E_AWS_PROVIDER_ACCESS_KEY}" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=${E2E_AWS_PROVIDER_SECRET_KEY}" >> .env
 
       - name: Build API image from current code
         # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
@@ -302,11 +349,38 @@ jobs:
         run: |
           docker compose down -v || true
 
-  # Skip job - provides clear feedback when no E2E tests needed
-  skip-e2e:
+  # Skip job - provides clear feedback when UI E2E is not explicitly authorized.
+  skip-e2e-no-label:
+    if: |
+      github.repository == 'prowler-cloud/prowler' &&
+      github.event_name == 'pull_request' &&
+      !contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') &&
+      !contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
+      - name: UI E2E skipped - opt-in label missing
+        run: |
+          echo "## UI E2E Tests Skipped" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "UI E2E tests consume cloud credentials and are skipped unless a maintainer adds the run-ui-e2e label." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Add the label to opt in; remove it to stop secret-consuming UI E2E jobs." >> $GITHUB_STEP_SUMMARY
+
+  # Skip job - provides clear feedback when no E2E tests needed after opt-in.
+  skip-e2e-no-tests:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
+      (github.event_name == 'push' ||
+        contains(github.event.pull_request.labels.*.name, 'run-ui-e2e') ||
+        contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.pull_request.author_association)) &&
       needs.impact-analysis.outputs.has-ui-e2e != 'true' &&
       needs.impact-analysis.outputs.run-all != 'true'
     runs-on: ubuntu-latest
