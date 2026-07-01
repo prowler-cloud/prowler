@@ -186,6 +186,25 @@ def _session_ctx(session: MagicMock) -> MagicMock:
     return ctx
 
 
+def _count_result(key: str, count: int) -> MagicMock:
+    return MagicMock(single=MagicMock(return_value={key: count}))
+
+
+def _directed_drop_results(
+    outgoing_rels: int,
+    incoming_rels: int,
+    nodes: int,
+) -> list[MagicMock]:
+    return [
+        _count_result("deleted_rels_count", outgoing_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_rels_count", incoming_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_nodes_count", nodes),
+        _count_result("deleted_nodes_count", 0),
+    ]
+
+
 class TestNeo4jSinkSyncWrites:
     def test_ensure_sync_indexes_runs_create_index_idempotent(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
@@ -315,29 +334,11 @@ class TestNeptuneSinkDropSubgraph:
 
         sink = NeptuneSink()
         session = MagicMock()
-
-        outgoing_rel_first = MagicMock()
-        outgoing_rel_first.__getitem__ = lambda _self, key: 50
-        outgoing_rel_drain = MagicMock()
-        outgoing_rel_drain.__getitem__ = lambda _self, key: 0
-        incoming_rel_first = MagicMock()
-        incoming_rel_first.__getitem__ = lambda _self, key: 30
-        incoming_rel_drain = MagicMock()
-        incoming_rel_drain.__getitem__ = lambda _self, key: 0
-        node_record_first = MagicMock()
-        node_record_first.__getitem__ = lambda _self, key: 10
-        node_record_drain = MagicMock()
-        node_record_drain.__getitem__ = lambda _self, key: 0
-
-        run_results = [
-            MagicMock(single=MagicMock(return_value=outgoing_rel_first)),
-            MagicMock(single=MagicMock(return_value=outgoing_rel_drain)),
-            MagicMock(single=MagicMock(return_value=incoming_rel_first)),
-            MagicMock(single=MagicMock(return_value=incoming_rel_drain)),
-            MagicMock(single=MagicMock(return_value=node_record_first)),
-            MagicMock(single=MagicMock(return_value=node_record_drain)),
-        ]
-        session.run.side_effect = run_results
+        session.run.side_effect = _directed_drop_results(
+            outgoing_rels=50,
+            incoming_rels=30,
+            nodes=10,
+        )
 
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
             deleted = sink.drop_subgraph("ignored", "provider-1")
@@ -365,27 +366,11 @@ class TestNeo4jSinkDropSubgraph:
 
         sink = Neo4jSink()
         session = MagicMock()
-
-        outgoing_rel_first = MagicMock()
-        outgoing_rel_first.__getitem__ = lambda _self, key: 50
-        outgoing_rel_drain = MagicMock()
-        outgoing_rel_drain.__getitem__ = lambda _self, key: 0
-        incoming_rel_first = MagicMock()
-        incoming_rel_first.__getitem__ = lambda _self, key: 30
-        incoming_rel_drain = MagicMock()
-        incoming_rel_drain.__getitem__ = lambda _self, key: 0
-        node_first = MagicMock()
-        node_first.__getitem__ = lambda _self, key: 10
-        node_drain = MagicMock()
-        node_drain.__getitem__ = lambda _self, key: 0
-        session.run.side_effect = [
-            MagicMock(single=MagicMock(return_value=outgoing_rel_first)),
-            MagicMock(single=MagicMock(return_value=outgoing_rel_drain)),
-            MagicMock(single=MagicMock(return_value=incoming_rel_first)),
-            MagicMock(single=MagicMock(return_value=incoming_rel_drain)),
-            MagicMock(single=MagicMock(return_value=node_first)),
-            MagicMock(single=MagicMock(return_value=node_drain)),
-        ]
+        session.run.side_effect = _directed_drop_results(
+            outgoing_rels=50,
+            incoming_rels=30,
+            nodes=10,
+        )
 
         provider_id = "00000000-0000-0000-0000-000000000abc"
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
