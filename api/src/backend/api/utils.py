@@ -7,9 +7,19 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Integration, Invitation, Processor, Provider, Resource
+from api.models import (
+    Integration,
+    Invitation,
+    Membership,
+    Processor,
+    Provider,
+    Resource,
+    Role,
+    UserRoleRelationship,
+)
 from api.v1.serializers import FindingMetadataSerializer
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
 from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -536,6 +546,35 @@ def validate_invitation(
         )
 
     return invitation
+
+
+def accept_invitation_for_user(
+    *, user, invitation_token: str, raise_not_found: bool = False
+):
+    with transaction.atomic(using=MainRouter.admin_db):
+        invitation = validate_invitation(
+            invitation_token, user.email, raise_not_found=raise_not_found
+        )
+        with rls_transaction(str(invitation.tenant_id), using=MainRouter.admin_db):
+            membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
+                user=user,
+                tenant=invitation.tenant,
+                defaults={"role": Membership.RoleChoices.MEMBER},
+            )
+            invitation_roles = Role.objects.using(MainRouter.admin_db).filter(
+                invitations=invitation
+            )
+            for role in invitation_roles:
+                UserRoleRelationship.objects.using(MainRouter.admin_db).get_or_create(
+                    user=user,
+                    role=role,
+                    defaults={"tenant": invitation.tenant},
+                )
+
+            invitation.state = Invitation.State.ACCEPTED
+            invitation.save(using=MainRouter.admin_db)
+
+    return invitation, membership
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata
