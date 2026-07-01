@@ -3,6 +3,8 @@ import { MouseEvent, SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
+import type { FindingTriageSummary } from "./findings-triage";
+
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
@@ -612,6 +614,7 @@ export interface FindingsResponse {
 export interface FindingProps {
   type: "findings";
   id: string;
+  triage?: FindingTriageSummary;
   attributes: {
     uid: string;
     delta: FindingDelta;
