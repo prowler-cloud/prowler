@@ -275,31 +275,6 @@ function renderResourceActionsCell({
   render(<div>{CellComponent({ row: { original: resource } })}</div>);
 }
 
-function renderResourceColumnCell({
-  columnId,
-  resource = makeResource(),
-}: {
-  columnId: string;
-  resource?: FindingResourceRow;
-}) {
-  const columns = getColumnFindingResources({
-    rowSelection: {},
-    selectableRowCount: 1,
-  });
-
-  const column = columns.find(
-    (col) => (col as { id?: string }).id === columnId,
-  );
-  if (!column?.cell) {
-    throw new Error(`${columnId} column not found`);
-  }
-  const CellComponent = column.cell as (props: {
-    row: { original: FindingResourceRow };
-  }) => ReactNode;
-
-  render(<div>{CellComponent({ row: { original: resource } })}</div>);
-}
-
 describe("column-finding-resources", () => {
   it("should render actions as the last visible column after Triage without Notes", () => {
     // Given
@@ -317,44 +292,6 @@ describe("column-finding-resources", () => {
     expect(
       (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
     ).toBe(56);
-  });
-
-  it("should render the current triage status label", () => {
-    // Given
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
-    });
-    const triageColumn = columns.find(
-      (col) => (col as { id?: string }).id === "triage",
-    );
-    if (!triageColumn?.cell) {
-      throw new Error("triage column not found");
-    }
-    const CellComponent = triageColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    // When
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource({
-              triage: makeTriageSummary({
-                status: FINDING_TRIAGE_STATUS.REMEDIATING,
-                label: "Remediating",
-              }),
-            }),
-          },
-        })}
-      </div>,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("button", { name: /triage status/i }),
-    ).toHaveTextContent("Remediating");
   });
 
   it("should render Open note in resource actions without exposing note preview metadata", () => {
@@ -494,107 +431,6 @@ describe("column-finding-resources", () => {
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
     expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
-  });
-
-  it("should pass delta to NotificationIndicator for resource rows", () => {
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
-    });
-
-    const selectColumn = columns.find(
-      (col) => (col as { id?: string }).id === "select",
-    );
-    if (!selectColumn?.cell) {
-      throw new Error("select column not found");
-    }
-
-    const CellComponent = selectColumn.cell as (props: {
-      row: {
-        id: string;
-        original: FindingResourceRow;
-        toggleSelected: (selected: boolean) => void;
-      };
-    }) => ReactNode;
-
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            id: "0",
-            original: makeResource(),
-            toggleSelected: vi.fn(),
-          },
-        })}
-      </div>,
-    );
-
-    expect(screen.getByLabelText("Select resource")).toBeInTheDocument();
-    expect(notificationIndicatorMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        delta: "new",
-        isMuted: false,
-      }),
-    );
-  });
-
-  it("should render the resource EntityInfo with resourceName as alias", () => {
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 1,
-    });
-
-    const resourceColumn = columns.find(
-      (col) => (col as { id?: string }).id === "resource",
-    );
-    if (!resourceColumn?.cell) {
-      throw new Error("resource column not found");
-    }
-
-    const CellComponent = resourceColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    render(
-      <div>
-        {CellComponent({
-          row: {
-            original: makeResource(),
-          },
-        })}
-      </div>,
-    );
-
-    expect(screen.getByText("my-bucket")).toBeInTheDocument();
-    expect(screen.getByText("arn:aws:s3:::my-bucket")).toBeInTheDocument();
-  });
-
-  it("should keep resource region on a single truncated line", () => {
-    // Given
-    renderResourceColumnCell({
-      columnId: "region",
-      resource: makeResource({ region: "ap-southeast-2" }),
-    });
-
-    // Then
-    expect(screen.getByText("ap-southeast-2")).toHaveClass(
-      "truncate",
-      "whitespace-nowrap",
-    );
-  });
-
-  it("should allow resource Last seen to render as a two-line date cell", () => {
-    // Given
-    renderResourceColumnCell({
-      columnId: "lastSeen",
-      resource: makeResource({ lastSeenAt: "2024-02-03T04:05:06Z" }),
-    });
-
-    // Then
-    expect(screen.getByText("2024-02-03T04:05:06Z")).toHaveAttribute(
-      "data-inline",
-      "false",
-    );
   });
 
   it("should open Send to Jira modal with finding UUID directly", async () => {

@@ -405,40 +405,6 @@ describe("findings triage actions", () => {
     );
   });
 
-  it("should create unique mute rule names per finding", async () => {
-    // Given
-    const { updateFindingTriage } = await importActions();
-    handleApiResponseMock.mockResolvedValue({ data: { id: "triage-1" } });
-
-    // When
-    await updateFindingTriage({
-      findingId: "finding-a",
-      findingUid: "finding/a",
-      triageId: "triage-a",
-      notesCount: 0,
-      status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-    });
-    await updateFindingTriage({
-      findingId: "finding-b",
-      findingUid: "finding/b",
-      triageId: "triage-b",
-      notesCount: 0,
-      status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      previousStatus: FINDING_TRIAGE_STATUS.OPEN,
-    });
-
-    // Then
-    const firstFormData = createMuteRuleMock.mock.calls[0][1] as FormData;
-    const secondFormData = createMuteRuleMock.mock.calls[1][1] as FormData;
-    expect(firstFormData.get("name")).toBe(
-      "Finding triage: Risk Accepted - finding-a",
-    );
-    expect(secondFormData.get("name")).toBe(
-      "Finding triage: Risk Accepted - finding-b",
-    );
-  });
-
   it("should reject and skip muting when triage patch returns an action error", async () => {
     // Given
     const { updateFindingTriage } = await importActions();

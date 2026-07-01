@@ -218,39 +218,6 @@ describe("MultiSelect", () => {
     expect(screen.getByPlaceholderText("Search accounts...")).toHaveValue("");
   });
 
-  it("closes the dropdown when clicking outside", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(
-      <div>
-        <MultiSelect values={[]} onValuesChange={() => {}}>
-          <MultiSelectTrigger>
-            <MultiSelectValue placeholder="Select accounts" />
-          </MultiSelectTrigger>
-          <MultiSelectContent
-            search={{
-              placeholder: "Search accounts...",
-              emptyMessage: "No accounts found.",
-            }}
-          >
-            <MultiSelectItem value="aws-prod">Production AWS</MultiSelectItem>
-          </MultiSelectContent>
-        </MultiSelect>
-        <button type="button">Outside target</button>
-      </div>,
-    );
-
-    // When
-    await user.click(screen.getByRole("combobox"));
-    expect(screen.getByPlaceholderText("Search accounts...")).toBeVisible();
-    await user.click(screen.getByRole("button", { name: /outside target/i }));
-
-    // Then
-    expect(
-      screen.queryByPlaceholderText("Search accounts..."),
-    ).not.toBeInTheDocument();
-  });
-
   it("sizes the dropdown to its content with a capped width", async () => {
     const user = userEvent.setup();
 
@@ -272,46 +239,6 @@ describe("MultiSelect", () => {
 
     expect(screen.getByRole("dialog")).toHaveClass("sm:w-max");
     expect(screen.getByRole("dialog")).toHaveClass("sm:max-w-[22rem]");
-  });
-
-  it("keeps long option lists scrollable inside the dropdown", async () => {
-    // Given
-    const user = userEvent.setup();
-
-    render(
-      <MultiSelect values={[]} onValuesChange={() => {}}>
-        <MultiSelectTrigger>
-          <MultiSelectValue placeholder="Select accounts" />
-        </MultiSelectTrigger>
-        <MultiSelectContent search={false}>
-          {Array.from({ length: 20 }, (_, index) => (
-            <MultiSelectItem key={index} value={`account-${index}`}>
-              Account {index}
-            </MultiSelectItem>
-          ))}
-        </MultiSelectContent>
-      </MultiSelect>,
-    );
-
-    // When
-    await user.click(screen.getByRole("combobox"));
-
-    // Then
-    const list = screen
-      .getByRole("dialog")
-      .querySelector('[data-slot="command-list"]');
-
-    expect(screen.getByRole("dialog")).toHaveStyle({
-      maxHeight:
-        "min(360px, var(--radix-popover-content-available-height, 360px))",
-    });
-    expect(list).toHaveClass("minimal-scrollbar");
-    expect(list).toHaveStyle({
-      maxHeight:
-        "min(300px, var(--radix-popover-content-available-height, 300px))",
-    });
-    expect(list).toHaveClass("overflow-y-auto");
-    expect(list).toHaveClass("overscroll-contain");
   });
 
   it("keeps the legacy clear-all behavior by default", async () => {

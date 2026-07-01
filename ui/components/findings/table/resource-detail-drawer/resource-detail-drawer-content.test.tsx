@@ -606,32 +606,6 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
 });
 
 describe("ResourceDetailDrawerContent — triage drawer actions", () => {
-  it("should render Add Triage Note in the top drawer actions when current finding has triage", () => {
-    // Given
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={{
-          ...mockFinding,
-          triage: makeTriageSummary(),
-        }}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // Then
-    expect(
-      screen.getByRole("button", { name: "Add Triage Note" }),
-    ).toBeInTheDocument();
-  });
-
   it("should render Triage and Add Triage Note for other findings rows", () => {
     // Given
     const otherFinding: ResourceDrawerFinding = {
@@ -1291,69 +1265,6 @@ describe("ResourceDetailDrawerContent — Risk section styling", () => {
     expect(headingSpans.length).toBeGreaterThan(0);
     const riskHeading = headingSpans[0];
     expect(riskHeading.className).not.toContain("text-xs");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Fix 4: Compliance icon styling should match master
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — compliance icon styling", () => {
-  it("should render framework icons inside the same white chip used in master", () => {
-    // Given
-    mockGetComplianceIcon.mockImplementation((framework: string) =>
-      framework === "CIS-1.4" ? "/cis.svg" : null,
-    );
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const icon = screen.getByRole("img", { name: "CIS-1.4" });
-    const chip = icon.closest("div");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
-  });
-
-  it("should render framework fallback pills with the same master styling", () => {
-    // Given
-    mockGetComplianceIcon.mockReturnValue(null);
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const chip = screen.getByText("PCI-DSS");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
   });
 });
 

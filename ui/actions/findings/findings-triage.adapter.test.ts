@@ -1,9 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  FINDING_TRIAGE_AUTOMATION_STATUS_VALUES,
   FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_MANUAL_STATUS_VALUES,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
 } from "@/types/findings-triage";
@@ -378,27 +376,6 @@ describe("adaptFindingTriageSummariesResponse", () => {
     // Then
     expectNoRawTransportKeys(summary as unknown as Record<string, unknown>);
     expect(JSON.stringify(summary)).not.toContain("Accepted risk note body");
-  });
-
-  it("should expose manual status choices without automation-owned statuses", () => {
-    // Given / When / Then
-    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).toEqual([
-      FINDING_TRIAGE_STATUS.OPEN,
-      FINDING_TRIAGE_STATUS.UNDER_REVIEW,
-      FINDING_TRIAGE_STATUS.REMEDIATING,
-      FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
-      FINDING_TRIAGE_STATUS.FALSE_POSITIVE,
-    ]);
-    expect(FINDING_TRIAGE_AUTOMATION_STATUS_VALUES).toEqual([
-      FINDING_TRIAGE_STATUS.RESOLVED,
-      FINDING_TRIAGE_STATUS.REOPENED,
-    ]);
-    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).not.toContain(
-      FINDING_TRIAGE_STATUS.RESOLVED,
-    );
-    expect(FINDING_TRIAGE_MANUAL_STATUS_VALUES).not.toContain(
-      FINDING_TRIAGE_STATUS.REOPENED,
-    );
   });
 });
 

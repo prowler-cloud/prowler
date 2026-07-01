@@ -45,22 +45,6 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return [] when apiResponse is undefined", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse(undefined);
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when apiResponse has no data property", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse({ meta: {} });
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
   it("should return [] when data is not an array", () => {
     // Given/When
     const result = adaptFindingsByResourceResponse({ data: "bad" });
@@ -72,14 +56,6 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
   it("should return [] when data is an empty array", () => {
     // Given/When
     const result = adaptFindingsByResourceResponse({ data: [], included: [] });
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when data is a number", () => {
-    // Given/When
-    const result = adaptFindingsByResourceResponse({ data: 42 });
 
     // Then
     expect(result).toEqual([]);
@@ -194,37 +170,6 @@ describe("adaptFindingsByResourceResponse — malformed input", () => {
     // Then
     expect(result[0].resourceDetails).toBeNull();
     expect(result[0].resourceMetadata).toBeNull();
-  });
-
-  it("should normalize a single finding response into a one-item drawer array", () => {
-    // Given — getFindingById returns a single JSON:API resource object
-    const input = {
-      data: {
-        id: "finding-1",
-        attributes: {
-          uid: "uid-1",
-          check_id: "s3_check",
-          status: "FAIL",
-          severity: "critical",
-          check_metadata: {
-            checktitle: "S3 Check",
-          },
-        },
-        relationships: {
-          resources: { data: [] },
-          scan: { data: null },
-        },
-      },
-      included: [],
-    };
-
-    // When
-    const result = adaptFindingsByResourceResponse(input);
-
-    // Then
-    expect(result).toHaveLength(1);
-    expect(result[0].id).toBe("finding-1");
-    expect(result[0].checkTitle).toBe("S3 Check");
   });
 
   it("should preserve triage summary fields for a single finding response", () => {

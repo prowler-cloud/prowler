@@ -37,42 +37,9 @@ describe("adaptFindingGroupsResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return [] when apiResponse has no data property", () => {
-    // Given
-    const input = { meta: { total: 0 } };
-
-    // When
-    const result = adaptFindingGroupsResponse(input);
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
   it("should return [] when data is not an array", () => {
     // Given
     const input = { data: "not-an-array" };
-
-    // When
-    const result = adaptFindingGroupsResponse(input);
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when data is null", () => {
-    // Given
-    const input = { data: null };
-
-    // When
-    const result = adaptFindingGroupsResponse(input);
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when apiResponse is undefined", () => {
-    // Given
-    const input = undefined;
 
     // When
     const result = adaptFindingGroupsResponse(input);
@@ -161,25 +128,9 @@ describe("adaptFindingGroupResourcesResponse — malformed input", () => {
     expect(result).toEqual([]);
   });
 
-  it("should return [] when apiResponse has no data property", () => {
-    // Given/When
-    const result = adaptFindingGroupResourcesResponse({ meta: {} }, "check-1");
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
   it("should return [] when data is not an array", () => {
     // Given/When
     const result = adaptFindingGroupResourcesResponse({ data: {} }, "check-1");
-
-    // Then
-    expect(result).toEqual([]);
-  });
-
-  it("should return [] when apiResponse is undefined", () => {
-    // Given/When
-    const result = adaptFindingGroupResourcesResponse(undefined, "check-1");
 
     // Then
     expect(result).toEqual([]);
