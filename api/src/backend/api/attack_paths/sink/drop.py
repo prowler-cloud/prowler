@@ -4,37 +4,27 @@ import logging
 import time
 from typing import Any
 
+RELATIONSHIP_DELETE_QUERY_TEMPLATES = {
+    "outgoing relationship": """
+        MATCH (n:`{provider_label}`)-[r]->()
+        WITH r LIMIT $batch_size
+        DELETE r
+        RETURN COUNT(r) AS deleted_rels_count
+        """,
+    "incoming relationship": """
+        MATCH (n:`{provider_label}`)<-[r]-()
+        WITH r LIMIT $batch_size
+        DELETE r
+        RETURN COUNT(r) AS deleted_rels_count
+        """,
+}
 
-def relationship_delete_queries(provider_label: str) -> tuple[tuple[str, str], ...]:
-    return (
-        (
-            "outgoing relationship",
-            f"""
-            MATCH (n:`{provider_label}`)-[r]->()
-            WITH r LIMIT $batch_size
-            DELETE r
-            RETURN COUNT(r) AS deleted_rels_count
-            """,
-        ),
-        (
-            "incoming relationship",
-            f"""
-            MATCH (n:`{provider_label}`)<-[r]-()
-            WITH r LIMIT $batch_size
-            DELETE r
-            RETURN COUNT(r) AS deleted_rels_count
-            """,
-        ),
-    )
-
-
-def node_delete_query(provider_label: str, provider_resource_label: str) -> str:
-    return f"""
-        MATCH (n:{provider_resource_label}:`{provider_label}`)
-        WITH n LIMIT $batch_size
-        DELETE n
-        RETURN COUNT(n) AS deleted_nodes_count
-        """
+NODE_DELETE_QUERY_TEMPLATE = """
+    MATCH (n:{provider_resource_label}:`{provider_label}`)
+    WITH n LIMIT $batch_size
+    DELETE n
+    RETURN COUNT(n) AS deleted_nodes_count
+    """
 
 
 def delete_batches(

@@ -28,9 +28,9 @@ import neo4j.exceptions
 from api.attack_paths.retryable_session import RetryableSession
 from api.attack_paths.sink.base import SinkDatabase
 from api.attack_paths.sink.drop import (
+    NODE_DELETE_QUERY_TEMPLATE,
+    RELATIONSHIP_DELETE_QUERY_TEMPLATES,
     delete_batches,
-    node_delete_query,
-    relationship_delete_queries,
 )
 from botocore.auth import SigV4Auth
 from botocore.awsrequest import AWSRequest
@@ -301,13 +301,13 @@ class NeptuneSink(SinkDatabase):
                 "Opened Neptune writer session for provider graph drop (provider=%s)",
                 provider_id,
             )
-            for phase, query in relationship_delete_queries(provider_label):
+            for phase, query_template in RELATIONSHIP_DELETE_QUERY_TEMPLATES.items():
                 deleted_relationships, phase_batches = delete_batches(
                     session=session,
                     logger=logger,
                     log_target="Neptune sink",
                     provider_id=provider_id,
-                    query=query,
+                    query=query_template.format(provider_label=provider_label),
                     phase=phase,
                     count_key="deleted_rels_count",
                     total_key="rels",
@@ -323,7 +323,10 @@ class NeptuneSink(SinkDatabase):
                 logger=logger,
                 log_target="Neptune sink",
                 provider_id=provider_id,
-                query=node_delete_query(provider_label, PROVIDER_RESOURCE_LABEL),
+                query=NODE_DELETE_QUERY_TEMPLATE.format(
+                    provider_label=provider_label,
+                    provider_resource_label=PROVIDER_RESOURCE_LABEL,
+                ),
                 phase="node",
                 count_key="deleted_nodes_count",
                 total_key="nodes",
