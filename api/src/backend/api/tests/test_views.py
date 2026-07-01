@@ -7226,10 +7226,10 @@ class TestFindingViewSet:
             reverse("finding-list"),
             {
                 "filter[inserted_at]": TODAY,
-                "filter[updated_at__gte]": today_after_n_days(
+                "filter[updated_at.gte]": today_after_n_days(
                     -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
                 ),
-                "filter[updated_at__lte]": TODAY,
+                "filter[updated_at.lte]": TODAY,
             },
         )
 
@@ -7292,8 +7292,8 @@ class TestFindingViewSet:
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[inserted_at__gte]": "2026-01-15T10:30:00.150Z",
-                "filter[inserted_at__lte]": "2026-01-15T10:30:00.250Z",
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
             },
         )
 
@@ -7330,8 +7330,8 @@ class TestFindingViewSet:
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[updated_at__gte]": "2026-01-15T10:30:00.150Z",
-                "filter[updated_at__lte]": "2026-01-15T10:30:00.250Z",
+                "filter[updated_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T10:30:00.250Z",
             },
         )
 
@@ -7401,10 +7401,10 @@ class TestFindingViewSet:
         response = authenticated_client.get(
             reverse("finding-list"),
             {
-                "filter[inserted_at__gte]": "2026-01-15T10:30:00.150Z",
-                "filter[inserted_at__lte]": "2026-01-15T10:30:00.250Z",
-                "filter[updated_at__gte]": "2026-01-15T11:30:00.150Z",
-                "filter[updated_at__lte]": "2026-01-15T11:30:00.250Z",
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
+                "filter[updated_at.gte]": "2026-01-15T11:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T11:30:00.250Z",
             },
         )
 
@@ -7878,6 +7878,23 @@ class TestFindingViewSet:
                 }
             ]
         }
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        ["inserted_at", "inserted_at.gte", "inserted_at.lte"],
+    )
+    def test_findings_metadata_rejects_timestamp_precision_filters(
+        self, authenticated_client, filter_name
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {f"filter[{filter_name}]": "2048-01-01T10:30:00Z"},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Enter a valid date."
+        assert error["code"] == "invalid"
 
     def test_findings_metadata_backfill(
         self, authenticated_client, scans_fixture, findings_fixture

@@ -991,7 +991,6 @@ class FindingMetadataFilter(BaseFindingFilter):
     class Meta(BaseFindingFilter.Meta):
         fields = FINDING_BASE_FILTER_FIELDS | {
             "inserted_at": ["date", "gte", "lte"],
-            "updated_at": ["gte", "lte"],
         }
 
 
