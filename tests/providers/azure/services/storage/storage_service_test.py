@@ -42,6 +42,7 @@ def mock_storage_get_storage_accounts(_):
                 enable_https_traffic_only=False,
                 infrastructure_encryption=False,
                 allow_blob_public_access=False,
+                public_network_access="Disabled",
                 network_rule_set=NetworkRuleSet(
                     bypass="AzureServices", default_action="Allow"
                 ),
@@ -96,6 +97,10 @@ class Test_Storage_Service:
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].allow_blob_public_access
             is False
+        )
+        assert (
+            storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].public_network_access
+            == "Disabled"
         )
         assert (
             storage.storage_accounts[AZURE_SUBSCRIPTION_ID][0].network_rule_set

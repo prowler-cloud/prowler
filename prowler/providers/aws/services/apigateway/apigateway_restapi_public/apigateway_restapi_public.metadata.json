@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsApiGatewayRestApi",
+  "ResourceGroup": "api_gateway",
   "Description": "**Amazon API Gateway REST APIs** are evaluated for endpoint exposure: **internet-accessible** endpoints versus **private VPC-only** access via interface VPC endpoints (`AWS PrivateLink`).",
   "Risk": "Internet exposure increases attack surface:\n- **Confidentiality**: misconfigured or anonymous methods can leak data\n- **Integrity**: unauthorized calls can change backend state\n- **Availability/cost**: bots or DDoS can exhaust capacity and spike spend",
   "RelatedUrl": "",

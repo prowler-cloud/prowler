@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
   "Description": "**Amazon ECR repositories** are evaluated for **public exposure** via repository policies that allow anonymous principals (e.g., `Principal: \"*\"`) to access the repo, including image listing, pulling, or modification.",
   "Risk": "**Public access to ECR repositories** weakens **confidentiality** and **integrity**.\n\nAnyone can pull images, exposing proprietary code or embedded secrets; if pushes are allowed, attackers can poison images, enabling supply-chain compromise. Uncontrolled pulls can raise **egress costs** and leak repository metadata.",
   "RelatedUrl": "",

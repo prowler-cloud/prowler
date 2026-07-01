@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcsCluster",
+  "ResourceGroup": "container",
   "Description": "**ECS clusters** have CloudWatch **Container Insights** configured via the `containerInsights` setting, accepting `enabled` or `enhanced` values to emit cluster, service, task, and container telemetry.",
   "Risk": "Without **Container Insights**, ECS operations lack **telemetry** to spot failures and anomalies. Missed CPU/memory/network spikes and restart loops degrade **availability** and delay response. Absent baselines impede detecting abuse (e.g., **cryptomining** or data egress bursts), risking **confidentiality** and unexpected **costs**.",
   "RelatedUrl": "",

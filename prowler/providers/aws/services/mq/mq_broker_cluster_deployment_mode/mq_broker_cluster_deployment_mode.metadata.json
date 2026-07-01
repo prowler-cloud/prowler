@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAmazonMQBroker",
+  "ResourceGroup": "messaging",
   "Description": "**Amazon MQ RabbitMQ brokers** are assessed for **cluster deployment mode** (`CLUSTER_MULTI_AZ`) with nodes spread across multiple AZs and shared state.\n\nBrokers configured otherwise are identified.",
   "Risk": "Without **clustered RabbitMQ**, the broker is a **single point of failure**. An instance or AZ outage can halt queues, cause message loss or duplication, and break ordering, reducing **availability** and **integrity** of workloads that depend on the broker.",
   "RelatedUrl": "",

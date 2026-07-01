@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster is evaluated for **encryption at rest**. Indicating the cluster's underlying storage is not encrypted.",
   "Risk": "**Unencrypted Neptune storage** reduces confidentiality of stored data and metadata and increases attack surface.\n\nPossible impacts:\n- Unauthorized access or data exfiltration from underlying volumes or snapshots\n- Greater blast radius from leaked or shared snapshots",
   "RelatedUrl": "",

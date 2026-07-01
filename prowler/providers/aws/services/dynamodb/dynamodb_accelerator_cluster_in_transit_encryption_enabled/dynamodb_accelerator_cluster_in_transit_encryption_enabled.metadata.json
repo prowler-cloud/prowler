@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "**DAX clusters** have endpoint encryption set to `TLS`, enforcing **encryption in transit** for client connections to the cluster",
   "Risk": "Missing **TLS** enables interception and manipulation of DAX traffic, impacting:\n- Confidentiality: exposure of queries, data, or credentials\n- Integrity: tampered requests/responses and cache poisoning\n- Availability: session hijacking or replay causing service disruption",
   "RelatedUrl": "",

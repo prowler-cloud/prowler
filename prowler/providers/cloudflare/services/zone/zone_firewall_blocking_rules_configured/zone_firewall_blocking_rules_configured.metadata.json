@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_firewall_blocking_rules_configured",
+  "CheckTitle": "Cloudflare Zone Firewall Rules Use Blocking Actions to Protect Against Threats",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **firewall blocking rules** by checking if custom rules use block, challenge, js_challenge, or managed_challenge actions to actively protect against threats rather than only logging.",
+  "Risk": "Firewall rules configured only for **logging** provide visibility but no protection.\n- **Confidentiality**: malicious traffic can access and exfiltrate sensitive data\n- **Integrity**: application exploits can modify data without being blocked\n- **Availability**: credential stuffing and abuse attacks reach the origin unimpeded",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/custom-rules/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > WAF > Custom rules\n3. Review existing rules and their actions\n4. Update rules to use blocking actions (Block, Challenge, JS Challenge, Managed Challenge)\n5. Test rules in log mode first, then enable blocking actions",
+      "Terraform": "```hcl\n# Configure firewall rule with blocking action\nresource \"cloudflare_ruleset\" \"blocking_rule\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"Block malicious requests\"\n  kind    = \"zone\"\n  phase   = \"http_request_firewall_custom\"\n  rules {\n    action      = \"block\" # Actively blocks matching traffic\n    expression  = \"(ip.geoip.country eq \\\"XX\\\")\"\n    description = \"Block traffic from high-risk country\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure **firewall rules** with blocking actions to enforce security policies.\n- Use challenge actions for suspicious traffic to verify human visitors\n- Use block actions for known malicious patterns and high-risk sources\n- Test rules in log mode before enabling blocking to avoid false positives\n- Follow the principle of least privilege in rule configuration",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_firewall_blocking_rules_configured"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Blocking actions include: block, challenge, js_challenge, managed_challenge. Log-only rules provide visibility but do not prevent attacks."
+}

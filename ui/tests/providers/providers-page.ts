@@ -7,6 +7,16 @@ export interface AWSProviderData {
   alias?: string;
 }
 
+export interface AWSOrganizationsProviderData {
+  organizationId: string;
+  organizationName?: string;
+}
+
+export interface AWSOrganizationsProviderCredential {
+  roleArn: string;
+  stackSetDeployed?: boolean;
+}
+
 // AZURE provider data
 export interface AZUREProviderData {
   subscriptionId: string;
@@ -41,6 +51,56 @@ export interface GitHubProviderData {
 export interface OCIProviderData {
   tenancyId: string;
   alias?: string;
+}
+
+// AlibabaCloud provider data
+export interface AlibabaCloudProviderData {
+  accountId: string;
+  alias?: string;
+}
+
+// Google Workspace provider data
+export interface GoogleWorkspaceProviderData {
+  customerId: string;
+  alias?: string;
+}
+
+// Google Workspace credential options
+export const GOOGLEWORKSPACE_CREDENTIAL_OPTIONS = {
+  GOOGLEWORKSPACE_SERVICE_ACCOUNT: "service_account",
+} as const;
+
+// Google Workspace credential type
+type GoogleWorkspaceCredentialType =
+  (typeof GOOGLEWORKSPACE_CREDENTIAL_OPTIONS)[keyof typeof GOOGLEWORKSPACE_CREDENTIAL_OPTIONS];
+
+// Google Workspace provider credential
+export interface GoogleWorkspaceProviderCredential {
+  type: GoogleWorkspaceCredentialType;
+  serviceAccountJson: string;
+  delegatedUser: string;
+}
+
+// Okta provider data
+export interface OktaProviderData {
+  orgDomain: string;
+  alias?: string;
+}
+
+// Okta credential options
+export const OKTA_CREDENTIAL_OPTIONS = {
+  OKTA_PRIVATE_KEY_JWT: "private_key_jwt",
+} as const;
+
+// Okta credential type
+type OktaCredentialType =
+  (typeof OKTA_CREDENTIAL_OPTIONS)[keyof typeof OKTA_CREDENTIAL_OPTIONS];
+
+// Okta provider credential (OAuth 2.0 Private Key JWT)
+export interface OktaProviderCredential {
+  type: OktaCredentialType;
+  clientId: string;
+  privateKey: string;
 }
 
 // AWS credential options
@@ -167,12 +227,55 @@ export interface OCIProviderCredential {
   region?: string;
 }
 
+// AlibabaCloud credential options
+export const ALIBABACLOUD_CREDENTIAL_OPTIONS = {
+  ALIBABACLOUD_CREDENTIALS: "credentials",
+  ALIBABACLOUD_ROLE: "role",
+} as const;
+
+// AlibabaCloud credential type
+type AlibabaCloudCredentialType =
+  (typeof ALIBABACLOUD_CREDENTIAL_OPTIONS)[keyof typeof ALIBABACLOUD_CREDENTIAL_OPTIONS];
+
+// AlibabaCloud provider credential
+export interface AlibabaCloudProviderCredential {
+  type: AlibabaCloudCredentialType;
+  accessKeyId: string;
+  accessKeySecret: string;
+  roleArn?: string;
+  roleSessionName?: string;
+}
+
+// Vercel provider data
+export interface VercelProviderData {
+  teamId: string;
+  alias?: string;
+}
+
+// Vercel credential options
+export const VERCEL_CREDENTIAL_OPTIONS = {
+  VERCEL_API_TOKEN: "api_token",
+} as const;
+
+// Vercel credential type
+type VercelCredentialType =
+  (typeof VERCEL_CREDENTIAL_OPTIONS)[keyof typeof VERCEL_CREDENTIAL_OPTIONS];
+
+// Vercel provider credential
+export interface VercelProviderCredential {
+  type: VercelCredentialType;
+  apiToken: string;
+}
+
 // Providers page
 export class ProvidersPage extends BasePage {
+  readonly wizardModal: Locator;
+  readonly wizardTitle: Locator;
+
   // Alias input
   readonly aliasInput: Locator;
 
-  // Button to add a new cloud provider
+  // Button to add a new provider
   readonly addProviderButton: Locator;
   readonly providersTable: Locator;
 
@@ -184,6 +287,24 @@ export class ProvidersPage extends BasePage {
   readonly kubernetesProviderRadio: Locator;
   readonly githubProviderRadio: Locator;
   readonly ociProviderRadio: Locator;
+  readonly alibabacloudProviderRadio: Locator;
+  readonly googleworkspaceProviderRadio: Locator;
+  readonly oktaProviderRadio: Locator;
+
+  // Google Workspace provider form elements
+  readonly googleworkspaceCustomerIdInput: Locator;
+  readonly googleworkspaceServiceAccountJsonInput: Locator;
+  readonly googleworkspaceDelegatedUserInput: Locator;
+
+  // Okta provider form elements
+  readonly oktaOrgDomainInput: Locator;
+  readonly oktaClientIdInput: Locator;
+  readonly oktaPrivateKeyInput: Locator;
+
+  // Vercel provider form elements
+  readonly vercelProviderRadio: Locator;
+  readonly vercelTeamIdInput: Locator;
+  readonly vercelApiTokenInput: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
@@ -247,48 +368,85 @@ export class ProvidersPage extends BasePage {
   readonly ociKeyContentInput: Locator;
   readonly ociRegionInput: Locator;
 
+  // AlibabaCloud provider form elements
+  readonly alibabacloudAccountIdInput: Locator;
+  readonly alibabacloudAccessKeyIdInput: Locator;
+  readonly alibabacloudAccessKeySecretInput: Locator;
+  readonly alibabacloudRoleArnInput: Locator;
+  readonly alibabacloudRoleSessionNameInput: Locator;
+  readonly alibabacloudStaticCredentialsRadio: Locator;
+  readonly alibabacloudRoleCredentialsRadio: Locator;
+
   // Delete button
   readonly deleteProviderConfirmationButton: Locator;
 
   constructor(page: Page) {
     super(page);
 
-    // Button to add a new cloud provider
-    this.addProviderButton = page.getByRole("link", {
-      name: "Add Cloud Provider",
-      exact: true,
+    this.wizardModal = page
+      .getByRole("dialog")
+      .filter({
+        has: page.getByRole("heading", {
+          name: /Adding A Provider|Update Provider Credentials/i,
+        }),
+      })
+      .first();
+    this.wizardTitle = page.getByRole("heading", {
+      name: /Adding A Provider|Update Provider Credentials/i,
     });
+
+    // Button to add a new provider. When providers exist this is the filter-bar
+    // "Add Provider" control; with zero providers the page renders the empty
+    // state whose CTA is labelled "Open Add Provider modal" (button on
+    // /providers, link on /scans). Only one of these is ever in the DOM at once.
+    this.addProviderButton = page
+      .getByRole("button", {
+        name: "Add Provider",
+        exact: true,
+      })
+      .or(
+        page.getByRole("link", {
+          name: "Add Provider",
+          exact: true,
+        }),
+      )
+      .or(page.getByRole("button", { name: "Open Add Provider modal" }))
+      .or(page.getByRole("link", { name: "Open Add Provider modal" }));
 
     // Table displaying existing providers
     this.providersTable = page.getByRole("table");
 
-    // Radio buttons to select the type of cloud provider
-    this.awsProviderRadio = page.getByRole("radio", {
+    // Option buttons to select the type of provider (listbox with options)
+    this.awsProviderRadio = page.getByRole("option", {
       name: /Amazon Web Services/i,
     });
     // Google Cloud Platform
-    this.gcpProviderRadio = page.getByRole("radio", {
+    this.gcpProviderRadio = page.getByRole("option", {
       name: /Google Cloud Platform/i,
     });
     // Microsoft Azure
-    this.azureProviderRadio = page.getByRole("radio", {
+    this.azureProviderRadio = page.getByRole("option", {
       name: /Microsoft Azure/i,
     });
     // Microsoft 365
-    this.m365ProviderRadio = page.getByRole("radio", {
+    this.m365ProviderRadio = page.getByRole("option", {
       name: /Microsoft 365/i,
     });
     // Kubernetes
-    this.kubernetesProviderRadio = page.getByRole("radio", {
+    this.kubernetesProviderRadio = page.getByRole("option", {
       name: /Kubernetes/i,
     });
     // GitHub
-    this.githubProviderRadio = page.getByRole("radio", {
+    this.githubProviderRadio = page.getByRole("option", {
       name: /GitHub/i,
     });
     // Oracle Cloud Infrastructure
-    this.ociProviderRadio = page.getByRole("radio", {
+    this.ociProviderRadio = page.getByRole("option", {
       name: /Oracle Cloud Infrastructure/i,
+    });
+    // Alibaba Cloud
+    this.alibabacloudProviderRadio = page.getByRole("option", {
+      name: /Alibaba Cloud/i,
     });
 
     // AWS provider form inputs
@@ -354,6 +512,64 @@ export class ProvidersPage extends BasePage {
     });
     this.ociRegionInput = page.getByRole("textbox", { name: /Region/i });
 
+    // AlibabaCloud provider form inputs
+    this.alibabacloudAccountIdInput = page.getByRole("textbox", {
+      name: "Account ID",
+    });
+    this.alibabacloudAccessKeyIdInput = page.getByRole("textbox", {
+      name: "Access Key ID",
+    });
+    this.alibabacloudAccessKeySecretInput = page.getByRole("textbox", {
+      name: "Access Key Secret",
+    });
+    this.alibabacloudRoleArnInput = page.getByRole("textbox", {
+      name: "Role ARN",
+    });
+    this.alibabacloudRoleSessionNameInput = page.getByRole("textbox", {
+      name: "Role Session Name",
+    });
+    // Radios for selecting AlibabaCloud credentials method
+    this.alibabacloudStaticCredentialsRadio = page.getByRole("radio", {
+      name: /Connect via Access Keys/i,
+    });
+    this.alibabacloudRoleCredentialsRadio = page.getByRole("radio", {
+      name: /Connect assuming RAM Role/i,
+    });
+
+    // Google Workspace
+    this.googleworkspaceProviderRadio = page.getByRole("option", {
+      name: /Google Workspace/i,
+    });
+    this.googleworkspaceCustomerIdInput = page.getByRole("textbox", {
+      name: "Customer ID",
+    });
+    this.googleworkspaceServiceAccountJsonInput = page.getByRole("textbox", {
+      name: /Service Account JSON/i,
+    });
+    this.googleworkspaceDelegatedUserInput = page.getByRole("textbox", {
+      name: /Delegated User Email/i,
+    });
+
+    // Okta
+    this.oktaProviderRadio = page.getByRole("option", {
+      name: /Okta/i,
+    });
+    this.oktaOrgDomainInput = page.getByRole("textbox", {
+      name: "Org Domain",
+    });
+    this.oktaClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.oktaPrivateKeyInput = page.getByRole("textbox", {
+      name: "Private Key",
+    });
+
+    // Vercel
+    this.vercelProviderRadio = page.getByRole("option", {
+      name: /Vercel/i,
+    });
+    this.vercelTeamIdInput = page.getByRole("textbox", { name: "Team ID" });
+    // API Token is a type="password" field (no textbox role); target by label.
+    this.vercelApiTokenInput = page.getByLabel(/API Token/i);
+
     // Alias input
     this.aliasInput = page.getByRole("textbox", {
       name: "Provider alias (optional)",
@@ -407,13 +623,9 @@ export class ProvidersPage extends BasePage {
     this.roleArnInput = page.getByRole("textbox", { name: "Role ARN" });
     this.externalIdInput = page.getByRole("textbox", { name: "External ID" });
 
-    // Inputs for static credentials
-    this.accessKeyIdInput = page.getByRole("textbox", {
-      name: "Access Key ID",
-    });
-    this.secretAccessKeyInput = page.getByRole("textbox", {
-      name: "Secret Access Key",
-    });
+    // Inputs for static credentials (type="password" fields have no textbox role)
+    this.accessKeyIdInput = page.getByLabel(/Access Key ID/i).first();
+    this.secretAccessKeyInput = page.getByLabel(/Secret Access Key/i).first();
 
     // Delete button in confirmation modal
     this.deleteProviderConfirmationButton = page.getByRole("button", {
@@ -428,6 +640,12 @@ export class ProvidersPage extends BasePage {
     await super.goto("/providers");
   }
 
+  async gotoFresh(): Promise<void> {
+    // Go to the providers page with fresh navigation
+
+    await super.gotoFresh("/providers");
+  }
+
   private async verifyPageHasProwlerTitle(): Promise<void> {
     await expect(this.page).toHaveTitle(/Prowler/);
   }
@@ -436,6 +654,25 @@ export class ProvidersPage extends BasePage {
     // Click the add provider button
 
     await this.addProviderButton.click();
+  }
+
+  async openProviderWizardModal(): Promise<void> {
+    await this.clickAddProvider();
+    await this.verifyWizardModalOpen();
+  }
+
+  async closeProviderWizardModal(): Promise<void> {
+    await this.page.keyboard.press("Escape");
+    await expect(this.wizardModal).not.toBeVisible();
+  }
+
+  async verifyWizardModalOpen(): Promise<void> {
+    await expect(this.wizardModal).toBeVisible();
+    await expect(this.wizardTitle).toBeVisible();
+  }
+
+  async advanceWizardStep(): Promise<void> {
+    await this.clickNext();
   }
 
   private async selectProviderRadio(radio: Locator): Promise<void> {
@@ -467,13 +704,105 @@ export class ProvidersPage extends BasePage {
     await this.selectProviderRadio(this.githubProviderRadio);
   }
 
-  async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
-    // Fill the AWS provider details
+  async selectAWSSingleAccountMethod(): Promise<void> {
+    const singleAccountOption = this.page.getByRole("radio", {
+      name: "Add A Single AWS Cloud Account",
+      exact: true,
+    });
+    await expect(singleAccountOption).toBeVisible({ timeout: 10000 });
+    await singleAccountOption.click();
+  }
 
+  async selectAWSOrganizationsMethod(): Promise<void> {
+    await this.page
+      .getByRole("radio", {
+        name: "Add Multiple Accounts With AWS Organizations",
+        exact: true,
+      })
+      .click();
+  }
+
+  async verifyOrganizationsAuthenticationStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByRole("heading", {
+        name: /Authentication Details/i,
+      }),
+    ).toBeVisible();
+  }
+
+  async verifyOrganizationsAccountSelectionStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByText(
+        /Confirm all accounts under this Organization you want to add to Prowler\./i,
+      ),
+    ).toBeVisible();
+  }
+
+  async verifyOrganizationsLaunchStepLoaded(): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.page.getByText(/Accounts Connected!/i)).toBeVisible();
+  }
+
+  async chooseOrganizationsScanSchedule(
+    option: "daily" | "single",
+  ): Promise<void> {
+    const trigger = this.page.getByRole("combobox");
+    await trigger.click();
+
+    const optionName =
+      option === "single"
+        ? "Run a single scan (no recurring schedule)"
+        : "Scan Daily (every 24 hours)";
+
+    await this.page.getByRole("option", { name: optionName }).click();
+  }
+
+  async fillAWSProviderDetails(data: AWSProviderData): Promise<void> {
+    await this.selectAWSSingleAccountMethod();
+    await expect(this.accountIdInput).toBeVisible({ timeout: 10000 });
     await this.accountIdInput.fill(data.accountId);
 
     if (data.alias) {
       await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillAWSOrganizationsProviderDetails(
+    data: AWSOrganizationsProviderData,
+  ): Promise<void> {
+    const organizationIdInput = this.page.getByRole("textbox", {
+      name: "Organization ID",
+      exact: true,
+    });
+    await expect(organizationIdInput).toBeVisible({ timeout: 10000 });
+    await organizationIdInput.fill(data.organizationId.toLowerCase());
+
+    if (data.organizationName) {
+      await this.page
+        .getByRole("textbox", { name: "Name (optional)", exact: true })
+        .fill(data.organizationName);
+    }
+  }
+
+  async fillAWSOrganizationsCredentials(
+    credentials: AWSOrganizationsProviderCredential,
+  ): Promise<void> {
+    const roleArnInput = this.page.getByRole("textbox", {
+      name: "Role ARN",
+      exact: true,
+    });
+    await expect(roleArnInput).toBeVisible({ timeout: 10000 });
+    await roleArnInput.fill(credentials.roleArn);
+
+    if (credentials.stackSetDeployed ?? true) {
+      const stackSetCheckbox = this.page.getByRole("checkbox", {
+        name: /The StackSet has been successfully deployed in AWS/i,
+      });
+      if (!(await stackSetCheckbox.isChecked())) {
+        await stackSetCheckbox.click();
+      }
     }
   }
 
@@ -530,112 +859,205 @@ export class ProvidersPage extends BasePage {
   }
 
   async clickNext(): Promise<void> {
-    // The wizard interface may use different labels for its primary action button on each step.
-    // This function determines which button to click depending on the current URL and page content.
+    await this.verifyWizardModalOpen();
 
-    // Get the current page URL
-    const url = this.page.url();
+    const actionNames = [
+      "Go to scans",
+      "Authenticate",
+      "Next",
+      "Save",
+      "Check connection",
+      "Launch scan",
+    ] as const;
 
-    // If on the "connect-account" step, click the "Next" button
-    if (/\/providers\/connect-account/.test(url)) {
-      await this.nextButton.click();
-      return;
-    }
-
-    // If on the "add-credentials" step, check for "Save" and "Next" buttons
-    if (/\/providers\/add-credentials/.test(url)) {
-      // Some UI implementations use "Save" instead of "Next" for primary action
-
-      if (await this.saveButton.count()) {
-        await this.saveButton.click();
-        return;
-      }
-      // If "Save" is not present, try clicking the "Next" button
-      if (await this.nextButton.count()) {
-        await this.nextButton.click();
-        return;
-      }
-    }
-
-    // If on the "test-connection" step, click the "Launch scan" button
-    if (/\/providers\/test-connection/.test(url)) {
-      const buttonByText = this.page
-        .locator("button")
-        .filter({ hasText: "Launch scan" });
-
-      await buttonByText.click();
-
-      // Wait for either success (redirect to scans) or error message to appear
-      const errorMessage = this.page
-        .locator(
-          "div.border-border-error, div.bg-red-100, p.text-text-error-primary, p.text-danger",
-        )
-        .first();
-
-      // Helper to check and throw error if visible
-      const checkAndThrowError = async (): Promise<void> => {
-        const isErrorVisible = await errorMessage
-          .isVisible()
-          .catch(() => false);
-
-        if (isErrorVisible) {
-          const errorText = await errorMessage.textContent();
-
-          throw new Error(
-            `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
-          );
-        }
-      };
-
-      try {
-        // Wait up to 15 seconds for either the error message or redirect
-        await Promise.race([
-          errorMessage.waitFor({ state: "visible", timeout: 15000 }),
-          this.page.waitForURL(/\/scans/, { timeout: 15000 }),
-        ]);
-
-        // If we're still on test-connection page, check for error
-        if (/\/providers\/test-connection/.test(this.page.url())) {
-          await checkAndThrowError();
-        }
-      } catch (error) {
-        await checkAndThrowError();
-        throw error;
-      }
-
-      return;
-    }
-
-    // Fallback logic: try finding any common primary action buttons in expected order
-    const candidates: Array<{ name: string | RegExp }> = [
-      { name: "Next" }, // Try the "Next" button
-      { name: "Save" }, // Try the "Save" button
-      { name: "Launch scan" }, // Try the "Launch scan" button
-      { name: /Continue|Proceed/i }, // Try "Continue" or "Proceed" (case-insensitive)
-    ];
-
-    // Try each candidate name and click it if found
-    for (const candidate of candidates) {
-      const btn = this.page.getByRole("button", {
-        name: candidate.name,
+    for (const actionName of actionNames) {
+      const button = this.page.getByRole("button", {
+        name: actionName,
+        exact: true,
       });
-
-      if (await btn.count()) {
-        await btn.click();
+      if (await button.isVisible().catch(() => false)) {
+        await button.click();
+        if (actionName === "Check connection") {
+          await this.handleCheckConnectionCompletion();
+        }
+        // "Save" is the wizard's final action (saves the scan schedule) and
+        // "Launch scan" its legacy/manual counterpart; both close the modal.
+        if (actionName === "Launch scan" || actionName === "Save") {
+          await this.handleLaunchScanCompletion();
+        }
         return;
       }
     }
 
-    // If none of the expected action buttons are present, throw an error
     throw new Error(
-      "Could not find an actionable Next/Save/Launch scan button on this step",
+      "Could not find an actionable primary button in the provider wizard modal.",
     );
   }
 
-  async selectCredentialsType(type: AWSCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
+  private async handleCheckConnectionCompletion(): Promise<void> {
+    // A successful connection advances to the schedule step ("Save"); older
+    // flows surfaced a "Launch scan" action instead.
+    const saveScheduleButton = this.page.getByRole("button", {
+      name: "Save",
+      exact: true,
+    });
+    const launchScanButton = this.page.getByRole("button", {
+      name: "Launch scan",
+      exact: true,
+    });
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
 
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    try {
+      await Promise.race([
+        saveScheduleButton.waitFor({ state: "visible", timeout: 30000 }),
+        launchScanButton.waitFor({ state: "visible", timeout: 30000 }),
+        this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    if (await saveScheduleButton.isVisible().catch(() => false)) {
+      await saveScheduleButton.click();
+      await this.handleLaunchScanCompletion();
+    } else if (await launchScanButton.isVisible().catch(() => false)) {
+      await launchScanButton.click();
+      await this.handleLaunchScanCompletion();
+    }
+  }
+
+  private async waitForProviderLaunchChoice(): Promise<void> {
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    try {
+      await Promise.race([
+        launchAction.waitFor({ state: "visible", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    await expect(launchAction).toBeVisible();
+  }
+
+  async completeProviderConnectionWithoutLaunchingScan(
+    providerUID: string,
+  ): Promise<void> {
+    await this.verifyWizardModalOpen();
+
+    const checkConnectionButton = this.page.getByRole("button", {
+      name: "Check connection",
+      exact: true,
+    });
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    // The test-connection step renders its footer action only after an async
+    // load (canSubmit gate). Wait for the footer to settle on an actionable
+    // state (or surface a connection error) instead of reading visibility on
+    // the first frame, which races the render and falls through.
+    await expect(
+      checkConnectionButton.or(launchAction).or(connectionError),
+    ).toBeVisible({ timeout: 30000 });
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    // Provider-add E2E validates credentials and provider persistence only.
+    // Launching one scan per provider made CI noisy and overloaded the backend;
+    // scan execution itself is covered by scans.spec.ts.
+    if (await checkConnectionButton.isVisible().catch(() => false)) {
+      await checkConnectionButton.click();
+      await this.waitForProviderLaunchChoice();
+    } else {
+      await expect(launchAction).toBeVisible();
+    }
+
+    await this.wizardModal
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await this.page.waitForURL(/\/providers/, { timeout: 30000 });
+    await this.verifyLoadProviderPageAfterNewProvider();
+
+    const providerExists =
+      await this.verifySingleRowForProviderUID(providerUID);
+    if (!providerExists) {
+      throw new Error(`Provider with UID ${providerUID} was not found.`);
+    }
+  }
+
+  private async handleLaunchScanCompletion(): Promise<void> {
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+    const launchErrorToast = this.page.getByRole("alert").filter({
+      hasText: /Unable to (launch scan|save scan schedule)/i,
+    });
+
+    try {
+      await Promise.race([
+        this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+        launchErrorToast.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    if (await launchErrorToast.isVisible().catch(() => false)) {
+      const errorText = await launchErrorToast.textContent();
+      throw new Error(
+        `Launch scan failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await this.page.waitForURL(/\/providers/, { timeout: 30000 });
+    await expect(this.providersTable).toBeVisible({ timeout: 30000 });
+  }
+
+  async selectCredentialsType(type: AWSCredentialType): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.roleCredentialsRadio).toBeVisible();
 
     if (type === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.roleCredentialsRadio.click({ force: true });
@@ -647,9 +1069,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectM365CredentialsType(type: M365CredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.m365StaticCredentialsRadio).toBeVisible();
 
     if (type === M365_CREDENTIAL_OPTIONS.M365_CREDENTIALS) {
       await this.m365StaticCredentialsRadio.click({ force: true });
@@ -661,9 +1082,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectGCPCredentialsType(type: GCPCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.gcpServiceAccountRadio).toBeVisible();
     if (type === GCP_CREDENTIAL_OPTIONS.GCP_SERVICE_ACCOUNT) {
       await this.gcpServiceAccountRadio.click({ force: true });
     } else {
@@ -672,9 +1092,8 @@ export class ProvidersPage extends BasePage {
   }
 
   async selectGitHubCredentialsType(type: GitHubCredentialType): Promise<void> {
-    // Ensure we are on the add-credentials page where the selector exists
-
-    await expect(this.page).toHaveURL(/\/providers\/add-credentials/);
+    await this.verifyWizardModalOpen();
+    await expect(this.githubPersonalAccessTokenRadio).toBeVisible();
 
     if (type === GITHUB_CREDENTIAL_OPTIONS.GITHUB_PERSONAL_ACCESS_TOKEN) {
       await this.githubPersonalAccessTokenRadio.click({ force: true });
@@ -686,19 +1105,46 @@ export class ProvidersPage extends BasePage {
   }
 
   async fillRoleCredentials(credentials: AWSProviderCredential): Promise<void> {
-    // Fill the role credentials form
+    await expect(this.roleArnInput).toBeVisible({ timeout: 10000 });
+    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Access Key ID",
+    );
+    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Secret Access Key",
+    );
+    const accessKeyId =
+      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
+    const secretAccessKey =
+      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    if (credentials.accessKeyId) {
-      await this.accessKeyIdInput.fill(credentials.accessKeyId);
+    const shouldFillStaticKeys = Boolean(accessKeyId || secretAccessKey);
+    if (shouldFillStaticKeys) {
+      const accessKeyIsVisible = await accessKeyInputInWizard
+        .isVisible()
+        .catch(() => false);
+
+      // In cloud env the default can be SDK mode, so expose Access/Secret explicitly.
+      if (!accessKeyIsVisible) {
+        await this.selectAuthenticationMethod(
+          AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN,
+        );
+      }
     }
-    if (credentials.secretAccessKey) {
-      await this.secretAccessKeyInput.fill(credentials.secretAccessKey);
+
+    if (accessKeyId) {
+      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await accessKeyInputInWizard.fill(accessKeyId);
+      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
+    }
+    if (secretAccessKey) {
+      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await secretKeyInputInWizard.fill(secretAccessKey);
+      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
     }
     if (credentials.roleArn) {
       await this.roleArnInput.fill(credentials.roleArn);
     }
     if (credentials.externalId) {
-      // External ID may be prefilled and disabled; only fill if enabled
       if (await this.externalIdInput.isEnabled()) {
         await this.externalIdInput.fill(credentials.externalId);
       }
@@ -708,13 +1154,26 @@ export class ProvidersPage extends BasePage {
   async fillStaticCredentials(
     credentials: AWSProviderCredential,
   ): Promise<void> {
-    // Fill the static credentials form
+    const accessKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Access Key ID",
+    );
+    const secretKeyInputInWizard = this.wizardModal.getByPlaceholder(
+      "Enter the AWS Secret Access Key",
+    );
+    const accessKeyId =
+      credentials.accessKeyId || process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
+    const secretAccessKey =
+      credentials.secretAccessKey || process.env.E2E_AWS_PROVIDER_SECRET_KEY;
 
-    if (credentials.accessKeyId) {
-      await this.accessKeyIdInput.fill(credentials.accessKeyId);
+    if (accessKeyId) {
+      await expect(accessKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await accessKeyInputInWizard.fill(accessKeyId);
+      await expect(accessKeyInputInWizard).toHaveValue(accessKeyId);
     }
-    if (credentials.secretAccessKey) {
-      await this.secretAccessKeyInput.fill(credentials.secretAccessKey);
+    if (secretAccessKey) {
+      await expect(secretKeyInputInWizard).toBeVisible({ timeout: 10000 });
+      await secretKeyInputInWizard.fill(secretAccessKey);
+      await expect(secretKeyInputInWizard).toHaveValue(secretAccessKey);
     }
   }
 
@@ -847,7 +1306,7 @@ export class ProvidersPage extends BasePage {
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
-    // Verify the OCI credentials page is loaded
+    // Verify the OCI credentials page is loaded (add flow - all fields visible)
 
     await this.verifyPageHasProwlerTitle();
     await expect(this.ociTenancyIdInput).toBeVisible();
@@ -855,6 +1314,212 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
     await expect(this.ociRegionInput).toBeVisible();
+  }
+
+  async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
+    // Verify the OCI update credentials page is loaded
+    // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.ociUserIdInput).toBeVisible();
+    await expect(this.ociFingerprintInput).toBeVisible();
+    await expect(this.ociKeyContentInput).toBeVisible();
+    await expect(this.ociRegionInput).toBeVisible();
+  }
+
+  async selectAlibabaCloudProvider(): Promise<void> {
+    await this.selectProviderRadio(this.alibabacloudProviderRadio);
+  }
+
+  async fillAlibabaCloudProviderDetails(
+    data: AlibabaCloudProviderData,
+  ): Promise<void> {
+    // Fill the AlibabaCloud provider details
+
+    await this.alibabacloudAccountIdInput.fill(data.accountId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async selectAlibabaCloudCredentialsType(
+    type: AlibabaCloudCredentialType,
+  ): Promise<void> {
+    await this.verifyWizardModalOpen();
+    await expect(this.alibabacloudStaticCredentialsRadio).toBeVisible();
+
+    if (type === ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS) {
+      await this.alibabacloudStaticCredentialsRadio.click({ force: true });
+    } else if (type === ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE) {
+      await this.alibabacloudRoleCredentialsRadio.click({ force: true });
+    } else {
+      throw new Error(`Invalid AlibabaCloud credential type: ${type}`);
+    }
+  }
+
+  async fillAlibabaCloudStaticCredentials(
+    credentials: AlibabaCloudProviderCredential,
+  ): Promise<void> {
+    // Fill the AlibabaCloud static credentials form
+
+    if (credentials.accessKeyId) {
+      await this.alibabacloudAccessKeyIdInput.fill(credentials.accessKeyId);
+    }
+    if (credentials.accessKeySecret) {
+      await this.alibabacloudAccessKeySecretInput.fill(
+        credentials.accessKeySecret,
+      );
+    }
+  }
+
+  async fillAlibabaCloudRoleCredentials(
+    credentials: AlibabaCloudProviderCredential,
+  ): Promise<void> {
+    // Fill the AlibabaCloud RAM Role credentials form
+
+    if (credentials.roleArn) {
+      await this.alibabacloudRoleArnInput.fill(credentials.roleArn);
+    }
+    if (credentials.accessKeyId) {
+      await this.alibabacloudAccessKeyIdInput.fill(credentials.accessKeyId);
+    }
+    if (credentials.accessKeySecret) {
+      await this.alibabacloudAccessKeySecretInput.fill(
+        credentials.accessKeySecret,
+      );
+    }
+    if (credentials.roleSessionName) {
+      await this.alibabacloudRoleSessionNameInput.fill(
+        credentials.roleSessionName,
+      );
+    }
+  }
+
+  async verifyAlibabaCloudCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudStaticCredentialsRadio).toBeVisible();
+    await expect(this.alibabacloudRoleCredentialsRadio).toBeVisible();
+  }
+
+  async verifyAlibabaCloudStaticCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud static credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudAccessKeyIdInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeySecretInput).toBeVisible();
+  }
+
+  async verifyAlibabaCloudRoleCredentialsPageLoaded(): Promise<void> {
+    // Verify the AlibabaCloud RAM Role credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.alibabacloudRoleArnInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeyIdInput).toBeVisible();
+    await expect(this.alibabacloudAccessKeySecretInput).toBeVisible();
+  }
+
+  async selectGoogleWorkspaceProvider(): Promise<void> {
+    await this.selectProviderRadio(this.googleworkspaceProviderRadio);
+  }
+
+  async fillGoogleWorkspaceProviderDetails(
+    data: GoogleWorkspaceProviderData,
+  ): Promise<void> {
+    await this.googleworkspaceCustomerIdInput.fill(data.customerId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillGoogleWorkspaceCredentials(
+    credentials: GoogleWorkspaceProviderCredential,
+  ): Promise<void> {
+    if (credentials.serviceAccountJson) {
+      await this.googleworkspaceServiceAccountJsonInput.fill(
+        credentials.serviceAccountJson,
+      );
+    }
+    if (credentials.delegatedUser) {
+      await this.googleworkspaceDelegatedUserInput.fill(
+        credentials.delegatedUser,
+      );
+    }
+  }
+
+  async verifyGoogleWorkspaceCredentialsPageLoaded(): Promise<void> {
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.googleworkspaceServiceAccountJsonInput).toBeVisible();
+    await expect(this.googleworkspaceDelegatedUserInput).toBeVisible();
+  }
+
+  async selectOktaProvider(): Promise<void> {
+    await this.selectProviderRadio(this.oktaProviderRadio);
+  }
+
+  async fillOktaProviderDetails(data: OktaProviderData): Promise<void> {
+    // Fill the Okta provider details (org domain is lowercased by the form)
+
+    await this.oktaOrgDomainInput.fill(data.orgDomain);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillOktaCredentials(
+    credentials: OktaProviderCredential,
+  ): Promise<void> {
+    // Fill the Okta OAuth 2.0 Private Key JWT credentials form
+
+    if (credentials.clientId) {
+      await this.oktaClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.privateKey) {
+      await this.oktaPrivateKeyInput.fill(credentials.privateKey);
+    }
+  }
+
+  async verifyOktaCredentialsPageLoaded(): Promise<void> {
+    // Verify the Okta credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.oktaClientIdInput).toBeVisible();
+    await expect(this.oktaPrivateKeyInput).toBeVisible();
+  }
+
+  async selectVercelProvider(): Promise<void> {
+    await this.selectProviderRadio(this.vercelProviderRadio);
+  }
+
+  async fillVercelProviderDetails(data: VercelProviderData): Promise<void> {
+    // Fill the Vercel provider details (Team ID is the provider UID)
+
+    await this.vercelTeamIdInput.fill(data.teamId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillVercelCredentials(
+    credentials: VercelProviderCredential,
+  ): Promise<void> {
+    // Fill the Vercel credentials form
+
+    if (credentials.apiToken) {
+      await this.vercelApiTokenInput.fill(credentials.apiToken);
+    }
+  }
+
+  async verifyVercelCredentialsPageLoaded(): Promise<void> {
+    // Verify the Vercel credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.vercelApiTokenInput).toBeVisible();
   }
 
   async verifyPageLoaded(): Promise<void> {
@@ -868,6 +1533,7 @@ export class ProvidersPage extends BasePage {
     // Verify the connect account page is loaded
 
     await this.verifyPageHasProwlerTitle();
+    await this.verifyWizardModalOpen();
     await expect(this.awsProviderRadio).toBeVisible();
     await expect(this.ociProviderRadio).toBeVisible();
     await expect(this.gcpProviderRadio).toBeVisible();
@@ -875,13 +1541,29 @@ export class ProvidersPage extends BasePage {
     await expect(this.m365ProviderRadio).toBeVisible();
     await expect(this.kubernetesProviderRadio).toBeVisible();
     await expect(this.githubProviderRadio).toBeVisible();
+    await expect(this.alibabacloudProviderRadio).toBeVisible();
+    await expect(this.googleworkspaceProviderRadio).toBeVisible();
+    await expect(this.oktaProviderRadio).toBeVisible();
+    await expect(this.vercelProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
-    // Verify the credentials page is loaded
-
     await this.verifyPageHasProwlerTitle();
-    await expect(this.roleCredentialsRadio).toBeVisible();
+    await this.verifyWizardModalOpen();
+
+    const selectorRadio = this.wizardModal.getByRole("radio", {
+      name: /Connect assuming IAM Role/i,
+    });
+    const selectorHint = this.wizardModal.getByText(/Using IAM Role/i);
+    const roleArnInForm = this.wizardModal.getByRole("textbox", {
+      name: "Role ARN",
+    });
+
+    await Promise.race([
+      selectorRadio.waitFor({ state: "visible", timeout: 20000 }),
+      selectorHint.waitFor({ state: "visible", timeout: 20000 }),
+      roleArnInForm.waitFor({ state: "visible", timeout: 20000 }),
+    ]);
   }
 
   async verifyM365CredentialsPageLoaded(): Promise<void> {
@@ -935,14 +1617,21 @@ export class ProvidersPage extends BasePage {
     // Verify the launch scan page is loaded
 
     await this.verifyPageHasProwlerTitle();
-    await expect(this.page).toHaveURL(/\/providers\/test-connection/);
+    await this.verifyWizardModalOpen();
 
-    // Verify the Launch scan button is visible
-    const launchScanButton = this.page
-      .locator("button")
-      .filter({ hasText: "Launch scan" });
+    // The final step saves the scan schedule ("Save"); manual-only accounts
+    // show "Launch scan" and some providers show "Check connection" first.
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
+      .or(
+        this.page.getByRole("button", {
+          name: "Check connection",
+          exact: true,
+        }),
+      );
 
-    await expect(launchScanButton).toBeVisible();
+    await expect(launchAction).toBeVisible();
   }
 
   async verifyLoadProviderPageAfterNewProvider(): Promise<void> {
@@ -962,26 +1651,27 @@ export class ProvidersPage extends BasePage {
       hasText: providerUID,
     });
 
-    // Verify the number of matching rows is 1
-    const count = await matchingRows.count();
-    if (count !== 1) return false;
-    return true;
+    // Use an auto-retrying assertion (not an instant count()) so the check
+    // waits for the table refetch to render the newly added provider row.
+    try {
+      await expect(matchingRows).toHaveCount(1, { timeout: 15000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {
-    // Select the authentication method
+    // Select the authentication method (shadcn Select renders as combobox + listbox)
 
-    const button = this.page.locator("button").filter({
+    const trigger = this.page.locator('[role="combobox"]').filter({
       hasText: /AWS SDK Default|Prowler Cloud will assume|Access & Secret Key/i,
     });
 
-    await button.click();
+    await trigger.click();
 
-    const modal = this.page
-      .locator('[role="dialog"], .modal, [data-testid*="modal"]')
-      .first();
-
-    await expect(modal).toBeVisible({ timeout: 10000 });
+    const listbox = this.page.getByRole("listbox");
+    await expect(listbox).toBeVisible({ timeout: 10000 });
 
     if (method === AWS_CREDENTIAL_OPTIONS.AWS_ROLE_ARN) {
       await this.page
@@ -989,10 +1679,75 @@ export class ProvidersPage extends BasePage {
         .click({ force: true });
     } else if (method === AWS_CREDENTIAL_OPTIONS.AWS_SDK_DEFAULT) {
       await this.page
-        .getByRole("option", { name: "AWS SDK Default" })
+        .getByRole("option", {
+          name: /AWS SDK Default|Prowler Cloud will assume your IAM role/i,
+        })
         .click({ force: true });
     } else {
       throw new Error(`Invalid authentication method: ${method}`);
     }
+  }
+
+  async clickProviderRowActions(providerUid: string): Promise<void> {
+    // Click the actions dropdown for a specific provider row
+    const row = this.providersTable.locator("tbody tr", {
+      hasText: providerUid,
+    });
+    await expect(row).toBeVisible();
+
+    // Click the dropdown trigger - it's the last button in the row (after the copy button)
+    const actionsButton = row.locator("button").last();
+    await actionsButton.click();
+  }
+
+  async clickUpdateCredentials(providerUid: string): Promise<void> {
+    // Click update credentials for a specific provider
+    await this.clickProviderRowActions(providerUid);
+
+    // Wait for dropdown menu to stabilize and click Update Credentials
+    const updateCredentialsOption = this.page.getByRole("menuitem", {
+      name: /Update Credentials/i,
+    });
+    await expect(updateCredentialsOption).toBeVisible();
+    // Wait a bit for the menu to stabilize before clicking
+    await this.page.waitForTimeout(100);
+    await updateCredentialsOption.click({ force: true });
+  }
+
+  async verifyUpdateCredentialsPageLoaded(): Promise<void> {
+    // Verify the update credentials page is loaded
+    await this.verifyPageHasProwlerTitle();
+    await this.verifyWizardModalOpen();
+    await expect(
+      this.page.getByRole("button", { name: "Authenticate", exact: true }),
+    ).toBeVisible();
+  }
+
+  async verifyTestConnectionPageLoaded(): Promise<void> {
+    await this.verifyPageHasProwlerTitle();
+    const testConnectionAction = this.page
+      .getByRole("button", { name: "Launch scan", exact: true })
+      .or(
+        this.page.getByRole("button", {
+          name: "Check connection",
+          exact: true,
+        }),
+      );
+
+    // Some update flows return directly to providers list after authenticating.
+    try {
+      await Promise.race([
+        testConnectionAction.waitFor({ state: "visible", timeout: 20000 }),
+        this.providersTable.waitFor({ state: "visible", timeout: 20000 }),
+      ]);
+    } catch {
+      // Fall through to explicit assertions below.
+    }
+
+    if (await this.providersTable.isVisible().catch(() => false)) {
+      return;
+    }
+
+    await expect(testConnectionAction).toBeVisible();
   }
 }

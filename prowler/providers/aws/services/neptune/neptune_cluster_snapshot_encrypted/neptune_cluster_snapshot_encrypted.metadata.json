@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbClusterSnapshot",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster snapshot is encrypted at rest. The evaluation looks at whether each snapshot's encrypted attribute is enabled, confirming that the data is protected while stored.",
   "Risk": "**Unencrypted Neptune snapshots** undermine data confidentiality. If accessed or shared due to compromised credentials or misconfiguration, attackers can restore or download snapshot contents, enabling **data exfiltration**, and exposure of sensitive records. This weakens overall data protection posture.",
   "RelatedUrl": "",

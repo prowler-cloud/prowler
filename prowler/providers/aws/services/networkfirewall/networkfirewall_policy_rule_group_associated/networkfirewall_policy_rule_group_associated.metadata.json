@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsNetworkFirewallFirewall",
+  "ResourceGroup": "network",
   "Description": "Network Firewall policies have one or more **stateful** or **stateless rule groups** associated to define packet inspection and handling.\n\nPolicies with no rule groups are identified.",
   "Risk": "Without rule groups, traffic isn't meaningfully inspected, allowing unauthorized flows across VPC boundaries.\n\nImpacts:\n- Confidentiality: data exfiltration\n- Integrity: unauthorized changes via exposed services\n- Availability: C2, scanning, or DoS traffic passes; enables lateral movement",
   "RelatedUrl": "",

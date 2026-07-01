@@ -9,9 +9,13 @@ import { RadioGroupGCPViaCredentialsTypeForm } from "./radio-group-gcp-via-crede
 
 interface SelectViaGCPProps {
   initialVia?: string;
+  onViaChange?: (via: string) => void;
 }
 
-export const SelectViaGCP = ({ initialVia }: SelectViaGCPProps) => {
+export const SelectViaGCP = ({
+  initialVia,
+  onViaChange,
+}: SelectViaGCPProps) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
@@ -20,6 +24,11 @@ export const SelectViaGCP = ({ initialVia }: SelectViaGCPProps) => {
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

@@ -18,6 +18,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCodeBuildProject",
+  "ResourceGroup": "devops",
   "Description": "**CodeBuild report groups** with export type `S3` are evaluated to confirm their exported test results are encrypted at rest with a **KMS key**.\n\nReport groups configured with `NO_EXPORT` are out of scope.",
   "Risk": "**Unencrypted S3 exports** leave report data in plaintext, weakening confidentiality.\n\nIf a bucket is misconfigured, compromised, or accessed by insiders, attackers can harvest test outputs for secrets, tokens, build paths, and system details, enabling credential theft and lateral movement.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "container",
   "Description": "Amazon ECR registries with repositories are evaluated for image scanning configured as `scan on push` at the registry level, with scan rules that cover all repositories (no restrictive filters), for either **basic** or **enhanced** scanning.",
   "Risk": "Absent or filtered `scan on push` lets **vulnerable images** be pushed and deployed without timely detection, enabling exploitation of known CVEs (RCE, privilege escalation), supply chain compromise, and lateral movement - threatening workload integrity and data confidentiality.",
   "RelatedUrl": "",

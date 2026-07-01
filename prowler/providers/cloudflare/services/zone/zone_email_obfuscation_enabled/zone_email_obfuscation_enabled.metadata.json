@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_email_obfuscation_enabled",
+  "CheckTitle": "Email Obfuscation is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Email Obfuscation** (Scrape Shield) configuration by checking if it is enabled to protect email addresses on the website from **automated harvesting** by bots and spammers.",
+  "Risk": "Without **Email Obfuscation**, email addresses displayed on your website can be harvested by bots.\n- **Confidentiality**: harvested emails become targets for spam and phishing campaigns\n- **Integrity**: employees may fall victim to targeted social engineering attacks\n- **Availability**: increased spam volume can overwhelm email systems",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/waf/tools/scrape-shield/email-address-obfuscation/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Scrape Shield (or Security > Settings in newer UI)\n3. Scroll to Email Address Obfuscation\n4. Toggle the setting to On\n5. Verify that email addresses still work correctly for human visitors",
+      "Terraform": "```hcl\n# Enable Email Obfuscation to protect against email harvesting\nresource \"cloudflare_zone_settings_override\" \"email_obfuscation\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    email_obfuscation = \"on\" # Critical: hides email addresses from automated scrapers\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable **Email Obfuscation** as part of anti-scraping protections.\n- Automatically encodes email addresses to prevent bot harvesting\n- Email addresses remain visible and clickable for human visitors\n- Works with mailto: links and plain text email addresses\n- Part of the Scrape Shield feature set for comprehensive protection",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_email_obfuscation_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Email Obfuscation automatically hides email addresses from bots while keeping them visible and clickable for human visitors. May not work with JavaScript-rendered email addresses."
+}

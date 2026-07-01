@@ -80,10 +80,9 @@ class Organizations(AWSService):
 
     def _list_policies(self):
         logger.info("Organizations - List policies...")
-
+        policies = {}
         try:
             list_policies_paginator = self.client.get_paginator("list_policies")
-            policies = {}
             for policy_type in AVAILABLE_ORGANIZATIONS_POLICIES:
                 logger.info(
                     "Organizations - List policies... - Type: %s",
@@ -122,8 +121,7 @@ class Organizations(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        finally:
-            return policies
+        return policies
 
     def _describe_policy(self, policy_id) -> dict:
         logger.info("Organizations - Describe policy: %s ...", policy_id)
@@ -192,8 +190,7 @@ class Organizations(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-        finally:
-            return self.delegated_administrators
+        return self.delegated_administrators
 
 
 class Policy(BaseModel):

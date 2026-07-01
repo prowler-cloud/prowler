@@ -1,11 +1,11 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
 import Link from "next/link";
 
 import { AddIcon } from "../icons";
 import { Button, Card, CardContent, CardHeader } from "../shadcn";
 import { Separator } from "../shadcn/separator/separator";
+import { CodeSnippet } from "../ui/code-snippet/code-snippet";
 import { DateWithTime } from "../ui/entities";
 
 interface InvitationDetailsProps {
@@ -34,12 +34,14 @@ const InfoField = ({
   label: string;
   children: React.ReactNode;
 }) => (
-  <div className="flex flex-col gap-1">
+  <div className="flex min-w-0 flex-col gap-1">
     <span className="text-text-neutral-secondary text-xs font-bold">
       {label}
     </span>
-    <div className="border-border-input-primary bg-bg-input-primary flex items-center rounded-lg border p-3">
-      <span className="text-small text-text-neutral-primary">{children}</span>
+    <div className="border-border-input-primary bg-bg-input-primary flex min-w-0 items-center overflow-hidden rounded-lg border p-3">
+      <span className="text-small text-text-neutral-primary min-w-0 truncate">
+        {children}
+      </span>
     </div>
   </div>
 );
@@ -51,7 +53,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
       ? window.location.origin
       : "http://localhost:3000";
 
-  const invitationLink = `${baseUrl}/sign-up?invitation_token=${attributes.token}`;
+  const invitationLink = `${baseUrl}/invitation/accept?invitation_token=${attributes.token}`;
 
   return (
     <div className="flex flex-col gap-x-4 gap-y-8">
@@ -87,20 +89,7 @@ export const InvitationDetails = ({ attributes }: InvitationDetailsProps) => {
             Share this link with the user:
           </h3>
 
-          <div className="flex flex-col items-start justify-between">
-            <Snippet
-              classNames={{
-                base: "mx-auto",
-              }}
-              hideSymbol
-              variant="bordered"
-              className="bg-bg-neutral-secondary overflow-hidden py-1 text-ellipsis whitespace-nowrap"
-            >
-              <p className="no-scrollbar w-fit overflow-hidden overflow-x-scroll text-sm text-ellipsis whitespace-nowrap">
-                {invitationLink}
-              </p>
-            </Snippet>
-          </div>
+          <CodeSnippet value={invitationLink} className="max-w-full" />
         </CardContent>
       </Card>
       <div className="flex w-full items-center justify-end">

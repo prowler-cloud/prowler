@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "entra_conditional_access_policy_require_mfa_for_admin_portals",
+  "CheckTitle": "Conditional Access policy requires MFA for Microsoft Admin Portals",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "**Microsoft Entra Conditional Access** is evaluated for a policy that requires **multifactor authentication** when accessing **Microsoft Admin Portals** (Microsoft 365 Admin Center, Microsoft Entra Admin Center, Microsoft Exchange Admin Center, etc.). The check confirms an enabled policy targets **All users**, includes the Microsoft Admin Portals app, and enforces an **MFA** grant control.",
+  "Risk": "Without **MFA** on admin portals, attackers with stolen credentials can access **Microsoft 365 Admin Center**, **Entra Admin Center**, or **Exchange Admin Center** to modify tenant settings, escalate privileges, and exfiltrate data. This directly impacts **confidentiality**, **integrity**, and **availability** of all services managed through those portals.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/how-to-policy-mfa-admin-portals",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-cloud-apps"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Microsoft Entra admin center\n2. Go to Protection > Conditional Access > Policies\n3. Click + New policy and enter a name\n4. Under Users > Include, select All users\n5. Under Exclude, check Users and groups and select break-glass / non-interactive service accounts\n6. Under Target resources > Include, click Select apps, then select Microsoft Admin Portals\n7. Under Grant, select Grant access and check Require multifactor authentication\n8. Set Enable policy to Report-only, click Create\n9. After testing, change Enable policy from Report-only to On",
+      "Terraform": "```hcl\nresource \"azuread_conditional_access_policy\" \"<example_resource_name>\" {\n  display_name = \"<example_resource_name>\"\n  state        = \"enabled\"\n\n  conditions {\n    users {\n      included_users = [\"All\"]\n      excluded_users = [\"<break_glass_account_id>\"]\n    }\n    applications {\n      included_applications = [\"MicrosoftAdminPortals\"]  # Critical: Microsoft Admin Portals\n    }\n  }\n\n  grant_controls {\n    operator          = \"OR\"\n    built_in_controls = [\"mfa\"]  # Critical: requires MFA\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Create a **Conditional Access policy** that requires **MFA** for the **Microsoft Admin Portals** app targeting **All users**. Exclude only **break-glass** emergency accounts and non-interactive service principals. Test in **Report-only** mode before enforcing. Prefer **phishing-resistant** MFA methods (FIDO2, passkeys) and apply **least privilege** principles.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_require_mfa_for_admin_portals"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Conditional Access policies require Microsoft Entra ID P1 or P2 licenses. Similarly, they may require additional overhead to maintain if users lose access to their MFA. Any users or groups which are granted an exception to this policy should be carefully tracked, be granted only minimal necessary privileges, and conditional access exceptions should be regularly reviewed or investigated."
+}

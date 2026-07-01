@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "AWS Directory Service RADIUS configuration uses the **authentication protocol** defined for MFA integration. The finding evaluates whether directories with RADIUS enabled are set to `MS-CHAPv2` instead of weaker options like `PAP`, `CHAP`, or `MS-CHAPv1`.",
   "Risk": "Using `PAP`, `CHAP`, or `MS-CHAPv1` weakens RADIUS-based MFA.\n\n`PAP` exposes cleartext credentials, while legacy CHAP variants permit offline cracking and replay, enabling unauthorized access to AD-integrated services and lateral movement, degrading confidentiality and integrity.",
   "RelatedUrl": "",

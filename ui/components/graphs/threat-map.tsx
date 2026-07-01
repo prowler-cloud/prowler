@@ -12,7 +12,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { Card } from "@/components/shadcn/card/card";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 
 import { HorizontalBarChart } from "./horizontal-bar-chart";
 import {
@@ -125,7 +124,11 @@ export function ThreatMap({
     x: number;
     y: number;
   } | null>(null);
-  const [selectedRegion, setSelectedRegion] = useState("All Regions");
+  // With a single region "All Regions" adds nothing, so it starts selected
+  const hasSingleRegion = data.regions.length === 1;
+  const [selectedRegion, setSelectedRegion] = useState(
+    hasSingleRegion ? data.regions[0] : "All Regions",
+  );
   const [worldData, setWorldData] = useState<FeatureCollection | null>(null);
   const [isLoadingMap, setIsLoadingMap] = useState(true);
   const [dimensions, setDimensions] = useState<{
@@ -382,7 +385,6 @@ export function ThreatMap({
     }
 
     svg.appendChild(pointsGroup);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dimensions,
     data.locations,
@@ -399,7 +401,6 @@ export function ThreatMap({
     providerType?: string,
   ) => {
     const params = new URLSearchParams(searchParams.toString());
-    mapProviderFiltersForFindings(params);
     if (providerType) params.set("filter[provider_type__in]", providerType);
     params.set("filter[region__in]", regionCode);
     params.set("filter[status__in]", status);
@@ -427,10 +428,12 @@ export function ThreatMap({
                   onChange={(e) => setSelectedRegion(e.target.value)}
                   className="border-border-neutral-primary bg-bg-neutral-secondary text-text-neutral-primary appearance-none rounded-lg border px-4 py-2 pr-10 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 >
-                  <option value="All Regions">All Regions</option>
+                  {!hasSingleRegion && (
+                    <option value="All Regions">All Regions</option>
+                  )}
                   {sortedRegions.map((region) => (
                     <option key={region} value={region}>
-                      {region}
+                      {region.toLowerCase() === "global" ? "Global" : region}
                     </option>
                   ))}
                 </select>
@@ -470,7 +473,7 @@ export function ThreatMap({
                   <div className="border-border-neutral-primary bg-bg-neutral-secondary absolute bottom-4 left-4 flex items-center gap-2 rounded-full border px-3 py-1.5">
                     <div
                       aria-hidden="true"
-                      className="bg-data-critical h-3 w-3 rounded"
+                      className="bg-bg-data-critical h-3 w-3 rounded"
                     />
                     <span className="text-text-neutral-primary text-sm font-medium">
                       {locationCount} Locations

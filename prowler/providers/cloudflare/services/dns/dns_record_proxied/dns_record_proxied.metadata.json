@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_record_proxied",
+  "CheckTitle": "Cloudflare proxy is enabled for applicable DNS records",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare DNS records** are assessed for **proxy configuration** by checking if A, AAAA, and CNAME records are proxied through Cloudflare to benefit from **DDoS protection**, **WAF**, and **caching** capabilities.",
+  "Risk": "Unproxied **DNS records** expose origin server IP addresses directly to the internet.\n- **Confidentiality**: origin IP exposure enables targeted reconnaissance and attacks\n- **Integrity**: direct access to origin bypasses WAF and security controls\n- **Availability**: origin is exposed to DDoS attacks without Cloudflare protection",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/reference/proxied-dns-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. For each A, AAAA, or CNAME record that should be protected\n4. Click Edit and toggle Proxy status to Proxied (orange cloud)\n5. Save the changes and verify traffic flows through Cloudflare",
+      "Terraform": "```hcl\n# Enable Cloudflare proxy for DNS records\nresource \"cloudflare_record\" \"proxied_record\" {\n  zone_id = \"<ZONE_ID>\"\n  name    = \"www\"\n  content = \"192.0.2.1\"\n  type    = \"A\"\n  proxied = true # Critical: enables DDoS protection, WAF, and caching\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enable the **Cloudflare proxy** (orange cloud) for DNS records that should be protected.\n- Proxied records benefit from DDoS protection, WAF, and caching\n- Origin server IP addresses are hidden from public DNS queries\n- Apply defense in depth by combining proxy protection with origin hardening\n- Some record types (MX, TXT) cannot be proxied by design",
+      "Url": "https://hub.prowler.com/checks/cloudflare/dns_record_proxied"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only A, AAAA, and CNAME records can be proxied. MX, TXT, and other record types are always DNS-only. Some services may require DNS-only mode for specific use cases."
+}

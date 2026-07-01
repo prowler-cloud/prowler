@@ -1,2 +1,2 @@
-export * from "./column-new-findings-to-date";
+export * from "./column-latest-findings";
 export * from "./skeleton-table-new-findings";

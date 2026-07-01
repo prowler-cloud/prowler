@@ -1,6 +1,10 @@
-import { Tooltip } from "@heroui/tooltip";
-
 import { Button } from "@/components/shadcn";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 
 interface DeltaIndicatorProps {
@@ -9,9 +13,20 @@ interface DeltaIndicatorProps {
 
 export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
   return (
-    <Tooltip
-      className="pointer-events-auto"
-      content={
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div
+          className={cn(
+            "h-2 w-2 min-w-2 cursor-pointer rounded-full",
+            delta === "new"
+              ? "bg-system-severity-high"
+              : delta === "changed"
+                ? "bg-system-severity-low"
+                : "bg-text-neutral-tertiary",
+          )}
+        />
+      </TooltipTrigger>
+      <TooltipContent>
         <div className="flex gap-1 text-xs">
           <span>
             {delta === "new"
@@ -26,7 +41,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             asChild
           >
             <a
-              href="https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings"
+              href={DOCS_URLS.FINDINGS_ANALYSIS}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -34,18 +49,7 @@ export const DeltaIndicator = ({ delta }: DeltaIndicatorProps) => {
             </a>
           </Button>
         </div>
-      }
-    >
-      <div
-        className={cn(
-          "h-2 w-2 min-w-2 cursor-pointer rounded-full",
-          delta === "new"
-            ? "bg-system-severity-high"
-            : delta === "changed"
-              ? "bg-system-severity-low"
-              : "bg-gray-500",
-        )}
-      />
+      </TooltipContent>
     </Tooltip>
   );
 };

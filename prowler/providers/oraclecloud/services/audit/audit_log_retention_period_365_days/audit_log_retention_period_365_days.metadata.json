@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Compartment",
+  "ResourceGroup": "governance",
   "Description": "**OCI Audit configuration** defines tenancy-wide log retention for audit events. The finding evaluates whether the retention period (days) is `>= 365` and that an audit configuration exists, *applying across all regions and compartments*.",
   "Risk": "**Insufficient audit retention** or missing configuration shrinks the **detection window** and breaks **accountability**.\n\nEvidence for older actions may be unavailable, enabling attackers to evade detection, mask **data exfiltration**, and impede **forensic reconstruction** and compliance reporting.",
   "RelatedUrl": "",

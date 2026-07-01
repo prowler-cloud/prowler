@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Provider
@@ -16,16 +14,26 @@ from api.utils import (
     return_prowler_provider,
     validate_invitation,
 )
+from prowler.providers.alibabacloud.alibabacloud_provider import AlibabacloudProvider
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.azure.azure_provider import AzureProvider
+from prowler.providers.cloudflare.cloudflare_provider import CloudflareProvider
 from prowler.providers.gcp.gcp_provider import GcpProvider
 from prowler.providers.github.github_provider import GithubProvider
+from prowler.providers.googleworkspace.googleworkspace_provider import (
+    GoogleworkspaceProvider,
+)
 from prowler.providers.iac.iac_provider import IacProvider
+from prowler.providers.image.image_provider import ImageProvider
 from prowler.providers.kubernetes.kubernetes_provider import KubernetesProvider
 from prowler.providers.m365.m365_provider import M365Provider
 from prowler.providers.mongodbatlas.mongodbatlas_provider import MongodbatlasProvider
+from prowler.providers.okta.okta_provider import OktaProvider
+from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+from prowler.providers.vercel.vercel_provider import VercelProvider
+from rest_framework.exceptions import NotFound, ValidationError
 
 
 class TestMergeDicts:
@@ -109,6 +117,7 @@ class TestReturnProwlerProvider:
         [
             (Provider.ProviderChoices.AWS.value, AwsProvider),
             (Provider.ProviderChoices.GCP.value, GcpProvider),
+            (Provider.ProviderChoices.GOOGLEWORKSPACE.value, GoogleworkspaceProvider),
             (Provider.ProviderChoices.AZURE.value, AzureProvider),
             (Provider.ProviderChoices.KUBERNETES.value, KubernetesProvider),
             (Provider.ProviderChoices.M365.value, M365Provider),
@@ -116,6 +125,12 @@ class TestReturnProwlerProvider:
             (Provider.ProviderChoices.MONGODBATLAS.value, MongodbatlasProvider),
             (Provider.ProviderChoices.ORACLECLOUD.value, OraclecloudProvider),
             (Provider.ProviderChoices.IAC.value, IacProvider),
+            (Provider.ProviderChoices.ALIBABACLOUD.value, AlibabacloudProvider),
+            (Provider.ProviderChoices.CLOUDFLARE.value, CloudflareProvider),
+            (Provider.ProviderChoices.OPENSTACK.value, OpenstackProvider),
+            (Provider.ProviderChoices.IMAGE.value, ImageProvider),
+            (Provider.ProviderChoices.VERCEL.value, VercelProvider),
+            (Provider.ProviderChoices.OKTA.value, OktaProvider),
         ],
     )
     def test_return_prowler_provider(self, provider_type, expected_provider):
@@ -182,6 +197,90 @@ class TestProwlerProviderConnectionTest:
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
         assert str(connection.error) == "Provider has no secret."
 
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Image provider with credentials."""
+        provider = MagicMock()
+        provider.uid = "docker.io/myns/myimage:latest"
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret.secret = {
+            "registry_username": "user",
+            "registry_password": "pass",
+            "registry_token": "tok123",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            image="docker.io/myns/myimage:latest",
+            raise_on_exception=False,
+            registry_username="user",
+            registry_password="pass",
+            registry_token="tok123",
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_vercel_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Vercel provider passes team_id."""
+        provider = MagicMock()
+        provider.uid = "team_abcdef1234567890"
+        provider.provider = Provider.ProviderChoices.VERCEL.value
+        provider.secret.secret = {"api_token": "vercel_token_123"}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            api_token="vercel_token_123",
+            team_id="team_abcdef1234567890",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_okta_provider(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Okta provider passes org domain and provider_id."""
+        provider = MagicMock()
+        provider.uid = "acme.okta.com"
+        provider.provider = Provider.ProviderChoices.OKTA.value
+        provider.secret.secret = {
+            "okta_client_id": "0oa123456789abcdef",
+            "okta_private_key": "-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            "okta_scopes": ["okta.policies.read"],
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            okta_client_id="0oa123456789abcdef",
+            okta_private_key="-----BEGIN PRIVATE KEY-----\ntest\n-----END PRIVATE KEY-----",
+            okta_scopes=["okta.policies.read"],
+            okta_org_domain="acme.okta.com",
+            provider_id="acme.okta.com",
+            raise_on_exception=False,
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_prowler_provider_connection_test_image_provider_no_creds(
+        self, mock_return_prowler_provider
+    ):
+        """Test connection test for Image provider without credentials."""
+        provider = MagicMock()
+        provider.uid = "alpine:3.18"
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret.secret = {}
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            image="alpine:3.18",
+            raise_on_exception=False,
+        )
+
 
 class TestGetProwlerProviderKwargs:
     @pytest.mark.parametrize(
@@ -198,6 +297,10 @@ class TestGetProwlerProviderKwargs:
             (
                 Provider.ProviderChoices.GCP.value,
                 {"project_ids": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.GOOGLEWORKSPACE.value,
+                {},
             ),
             (
                 Provider.ProviderChoices.KUBERNETES.value,
@@ -219,6 +322,22 @@ class TestGetProwlerProviderKwargs:
                 Provider.ProviderChoices.MONGODBATLAS.value,
                 {"atlas_organization_id": "provider_uid"},
             ),
+            (
+                Provider.ProviderChoices.CLOUDFLARE.value,
+                {"filter_accounts": ["provider_uid"]},
+            ),
+            (
+                Provider.ProviderChoices.OPENSTACK.value,
+                {},
+            ),
+            (
+                Provider.ProviderChoices.VERCEL.value,
+                {"team_id": "provider_uid"},
+            ),
+            (
+                Provider.ProviderChoices.OKTA.value,
+                {"okta_org_domain": "provider_uid"},
+            ),
         ],
     )
     def test_get_prowler_provider_kwargs(self, provider_type, expected_extra_kwargs):
@@ -235,6 +354,30 @@ class TestGetProwlerProviderKwargs:
         result = get_prowler_provider_kwargs(provider)
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_oraclecloud_converts_region_string_to_set(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "us-ashburn-1",
+            "pass_phrase": "fake-passphrase",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {**secret_dict, "region": {"us-ashburn-1"}}
         assert result == expected_result
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):
@@ -322,6 +465,123 @@ class TestGetProwlerProviderKwargs:
         }
         assert result == expected_result
 
+    def test_get_prowler_provider_kwargs_image_provider_registry_url(self):
+        """Test that Image provider with a registry URL gets 'registry' kwarg."""
+        provider_uid = "docker.io/myns"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "registry": provider_uid,
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_image_ref(self):
+        """Test that Image provider with a full image reference gets 'images' kwarg."""
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {
+            "images": [provider_uid],
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_dockerhub_image(self):
+        """Test that Image provider with a short DockerHub image gets 'images' kwarg."""
+        provider_uid = "alpine:3.18"
+        secret_dict = {}
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"images": [provider_uid]}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_filters_falsy_secrets(self):
+        """Test that falsy secret values are filtered out for Image provider."""
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "",
+            "registry_password": "",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider)
+
+        expected_result = {"images": [provider_uid]}
+        assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_image_provider_ignores_mutelist(self):
+        """Test that Image provider does NOT receive mutelist_content.
+
+        Image provider uses Trivy's built-in mutelist logic, so it should not
+        receive mutelist_content even when a mutelist processor is configured.
+        """
+        provider_uid = "docker.io/myns/myimage:latest"
+        secret_dict = {
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        mutelist_processor = MagicMock()
+        mutelist_processor.configuration = {"Mutelist": {"key": "value"}}
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.IMAGE.value
+        provider.secret = secret_mock
+        provider.uid = provider_uid
+
+        result = get_prowler_provider_kwargs(provider, mutelist_processor)
+
+        assert "mutelist_content" not in result
+        expected_result = {
+            "images": [provider_uid],
+            "registry_username": "user",
+            "registry_password": "pass",
+        }
+        assert result == expected_result
+
     def test_get_prowler_provider_kwargs_unsupported_provider(self):
         # Setup
         provider_uid = "provider_uid"
@@ -362,7 +622,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = "user@example.com"
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
         return invitation
@@ -410,7 +670,7 @@ class TestValidateInvitation:
             )
 
     def test_invitation_expired(self, invitation):
-        expired_time = datetime.now(timezone.utc) - timedelta(days=1)
+        expired_time = datetime.now(UTC) - timedelta(days=1)
         invitation.expires_at = expired_time
 
         with (
@@ -419,7 +679,7 @@ class TestValidateInvitation:
         ):
             mock_db = mock_using.return_value
             mock_db.get.return_value = invitation
-            mock_datetime.now.return_value = datetime.now(timezone.utc)
+            mock_datetime.now.return_value = datetime.now(UTC)
 
             with pytest.raises(InvitationTokenExpiredException):
                 validate_invitation("VALID_TOKEN", "user@example.com")
@@ -464,7 +724,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = uppercase_email
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
 
@@ -600,11 +860,15 @@ class TestProwlerIntegrationConnectionTest:
         }
         integration.configuration = {}
 
-        # Mock successful JIRA connection with projects
+        # Mock successful JIRA connection with projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {"PROJ1": "Project 1", "PROJ2": "Project 2"}
+        mock_connection.issue_types = {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -633,6 +897,12 @@ class TestProwlerIntegrationConnectionTest:
             "PROJ2": "Project 2",
         }
 
+        # Verify issue types were saved to integration configuration
+        assert integration.configuration["issue_types"] == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Task", "Story"],
+        }
+
         # Verify integration.save() was called
         integration.save.assert_called_once()
 
@@ -656,6 +926,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_connection.is_connected = False
         mock_connection.error = Exception("Authentication failed: Invalid credentials")
         mock_connection.projects = {}  # Empty projects when connection fails
+        mock_connection.issue_types = {}  # Empty issue types when connection fails
         mock_jira_class.test_connection.return_value = mock_connection
 
         # Mock rls_transaction context manager
@@ -681,6 +952,9 @@ class TestProwlerIntegrationConnectionTest:
         # Verify empty projects dict was saved to integration configuration
         assert integration.configuration["projects"] == {}
 
+        # Verify empty issue types dict was saved to integration configuration
+        assert integration.configuration["issue_types"] == {}
+
         # Verify integration.save() was called even on connection failure
         integration.save.assert_called_once()
 
@@ -699,17 +973,21 @@ class TestProwlerIntegrationConnectionTest:
             "domain": "example.atlassian.net",
         }
         integration.configuration = {
-            "issue_types": ["Task"],  # Existing configuration
+            "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration
             "projects": {"OLD_PROJ": "Old Project"},  # Will be overwritten
         }
 
-        # Mock successful JIRA connection with new projects
+        # Mock successful JIRA connection with new projects and issue types
         mock_connection = MagicMock()
         mock_connection.is_connected = True
         mock_connection.error = None
         mock_connection.projects = {
             "NEW_PROJ1": "New Project 1",
             "NEW_PROJ2": "New Project 2",
+        }
+        mock_connection.issue_types = {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
         }
         mock_jira_class.test_connection.return_value = mock_connection
 
@@ -728,8 +1006,11 @@ class TestProwlerIntegrationConnectionTest:
             "NEW_PROJ2": "New Project 2",
         }
 
-        # Verify other configuration fields were preserved
-        assert integration.configuration["issue_types"] == ["Task"]
+        # Verify issue types were also updated
+        assert integration.configuration["issue_types"] == {
+            "NEW_PROJ1": ["Task", "Bug"],
+            "NEW_PROJ2": ["Story"],
+        }
 
         # Verify integration.save() was called
         integration.save.assert_called_once()

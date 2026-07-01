@@ -31,20 +31,20 @@ def mock_generate_regional_clients(provider, service):
 class Test_EKS_Service:
     # Test EKS Service
     def test_service(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         eks = EKS(aws_provider)
         assert eks.service == "eks"
 
     # Test EKS client
     def test_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         eks = EKS(aws_provider)
         for reg_client in eks.regional_clients.values():
             assert reg_client.__class__.__name__ == "EKS"
 
     # Test EKS session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         eks = EKS(aws_provider)
         assert eks.session.__class__.__name__ == "Session"
 
@@ -73,7 +73,7 @@ class Test_EKS_Service:
             roleArn=f"arn:aws:iam::{AWS_ACCOUNT_NUMBER}:role/eks-service-role-AWSServiceRoleForAmazonEKS-J7ONKE3BQ4PI",
             tags={"test": "test"},
         )
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         eks = EKS(aws_provider)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name
@@ -126,7 +126,7 @@ class Test_EKS_Service:
                 },
             ],
         )
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         eks = EKS(aws_provider)
         assert len(eks.clusters) == 1
         assert eks.clusters[0].name == cluster_name

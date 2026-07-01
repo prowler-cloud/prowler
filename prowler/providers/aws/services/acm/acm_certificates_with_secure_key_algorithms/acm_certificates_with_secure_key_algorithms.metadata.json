@@ -13,12 +13,13 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCertificateManagerCertificate",
+  "ResourceGroup": "security",
   "Description": "**ACM certificates** are evaluated for the **public key algorithm and size**, identifying those that use weak parameters such as `RSA-1024` or ECDSA `P-192`. Certificates using `RSA-2048+` or ECDSA `P-256+` meet the secure baseline.",
   "Risk": "**Weak certificate keys** reduce TLS confidentiality and authenticity.\n\nFeasible factoring or discrete log attacks can reveal private keys, enabling **man-in-the-middle**, session decryption, and **certificate spoofing**, leading to data exposure and tampering.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://noise.getoto.net/2022/11/08/how-to-evaluate-and-use-ecdsa-certificates-in-aws-certificate-manager/",
-	"https://docs.aws.amazon.com/acm/latest/userguide/data-protection.html"
+    "https://docs.aws.amazon.com/acm/latest/userguide/data-protection.html"
   ],
   "Remediation": {
     "Code": {

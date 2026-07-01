@@ -106,7 +106,7 @@ export const runTestConnection = async ({
         config?.errorMessage || `Failed to connect to ${integrationType}.`;
       onError?.(pollResult.error || defaultError);
     }
-  } catch (error) {
+  } catch (_error) {
     onError?.(
       "Failed to start connection test. You can try manually using the Test Connection button.",
     );

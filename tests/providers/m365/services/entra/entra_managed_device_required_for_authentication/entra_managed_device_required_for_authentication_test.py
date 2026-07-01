@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.m365.services.entra.entra_service import (
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
@@ -106,6 +107,9 @@ class Test_entra_managed_device_required_for_authentication:
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
                         ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.DISABLED,
                 )
@@ -183,6 +187,9 @@ class Test_entra_managed_device_required_for_authentication:
                             frequency=None,
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -265,6 +272,9 @@ class Test_entra_managed_device_required_for_authentication:
                             frequency=None,
                             type=None,
                             interval=SignInFrequencyInterval.TIME_BASED,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,

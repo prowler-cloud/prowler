@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail trails** log **S3 object-level read data events** for all buckets, capturing object access (for example `GetObject`) via selectors targeting `AWS::S3::Object`",
   "Risk": "Without **object-level read logging**, S3 access is opaque. Attackers or insiders can exfiltrate data via `GetObject` without audit trails, eroding **confidentiality** and hindering **forensics**, anomaly detection, and incident response.",
   "RelatedUrl": "",

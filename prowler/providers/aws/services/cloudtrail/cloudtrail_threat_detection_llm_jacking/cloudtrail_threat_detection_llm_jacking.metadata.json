@@ -15,6 +15,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail Bedrock activity** is analyzed per identity for a high diversity of LLM-related API calls (e.g., `InvokeModel`, `InvokeModelWithResponseStream`, `GetFoundationModelAvailability`). *If an identity's share of these actions exceeds a configured threshold over a recent window*, it is surfaced as potential **LLM-jacking** behavior.",
   "Risk": "Such patterns suggest **stolen credential** abuse to drive LLM usage.\n- Availability: cost exhaustion and service disruption\n- Confidentiality: leakage of prompts/outputs and model settings\n- Integrity: misuse of permissions for broader access\nAttackers may use reverse proxies to resell access and obfuscate sources.",
   "RelatedUrl": "",

@@ -19,6 +19,7 @@ IAM_ROLE = "test-role"
 IAM_SERVICE = "iam"
 COMMERCIAL_PARTITION = "aws"
 CHINA_PARTITION = "aws-cn"
+EUSC_PARTITION = "aws-eusc"
 GOVCLOUD_PARTITION = "aws-us-gov"
 
 
@@ -245,6 +246,28 @@ class Test_ARN_Parsing:
                     "resource": IAM_ROLE,
                 },
             },
+            {
+                "input_arn": f"arn:{EUSC_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:{RESOURCE_TYPE_ROLE}/{IAM_ROLE}",
+                "expected": {
+                    "partition": EUSC_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": RESOURCE_TYPE_ROLE,
+                    "resource": IAM_ROLE,
+                },
+            },
+            {
+                "input_arn": f"arn:{EUSC_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:{RESOUCE_TYPE_USER}/{IAM_ROLE}",
+                "expected": {
+                    "partition": EUSC_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": RESOUCE_TYPE_USER,
+                    "resource": IAM_ROLE,
+                },
+            },
             # Root user
             {
                 "input_arn": f"arn:aws:{IAM_SERVICE}::{ACCOUNT_ID}:root",
@@ -280,6 +303,17 @@ class Test_ARN_Parsing:
                 },
             },
             {
+                "input_arn": f"arn:{EUSC_PARTITION}:{IAM_SERVICE}::{ACCOUNT_ID}:root",
+                "expected": {
+                    "partition": EUSC_PARTITION,
+                    "service": IAM_SERVICE,
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "root",
+                    "resource": "root",
+                },
+            },
+            {
                 "input_arn": f"arn:aws:sts::{ACCOUNT_ID}:federated-user/Bob",
                 "expected": {
                     "partition": COMMERCIAL_PARTITION,
@@ -305,6 +339,17 @@ class Test_ARN_Parsing:
                 "input_arn": f"arn:{GOVCLOUD_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
                 "expected": {
                     "partition": GOVCLOUD_PARTITION,
+                    "service": "sts",
+                    "region": None,
+                    "account_id": ACCOUNT_ID,
+                    "resource_type": "federated-user",
+                    "resource": "Bob",
+                },
+            },
+            {
+                "input_arn": f"arn:{EUSC_PARTITION}:sts::{ACCOUNT_ID}:federated-user/Bob",
+                "expected": {
+                    "partition": EUSC_PARTITION,
                     "service": "sts",
                     "region": None,
                     "account_id": ACCOUNT_ID,
@@ -379,6 +424,7 @@ class Test_ARN_Parsing:
     def test_is_valid_arn(self):
         assert is_valid_arn("arn:aws:iam::012345678910:user/test")
         assert is_valid_arn("arn:aws-cn:ec2:us-east-1:123456789012:vpc/vpc-12345678")
+        assert is_valid_arn("arn:aws-eusc:ec2:us-east-1:123456789012:vpc/vpc-12345678")
         assert is_valid_arn("arn:aws-us-gov:s3:::bucket")
         assert is_valid_arn("arn:aws-iso:iam::012345678910:user/test")
         assert is_valid_arn("arn:aws-iso-b:ec2:us-east-1:123456789012:vpc/vpc-12345678")

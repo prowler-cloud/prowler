@@ -28,7 +28,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 class Test_guardduty_no_high_severity_findings:
     @mock_aws
     def test_no_detectors(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -56,7 +56,7 @@ class Test_guardduty_no_high_severity_findings:
 
         detector_id = guardduty_client.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -97,7 +97,7 @@ class Test_guardduty_no_high_severity_findings:
 
         detector_id = guardduty_client.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 

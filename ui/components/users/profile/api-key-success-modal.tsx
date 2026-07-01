@@ -1,10 +1,9 @@
 "use client";
 
-import { Snippet } from "@heroui/snippet";
-
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { Alert, AlertDescription } from "@/components/ui/alert/Alert";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 
 interface ApiKeySuccessModalProps {
   isOpen: boolean;
@@ -18,8 +17,8 @@ export const ApiKeySuccessModal = ({
   apiKey,
 }: ApiKeySuccessModalProps) => {
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && onClose()}
       title="API Key Created Successfully"
     >
@@ -36,18 +35,12 @@ export const ApiKeySuccessModal = ({
           <p className="text-text-neutral-primary text-sm font-medium">
             Your API Key
           </p>
-          <Snippet
-            hideSymbol
-            classNames={{
-              pre: "font-mono text-sm break-all whitespace-pre-wrap p-2 text-text-neutral-primary",
-            }}
-            tooltipProps={{
-              content: "Copy API key",
-              color: "default",
-            }}
-          >
-            {apiKey}
-          </Snippet>
+          <CodeSnippet
+            value={apiKey}
+            multiline
+            ariaLabel="Copy API key"
+            className="w-full px-3 py-2 text-sm"
+          />
         </div>
       </div>
 
@@ -56,6 +49,6 @@ export const ApiKeySuccessModal = ({
           Acknowledged
         </Button>
       </div>
-    </CustomAlertModal>
+    </Modal>
   );
 };

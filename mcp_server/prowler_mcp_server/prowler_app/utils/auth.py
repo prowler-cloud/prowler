@@ -2,9 +2,9 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import Dict, Optional
 
 from fastmcp.server.dependencies import get_http_headers
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 
@@ -15,13 +15,13 @@ class ProwlerAppAuth:
     def __init__(
         self,
         mode: str = os.getenv("PROWLER_MCP_TRANSPORT_MODE", "stdio"),
-        base_url: str = os.getenv("PROWLER_API_BASE_URL", "https://api.prowler.com"),
+        base_url: str = os.getenv("API_BASE_URL", "https://api.prowler.com/api/v1"),
     ):
         self.base_url = base_url.rstrip("/")
         logger.info(f"Using Prowler App API base URL: {self.base_url}")
         self.mode = mode
-        self.access_token: Optional[str] = None
-        self.api_key: Optional[str] = None
+        self.access_token: str | None = None
+        self.api_key: str | None = None
 
         if mode == "stdio":  # STDIO mode
             self.api_key = os.getenv("PROWLER_APP_API_KEY")
@@ -32,7 +32,7 @@ class ProwlerAppAuth:
             if not self.api_key.startswith("pk_"):
                 raise ValueError("Prowler App API key format is incorrect")
 
-    def _parse_jwt(self, token: str) -> Optional[Dict]:
+    def _parse_jwt(self, token: str) -> dict | None:
         """Parse JWT token and return payload
 
         Args:
@@ -68,7 +68,7 @@ class ProwlerAppAuth:
     async def authenticate(self) -> str:
         """Authenticate and return token (API key for STDIO, API key or JWT for HTTP)."""
         if self.mode == "http":
-            headers = get_http_headers()
+            headers = get_http_headers(include={"authorization"})
             authorization_header = headers.get("authorization", None)
 
             if not authorization_header:
@@ -109,7 +109,7 @@ class ProwlerAppAuth:
         else:
             return await self.authenticate()
 
-    def get_headers(self, token: str) -> Dict[str, str]:
+    def get_headers(self, token: str) -> dict[str, str]:
         """Get headers for API requests with authentication."""
         if token.startswith("pk_"):
             authorization_header = f"Api-Key {token}"

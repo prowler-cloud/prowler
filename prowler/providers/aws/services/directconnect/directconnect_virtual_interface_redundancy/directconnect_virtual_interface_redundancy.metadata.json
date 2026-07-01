@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "network",
   "Description": "**Direct Connect gateways** and **virtual private gateways** are assessed for **interface redundancy**: multiple virtual interfaces (`VIFs`) distributed across more than one **Direct Connect connection**.\n\n*Gateways with only one VIF or with all VIFs on a single connection are identified.*",
   "Risk": "Missing connection diversity undermines **availability**. A single device, fiber, or location failure can cut on-prem to VPC connectivity, causing **outages**, **packet loss**, or routing blackholes. Fallback to internet VPN can add latency and throttle throughput, delaying recovery and impacting operations.",
   "RelatedUrl": "",

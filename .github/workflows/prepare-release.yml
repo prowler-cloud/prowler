@@ -17,6 +17,8 @@ concurrency:
 env:
   PROWLER_VERSION: ${{ inputs.prowler_version }}
 
+permissions: {}
+
 jobs:
   prepare-release:
     if: github.event_name == 'workflow_dispatch' && github.repository == 'prowler-cloud/prowler'
@@ -26,21 +28,23 @@ jobs:
       contents: write
       pull-requests: write
     steps:
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+      with:
+        egress-policy: audit
+
     - name: Checkout repository
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         fetch-depth: 0
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
+        persist-credentials: false
 
-    - name: Set up Python
-      uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+    - name: Setup Python with uv
+      uses: ./.github/actions/setup-python-uv
       with:
         python-version: '3.12'
-
-    - name: Install Poetry
-      run: |
-        python3 -m pip install --user poetry==2.1.1
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+        install-dependencies: 'false'
 
     - name: Configure Git
       run: |
@@ -49,7 +53,7 @@ jobs:
 
     - name: Parse version and determine branch
       run: |
-        # Validate version format (reusing pattern from sdk-bump-version.yml)
+        # Validate version format (reusing pattern from bump-version.yml)
         if [[ $PROWLER_VERSION =~ ^([0-9]+)\.([0-9]+)\.([0-9]+)$ ]]; then
           MAJOR_VERSION=${BASH_REMATCH[1]}
           MINOR_VERSION=${BASH_REMATCH[2]}
@@ -295,17 +299,6 @@ jobs:
         fi
         echo "✓ api/pyproject.toml prowler dependency: $CURRENT_PROWLER_REF"
 
-    - name: Verify API version in api/src/backend/api/v1/views.py
-      if: ${{ env.HAS_API_CHANGES == 'true' }}
-      run: |
-        CURRENT_API_VERSION=$(grep 'spectacular_settings.VERSION = ' api/src/backend/api/v1/views.py | sed -E 's/.*spectacular_settings.VERSION = "([^"]+)".*/\1/' | tr -d '[:space:]')
-        API_VERSION_TRIMMED=$(echo "$API_VERSION" | tr -d '[:space:]')
-        if [ "$CURRENT_API_VERSION" != "$API_VERSION_TRIMMED" ]; then
-          echo "ERROR: API version mismatch in views.py (expected: '$API_VERSION_TRIMMED', found: '$CURRENT_API_VERSION')"
-          exit 1
-        fi
-        echo "✓ api/src/backend/api/v1/views.py version: $CURRENT_API_VERSION"
-
     - name: Verify API version in api/src/backend/api/specs/v1.yaml
       if: ${{ env.HAS_API_CHANGES == 'true' }}
       run: |
@@ -334,17 +327,18 @@ jobs:
           exit 1
         fi
 
-        # Update poetry lock file
-        echo "Updating poetry.lock file..."
+        # Update uv lock file
+        echo "Updating uv.lock file..."
+        pip install --no-cache-dir uv==0.11.14
         cd api
-        poetry lock
+        uv lock
         cd ..
 
         echo "✓ Prepared prowler dependency update to: $UPDATED_PROWLER_REF"
 
     - name: Create PR for API dependency update
       if: ${{ env.PATCH_VERSION == '0' }}
-      uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+      uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
       with:
         token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
         commit-message: 'chore(api): update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}'
@@ -352,7 +346,7 @@ jobs:
         base: ${{ env.BRANCH_NAME }}
         add-paths: |
           api/pyproject.toml
-          api/poetry.lock
+          api/uv.lock
         title: "chore(api): Update prowler dependency to ${{ env.BRANCH_NAME }} for release ${{ env.PROWLER_VERSION }}"
         body: |
           ### Description
@@ -361,7 +355,7 @@ jobs:
 
           **Changes:**
           - Updates `api/pyproject.toml` prowler dependency from `@master` to `@${{ env.BRANCH_NAME }}`
-          - Updates `api/poetry.lock` file with resolved dependencies
+          - Updates `api/uv.lock` file with resolved dependencies
 
           This PR should be merged into the `${{ env.BRANCH_NAME }}` release branch.
 
@@ -374,7 +368,7 @@ jobs:
           no-changelog
 
     - name: Create draft release
-      uses: softprops/action-gh-release@6da8fa9354ddfdc4aeace5fc48d7f679b5214090 # v2.4.1
+      uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # v2.6.1
       with:
         tag_name: ${{ env.PROWLER_VERSION }}
         name: Prowler ${{ env.PROWLER_VERSION }}

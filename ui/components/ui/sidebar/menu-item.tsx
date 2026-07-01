@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { cn } from "@/lib/utils";
 import { IconComponent } from "@/types";
 
@@ -20,6 +21,7 @@ interface MenuItemProps {
   target?: string;
   tooltip?: string;
   isOpen: boolean;
+  highlight?: boolean;
 }
 
 export const MenuItem = ({
@@ -30,9 +32,13 @@ export const MenuItem = ({
   target,
   tooltip,
   isOpen,
+  highlight,
 }: MenuItemProps) => {
   const pathname = usePathname();
-  const isActive = active !== undefined ? active : pathname.startsWith(href);
+  // Extract only the pathname from href (without query parameters) for comparison
+  const hrefPathname = href.split("?")[0];
+  const isActive =
+    active !== undefined ? active : pathname.startsWith(hrefPathname);
 
   // Show tooltip always for Prowler Hub, or when sidebar is collapsed
   const showTooltip = label === "Prowler Hub" ? !!tooltip : !isOpen;
@@ -52,7 +58,19 @@ export const MenuItem = ({
               <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />
               </span>
-              {isOpen && <p className="max-w-[200px] truncate">{label}</p>}
+              {isOpen && (
+                <p className="flex max-w-[200px] items-center truncate">
+                  <span>{label}</span>
+                  {highlight && (
+                    <MenuFeatureBadge
+                      label="New"
+                      variant="new"
+                      size="sm"
+                      className="ml-2"
+                    />
+                  )}
+                </p>
+              )}
             </div>
           </Link>
         </Button>

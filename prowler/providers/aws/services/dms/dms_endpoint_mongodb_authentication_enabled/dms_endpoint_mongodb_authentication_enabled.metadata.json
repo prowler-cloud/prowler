@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsEndpoint",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS MongoDB endpoints** use an authentication mechanism. Configuration expects `AuthType` not `no` (e.g., `password`) with an `authMechanism` such as `scram_sha_1` or `mongodb_cr`.",
   "Risk": "Without authentication, unauthenticated connections can access the source, degrading **confidentiality** and **integrity**. Adversaries could read or modify migrated documents, hijack CDC, inject data, or exfiltrate records during replication.",
   "RelatedUrl": "",

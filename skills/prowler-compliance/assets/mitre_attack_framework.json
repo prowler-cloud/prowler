@@ -1,0 +1,142 @@
+{
+  "Framework": "MITRE-ATTACK",
+  "Name": "MITRE ATT&CK compliance framework",
+  "Version": "",
+  "Provider": "AWS",
+  "Description": "MITRE ATT&CK is a globally-accessible knowledge base of adversary tactics and techniques based on real-world observations. The ATT&CK knowledge base is used as a foundation for the development of specific threat models and methodologies in the private sector, in government, and in the cybersecurity product and service community.",
+  "Requirements": [
+    {
+      "Name": "Exploit Public-Facing Application",
+      "Id": "T1190",
+      "Tactics": [
+        "Initial Access"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "Containers",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may attempt to exploit a weakness in an Internet-facing host or system to initially access a network. The weakness in the system can be a software bug, a temporary glitch, or a misconfiguration.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
+      "Checks": [
+        "guardduty_is_enabled",
+        "inspector2_is_enabled",
+        "securityhub_enabled",
+        "elbv2_waf_acl_attached",
+        "awslambda_function_not_publicly_accessible",
+        "ec2_instance_public_ip"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "Amazon GuardDuty",
+          "Category": "Detect",
+          "Value": "Minimal",
+          "Comment": "GuardDuty can detect when vulnerable publicly facing resources are leveraged to capture data not intended to be viewable."
+        },
+        {
+          "AWSService": "AWS Web Application Firewall",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "AWS WAF protects public-facing applications against vulnerabilities including OWASP Top 10 via managed rule sets."
+        },
+        {
+          "AWSService": "Amazon Inspector",
+          "Category": "Protect",
+          "Value": "Partial",
+          "Comment": "Amazon Inspector can detect known vulnerabilities on various Windows and Linux endpoints."
+        }
+      ]
+    },
+    {
+      "Name": "Valid Accounts",
+      "Id": "T1078",
+      "Tactics": [
+        "Defense Evasion",
+        "Persistence",
+        "Privilege Escalation",
+        "Initial Access"
+      ],
+      "SubTechniques": [
+        "T1078.001",
+        "T1078.002",
+        "T1078.003",
+        "T1078.004"
+      ],
+      "Platforms": [
+        "Azure AD",
+        "Containers",
+        "Google Workspace",
+        "IaaS",
+        "Linux",
+        "Network",
+        "Office 365",
+        "SaaS",
+        "Windows",
+        "macOS"
+      ],
+      "Description": "Adversaries may obtain and abuse credentials of existing accounts as a means of gaining Initial Access, Persistence, Privilege Escalation, or Defense Evasion.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1078/",
+      "Checks": [
+        "iam_root_mfa_enabled",
+        "iam_user_mfa_enabled_console_access",
+        "iam_no_root_access_key",
+        "iam_rotate_access_key_90_days",
+        "iam_user_accesskey_unused",
+        "cloudtrail_multi_region_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "AWS IAM",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "IAM MFA and access key rotation help prevent unauthorized access with valid credentials."
+        },
+        {
+          "AWSService": "AWS CloudTrail",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "CloudTrail logs all API calls, enabling detection of unauthorized account usage."
+        }
+      ]
+    },
+    {
+      "Name": "Data from Cloud Storage",
+      "Id": "T1530",
+      "Tactics": [
+        "Collection"
+      ],
+      "SubTechniques": [],
+      "Platforms": [
+        "IaaS",
+        "SaaS"
+      ],
+      "Description": "Adversaries may access data from improperly secured cloud storage. Many cloud service providers offer solutions for online data object storage.",
+      "TechniqueURL": "https://attack.mitre.org/techniques/T1530/",
+      "Checks": [
+        "s3_bucket_public_access",
+        "s3_bucket_policy_public_write_access",
+        "s3_bucket_acl_prohibited",
+        "s3_bucket_default_encryption",
+        "macie_is_enabled"
+      ],
+      "Attributes": [
+        {
+          "AWSService": "Amazon S3",
+          "Category": "Protect",
+          "Value": "Significant",
+          "Comment": "S3 bucket policies and ACLs can prevent public access to sensitive data."
+        },
+        {
+          "AWSService": "Amazon Macie",
+          "Category": "Detect",
+          "Value": "Significant",
+          "Comment": "Macie can detect and alert on sensitive data exposure in S3 buckets."
+        }
+      ]
+    }
+  ]
+}

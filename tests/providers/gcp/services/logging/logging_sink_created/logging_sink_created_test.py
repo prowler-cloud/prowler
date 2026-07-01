@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.gcp.models import GCPProject
+from prowler.providers.gcp.models import GCPOrganization, GCPProject
 from tests.providers.gcp.gcp_fixtures import (
     GCP_EU1_LOCATION,
     GCP_PROJECT_ID,
@@ -268,6 +268,7 @@ class Test_logging_sink_created:
             sink.name = None
             sink.filter = "all"
             sink.project_id = GCP_PROJECT_ID
+            sink.include_children = False
 
             logging_client.project_ids = [GCP_PROJECT_ID]
             logging_client.region = GCP_EU1_LOCATION
@@ -311,9 +312,10 @@ class Test_logging_sink_created:
             )
 
             # Create a MagicMock sink object without name attribute
-            sink = MagicMock(spec=["filter", "project_id"])
+            sink = MagicMock(spec=["filter", "project_id", "include_children"])
             sink.filter = "all"
             sink.project_id = GCP_PROJECT_ID
+            sink.include_children = False
 
             logging_client.project_ids = [GCP_PROJECT_ID]
             logging_client.region = GCP_EU1_LOCATION
@@ -336,3 +338,175 @@ class Test_logging_sink_created:
             assert result[0].resource_id == "unknown"
             assert result[0].project_id == GCP_PROJECT_ID
             assert result[0].location == GCP_EU1_LOCATION
+
+    def test_org_level_sink_with_include_children_passes(self):
+        """Projects covered by an org-level sink with includeChildren=True should PASS."""
+        logging_client = MagicMock()
+        org_id = "111222333"
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_service import Sink
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = [
+                Sink(
+                    name="org-sink",
+                    destination="storage.googleapis.com/org-bucket",
+                    filter="all",
+                    project_id=f"organizations/{org_id}",
+                    include_children=True,
+                )
+            ]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                    organization=GCPOrganization(
+                        id=org_id, name=f"organizations/{org_id}"
+                    ),
+                )
+            }
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Sink org-sink at organization level is exporting copies of all the log entries in project {GCP_PROJECT_ID}."
+            )
+            assert result[0].resource_id == "org-sink"
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_EU1_LOCATION
+
+    def test_org_level_sink_without_include_children_fails(self):
+        """Projects NOT covered by includeChildren should still FAIL if no direct project sink."""
+        logging_client = MagicMock()
+        org_id = "111222333"
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_service import Sink
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = [
+                Sink(
+                    name="org-sink-no-children",
+                    destination="storage.googleapis.com/org-bucket",
+                    filter="all",
+                    project_id=f"organizations/{org_id}",
+                    include_children=False,
+                )
+            ]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                    organization=GCPOrganization(
+                        id=org_id, name=f"organizations/{org_id}"
+                    ),
+                )
+            }
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert (
+                result[0].status_extended
+                == f"There are no logging sinks to export copies of all the log entries in project {GCP_PROJECT_ID}."
+            )
+            assert result[0].resource_id == GCP_PROJECT_ID
+            assert result[0].project_id == GCP_PROJECT_ID
+
+    def test_project_sink_takes_precedence_over_org_sink(self):
+        """A direct project sink should be reported even when an org-level sink also covers the project."""
+        logging_client = MagicMock()
+        org_id = "111222333"
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            patch(
+                "prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created.logging_client",
+                new=logging_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.logging.logging_service import Sink
+            from prowler.providers.gcp.services.logging.logging_sink_created.logging_sink_created import (
+                logging_sink_created,
+            )
+
+            logging_client.project_ids = [GCP_PROJECT_ID]
+            logging_client.region = GCP_EU1_LOCATION
+            logging_client.sinks = [
+                Sink(
+                    name="project-sink",
+                    destination="storage.googleapis.com/project-bucket",
+                    filter="all",
+                    project_id=GCP_PROJECT_ID,
+                ),
+                Sink(
+                    name="org-sink",
+                    destination="storage.googleapis.com/org-bucket",
+                    filter="all",
+                    project_id=f"organizations/{org_id}",
+                    include_children=True,
+                ),
+            ]
+            logging_client.projects = {
+                GCP_PROJECT_ID: GCPProject(
+                    id=GCP_PROJECT_ID,
+                    number="123456789012",
+                    name="test",
+                    labels={},
+                    lifecycle_state="ACTIVE",
+                    organization=GCPOrganization(
+                        id=org_id, name=f"organizations/{org_id}"
+                    ),
+                )
+            }
+
+            check = logging_sink_created()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Sink project-sink is enabled exporting copies of all the log entries in project {GCP_PROJECT_ID}."
+            )
+            assert result[0].resource_id == "project-sink"
+            assert result[0].project_id == GCP_PROJECT_ID

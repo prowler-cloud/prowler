@@ -15,7 +15,7 @@ orig = botocore.client.BaseClient._make_api_call
 
 class Test_guardduty_lambda_protection_enabled:
     def test_no_detectors(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -45,7 +45,7 @@ class Test_guardduty_lambda_protection_enabled:
 
         guardduty_client.create_detector(Enable=False)
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -78,7 +78,7 @@ class Test_guardduty_lambda_protection_enabled:
             Features=[{"Name": "LAMBDA_NETWORK_LOGS", "Status": "ENABLED"}],
         )["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -123,7 +123,7 @@ class Test_guardduty_lambda_protection_enabled:
             Features=[{"Name": "LAMBDA_NETWORK_LOGS", "Status": "DISABLED"}],
         )["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 

@@ -1,5 +1,9 @@
 import { RolePermissionAttributes } from "@/types/users";
 
+/**
+ * Check if a user is owner of any organization and has manage_account permission.
+ * Currently unused — kept as a utility for future use outside the profile page.
+ */
 export const isUserOwnerAndHasManageAccount = (
   roles: any[],
   memberships: any[],
@@ -26,6 +30,8 @@ export const isUserOwnerAndHasManageAccount = (
  * @returns The permissions for the user role
  */
 export const getRolePermissions = (attributes: RolePermissionAttributes) => {
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
   const permissions = [
     {
       key: "manage_users",
@@ -53,6 +59,15 @@ export const getRolePermissions = (attributes: RolePermissionAttributes) => {
       label: "Manage Integrations",
       enabled: attributes.manage_integrations,
     },
+    ...(isCloudEnvironment
+      ? [
+          {
+            key: "manage_alerts",
+            label: "Manage Alerts",
+            enabled: attributes.manage_alerts ?? false,
+          },
+        ]
+      : []),
     {
       key: "unlimited_visibility",
       label: "Unlimited Visibility",

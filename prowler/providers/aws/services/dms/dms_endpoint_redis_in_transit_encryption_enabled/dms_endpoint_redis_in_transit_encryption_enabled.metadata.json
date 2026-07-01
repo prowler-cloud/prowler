@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsEndpoint",
+  "ResourceGroup": "database",
   "Description": "**DMS Redis OSS endpoints** are assessed for the presence of **TLS** in their endpoint settings, such as `ssl-encryption`, indicating encrypted connections between the DMS replication instance and Redis.",
   "Risk": "Without **TLS**, traffic between DMS and Redis can be intercepted or altered, compromising **confidentiality** and **integrity**.\n\nAttackers can perform **man-in-the-middle** interception, steal auth tokens, and inject or corrupt migrated data.",
   "RelatedUrl": "",

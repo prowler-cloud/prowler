@@ -127,9 +127,9 @@ export const ComplianceAccordionTitle = ({
           size="sm"
           placement="top"
         >
-          <div className="text-default-600 min-w-[32px] text-center text-xs font-medium">
+          <span className="text-default-600 min-w-[32px] text-center text-xs font-medium">
             {total > 0 ? total : "—"}
-          </div>
+          </span>
         </Tooltip>
       </div>
     </div>

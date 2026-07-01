@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail trails** include **S3 object-level data events** for **write (or all) operations** across **all current and future buckets**, via classic or advanced selectors. This records actions like `PutObject`, `DeleteObject`, and multipart uploads at the object level.",
   "Risk": "Without object-level write logging, unauthorized or accidental changes and deletions can go unobserved, undermining data **integrity** and **availability**. Forensics lose visibility into who modified or removed objects, hindering detection of ransomware, rogue automation, or insider tampering.",
   "RelatedUrl": "",

@@ -35,6 +35,32 @@
         "awslambda_function_not_publicly_accessible",
         "ec2_instance_public_ip"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS CloudEndure Disaster Recovery",
@@ -169,6 +195,9 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_expired_server_certificates_stored",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_root_access_key",
@@ -196,6 +225,26 @@
         "organizations_delegated_administrators",
         "organizations_scp_check_deny_regions",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -345,6 +394,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Config",
@@ -389,6 +446,26 @@
         "iam_user_mfa_enabled_console_access",
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -440,6 +517,14 @@
       "TechniqueURL": "https://attack.mitre.org/techniques/T1136/",
       "Checks": [
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -554,6 +639,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Config",
@@ -630,6 +723,26 @@
         "guardduty_is_enabled",
         "inspector2_is_enabled",
         "inspector2_active_findings_exist"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -818,6 +931,26 @@
         "inspector2_is_enabled",
         "inspector2_active_findings_exist"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Config",
@@ -981,6 +1114,14 @@
         "cloudfront_distributions_https_enabled",
         "s3_bucket_secure_transport_policy"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS CloudWatch",
@@ -1053,6 +1194,14 @@
         "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
         "ssm_document_secrets",
         "secretsmanager_automatic_rotation_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1140,6 +1289,14 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Network Firewall",
@@ -1215,6 +1372,14 @@
         "s3_bucket_default_encryption",
         "rds_instance_storage_encrypted"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Config",
@@ -1260,6 +1425,20 @@
         "networkfirewall_in_all_vpc",
         "securityhub_enabled",
         "macie_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1438,6 +1617,20 @@
         "s3_bucket_object_versioning",
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS CloudEndure Disaster Recovery",
@@ -1515,6 +1708,20 @@
         "efs_have_backup_enabled",
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS CloudEndure Disaster Recovery",
@@ -1562,6 +1769,20 @@
       "Checks": [
         "drs_job_exist",
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1636,6 +1857,14 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Shield",
@@ -1682,6 +1911,14 @@
       "Checks": [
         "drs_job_exist",
         "rds_instance_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1739,6 +1976,20 @@
         "cloudwatch_log_metric_filter_security_group_changes",
         "cloudwatch_log_metric_filter_sign_in_without_mfa",
         "cloudwatch_log_metric_filter_unauthorized_api_calls"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1815,6 +2066,20 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1907,6 +2172,20 @@
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "AWS Organizations",
@@ -1990,6 +2269,14 @@
       "Checks": [
         "guardduty_is_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "AWSService": "Amazon GuardDuty",
@@ -2067,6 +2354,14 @@
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

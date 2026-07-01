@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEcrRepository",
+  "ResourceGroup": "container",
   "Description": "**Amazon ECR repositories** are assessed on the most recent pushed image to confirm a vulnerability scan exists, completed successfully, and that no results meet or exceed the configured minimum severity (e.g., `CRITICAL`, `HIGH`, `MEDIUM`).",
   "Risk": "Unscanned or high-severity findings in container images expose workloads to exploitation of known CVEs.\n\nAttackers can gain code execution, exfiltrate data, alter services, or disrupt operations, enabling **lateral movement** and supply-chain compromise-impacting **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

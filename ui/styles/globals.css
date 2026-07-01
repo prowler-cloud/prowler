@@ -1,6 +1,10 @@
 @import "tailwindcss";
+/* All @import rules must precede @config/@source — a late @import is invalid
+ * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
+@import "./tours.css";
+
 @config "../tailwind.config.js";
-@source "../node_modules/streamdown/dist/index.js";
+@source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -28,6 +32,7 @@
   --bg-input-primary: var(--color-white);
   --border-input-primary: var(--color-slate-400);
   --border-input-primary-press: var(--color-slate-700);
+  --border-input-primary-pressed: #a7f3d0;
   --border-input-primary-fill: var(--color-slate-500);
 
   /* Text Colors */
@@ -54,6 +59,7 @@
   --bg-pass-primary: var(--color-emerald-400);
   --bg-pass-secondary: var(--color-emerald-50);
   --bg-warning-primary: var(--color-orange-500);
+  --bg-warning-secondary: var(--color-orange-50);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
@@ -77,10 +83,17 @@
   --chart-dots: var(--color-neutral-200);
 
   /* Progress Bar */
-  --shadow-progress-glow: 0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+  --shadow-progress-glow:
+    0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+
+  /* Lighthouse AI */
+  --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
 }
 
-/* ===== DARK THEME ===== */
+/* ===== DARK THEME =====
+ * Editorial contrast tweaks: pure-black canvas, pure-white primary text,
+ * and one tier brighter primary border for clearer element separation.
+ */
 .dark {
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
@@ -97,35 +110,37 @@
   --bg-neutral-map: var(--color-gray-800);
 
   /* Input Colors */
-  --bg-input-primary: var(--color-neutral-900);
-  --border-input-primary: var(--color-neutral-800);
-  --border-input-primary-press: var(--color-neutral-800);
-  --border-input-primary-fill: var(--color-neutral-300);
+  --bg-input-primary: #111111;
+  --border-input-primary: var(--color-zinc-700);
+  --border-input-primary-press: var(--color-zinc-500);
+  --border-input-primary-pressed: #a7f3d0;
+  --border-input-primary-fill: var(--color-zinc-200);
 
   /* Text Colors */
-  --text-neutral-primary: var(--color-zinc-100);
-  --text-neutral-secondary: var(--color-zinc-300);
+  --text-neutral-primary: #ffffff;
+  --text-neutral-secondary: var(--color-zinc-200);
   --text-neutral-tertiary: var(--color-zinc-400);
-  --text-error-primary: var(--color-red-500);
-  --text-warning-primary: var(--color-orange-500);
+  --text-error-primary: var(--color-red-400);
+  --text-warning-primary: var(--color-orange-400);
   --text-success-primary: var(--color-green-500);
 
   /* Border Colors */
   --border-error-primary: var(--color-red-400);
-  --border-neutral-primary: var(--color-zinc-800);
-  --border-neutral-secondary: var(--color-zinc-900);
-  --border-neutral-tertiary: var(--color-zinc-900);
+  --border-neutral-primary: var(--color-zinc-700);
+  --border-neutral-secondary: var(--color-zinc-800);
+  --border-neutral-tertiary: var(--color-zinc-700);
   --border-tag-primary: var(--color-slate-700);
-  --border-data-emphasis: rgba(255, 255, 255, 0.1);
+  --border-data-emphasis: rgba(255, 255, 255, 0.14);
 
   /* Background Colors */
-  --bg-neutral-primary: var(--color-zinc-950);
+  --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
   --bg-pass-primary: var(--color-green-400);
   --bg-pass-secondary: var(--color-emerald-900);
   --bg-warning-primary: var(--color-orange-400);
+  --bg-warning-secondary: var(--color-orange-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
 
@@ -149,7 +164,8 @@
   --chart-dots: var(--text-neutral-primary);
 
   /* Progress Bar */
-  --shadow-progress-glow: 0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+  --shadow-progress-glow:
+    0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -183,6 +199,7 @@
   --color-bg-input-primary: var(--bg-input-primary);
   --color-border-input-primary: var(--border-input-primary);
   --color-border-input-primary-press: var(--border-input-primary-press);
+  --color-border-input-primary-pressed: var(--border-input-primary-pressed);
   --color-border-input-primary-fill: var(--border-input-primary-fill);
 
   /* Neutral Map Colors */
@@ -215,6 +232,7 @@
   --color-bg-pass: var(--bg-pass-primary);
   --color-bg-pass-secondary: var(--bg-pass-secondary);
   --color-bg-warning: var(--bg-warning-primary);
+  --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
 
@@ -233,6 +251,66 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+
+  /* Lighthouse chat markdown styles */
+  .lighthouse-markdown ul,
+  .lighthouse-markdown ol {
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .lighthouse-markdown li {
+    margin-top: 0.375rem;
+    margin-bottom: 0.375rem;
+  }
+
+  .lighthouse-markdown li > p {
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Nested list styling - different bullets for different levels */
+  .lighthouse-markdown > ul {
+    list-style-type: disc !important;
+  }
+
+  .lighthouse-markdown > ul > li > ul,
+  .lighthouse-markdown ul ul {
+    list-style-type: "◦ " !important;
+    margin-top: 0.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .lighthouse-markdown > ul > li > ul > li > ul,
+  .lighthouse-markdown ul ul ul {
+    list-style-type: "▪ " !important;
+  }
+
+  .lighthouse-markdown > ul > li > ul > li > ul > li > ul,
+  .lighthouse-markdown ul ul ul ul {
+    list-style-type: "- " !important;
+  }
+
+  /* Nested lists indentation */
+  .lighthouse-markdown ul ul,
+  .lighthouse-markdown ol ol,
+  .lighthouse-markdown ul ol,
+  .lighthouse-markdown ol ul {
+    padding-left: 1.25rem;
+  }
+
+  .lighthouse-markdown h2,
+  .lighthouse-markdown h3,
+  .lighthouse-markdown h4 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .lighthouse-markdown p + ul,
+  .lighthouse-markdown p + ol {
+    margin-top: 0.25rem;
   }
 }
 
@@ -261,49 +339,65 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
-  /* Minimal scrollbar styles */
-  .minimal-scrollbar {
+  /* Minimal scrollbar styles
+   *
+   * The descendant selectors target `.cm-scroller` so that CodeMirror
+   * editors which receive `.minimal-scrollbar` on their `.cm-editor`
+   * wrapper also style their inner scroller (the element that actually
+   * overflows when the editor fills a bounded container).
+   */
+  .minimal-scrollbar,
+  .minimal-scrollbar .cm-scroller {
     scrollbar-width: thin; /* Firefox */
     scrollbar-color: rgb(203 213 225 / 0.5) transparent; /* thumb and track for Firefox */
   }
 
-  .minimal-scrollbar:hover {
+  .minimal-scrollbar:hover,
+  .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(148 163 184 / 0.7) transparent; /* darker thumb on hover */
   }
 
   /* Webkit browsers (Chrome, Safari, Edge) */
-  .minimal-scrollbar::-webkit-scrollbar {
+  .minimal-scrollbar::-webkit-scrollbar,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar {
     width: 6px;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-track {
+  .minimal-scrollbar::-webkit-scrollbar-track,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(203 213 225 / 0.5);
     border-radius: 3px;
     transition: background-color 0.2s ease;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(148 163 184 / 0.7);
   }
 
   /* Dark mode */
-  .dark .minimal-scrollbar {
+  .dark .minimal-scrollbar,
+  .dark .minimal-scrollbar .cm-scroller {
     scrollbar-color: rgb(71 85 105 / 0.5) transparent;
   }
 
-  .dark .minimal-scrollbar:hover {
+  .dark .minimal-scrollbar:hover,
+  .dark .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(100 116 139 / 0.7) transparent;
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(71 85 105 / 0.5);
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(100 116 139 / 0.7);
   }
 
@@ -326,5 +420,12 @@
   /* Global base styles */
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Override vaul's injected user-select: none to allow text selection in drawers */
+@media (hover: hover) and (pointer: fine) {
+  [data-vaul-drawer][data-vaul-drawer] {
+    user-select: text;
   }
 }

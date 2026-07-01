@@ -6,15 +6,16 @@ By default Prowler is able to scan the following AWS partitions:
 
 - Commercial: `aws`
 - China: `aws-cn`
+- European Sovereign Cloud: `aws-eusc`
 - GovCloud (US): `aws-us-gov`
 
 <Note>
 To check the available regions for each partition and service, refer to: [aws\_regions\_by\_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json)
 
 </Note>
-## Scanning AWS China and GovCloud Partitions in Prowler
+## Scanning AWS China, European Sovereign Cloud and GovCloud Partitions in Prowler
 
-When scanning the China (`aws-cn`) or GovCloud (`aws-us-gov`), ensure one of the following:
+When scanning the China (`aws-cn`), European Sovereign Cloud (`aws-eusc`) or GovCloud (`aws-us-gov`) partitions, ensure one of the following:
 
 - Your AWS credentials include a valid region within the desired partition.
 
@@ -31,6 +32,41 @@ To scan a particular AWS region with Prowler, use:
 ```console
 prowler aws -f/--region eu-west-1 us-east-1
 ```
+
+### Excluding Specific Regions
+
+To scan all supported AWS regions except a specific subset, use the `--excluded-region` flag:
+
+```console
+prowler aws --excluded-region eu-west-1 me-south-1
+```
+
+You can also configure the exclusion list with the `PROWLER_AWS_DISALLOWED_REGIONS` environment variable as a comma-separated list:
+
+```console
+export PROWLER_AWS_DISALLOWED_REGIONS="eu-west-1,me-south-1"
+prowler aws
+```
+
+Or with the AWS provider configuration in `config.yaml`:
+
+```yaml
+aws:
+  disallowed_regions:
+    - eu-west-1
+    - me-south-1
+```
+
+When more than one source is set, precedence is:
+
+1. `--excluded-region`
+2. `PROWLER_AWS_DISALLOWED_REGIONS`
+3. `aws.disallowed_regions` in `config.yaml`
+
+<Note>
+For self-hosted App or API-triggered scans, set `PROWLER_AWS_DISALLOWED_REGIONS` in the runtime environment of the backend scan containers such as `api` and `worker`. The `ui` container does not enforce AWS region selection.
+
+</Note>
 
 ### AWS Credentials Configuration
 
@@ -84,6 +120,29 @@ To scan an account in the AWS GovCloud (US) partition (`aws-us-gov`):
 With this configuration, all partition regions will be scanned without needing the `-f/--region` flag
 
 </Note>
+### AWS European Sovereign Cloud
+
+To scan an account in the AWS European Sovereign Cloud partition (`aws-eusc`):
+
+- By using the `-f/--region` flag:
+
+    ```
+    prowler aws --region eusc-de-east-1
+    ```
+
+- By using the region configured in your AWS profile at `~/.aws/credentials` or `~/.aws/config`:
+
+    ```
+    [default]
+    aws_access_key_id = XXXXXXXXXXXXXXXXXXX
+    aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+    region = eusc-de-east-1
+    ```
+
+<Note>
+With this configuration, all partition regions will be scanned without needing the `-f/--region` flag
+
+</Note>
 ### AWS ISO (US \& Europe)
 
 The AWS ISO partitions—commonly referred to as "secret partitions"—are air-gapped from the Internet, and Prowler does not have a built-in way to scan them. To audit an AWS ISO partition, manually update [aws\_regions\_by\_service.json](https://github.com/prowler-cloud/prowler/blob/master/prowler/providers/aws/aws_regions_by_service.json) to include the partition, region, and services. For example:
@@ -98,6 +157,9 @@ The AWS ISO partitions—commonly referred to as "secret partitions"—are air-g
     "aws-cn": [
         "cn-north-1",
         "cn-northwest-1"
+    ],
+    "aws-eusc": [
+        "eusc-de-east-1"
     ],
     "aws-us-gov": [
         "us-gov-east-1",

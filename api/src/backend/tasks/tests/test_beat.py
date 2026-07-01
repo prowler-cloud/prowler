@@ -2,11 +2,10 @@ import json
 from unittest.mock import patch
 
 import pytest
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from tasks.beat import schedule_provider_scan
-
 from api.exceptions import ConflictException
 from api.models import Scan
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from tasks.beat import schedule_provider_scan
 
 
 @pytest.mark.django_db
@@ -28,6 +27,7 @@ class TestScheduleProviderScan:
                     "tenant_id": str(provider_instance.tenant_id),
                     "provider_id": str(provider_instance.id),
                 },
+                countdown=5,
             )
 
             task_name = f"scan-perform-scheduled-{provider_instance.id}"

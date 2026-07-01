@@ -5,9 +5,9 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
-import { CustomAlertModal } from "@/components/ui/custom/custom-alert-modal";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { Form, FormButtons } from "@/components/ui/form";
 
@@ -86,8 +86,8 @@ export const CreateApiKeyModal = ({
   };
 
   return (
-    <CustomAlertModal
-      isOpen={isOpen}
+    <Modal
+      open={isOpen}
       onOpenChange={(open) => !open && handleClose()}
       title="Create API Key"
       size="lg"
@@ -99,7 +99,7 @@ export const CreateApiKeyModal = ({
         >
           <p className="text-xs text-gray-500">
             Need help configuring API Keys?{" "}
-            <CustomLink href="https://docs.prowler.com/user-guide/providers/prowler-app-api-keys">
+            <CustomLink href="https://docs.prowler.com/user-guide/tutorials/prowler-app-api-keys">
               Read the docs
             </CustomLink>
           </p>
@@ -139,6 +139,6 @@ export const CreateApiKeyModal = ({
           />
         </form>
       </Form>
-    </CustomAlertModal>
+    </Modal>
   );
 };

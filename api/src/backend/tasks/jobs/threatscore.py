@@ -1,13 +1,12 @@
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Provider, StatusChoices
 from celery.utils.log import get_task_logger
+from prowler.lib.check.compliance_models import Compliance
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _calculate_requirements_data_from_statistics,
 )
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Provider, StatusChoices
-from prowler.lib.check.compliance_models import Compliance
 
 logger = get_task_logger(__name__)
 
@@ -131,9 +130,11 @@ def compute_threatscore_metrics(
             continue
 
         m = metadata[0]
-        risk_level = getattr(m, "LevelOfRisk", 0)
-        weight = getattr(m, "Weight", 0)
+        risk_level_raw = getattr(m, "LevelOfRisk", 0)
+        weight_raw = getattr(m, "Weight", 0)
         section = getattr(m, "Section", "Unknown")
+        risk_level = int(risk_level_raw) if risk_level_raw else 0
+        weight = int(weight_raw) if weight_raw else 0
 
         # Calculate ThreatScore components using formula from UI
         rate_i = req_passed_findings / req_total_findings

@@ -106,27 +106,27 @@ def mock_generate_regional_clients(provider, service):
 class Test_DataSync_Service:
     # Test DataSync Service initialization
     def test_service(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
         assert datasync.service == "datasync"
 
     # Test DataSync clients creation
     def test_client(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
         for reg_client in datasync.regional_clients.values():
             assert reg_client.__class__.__name__ == "DataSync"
 
     # Test DataSync session
     def test__get_session__(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
         assert datasync.session.__class__.__name__ == "Session"
 
     # Test listing DataSync tasks
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_tasks(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
 
         task_arn = "arn:aws:datasync:eu-west-1:123456789012:task/task-12345678901234567"
@@ -142,7 +142,7 @@ class Test_DataSync_Service:
 
     # Test generic exception in list_tasks
     def test_list_tasks_generic_exception(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         # Mock the regional client's list_tasks method specifically
         mock_client = MagicMock()
@@ -155,7 +155,7 @@ class Test_DataSync_Service:
     # Test describing DataSync tasks with various exceptions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_describe_tasks_with_exceptions(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
 
         # Check all tasks were processed despite exceptions
@@ -183,7 +183,7 @@ class Test_DataSync_Service:
     # Test listing task tags with various exceptions
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_list_task_tags_with_exceptions(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         datasync = DataSync(aws_provider)
 
         tasks_by_name = {task.name: task for task in datasync.tasks.values()}

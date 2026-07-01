@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.network.network_service import BastionHost
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -12,6 +14,7 @@ class Test_network_bastion_host_exists:
     def test_no_bastion_hosts(self):
         network_client = mock.MagicMock
         network_client.bastion_hosts = {AZURE_SUBSCRIPTION_ID: []}
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
         with (
             mock.patch(
@@ -37,14 +40,15 @@ class Test_network_bastion_host_exists:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Bastion Host from subscription {AZURE_SUBSCRIPTION_ID} does not exist"
+                == f"Bastion Host from subscription {AZURE_SUBSCRIPTION_DISPLAY} does not exist"
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Bastion Host"
-            assert result[0].resource_id == "Bastion Host"
+            assert result[0].resource_name == AZURE_SUBSCRIPTION_ID
+            assert result[0].resource_id == f"/subscriptions/{AZURE_SUBSCRIPTION_ID}"
 
     def test_network_bastion_host_exists(self):
         network_client = mock.MagicMock
+        network_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         bastion_host_name = "Bastion Host Name"
         bastion_host_id = str(uuid4())
 
@@ -82,8 +86,8 @@ class Test_network_bastion_host_exists:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"Bastion Host from subscription {AZURE_SUBSCRIPTION_ID} available are: {bastion_host_name}"
+                == f"Bastion Host {bastion_host_name} exists in subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
-            assert result[0].resource_name == "Bastion Host"
-            assert result[0].resource_id == "Bastion Host"
+            assert result[0].resource_name == bastion_host_name
+            assert result[0].resource_id == bastion_host_id

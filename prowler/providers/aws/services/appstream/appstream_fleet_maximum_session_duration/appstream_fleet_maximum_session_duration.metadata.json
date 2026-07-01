@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**AppStream fleets** enforce a **maximum user session duration**. This finding evaluates each fleet's configured limit against a threshold-default `10 hours` (`36000` seconds)-and identifies fleets whose session duration exceeds that limit.",
   "Risk": "Overlong sessions widen the window for **session hijacking**, **lateral movement**, and **data exfiltration** if endpoints or tokens are compromised. Reduced reauthentication weakens **confidentiality** and **integrity**, and extended access can increase **costs** and resource contention.",
   "RelatedUrl": "",

@@ -168,7 +168,7 @@ export const convertToYaml = (config: string | object): string => {
       // If it's not JSON, assume it's already YAML
       return config;
     }
-  } catch (error) {
+  } catch (_error) {
     return config.toString();
   }
 };
@@ -273,3 +273,40 @@ Mutelist:
             - "*"
           Tags:
             - "Name=aws-controltower-VPC"`;
+
+export const defaultScanConfigurationYaml = `# Override Prowler's per-tenant defaults below.
+# Keep only the keys you want to change; the rest
+# use the built-in defaults from config.yaml.
+# Values are validated on save.
+
+aws:
+  mute_non_default_regions: false
+  max_unused_access_keys_days: 45
+  max_console_access_days: 45
+  max_unused_sagemaker_access_days: 90
+  max_security_group_rules: 50
+
+azure:
+  defender_attack_path_minimal_risk_level: "High"
+  php_latest_version: "8.2"
+  python_latest_version: "3.12"
+  java_latest_version: "17"
+  vm_backup_min_daily_retention_days: 7
+
+gcp:
+  mig_min_zones: 2
+  max_snapshot_age_days: 90
+  max_unused_account_days: 180
+  storage_min_retention_days: 90
+  secretmanager_max_rotation_days: 90
+
+kubernetes:
+  audit_log_maxbackup: 10
+  audit_log_maxsize: 100
+  audit_log_maxage: 30
+
+m365:
+  sign_in_frequency: 4
+  recommended_mailtips_large_audience_threshold: 25
+  audit_log_age: 90
+`;

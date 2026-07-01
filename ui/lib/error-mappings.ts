@@ -30,4 +30,20 @@ export const PROVIDER_CREDENTIALS_ERROR_MAPPING: Record<string, string> = {
     ProviderCredentialFields.SERVICE_ACCOUNT_KEY,
   [ErrorPointers.ATLAS_PUBLIC_KEY]: ProviderCredentialFields.ATLAS_PUBLIC_KEY,
   [ErrorPointers.ATLAS_PRIVATE_KEY]: ProviderCredentialFields.ATLAS_PRIVATE_KEY,
+  [ErrorPointers.CLOUDFLARE_API_TOKEN]:
+    ProviderCredentialFields.CLOUDFLARE_API_TOKEN,
+  [ErrorPointers.CLOUDFLARE_API_KEY]:
+    ProviderCredentialFields.CLOUDFLARE_API_KEY,
+  [ErrorPointers.CLOUDFLARE_API_EMAIL]:
+    ProviderCredentialFields.CLOUDFLARE_API_EMAIL,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CONTENT]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT,
+  [ErrorPointers.OPENSTACK_CLOUDS_YAML_CLOUD]:
+    ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD,
+  [ErrorPointers.GOOGLEWORKSPACE_CUSTOMER_ID]:
+    ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID,
+  [ErrorPointers.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+    ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT,
+  [ErrorPointers.GOOGLEWORKSPACE_DELEGATED_USER]:
+    ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER,
 };

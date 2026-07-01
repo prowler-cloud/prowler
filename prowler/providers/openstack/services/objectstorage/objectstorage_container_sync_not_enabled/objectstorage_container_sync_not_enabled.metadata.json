@@ -1,0 +1,37 @@
+{
+  "Provider": "openstack",
+  "CheckID": "objectstorage_container_sync_not_enabled",
+  "CheckTitle": "Object storage containers do not have container sync enabled",
+  "CheckType": [],
+  "ServiceName": "objectstorage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OS::Swift::Container",
+  "ResourceGroup": "storage",
+  "Description": "**OpenStack Swift containers** are evaluated to verify that **container sync** is not configured. Container sync replicates objects to another Swift cluster, potentially outside the organization's control. Unauthorized sync configurations can be used for data exfiltration to external clusters.",
+  "Risk": "Container sync replicates all objects to a **remote Swift cluster**. If misconfigured or set up by an attacker, sensitive data is continuously **exfiltrated** to an external location. The sync operates automatically and silently, making it difficult to detect ongoing **data theft**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.openstack.org/swift/latest/overview_container_sync.html",
+    "https://docs.openstack.org/security-guide/object-storage.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "swift post <container_name> -H 'X-Container-Sync-To:' -H 'X-Container-Sync-Key:'",
+      "NativeIaC": "",
+      "Other": "1. Identify containers with sync enabled\n2. Remove sync configuration using CLI\n3. Verify sync is disabled: `swift stat <container_name>`\n4. Review sync logs for unauthorized data transfers\n5. Investigate who configured the sync and when",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable container sync unless explicitly required for **disaster recovery**. If sync is needed, ensure the target cluster is within your organization's **trust boundary**. Monitor sync configurations for unauthorized changes. Implement **RBAC policies** to restrict who can configure container sync.",
+      "Url": "https://hub.prowler.com/check/objectstorage_container_sync_not_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Container sync is configured via X-Container-Sync-To (target URL) and X-Container-Sync-Key (shared secret) headers. The sync middleware must be enabled in the Swift pipeline for sync to function. This check flags any container with a non-empty sync_to value."
+}

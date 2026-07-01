@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { AWSCredentials } from "@/types";
 
@@ -19,7 +19,7 @@ export const AWSStaticCredentialsForm = ({
           Please provide the information for your AWS credentials.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.AWS_ACCESS_KEY_ID}
         type="password"
@@ -29,7 +29,7 @@ export const AWSStaticCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.AWS_SECRET_ACCESS_KEY}
         type="password"
@@ -39,7 +39,7 @@ export const AWSStaticCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.AWS_SESSION_TOKEN}
         type="password"

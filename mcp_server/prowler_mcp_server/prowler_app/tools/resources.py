@@ -6,13 +6,15 @@ across all providers.
 
 from typing import Any
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.resources import (
     DetailedResource,
+    ResourceEventsResponse,
     ResourcesListResponse,
     ResourcesMetadataResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class ResourcesTools(BaseTool):
@@ -121,11 +123,11 @@ class ResourcesTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest resources endpoint
-            endpoint = "/api/v1/resources/latest"
+            endpoint = "/resources/latest"
             params = {}
         else:
             # Dates provided - use historical resources endpoint
-            endpoint = "/api/v1/resources"
+            endpoint = "/resources"
             params = {
                 "filter[updated_at__gte]": date_range[0],
                 "filter[updated_at__lte]": date_range[1],
@@ -187,7 +189,7 @@ class ResourcesTools(BaseTool):
 
         1. Configuration Details:
            - metadata: Provider-specific configuration (tags, policies, encryption settings, network rules)
-           - partition: Provider-specific partition/region grouping (e.g., aws, aws-cn, aws-us-gov for AWS)
+           - partition: Provider-specific partition/region grouping (e.g., aws, aws-cn, aws-eusc, aws-us-gov for AWS)
 
         2. Temporal Tracking:
            - inserted_at: When Prowler first discovered this resource
@@ -206,9 +208,8 @@ class ResourcesTools(BaseTool):
 
         # Get API response and transform to detailed format
         api_response = await self.api_client.get(
-            f"/api/v1/resources/{resource_id}", params=params
+            f"/resources/{resource_id}", params=params
         )
-        self.logger.info(f"API response: {api_response}")
         detailed_resource = DetailedResource.from_api_response(
             api_response.get("data", {})
         )
@@ -265,13 +266,13 @@ class ResourcesTools(BaseTool):
 
         if date_range is None:
             # No dates provided - use latest metadata endpoint
-            metadata_endpoint = "/api/v1/resources/metadata/latest"
-            list_endpoint = "/api/v1/resources/latest"
+            metadata_endpoint = "/resources/metadata/latest"
+            list_endpoint = "/resources/latest"
             params = {}
         else:
             # Dates provided - use historical endpoints
-            metadata_endpoint = "/api/v1/resources/metadata"
-            list_endpoint = "/api/v1/resources"
+            metadata_endpoint = "/resources/metadata"
+            list_endpoint = "/resources"
             params = {
                 "filter[updated_at__gte]": date_range[0],
                 "filter[updated_at__lte]": date_range[1],
@@ -343,3 +344,62 @@ class ResourcesTools(BaseTool):
 
         report = "\n".join(report_lines)
         return {"report": report}
+
+    async def get_resource_events(
+        self,
+        resource_id: str = Field(
+            description="Prowler's internal UUID (v4) for the resource. Use `prowler_app_list_resources` to find the right ID, or get it from a finding's resource relationship via `prowler_app_get_finding_details`."
+        ),
+        lookback_days: int = Field(
+            default=90,
+            ge=1,
+            le=90,
+            description="How many days back to search for events. Range: 1-90. Default: 90.",
+        ),
+        page_size: int = Field(
+            default=50,
+            ge=1,
+            le=50,
+            description="Number of events to return. Range: 1-50. Default: 50.",
+        ),
+        include_read_events: bool = Field(
+            default=False,
+            description="Include read-only API calls (e.g., Describe*, Get*, List*). Default: false (write/modify events only).",
+        ),
+    ) -> dict[str, Any]:
+        """Get the timeline of cloud API actions performed on a specific resource.
+
+        IMPORTANT: Currently only available for AWS resources. Uses CloudTrail to retrieve
+        the modification history of a resource, showing who did what and when.
+
+        Each event includes:
+        - What happened: event_name (e.g., PutBucketPolicy), event_source (e.g., s3.amazonaws.com)
+        - Who did it: actor, actor_type, actor_uid
+        - From where: source_ip_address, user_agent
+        - What changed: request_data, response_data (full API payloads)
+        - Errors: error_code, error_message (if the action failed)
+
+        Use cases:
+        - Investigating security incidents (who modified this resource?)
+        - Change tracking and audit trails
+        - Understanding resource configuration drift
+        - Identifying unauthorized or unexpected modifications
+
+        Workflows:
+        1. Resource browsing: prowler_app_list_resources → find resource → this tool for event history
+        2. Incident investigation: prowler_app_get_finding_details → get resource ID from finding → this tool to identify who caused the issue, what they changed, and when
+        """
+        params = {
+            "lookback_days": lookback_days,
+            "page[size]": page_size,
+            "include_read_events": include_read_events,
+        }
+
+        clean_params = self.api_client.build_filter_params(params)
+
+        api_response = await self.api_client.get(
+            f"/resources/{resource_id}/events", params=clean_params
+        )
+        events_response = ResourceEventsResponse.from_api_response(api_response)
+
+        return events_response.model_dump()

@@ -12,7 +12,6 @@ export interface SignUpData {
 }
 
 export class SignUpPage extends BasePage {
-
   // Form inputs
   readonly nameInput: Locator;
   readonly companyInput: Locator;
@@ -39,7 +38,9 @@ export class SignUpPage extends BasePage {
 
     this.submitButton = page.getByRole("button", { name: "Sign up" });
     this.loginLink = page.getByRole("link", { name: "Log in" });
-    this.termsCheckbox = page.getByRole("checkbox", { name: /I agree with the/i });
+    this.termsCheckbox = page.getByRole("checkbox", {
+      name: /I agree with the/i,
+    });
   }
 
   async goto(): Promise<void> {
@@ -50,15 +51,17 @@ export class SignUpPage extends BasePage {
   async gotoInvite(shareUrl: string): Promise<void> {
     // Navigate to the share url
 
-    await  super.goto(shareUrl);
+    await super.goto(shareUrl);
   }
 
   async verifyPageLoaded(): Promise<void> {
-    // Verify the sign up page is loaded
-
-    await expect(this.page.getByRole("heading", { name: "Sign up" })).toBeVisible();
     await expect(this.emailInput).toBeVisible();
     await expect(this.submitButton).toBeVisible();
+  }
+
+  async verifyOnSignUpPage(): Promise<void> {
+    await expect(this.page).toHaveURL("/sign-up");
+    await expect(this.emailInput).toBeVisible();
   }
 
   async fillName(name: string): Promise<void> {
@@ -130,9 +133,7 @@ export class SignUpPage extends BasePage {
   }
 
   async verifyRedirectToLogin(): Promise<void> {
-    // Verify redirect to login page
-
-    await expect(this.page).toHaveURL("/sign-in");
+    await expect(this.page).toHaveURL(/\/sign-in/);
   }
 
   async verifyRedirectToEmailVerification(): Promise<void> {
@@ -141,5 +142,3 @@ export class SignUpPage extends BasePage {
     await expect(this.page).toHaveURL("/email-verification");
   }
 }
-
-

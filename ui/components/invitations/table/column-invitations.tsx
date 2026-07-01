@@ -77,9 +77,7 @@ export const ColumnsInvitation: ColumnDef<InvitationProps>[] = [
   },
   {
     accessorKey: "actions",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Actions" />
-    ),
+    header: () => null,
     id: "actions",
     cell: ({ row }) => {
       const roles = row.original.roles;

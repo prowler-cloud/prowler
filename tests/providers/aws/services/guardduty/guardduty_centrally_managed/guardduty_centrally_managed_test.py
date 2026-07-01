@@ -39,7 +39,7 @@ def mock_make_api_call_members_managers(self, operation_name, api_params):
 class Test_guardduty_centrally_managed:
     @mock_aws
     def test_no_detectors(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -67,7 +67,7 @@ class Test_guardduty_centrally_managed:
 
         detector_id = guardduty_client.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -112,7 +112,7 @@ class Test_guardduty_centrally_managed:
 
         detector_id = guardduty_client.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -156,7 +156,7 @@ class Test_guardduty_centrally_managed:
 
         detector_id = guardduty_client.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 

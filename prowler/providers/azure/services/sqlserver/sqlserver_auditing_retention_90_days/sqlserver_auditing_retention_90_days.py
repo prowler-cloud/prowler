@@ -6,6 +6,9 @@ class sqlserver_auditing_retention_90_days(Check):
     def execute(self) -> Check_Report_Azure:
         findings = []
         for subscription, sql_servers in sqlserver_client.sql_servers.items():
+            subscription_name = sqlserver_client.subscriptions.get(
+                subscription, subscription
+            )
             for sql_server in sql_servers:
                 report = Check_Report_Azure(
                     metadata=self.metadata(), resource=sql_server
@@ -20,14 +23,14 @@ class sqlserver_auditing_retention_90_days(Check):
                     if policy.state == "Enabled":
                         if policy.retention_days <= 90:
                             report.status = "FAIL"
-                            report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has auditing retention less than 91 days."
+                            report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has auditing retention less than 91 days."
                             has_failed = True
                         else:
                             report.status = "PASS"
-                            report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has auditing retention greater than 90 days."
+                            report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has auditing retention greater than 90 days."
                     else:
                         report.status = "FAIL"
-                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription} has auditing disabled."
+                        report.status_extended = f"SQL Server {sql_server.name} from subscription {subscription_name} ({subscription}) has auditing disabled."
                         has_failed = True
                 if has_policy:
                     findings.append(report)

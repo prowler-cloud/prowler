@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster is inspected for CloudWatch export of **audit** events. The finding indicates whether the cluster publishes `audit` logs to CloudWatch; a failed status in the report means the `audit` export is not enabled and audit records are not being forwarded to CloudWatch for centralized logging and review.",
   "Risk": "Missing **audit logs** reduces **detectability** and **accountability**: \n\n- Investigators cannot reconstruct queries, client origins, or timeline\n- Unauthorized queries, data exfiltration, or privilege misuse may go undetected\n\nThis degrades confidentiality and integrity and slows incident response.",
   "RelatedUrl": "",

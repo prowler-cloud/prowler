@@ -46,10 +46,10 @@ self_asterisk_policy = {
 
 
 class Test_eventbridge_schema_registry_cross_account_access:
-
     def test_no_schemas(self):
         schema_client = mock.MagicMock
         schema_client.registries = {}
+        schema_client.audit_config = {}
 
         with (
             mock.patch(
@@ -76,6 +76,7 @@ class Test_eventbridge_schema_registry_cross_account_access:
 
         schema_client = mock.MagicMock
         schema_client.audited_account = AWS_ACCOUNT_NUMBER
+        schema_client.audit_config = {}
         schema_client.registries = {
             test_schema_arn: Registry(
                 name=test_schema_name,
@@ -119,6 +120,7 @@ class Test_eventbridge_schema_registry_cross_account_access:
 
         schema_client = mock.MagicMock
         schema_client.audited_account = AWS_ACCOUNT_NUMBER
+        schema_client.audit_config = {}
         schema_client.registries = {
             test_schema_arn: Registry(
                 name=test_schema_name,
@@ -162,6 +164,7 @@ class Test_eventbridge_schema_registry_cross_account_access:
 
         schema_client = mock.MagicMock
         schema_client.audited_account = AWS_ACCOUNT_NUMBER
+        schema_client.audit_config = {}
         schema_client.registries = {
             test_schema_arn: Registry(
                 name=test_schema_name,

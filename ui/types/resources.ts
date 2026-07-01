@@ -10,7 +10,11 @@ export interface ResourceProps {
     service: string;
     tags: Record<string, string>;
     type: string;
+    groups: string[] | null;
     failed_findings_count: number;
+    details: string | null;
+    partition: string | null;
+    metadata: Record<string, unknown> | null;
   };
   relationships: {
     provider: {
@@ -68,7 +72,7 @@ interface ResourceItemProps {
     severity: "informational" | "low" | "medium" | "high" | "critical";
     check_id: string;
     check_metadata: CheckMetadataProps;
-    raw_result: Record<string, any>;
+    raw_result: Record<string, unknown>;
     inserted_at: string;
     updated_at: string;
     first_seen_at: string;
@@ -110,7 +114,7 @@ interface CheckMetadataProps {
   relatedto: string[];
   categories: string[];
   checktitle: string;
-  compliance: any;
+  compliance: unknown;
   relatedurl: string;
   description: string;
   remediation: {
@@ -140,4 +144,25 @@ export interface ResourceApiResponse {
   data: ResourceProps;
   included: ResourceItemProps[];
   meta: Meta;
+}
+
+export interface ResourceEventAttributes {
+  event_time: string;
+  event_name: string;
+  event_source: string;
+  actor: string;
+  actor_uid: string;
+  actor_type: string;
+  source_ip_address: string;
+  user_agent: string;
+  request_data: Record<string, unknown> | null;
+  response_data: Record<string, unknown> | null;
+  error_code: string | null;
+  error_message: string | null;
+}
+
+export interface ResourceEventProps {
+  type: "resource-events";
+  id: string;
+  attributes: ResourceEventAttributes;
 }

@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsAthenaWorkGroup",
+  "ResourceGroup": "analytics",
   "Description": "**Athena workgroups** publish **query metrics** to CloudWatch. This evaluation determines whether each workgroup has query activity logging enabled in CloudWatch.",
   "Risk": "Without CloudWatch query logging, risky or anomalous queries go unobserved, weakening **confidentiality** and **integrity**. Compromised or insider accounts can exfiltrate data and alter datasets without timely detection, hampering forensics and containment.",
   "RelatedUrl": "",

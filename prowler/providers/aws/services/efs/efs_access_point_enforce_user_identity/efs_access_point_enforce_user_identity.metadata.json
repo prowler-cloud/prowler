@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsEfsAccessPoint",
+  "ResourceGroup": "storage",
   "Description": "**Amazon EFS access points** are evaluated for a defined **POSIX user** (`uid`, `gid`, optional secondary groups). The check inspects each access point on a file system and flags those without a configured POSIX user identity.",
   "Risk": "Without enforced **POSIX identity**, NFS clients can supply arbitrary UIDs/GIDs, enabling impersonation, unauthorized reads/writes, and ownership spoofing. This undermines **confidentiality** and **integrity** of shared data and can enable **lateral movement** across applications sharing the file system.",
   "RelatedUrl": "",

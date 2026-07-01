@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsDmsReplicationTask",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS replication tasks** have target logging enabled, including `TARGET_APPLY` and `TARGET_LOAD`, each set to at least `LOGGER_SEVERITY_DEFAULT`.",
   "Risk": "Insufficient target logging limits visibility into load/apply activity, masking failures and anomalies. This risks **data integrity** (silent drift, partial loads) and **availability** (longer incident resolution), and reduces **auditability** of migration events.",
   "RelatedUrl": "",

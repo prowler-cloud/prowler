@@ -22,7 +22,8 @@ export const getProviderGroups = async ({
 }): Promise<ProviderGroupsResponse | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
 
-  if (isNaN(Number(page)) || page < 1) redirect("/manage-groups");
+  if (isNaN(Number(page)) || page < 1)
+    redirect("/providers?tab=provider-groups");
 
   const url = new URL(`${apiBaseUrl}/provider-groups`);
 
@@ -43,9 +44,90 @@ export const getProviderGroups = async ({
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     console.error("Error fetching provider groups:", error);
+    return undefined;
+  }
+};
+
+/**
+ * Fetches all provider groups by iterating through every page.
+ * Used to populate filter dropdowns (e.g. the Provider Group selector) without
+ * the pagination cap that `getProviderGroups` applies for the management table.
+ */
+export const getAllProviderGroups = async (): Promise<
+  ProviderGroupsResponse | undefined
+> => {
+  const pageSize = 100; // Larger page size to minimize API calls
+  const maxPages = 50; // Safety limit: 50 pages × 100 = 5000 groups max
+  let currentPage = 1;
+  const allGroups: ProviderGroupsResponse["data"] = [];
+  let lastResponse: ProviderGroupsResponse | undefined;
+  let hasMorePages = true;
+
+  try {
+    const headers = await getAuthHeaders({ contentType: false });
+    while (hasMorePages && currentPage <= maxPages) {
+      const url = new URL(`${apiBaseUrl}/provider-groups`);
+      url.searchParams.append("page[number]", currentPage.toString());
+      url.searchParams.append("page[size]", pageSize.toString());
+
+      const response = await fetch(url.toString(), { headers });
+      const data = (await handleApiResponse(response)) as
+        | ProviderGroupsResponse
+        | { error: string; status?: number }
+        | undefined;
+
+      // A later page resolving to an API error payload must abort rather than
+      // be treated as "no more pages", which would silently truncate groups.
+      if (data && "error" in data) {
+        console.error("Error fetching all provider groups:", data.error);
+        return undefined;
+      }
+
+      if (!data?.data || data.data.length === 0) {
+        hasMorePages = false;
+        continue;
+      }
+
+      allGroups.push(...data.data);
+      lastResponse = data;
+
+      const totalPages = data.meta?.pagination?.pages || 1;
+      if (currentPage >= totalPages) {
+        hasMorePages = false;
+      } else {
+        currentPage++;
+      }
+    }
+
+    if (hasMorePages && currentPage > maxPages) {
+      console.error(
+        `Error fetching all provider groups: exceeded max page limit (${maxPages})`,
+      );
+      return undefined;
+    }
+
+    if (lastResponse) {
+      return {
+        ...lastResponse,
+        data: allGroups,
+        meta: {
+          ...lastResponse.meta,
+          pagination: {
+            ...lastResponse.meta?.pagination,
+            page: 1,
+            pages: 1,
+            count: allGroups.length,
+          },
+        },
+      };
+    }
+
+    return undefined;
+  } catch (error) {
+    console.error("Error fetching all provider groups:", error);
     return undefined;
   }
 };
@@ -60,7 +142,7 @@ export const getProviderGroupInfoById = async (providerGroupId: string) => {
       headers,
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -111,7 +193,7 @@ export const createProviderGroup = async (formData: FormData) => {
       body,
     });
 
-    return handleApiResponse(response, "/manage-groups");
+    return await handleApiResponse(response, "/providers?tab=provider-groups");
   } catch (error) {
     handleApiError(error);
   }
@@ -156,7 +238,7 @@ export const updateProviderGroup = async (
       body: JSON.stringify(payload),
     });
 
-    return handleApiResponse(response);
+    return await handleApiResponse(response);
   } catch (error) {
     handleApiError(error);
   }
@@ -196,7 +278,7 @@ export const deleteProviderGroup = async (formData: FormData) => {
       data = await response.json();
     }
 
-    revalidatePath("/manage-groups");
+    revalidatePath("/providers");
     return data || { success: true };
   } catch (error) {
     console.error("Error deleting provider group:", error);

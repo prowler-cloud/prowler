@@ -1,5 +1,3 @@
-import { formatDistanceToNow } from "date-fns";
-
 import { FALLBACK_VALUES } from "./constants";
 import {
   API_KEY_STATUS,
@@ -31,10 +29,7 @@ export const getStatusLabel = (status: ApiKeyStatus): string => {
   return labelMap[status] || FALLBACK_VALUES.UNKNOWN;
 };
 
-export const formatRelativeTime = (date: string | null): string => {
-  if (!date) return FALLBACK_VALUES.NEVER;
-  return formatDistanceToNow(new Date(date), { addSuffix: true });
-};
+export { formatRelativeTime } from "@/lib/date-utils";
 
 export const calculateExpiryDate = (days: number): string => {
   const expiresAt = new Date();

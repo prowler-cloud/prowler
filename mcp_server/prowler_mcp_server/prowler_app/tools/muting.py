@@ -8,13 +8,14 @@ This module provides tools for managing finding muting in Prowler, including:
 import json
 from typing import Any
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.muting import (
     DetailedMuteRule,
     MutelistResponse,
     MuteRulesListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class MutingTools(BaseTool):
@@ -53,9 +54,7 @@ class MutingTools(BaseTool):
         }
 
         clean_params = self.api_client.build_filter_params(params)
-        api_response = await self.api_client.get(
-            "/api/v1/processors", params=clean_params
-        )
+        api_response = await self.api_client.get("/processors", params=clean_params)
 
         data = api_response.get("data", [])
 
@@ -145,7 +144,7 @@ Structure:
             }
 
             api_response = await self.api_client.post(
-                "/api/v1/processors", json_data=create_body
+                "/processors", json_data=create_body
             )
             mutelist = MutelistResponse.from_api_response(api_response.get("data", {}))
             return mutelist.model_dump()
@@ -163,7 +162,7 @@ Structure:
             }
 
             api_response = await self.api_client.patch(
-                f"/api/v1/processors/{existing_mutelist['id']}", json_data=update_body
+                f"/processors/{existing_mutelist['id']}", json_data=update_body
             )
             mutelist = MutelistResponse.from_api_response(api_response.get("data", {}))
             return mutelist.model_dump()
@@ -194,7 +193,7 @@ Structure:
 
         # Delete the mutelist
         mutelist_id = existing_mutelist["id"]
-        await self.api_client.delete(f"/api/v1/processors/{mutelist_id}")
+        await self.api_client.delete(f"/processors/{mutelist_id}")
 
         return {
             "success": True,
@@ -276,9 +275,7 @@ Structure:
             params["filter[search]"] = search
 
         clean_params = self.api_client.build_filter_params(params)
-        api_response = await self.api_client.get(
-            "/api/v1/mute-rules", params=clean_params
-        )
+        api_response = await self.api_client.get("/mute-rules", params=clean_params)
 
         simplified_response = MuteRulesListResponse.from_api_response(api_response)
         return simplified_response.model_dump()
@@ -311,7 +308,7 @@ Structure:
         }
 
         api_response = await self.api_client.get(
-            f"/api/v1/mute-rules/{rule_id}", params=params
+            f"/mute-rules/{rule_id}", params=params
         )
 
         detailed_rule = DetailedMuteRule.from_api_response(api_response.get("data", {}))
@@ -363,9 +360,7 @@ Structure:
             }
         }
 
-        api_response = await self.api_client.post(
-            "/api/v1/mute-rules", json_data=create_body
-        )
+        api_response = await self.api_client.post("/mute-rules", json_data=create_body)
 
         detailed_rule = DetailedMuteRule.from_api_response(api_response.get("data", {}))
         return detailed_rule.model_dump()
@@ -432,10 +427,9 @@ Structure:
         }
 
         api_response = await self.api_client.patch(
-            f"/api/v1/mute-rules/{rule_id}", json_data=update_body
+            f"/mute-rules/{rule_id}", json_data=update_body
         )
 
-        self.logger.info(f"API response: {api_response}")
         detailed_rule = DetailedMuteRule.from_api_response(api_response.get("data", {}))
         return detailed_rule.model_dump()
 
@@ -463,7 +457,7 @@ Structure:
         """
         self.logger.info(f"Deleting mute rule {rule_id}...")
 
-        result = await self.api_client.delete(f"/api/v1/mute-rules/{rule_id}")
+        result = await self.api_client.delete(f"/mute-rules/{rule_id}")
 
         if result.get("success"):
             return {

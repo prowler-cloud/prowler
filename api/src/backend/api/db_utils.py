@@ -3,24 +3,7 @@ import secrets
 import time
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
-
-from celery.utils.log import get_task_logger
-from config.env import env
-from django.conf import settings
-from django.contrib.auth.models import BaseUserManager
-from django.db import (
-    DEFAULT_DB_ALIAS,
-    OperationalError,
-    connection,
-    connections,
-    models,
-    transaction,
-)
-from django_celery_beat.models import PeriodicTask
-from psycopg2 import connect as psycopg2_connect
-from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
-from rest_framework_json_api.serializers import ValidationError
+from datetime import UTC, datetime, timedelta
 
 from api.db_router import (
     READ_REPLICA_ALIAS,
@@ -28,6 +11,22 @@ from api.db_router import (
     reset_read_db_alias,
     set_read_db_alias,
 )
+from celery.utils.log import get_task_logger
+from config.env import env
+from django.conf import settings
+from django.contrib.auth.models import BaseUserManager
+from django.db import (
+    DEFAULT_DB_ALIAS,
+    OperationalError,
+    connections,
+    models,
+    transaction,
+)
+from django_celery_beat.models import PeriodicTask
+from psycopg2 import connect as psycopg2_connect
+from psycopg2 import sql as psycopg2_sql
+from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
+from rest_framework_json_api.serializers import ValidationError
 
 logger = get_task_logger(__name__)
 
@@ -75,6 +74,7 @@ def rls_transaction(
     value: str,
     parameter: str = POSTGRES_TENANT_VAR,
     using: str | None = None,
+    retry_on_replica: bool = True,
 ):
     """
     Creates a new database transaction setting the given configuration value for Postgres RLS. It validates the
@@ -93,10 +93,11 @@ def rls_transaction(
 
     alias = db_alias
     is_replica = READ_REPLICA_ALIAS and alias == READ_REPLICA_ALIAS
-    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica else 1
+    max_attempts = REPLICA_MAX_ATTEMPTS if is_replica and retry_on_replica else 1
 
     for attempt in range(1, max_attempts + 1):
         router_token = None
+        yielded_cursor = False
 
         # On final attempt, fallback to primary
         if attempt == max_attempts and is_replica:
@@ -119,9 +120,12 @@ def rls_transaction(
                     except ValueError:
                         raise ValidationError("Must be a valid UUID")
                     cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+                    yielded_cursor = True
                     yield cursor
             return
         except OperationalError as e:
+            if yielded_cursor:
+                raise
             # If on primary or max attempts reached, raise
             if not is_replica or attempt == max_attempts:
                 raise
@@ -165,7 +169,7 @@ def one_week_from_now():
     """
     Return a datetime object with a date one week from now.
     """
-    return datetime.now(timezone.utc) + timedelta(days=7)
+    return datetime.now(UTC) + timedelta(days=7)
 
 
 def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
@@ -276,15 +280,23 @@ class PostgresEnumMigration:
         self.enum_values = enum_values
 
     def create_enum_type(self, apps, schema_editor):  # noqa: F841
-        string_enum_values = ", ".join([f"'{value}'" for value in self.enum_values])
         with schema_editor.connection.cursor() as cursor:
             cursor.execute(
-                f"CREATE TYPE {self.enum_name} AS ENUM ({string_enum_values});"
+                psycopg2_sql.SQL("CREATE TYPE {} AS ENUM ({})").format(
+                    psycopg2_sql.Identifier(self.enum_name),
+                    psycopg2_sql.SQL(", ").join(
+                        psycopg2_sql.Literal(v) for v in self.enum_values
+                    ),
+                )
             )
 
     def drop_enum_type(self, apps, schema_editor):  # noqa: F841
         with schema_editor.connection.cursor() as cursor:
-            cursor.execute(f"DROP TYPE {self.enum_name};")
+            cursor.execute(
+                psycopg2_sql.SQL("DROP TYPE {}").format(
+                    psycopg2_sql.Identifier(self.enum_name)
+                )
+            )
 
 
 class PostgresEnumField(models.Field):
@@ -392,10 +404,10 @@ def _should_create_index_on_partition(
             # Unknown month abbreviation, include it to be safe
             return True
 
-        partition_date = datetime(year, month, 1, tzinfo=timezone.utc)
+        partition_date = datetime(year, month, 1, tzinfo=UTC)
 
         # Get current month start
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         current_month_start = now.replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
@@ -450,7 +462,7 @@ def create_index_on_partitions(
             all_partitions=True
         )
     """
-    with connection.cursor() as cursor:
+    with schema_editor.connection.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -462,6 +474,7 @@ def create_index_on_partitions(
         partitions = [row[0] for row in cursor.fetchall()]
 
     where_sql = f" WHERE {where}" if where else ""
+    conn = schema_editor.connection
     for partition in partitions:
         if _should_create_index_on_partition(partition, all_partitions):
             idx_name = f"{partition.replace('.', '_')}_{index_name}"
@@ -470,7 +483,12 @@ def create_index_on_partitions(
                 f"ON {partition} USING {method} ({columns})"
                 f"{where_sql};"
             )
-            schema_editor.execute(sql)
+            old_autocommit = conn.connection.autocommit
+            conn.connection.autocommit = True
+            try:
+                schema_editor.execute(sql)
+            finally:
+                conn.connection.autocommit = old_autocommit
 
 
 def drop_index_on_partitions(
@@ -486,7 +504,8 @@ def drop_index_on_partitions(
         parent_table: The name of the root table (e.g. "findings").
         index_name: The same short name used when creating them.
     """
-    with connection.cursor() as cursor:
+    conn = schema_editor.connection
+    with conn.cursor() as cursor:
         cursor.execute(
             """
             SELECT inhrelid::regclass::text
@@ -500,7 +519,12 @@ def drop_index_on_partitions(
     for partition in partitions:
         idx_name = f"{partition.replace('.', '_')}_{index_name}"
         sql = f"DROP INDEX CONCURRENTLY IF EXISTS {idx_name};"
-        schema_editor.execute(sql)
+        old_autocommit = conn.connection.autocommit
+        conn.connection.autocommit = True
+        try:
+            schema_editor.execute(sql)
+        finally:
+            conn.connection.autocommit = old_autocommit
 
 
 def generate_api_key_prefix():

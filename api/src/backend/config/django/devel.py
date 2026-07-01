@@ -44,9 +44,23 @@ DATABASES = {
         "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
+    "neo4j": {
+        "HOST": env.str("NEO4J_HOST", "neo4j"),
+        "PORT": env.str("NEO4J_PORT", "7687"),
+        "USER": env.str("NEO4J_USER", "neo4j"),
+        "PASSWORD": env.str("NEO4J_PASSWORD", "neo4j_password"),
+    },
+    "neptune": {
+        "WRITER_ENDPOINT": env.str("NEPTUNE_WRITER_ENDPOINT", ""),
+        "READER_ENDPOINT": env.str("NEPTUNE_READER_ENDPOINT", ""),
+        "PORT": env.str("NEPTUNE_PORT", "8182"),
+        "REGION": env.str("AWS_REGION", ""),
+    },
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]
+
+label_postgres_connections(DATABASES)  # noqa: F405
 
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = tuple(  # noqa: F405
     render_class

@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+  "CheckTitle": "Conditional Access policy enforces approved client apps or app protection for mobile devices",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** policies can require that only **approved client apps** or apps with **app protection policies** are used on iOS and Android devices. This ensures corporate data on mobile platforms is accessed only through managed or protected applications.",
+  "Risk": "Without requiring approved or protected client apps on mobile platforms, users can access corporate data through **unmanaged applications** that lack security controls. This increases the risk of **data leakage**, unauthorized data sharing, and exposure of sensitive information on personal or compromised mobile devices.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-policy-approved-app-or-app-protection",
+    "https://learn.microsoft.com/en-us/mem/intune/apps/app-protection-policy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Select **New policy**.\n4. Under **Users**, include **All users**.\n5. Under **Target resources**, include **All cloud apps**.\n6. Under **Conditions** > **Device platforms**, select **Android** and **iOS**.\n7. Under **Grant**, select **Require app protection policy** (preferred) or **Require approved client app**.\n8. Set the operator to **OR**.\n9. Enable the policy and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enforce Conditional Access policies requiring app protection policies or approved client apps on iOS and Android devices. Prefer **app protection policies** over approved client apps, as the approved client app grant control is retiring June 30, 2026. Regularly review policies to ensure mobile access is restricted to managed applications.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_approved_client_app_required_for_mobile"
+    }
+  },
+  "Categories": [
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "The 'Require approved client app' grant control is retiring June 30, 2026. Organizations should migrate to 'Require app protection policy' (compliantApplication)."
+}

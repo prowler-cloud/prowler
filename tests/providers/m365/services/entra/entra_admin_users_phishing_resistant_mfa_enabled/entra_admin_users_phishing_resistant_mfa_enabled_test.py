@@ -2,6 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 from prowler.providers.m365.services.entra.entra_service import (
+    ApplicationEnforcedRestrictions,
     ApplicationsConditions,
     ConditionalAccessGrantControl,
     ConditionalAccessPolicyState,
@@ -125,6 +126,9 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
                         ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
+                        ),
                     ),
                     state=ConditionalAccessPolicyState.DISABLED,
                 )
@@ -216,6 +220,9 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                             frequency=None,
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED_FOR_REPORTING,
@@ -311,6 +318,9 @@ class Test_entra_admin_users_phishing_resistant_mfa_enabled:
                             frequency=None,
                             type=None,
                             interval=SignInFrequencyInterval.EVERY_TIME,
+                        ),
+                        application_enforced_restrictions=ApplicationEnforcedRestrictions(
+                            is_enabled=False
                         ),
                     ),
                     state=ConditionalAccessPolicyState.ENABLED,

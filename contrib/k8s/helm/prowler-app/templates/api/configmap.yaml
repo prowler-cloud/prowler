@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: {{ include "prowler.fullname" . }}-api
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+data:
+  {{- range $key, $value := .Values.api.djangoConfig }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}

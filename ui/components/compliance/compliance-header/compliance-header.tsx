@@ -1,6 +1,5 @@
 "use client";
 
-import { Spacer } from "@heroui/spacer";
 import Image from "next/image";
 
 import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
@@ -36,6 +35,9 @@ export const ComplianceHeader = ({
   selectedScan,
 }: ComplianceHeaderProps) => {
   const frameworkFilters = [];
+  const prependElement = showProviders ? (
+    <DataCompliance scans={scans} className="w-full sm:col-span-2" />
+  ) : undefined;
 
   // Add CIS Profile Level filter if framework is CIS
   if (framework === "CIS") {
@@ -43,6 +45,7 @@ export const ComplianceHeader = ({
       key: "cis_profile_level",
       labelCheckboxGroup: "Level",
       values: ["Level 1", "Level 2"],
+      width: "wide" as const,
       index: 0, // Show first
       showSelectAll: false, // No "Select All" option since Level 2 includes Level 1
       defaultValues: ["Level 2"], // Default to Level 2 selected (which includes Level 1)
@@ -56,6 +59,7 @@ export const ComplianceHeader = ({
           key: "region__in",
           labelCheckboxGroup: "Regions",
           values: uniqueRegions,
+          width: "wide" as const,
           index: 1, // Show after framework filters
         },
       ]
@@ -72,13 +76,17 @@ export const ComplianceHeader = ({
   return (
     <>
       {hasContent && (
-        <div className="flex w-full items-start justify-between gap-6">
+        <div className="flex w-full items-start justify-between gap-6 sm:mb-8">
           <div className="flex flex-1 flex-col justify-end gap-4">
+            {/* Showed in the details page */}
             {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
 
-            {showProviders && <DataCompliance scans={scans} />}
-            {!hideFilters && allFilters.length > 0 && (
-              <DataTableFilterCustom filters={allFilters} />
+            {/* Showed in the compliance page */}
+            {!hideFilters && (allFilters.length > 0 || showProviders) && (
+              <DataTableFilterCustom
+                filters={allFilters}
+                prependElement={prependElement}
+              />
             )}
           </div>
           {logoPath && complianceTitle && (
@@ -95,7 +103,6 @@ export const ComplianceHeader = ({
           )}
         </div>
       )}
-      {hasContent && <Spacer y={8} />}
     </>
   );
 };

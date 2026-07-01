@@ -4,14 +4,13 @@ import json
 import logging
 import uuid
 
+import api.rls
 import django.db.models.deletion
+from api.db_router import MainRouter
 from config.custom_logging import BackendLogger
 from cryptography.fernet import Fernet
 from django.conf import settings
 from django.db import migrations, models
-
-import api.rls
-from api.db_router import MainRouter
 
 logger = logging.getLogger(BackendLogger.API)
 

@@ -4,7 +4,7 @@ export function RequirementsStatusCardSkeleton() {
   return (
     <Card
       variant="base"
-      className="flex min-h-[372px] min-w-[328px] flex-col justify-between md:max-w-[312px]"
+      className="flex h-full min-h-[372px] flex-col justify-between xl:max-w-[400px]"
     >
       <CardHeader>
         <Skeleton className="h-7 w-[260px] rounded-xl" />
@@ -24,10 +24,7 @@ export function RequirementsStatusCardSkeleton() {
 
 export function TopFailedSectionsCardSkeleton() {
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[372px] min-w-[328px] flex-1 flex-col"
-    >
+    <Card variant="base" className="flex h-full min-h-[372px] w-full flex-col">
       <CardHeader>
         <Skeleton className="h-6 w-48" />
       </CardHeader>

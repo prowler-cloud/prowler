@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsRdsDbClusterSnapshot",
+  "ResourceGroup": "database",
   "Description": "**Amazon DocumentDB** manual cluster snapshot visibility is evaluated to detect snapshots marked as **public** instead of limited to specified AWS accounts.",
   "Risk": "**Public snapshots** weaken **confidentiality**: any AWS account can restore and read database contents, enabling data exfiltration.\n\nThey also aid **lateral movement** by revealing embedded secrets/config and reduce accountability when restores occur outside your account.",
   "RelatedUrl": "",

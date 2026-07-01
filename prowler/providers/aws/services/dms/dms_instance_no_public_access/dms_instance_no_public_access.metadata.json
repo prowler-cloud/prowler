@@ -13,13 +13,14 @@
   "ResourceIdTemplate": "",
   "Severity": "critical",
   "ResourceType": "AwsDmsReplicationInstance",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS replication instances** are evaluated for **public exposure**. Exposure is identified when `PubliclyAccessible` is enabled and an attached security group allows inbound traffic from any address. Private or allowlisted instances are not considered exposed.",
   "Risk": "Publicly reachable replication instances threaten:\n- Confidentiality: migration data and credentials can be intercepted or exfiltrated.\n- Integrity: attackers may alter tasks or inject records.\n- Availability: abuse or DDoS can stall replication and delay cutovers.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/securityhub/latest/userguide/dms-controls.html#dms-1",
     "https://docs.aws.amazon.com/amazonq/detector-library/terraform/restrict-public-access-dms-terraform/",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/DMS/publicly-accessible.html",
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/DMS/publicly-accessible.html",
     "https://support.icompaas.com/support/solutions/articles/62000233448-ensure-dms-instances-are-not-publicly-accessible"
   ],
   "Remediation": {

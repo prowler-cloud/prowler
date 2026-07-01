@@ -50,14 +50,12 @@ export async function GET(req: Request) {
 
       return NextResponse.redirect(new URL("/", baseUrl));
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("SignIn error:", error);
       return NextResponse.redirect(
         new URL("/sign-in?error=AuthenticationFailed", baseUrl),
       );
     }
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("Error in Github callback:", error);
     return NextResponse.json(
       { error: (error as Error).message },

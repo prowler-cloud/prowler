@@ -2,7 +2,7 @@
 
 import { IdIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { SnippetChip } from "@/components/ui/entities";
+import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
 import { IntegrationType } from "@/types/integrations";
 
 interface CredentialsRoleHelperProps {
@@ -95,7 +95,7 @@ export const CredentialsRoleHelper = ({
           <span className="text-default-500 block text-xs font-medium">
             External ID:
           </span>
-          <SnippetChip value={externalId} icon={<IdIcon size={16} />} />
+          <CodeSnippet value={externalId} icon={<IdIcon size={16} />} />
         </div>
       </div>
     </div>

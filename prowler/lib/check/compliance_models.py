@@ -1,9 +1,11 @@
+import importlib.metadata
+import json
 import os
 import sys
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Literal, Optional, Union
 
-from pydantic.v1 import BaseModel, ValidationError, root_validator
+from pydantic.v1 import BaseModel, Field, ValidationError, root_validator
 
 from prowler.lib.check.utils import list_compliance_modules
 from prowler.lib.logger import logger
@@ -62,6 +64,7 @@ class Generic_Compliance_Requirement_Attribute(BaseModel):
     SubGroup: Optional[str] = None
     Service: Optional[str] = None
     Type: Optional[str] = None
+    Comment: Optional[str] = None
 
 
 class CIS_Requirement_Attribute_Profile(str, Enum):
@@ -100,6 +103,48 @@ class CIS_Requirement_Attribute(BaseModel):
     References: str
 
 
+class ASDEssentialEight_Requirement_Attribute_MaturityLevel(str, Enum):
+    """ASD Essential Eight Maturity Level"""
+
+    ML1 = "ML1"
+    ML2 = "ML2"
+    ML3 = "ML3"
+
+
+class ASDEssentialEight_Requirement_Attribute_AssessmentStatus(str, Enum):
+    """Essential Eight Requirement Attribute Assessment Status"""
+
+    Manual = "Manual"
+    Automated = "Automated"
+
+
+class ASDEssentialEight_Requirement_Attribute_CloudApplicability(str, Enum):
+    """How well the ASD control maps to AWS cloud infrastructure."""
+
+    Full = "full"
+    Partial = "partial"
+    Limited = "limited"
+    NonApplicable = "non-applicable"
+
+
+# Essential Eight Requirement Attribute
+class ASDEssentialEight_Requirement_Attribute(BaseModel):
+    """ASD Essential Eight Requirement Attribute"""
+
+    Section: str
+    MaturityLevel: ASDEssentialEight_Requirement_Attribute_MaturityLevel
+    AssessmentStatus: ASDEssentialEight_Requirement_Attribute_AssessmentStatus
+    CloudApplicability: ASDEssentialEight_Requirement_Attribute_CloudApplicability
+    MitigatedThreats: list[str]
+    Description: str
+    RationaleStatement: str
+    ImpactStatement: str
+    RemediationProcedure: str
+    AuditProcedure: str
+    AdditionalInformation: str
+    References: str
+
+
 # Well Architected Requirement Attribute
 class AWS_Well_Architected_Requirement_Attribute(BaseModel):
     """AWS Well Architected Requirement Attribute"""
@@ -123,6 +168,79 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
     Objetive_ID: str
     Objetive_Name: str
     Check_Summary: str
+
+
+# Base Compliance Model
+class Compliance_Requirement_ConfigConstraint(BaseModel):
+    """A constraint a requirement places on a configurable check's config.
+
+    Declares that the configurable check ``Check`` must have run with
+    ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
+    result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
+
+    ``Provider`` scopes the constraint to a single provider. It is required for
+    universal (multi-provider) frameworks, where the same requirement maps
+    checks across providers and a constraint must only apply when that provider
+    is the one being scanned. Single-provider frameworks may omit it (the
+    framework's provider is already the one being scanned).
+
+    Operators:
+    - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
+      threshold, or a boolean toggle).
+    - ``in``: the applied scalar must be one of ``Value`` (a list).
+    - ``subset``: the applied list must be a subset of ``Value`` — for allowlist
+      configs (e.g. ``recommended_minimal_tls_versions``); widening the allowlist
+      with a weaker value (e.g. TLS ``1.0``) breaks the constraint.
+    - ``superset``: the applied list must be a superset of ``Value`` — for
+      denylist configs (e.g. ``insecure_key_algorithms``); removing a forbidden
+      value from the denylist breaks the constraint.
+    """
+
+    Check: str
+    ConfigKey: str
+    Operator: Literal["lte", "gte", "eq", "in", "subset", "superset"]
+    # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
+    # ``mute_non_default_regions == false`` constraint) instead of coercing
+    # them to 0/1.
+    Value: Union[bool, int, float, str, list[Any]]
+    # Provider this constraint applies to (e.g. ``aws``), matched
+    # case-insensitively. ``None`` applies whenever the requirement runs
+    # (single-provider frameworks).
+    Provider: Optional[str] = None
+
+    @root_validator
+    @classmethod
+    def validate_value_matches_operator(cls, values):  # noqa: F841
+        """Ensure ``Value``'s type is consistent with ``Operator``.
+
+        Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
+        with a scalar) is not rejected at load time and ``_check_operator``
+        silently treats it as *not satisfied*, forcing the requirement to a
+        spurious config-not-valid FAIL. Validating here turns that into a
+        clear error when the framework is loaded.
+        """
+        operator = values.get("Operator")
+        value = values.get("Value")
+        # If Operator/Value failed their own validation they are absent here.
+        if operator is None or value is None:
+            return values
+        if operator in ("in", "subset", "superset"):
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"operator '{operator}' requires a list Value, got {type(value).__name__}"
+                )
+        elif operator in ("lte", "gte"):
+            # bool is an int subclass but is never a valid numeric threshold.
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"operator '{operator}' requires a numeric Value, got {value!r}"
+                )
+        elif operator == "eq":
+            if not isinstance(value, (bool, int, float, str)):
+                raise ValueError(
+                    f"operator 'eq' requires a scalar Value, got {type(value).__name__}"
+                )
+        return values
 
 
 # MITRE Requirement Attribute for AWS
@@ -172,6 +290,9 @@ class Mitre_Requirement(BaseModel):
         list[Mitre_Requirement_Attribute_GCP],
     ]
     Checks: list[str]
+    # MITRE checks may also declare config constraints; without this field
+    # Pydantic silently drops them during parsing.
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 # KISA-ISMS-P Requirement Attribute
@@ -226,7 +347,38 @@ class C5Germany_Requirement_Attribute(BaseModel):
     ComplementaryCriteria: str
 
 
-# Base Compliance Model
+# CSA CCM v4 Requirement Attribute
+class CSA_CCM_Requirement_Attribute(BaseModel):
+    """CSA Cloud Controls Matrix (CCM) v4 Requirement Attribute"""
+
+    Section: str
+    CCMLite: str
+    IaaS: str
+    PaaS: str
+    SaaS: str
+    ScopeApplicability: list[dict]
+
+
+class STIG_Requirement_Attribute_Severity(str, Enum):
+    """DISA STIG Requirement Attribute Severity (maps to CAT I/II/III)"""
+
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
+class STIG_Requirement_Attribute(BaseModel):
+    """DISA STIG Requirement Attribute"""
+
+    Section: str
+    Severity: STIG_Requirement_Attribute_Severity
+    RuleID: str
+    StigID: str
+    CCI: Optional[list[str]] = None
+    CheckText: Optional[str] = None
+    FixText: Optional[str] = None
+
+
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
     """Compliance_Requirement holds the base model for every requirement within a compliance framework"""
@@ -236,6 +388,7 @@ class Compliance_Requirement(BaseModel):
     Name: Optional[str] = None
     Attributes: list[
         Union[
+            ASDEssentialEight_Requirement_Attribute,
             CIS_Requirement_Attribute,
             ENS_Requirement_Attribute,
             ISO27001_2013_Requirement_Attribute,
@@ -244,11 +397,14 @@ class Compliance_Requirement(BaseModel):
             Prowler_ThreatScore_Requirement_Attribute,
             CCC_Requirement_Attribute,
             C5Germany_Requirement_Attribute,
+            CSA_CCM_Requirement_Attribute,
+            STIG_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]
     ]
     Checks: list[str]
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 class Compliance(BaseModel):
@@ -376,26 +532,63 @@ class Compliance(BaseModel):
         """Bulk load all compliance frameworks specification into a dict"""
         try:
             bulk_compliance_frameworks = {}
+            # Built-in compliance from prowler/compliance/{provider}/
             available_compliance_framework_modules = list_compliance_modules()
             for compliance_framework in available_compliance_framework_modules:
-                if provider in compliance_framework.name:
+                # Match the provider segment exactly, not as a substring, so
+                # e.g. `cloud` does not capture `cloudflare`.
+                if compliance_framework.name.split(".")[-1] == provider:
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )
-                    # for compliance_framework in available_compliance_framework_modules:
                     for filename in os.listdir(compliance_specification_dir_path):
                         file_path = os.path.join(
                             compliance_specification_dir_path, filename
                         )
-                        # Check if it is a file and ti size is greater than 0
                         if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                            # Open Compliance file in JSON
-                            # cis_v1.4_aws.json --> cis_v1.4_aws
                             compliance_framework_name = filename.split(".json")[0]
-                            # Store the compliance info
                             bulk_compliance_frameworks[compliance_framework_name] = (
                                 load_compliance_framework(file_path)
                             )
+
+            # External compliance via entry points
+            for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+                if ep.name == provider:
+                    try:
+                        module = ep.load()
+                        compliance_dir = (
+                            module.__path__[0]
+                            if hasattr(module, "__path__")
+                            else os.path.dirname(module.__file__)
+                        )
+                        for filename in os.listdir(compliance_dir):
+                            if filename.endswith(".json"):
+                                file_path = os.path.join(compliance_dir, filename)
+                                if (
+                                    os.path.isfile(file_path)
+                                    and os.stat(file_path).st_size > 0
+                                ):
+                                    compliance_framework_name = filename.split(".json")[
+                                        0
+                                    ]
+                                    if (
+                                        compliance_framework_name
+                                        not in bulk_compliance_frameworks
+                                    ):
+                                        # External JSON: tolerate non-legacy
+                                        # schemas (skip + warn) instead of aborting.
+                                        framework = load_compliance_framework(
+                                            file_path, fatal=False
+                                        )
+                                        if framework is not None:
+                                            bulk_compliance_frameworks[
+                                                compliance_framework_name
+                                            ] = framework
+                    except Exception as error:
+                        logger.warning(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 
@@ -404,15 +597,537 @@ class Compliance(BaseModel):
 
 # Testing Pending
 def load_compliance_framework(
-    compliance_specification_file: str,
-) -> Compliance:
-    """load_compliance_framework loads and parse a Compliance Framework Specification"""
+    compliance_specification_file: str, fatal: bool = True
+) -> Optional[Compliance]:
+    """load_compliance_framework loads and parse a Compliance Framework Specification.
+
+    With ``fatal=True`` (built-in JSONs) an invalid file aborts the run; with
+    ``fatal=False`` (external JSONs) it is skipped with a warning and ``None``
+    is returned.
+    """
     try:
-        compliance_framework = Compliance.parse_file(compliance_specification_file)
+        return Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
-        logger.critical(
-            f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+        if fatal:
+            logger.critical(
+                f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+            )
+            sys.exit(1)
+        logger.warning(
+            f"Skipping invalid compliance framework {compliance_specification_file}: {error}"
         )
-        sys.exit(1)
-    else:
-        return compliance_framework
+        return None
+
+
+# ─── Universal Compliance Schema Models (Phase 1-3) ─────────────────────────
+
+
+class OutputFormats(BaseModel):
+    """Flags indicating in which output formats an attribute should be included."""
+
+    csv: bool = True
+    ocsf: bool = True
+
+
+class AttributeMetadata(BaseModel):
+    """Schema descriptor for a single attribute field in a universal compliance framework."""
+
+    key: str
+    label: Optional[str] = None
+    type: str = "str"  # str, int, float, list_str, list_dict, bool
+    enum: Optional[list] = None
+    required: bool = False
+    enum_display: Optional[dict] = None  # enum_value -> EnumValueDisplay dict
+    enum_order: Optional[list] = None  # explicit ordering of enum values
+    chart_label: Optional[str] = None  # axis label when used in charts
+    output_formats: OutputFormats = Field(default_factory=OutputFormats)
+
+
+class SplitByConfig(BaseModel):
+    """Column-splitting configuration (e.g. CIS Level 1/Level 2)."""
+
+    field: str
+    values: list
+
+
+class ScoringConfig(BaseModel):
+    """Weighted scoring configuration (e.g. ThreatScore)."""
+
+    risk_field: str
+    weight_field: str
+
+
+class TableLabels(BaseModel):
+    """Custom pass/fail labels for console table rendering."""
+
+    pass_label: str = "PASS"
+    fail_label: str = "FAIL"
+    provider_header: str = "Provider"
+    group_header: Optional[str] = None
+    status_header: str = "Status"
+    title: Optional[str] = None
+    results_title: Optional[str] = None
+    footer_note: Optional[str] = None
+
+
+class TableConfig(BaseModel):
+    """Declarative rendering instructions for the console compliance table."""
+
+    group_by: str
+    split_by: Optional[SplitByConfig] = None
+    scoring: Optional[ScoringConfig] = None
+    labels: Optional[TableLabels] = None
+
+
+class EnumValueDisplay(BaseModel):
+    """Per-enum-value visual metadata for PDF rendering.
+
+    Replaces hardcoded DIMENSION_MAPPING, TIPO_ICONS, nivel colors.
+    """
+
+    label: Optional[str] = None  # "Trazabilidad"
+    abbreviation: Optional[str] = None  # "T"
+    color: Optional[str] = None  # "#4286F4"
+    icon: Optional[str] = None  # emoji
+
+
+class ChartConfig(BaseModel):
+    """Declarative chart description for PDF reports."""
+
+    id: str
+    type: str  # vertical_bar | horizontal_bar | radar
+    group_by: str  # attribute key to group by
+    title: Optional[str] = None
+    x_label: Optional[str] = None
+    y_label: Optional[str] = None
+    value_source: str = "compliance_percent"
+    color_mode: str = "by_value"  # by_value | fixed | by_group
+    fixed_color: Optional[str] = None
+
+
+class ScoringFormula(BaseModel):
+    """Weighted scoring formula (e.g. ThreatScore)."""
+
+    risk_field: str  # "LevelOfRisk"
+    weight_field: str  # "Weight"
+    risk_boost_factor: float = 0.25  # rfac = 1 + factor * risk_level
+
+
+class CriticalRequirementsFilter(BaseModel):
+    """Filter for critical requirements section in PDF reports."""
+
+    filter_field: str  # "LevelOfRisk"
+    min_value: Optional[int] = None  # 4 (int-based filter)
+    filter_value: Optional[str] = None  # "alto" (string-based filter)
+    status_filter: str = "FAIL"
+    title: Optional[str] = None  # "Critical Failed Requirements"
+
+
+class ReportFilter(BaseModel):
+    """Default report filtering for PDF generation."""
+
+    only_failed: bool = True
+    include_manual: bool = False
+
+
+class I18nLabels(BaseModel):
+    """Localized labels for PDF report rendering."""
+
+    report_title: Optional[str] = None
+    page_label: str = "Page"
+    powered_by: str = "Powered by Prowler"
+    framework_label: str = "Framework:"
+    version_label: str = "Version:"
+    provider_label: str = "Provider:"
+    description_label: str = "Description:"
+    compliance_score_label: str = "Compliance Score by Sections"
+    requirements_index_label: str = "Requirements Index"
+    detailed_findings_label: str = "Detailed Findings"
+
+
+class PDFConfig(BaseModel):
+    """Declarative PDF report configuration.
+
+    Drives the API report generator from JSON data instead of hardcoded
+    Python config. Colors are hex strings (e.g. '#336699').
+    """
+
+    language: str = "en"
+    logo_filename: Optional[str] = None
+    primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    bg_color: Optional[str] = None
+    sections: Optional[list] = None
+    section_short_names: Optional[dict] = None
+    group_by_field: Optional[str] = None
+    sub_group_by_field: Optional[str] = None
+    section_titles: Optional[dict] = None
+    charts: Optional[list] = None
+    scoring: Optional[ScoringFormula] = None
+    critical_filter: Optional[CriticalRequirementsFilter] = None
+    filter: Optional[ReportFilter] = None
+    labels: Optional[I18nLabels] = None
+
+
+class UniversalComplianceRequirement(BaseModel):
+    """Universal requirement with flat dict-based attributes."""
+
+    id: str
+    description: str
+    name: Optional[str] = None
+    attributes: dict = Field(default_factory=dict)
+    checks: dict[str, list[str]] = Field(default_factory=dict)
+    # Typed with the same constraint model as legacy so the operator/value
+    # validation also covers universal frameworks. evaluate_config_constraints
+    # accepts both dicts and model objects, so downstream consumers are unaffected.
+    config_requirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
+    tactics: Optional[list] = None
+    sub_techniques: Optional[list] = None
+    platforms: Optional[list] = None
+    technique_url: Optional[str] = None
+
+
+class OutputsConfig(BaseModel):
+    """Container for output-related configuration (table, PDF, etc.)."""
+
+    table_config: Optional[TableConfig] = None
+    pdf_config: Optional[PDFConfig] = None
+
+
+class ComplianceFramework(BaseModel):
+    """Universal top-level container for any compliance framework.
+
+    Provider may be explicit (single-provider JSON) or derived from checks
+    keys across all requirements.
+    """
+
+    framework: str
+    name: str
+    provider: Optional[str] = None
+    version: Optional[str] = None
+    description: str
+    icon: Optional[str] = None
+    requirements: list[UniversalComplianceRequirement]
+    attributes_metadata: Optional[list[AttributeMetadata]] = None
+    outputs: Optional[OutputsConfig] = None
+
+    @root_validator
+    # noqa: F841 - since vulture raises unused variable 'cls'
+    def validate_attributes_against_metadata(cls, values):  # noqa: F841
+        """Validate every Requirement's attributes dict against attributes_metadata.
+
+        Checks:
+        - Required keys (required=True) must be present in each Requirement.
+        - Enum-constrained keys must have a value within the declared enum list.
+        - Basic type validation (int, float, bool) for non-None values.
+        """
+        metadata = values.get("attributes_metadata")
+        requirements = values.get("requirements", [])
+        if not metadata:
+            return values
+
+        required_keys = {m.key for m in metadata if m.required}
+        valid_keys = {m.key for m in metadata}
+        enum_map = {m.key: m.enum for m in metadata if m.enum}
+        type_map = {m.key: m.type for m in metadata}
+
+        type_checks = {
+            "int": int,
+            "float": (int, float),
+            "bool": bool,
+        }
+
+        errors = []
+        for req in requirements:
+            attrs = req.attributes
+
+            # Required keys
+            for key in required_keys:
+                if key not in attrs or attrs[key] is None:
+                    errors.append(
+                        f"Requirement '{req.id}': missing required attribute '{key}'"
+                    )
+
+            # Unknown keys — anything outside the declared schema is a typo or drift
+            unknown_keys = set(attrs) - valid_keys
+            for key in sorted(unknown_keys):
+                errors.append(
+                    f"Requirement '{req.id}': unknown attribute '{key}' "
+                    f"(not declared in attributes_metadata)"
+                )
+
+            # Enum validation
+            for key, allowed in enum_map.items():
+                if key in attrs and attrs[key] is not None:
+                    if attrs[key] not in allowed:
+                        errors.append(
+                            f"Requirement '{req.id}': attribute '{key}' value "
+                            f"'{attrs[key]}' not in {allowed}"
+                        )
+
+            # Type validation for non-string types
+            for key in attrs:
+                if key not in valid_keys or attrs[key] is None:
+                    continue
+                expected_type = type_map.get(key, "str")
+                py_type = type_checks.get(expected_type)
+                if py_type and not isinstance(attrs[key], py_type):
+                    errors.append(
+                        f"Requirement '{req.id}': attribute '{key}' expected "
+                        f"type {expected_type}, got {type(attrs[key]).__name__}"
+                    )
+
+        if errors:
+            detail = "\n  ".join(errors)
+            raise ValueError(f"attributes_metadata validation failed:\n  {detail}")
+
+        return values
+
+    def get_providers(self) -> list:
+        """Derive the set of providers this framework supports.
+
+        Inspects checks keys across all requirements. Falls back to the
+        explicit provider field for single-provider frameworks with no
+        requirement-level checks.
+        """
+        providers = set()
+        for req in self.requirements:
+            providers.update(k.lower() for k in req.checks.keys())
+        if self.provider and not providers:
+            providers.add(self.provider.lower())
+        return sorted(providers)
+
+    def supports_provider(self, provider: str) -> bool:
+        """Return True if this framework has checks for the given provider."""
+        provider_lower = provider.lower()
+        for req in self.requirements:
+            if any(k.lower() == provider_lower for k in req.checks.keys()):
+                return True
+        return self.provider is not None and self.provider.lower() == provider_lower
+
+
+# ─── Legacy-to-Universal Adapter (Phase 2) ──────────────────────────────────
+
+
+def _infer_attribute_metadata(legacy: Compliance) -> Optional[list[AttributeMetadata]]:
+    """Introspect the first requirement's attribute model to build attributes_metadata."""
+    try:
+        if not legacy.Requirements:
+            return None
+
+        first_req = legacy.Requirements[0]
+
+        # MITRE requirements have Tactics at top level, not in Attributes
+        if isinstance(first_req, Mitre_Requirement):
+            return None
+
+        if not first_req.Attributes:
+            return None
+
+        sample_attr = first_req.Attributes[0]
+        metadata = []
+
+        for field_name, field_obj in sample_attr.__fields__.items():
+            field_type = field_obj.outer_type_
+            type_str = "str"
+            enum_values = None
+
+            origin = getattr(field_type, "__origin__", None)
+            if field_type is int:
+                type_str = "int"
+            elif field_type is float:
+                type_str = "float"
+            elif field_type is bool:
+                type_str = "bool"
+            elif origin is list:
+                args = getattr(field_type, "__args__", ())
+                if args and args[0] is dict:
+                    type_str = "list_dict"
+                else:
+                    type_str = "list_str"
+            elif isinstance(field_type, type) and issubclass(field_type, Enum):
+                type_str = "str"
+                enum_values = [e.value for e in field_type]
+
+            metadata.append(
+                AttributeMetadata(
+                    key=field_name,
+                    type=type_str,
+                    enum=enum_values,
+                    required=field_obj.required,
+                )
+            )
+
+        return metadata
+    except Exception:
+        return None
+
+
+def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
+    """Convert a legacy Compliance object to a ComplianceFramework."""
+    universal_requirements = []
+    legacy_provider_key = legacy.Provider.lower()
+
+    for req in legacy.Requirements:
+        req_checks = {legacy_provider_key: list(req.Checks)} if req.Checks else {}
+        if isinstance(req, Mitre_Requirement):
+            # For MITRE, promote special fields and store raw attributes
+            raw_attrs = [attr.dict() for attr in req.Attributes]
+            attrs = {"_raw_attributes": raw_attrs}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
+            universal_requirements.append(
+                UniversalComplianceRequirement(
+                    id=req.Id,
+                    description=req.Description,
+                    name=req.Name,
+                    attributes=attrs,
+                    checks=req_checks,
+                    config_requirements=config_requirements,
+                    tactics=req.Tactics,
+                    sub_techniques=req.SubTechniques,
+                    platforms=req.Platforms,
+                    technique_url=req.TechniqueURL,
+                )
+            )
+        else:
+            # Standard requirement: flatten first attribute to dict
+            if req.Attributes:
+                attrs = req.Attributes[0].dict()
+            else:
+                attrs = {}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
+            universal_requirements.append(
+                UniversalComplianceRequirement(
+                    id=req.Id,
+                    description=req.Description,
+                    name=req.Name,
+                    attributes=attrs,
+                    checks=req_checks,
+                    config_requirements=config_requirements,
+                )
+            )
+
+    inferred_metadata = _infer_attribute_metadata(legacy)
+
+    return ComplianceFramework(
+        framework=legacy.Framework,
+        name=legacy.Name,
+        provider=legacy.Provider,
+        version=legacy.Version,
+        description=legacy.Description,
+        requirements=universal_requirements,
+        attributes_metadata=inferred_metadata,
+    )
+
+
+def load_compliance_framework_universal(path: str) -> ComplianceFramework:
+    """Load a compliance JSON as a ComplianceFramework, handling both new and legacy formats."""
+    try:
+        with open(path, "r") as f:
+            data = json.load(f)
+
+        if "attributes_metadata" in data or "requirements" in data:
+            # New universal format — parse directly
+            return ComplianceFramework(**data)
+        else:
+            # Legacy format — parse as Compliance, then adapt
+            legacy = Compliance(**data)
+            return adapt_legacy_to_universal(legacy)
+    except Exception as e:
+        logger.error(
+            f"Failed to load universal compliance framework from {path}: "
+            f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}"
+        )
+        return None
+
+
+def _load_jsons_from_dir(dir_path: str, provider: str, bulk: dict) -> None:
+    """Scan *dir_path* for JSON files and add matching frameworks to *bulk*."""
+    for filename in os.listdir(dir_path):
+        file_path = os.path.join(dir_path, filename)
+        if not (
+            os.path.isfile(file_path)
+            and filename.endswith(".json")
+            and os.stat(file_path).st_size > 0
+        ):
+            continue
+        framework_name = filename.split(".json")[0]
+        if framework_name in bulk:
+            continue
+        fw = load_compliance_framework_universal(file_path)
+        if fw is None:
+            continue
+        if fw.provider and fw.provider.lower() == provider.lower():
+            bulk[framework_name] = fw
+        elif fw.supports_provider(provider):
+            bulk[framework_name] = fw
+
+
+def get_bulk_compliance_frameworks_universal(provider: str) -> dict:
+    """Bulk load all compliance frameworks relevant to the given provider.
+
+    Scans:
+
+    1. The **top-level** ``prowler/compliance/`` directory for multi-provider
+       JSONs (``Checks`` keyed by provider, no ``Provider`` field).
+    2. Every **provider sub-directory** (``prowler/compliance/{p}/``) so that
+       single-provider JSONs are also picked up.
+
+    A framework is included when its explicit ``Provider`` matches
+    (case-insensitive) **or** any requirement has dict-style ``Checks``
+    with a key for *provider*.
+    """
+    bulk = {}
+    try:
+        available_modules = list_compliance_modules()
+
+        # Resolve the compliance root once (parent of provider sub-dirs).
+        compliance_root = None
+        seen_paths = set()
+
+        for module in available_modules:
+            dir_path = f"{module.module_finder.path}/{module.name.split('.')[-1]}"
+            if not os.path.isdir(dir_path) or dir_path in seen_paths:
+                continue
+            seen_paths.add(dir_path)
+
+            # Remember the root the first time we see a valid sub-dir.
+            if compliance_root is None:
+                compliance_root = module.module_finder.path
+
+            _load_jsons_from_dir(dir_path, provider, bulk)
+
+        # Also scan top-level compliance/ for provider-agnostic JSONs.
+        if compliance_root and os.path.isdir(compliance_root):
+            _load_jsons_from_dir(compliance_root, provider, bulk)
+
+        # External multi-provider frameworks via the dedicated universal entry
+        # point group, kept separate from the per-provider `prowler.compliance`
+        # group so the legacy loader never parses a universal JSON. Built-ins
+        # (already in bulk) win on a name collision.
+        for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+            try:
+                module = ep.load()
+                ep_dir = (
+                    module.__path__[0]
+                    if hasattr(module, "__path__")
+                    else os.path.dirname(module.__file__)
+                )
+                if os.path.isdir(ep_dir):
+                    _load_jsons_from_dir(ep_dir, provider, bulk)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+    except Exception as e:
+        logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
+    return bulk

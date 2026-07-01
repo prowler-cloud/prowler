@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "Amazon GuardDuty detectors are under **centralized management** when linked to a delegated administrator account, or when the detector's account serves as the **administrator** with associated member accounts.",
   "Risk": "Lack of central management fragments **visibility** and slows **incident response** across accounts and regions. Adversaries can persist unnoticed, perform **lateral movement**, exfiltrate data, and alter configurations, harming **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",

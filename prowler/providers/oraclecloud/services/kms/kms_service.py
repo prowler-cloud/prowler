@@ -1,5 +1,6 @@
 """OCI Kms Service Module."""
 
+from datetime import datetime
 from typing import Optional
 
 import oci
@@ -20,10 +21,9 @@ class Kms(OCIService):
 
     def __get_client__(self, region):
         """Get the Kms client for a region."""
-        client_region = self.regional_clients.get(region)
-        if client_region:
-            return self._create_oci_client(oci.key_management.KmsVaultClient)
-        return None
+        return self._create_oci_client(
+            oci.key_management.KmsVaultClient, config_overrides={"region": region}
+        )
 
     def __list_keys__(self, regional_client):
         """List all keys."""
@@ -78,6 +78,25 @@ class Kms(OCIService):
                                         key_id=key_summary.id
                                     ).data
 
+                                    # Fetch current key version to get its creation time
+                                    current_key_version_time_created = None
+                                    if (
+                                        hasattr(key_details, "current_key_version")
+                                        and key_details.current_key_version
+                                    ):
+                                        try:
+                                            key_version = kms_management_client.get_key_version(
+                                                key_id=key_details.id,
+                                                key_version_id=key_details.current_key_version,
+                                            ).data
+                                            current_key_version_time_created = (
+                                                key_version.time_created
+                                            )
+                                        except Exception as version_error:
+                                            logger.warning(
+                                                f"Could not fetch key version for {key_details.id}: {version_error}"
+                                            )
+
                                     self.keys.append(
                                         Key(
                                             id=key_details.id,
@@ -110,6 +129,7 @@ class Kms(OCIService):
                                                 )
                                                 else None
                                             ),
+                                            current_key_version_time_created=current_key_version_time_created,
                                         )
                                     )
                 except Exception as error:
@@ -134,3 +154,4 @@ class Key(BaseModel):
     lifecycle_state: str
     is_auto_rotation_enabled: bool = False
     rotation_interval_in_days: Optional[int] = None
+    current_key_version_time_created: Optional[datetime] = None

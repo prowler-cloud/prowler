@@ -136,6 +136,20 @@
         "ec2_securitygroup_default_restrict_traffic",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_securitygroup_allow_ingress_from_internet_to_all_ports"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -183,6 +197,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "elbv2_ssl_listeners",
         "iam_no_custom_policy_permissive_role_assumption",
         "iam_aws_attached_policy_no_administrative_privileges",
@@ -365,6 +381,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

@@ -1,30 +1,40 @@
 {
   "Provider": "azure",
   "CheckID": "network_flow_log_more_than_90_days",
-  "CheckTitle": "Ensure that Network Security Group Flow Log retention period is 0, 90 days or greater",
+  "CheckTitle": "Network Watcher has all flow logs enabled with retention set to 0 or at least 90 days",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "Network",
-  "Description": "Network Security Group Flow Logs should be enabled and the retention period set to greater than or equal to 90 days.",
-  "Risk": "Flow logs enable capturing information about IP traffic flowing in and out of network security groups. Logs can be used to check for anomalies and give insight into suspected breaches.",
-  "RelatedUrl": " https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-overview",
+  "ResourceType": "microsoft.network/networkwatchers",
+  "ResourceGroup": "network",
+  "Description": "**Azure Network Watcher** has **flow logs** enabled for supported targets, such as **virtual networks** and **network security groups**, and configured to retain for at least `90` days (or `0` for unlimited). The evaluation checks that flow logging is enabled and that the retention policy meets the required duration for each configured log.",
+  "Risk": "Absent or short-retained **flow logs** reduce visibility into IP flows, delaying detection of port scans, brute force, data exfiltration, and lateral movement.\n\nForensics and accountability degrade, threatening **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest",
+    "https://learn.microsoft.com/en-us/azure/network-watcher/nsg-flow-logs-overview?tabs=Americas",
+    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
+    "https://support.icompaas.com/support/solutions/articles/62000229906-ensure-that-network-security-group-flow-log-retention-period-is-greater-than-90-days-"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 -- storage-account <NameorID of the storage account to save flow logs>",
-      "NativeIaC": "",
-      "Other": "https://www.trendmicro.com/cloudoneconformity-staging/knowledge-base/azure/Network/sufficient-nsg-flow-log-retention-period.html",
-      "Terraform": "https://docs.prowler.com/checks/azure/azure-logging-policies/bc_azr_logging_1#terraform"
+      "CLI": "az network watcher flow-log create --location <LOCATION> --name <example_flow_log_name> --target-resource-id <example_target_resource_id> --storage-account <example_storage_account_id> --enabled true --retention 90",
+      "NativeIaC": "```bicep\n// Enable flow logs with retention >= 90 days for a supported target\nresource flowlog 'Microsoft.Network/networkWatchers/flowLogs@2023-09-01' = {\n  name: '<example_network_watcher_name>/<example_flow_log_name>'\n  location: '<LOCATION>'\n  properties: {\n    targetResourceId: '<example_target_resource_id>'\n    storageId: '<example_storage_account_id>'\n    enabled: true\n    retentionPolicy: {\n      enabled: true\n      days: 90\n    }\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to Network Watcher > Flow logs\n2. Select the relevant flow log or create one for the target resource, such as a virtual network or network security group\n3. Set Status to On\n4. Set Retention (days) to 0 (unlimited) or at least 90\n5. Select a Storage account\n6. Click Save or Review + create",
+      "Terraform": "```hcl\n# Enable flow logs with retention >= 90 days\nresource \"azurerm_network_watcher_flow_log\" \"<example_resource_name>\" {\n  name                 = \"<example_resource_name>\"\n  network_watcher_name = \"<example_network_watcher_name>\"\n  resource_group_name  = \"<example_resource_group_name>\"\n  target_resource_id   = \"<example_target_resource_id>\"\n  storage_account_id   = \"<example_storage_account_id>\"\n\n  enabled = true\n\n  retention_policy {\n    enabled = true\n    days    = 90\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "From Azure Portal 1. Go to Network Watcher 2. Select NSG flow logs blade in the Logs section 3. Select each Network Security Group from the list 4. Ensure Status is set to On 5. Ensure Retention (days) setting greater than 90 days 6. Select your storage account in the Storage account field 7. Select Save From Azure CLI Enable the NSG flow logs and set the Retention (days) to greater than or equal to 90 days. az network watcher flow-log configure --nsg <NameorID of the Network Security Group> --enabled true --resource-group <resourceGroupName> --retention 91 --storage-account <NameorID of the storage account to save flow logs>",
-      "Url": "https://docs.microsoft.com/en-us/cli/azure/network/watcher/flow-log?view=azure-cli-latest"
+      "Text": "Enable **flow logs** and keep retention `90` days (`0` for unlimited) for supported targets, including **virtual networks** and **network security groups**. Restrict and monitor access to logs, store immutably, and stream to a SIEM to detect anomalies. Apply **defense in depth** and **least privilege**. Prefer **virtual network flow logs** for new deployments as NSG flow logs are being retired.",
+      "Url": "https://hub.prowler.com/check/network_flow_log_more_than_90_days"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "This will keep IP traffic logs for longer than 90 days. As a level 2, first determine your need to retain data, then apply your selection here. As this is data stored for longer, your monthly storage costs will increase depending on your data use."
+  "Notes": "Longer retention improves investigation depth but increases storage cost. For new Azure deployments, prefer virtual network flow logs where they satisfy your monitoring requirements because NSG flow logs are on the retirement path."
 }

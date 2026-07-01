@@ -1,10 +1,3 @@
-from celery import states
-from celery.signals import before_task_publish
-from config.celery import celery_app
-from django.db.models.signals import post_delete, pre_delete
-from django.dispatch import receiver
-from django_celery_results.backends.database import DatabaseBackend
-
 from api.db_utils import delete_related_daily_task
 from api.models import (
     LighthouseProviderConfiguration,
@@ -14,6 +7,12 @@ from api.models import (
     TenantAPIKey,
     User,
 )
+from celery import states
+from celery.signals import before_task_publish
+from config.celery import celery_app
+from django.db.models.signals import post_delete, pre_delete
+from django.dispatch import receiver
+from django_celery_results.backends.database import DatabaseBackend
 
 
 def create_task_result_on_publish(sender=None, headers=None, **kwargs):  # noqa: F841
@@ -61,7 +60,7 @@ def revoke_membership_api_keys(sender, instance, **kwargs):  # noqa: F841
     in that tenant should be revoked to prevent further access.
     """
     TenantAPIKey.objects.filter(
-        entity=instance.user, tenant_id=instance.tenant.id
+        entity_id=instance.user_id, tenant_id=instance.tenant_id
     ).update(revoked=True)
 
 

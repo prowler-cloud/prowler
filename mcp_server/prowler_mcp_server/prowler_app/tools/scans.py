@@ -5,6 +5,8 @@ This module provides tools for managing and monitoring Prowler security scans.
 
 from typing import Any, Literal
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.scans import (
     DetailedScan,
     ScanCreationResult,
@@ -12,7 +14,6 @@ from prowler_mcp_server.prowler_app.models.scans import (
     ScheduleCreationResult,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class ScansTools(BaseTool):
@@ -119,7 +120,7 @@ class ScansTools(BaseTool):
 
         clean_params = self.api_client.build_filter_params(params)
 
-        api_response = await self.api_client.get("/api/v1/scans", params=clean_params)
+        api_response = await self.api_client.get("/scans", params=clean_params)
         simplified_response = ScansListResponse.from_api_response(api_response)
 
         return simplified_response.model_dump()
@@ -163,9 +164,7 @@ class ScansTools(BaseTool):
             "fields[scans]": "name,trigger,state,progress,duration,unique_resource_count,started_at,completed_at,scheduled_at,next_scan_at,inserted_at"
         }
 
-        api_response = await self.api_client.get(
-            f"/api/v1/scans/{scan_id}", params=params
-        )
+        api_response = await self.api_client.get(f"/scans/{scan_id}", params=params)
         detailed_scan = DetailedScan.from_api_response(api_response["data"])
 
         return detailed_scan.model_dump()
@@ -213,9 +212,7 @@ class ScansTools(BaseTool):
 
             # Create scan (returns Task)
             self.logger.info(f"Creating scan for provider {provider_id}")
-            task_response = await self.api_client.post(
-                "/api/v1/scans", json_data=request_data
-            )
+            task_response = await self.api_client.post("/scans", json_data=request_data)
 
             scan_id = (
                 task_response.get("data", {})
@@ -228,7 +225,7 @@ class ScansTools(BaseTool):
                 raise Exception("No scan_id returned from scan creation")
 
             self.logger.info(f"Scan created successfully: {scan_id}")
-            scan_response = await self.api_client.get(f"/api/v1/scans/{scan_id}")
+            scan_response = await self.api_client.get(f"/scans/{scan_id}")
             scan_info = DetailedScan.from_api_response(scan_response["data"])
 
             return ScanCreationResult(
@@ -273,7 +270,7 @@ class ScansTools(BaseTool):
         """
         self.logger.info(f"Creating daily schedule for provider {provider_id}")
         task_response = await self.api_client.post(
-            "/api/v1/schedules/daily",
+            "/schedules/daily",
             json_data={
                 "data": {
                     "type": "daily-schedules",
@@ -316,7 +313,7 @@ class ScansTools(BaseTool):
         2. Use this tool with the scan 'id' and new name
         """
         api_response = await self.api_client.patch(
-            f"/api/v1/scans/{scan_id}",
+            f"/scans/{scan_id}",
             json_data={
                 "data": {
                     "type": "scans",

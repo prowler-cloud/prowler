@@ -42,13 +42,13 @@ Set up authentication for Microsoft 365 with the [Microsoft 365 Authentication](
 ### Step 2: Open Prowler Cloud
 
 1. Go to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app).
-2. Navigate to "Configuration" > "Cloud Providers".
+2. Navigate to "Configuration" > "Providers".
 
-    ![Cloud Providers Page](/images/prowler-app/cloud-providers-page.png)
+    ![Providers Page](/images/prowler-app/cloud-providers-page.png)
 
-3. Click "Add Cloud Provider".
+3. Click "Add Provider".
 
-    ![Add a Cloud Provider](/images/prowler-app/add-cloud-provider.png)
+    ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
 
 4. Select "Microsoft 365".
 
@@ -126,5 +126,19 @@ Include PowerShell module initialization to run every check:
 ```console
 prowler m365 --sp-env-auth --init-modules
 ```
+
+### Region Selection
+
+By default, Prowler connects to the global Microsoft 365 environment (`M365Global`). To target a different cloud environment, use the `--region` flag:
+
+```console
+prowler m365 --sp-env-auth --region M365USGovernment
+```
+
+Available regions:
+
+* **M365Global** (default): Standard commercial cloud
+* **M365China**: China-operated cloud (21Vianet)
+* **M365USGovernment**: US Government cloud (GCC High)
 
 ---

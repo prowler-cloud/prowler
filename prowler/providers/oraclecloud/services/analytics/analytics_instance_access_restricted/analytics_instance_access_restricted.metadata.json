@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AnalyticsInstance",
+  "ResourceGroup": "analytics",
   "Description": "Oracle Analytics Cloud endpoints are evaluated for **network exposure**. Public endpoints must use **restricted allowlists** of specific IPs/CIDRs; presence of `0.0.0.0/0` or no allowed sources indicates unrestricted access. Instances using a **VCN/private endpoint** or public endpoints limited to specific sources align with the intended exposure model.",
   "Risk": "Unrestricted OAC endpoints allow Internet-wide access to the login surface, enabling **credential stuffing** and **brute force**. Account takeover can expose **reports and data sources** (**confidentiality**), permit **dashboard/model changes** (**integrity**), and support **lateral movement** into connected systems.",
   "RelatedUrl": "",

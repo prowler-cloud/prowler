@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsCloudTrailTrail",
+  "ResourceGroup": "monitoring",
   "Description": "**AWS CloudTrail** has at least one trail with `logging` enabled in every region. A **multi-region trail** or a regional trail counts for coverage in that region.",
   "Risk": "Missing coverage in any region creates **visibility gaps**.\n\nAttackers can use lesser-monitored regions to run API actions, hide **unauthorized changes**, and exfiltrate data without audit trails, weakening **detective controls**, hindering **forensics**, and delaying response (confidentiality and integrity).",
   "RelatedUrl": "",

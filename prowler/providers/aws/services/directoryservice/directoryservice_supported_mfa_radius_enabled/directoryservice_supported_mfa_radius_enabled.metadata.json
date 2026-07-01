@@ -4,7 +4,7 @@
   "CheckTitle": "AWS Directory Service directory has RADIUS-based MFA enabled",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices",
-    "Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
     "TTPs/Initial Access",
     "TTPs/Credential Access"
   ],
@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "IAM",
   "Description": "**AWS Directory Service directories** are evaluated for **RADIUS-backed multi-factor authentication**, confirming that MFA is configured and the RADIUS integration is active.",
   "Risk": "Without **RADIUS MFA**, directory-based sign-ins to AWS-integrated services rely on a single factor, enabling credential stuffing and phishing to succeed. Compromised passwords can grant unauthorized access, drive data exfiltration, and enable privilege escalation, undermining confidentiality and integrity.",
   "RelatedUrl": "",

@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**IAM Access Analyzer** presence and status are evaluated per account and Region. An analyzer in `ACTIVE` state indicates continuous analysis of supported resources and IAM activity to identify external, internal, and unused access.",
   "Risk": "Without an active analyzer, visibility into unintended public, cross-account, or risky internal access is lost. Adversaries can exploit exposed S3, snapshots, KMS keys, or permissive role trusts for data exfiltration and escalation. Unused permissions persist, enlarging the attack surface. This degrades confidentiality and integrity.",
   "RelatedUrl": "",

@@ -20,6 +20,14 @@
           "SectionDescription": "This section contains recommendations for configuring ACM resources.",
           "Service": "ACM"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 30
+        }
       ]
     },
     {
@@ -28,6 +36,17 @@
       "Description": "This control checks whether RSA certificates managed by AWS Certificate Manager use a key length of at least 2,048 bits. The control fails if the key length is smaller than 2,048 bits.",
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -777,6 +796,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "Config.1",
@@ -891,6 +918,14 @@
       "Description": "This control checks whether an Amazon DocumentDB cluster has a backup retention period greater than or equal to 7 days. The control fails if the backup retention period is less than 7 days.",
       "Checks": [
         "documentdb_cluster_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "documentdb_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ],
       "Attributes": [
         {
@@ -1863,7 +1898,9 @@
       "Id": "ELB.4",
       "Name": "Application load balancers should be configured to drop HTTP headers",
       "Description": "This control evaluates AWS Application Load Balancers (ALB) to ensure they are configured to drop invalid HTTP headers. The control fails if the value of routing.http.drop_invalid_header_fields.enabled is set to false. By default, ALBs are not configured to drop invalid HTTP header values. Removing these header values prevents HTTP desync attacks.",
-      "Checks": [],
+      "Checks": [
+        "elbv2_alb_drop_invalid_header_fields_enabled"
+      ],
       "Attributes": [
         {
           "ItemId": "ELB.4",
@@ -1957,6 +1994,14 @@
           "SectionDescription": "This section contains recommendations for configuring ELB resources.",
           "Service": "ELB"
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elb_is_in_multiple_az",
+          "ConfigKey": "elb_min_azs",
+          "Operator": "gte",
+          "Value": 2
+        }
       ]
     },
     {
@@ -1990,6 +2035,14 @@
           "Section": "ELB",
           "SectionDescription": "This section contains recommendations for configuring ELB resources.",
           "Service": "ELB"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "elbv2_is_in_multiple_az",
+          "ConfigKey": "elbv2_min_azs",
+          "Operator": "gte",
+          "Value": 2
         }
       ]
     },
@@ -2368,6 +2421,14 @@
       "Checks": [
         "guardduty_is_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "GuardDuty.1",
@@ -2545,6 +2606,20 @@
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
+      ],
       "Attributes": [
         {
           "ItemId": "IAM.8",
@@ -2632,6 +2707,20 @@
       "Checks": [
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
       ],
       "Attributes": [
         {
@@ -2788,6 +2877,40 @@
           "Section": "Lambda",
           "SectionDescription": "This section contains recommendations for configuring Lambda resources.",
           "Service": "Lambda"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "awslambda_function_using_supported_runtimes",
+          "ConfigKey": "obsolete_lambda_runtimes",
+          "Operator": "superset",
+          "Value": [
+            "java8",
+            "go1.x",
+            "provided",
+            "python3.6",
+            "python2.7",
+            "python3.7",
+            "python3.8",
+            "nodejs4.3",
+            "nodejs4.3-edge",
+            "nodejs6.10",
+            "nodejs",
+            "nodejs8.10",
+            "nodejs10.x",
+            "nodejs12.x",
+            "nodejs14.x",
+            "nodejs16.x",
+            "dotnet5.0",
+            "dotnet6",
+            "dotnet7",
+            "dotnetcore1.0",
+            "dotnetcore2.0",
+            "dotnetcore2.1",
+            "dotnetcore3.1",
+            "ruby2.5",
+            "ruby2.7"
+          ]
         }
       ]
     },
@@ -2948,6 +3071,14 @@
       "Description": "This control checks whether a Neptune DB cluster has automated backups enabled, and a backup retention period greater than or equal to 7 days. The control fails if backups aren't enabled for the Neptune DB cluster, or if the retention period is less than 7 days.",
       "Checks": [
         "neptune_cluster_backup_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "neptune_cluster_backup_enabled",
+          "ConfigKey": "minimum_backup_retention_period",
+          "Operator": "gte",
+          "Value": 7
+        }
       ],
       "Attributes": [
         {

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail events** for **VPC configuration changes** are captured in CloudWatch Logs with a metric filter and an associated alarm. The filter targets actions like `CreateVpc`, `DeleteVpc`, `ModifyVpcAttribute`, and VPC peering operations to surface when network topology is altered.",
   "Risk": "Without alerting on VPC changes, unauthorized or accidental edits to routes, peering, or attributes can go unnoticed, exposing private networks and enabling data exfiltration (C), lateral movement and traffic tampering (I), and outages from misrouted or bridged networks (A).",
   "RelatedUrl": "",

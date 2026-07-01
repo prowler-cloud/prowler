@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "**Amazon GuardDuty detectors** are evaluated for **EKS Audit Log Monitoring** (`EKS_AUDIT_LOGS`) being enabled to analyze Kubernetes audit activity from your **Amazon EKS** clusters.",
   "Risk": "Without it, **Kubernetes API abuse** may go undetected, impacting CIA:\n- Secret access and data exfiltration\n- RBAC changes enabling privilege escalation\n- Rogue deployments for persistence/cryptomining\n\nAttackers can laterally move to AWS using harvested credentials.",
   "RelatedUrl": "",

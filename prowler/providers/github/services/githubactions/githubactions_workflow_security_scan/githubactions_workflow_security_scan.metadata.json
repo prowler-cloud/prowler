@@ -1,0 +1,36 @@
+{
+  "Provider": "github",
+  "CheckID": "githubactions_workflow_security_scan",
+  "CheckTitle": "GitHub Actions workflows have no security issues detected by zizmor",
+  "CheckType": [],
+  "ServiceName": "githubactions",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "GitHubActionsWorkflow",
+  "ResourceGroup": "devops",
+  "Description": "Scan GitHub Actions workflow files for security issues such as template injection, excessive permissions, unpinned actions, and other misconfigurations using the zizmor static analysis tool.",
+  "Risk": "Insecure GitHub Actions workflows can lead to supply chain attacks, credential theft, code injection, and unauthorized access to repository secrets.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Review and fix the security issues identified by zizmor in your GitHub Actions workflow files.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review your GitHub Actions workflows for security best practices including pinning actions to commit SHAs, using minimal permissions, avoiding template injection, and securing workflow triggers.",
+      "Url": "https://hub.prowler.com/check/githubactions_workflow_security_scan"
+    }
+  },
+  "Categories": [
+    "software-supply-chain"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check requires zizmor to be installed. If zizmor is not available, the check will be skipped gracefully.",
+  "AdditionalURLs": [
+    "https://docs.zizmor.sh/"
+  ]
+}

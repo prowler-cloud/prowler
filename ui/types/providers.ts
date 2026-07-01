@@ -1,3 +1,5 @@
+import type { ScheduleFrequency } from "./schedules";
+
 export const PROVIDER_TYPES = [
   "aws",
   "azure",
@@ -6,8 +8,15 @@ export const PROVIDER_TYPES = [
   "m365",
   "mongodbatlas",
   "github",
+  "googleworkspace",
   "iac",
+  "image",
   "oraclecloud",
+  "alibabacloud",
+  "cloudflare",
+  "openstack",
+  "vercel",
+  "okta",
 ] as const;
 
 export type ProviderType = (typeof PROVIDER_TYPES)[number];
@@ -20,8 +29,15 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   m365: "Microsoft 365",
   mongodbatlas: "MongoDB Atlas",
   github: "GitHub",
+  googleworkspace: "Google Workspace",
   iac: "Infrastructure as Code",
+  image: "Container Registry",
   oraclecloud: "Oracle Cloud Infrastructure",
+  alibabacloud: "Alibaba Cloud",
+  cloudflare: "Cloudflare",
+  openstack: "OpenStack",
+  vercel: "Vercel",
+  okta: "Okta",
 };
 
 export function getProviderDisplayName(providerId: string): string {
@@ -51,6 +67,15 @@ export interface ProviderProps {
     };
     inserted_at: string;
     updated_at: string;
+    scan_frequency?: ScheduleFrequency | null;
+    scan_hour?: number | null;
+    scan_day_of_week?: number | null;
+    scan_day_of_month?: number | null;
+    scan_interval_hours?: number | null;
+    scan_timezone?: string | null;
+    scan_enabled?: boolean | null;
+    next_scan_at?: string | null;
+    last_scan_at?: string | null;
     created_by: {
       object: string;
       id: string;
@@ -80,6 +105,11 @@ export interface ProviderEntity {
   provider: ProviderType;
   uid: string;
   alias: string | null;
+}
+
+export interface GroupFilterEntity {
+  name: string;
+  uid: string;
 }
 
 export interface ProviderConnectionStatus {

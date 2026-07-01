@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsDmsEndpoint",
+  "ResourceGroup": "database",
   "Description": "**AWS DMS endpoints** have their SSL/TLS mode inspected; any value other than `none` denotes encrypted connections between the replication instance and databases.\n\nSupported modes include `require`, `verify-ca`, and `verify-full`.",
   "Risk": "Without TLS, data in transit can be read or altered, affecting:\n- **Confidentiality** via packet sniffing and credential leakage\n- **Integrity** through **MITM** tampering of migration streams\n- **Availability** from session hijack or task disruption",
   "RelatedUrl": "",

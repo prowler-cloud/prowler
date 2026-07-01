@@ -1,12 +1,14 @@
 import {
+  BellRing,
   CloudCog,
   Cog,
-  Group,
+  GitBranch,
   Mail,
   MessageCircleQuestion,
   Puzzle,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
@@ -16,7 +18,6 @@ import {
   VolumeX,
   Warehouse,
 } from "lucide-react";
-import type { MouseEvent } from "react";
 
 import { ProwlerShort } from "@/components/icons";
 import {
@@ -30,17 +31,17 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
-  hasProviders?: boolean;
-  openMutelistModal?: () => void;
-  requestMutelistModalOpen?: () => void;
+  // Passed in (not read here) so the island isn't read during SSR — that would
+  // cause a hydration mismatch. See useRuntimeConfig.
+  apiDocsUrl?: string | null;
 }
 
 export const getMenuList = ({
   pathname,
-  hasProviders,
-  openMutelistModal,
-  requestMutelistModalOpen,
+  apiDocsUrl = null,
 }: MenuListOptions): GroupProps[] => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
   return [
     {
       groupLabel: "",
@@ -79,9 +80,34 @@ export const getMenuList = ({
       groupLabel: "",
       menus: [
         {
-          href: "/findings",
+          href: "/attack-paths",
+          label: "Attack Paths",
+          icon: GitBranch,
+          active: pathname.startsWith("/attack-paths"),
+        },
+      ],
+    },
+
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
           label: "Findings",
           icon: Tag,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/scans",
+          label: "Scans",
+          icon: Timer,
+          // Exact match so it isn't also marked active on the `/scans/config`
+          // sub-route (mirrors the top-level Lighthouse entry).
+          active: pathname === "/scans",
         },
       ],
     },
@@ -103,35 +129,32 @@ export const getMenuList = ({
           label: "Configuration",
           icon: Settings,
           submenus: [
-            { href: "/providers", label: "Cloud Providers", icon: CloudCog },
+            { href: "/providers", label: "Providers", icon: CloudCog },
             {
-              href: "/providers",
+              href: "/alerts",
+              label: "Alerts",
+              icon: BellRing,
+              active: isCloudEnv && pathname.startsWith("/alerts"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
+            {
+              href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
-              disabled: hasProviders === false,
-              active: false,
-              onClick: (event: MouseEvent<HTMLAnchorElement>) => {
-                if (hasProviders === false) {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  return;
-                }
-
-                requestMutelistModalOpen?.();
-
-                if (pathname !== "/providers") {
-                  return;
-                }
-
-                event.preventDefault();
-                event.stopPropagation();
-                openMutelistModal?.();
-              },
+              active: pathname === "/mutelist",
             },
-            { href: "/manage-groups", label: "Provider Groups", icon: Group },
-            { href: "/scans", label: "Scan Jobs", icon: Timer },
+            {
+              href: "/scans/config",
+              label: "Scan",
+              icon: SlidersHorizontal,
+              active: isCloudEnv && pathname.startsWith("/scans/config"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/roles", label: "Roles", icon: UserCog },
             { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
@@ -148,6 +171,7 @@ export const getMenuList = ({
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
+            { href: "/roles", label: "Roles", icon: UserCog },
           ],
           defaultOpen: false,
         },
@@ -168,26 +192,30 @@ export const getMenuList = ({
               icon: DocIcon,
             },
             {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              href: isCloudEnv
+                ? "https://api.prowler.com/api/v1/docs"
+                : (apiDocsUrl ?? ""),
               target: "_blank",
               label: "API reference",
               icon: APIdocIcon,
             },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
+            ...(isCloudEnv
+              ? [
+                  {
+                    href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+                    target: "_blank",
+                    label: "Support Desk",
+                    icon: MessageCircleQuestion,
+                  },
+                ]
+              : [
+                  {
+                    href: "https://github.com/prowler-cloud/prowler/issues",
+                    target: "_blank",
+                    label: "Community Support",
+                    icon: GithubIcon,
+                  },
+                ]),
           ],
           defaultOpen: false,
         },

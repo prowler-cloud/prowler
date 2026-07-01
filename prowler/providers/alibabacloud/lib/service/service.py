@@ -68,6 +68,45 @@ class AlibabaCloudService:
             return self.regional_clients[region]
         return self.client
 
+    @staticmethod
+    def _is_retriable_error(error: Exception) -> bool:
+        """Return True when an Alibaba API error is worth retrying once."""
+        error_code = getattr(error, "code", "")
+        status_code = getattr(error, "statusCode", None) or getattr(
+            error, "status_code", None
+        )
+        message = str(error)
+
+        retriable_codes = {"ServiceUnavailable", "Throttling", "Throttling.User"}
+        retriable_substrings = (
+            "Connection reset by peer",
+            "Connection aborted",
+            "ConnectTimeoutError",
+            "ReadTimeout",
+            "timed out",
+            "temporarily unavailable",
+        )
+
+        return (
+            error_code in retriable_codes
+            or status_code in {429, 500, 502, 503, 504}
+            or any(fragment in message for fragment in retriable_substrings)
+        )
+
+    def _call_with_retries(self, func, *args, retries: int = 1, **kwargs):
+        """Call a function and retry once for transient Alibaba API failures."""
+        last_error = None
+
+        for attempt in range(retries + 1):
+            try:
+                return func(*args, **kwargs)
+            except Exception as error:  # pragma: no cover - exercised via services
+                last_error = error
+                if attempt >= retries or not self._is_retriable_error(error):
+                    raise
+
+        raise last_error
+
     def __threading_call__(self, call, iterator=None):
         """
         Execute a function across multiple regions or items using threads.

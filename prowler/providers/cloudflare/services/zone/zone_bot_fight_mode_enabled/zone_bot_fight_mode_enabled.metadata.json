@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_bot_fight_mode_enabled",
+  "CheckTitle": "Bot Fight Mode is enabled",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Bot Fight Mode** configuration by checking if it is enabled to detect and mitigate **automated bot traffic** targeting the zone through browser integrity checks.",
+  "Risk": "Without **Bot Fight Mode**, zones are vulnerable to automated attacks.\n- **Confidentiality**: web scraping bots can harvest sensitive data from your site\n- **Integrity**: credential stuffing attacks can compromise user accounts\n- **Availability**: bot traffic can overwhelm resources causing service degradation",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/bots/get-started/free/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > Bots\n3. Enable Bot Fight Mode\n4. Monitor bot analytics to fine-tune protection\n5. Consider combining with rate limiting for comprehensive protection",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **Bot Fight Mode** as part of a layered bot management strategy.\n- Detects and challenges automated bot traffic\n- Protects against web scraping and credential stuffing\n- Combine with rate limiting and WAF rules for comprehensive protection\n- Monitor bot analytics to understand traffic patterns",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_bot_fight_mode_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Bot Fight Mode is a free feature that uses browser integrity checks to detect and challenge automated traffic. For more advanced bot management, consider Cloudflare's paid Bot Management product."
+}

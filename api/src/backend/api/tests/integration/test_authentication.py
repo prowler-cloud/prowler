@@ -1,14 +1,13 @@
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
-
-from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 
 
 @pytest.mark.django_db
@@ -215,6 +214,21 @@ class TestTokenSwitchTenant:
         tenant_id = tenants_fixture[0].id
         user_instance = User.objects.get(email=test_user)
         Membership.objects.create(user=user_instance, tenant_id=tenant_id)
+        # Assign an admin role in the target tenant so the user can access resources
+        target_role = Role.objects.create(
+            name="admin",
+            tenant_id=tenant_id,
+            manage_users=True,
+            manage_account=True,
+            manage_billing=True,
+            manage_providers=True,
+            manage_integrations=True,
+            manage_scans=True,
+            unlimited_visibility=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user_instance, role=target_role, tenant_id=tenant_id
+        )
 
         # Check that using our new user's credentials we can authenticate and get the providers
         access_token, _ = get_api_tokens(client, test_user, test_password)
@@ -301,7 +315,7 @@ class TestTokenSwitchTenant:
         assert invalid_tenant_response.status_code == 400
         assert invalid_tenant_response.json()["errors"][0]["code"] == "invalid"
         assert invalid_tenant_response.json()["errors"][0]["detail"] == (
-            "Tenant does not exist or user is not a " "member."
+            "Tenant does not exist or user is not a member."
         )
 
 
@@ -453,7 +467,7 @@ class TestAPIKeyErrors:
             name="Expired Key",
             tenant_id=tenants_fixture[0].id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)
@@ -485,7 +499,7 @@ class TestAPIKeyErrors:
         # Create a valid-looking key with non-existent UUID
         crypto = get_crypto()
         fake_uuid = str(uuid4())
-        fake_expiry = (datetime.now(timezone.utc) + timedelta(days=30)).timestamp()
+        fake_expiry = (datetime.now(UTC) + timedelta(days=30)).timestamp()
         payload = {"_pk": fake_uuid, "_exp": fake_expiry}
         encrypted_payload = crypto.generate(payload)
 
@@ -708,7 +722,7 @@ class TestAPIKeyLifecycle:
         assert created_data["attributes"]["revoked"] is False
 
         # Create API key with expiry
-        future_expiry = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+        future_expiry = (datetime.now(UTC) + timedelta(days=90)).isoformat()
         create_with_expiry_response = client.post(
             reverse("api-key-list"),
             data={
@@ -913,8 +927,7 @@ class TestAPIKeyLifecycle:
 
         # Must return 401 Unauthorized, not 500 Internal Server Error
         assert auth_response.status_code == 401, (
-            f"Expected 401 but got {auth_response.status_code}: "
-            f"{auth_response.json()}"
+            f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
         )
 
         # Verify error message is present
@@ -1253,7 +1266,7 @@ class TestAPIKeyRLSBypass:
             name="Expired Test Key",
             tenant_id=tenant.id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)

@@ -5,10 +5,10 @@
     "forceConsistentCasingInFileNames": true,
     "incremental": true,
     "isolatedModules": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": ["dom", "dom.iterable", "esnext"],
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
@@ -24,12 +24,13 @@
     "strict": true,
     "target": "es5"
   },
-  "exclude": ["node_modules"],
+  "exclude": ["node_modules", "vitest.config.ts"],
   "include": [
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "images.d.ts"
+    "images.d.ts",
+    ".next/dev/types/**/*.ts"
   ]
 }

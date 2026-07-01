@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd** configuration is reviewed for the `--auto-tls` option, which enables automatically generated self-signed certificates for client TLS.\n\nPresence of this flag indicates self-signed TLS is used; absence indicates client TLS relies on externally managed certificates.",
   "Risk": "Using **self-signed auto TLS** weakens identity assurance, enabling spoofed endpoints and **man-in-the-middle** on etcd client traffic. Attackers could read or alter Kubernetes state in etcd, impacting **confidentiality** and **integrity**, and facilitating control-plane takeover or data exfiltration.",
   "RelatedUrl": "",

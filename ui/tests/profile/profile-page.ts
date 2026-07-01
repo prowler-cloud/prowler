@@ -15,9 +15,16 @@ export class UserProfilePage extends BasePage {
   }
 
   async goto(): Promise<void> {
-    // Navigate to the user profile page
-
     await super.goto("/profile");
+  }
+
+  async verifyPageLoaded(): Promise<void> {
+    await expect(this.page).toHaveURL("/profile");
+    await expect(this.pageHeadingUserProfile).toBeVisible();
+  }
+
+  async verifyOnProfilePage(): Promise<void> {
+    await expect(this.page).toHaveURL("/profile");
   }
 
   async verifyOrganizationId(organizationId: string): Promise<void> {

@@ -16,6 +16,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**Amazon DocumentDB clusters** are assessed for **storage encryption at rest** via the cluster's `encrypted` setting.\n\nIt identifies clusters where data volumes, automated backups, and snapshots aren't protected by AWS KMS-managed encryption.",
   "Risk": "Without at-rest encryption, cluster data, snapshots, and backups can be read in plaintext if copies are leaked, mis-shared, or underlying storage is accessed. This harms **confidentiality**, enables offline analysis and data exfiltration, and widens the blast radius of insider or backup repository compromise.",
   "RelatedUrl": "",

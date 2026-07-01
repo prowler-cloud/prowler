@@ -16,8 +16,8 @@ import {
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
 import { Button } from "@/components/shadcn";
+import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
-import { CustomAlertModal } from "@/components/ui/custom";
 import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
@@ -78,7 +78,7 @@ export const JiraIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -109,7 +109,7 @@ export const JiraIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -160,7 +160,7 @@ export const JiraIntegrationsManager = ({
           description: result.error,
         });
       }
-    } catch (error) {
+    } catch (_error) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -209,8 +209,8 @@ export const JiraIntegrationsManager = ({
 
   return (
     <>
-      <CustomAlertModal
-        isOpen={isDeleteOpen}
+      <Modal
+        open={isDeleteOpen}
         onOpenChange={setIsDeleteOpen}
         title="Delete Jira Integration"
         description="This action cannot be undone. This will permanently delete your Jira integration."
@@ -243,10 +243,10 @@ export const JiraIntegrationsManager = ({
             {isDeleting ? "Deleting..." : "Delete"}
           </Button>
         </div>
-      </CustomAlertModal>
+      </Modal>
 
-      <CustomAlertModal
-        isOpen={isModalOpen}
+      <Modal
+        open={isModalOpen}
         onOpenChange={setIsModalOpen}
         title={
           editingIntegration
@@ -259,7 +259,7 @@ export const JiraIntegrationsManager = ({
           onSuccess={handleFormSuccess}
           onCancel={handleModalClose}
         />
-      </CustomAlertModal>
+      </Modal>
 
       <div className="flex flex-col gap-6">
         {/* Header with Add Button */}

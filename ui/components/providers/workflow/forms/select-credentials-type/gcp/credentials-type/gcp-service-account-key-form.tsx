@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomTextarea } from "@/components/ui/custom";
+import { WizardTextareaField } from "@/components/providers/workflow/forms/fields";
 import { GCPServiceAccountKey } from "@/types";
 
 export const GCPServiceAccountKeyForm = ({
@@ -18,7 +18,7 @@ export const GCPServiceAccountKeyForm = ({
           Please provide the service account key for your GCP credentials.
         </div>
       </div>
-      <CustomTextarea
+      <WizardTextareaField
         control={control}
         name="service_account_key"
         label="Service Account Key"

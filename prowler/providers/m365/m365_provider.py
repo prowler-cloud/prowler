@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import logging
 import os
 from argparse import ArgumentTypeError
 from os import getenv
@@ -98,6 +99,7 @@ class M365Provider(Provider):
     """
 
     _type: str = "m365"
+    sdk_only: bool = False
     _session: DefaultAzureCredential  # Must be used besides being named for Azure
     _identity: M365IdentityInfo
     _audit_config: dict
@@ -156,6 +158,9 @@ class M365Provider(Provider):
             M365HTTPResponseError: If there is an HTTP response error.
         """
         logger.info("Setting M365 provider ...")
+
+        # Mute HPACK library logs to prevent token leakage in debug mode
+        logging.getLogger("hpack").setLevel(logging.CRITICAL)
 
         logger.info("Checking if any credentials mode is set ...")
 
@@ -1069,7 +1074,7 @@ class M365Provider(Provider):
             organization_info = await client.organization.get()
             identity.tenant_id = organization_info.value[0].id
 
-        asyncio.get_event_loop().run_until_complete(get_m365_identity(identity))
+        asyncio.run(get_m365_identity(identity))
         return identity
 
     @staticmethod
@@ -1257,9 +1262,7 @@ class M365Provider(Provider):
                     result = await client.domains.get()
                     return result.value
 
-                result = asyncio.get_event_loop().run_until_complete(
-                    verify_certificate()
-                )
+                result = asyncio.run(verify_certificate())
                 if not result:
                     raise M365NotValidCertificateContentError(
                         file=os.path.basename(__file__),
@@ -1280,9 +1283,7 @@ class M365Provider(Provider):
                     result = await client.domains.get()
                     return result.value
 
-                result = asyncio.get_event_loop().run_until_complete(
-                    verify_certificate()
-                )
+                result = asyncio.run(verify_certificate())
                 if not result:
                     raise M365NotValidCertificatePathError(
                         file=os.path.basename(__file__),

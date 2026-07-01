@@ -35,10 +35,9 @@ class BlockStorage(OCIService):
         Returns:
             Block Storage client instance
         """
-        client_region = self.regional_clients.get(region)
-        if client_region:
-            return self._create_oci_client(oci.core.BlockstorageClient)
-        return None
+        return self._create_oci_client(
+            oci.core.BlockstorageClient, config_overrides={"region": region}
+        )
 
     def __list_volumes__(self, regional_client):
         """
@@ -112,7 +111,8 @@ class BlockStorage(OCIService):
                 try:
                     # Get availability domains for this compartment
                     identity_client = self._create_oci_client(
-                        oci.identity.IdentityClient
+                        oci.identity.IdentityClient,
+                        config_overrides={"region": regional_client.region},
                     )
                     availability_domains = identity_client.list_availability_domains(
                         compartment_id=compartment.id

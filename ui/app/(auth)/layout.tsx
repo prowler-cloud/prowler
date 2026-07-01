@@ -2,14 +2,15 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
-import { redirect } from "next/navigation";
-import { ReactNode } from "react";
+import { connection } from "next/server";
+import { ReactNode, Suspense } from "react";
 
-import { auth } from "@/auth.config";
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
+import { readEnv } from "@/lib/runtime-env";
 
 import { Providers } from "../providers";
 
@@ -31,20 +32,27 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth();
+  // Force dynamic rendering so the read below resolves from the container env
+  // at request time rather than being snapshotted at build (independent of the
+  // <RuntimePublicConfig/> island's own connection() call).
+  await connection();
 
-  if (session?.user) {
-    redirect("/");
-  }
+  // Server-side runtime read. Empty/unset id ⇒ GoogleTagManager is not mounted
+  const gtmId = readEnv(
+    "UI_GOOGLE_TAG_MANAGER_ID",
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
+  );
 
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
@@ -53,12 +61,12 @@ export default async function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <NavigationProgress />
+          <Suspense>
+            <NavigationProgress />
+          </Suspense>
           {children}
           <Toaster />
-          <GoogleTagManager
-            gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
-          />
+          {gtmId && <GoogleTagManager gtmId={gtmId} />}
         </Providers>
       </body>
     </html>

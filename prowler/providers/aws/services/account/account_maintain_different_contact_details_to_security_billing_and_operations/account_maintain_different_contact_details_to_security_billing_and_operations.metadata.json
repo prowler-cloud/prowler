@@ -11,16 +11,16 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "governance",
   "Description": "**AWS account alternate contacts** are defined for **Security**, **Billing**, and **Operations** with `name`, `email`, and `phone`. The finding evaluates that all three exist, are distinct from one another, and differ from the **primary (root) contact**.",
   "Risk": "Missing or shared contacts can delay response to abuse alerts, credential compromise, or billing anomalies, reducing **availability** (possible AWS traffic throttling) and raising **confidentiality** and **integrity** risk through extended exposure. If AWS cannot reach you, urgent mitigation may disrupt service.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/account_alternate_contact",
-    "https://docs.prowler.com/checks/aws/iam-policies/iam_18-maintain-contact-details#aws-console",
     "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-alternate.html",
     "https://builder.aws.com/content/2qRw97fe8JFwfk2AbpJ3sYNpNvM/aws-bulk-update-alternate-contacts-across-organization",
     "https://github.com/aws-samples/aws-account-alternate-contact-with-terraform",
-    "https://trendmicro.com/cloudoneconformity/knowledge-base/aws/IAM/account-security-alternate-contacts.html",
+    "https://trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/IAM/account-security-alternate-contacts.html",
     "https://repost.aws/articles/ARDFbpt-bvQ8iuErnqVVcCXQ/managing-aws-organization-alternate-contacts-via-csv"
   ],
   "Remediation": {

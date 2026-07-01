@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon EMR clusters** are assessed for **public network exposure** by examining master and core/task node security groups for inbound rules that allow any source (`0.0.0.0/0` or `::/0`).\n\nOnly active clusters are considered, and findings identify exposure via the specific security groups attached to the cluster nodes.",
   "Risk": "**Open Internet ingress** to EMR nodes enables direct access to services and UIs, facilitating brute force, RCE, and data theft. Adversaries can pivot inside the VPC, alter jobs and outputs (**integrity**), exfiltrate datasets (**confidentiality**), or abuse compute for mining, degrading **availability**.",
   "RelatedUrl": "",

@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "**Amazon DocumentDB clusters** with **Multi-AZ** (`multi_az`) indicate deployment of a primary and one or more replicas across Availability Zones.",
   "Risk": "Without Multi-AZ, the cluster depends on a single AZ/instance. An AZ or node failure-or maintenance-can stop reads and writes, causing downtime, timeouts, and SLA breaches. Availability degrades, RTO rises, and applications may experience failed or retried transactions until replacement capacity is created.",
   "RelatedUrl": "",

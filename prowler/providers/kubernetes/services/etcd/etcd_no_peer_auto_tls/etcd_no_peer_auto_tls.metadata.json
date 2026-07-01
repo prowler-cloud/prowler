@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd peer TLS** configuration is evaluated by checking etcd containers for the `--peer-auto-tls` flag. Presence of `--peer-auto-tls` indicates peers use automatically generated self-signed certificates for inter-peer connections.",
   "Risk": "With `--peer-auto-tls`, traffic is encrypted but peer identity isn't verified, enabling:\n- MITM on peer links\n- Rogue member joins to read/modify data\n- Quorum disruption\n\nThis degrades **confidentiality**, **integrity**, and **availability** of control-plane state replicated in etcd.",
   "RelatedUrl": "",

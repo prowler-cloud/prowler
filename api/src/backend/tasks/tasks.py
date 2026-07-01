@@ -1,16 +1,42 @@
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from shutil import rmtree
 
+from api.compliance import (
+    get_compliance_frameworks,
+    get_prowler_provider_compliance,
+)
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import delete_related_daily_task, rls_transaction
+from api.decorators import handle_provider_deletion, set_tenant
+from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.utils import initialize_prowler_provider
+from api.v1.serializers import ScanTaskSerializer
 from celery import chain, group, shared_task
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
 from django_celery_beat.models import PeriodicTask
+from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.outputs.compliance.compliance import (
+    process_universal_compliance_frameworks,
+)
+from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
+from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.jobs.attack_paths import (
+    attack_paths_scan,
+    can_provider_run_attack_paths_scan,
+)
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
     backfill_compliance_summaries,
     backfill_daily_severity_summaries,
+    backfill_finding_group_summaries,
+    backfill_provider_compliance_scores,
     backfill_resource_scan_summaries,
 )
 from tasks.jobs.connection import (
@@ -36,28 +62,81 @@ from tasks.jobs.lighthouse_providers import (
     refresh_lighthouse_provider_models,
 )
 from tasks.jobs.muting import mute_historical_findings
-from tasks.jobs.report import generate_compliance_reports_job
+from tasks.jobs.orphan_recovery import reconcile_orphans
+from tasks.jobs.report import (
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    _cleanup_stale_tmp_output_directories,
+    generate_compliance_reports_job,
+)
 from tasks.jobs.scan import (
     aggregate_attack_surface,
     aggregate_daily_severity,
+    aggregate_finding_group_summaries,
     aggregate_findings,
     create_compliance_requirements,
     perform_prowler_scan,
+    reset_ephemeral_resource_findings_count,
+    update_provider_compliance_scores,
 )
-from tasks.utils import batched, get_next_execution_datetime
-
-from api.compliance import get_compliance_frameworks
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.decorators import handle_provider_deletion, set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
-from api.utils import initialize_prowler_provider
-from api.v1.serializers import ScanTaskSerializer
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.utils import (
+    _get_or_create_scheduled_scan,
+    batched,
+    get_next_execution_datetime,
+)
 
 logger = get_task_logger(__name__)
+
+
+def _cleanup_orphan_scheduled_scans(
+    tenant_id: str,
+    provider_id: str,
+    scheduler_task_id: int,
+) -> int:
+    """
+    TEMPORARY WORKAROUND: Clean up orphan AVAILABLE scans.
+
+    Detects and removes AVAILABLE scans that were never used due to an
+    issue during the first scheduled scan setup.
+
+    An AVAILABLE scan is considered orphan if there's also a SCHEDULED scan for
+    the same provider with the same scheduler_task_id. This situation indicates
+    that the first scan execution didn't find the AVAILABLE scan (because it
+    wasn't committed yet, probably) and created a new one, leaving the AVAILABLE orphaned.
+
+    Args:
+        tenant_id: The tenant ID.
+        provider_id: The provider ID.
+        scheduler_task_id: The PeriodicTask ID that triggers these scans.
+
+    Returns:
+        Number of orphan scans deleted (0 if none found).
+    """
+    orphan_available_scans = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.AVAILABLE,
+        scheduler_task_id=scheduler_task_id,
+    )
+
+    scheduled_scan_exists = Scan.objects.filter(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.SCHEDULED,
+        scheduler_task_id=scheduler_task_id,
+    ).exists()
+
+    if scheduled_scan_exists and orphan_available_scans.exists():
+        orphan_count = orphan_available_scans.count()
+        logger.warning(
+            f"[WORKAROUND] Found {orphan_count} orphan AVAILABLE scan(s) for "
+            f"provider {provider_id} alongside a SCHEDULED scan. Cleaning up orphans..."
+        )
+        orphan_available_scans.delete()
+        return orphan_count
+
+    return 0
 
 
 def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str):
@@ -69,9 +148,10 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         scan_id (str): The ID of the scan that was performed.
         provider_id (str): The primary key of the Provider instance that was scanned.
     """
-    create_compliance_requirements_task.apply_async(
-        kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
-    )
+    chain(
+        create_compliance_requirements_task.si(tenant_id=tenant_id, scan_id=scan_id),
+        update_provider_compliance_scores_task.si(tenant_id=tenant_id, scan_id=scan_id),
+    ).apply_async()
     aggregate_attack_surface_task.apply_async(
         kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
     )
@@ -79,8 +159,18 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
         perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
         group(
             aggregate_daily_severity_task.si(tenant_id=tenant_id, scan_id=scan_id),
+            aggregate_finding_group_summaries_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
+            ),
             generate_outputs_task.si(
                 scan_id=scan_id, provider_id=provider_id, tenant_id=tenant_id
+            ),
+            # post-scan task — runs in the parallel group so a
+            # failure cannot cascade into reports or integrations. Its only
+            # prerequisite is that perform_prowler_scan has committed
+            # ResourceScanSummary, which is true by the time this chain fires.
+            reset_ephemeral_resource_findings_count_task.si(
+                tenant_id=tenant_id, scan_id=scan_id
             ),
         ),
         group(
@@ -95,6 +185,26 @@ def _perform_scan_complete_tasks(tenant_id: str, scan_id: str, provider_id: str)
             ),
         ),
     ).apply_async()
+
+    if can_provider_run_attack_paths_scan(tenant_id, provider_id):
+        # Row is normally created upstream, so this is a safeguard so we can attach the task id below
+        attack_paths_scan = attack_paths_db_utils.retrieve_attack_paths_scan(
+            tenant_id, scan_id
+        )
+        if attack_paths_scan is None:
+            attack_paths_scan = attack_paths_db_utils.create_attack_paths_scan(
+                tenant_id, scan_id, provider_id
+            )
+
+        # Persist the Celery task id so the periodic cleanup can revoke scans stuck in SCHEDULED
+        result = perform_attack_paths_scan_task.apply_async(
+            kwargs={"tenant_id": tenant_id, "scan_id": scan_id}
+        )
+
+        if attack_paths_scan and result:
+            attack_paths_db_utils.set_attack_paths_scan_task_id(
+                tenant_id, attack_paths_scan.id, result.task_id
+            )
 
 
 @shared_task(base=RLSTask, name="provider-connection-check")
@@ -148,7 +258,9 @@ def delete_provider_task(provider_id: str, tenant_id: str):
     return delete_provider(tenant_id=tenant_id, pk=provider_id)
 
 
-@shared_task(base=RLSTask, name="scan-perform", queue="scans")
+# acks_late=False: a re-run would duplicate findings and the task is not auto-recovered,
+# so a crashed scan is dropped rather than redelivered by the broker (as before #11416).
+@shared_task(base=RLSTask, name="scan-perform", queue="scans", acks_late=False)
 @handle_provider_deletion
 def perform_scan_task(
     tenant_id: str, scan_id: str, provider_id: str, checks_to_execute: list[str] = None
@@ -169,6 +281,17 @@ def perform_scan_task(
     Returns:
         dict: The result of the scan execution, typically including the status and results of the performed checks.
     """
+    with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s, scan=%s)",
+                provider_id,
+                tenant_id,
+                scan_id,
+            )
+            return None
+
     result = perform_prowler_scan(
         tenant_id=tenant_id,
         scan_id=scan_id,
@@ -181,7 +304,14 @@ def perform_scan_task(
     return result
 
 
-@shared_task(base=RLSTask, bind=True, name="scan-perform-scheduled", queue="scans")
+# acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
+@shared_task(
+    base=RLSTask,
+    bind=True,
+    name="scan-perform-scheduled",
+    queue="scans",
+    acks_late=False,
+)
 @handle_provider_deletion
 def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     """
@@ -205,60 +335,65 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
+        if not Provider.objects.filter(pk=provider_id).exists():
+            logger.warning(
+                "scheduled scan-perform skipped: provider %s no longer exists "
+                "(tenant=%s)",
+                provider_id,
+                tenant_id,
+            )
+            delete_related_daily_task(provider_id)
+            return None
+
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-
-        executed_scan = Scan.objects.filter(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            task__task_runner_task__task_id=task_id,
-        ).order_by("completed_at")
-
-        if (
+        executing_scan = (
             Scan.objects.filter(
                 tenant_id=tenant_id,
                 provider_id=provider_id,
                 trigger=Scan.TriggerChoices.SCHEDULED,
                 state=StateChoices.EXECUTING,
-                scheduler_task_id=periodic_task_instance.id,
-                scheduled_at__date=datetime.now(timezone.utc).date(),
-            ).exists()
-            or executed_scan.exists()
-        ):
-            # Duplicated task execution due to visibility timeout or scan is already running
-            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
-            try:
-                affected_scan = executed_scan.first()
-                if not affected_scan:
-                    raise ValueError(
-                        "Error retrieving affected scan details after detecting duplicated scheduled "
-                        "scan."
-                    )
-                # Return the affected scan details to avoid losing data
-                serializer = ScanTaskSerializer(instance=affected_scan)
-            except Exception as duplicated_scan_exception:
-                logger.error(
-                    f"Duplicated scheduled scan for provider {provider_id}. Error retrieving affected scan details: "
-                    f"{str(duplicated_scan_exception)}"
-                )
-                raise duplicated_scan_exception
-            return serializer.data
+            )
+            .order_by("-started_at")
+            .first()
+        )
+        if executing_scan:
+            logger.warning(
+                f"Scheduled scan already executing for provider {provider_id}. Skipping."
+            )
+            return ScanTaskSerializer(instance=executing_scan).data
 
-        next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
-        scan_instance, _ = Scan.objects.get_or_create(
+        executed_scan = Scan.objects.filter(
             tenant_id=tenant_id,
             provider_id=provider_id,
-            trigger=Scan.TriggerChoices.SCHEDULED,
-            state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
-            scheduler_task_id=periodic_task_instance.id,
-            defaults={
-                "state": StateChoices.SCHEDULED,
-                "name": "Daily scheduled scan",
-                "scheduled_at": next_scan_datetime - timedelta(days=1),
-            },
+            task__task_runner_task__task_id=task_id,
+        ).first()
+
+        if executed_scan:
+            # Duplicated task execution due to visibility timeout
+            logger.warning(f"Duplicated scheduled scan for provider {provider_id}.")
+            return ScanTaskSerializer(instance=executed_scan).data
+
+        interval = periodic_task_instance.interval
+        next_scan_datetime = get_next_execution_datetime(task_id, provider_id)
+        current_scan_datetime = next_scan_datetime - timedelta(
+            **{interval.period: interval.every}
         )
 
+        # TEMPORARY WORKAROUND: Clean up orphan scans from transaction isolation issue
+        _cleanup_orphan_scheduled_scans(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scheduler_task_id=periodic_task_instance.id,
+        )
+
+        scan_instance = _get_or_create_scheduled_scan(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            scheduler_task_id=periodic_task_instance.id,
+            scheduled_at=current_scan_datetime,
+        )
         scan_instance.task_id = task_id
         scan_instance.save()
 
@@ -268,18 +403,19 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scan_id=str(scan_instance.id),
             provider_id=provider_id,
         )
-    except Exception as e:
-        raise e
     finally:
         with rls_transaction(tenant_id):
-            Scan.objects.get_or_create(
+            now = datetime.now(UTC)
+            if next_scan_datetime <= now:
+                interval_delta = timedelta(**{interval.period: interval.every})
+                while next_scan_datetime <= now:
+                    next_scan_datetime += interval_delta
+            _get_or_create_scheduled_scan(
                 tenant_id=tenant_id,
-                name="Daily scheduled scan",
                 provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.SCHEDULED,
-                scheduled_at=next_scan_datetime,
                 scheduler_task_id=periodic_task_instance.id,
+                scheduled_at=next_scan_datetime,
+                update_state=True,
             )
 
     _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
@@ -293,13 +429,89 @@ def perform_scan_summary_task(tenant_id: str, scan_id: str):
     return aggregate_findings(tenant_id=tenant_id, scan_id=scan_id)
 
 
+class AttackPathsScanRLSTask(RLSTask):
+    """
+    RLS task that marks the `AttackPathsScan` DB row as `FAILED` when the Celery task fails.
+
+    Covers failures that happen outside the job's own try/except (e.g. provider lookup,
+    SDK initialization, or Neo4j configuration errors during setup).
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
+
+
+@shared_task(
+    base=AttackPathsScanRLSTask,
+    bind=True,
+    name="attack-paths-scan-perform",
+    queue="attack-paths-scans",
+)
+@handle_provider_deletion
+def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
+    """
+    Execute an Attack Paths scan for the given provider within the current tenant RLS context.
+
+    Args:
+        self: The task instance (automatically passed when bind=True).
+        tenant_id (str): The tenant identifier for RLS context.
+        scan_id (str): The Prowler scan identifier for obtaining the tenant and provider context.
+
+    Returns:
+        Any: The result from `attack_paths_scan`, including any per-scan failure details.
+    """
+    return attack_paths_scan(
+        tenant_id=tenant_id, scan_id=scan_id, task_id=self.request.id
+    )
+
+
+@shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
+def cleanup_stale_attack_paths_scans_task():
+    return cleanup_stale_attack_paths_scans()
+
+
+@shared_task(name="reconcile-orphan-tasks", queue="celery")
+def reconcile_orphan_tasks_task():
+    """Periodic watchdog: recover tasks whose worker is gone (deploys, crashes)."""
+    return reconcile_orphans()
+
+
 @shared_task(name="tenant-deletion", queue="deletion", autoretry_for=(Exception,))
 def delete_tenant_task(tenant_id: str):
     return delete_tenant(pk=tenant_id)
 
 
+def _scan_tmp_output_directory(tenant_id: str, scan_id: str) -> Path:
+    """Root tmp output directory for a scan ({tmp}/{tenant_id}/{scan_id})."""
+    return Path(DJANGO_TMP_OUTPUT_DIRECTORY) / str(tenant_id) / str(scan_id)
+
+
+class ScanReportRLSTask(RLSTask):
+    """
+    RLS task that removes the scan's tmp output directory when the task fails.
+
+    Covers failures both inside and outside the task body (e.g. ENOSPC mid-write,
+    or setup errors) so partial artifacts do not accumulate on the worker disk.
+    """
+
+    def on_failure(self, exc, task_id, args, kwargs, _einfo):  # noqa: ARG002
+        del args  # Required by Celery's Task.on_failure signature; not used.
+        tenant_id = kwargs.get("tenant_id")
+        scan_id = kwargs.get("scan_id")
+
+        if tenant_id and scan_id:
+            logger.error(f"Scan report task {task_id} failed: {exc}")
+            rmtree(_scan_tmp_output_directory(tenant_id, scan_id), ignore_errors=True)
+
+
 @shared_task(
-    base=RLSTask,
+    base=ScanReportRLSTask,
     name="scan-report",
     queue="scan-reports",
 )
@@ -321,6 +533,19 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         scan_id (str): The scan identifier.
         provider_id (str): The provider_id id to be used in generating outputs.
     """
+    try:
+        _cleanup_stale_tmp_output_directories(
+            DJANGO_TMP_OUTPUT_DIRECTORY,
+            max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+            exclude_scan=(tenant_id, scan_id),
+        )
+    except Exception as error:
+        logger.warning(
+            "Skipping stale tmp cleanup before output generation for scan %s: %s",
+            scan_id,
+            error,
+        )
+
     # Check if the scan has findings
     if not ScanSummary.objects.filter(scan_id=scan_id).exists():
         logger.info(f"No findings found for scan {scan_id}")
@@ -331,11 +556,23 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     provider_uid = provider_obj.uid
     provider_type = provider_obj.provider
 
+    # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
+    # Universal-only frameworks (top-level JSONs like `dora_2022_2554.json`) are emitted
+    # via `process_universal_compliance_frameworks` below.
+    universal_bulk = get_prowler_provider_compliance(provider_type)
+    universal_only_names = {
+        name
+        for name in universal_bulk
+        if name not in frameworks_bulk and universal_bulk[name].outputs
+    }
     frameworks_avail = get_compliance_frameworks(provider_type)
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
+    # Removed on success here and on failure by ScanReportRLSTask.on_failure,
+    # so partial artifacts do not accumulate and fill the disk (ENOSPC).
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """
@@ -353,6 +590,10 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     output_writers = {}
     compliance_writers = {}
+    # Shared across batches so universal writers are created once and reused.
+    universal_compliance_state: dict[str, list] = {"compliance": []}
+    universal_base_dir = os.path.dirname(out_dir)
+    universal_output_filename = os.path.basename(out_dir)
 
     scan_summary = FindingOutput._transform_findings_stats(
         ScanSummary.objects.filter(scan_id=scan_id)
@@ -407,8 +648,30 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
                 writer.batch_write_data_to_file(**extra)
                 writer._data.clear()
 
-            # Compliance CSVs
+            # Universal-only frameworks (e.g. `dora_2022_2554.json`).
+            if universal_only_names:
+                process_universal_compliance_frameworks(
+                    input_compliance_frameworks=universal_only_names,
+                    universal_frameworks=universal_bulk,
+                    finding_outputs=fos,
+                    output_directory=universal_base_dir,
+                    output_filename=universal_output_filename,
+                    provider=provider_type,
+                    generated_outputs=universal_compliance_state,
+                    from_cli=False,
+                    is_last=is_last,
+                )
+
+            # Compliance CSVs (per-framework exporters).
             for name in frameworks_avail:
+                if name in universal_only_names:
+                    continue
+                if name not in frameworks_bulk:
+                    logger.warning(
+                        "Compliance framework '%s' missing from bulk; skipping CSV export",
+                        name,
+                    )
+                    continue
                 compliance_obj = frameworks_bulk[name]
 
                 klass = GenericCompliance
@@ -484,7 +747,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         # TODO: We need to create a new periodic task to delete the output files
         # This task shouldn't be responsible for deleting the output files
         try:
-            rmtree(Path(compressed).parent, ignore_errors=True)
+            rmtree(scan_tmp_dir, ignore_errors=True)
         except Exception as e:
             logger.error(f"Error deleting output files: {e}")
         final_location, did_upload = upload_uri, True
@@ -534,6 +797,56 @@ def backfill_daily_severity_summaries_task(tenant_id: str, days: int = None):
     return backfill_daily_severity_summaries(tenant_id=tenant_id, days=days)
 
 
+@shared_task(name="backfill-finding-group-summaries", queue="backfill")
+def backfill_finding_group_summaries_task(tenant_id: str, days: int = None):
+    """Backfill FindingGroupDailySummary from historical scans. Use days param to limit scope."""
+    return backfill_finding_group_summaries(tenant_id=tenant_id, days=days)
+
+
+@shared_task(name="scan-category-summaries", queue="overview")
+@handle_provider_deletion
+def aggregate_scan_category_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanCategorySummary for a completed scan.
+
+    Aggregates unique categories from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return aggregate_scan_category_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-resource-group-summaries", queue="overview")
+@handle_provider_deletion
+def aggregate_scan_resource_group_summaries_task(tenant_id: str, scan_id: str):
+    """
+    Backfill ScanGroupSummary for a completed scan.
+
+    Aggregates unique resource groups from findings and creates a summary row.
+
+    Args:
+        tenant_id (str): The tenant identifier.
+        scan_id (str): The scan identifier.
+    """
+    return aggregate_scan_resource_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="backfill-provider-compliance-scores", queue="backfill")
+def backfill_provider_compliance_scores_task(tenant_id: str):
+    """
+    Backfill ProviderComplianceScore from latest completed scan per provider.
+
+    Used to populate the compliance watchlist materialized table for tenants
+    that had scans before the feature was deployed.
+
+    Args:
+        tenant_id: Target tenant UUID.
+    """
+    return backfill_provider_compliance_scores(tenant_id=tenant_id)
+
+
 @shared_task(base=RLSTask, name="scan-compliance-overviews", queue="compliance")
 @handle_provider_deletion
 def create_compliance_requirements_task(tenant_id: str, scan_id: str):
@@ -567,11 +880,141 @@ def aggregate_attack_surface_task(tenant_id: str, scan_id: str):
     return aggregate_attack_surface(tenant_id=tenant_id, scan_id=scan_id)
 
 
+@shared_task(name="scan-provider-compliance-scores", queue="compliance")
+def update_provider_compliance_scores_task(tenant_id: str, scan_id: str):
+    """
+    Update provider compliance scores from a completed scan.
+
+    This task materializes compliance requirement statuses into ProviderComplianceScore
+    for efficient watchlist queries. Uses atomic upsert with concurrency protection.
+
+    Args:
+        tenant_id (str): The tenant ID for which to update scores.
+        scan_id (str): The ID of the scan whose data should be materialized.
+    """
+    return update_provider_compliance_scores(tenant_id=tenant_id, scan_id=scan_id)
+
+
 @shared_task(name="scan-daily-severity", queue="overview")
 @handle_provider_deletion
 def aggregate_daily_severity_task(tenant_id: str, scan_id: str):
     """Aggregate scan severity into DailySeveritySummary for findings_severity/timeseries endpoint."""
     return aggregate_daily_severity(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(name="scan-reset-ephemeral-resources", queue="overview")
+@handle_provider_deletion
+def reset_ephemeral_resource_findings_count_task(tenant_id: str, scan_id: str):
+    """Reset failed_findings_count for resources missing from a completed full-scope scan.
+
+    Failures are swallowed and returned as a status: this task lives inside the
+    post-scan group, and Celery propagates group-member exceptions into the next
+    chain step — meaning a crash here would block compliance reports and
+    integrations. The reset is purely cosmetic (UI sort optimization), so a
+    bad run is logged and absorbed rather than allowed to cascade.
+    """
+    try:
+        return reset_ephemeral_resource_findings_count(
+            tenant_id=tenant_id, scan_id=scan_id
+        )
+    except Exception as exc:  # noqa: BLE001 — intentionally broad
+        logger.exception(
+            f"reset_ephemeral_resource_findings_count failed for scan {scan_id}: {exc}"
+        )
+        return {
+            "status": "failed",
+            "scan_id": str(scan_id),
+            "reason": str(exc),
+        }
+
+
+@shared_task(base=RLSTask, name="scan-finding-group-summaries", queue="overview")
+@set_tenant(keep_tenant=True)
+@handle_provider_deletion
+def aggregate_finding_group_summaries_task(tenant_id: str, scan_id: str):
+    """Aggregate findings by check_id into FindingGroupDailySummary for finding-groups endpoint."""
+    return aggregate_finding_group_summaries(tenant_id=tenant_id, scan_id=scan_id)
+
+
+@shared_task(
+    base=RLSTask, name="reaggregate-all-finding-group-summaries", queue="overview"
+)
+@set_tenant(keep_tenant=True)
+def reaggregate_all_finding_group_summaries_task(tenant_id: str):
+    """Reaggregate every pre-aggregated summary table for this tenant.
+
+    Mirrors the unbounded scope of `mute_historical_findings_task`: that task
+    rewrites every Finding row whose UID matches a mute rule, with no time
+    limit. To keep the pre-aggregated tables consistent with that update,
+    this task re-runs the same per-scan aggregation pipeline that scan
+    completion runs on the latest completed scan of every (provider, day)
+    pair, rebuilding the tables that power the read endpoints:
+
+      - `ScanSummary` and `DailySeveritySummary` -> `/overviews/findings`,
+        `/overviews/findings-severity`, `/overviews/services`.
+      - `FindingGroupDailySummary` -> `/finding-groups` and
+        `/finding-groups/latest`.
+      - `ScanGroupSummary` -> `/overviews/resource-groups` (resource
+        inventory).
+      - `ScanCategorySummary` -> `/overviews/categories`.
+      - `AttackSurfaceOverview` -> `/overviews/attack-surfaces`.
+
+    Per-scan pipelines are dispatched in parallel via a Celery group so
+    wallclock scales with the worker pool.
+    """
+    completed_scans = list(
+        Scan.objects.filter(
+            tenant_id=tenant_id,
+            state=StateChoices.COMPLETED,
+            completed_at__isnull=False,
+        )
+        .order_by("-completed_at")
+        .values("id", "completed_at", "provider_id")
+    )
+
+    # Keep the latest scan per (provider, day) pair so the daily summary row
+    # the aggregator writes is the most recent snapshot of that day for that
+    # provider. Iterating from most recent to oldest means the first scan we
+    # see for a given key wins.
+    latest_scans: dict[tuple, str] = {}
+    for scan in completed_scans:
+        key = (scan["provider_id"], scan["completed_at"].date())
+        if key not in latest_scans:
+            latest_scans[key] = str(scan["id"])
+
+    scan_ids = list(latest_scans.values())
+    if scan_ids:
+        logger.info(
+            "Reaggregating overview/finding summaries for %d scans (provider x day)",
+            len(scan_ids),
+        )
+        # DailySeveritySummary reads from ScanSummary, so ScanSummary must be
+        # recomputed first; the other aggregators read Finding directly and
+        # can run in parallel with the severity step.
+        group(
+            chain(
+                perform_scan_summary_task.si(tenant_id=tenant_id, scan_id=scan_id),
+                group(
+                    aggregate_daily_severity_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_finding_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_resource_group_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_scan_category_summaries_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                    aggregate_attack_surface_task.si(
+                        tenant_id=tenant_id, scan_id=scan_id
+                    ),
+                ),
+            )
+            for scan_id in scan_ids
+        ).apply_async()
+    return {"scans_reaggregated": len(scan_ids)}
 
 
 @shared_task(base=RLSTask, name="lighthouse-connection-check")
@@ -715,10 +1158,13 @@ def security_hub_integration_task(
     return upload_security_hub_integration(tenant_id, provider_id, scan_id)
 
 
+# acks_late=False: Jira sends are not deduplicated and the task is not auto-recovered,
+# so a crashed send is dropped rather than redelivered (avoids duplicate Jira issues).
 @shared_task(
     base=RLSTask,
     name="integration-jira",
     queue="integrations",
+    acks_late=False,
 )
 def jira_integration_task(
     tenant_id: str,
@@ -740,12 +1186,16 @@ def jira_integration_task(
 @handle_provider_deletion
 def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: str):
     """
-    Optimized task to generate ThreatScore, ENS, and NIS2 reports with shared queries.
+    Optimized task to generate ThreatScore, ENS, NIS2, CSA CCM and CIS reports with shared queries.
 
     This task is more efficient than running separate report tasks because it reuses database queries:
-    - Provider object fetched once (instead of three times)
-    - Requirement statistics aggregated once (instead of three times)
+    - Provider object fetched once (instead of multiple times)
+    - Requirement statistics aggregated once (instead of multiple times)
     - Can reduce database load by up to 50-70%
+
+    CIS emits a single PDF per run: the one matching the highest CIS version
+    available for the scan's provider, picked dynamically from
+    ``Compliance.get_bulk`` (no hard-coded provider → version mapping).
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -762,6 +1212,8 @@ def generate_compliance_reports_task(tenant_id: str, scan_id: str, provider_id: 
         generate_threatscore=True,
         generate_ens=True,
         generate_nis2=True,
+        generate_csa=True,
+        generate_cis=True,
     )
 
 

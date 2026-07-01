@@ -1,6 +1,7 @@
 "use server";
 
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 
 import { ServicesOverviewResponse } from "./types";
@@ -14,11 +15,7 @@ export const getServicesOverview = async ({
 
   const url = new URL(`${apiBaseUrl}/overviews/services`);
 
-  Object.entries(filters).forEach(([key, value]) => {
-    if (key !== "filter[search]" && value !== undefined) {
-      url.searchParams.append(key, String(value));
-    }
-  });
+  appendSanitizedProviderTypeFilters(url, filters);
 
   try {
     const response = await fetch(url.toString(), {

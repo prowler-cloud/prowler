@@ -1,29 +1,34 @@
 {
   "Provider": "gcp",
   "CheckID": "cloudsql_instance_postgres_log_error_verbosity_flag",
-  "CheckTitle": "Ensure Log_error_verbosity Database Flag for Cloud SQL PostgreSQL Instance Is Set to DEFAULT or Stricter",
+  "CheckTitle": "Cloud SQL PostgreSQL instance has log_error_verbosity flag set to default",
   "CheckType": [],
   "ServiceName": "cloudsql",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "DatabaseInstance",
-  "Description": "Ensure Log_error_verbosity Database Flag for Cloud SQL PostgreSQL Instance Is Set to DEFAULT or Stricter",
-  "Risk": "The log_error_verbosity flag controls the verbosity/details of messages logged.TERSE excludes the logging of DETAIL, HINT, QUERY, and CONTEXT error information. VERBOSE output includes the SQLSTATE error code, source code file name, function name, and line number that generated the error. Ensure an appropriate value is set to 'DEFAULT' or stricter.",
+  "ResourceType": "sqladmin.googleapis.com/Instance",
+  "Description": "**Cloud SQL for PostgreSQL** evaluates the `log_error_verbosity` database flag and expects the value `default`.\n\nConfigurations using `terse` or `verbose` are flagged as deviations.",
+  "Risk": "With `verbose`, logs may reveal SQLSTATE, code paths, and function details, aiding recon and leaking metadata (**confidentiality**). With `terse`, missing DETAIL/HINT/CONTEXT hinders detection and forensics, reducing **integrity** of investigations and **availability** of operational insight.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/sql/docs/postgres/flags"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "gcloud sql instances patch INSTANCE_NAME --database-flags log_error_verbosity=default",
+      "CLI": "gcloud sql instances patch <INSTANCE_NAME> --database-flags=log_error_verbosity=default",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In Google Cloud Console, go to Cloud SQL > Instances\n2. Open the PostgreSQL instance\n3. Click Edit\n4. In Database flags, set log_error_verbosity to default (or remove the custom value)\n5. Click Save (the instance may restart)",
+      "Terraform": "```hcl\nresource \"google_sql_database_instance\" \"main\" {\n  name             = \"<example_resource_name>\"\n  region           = \"<example_region>\"\n  database_version = \"POSTGRES_14\"\n\n  settings {\n    tier = \"<example_machine_tier>\"\n\n    database_flags {\n      name  = \"log_error_verbosity\"\n      value = \"default\" # Critical: sets the flag to default to pass the check\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Auditing helps in troubleshooting operational problems and also permits forensic analysis. If log_error_verbosity is not set to the correct value, too many details or too few details may be logged. This flag should be configured with a value of 'DEFAULT' or stricter. This recommendation is applicable to PostgreSQL database instances.",
-      "Url": "https://cloud.google.com/sql/docs/postgres/flags"
+      "Text": "Set `log_error_verbosity` to `default` to balance **data minimization** and **observability**.\n\n- Avoid `verbose` in production; restrict log access (least privilege)\n- Avoid `terse` except briefly to curb noise\n- Centralize logs with retention and tamper protection for **defense in depth**",
+      "Url": "https://hub.prowler.com/check/cloudsql_instance_postgres_log_error_verbosity_flag"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
   "Notes": ""

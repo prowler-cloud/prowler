@@ -286,7 +286,7 @@ const pollTaskUntilComplete = async (
   taskId: string,
 ): Promise<PollConnectionResult> => {
   const settled = await pollTaskUntilSettled<ConnectionTaskResult>(taskId, {
-    maxAttempts: 10,
+    maxAttempts: 20,
     delayMs: 3000,
   });
 
@@ -404,7 +404,7 @@ export const pollConnectionTestStatus = async (
         error: pollResult.message || "Connection test failed.",
       };
     }
-  } catch (error) {
+  } catch (_error) {
     return { success: false, error: "Failed to check connection test status." };
   }
 };

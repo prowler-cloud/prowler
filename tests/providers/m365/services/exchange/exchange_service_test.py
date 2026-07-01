@@ -9,6 +9,7 @@ from prowler.providers.m365.services.exchange.exchange_service import (
     MailboxAuditProperties,
     Organization,
     RoleAssignmentPolicy,
+    SharedMailbox,
     TransportConfig,
     TransportRule,
 )
@@ -143,6 +144,35 @@ def mock_exchange_get_mailbox_audit_properties(_):
     ]
 
 
+def mock_exchange_get_shared_mailboxes(_):
+    return [
+        SharedMailbox(
+            name="Support Mailbox",
+            user_principal_name="support@contoso.com",
+            external_directory_object_id="12345678-1234-1234-1234-123456789012",
+            identity="support@contoso.com",
+        ),
+        SharedMailbox(
+            name="Info Mailbox",
+            user_principal_name="info@contoso.com",
+            external_directory_object_id="87654321-4321-4321-4321-210987654321",
+            identity="info@contoso.com",
+        ),
+    ]
+
+
+async def mock_exchange_get_total_paid_licenses(_):
+    return 6000
+
+
+async def mock_exchange_get_total_paid_licenses_none(_):
+    return None
+
+
+@patch(
+    "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_total_paid_licenses",
+    new=mock_exchange_get_total_paid_licenses,
+)
 class Test_Exchange_Service:
     def test_get_client(self):
         with (
@@ -183,6 +213,7 @@ class Test_Exchange_Service:
             assert organization_config.mailtips_external_recipient_enabled is False
             assert organization_config.mailtips_group_metrics_enabled is True
             assert organization_config.mailtips_large_audience_threshold == 25
+            assert organization_config.total_paid_licenses == 6000
 
             exchange_client.powershell.close()
 
@@ -428,4 +459,160 @@ class Test_Exchange_Service:
             assert role_assignment_policies[1].id == "12345678-1234-1234"
             assert role_assignment_policies[1].assigned_roles == []
 
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.services.exchange.exchange_service.Exchange._get_shared_mailboxes",
+        new=mock_exchange_get_shared_mailboxes,
+    )
+    def test_get_shared_mailboxes(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            shared_mailboxes = exchange_client.shared_mailboxes
+            assert len(shared_mailboxes) == 2
+            assert shared_mailboxes[0].name == "Support Mailbox"
+            assert shared_mailboxes[0].user_principal_name == "support@contoso.com"
+            assert (
+                shared_mailboxes[0].external_directory_object_id
+                == "12345678-1234-1234-1234-123456789012"
+            )
+            assert shared_mailboxes[0].identity == "support@contoso.com"
+            assert shared_mailboxes[1].name == "Info Mailbox"
+            assert shared_mailboxes[1].user_principal_name == "info@contoso.com"
+            assert (
+                shared_mailboxes[1].external_directory_object_id
+                == "87654321-4321-4321-4321-210987654321"
+            )
+            assert shared_mailboxes[1].identity == "info@contoso.com"
+
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        return_value=[
+            {
+                "Identity": "user1@contoso.com",
+                "DisplayName": "User One",
+                "PrimarySmtpAddress": "user1@contoso.com",
+                "RecipientTypeDetails": "UserMailbox",
+            },
+            {
+                "Identity": "room@contoso.com",
+                "DisplayName": "Boardroom",
+                "PrimarySmtpAddress": "room@contoso.com",
+                "RecipientTypeDetails": "RoomMailbox",
+            },
+            {
+                "Identity": "DiscoverySearchMailbox{D919BA05}",
+                "DisplayName": "Discovery Search Mailbox",
+                "PrimarySmtpAddress": "DiscoverySearchMailbox@contoso.onmicrosoft.com",
+                "RecipientTypeDetails": "DiscoveryMailbox",
+            },
+            {
+                "Identity": "SystemMailbox{1f05a927}",
+                "DisplayName": "Microsoft Exchange",
+                "PrimarySmtpAddress": "SystemMailbox@contoso.onmicrosoft.com",
+                "RecipientTypeDetails": "SystemMailbox",
+            },
+        ],
+    )
+    def test_get_mailboxes_excludes_system_types(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailboxes = exchange_client.mailboxes
+            assert mailboxes is not None
+            assert len(mailboxes) == 2
+            identities = {m.identity for m in mailboxes}
+            assert identities == {"user1@contoso.com", "room@contoso.com"}
+            assert all(
+                m.recipient_type_details not in {"DiscoveryMailbox", "SystemMailbox"}
+                for m in mailboxes
+            )
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        return_value={
+            "Identity": "user1@contoso.com",
+            "DisplayName": "User One",
+            "PrimarySmtpAddress": "user1@contoso.com",
+            "RecipientTypeDetails": "UserMailbox",
+        },
+    )
+    def test_get_mailboxes_single_dict(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            mailboxes = exchange_client.mailboxes
+            assert mailboxes is not None
+            assert len(mailboxes) == 1
+            assert mailboxes[0].identity == "user1@contoso.com"
+            exchange_client.powershell.close()
+
+    @patch(
+        "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.get_mailboxes",
+        side_effect=Exception("Get-EXOMailbox failed"),
+    )
+    def test_get_mailboxes_returns_none_on_exception(self, _mock_get_mailboxes):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online",
+                return_value=True,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.mailboxes is None
+            exchange_client.powershell.close()
+
+    def test_get_total_paid_licenses_none(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+            mock.patch.object(
+                Exchange,
+                "_get_organization_config",
+                mock_exchange_get_organization_config,
+            ),
+            mock.patch.object(
+                Exchange,
+                "_get_total_paid_licenses",
+                mock_exchange_get_total_paid_licenses_none,
+            ),
+        ):
+            exchange_client = Exchange(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            assert exchange_client.organization_config.total_paid_licenses is None
             exchange_client.powershell.close()

@@ -1211,6 +1211,14 @@
         "rds_instance_default_admin",
         "redshift_cluster_non_default_database_name"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. 보호대책 요구사항",
@@ -1389,6 +1397,9 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings",
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
+        "bedrock_full_access_policy_attached",
         "iam_administrator_access_with_mfa",
         "iam_avoid_root_usage",
         "iam_aws_attached_policy_no_administrative_privileges",
@@ -1412,6 +1423,14 @@
         "iam_support_role_created",
         "iam_user_administrator_access_policy",
         "organizations_delegated_administrators"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1481,6 +1500,14 @@
         "sqs_queues_not_publicly_accessible",
         "ssm_documents_set_as_public",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1613,6 +1640,7 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "sagemaker_training_jobs_network_isolation_enabled",
         "sagemaker_training_jobs_vpc_settings_configured",
+        "bedrock_vpc_endpoints_configured",
         "vpc_endpoint_connections_trust_boundaries",
         "vpc_endpoint_for_ec2_enabled",
         "vpc_peering_routing_tables_with_least_privilege",
@@ -2038,6 +2066,9 @@
         "elb_ssl_listeners",
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_nlb_tls_termination_enabled",
         "elbv2_ssl_listeners",
         "glue_data_catalogs_connection_passwords_encryption_enabled",
@@ -2077,6 +2108,17 @@
         "transfer_server_in_transit_encryption_enabled",
         "workspaces_volume_encryption_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. 보호대책 요구사항",
@@ -2113,6 +2155,7 @@
       "Checks": [
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudtrail_kms_encryption_enabled",
         "cloudwatch_log_group_kms_encryption_enabled",
         "dynamodb_tables_kms_cmk_encryption_enabled",
@@ -2814,6 +2857,20 @@
         "wafv2_webacl_rule_logging_enabled",
         "wafv2_webacl_with_rules"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. 보호대책 요구사항",
@@ -2894,8 +2951,10 @@
         "bedrock_agent_guardrail_enabled",
         "bedrock_guardrail_prompt_attack_filter_enabled",
         "bedrock_guardrail_sensitive_information_filter_enabled",
+        "bedrock_guardrails_configured",
         "bedrock_model_invocation_logging_enabled",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_management_exists",
         "cloudformation_stack_outputs_find_secrets",
         "cloudfront_distributions_custom_ssl_certificate",
         "cloudfront_distributions_default_root_object",
@@ -3086,6 +3145,9 @@
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_desync_mitigation_mode",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_internet_facing",
         "elbv2_listeners_underneath",
         "elbv2_logging_enabled",
@@ -3308,6 +3370,47 @@
         "wellarchitected_workload_no_high_or_medium_risks",
         "workspaces_volume_encryption_enabled",
         "workspaces_vpc_2private_1public_subnets_nat"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -3701,6 +3804,14 @@
         "s3_bucket_event_notifications_enabled",
         "trustedadvisor_errors_and_warnings"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. 보호대책 요구사항",
@@ -3819,6 +3930,14 @@
         "s3_bucket_object_lock",
         "s3_bucket_object_versioning"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. 보호대책 요구사항",
@@ -3855,6 +3974,14 @@
       "Description": "재해 복구 전략 및 대책의 적정성을 정기적으로 시험하여 시험결과, 정보시스템 환경변화, 법규 등에 따른 변화를 반영하여 복구전략 및 대책을 보완하여야 한다.",
       "Checks": [
         "drs_job_exist"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

@@ -15,7 +15,7 @@ from prowler.lib.check.models import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.outputs.common import Status, fill_common_finding_data
-from prowler.lib.outputs.compliance.compliance import get_check_compliance
+from prowler.lib.outputs.compliance.compliance_check import get_check_compliance
 from prowler.lib.outputs.utils import unroll_tags
 from prowler.lib.utils.utils import dict_to_lowercase, get_nested_attribute
 from prowler.providers.common.provider import Provider
@@ -34,10 +34,13 @@ class Finding(BaseModel):
     auth_method: str
     timestamp: Union[int, datetime]
     account_uid: str
+    provider_uid: Optional[str] = None
     account_name: Optional[str] = None
     account_email: Optional[str] = None
     account_organization_uid: Optional[str] = None
     account_organization_name: Optional[str] = None
+    account_ou_uid: Optional[str] = None
+    account_ou_name: Optional[str] = None
     metadata: CheckMetadata
     account_tags: dict = Field(default_factory=dict)
     uid: str
@@ -154,6 +157,12 @@ class Finding(BaseModel):
                 output_data["account_tags"] = get_nested_attribute(
                     provider, "organizations_metadata.account_tags"
                 )
+                output_data["account_ou_uid"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_id"
+                )
+                output_data["account_ou_name"] = get_nested_attribute(
+                    provider, "organizations_metadata.account_ou_name"
+                )
                 output_data["partition"] = get_nested_attribute(
                     provider, "identity.partition"
                 )
@@ -178,9 +187,11 @@ class Finding(BaseModel):
                 output_data["account_uid"] = (
                     output_data["account_organization_uid"]
                     if "Tenant:" in check_output.subscription
-                    else provider.identity.subscriptions[check_output.subscription]
+                    else check_output.subscription
                 )
-                output_data["account_name"] = check_output.subscription
+                output_data["account_name"] = provider.identity.subscriptions.get(
+                    check_output.subscription, check_output.subscription
+                )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
@@ -236,8 +247,10 @@ class Finding(BaseModel):
             elif provider.type == "kubernetes":
                 if provider.identity.context == "In-Cluster":
                     output_data["auth_method"] = "in-cluster"
+                    output_data["provider_uid"] = provider.identity.cluster
                 else:
                     output_data["auth_method"] = "kubeconfig"
+                    output_data["provider_uid"] = provider.identity.context
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["account_name"] = f"context: {provider.identity.context}"
@@ -251,15 +264,22 @@ class Finding(BaseModel):
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
 
+                owner = getattr(check_output, "owner", None)
+
                 if isinstance(provider.identity, GithubIdentityInfo):
                     # GithubIdentityInfo (Personal Access Token, OAuth)
-                    output_data["account_name"] = provider.identity.account_name
-                    output_data["account_uid"] = provider.identity.account_id
+                    output_data["account_name"] = (
+                        owner or provider.identity.account_name
+                    )
+                    output_data["account_uid"] = owner or provider.identity.account_name
                     output_data["account_email"] = provider.identity.account_email
                 elif isinstance(provider.identity, GithubAppIdentityInfo):
                     # GithubAppIdentityInfo (GitHub App)
-                    output_data["account_name"] = provider.identity.app_name
-                    output_data["account_uid"] = provider.identity.app_id
+                    output_data["account_name"] = owner or provider.identity.app_name
+                    output_data["account_uid"] = owner or provider.identity.app_name
+                    output_data["account_organization_uid"] = str(
+                        provider.identity.app_id
+                    )
                     output_data["installations"] = provider.identity.installations
 
                 output_data["region"] = check_output.owner
@@ -269,10 +289,27 @@ class Finding(BaseModel):
                     f"{provider.identity.identity_type}: {provider.identity.identity_id}"
                 )
                 output_data["account_uid"] = get_nested_attribute(
-                    provider, "identity.tenant_id"
+                    provider, "identity.tenant_domain"
                 )
                 output_data["account_name"] = get_nested_attribute(
                     provider, "identity.tenant_domain"
+                )
+                output_data["account_organization_uid"] = get_nested_attribute(
+                    provider, "identity.tenant_id"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
+            elif provider.type == "googleworkspace":
+                output_data["auth_method"] = (
+                    f"service_account: {provider.identity.delegated_user}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.customer_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.domain"
                 )
                 output_data["resource_name"] = check_output.resource_name
                 output_data["resource_uid"] = check_output.resource_id
@@ -305,10 +342,25 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
+            elif provider.type == "stackit":
+                output_data["auth_method"] = getattr(
+                    provider, "auth_method", "api_token"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.project_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.project_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.location
+
             elif provider.type == "iac":
                 output_data["auth_method"] = provider.auth_method
-                output_data["account_uid"] = "iac"
-                output_data["account_name"] = "iac"
+                provider_uid = getattr(provider, "provider_uid", None)
+                output_data["account_uid"] = provider_uid if provider_uid else "iac"
+                output_data["account_name"] = provider_uid if provider_uid else "iac"
                 output_data["resource_name"] = getattr(
                     check_output, "resource_name", ""
                 )
@@ -319,6 +371,9 @@ class Finding(BaseModel):
                     check_output, "resource_line_range", ""
                 )
                 output_data["framework"] = check_output.check_metadata.ServiceName
+                output_data["raw"] = {
+                    "resource_line_range": output_data.get("resource_line_range", ""),
+                }
 
             elif provider.type == "llm":
                 output_data["auth_method"] = provider.auth_method
@@ -342,6 +397,95 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.region
 
+            elif provider.type == "cloudflare":
+                output_data["auth_method"] = "api_token"
+                account_id = check_output.account_id
+                if not account_id:
+                    audited_accounts = (
+                        get_nested_attribute(provider, "identity.audited_accounts")
+                        or []
+                    )
+                    if audited_accounts:
+                        account_id = audited_accounts[0]
+
+                account_name = account_id
+                if account_id:
+                    accounts = get_nested_attribute(provider, "identity.accounts") or []
+                    for account in accounts:
+                        if getattr(account, "id", None) == account_id and getattr(
+                            account, "name", None
+                        ):
+                            account_name = account.name
+                            break
+
+                output_data["account_uid"] = account_id or ""
+                output_data["account_name"] = account_name or account_id or ""
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.zone_name
+
+            elif provider.type == "vercel":
+                output_data["auth_method"] = "api_token"
+                team = get_nested_attribute(provider, "identity.team")
+                output_data["account_uid"] = (
+                    team.id
+                    if team
+                    else get_nested_attribute(provider, "identity.user_id")
+                )
+                output_data["account_name"] = (
+                    team.name
+                    if team
+                    else get_nested_attribute(provider, "identity.username")
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
+
+            elif provider.type == "okta":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.org_domain"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.org_domain"
+                )
+                output_data["account_organization_uid"] = get_nested_attribute(
+                    provider, "identity.client_id"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
+
+            elif provider.type == "scaleway":
+                output_data["auth_method"] = "api_key"
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.organization_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.bearer_email"
+                ) or get_nested_attribute(provider, "identity.organization_id")
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
+            elif provider.type == "linode":
+                output_data["auth_method"] = "api_token"
+                # account_uid is a required string, but the account ID may be
+                # unavailable when the token lacks account:read_only scope. Fall
+                # back to the username/email so findings are never dropped.
+                output_data["account_uid"] = (
+                    get_nested_attribute(provider, "identity.account_id")
+                    or get_nested_attribute(provider, "identity.username")
+                    or get_nested_attribute(provider, "identity.email")
+                    or "linode"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.username"
+                ) or get_nested_attribute(provider, "identity.email")
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
             elif provider.type == "alibabacloud":
                 output_data["auth_method"] = get_nested_attribute(
                     provider, "identity.identity_arn"
@@ -358,6 +502,44 @@ class Finding(BaseModel):
                 )
                 output_data["region"] = check_output.region
 
+            elif provider.type == "openstack":
+                output_data["auth_method"] = (
+                    f"Username: {get_nested_attribute(provider, 'identity.username')}"
+                )
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.project_id"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.project_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = check_output.region
+
+            elif provider.type == "image":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = "image"
+                output_data["account_name"] = "image"
+                image_name = getattr(check_output, "resource_name", "")
+                image_sha = getattr(check_output, "image_sha", "")
+                output_data["resource_name"] = image_name
+                output_data["resource_uid"] = (
+                    f"{image_name}:{image_sha}" if image_sha else image_name
+                )
+                output_data["region"] = getattr(check_output, "region", "container")
+                output_data["package_name"] = getattr(check_output, "package_name", "")
+                output_data["installed_version"] = getattr(
+                    check_output, "installed_version", ""
+                )
+                output_data["fixed_version"] = getattr(
+                    check_output, "fixed_version", ""
+                )
+
+            else:
+                # Dynamic fallback: any external/custom provider
+                provider_data = provider.get_finding_output_data(check_output)
+                output_data.update(provider_data)
+
             # check_output Unique ID
             # TODO: move this to a function
             # TODO: in Azure, GCP and K8s there are findings without resource_name
@@ -365,6 +547,9 @@ class Finding(BaseModel):
                 f"prowler-{provider.type}-{check_output.check_metadata.CheckID}-{output_data['account_uid']}-"
                 f"{output_data['region']}-{output_data['resource_name']}"
             )
+
+            if provider.type == "iac" and output_data.get("resource_line_range"):
+                output_data["uid"] += f"-{output_data['resource_line_range']}"
 
             if not output_data["resource_uid"]:
                 logger.error(
@@ -428,12 +613,17 @@ class Finding(BaseModel):
             finding.subscription = list(provider.identity.subscriptions.keys())[0]
         elif provider.type == "gcp":
             finding.project_id = list(provider.projects.keys())[0]
+        elif provider.type == "stackit":
+            finding.project_id = provider.identity.project_id
         elif provider.type == "iac":
             # For IaC, we don't have resource_line_range in the Finding model
             # It would need to be extracted from the resource metadata if needed
             finding.resource_line_range = ""  # Set empty for compatibility
         elif provider.type == "oraclecloud":
             finding.compartment_id = getattr(finding, "compartment_id", "")
+        elif provider.type == "cloudflare":
+            finding.zone_name = getattr(resource, "zone_name", resource.name)
+            finding.account_id = getattr(finding, "account_id", "")
 
         finding.check_metadata = CheckMetadata(
             Provider=finding.check_metadata["provider"],

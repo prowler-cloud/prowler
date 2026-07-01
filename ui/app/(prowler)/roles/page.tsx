@@ -1,4 +1,3 @@
-import { Spacer } from "@heroui/spacer";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -6,8 +5,7 @@ import { getRoles } from "@/actions/roles";
 import { FilterControls } from "@/components/filters";
 import { filterRoles } from "@/components/filters/data-filters";
 import { AddIcon } from "@/components/icons";
-import { ColumnsRoles } from "@/components/roles/table";
-import { SkeletonTableRoles } from "@/components/roles/table";
+import { ColumnsRoles, SkeletonTableRoles } from "@/components/roles/table";
 import { Button } from "@/components/shadcn";
 import { ContentLayout } from "@/components/ui";
 import { DataTable, DataTableFilterCustom } from "@/components/ui/table";
@@ -25,21 +23,21 @@ export default async function Roles({
     <ContentLayout title="Roles" icon="lucide:user-cog">
       <FilterControls search />
 
-      <div className="flex flex-row items-center justify-between">
-        <DataTableFilterCustom filters={filterRoles || []} />
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-row items-end justify-between">
+          <DataTableFilterCustom filters={filterRoles || []} />
+          <Button asChild>
+            <Link href="/roles/new">
+              Add Role
+              <AddIcon size={20} />
+            </Link>
+          </Button>
+        </div>
 
-        <Button asChild>
-          <Link href="/roles/new">
-            Add Role
-            <AddIcon size={20} />
-          </Link>
-        </Button>
+        <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
+          <SSRDataTable searchParams={resolvedSearchParams} />
+        </Suspense>
       </div>
-      <Spacer y={8} />
-
-      <Suspense key={searchParamsKey} fallback={<SkeletonTableRoles />}>
-        <SSRDataTable searchParams={resolvedSearchParams} />
-      </Suspense>
     </ContentLayout>
   );
 }

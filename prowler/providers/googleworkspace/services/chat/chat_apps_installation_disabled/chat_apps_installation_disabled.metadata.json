@@ -1,0 +1,39 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "chat_apps_installation_disabled",
+  "CheckTitle": "Chat apps installation is disabled for users",
+  "CheckType": [],
+  "ServiceName": "chat",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Google Chat apps connect to external services to look up information, schedule meetings, or complete tasks. Apps are accounts created by Google, users in the organization, or third parties that can access user data including **email addresses**, **conversation content**, and **organizational information**.",
+  "Risk": "Unrestricted Chat app installation allows **unvetted third-party applications** to access user data including conversation content and organizational information. An attacker could distribute a malicious Chat app to **exfiltrate confidential data** or establish **persistent access** to internal communications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/apps/manage-the-marketplace-app-allowlist-for-your-organization",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Apps** > **Google Workspace** > **Google Chat and classic Hangouts**\n3. Click **Chat apps**\n4. Under Chat apps access settings, set **Allow users to install Chat apps** to **OFF**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable Chat apps installation to prevent **unvetted third-party applications** from accessing organizational data through the Chat platform.",
+      "Url": "https://hub.prowler.com/check/chat_apps_installation_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "chat_incoming_webhooks_disabled"
+  ],
+  "Notes": ""
+}

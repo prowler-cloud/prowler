@@ -288,7 +288,7 @@ class TestM365Arguments:
         assert kwargs["default"] == "M365Global"
         assert kwargs["choices"] == [
             "M365Global",
-            "M365GlobalChina",
+            "M365China",
             "M365USGovernment",
         ]
         assert "Microsoft 365 region" in kwargs["help"]
@@ -423,11 +423,9 @@ class TestM365ArgumentsIntegration:
         args = parser.parse_args(["m365", "--az-cli-auth"])
         assert args.region == "M365Global"
 
-        # Test M365GlobalChina
-        args = parser.parse_args(
-            ["m365", "--az-cli-auth", "--region", "M365GlobalChina"]
-        )
-        assert args.region == "M365GlobalChina"
+        # Test M365China
+        args = parser.parse_args(["m365", "--az-cli-auth", "--region", "M365China"])
+        assert args.region == "M365China"
 
         # Test M365USGovernment
         args = parser.parse_args(

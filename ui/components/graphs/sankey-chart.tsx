@@ -5,12 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Rectangle, ResponsiveContainer, Sankey, Tooltip } from "recharts";
 
-import { PROVIDER_ICONS } from "@/components/icons/providers-badge";
+import { PROVIDER_BADGE_BY_NAME } from "@/components/icons/providers-badge";
+import { applyFailNonMutedFilters } from "@/lib";
 import { initializeChartColors } from "@/lib/charts/colors";
-import { mapProviderFiltersForFindings } from "@/lib/provider-helpers";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 import { SEVERITY_FILTER_MAP } from "@/types/severities";
 
+import { getSankeyLayoutConfig } from "./sankey-chart.layout";
 import { ChartTooltip } from "./shared/chart-tooltip";
 
 // Reverse mapping from display name to provider type for URL filters
@@ -73,6 +74,7 @@ interface NodeTooltipState {
 
 const TOOLTIP_OFFSET_PX = 10;
 const MIN_LINK_WIDTH = 4;
+const NODE_LABEL_LINE_SPACING = 13;
 
 interface TooltipPayload {
   payload: {
@@ -88,7 +90,7 @@ interface TooltipProps {
   payload?: TooltipPayload[];
 }
 
-interface CustomNodeProps {
+export interface CustomNodeProps {
   x: number;
   y: number;
   width: number;
@@ -148,7 +150,7 @@ const CustomTooltip = ({ active, payload }: TooltipProps) => {
   return null;
 };
 
-const CustomNode = ({
+export const CustomNode = ({
   x,
   y,
   width,
@@ -210,10 +212,14 @@ const CustomNode = ({
     }
   };
 
-  const IconComponent = PROVIDER_ICONS[nodeName];
+  const IconComponent = PROVIDER_BADGE_BY_NAME[nodeName];
   const hasIcon = IconComponent !== undefined;
   const iconSize = 24;
   const iconGap = 8;
+
+  const nodeCenterY = y + height / 2;
+  const nodeNameY = nodeCenterY - NODE_LABEL_LINE_SPACING / 2;
+  const nodeValueY = nodeCenterY + NODE_LABEL_LINE_SPACING / 2;
 
   // Calculate text position accounting for icon
   const textOffsetX = isOut ? x - 6 : x + width + 6;
@@ -260,8 +266,9 @@ const CustomNode = ({
                   : textOffsetX + iconSize + iconGap * 2
                 : textOffsetX
             }
-            y={y + height / 2}
+            y={nodeNameY}
             fontSize="14"
+            dominantBaseline="middle"
             fill="var(--color-text-neutral-primary)"
           >
             {nodeName}
@@ -275,8 +282,9 @@ const CustomNode = ({
                   : textOffsetX + iconSize + iconGap * 2
                 : textOffsetX
             }
-            y={y + height / 2 + 13}
+            y={nodeValueY}
             fontSize="12"
+            dominantBaseline="middle"
             fill="var(--color-text-neutral-secondary)"
           >
             {payload.value}
@@ -463,12 +471,8 @@ export function SankeyChart({
     const severityFilter = SEVERITY_FILTER_MAP[nodeName];
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
-
-      mapProviderFiltersForFindings(params);
-
       params.set("filter[severity__in]", severityFilter);
-      params.set("filter[status__in]", "FAIL");
-      params.set("filter[muted]", "false");
+      applyFailNonMutedFilters(params);
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -480,18 +484,15 @@ export function SankeyChart({
     if (severityFilter) {
       const params = new URLSearchParams(searchParams.toString());
 
-      mapProviderFiltersForFindings(params);
-
       // Always set provider_type filter based on the clicked link's source (provider)
       // This ensures clicking "AWS → High" filters by AWS even when no global filter is set
-      const hasProviderIdFilter = searchParams.has("filter[provider_id__in]");
-      if (providerType && !hasProviderIdFilter) {
+      const hasProviderFilter = searchParams.has("filter[provider_id__in]");
+      if (providerType && !hasProviderFilter) {
         params.set("filter[provider_type__in]", providerType);
       }
 
       params.set("filter[severity__in]", severityFilter);
-      params.set("filter[status__in]", "FAIL");
-      params.set("filter[muted]", "false");
+      applyFailNonMutedFilters(params);
       router.push(`/findings?${params.toString()}`);
     }
   };
@@ -538,11 +539,17 @@ export function SankeyChart({
   // Check if there's actual data to display (links with values > 0)
   const hasData = data.links.some((link) => link.value > 0);
 
+  const layoutConfig = getSankeyLayoutConfig({
+    baseHeight: height,
+    nodes: data.nodes,
+    links: data.links,
+  });
+
   if (!hasData) {
     return (
       <div
         className="flex items-center justify-center"
-        style={{ height: `${height}px` }}
+        style={{ height: `${layoutConfig.height}px` }}
       >
         <div className="flex flex-col items-center gap-2 text-center">
           <Info size={48} className="text-text-neutral-tertiary" />
@@ -556,12 +563,12 @@ export function SankeyChart({
 
   return (
     <div className="relative">
-      <ResponsiveContainer width="100%" height={height}>
+      <ResponsiveContainer width="100%" height={layoutConfig.height}>
         <Sankey
           data={data}
           node={wrappedCustomNode}
           link={wrappedCustomLink}
-          nodePadding={50}
+          nodePadding={layoutConfig.nodePadding}
           margin={{ top: 20, right: 160, bottom: 20, left: 160 }}
           sort={false}
         >
@@ -626,7 +633,8 @@ export function SankeyChart({
           </p>
           <div className="flex flex-wrap gap-4">
             {zeroDataProviders.map((provider) => {
-              const IconComponent = PROVIDER_ICONS[provider.displayName];
+              const IconComponent =
+                PROVIDER_BADGE_BY_NAME[provider.displayName];
               return (
                 <div
                   key={provider.id}

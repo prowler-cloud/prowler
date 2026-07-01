@@ -150,6 +150,34 @@ class AlibabaCloudSession:
             )
         return self._credentials
 
+    @staticmethod
+    def _get_securitycenter_endpoint(region: str) -> str:
+        """Return the public Security Center OpenAPI endpoint for a region."""
+        securitycenter_region = region or ALIBABACLOUD_DEFAULT_REGION
+        if securitycenter_region.startswith("cn-"):
+            return "tds.cn-shanghai.aliyuncs.com"
+        return "tds.ap-southeast-1.aliyuncs.com"
+
+    @staticmethod
+    def _get_rds_endpoint(region: str) -> str:
+        """Return the public RDS OpenAPI endpoint for a region."""
+        rds_region = region or ALIBABACLOUD_DEFAULT_REGION
+        shared_rds_regions = {
+            "cn-qingdao",
+            "cn-beijing",
+            "cn-hangzhou",
+            "cn-shanghai",
+            "cn-shenzhen",
+            "cn-heyuan",
+            "cn-hongkong",
+            "cn-beijing-finance-1",
+            "cn-hangzhou-finance",
+            "cn-shanghai-finance-1",
+        }
+        if rds_region in shared_rds_regions:
+            return "rds.aliyuncs.com"
+        return f"rds.{rds_region}.aliyuncs.com"
+
     def client(self, service: str, region: str = None):
         """
         Create a service client for the given service and region.
@@ -196,11 +224,8 @@ class AlibabaCloudSession:
                 config.endpoint = f"ecs.{ALIBABACLOUD_DEFAULT_REGION}.aliyuncs.com"
             return EcsClient(config)
         elif service == "sas" or service == "securitycenter":
-            # SAS (Security Center) endpoint is regional: sas.{region}.aliyuncs.com
-            if region:
-                config.endpoint = f"sas.{region}.aliyuncs.com"
-            else:
-                config.endpoint = f"sas.{ALIBABACLOUD_DEFAULT_REGION}.aliyuncs.com"
+            # Security Center uses regional groups of shared TDS endpoints.
+            config.endpoint = self._get_securitycenter_endpoint(region)
             return SasClient(config)
         elif service == "oss":
             if region:
@@ -226,10 +251,7 @@ class AlibabaCloudSession:
                 config.endpoint = f"cs.{ALIBABACLOUD_DEFAULT_REGION}.aliyuncs.com"
             return CSClient(config)
         elif service == "rds":
-            if region:
-                config.endpoint = f"rds.{region}.aliyuncs.com"
-            else:
-                config.endpoint = f"rds.{ALIBABACLOUD_DEFAULT_REGION}.aliyuncs.com"
+            config.endpoint = self._get_rds_endpoint(region)
             return RdsClient(config)
         elif service == "sls":
             if region:

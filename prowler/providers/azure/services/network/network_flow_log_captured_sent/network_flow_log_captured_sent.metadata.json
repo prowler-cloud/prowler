@@ -1,30 +1,38 @@
 {
   "Provider": "azure",
   "CheckID": "network_flow_log_captured_sent",
-  "CheckTitle": "Ensure that network flow logs are captured and fed into a central log analytics workspace.",
+  "CheckTitle": "Network Watcher has flow logs enabled and sent to a Log Analytics workspace",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "Network",
-  "Description": "Ensure that network flow logs are captured and fed into a central log analytics workspace.",
-  "Risk": "Network Flow Logs provide valuable insight into the flow of traffic around your network and feed into both Azure Monitor and Azure Sentinel (if in use), permitting the generation of visual flow diagrams to aid with analyzing for lateral movement, etc.",
-  "RelatedUrl": "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-4-enable-network-logging-for-security-investigation",
+  "ResourceType": "microsoft.network/networkwatchers",
+  "ResourceGroup": "network",
+  "Description": "**Azure Network Watcher** has **flow logs** enabled for supported targets, such as **virtual networks** and **network security groups**, and configured with **Traffic Analytics** to forward records to a centralized **Log Analytics workspace**",
+  "Risk": "Missing, disabled, or non-centralized flow logging blinds visibility into network behavior, hindering detection of:\n- **Lateral movement** and internal scanning\n- **C2 beacons** and exfiltration patterns\nThis degrades incident response and correlation, impacting **confidentiality** and **integrity**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/network-watcher/vnet-flow-logs-tutorial",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/mcsb-logging-threat-detection#lt-4-enable-network-logging-for-security-investigation"
+  ],
   "Remediation": {
     "Code": {
-      "CLI": "",
-      "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "CLI": "az network watcher flow-log create --location <REGION> --name <FLOW_LOG_NAME> --resource-group <RESOURCE_GROUP> --target-resource-id <TARGET_RESOURCE_ID> --storage-account <STORAGE_ACCOUNT_ID> --enabled true --workspace <LOG_ANALYTICS_WORKSPACE_ID>",
+      "NativeIaC": "```bicep\n// Enable flow logs for a supported target (for example, a virtual network or NSG)\nresource flowLog 'Microsoft.Network/networkWatchers/flowLogs@2023-09-01' = {\n  name: '<example_network_watcher_name>/<example_flow_log_name>'\n  location: '<REGION>'\n  properties: {\n    enabled: true\n    targetResourceId: '<example_target_resource_id>'\n    storageId: '<example_storage_account_id>'\n    flowAnalyticsConfiguration: {\n      networkWatcherFlowAnalyticsConfiguration: {\n        enabled: true\n        workspaceResourceId: '<example_log_analytics_workspace_id>'\n      }\n    }\n  }\n}\n```",
+      "Other": "1. In Azure portal, go to Network Watcher > Flow logs\n2. Click + Create\n3. Select the subscription and region\n4. Choose the appropriate flow log type and target resource, such as a virtual network or network security group\n5. Set Status to On\n6. Select a Storage account\n7. Enable Traffic analytics and select the Log Analytics workspace\n8. Click Review + create, then Create",
+      "Terraform": "```hcl\n# Enable flow logs for a supported target and send analytics to Log Analytics\nresource \"azurerm_network_watcher_flow_log\" \"<example_resource_name>\" {\n  name                 = \"<example_resource_name>\"\n  network_watcher_name = \"<example_network_watcher_name>\"\n  resource_group_name  = \"<example_resource_group_name>\"\n  target_resource_id   = \"<example_target_resource_id>\"\n  storage_account_id   = \"<example_storage_account_id>\"\n\n  enabled = true\n\n  traffic_analytics {\n    enabled               = true\n    workspace_id          = \"<example_workspace_id>\"\n    workspace_region      = \"<REGION>\"\n    workspace_resource_id = \"<example_log_analytics_workspace_id>\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "1. Navigate to Network Watcher. 2. Select NSG flow logs. 3. Select + Create. 4. Select the desired Subscription. 5. Select + Select NSG. 6. Select a network security group. 7. Click Confirm selection. 8. Select or create a new Storage Account. 9. Input the retention in days to retain the log. 10. Click Next. 11. Under Configuration, select Version 2. 12. If rich analytics are required, select Enable Traffic Analytics, a processing interval, and a Log Analytics Workspace. 13. Select Next. 14. Optionally add Tags. 15. Select Review + create. 16. Select Create. Warning The remediation policy creates remediation deployment and names them by concatenating the subscription name and the resource group name. The MAXIMUM permitted length of a deployment name is 64 characters. Exceeding this will cause the remediation task to fail.",
-      "Url": "https://docs.microsoft.com/en-us/azure/network-watcher/network-watcher-nsg-flow-logging-portal"
+      "Text": "Enable and centrally aggregate **flow logs** for supported Network Watcher targets, including **virtual networks** and **network security groups**, to a **Log Analytics workspace**.\n\n- Enforce least privilege on log data\n- Define retention and secure storage\n- Use layered monitoring (e.g., Traffic Analytics)\n- Ensure coverage across regions, subscriptions, and critical network segments",
+      "Url": "https://hub.prowler.com/check/network_flow_log_captured_sent"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "The impact of configuring NSG Flow logs is primarily one of cost and configuration. If deployed, it will create storage accounts that hold minimal amounts of data on a 5-day lifecycle before feeding to Log Analytics Workspace. This will increase the amount of data stored and used by Azure Monitor."
+  "Notes": "Configuring flow logs and Traffic Analytics increases storage and analytics costs. For new Azure deployments, prefer virtual network flow logs where they satisfy your monitoring requirements because NSG flow logs are on the retirement path."
 }

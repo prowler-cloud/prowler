@@ -1,0 +1,142 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Amazon Web Services Foundations Benchmark v5.0.0",
+  "Version": "5.0",
+  "Provider": "AWS",
+  "Description": "The CIS Amazon Web Services Foundations Benchmark provides prescriptive guidance for configuring security options for a subset of Amazon Web Services with an emphasis on foundational, testable, and architecture agnostic settings.",
+  "Requirements": [
+    {
+      "Id": "1.1",
+      "Description": "Maintain current contact details",
+      "Checks": [
+        "account_maintain_current_contact_details"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Manual",
+          "Description": "Ensure contact email and telephone details for AWS accounts are current and map to more than one individual in your organization.",
+          "RationaleStatement": "If an AWS account is observed to be behaving in a prohibited or suspicious manner, AWS will attempt to contact the account owner by email and phone using the contact details listed. If this is unsuccessful and the account behavior is not corrected then AWS may suspend the account.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "This activity can only be performed via the AWS Console. Navigate to Account Settings and update contact information.",
+          "AuditProcedure": "This activity can only be performed via the AWS Console. Navigate to Account Settings and verify contact information is current.",
+          "AdditionalInformation": "",
+          "DefaultValue": "",
+          "References": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.2",
+      "Description": "Ensure security contact information is registered",
+      "Checks": [
+        "account_security_contact_information_is_registered"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "AWS provides customers with the option to specify the contact information for the account's security team. It is recommended that this information be provided.",
+          "RationaleStatement": "Specifying security-specific contact information will help ensure that security advisories sent by AWS reach the team in your organization that is best equipped to respond to them.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Navigate to AWS Console > Account > Alternate Contacts and add security contact information.",
+          "AuditProcedure": "Run: aws account get-alternate-contact --alternate-contact-type SECURITY",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, no security contact is registered.",
+          "References": "https://docs.aws.amazon.com/accounts/latest/reference/manage-acct-update-contact-alternate.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.3",
+      "Description": "Ensure no 'root' user account access key exists",
+      "Checks": [
+        "iam_no_root_access_key"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "The 'root' user account is the most privileged user in an AWS account. AWS Access Keys provide programmatic access to a given AWS account. It is recommended that all access keys associated with the 'root' user account be deleted.",
+          "RationaleStatement": "Deleting access keys associated with the 'root' user account limits vectors by which the account can be compromised. Additionally, deleting the root access keys encourages the creation and use of role based accounts that are least privileged.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Navigate to IAM console, select root user, Security credentials tab, and delete any access keys.",
+          "AuditProcedure": "Run: aws iam get-account-summary | grep 'AccountAccessKeysPresent'",
+          "AdditionalInformation": "IAM User account root for us-gov cloud regions is not enabled by default.",
+          "DefaultValue": "By default, no root access keys exist.",
+          "References": "https://docs.aws.amazon.com/general/latest/gr/aws-access-keys-best-practices.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.4",
+      "Description": "Ensure MFA is enabled for the 'root' user account",
+      "Checks": [
+        "iam_root_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "The 'root' user account is the most privileged user in an AWS account. Multi-factor Authentication (MFA) adds an extra layer of protection on top of a username and password. With MFA enabled, when a user signs in to an AWS website, they will be prompted for their username and password as well as for an authentication code from their AWS MFA device.",
+          "RationaleStatement": "Enabling MFA provides increased security for console access as it requires the authenticating principal to possess a device that emits a time-sensitive key and have knowledge of a credential.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "Using IAM console, navigate to Dashboard and choose Activate MFA on your root account.",
+          "AuditProcedure": "Run: aws iam get-account-summary | grep 'AccountMFAEnabled'. Ensure the value is 1.",
+          "AdditionalInformation": "",
+          "DefaultValue": "MFA is not enabled by default.",
+          "References": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_root-user.html#id_root-user_manage_mfa"
+        }
+      ]
+    },
+    {
+      "Id": "1.5",
+      "Description": "Ensure hardware MFA is enabled for the 'root' user account",
+      "Checks": [
+        "iam_root_hardware_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "The 'root' user account is the most privileged user in an AWS account. MFA adds an extra layer of protection on top of a user name and password. With MFA enabled, when a user signs in to an AWS website, they will be prompted for their user name and password as well as for an authentication code from their AWS MFA device. For Level 2, it is recommended that the root user account be protected with a hardware MFA.",
+          "RationaleStatement": "A hardware MFA has a smaller attack surface than a virtual MFA. For example, a hardware MFA does not suffer from the attack surface introduced by the mobile smartphone on which a virtual MFA resides.",
+          "ImpactStatement": "Using a hardware MFA device instead of a virtual MFA may result in additional hardware costs.",
+          "RemediationProcedure": "Using IAM console, navigate to Dashboard, select root user, and configure hardware MFA device.",
+          "AuditProcedure": "Run: aws iam list-virtual-mfa-devices and verify the root account is not using a virtual MFA.",
+          "AdditionalInformation": "For recommendations on protecting hardware MFA devices, refer to https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_lost-or-broken.html",
+          "DefaultValue": "MFA is not enabled by default.",
+          "References": "https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_mfa_enable_physical.html"
+        }
+      ]
+    },
+    {
+      "Id": "2.1.1",
+      "Description": "Ensure S3 Bucket Policy is set to deny HTTP requests",
+      "Checks": [
+        "s3_bucket_secure_transport_policy"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Storage",
+          "SubSection": "2.1 Simple Storage Service (S3)",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "At the Amazon S3 bucket level, you can configure permissions through a bucket policy making the objects accessible only through HTTPS.",
+          "RationaleStatement": "By default, Amazon S3 allows both HTTP and HTTPS requests. To achieve only allowing access to Amazon S3 objects through HTTPS you also have to explicitly deny access to HTTP requests. Bucket policies that allow HTTPS requests without explicitly denying HTTP requests will not comply with this recommendation.",
+          "ImpactStatement": "Enabling this setting will result in rejection of requests that do not use HTTPS for S3 bucket operations.",
+          "RemediationProcedure": "Add a bucket policy with condition aws:SecureTransport: false that denies all s3 actions.",
+          "AuditProcedure": "Review bucket policies for Deny statements with aws:SecureTransport: false condition.",
+          "AdditionalInformation": "",
+          "DefaultValue": "By default, S3 buckets allow both HTTP and HTTPS requests.",
+          "References": "https://aws.amazon.com/blogs/security/how-to-use-bucket-policies-and-apply-defense-in-depth-to-help-secure-your-amazon-s3-data/"
+        }
+      ]
+    }
+  ]
+}

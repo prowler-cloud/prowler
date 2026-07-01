@@ -13,6 +13,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "Other",
+  "ResourceGroup": "security",
   "Description": "**IAM Access Analyzer** analyzers are in `Active` state and currently report zero `Active` findings within their scope of monitored resources.",
   "Risk": "Unresolved `Active` findings indicate unintended external or internal access paths.\n- **Confidentiality**: public/cross-account reads of data (buckets, snapshots, secrets)\n- **Integrity**: rogue role assumption or KMS use enabling policy/data changes\n- **Lateral movement** across accounts",
   "RelatedUrl": "",
@@ -26,7 +27,7 @@
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/access-analyzer-findings.html",
     "https://aws.amazon.com/blogs/security/automate-resolution-for-iam-access-analyzer-cross-account-access-findings-on-iam-roles/",
     "https://docs.aws.amazon.com/IAM/latest/UserGuide/what-is-access-analyzer.html",
-    "https://www.trendmicro.com/cloudoneconformity/knowledge-base/aws/AccessAnalyzer/findings.html"
+    "https://www.trendmicro.com/trendaivisiononecloudriskmanagement/knowledge-base/aws/AccessAnalyzer/findings.html"
   ],
   "Remediation": {
     "Code": {

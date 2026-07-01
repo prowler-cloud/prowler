@@ -9,9 +9,13 @@ import { RadioGroupM365ViaCredentialsTypeForm } from "./radio-group-m365-via-cre
 
 interface SelectViaM365Props {
   initialVia?: string;
+  onViaChange?: (via: string) => void;
 }
 
-export const SelectViaM365 = ({ initialVia }: SelectViaM365Props) => {
+export const SelectViaM365 = ({
+  initialVia,
+  onViaChange,
+}: SelectViaM365Props) => {
   const router = useRouter();
   const form = useForm({
     defaultValues: {
@@ -20,6 +24,11 @@ export const SelectViaM365 = ({ initialVia }: SelectViaM365Props) => {
   });
 
   const handleSelectionChange = (value: string) => {
+    if (onViaChange) {
+      onViaChange(value);
+      return;
+    }
+
     const url = new URL(window.location.href);
     url.searchParams.set("via", value);
     router.push(url.toString());

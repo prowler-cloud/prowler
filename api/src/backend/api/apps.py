@@ -28,19 +28,19 @@ class ApiConfig(AppConfig):
     name = "api"
 
     def ready(self):
-        from api import schema_extensions  # noqa: F401
-        from api import signals  # noqa: F401
-        from api.compliance import load_prowler_compliance
+        from api import (
+            schema_extensions,  # noqa: F401
+            signals,  # noqa: F401
+        )
 
         # Generate required cryptographic keys if not present, but only if:
-        #   `"manage.py" not in sys.argv`: If an external server (e.g., Gunicorn) is running the app
+        #   `"manage.py" not in sys.argv[0]`: If an external server (e.g., Gunicorn) is running the app
         #   `os.environ.get("RUN_MAIN")`: If it's not a Django command or using `runserver`,
         #                                 only the main process will do it
-        if "manage.py" not in sys.argv or os.environ.get("RUN_MAIN"):
+        if (len(sys.argv) >= 1 and "manage.py" not in sys.argv[0]) or os.environ.get(
+            "RUN_MAIN"
+        ):
             self._ensure_crypto_keys()
-
-        load_prowler_compliance()
-        self._initialize_attack_surface_mapping()
 
     def _ensure_crypto_keys(self):
         """
@@ -55,7 +55,7 @@ class ApiConfig(AppConfig):
         global _keys_initialized
 
         # Skip key generation if running tests
-        if hasattr(settings, "TESTING") and settings.TESTING:
+        if getattr(settings, "TESTING", False):
             return
 
         # Skip if already initialized in this process
@@ -168,13 +168,3 @@ class ApiConfig(AppConfig):
                 f"Error generating JWT keys: {e}. Please set '{SIGNING_KEY_ENV}' and '{VERIFYING_KEY_ENV}' manually."
             )
             raise e
-
-    def _initialize_attack_surface_mapping(self):
-        from tasks.jobs.scan import (  # noqa: F401
-            _get_attack_surface_mapping_from_provider,
-        )
-
-        from api.models import Provider  # noqa: F401
-
-        for provider_type, _label in Provider.ProviderChoices.choices:
-            _get_attack_surface_mapping_from_provider(provider_type)

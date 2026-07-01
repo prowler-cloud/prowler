@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon EMR clusters** in non-terminated states are assessed for **public IP assignment** on cluster nodes (primary and workers). The finding identifies clusters whose instances are reachable via public IPs rather than private VPC addresses.",
   "Risk": "**Publicly reachable EMR nodes** expose admin UIs and SSH to the Internet, enabling brute force and service exploits. A compromised primary node can alter jobs and exfiltrate data from S3/HDFS, degrading **confidentiality** and **integrity**, and disrupt workloads, impacting **availability**.",
   "RelatedUrl": "",

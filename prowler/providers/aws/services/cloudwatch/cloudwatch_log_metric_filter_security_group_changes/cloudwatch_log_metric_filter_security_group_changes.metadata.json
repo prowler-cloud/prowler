@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "**CloudTrail** events for **security group configuration changes** are monitored using a **CloudWatch Logs metric filter** with an associated **alarm**. The filter targets actions like `AuthorizeSecurityGroupIngress/Egress`, `RevokeSecurityGroupIngress/Egress`, `CreateSecurityGroup`, and `DeleteSecurityGroup` to surface any security group modifications.",
   "Risk": "Without alerting on **security group changes**, unauthorized or mistaken rules can expose services to the Internet, enabling brute force and lateral movement (**confidentiality, integrity**). Deletions or restrictive edits can break connectivity (**availability**). Delayed detection increases attacker dwell time and impact.",
   "RelatedUrl": "",

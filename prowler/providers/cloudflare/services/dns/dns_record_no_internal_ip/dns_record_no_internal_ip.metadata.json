@@ -1,0 +1,36 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "dns_record_no_internal_ip",
+  "CheckTitle": "DNS records do not expose internal IP addresses",
+  "CheckType": [],
+  "ServiceName": "dns",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "DNSRecord",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare DNS records** are assessed for **internal IP exposure** by checking if A or AAAA records point to private, loopback, or reserved IP addresses which could **leak internal network structure**.",
+  "Risk": "DNS records exposing **internal IP addresses** leak sensitive network information.\n- **Confidentiality**: reveals internal network topology and addressing schemes to attackers\n- **Integrity**: provides reconnaissance data for targeted attacks on internal infrastructure\n- **Availability**: internal IPs in public DNS may indicate misconfiguration affecting service routing",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to DNS > Records\n3. Identify A/AAAA records pointing to internal IP addresses\n4. Update records to point to public IP addresses or remove if not needed\n5. Use split-horizon DNS if internal resolution is required",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove **internal IP addresses** from public DNS records.\n- Use split-horizon DNS for internal service resolution\n- Ensure DNS records only contain publicly routable IP addresses\n- Review DNS records after network changes or migrations\n- Consider using Cloudflare Access for secure internal service access",
+      "Url": "https://hub.prowler.com/checks/cloudflare/dns_record_no_internal_ip"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Internal IP ranges include: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16 (IPv4), fc00::/7 (IPv6 ULA), and loopback addresses. These should not appear in public DNS records."
+}

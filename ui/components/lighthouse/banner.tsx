@@ -7,7 +7,7 @@ export const LighthouseBanner = async () => {
     const isConfigured = await isLighthouseConfigured();
 
     return <LighthouseBannerClient isConfigured={isConfigured} />;
-  } catch (error) {
+  } catch (_error) {
     return null;
   }
 };

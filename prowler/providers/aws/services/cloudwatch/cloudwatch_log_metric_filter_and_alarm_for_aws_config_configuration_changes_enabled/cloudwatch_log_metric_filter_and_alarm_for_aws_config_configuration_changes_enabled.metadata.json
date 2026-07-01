@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsCloudWatchAlarm",
+  "ResourceGroup": "monitoring",
   "Description": "CloudTrail logs in **CloudWatch Logs** are inspected for a metric filter and alarm that track **AWS Config configuration changes**, specifically `StopConfigurationRecorder`, `DeleteDeliveryChannel`, `PutDeliveryChannel`, and `PutConfigurationRecorder` events from `config.amazonaws.com`.",
   "Risk": "Without alerting on **AWS Config changes**, actions like `StopConfigurationRecorder` or `DeleteDeliveryChannel` can silently suspend recording and delivery.\n\nThis degrades the **integrity** and **availability** of configuration audit data, enabling undetected changes and delaying incident response.",
   "RelatedUrl": "",

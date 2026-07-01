@@ -1,0 +1,43 @@
+{{- if .Values.api.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "prowler.fullname" . }}-api
+  labels:
+    {{- include "prowler.labels" . | nindent 4 }}
+  {{- with .Values.api.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.api.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if .Values.api.ingress.tls }}
+  tls:
+    {{- range .Values.api.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.api.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            {{- with .pathType }}
+            pathType: {{ . }}
+            {{- end }}
+            backend:
+              service:
+                name: {{ include "prowler.fullname" $ }}-api
+                port:
+                  number: {{ $.Values.api.service.port }}
+          {{- end }}
+    {{- end }}
+{{- end }}

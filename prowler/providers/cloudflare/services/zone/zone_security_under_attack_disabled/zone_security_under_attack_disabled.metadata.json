@@ -1,0 +1,37 @@
+{
+  "Provider": "cloudflare",
+  "CheckID": "zone_security_under_attack_disabled",
+  "CheckTitle": "Under Attack Mode is disabled during normal operations",
+  "CheckType": [],
+  "ServiceName": "zone",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "Zone",
+  "ResourceGroup": "network",
+  "Description": "**Cloudflare zones** are assessed for **Under Attack Mode** configuration by checking if it is disabled during normal operations, as this mode performs additional security checks including an **interstitial JavaScript challenge page** that significantly impacts user experience.",
+  "Risk": "Keeping **Under Attack Mode** permanently enabled causes operational issues.\n- **Availability**: all visitors face a 5-second interstitial challenge page before accessing the site\n- **Accessibility**: visitors without JavaScript support cannot access the site at all\n- **User Experience**: legitimate users experience unnecessary delays and third-party analytics show degraded performance",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developers.cloudflare.com/fundamentals/reference/under-attack-mode/",
+    "https://developers.cloudflare.com/waf/tools/security-level/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Cloudflare dashboard and select your account and domain\n2. Go to Security > Settings\n3. Under 'Under Attack Mode', toggle it OFF\n4. Consider setting Security Level to 'High' for continued protection without the interstitial",
+      "Terraform": "```hcl\n# Set security level to high instead of under_attack\nresource \"cloudflare_zone_settings_override\" \"security_settings\" {\n  zone_id = \"<ZONE_ID>\"\n  settings {\n    security_level = \"high\" # Use high instead of under_attack for normal operations\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable **Under Attack Mode** when not actively under a DDoS attack.\n- Use it only as a **last resort** during active layer 7 DDoS attacks\n- For ongoing protection, use **Security Level** settings (Low, Medium, High)\n- Configure specific **WAF rules** for targeted protection without impacting all users",
+      "Url": "https://hub.prowler.com/checks/cloudflare/zone_security_under_attack_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Under Attack Mode is designed as a temporary measure during active attacks. The interstitial challenge page validates visitors using JavaScript, blocking automated attacks while allowing legitimate users through after a brief delay."
+}

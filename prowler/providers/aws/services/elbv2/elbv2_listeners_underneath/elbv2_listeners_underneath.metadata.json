@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbv2LoadBalancer",
+  "ResourceGroup": "network",
   "Description": "**ELBv2 load balancer** requires at least one **listener** (protocol and port) to accept client connections and route requests to target groups. The finding indicates whether listeners are defined on the load balancer.",
   "Risk": "Without a listener, the load balancer cannot accept connections, making back-end services unreachable. This harms **availability**, leads to client timeouts and errors, and disrupts integrations that rely on the load balancer's DNS endpoint.",
   "RelatedUrl": "",

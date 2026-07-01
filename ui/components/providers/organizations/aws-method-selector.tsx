@@ -1,0 +1,41 @@
+"use client";
+
+import { Ban, Box, Boxes } from "lucide-react";
+
+import { RadioCard } from "@/components/providers/radio-card";
+import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+
+interface AwsMethodSelectorProps {
+  onSelectSingle: () => void;
+  onSelectOrganizations: () => void;
+}
+
+export function AwsMethodSelector({
+  onSelectSingle,
+  onSelectOrganizations,
+}: AwsMethodSelectorProps) {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
+  return (
+    <div className="flex flex-col gap-3">
+      <p className="text-muted-foreground text-sm">
+        Select a method to add your accounts to Prowler.
+      </p>
+
+      <RadioCard
+        icon={Box}
+        title="Add A Single AWS Cloud Account"
+        onClick={onSelectSingle}
+      />
+
+      <RadioCard
+        icon={isCloudEnv ? Boxes : Ban}
+        title="Add Multiple Accounts With AWS Organizations"
+        onClick={onSelectOrganizations}
+        disabled={!isCloudEnv}
+      >
+        {!isCloudEnv && <CloudFeatureBadgeLink />}
+      </RadioCard>
+    </div>
+  );
+}

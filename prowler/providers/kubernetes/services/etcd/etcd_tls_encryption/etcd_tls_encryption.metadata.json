@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "Pod",
+  "ResourceGroup": "container",
   "Description": "**Etcd pods** are assessed for **TLS-enabled client communication**, indicated by `--cert-file` and `--key-file` in container arguments, showing that Kubernetes API state traffic is encrypted in transit.",
   "Risk": "Without **TLS**, etcd traffic is exposed on the network, weakening CIA:\n- Confidentiality: leakage of **secrets** and cluster state\n- Integrity: **MITM** can alter configs, roles, and objects\n- Availability: control-plane instability from tampered responses",
   "RelatedUrl": "",

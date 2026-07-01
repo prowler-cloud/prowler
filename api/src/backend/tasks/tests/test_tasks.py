@@ -1,27 +1,42 @@
 import uuid
+from contextlib import contextmanager
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+    Task,
+)
 from botocore.exceptions import ClientError
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
 )
 from tasks.tasks import (
+    DJANGO_TMP_OUTPUT_DIRECTORY,
+    STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    ScanReportRLSTask,
+    _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
+    _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
+    perform_attack_paths_scan_task,
+    perform_scan_task,
+    perform_scheduled_scan_task,
+    reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
-)
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
 )
 
 
@@ -225,7 +240,8 @@ class TestGenerateOutputs:
         self.provider_id = str(uuid.uuid4())
         self.tenant_id = str(uuid.uuid4())
 
-    def test_no_findings_returns_early(self):
+    @patch("tasks.tasks._cleanup_stale_tmp_output_directories")
+    def test_no_findings_returns_early(self, mock_cleanup_stale_tmp_output_directories):
         with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
             mock_filter.return_value.exists.return_value = False
 
@@ -237,6 +253,34 @@ class TestGenerateOutputs:
 
             assert result == {"upload": False}
             mock_filter.assert_called_once_with(scan_id=self.scan_id)
+            mock_cleanup_stale_tmp_output_directories.assert_called_once_with(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+                exclude_scan=(self.tenant_id, self.scan_id),
+            )
+
+    @patch(
+        "tasks.tasks._cleanup_stale_tmp_output_directories",
+        side_effect=RuntimeError("cleanup boom"),
+    )
+    def test_cleanup_exception_does_not_break_no_findings_flow(
+        self, mock_cleanup_stale_tmp_output_directories
+    ):
+        with patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter:
+            mock_filter.return_value.exists.return_value = False
+
+            result = generate_outputs_task(
+                scan_id=self.scan_id,
+                provider_id=self.provider_id,
+                tenant_id=self.tenant_id,
+            )
+
+            assert result == {"upload": False}
+            mock_cleanup_stale_tmp_output_directories.assert_called_once_with(
+                DJANGO_TMP_OUTPUT_DIRECTORY,
+                max_age_hours=STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+                exclude_scan=(self.tenant_id, self.scan_id),
+            )
 
     @patch("tasks.tasks._upload_to_s3")
     @patch("tasks.tasks._compress_output_files")
@@ -278,6 +322,7 @@ class TestGenerateOutputs:
 
         mock_transformed_stats = {"some": "stats"}
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
                 return_value=mock_transformed_stats,
@@ -298,7 +343,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, MagicMock(name="CSVCompliance"))]},
+                {"aws": [(lambda _x: True, MagicMock(name="CSVCompliance"))]},
             ),
             patch(
                 "tasks.tasks._generate_output_directory",
@@ -350,7 +395,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, MagicMock())]},
+                {"aws": [(lambda _x: True, MagicMock())]},
             ),
             patch("tasks.tasks._compress_output_files", return_value="/tmp/compressed"),
             patch("tasks.tasks._upload_to_s3", return_value=None),
@@ -396,6 +441,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -430,7 +476,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, mock_compliance_class)]},
+                {"aws": [(lambda _x: True, mock_compliance_class)]},
             ),
         ):
             mock_filter.return_value.exists.return_value = True
@@ -459,6 +505,10 @@ class TestGenerateOutputs:
 
         class TrackingWriter:
             def __init__(self, findings, file_path, file_extension, from_cli):
+                self.findings = findings
+                self.file_path = file_path
+                self.file_extension = file_extension
+                self.from_cli = from_cli
                 self.transform_called = 0
                 self.batch_write_data_to_file = MagicMock()
                 self._data = []
@@ -547,6 +597,7 @@ class TestGenerateOutputs:
         ]
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
                 "tasks.tasks.Provider.objects.get",
@@ -567,13 +618,13 @@ class TestGenerateOutputs:
             patch("tasks.tasks.FindingOutput._transform_findings_stats"),
             patch(
                 "tasks.tasks.FindingOutput.transform_api_finding",
-                side_effect=lambda f, prov: f,
+                side_effect=lambda f, _prov: f,
             ),
             patch("tasks.tasks._compress_output_files", return_value="outdir.zip"),
             patch("tasks.tasks._upload_to_s3", return_value="s3://bucket/outdir.zip"),
             patch(
                 "tasks.tasks.Scan.all_objects.filter",
-                return_value=MagicMock(update=lambda **kw: None),
+                return_value=MagicMock(update=lambda **_kw: None),
             ),
             patch("tasks.tasks.batched", return_value=two_batches),
             patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
@@ -621,6 +672,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -655,7 +707,7 @@ class TestGenerateOutputs:
             ),
             patch(
                 "tasks.tasks.COMPLIANCE_CLASS_MAP",
-                {"aws": [(lambda x: True, mock_compliance_class)]},
+                {"aws": [(lambda _x: True, mock_compliance_class)]},
             ),
         ):
             mock_filter.return_value.exists.return_value = True
@@ -724,28 +776,73 @@ class TestGenerateOutputs:
             mock_s3_task.assert_called_once()
 
 
+class TestScanReportRLSTaskOnFailure:
+    def test_on_failure_removes_scan_tmp_directory(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_called_once_with(
+            _scan_tmp_output_directory("t-1", "s-1"), ignore_errors=True
+        )
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_not_called()
+
+
 class TestScanCompleteTasks:
     @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
-    @patch("tasks.tasks.create_compliance_requirements_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
     @patch("tasks.tasks.perform_scan_summary_task.si")
     @patch("tasks.tasks.generate_outputs_task.si")
     @patch("tasks.tasks.generate_compliance_reports_task.si")
     @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=False)
     def test_scan_complete_tasks(
         self,
+        _mock_can_run_attack_paths,
+        mock_attack_paths_task,
         mock_check_integrations_task,
         mock_compliance_reports_task,
         mock_outputs_task,
         mock_scan_summary_task,
+        mock_update_compliance_scores_task,
         mock_compliance_requirements_task,
+        mock_chain,
         mock_attack_surface_task,
     ):
         """Test that scan complete tasks are properly orchestrated with optimized reports."""
         _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
 
-        # Verify compliance requirements task is called
+        # Verify compliance requirements task is called via chain
         mock_compliance_requirements_task.assert_called_once_with(
-            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"},
+            tenant_id="tenant-id", scan_id="scan-id"
+        )
+
+        # Verify update provider compliance scores task is called via chain
+        mock_update_compliance_scores_task.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id"
         )
 
         # Verify attack surface task is called
@@ -778,6 +875,133 @@ class TestScanCompleteTasks:
             tenant_id="tenant-id",
             provider_id="provider-id",
             scan_id="scan-id",
+        )
+
+        # Attack Paths task should be skipped when provider cannot run it
+        mock_attack_paths_task.assert_not_called()
+
+    @pytest.mark.parametrize(
+        "row_pre_existing",
+        [True, False],
+        ids=["row-pre-existing", "row-missing-fallback"],
+    )
+    @patch("tasks.tasks.aggregate_attack_surface_task.apply_async")
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.create_compliance_requirements_task.si")
+    @patch("tasks.tasks.update_provider_compliance_scores_task.si")
+    @patch("tasks.tasks.perform_scan_summary_task.si")
+    @patch("tasks.tasks.generate_outputs_task.si")
+    @patch("tasks.tasks.generate_compliance_reports_task.si")
+    @patch("tasks.tasks.check_integrations_task.si")
+    @patch("tasks.tasks.attack_paths_db_utils.set_attack_paths_scan_task_id")
+    @patch("tasks.tasks.attack_paths_db_utils.create_attack_paths_scan")
+    @patch("tasks.tasks.attack_paths_db_utils.retrieve_attack_paths_scan")
+    @patch("tasks.tasks.perform_attack_paths_scan_task.apply_async")
+    @patch("tasks.tasks.can_provider_run_attack_paths_scan", return_value=True)
+    def test_scan_complete_dispatches_attack_paths_scan(
+        self,
+        _mock_can_run_attack_paths,
+        mock_attack_paths_task,
+        mock_retrieve,
+        mock_create,
+        mock_set_task_id,
+        mock_check_integrations_task,
+        mock_compliance_reports_task,
+        mock_outputs_task,
+        mock_scan_summary_task,
+        mock_update_compliance_scores_task,
+        mock_compliance_requirements_task,
+        mock_chain,
+        mock_attack_surface_task,
+        row_pre_existing,
+    ):
+        """When a provider can run Attack Paths, dispatch must:
+        1. Reuse the existing row or create one if missing.
+        2. Call apply_async on the Attack Paths task.
+        3. Persist the returned Celery task id on the row.
+        """
+        existing_row = MagicMock(id="ap-scan-id")
+        if row_pre_existing:
+            mock_retrieve.return_value = existing_row
+        else:
+            mock_retrieve.return_value = None
+            mock_create.return_value = existing_row
+
+        async_result = MagicMock(task_id="celery-task-id")
+        mock_attack_paths_task.return_value = async_result
+
+        _perform_scan_complete_tasks("tenant-id", "scan-id", "provider-id")
+
+        mock_retrieve.assert_called_once_with("tenant-id", "scan-id")
+        if row_pre_existing:
+            mock_create.assert_not_called()
+        else:
+            mock_create.assert_called_once_with("tenant-id", "scan-id", "provider-id")
+
+        mock_attack_paths_task.assert_called_once_with(
+            kwargs={"tenant_id": "tenant-id", "scan_id": "scan-id"}
+        )
+
+        mock_set_task_id.assert_called_once_with(
+            "tenant-id", "ap-scan-id", "celery-task-id"
+        )
+
+
+class TestAttackPathsTasks:
+    @staticmethod
+    @contextmanager
+    def _override_task_request(task, **attrs):
+        request = task.request
+        sentinel = object()
+        previous = {key: getattr(request, key, sentinel) for key in attrs}
+        for key, value in attrs.items():
+            setattr(request, key, value)
+
+        try:
+            yield
+        finally:
+            for key, prev in previous.items():
+                if prev is sentinel:
+                    if hasattr(request, key):
+                        delattr(request, key)
+                else:
+                    setattr(request, key, prev)
+
+    def test_perform_attack_paths_scan_task_calls_runner(self):
+        with (
+            patch("tasks.tasks.attack_paths_scan") as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-id"
+            ),
+        ):
+            mock_attack_paths_scan.return_value = {"status": "ok"}
+
+            result = perform_attack_paths_scan_task.run(
+                tenant_id="tenant-id", scan_id="scan-id"
+            )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-id"
+        )
+        assert result == {"status": "ok"}
+
+    def test_perform_attack_paths_scan_task_propagates_exception(self):
+        with (
+            patch(
+                "tasks.tasks.attack_paths_scan",
+                side_effect=RuntimeError("Exception to propagate"),
+            ) as mock_attack_paths_scan,
+            self._override_task_request(
+                perform_attack_paths_scan_task, id="celery-task-error"
+            ),
+        ):
+            with pytest.raises(RuntimeError, match="Exception to propagate"):
+                perform_attack_paths_scan_task.run(
+                    tenant_id="tenant-id", scan_id="scan-id"
+                )
+
+        mock_attack_paths_scan.assert_called_once_with(
+            tenant_id="tenant-id", scan_id="scan-id", task_id="celery-task-error"
         )
 
 
@@ -892,6 +1116,7 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -909,7 +1134,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_with_asff_for_aws_with_security_hub(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -924,6 +1149,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
         # Setup
@@ -1020,6 +1246,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1037,7 +1264,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_no_asff_for_aws_without_security_hub(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -1052,6 +1279,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
         # Setup
@@ -1145,6 +1373,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Provider.objects.get")
     @patch("tasks.tasks.initialize_prowler_provider")
@@ -1160,7 +1389,7 @@ class TestCheckIntegrationsTask:
     @patch("tasks.tasks.rmtree")
     def test_generate_outputs_no_asff_for_non_aws_provider(
         self,
-        mock_rmtree,
+        _mock_rmtree,
         mock_scan_update,
         mock_upload,
         mock_compress,
@@ -1173,6 +1402,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider,
         mock_provider_get,
         mock_scan_summary,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
         # Setup
@@ -1247,9 +1477,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -1715,3 +1945,806 @@ class TestRefreshLighthouseProviderModelsTask:
             assert result["deleted"] == 0
             assert "error" in result
             assert result["error"] is not None
+
+
+@pytest.mark.django_db
+class TestCleanupOrphanScheduledScans:
+    """Unit tests for _cleanup_orphan_scheduled_scans helper function."""
+
+    def _create_periodic_task(self, provider_id, tenant_id):
+        """Helper to create a PeriodicTask for testing."""
+        interval, _ = IntervalSchedule.objects.get_or_create(every=24, period="hours")
+        return PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-{provider_id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant_id}", "provider_id": "{provider_id}"}}',
+            enabled=True,
+        )
+
+    def test_cleanup_deletes_orphan_when_both_available_and_scheduled_exist(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that AVAILABLE scan is deleted when SCHEDULED also exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create orphan AVAILABLE scan
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan (next execution)
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_does_not_delete_when_only_available_exists(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that AVAILABLE scan is NOT deleted when no SCHEDULED exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create only AVAILABLE scan (normal first scan scenario)
+        available_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify nothing was deleted
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=available_scan.id).exists()
+
+    def test_cleanup_does_not_delete_when_only_scheduled_exists(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that nothing is deleted when only SCHEDULED exists."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create only SCHEDULED scan (normal subsequent scan scenario)
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify nothing was deleted
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_returns_zero_when_no_scans_exist(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup returns 0 when no scans exist."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Execute cleanup with no scans
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        assert deleted_count == 0
+
+    def test_cleanup_deletes_multiple_orphan_available_scans(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that multiple AVAILABLE orphan scans are all deleted."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create multiple orphan AVAILABLE scans
+        orphan_scan_1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+        orphan_scan_2 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify all orphans were deleted
+        assert deleted_count == 2
+        assert not Scan.objects.filter(id=orphan_scan_1.id).exists()
+        assert not Scan.objects.filter(id=orphan_scan_2.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
+    def test_cleanup_does_not_affect_different_provider(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects scans for the specified provider."""
+        tenant = tenants_fixture[0]
+        provider1 = providers_fixture[0]
+        provider2 = providers_fixture[1]
+        periodic_task1 = self._create_periodic_task(provider1.id, tenant.id)
+        periodic_task2 = self._create_periodic_task(provider2.id, tenant.id)
+
+        # Create orphan scenario for provider1
+        orphan_scan_p1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task1.id,
+        )
+        scheduled_scan_p1 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider1,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Create AVAILABLE scan for provider2 (should not be affected)
+        available_scan_p2 = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider2,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task2.id,
+        )
+
+        # Execute cleanup for provider1 only
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider1.id),
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Verify only provider1's orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan_p1.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan_p1.id).exists()
+        assert Scan.objects.filter(id=available_scan_p2.id).exists()
+
+    def test_cleanup_does_not_affect_manual_scans(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects SCHEDULED trigger scans, not MANUAL."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create orphan AVAILABLE scheduled scan
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create SCHEDULED scan
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Create AVAILABLE manual scan (should not be affected)
+        manual_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+
+        # Execute cleanup
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        # Verify only scheduled orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert Scan.objects.filter(id=manual_scan.id).exists()
+
+    def test_cleanup_does_not_affect_different_scheduler_task(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Test that cleanup only affects scans with the specified scheduler_task_id."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task1 = self._create_periodic_task(provider.id, tenant.id)
+
+        # Create another periodic task
+        interval, _ = IntervalSchedule.objects.get_or_create(every=24, period="hours")
+        periodic_task2 = PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-other-{provider.id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant.id}", "provider_id": "{provider.id}"}}',
+            enabled=True,
+        )
+
+        # Create orphan scenario for periodic_task1
+        orphan_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task1.id,
+        )
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Create AVAILABLE scan for periodic_task2 (should not be affected)
+        available_scan_other_task = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task2.id,
+        )
+
+        # Execute cleanup for periodic_task1 only
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task1.id,
+        )
+
+        # Verify only periodic_task1's orphan was deleted
+        assert deleted_count == 1
+        assert not Scan.objects.filter(id=orphan_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert Scan.objects.filter(id=available_scan_other_task.id).exists()
+
+
+@pytest.mark.django_db
+class TestPerformScheduledScanTask:
+    """Unit tests for perform_scheduled_scan_task."""
+
+    @staticmethod
+    @contextmanager
+    def _override_task_request(task, **attrs):
+        request = task.request
+        sentinel = object()
+        previous = {key: getattr(request, key, sentinel) for key in attrs}
+        for key, value in attrs.items():
+            setattr(request, key, value)
+
+        try:
+            yield
+        finally:
+            for key, prev in previous.items():
+                if prev is sentinel:
+                    if hasattr(request, key):
+                        delattr(request, key)
+                else:
+                    setattr(request, key, prev)
+
+    def _create_periodic_task(self, provider_id, tenant_id, interval_hours=24):
+        interval, _ = IntervalSchedule.objects.get_or_create(
+            every=interval_hours, period="hours"
+        )
+        return PeriodicTask.objects.create(
+            name=f"scan-perform-scheduled-{provider_id}",
+            task="scan-perform-scheduled",
+            interval=interval,
+            kwargs=f'{{"tenant_id": "{tenant_id}", "provider_id": "{provider_id}"}}',
+            enabled=True,
+        )
+
+    def _create_task_result(self, tenant_id, task_id):
+        task_result = TaskResult.objects.create(
+            task_id=task_id,
+            task_name="scan-perform-scheduled",
+            status="STARTED",
+            date_created=datetime.now(UTC),
+        )
+        Task.objects.create(
+            id=task_id, task_runner_task=task_result, tenant_id=tenant_id
+        )
+        return task_result
+
+    def test_skip_when_scheduled_scan_executing(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Skip a scheduled run when another scheduled scan is already executing."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        executing_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.EXECUTING,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] == str(executing_scan.id)
+        assert result["state"] == StateChoices.EXECUTING
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+            ).count()
+            == 0
+        )
+
+    def test_creates_next_scheduled_scan_after_completion(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Create a next scheduled scan after a successful run completes."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            other_scheduled = Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.SCHEDULED,
+            ).exclude(id=scan_id)
+            assert not other_scheduled.exists()
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        scheduled_scans = Scan.objects.filter(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+        )
+        assert scheduled_scans.count() == 1
+        assert scheduled_scans.first().scheduled_at > datetime.now(UTC)
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).count()
+            == 1
+        )
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.COMPLETED,
+            ).count()
+            == 1
+        )
+
+    def test_dedupes_multiple_scheduled_scans_before_run(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Ensure duplicated scheduled scans are removed before executing."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduled_at=datetime.now(UTC),
+            scheduler_task_id=periodic_task.id,
+        )
+        duplicate_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduled_at=scheduled_scan.scheduled_at,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            other_scheduled = Scan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).exclude(id=scan_id)
+            assert not other_scheduled.exists()
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        assert not Scan.objects.filter(id=duplicate_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
+            ).count()
+            == 1
+        )
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        # Orphan PeriodicTask left behind from a previous lifecycle.
+        self._create_periodic_task(missing_provider_id, tenant.id)
+        orphan_name = f"scan-perform-scheduled-{missing_provider_id}"
+        assert PeriodicTask.objects.filter(name=orphan_name).exists()
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=missing_provider_id
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        # Orphan PeriodicTask is cleaned up so beat stops re-firing it.
+        assert not PeriodicTask.objects.filter(name=orphan_name).exists()
+
+
+@pytest.mark.django_db
+class TestPerformScanTask:
+    """Unit tests for perform_scan_task."""
+
+    def test_no_op_when_provider_does_not_exist(self, tenants_fixture):
+        """Return None without raising when the provider was already deleted."""
+        tenant = tenants_fixture[0]
+        missing_provider_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=scan_id,
+                provider_id=missing_provider_id,
+            )
+
+        assert result is None
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+
+
+@pytest.mark.django_db
+class TestReaggregateAllFindingGroupSummaries:
+    def setup_method(self):
+        self.tenant_id = str(uuid.uuid4())
+
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
+    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    @patch("tasks.tasks.aggregate_daily_severity_task")
+    @patch("tasks.tasks.perform_scan_summary_task")
+    @patch("tasks.tasks.Scan.objects.filter")
+    def test_dispatches_subtasks_for_each_provider_per_day(
+        self,
+        mock_scan_filter,
+        mock_scan_summary_task,
+        mock_daily_severity_task,
+        mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
+        mock_group,
+        mock_chain,
+    ):
+        provider_id_1 = uuid.uuid4()
+        provider_id_2 = uuid.uuid4()
+        scan_id_today_p1 = uuid.uuid4()
+        scan_id_yesterday_p1 = uuid.uuid4()
+        scan_id_today_p2 = uuid.uuid4()
+        today = datetime.now(tz=UTC)
+        yesterday = today - timedelta(days=1)
+
+        mock_outer_group_result = MagicMock()
+        # The first `group()` call wraps the inner parallel step; subsequent
+        # calls wrap the outer per-scan generator.
+        mock_group.side_effect = lambda *args, **kwargs: (
+            list(args[0]) if args and hasattr(args[0], "__iter__") else None,
+            mock_outer_group_result,
+        )[1]
+
+        mock_scan_filter.return_value.order_by.return_value.values.return_value = [
+            {
+                "id": scan_id_today_p1,
+                "completed_at": today,
+                "provider_id": provider_id_1,
+            },
+            {
+                "id": scan_id_today_p2,
+                "completed_at": today,
+                "provider_id": provider_id_2,
+            },
+            {
+                "id": scan_id_yesterday_p1,
+                "completed_at": yesterday,
+                "provider_id": provider_id_1,
+            },
+        ]
+
+        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 3}
+        expected_scan_ids = {
+            str(scan_id_today_p1),
+            str(scan_id_today_p2),
+            str(scan_id_yesterday_p1),
+        }
+        for task_mock in (
+            mock_scan_summary_task,
+            mock_daily_severity_task,
+            mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
+        ):
+            assert task_mock.si.call_count == 3
+            dispatched = {
+                call.kwargs["scan_id"] for call in task_mock.si.call_args_list
+            }
+            assert dispatched == expected_scan_ids
+            for call in task_mock.si.call_args_list:
+                assert call.kwargs["tenant_id"] == self.tenant_id
+        assert mock_chain.call_count == 3
+        mock_outer_group_result.apply_async.assert_called_once()
+
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.aggregate_attack_surface_task")
+    @patch("tasks.tasks.aggregate_scan_category_summaries_task")
+    @patch("tasks.tasks.aggregate_scan_resource_group_summaries_task")
+    @patch("tasks.tasks.aggregate_finding_group_summaries_task")
+    @patch("tasks.tasks.aggregate_daily_severity_task")
+    @patch("tasks.tasks.perform_scan_summary_task")
+    @patch("tasks.tasks.Scan.objects.filter")
+    def test_dedupes_scans_to_latest_per_provider_per_day(
+        self,
+        mock_scan_filter,
+        mock_scan_summary_task,
+        mock_daily_severity_task,
+        mock_finding_group_task,
+        mock_resource_group_task,
+        mock_category_task,
+        mock_attack_surface_task,
+        mock_group,
+        mock_chain,
+    ):
+        """When several scans run on the same day for the same provider, only
+        the latest one is dispatched (matching the daily summary unique key)."""
+        provider_id = uuid.uuid4()
+        latest_scan_today = uuid.uuid4()
+        earlier_scan_today = uuid.uuid4()
+        today_late = datetime.now(tz=UTC)
+        today_early = today_late - timedelta(hours=4)
+
+        mock_outer_group_result = MagicMock()
+        mock_group.side_effect = lambda *args, **kwargs: (
+            list(args[0]) if args and hasattr(args[0], "__iter__") else None,
+            mock_outer_group_result,
+        )[1]
+
+        # Returned ordered by `-completed_at`, so the most recent comes first.
+        mock_scan_filter.return_value.order_by.return_value.values.return_value = [
+            {
+                "id": latest_scan_today,
+                "completed_at": today_late,
+                "provider_id": provider_id,
+            },
+            {
+                "id": earlier_scan_today,
+                "completed_at": today_early,
+                "provider_id": provider_id,
+            },
+        ]
+
+        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 1}
+        for task_mock in (
+            mock_scan_summary_task,
+            mock_daily_severity_task,
+            mock_finding_group_task,
+            mock_resource_group_task,
+            mock_category_task,
+            mock_attack_surface_task,
+        ):
+            task_mock.si.assert_called_once_with(
+                tenant_id=self.tenant_id, scan_id=str(latest_scan_today)
+            )
+        mock_chain.assert_called_once()
+        mock_outer_group_result.apply_async.assert_called_once()
+
+    @patch("tasks.tasks.chain")
+    @patch("tasks.tasks.group")
+    @patch("tasks.tasks.Scan.objects.filter")
+    def test_no_completed_scans_skips_dispatch(
+        self, mock_scan_filter, mock_group, mock_chain
+    ):
+        mock_scan_filter.return_value.order_by.return_value.values.return_value = []
+
+        result = reaggregate_all_finding_group_summaries_task(tenant_id=self.tenant_id)
+
+        assert result == {"scans_reaggregated": 0}
+        mock_group.assert_not_called()
+        mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default

@@ -1,8 +1,7 @@
-from typing import List, Optional
-
 import httpx
-from prowler_mcp_server import __version__
 from pydantic import BaseModel, Field
+
+from prowler_mcp_server import __version__
 
 
 class SearchResult(BaseModel):
@@ -11,7 +10,7 @@ class SearchResult(BaseModel):
     path: str = Field(description="Document path")
     title: str = Field(description="Document title")
     url: str = Field(description="Documentation URL")
-    highlights: List[str] = Field(
+    highlights: list[str] = Field(
         description="Highlighted content snippets showing query matches with <mark><b> tags",
         default_factory=list,
     )
@@ -54,7 +53,7 @@ class ProwlerDocsSearchEngine:
             },
         )
 
-    def search(self, query: str, page_size: int = 5) -> List[SearchResult]:
+    def search(self, query: str, page_size: int = 5) -> list[SearchResult]:
         """
         Search documentation using Mintlify API.
 
@@ -63,7 +62,7 @@ class ProwlerDocsSearchEngine:
             page_size: Maximum number of results to return
 
         Returns:
-            List of search results
+            list of search results
         """
         try:
             # Construct request body
@@ -139,7 +138,7 @@ class ProwlerDocsSearchEngine:
             print(f"Search error: {e}")
             return []
 
-    def get_document(self, doc_path: str) -> Optional[str]:
+    def get_document(self, doc_path: str) -> str | None:
         """
         Get full document content from Mintlify documentation.
 

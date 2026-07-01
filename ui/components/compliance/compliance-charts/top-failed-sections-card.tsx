@@ -12,13 +12,17 @@ import {
 interface TopFailedSectionsCardProps {
   sections: FailedSection[];
   dataType?: TopFailedDataType;
+  // True when `sections` already covers every relevant category (e.g.
+  // ThreatScore's canonical pillars zero-filled). Renders the supplied list
+  // as-is instead of falling back to severity placeholders on zero totals.
+  prepopulated?: boolean;
 }
 
 export function TopFailedSectionsCard({
   sections,
   dataType = TOP_FAILED_DATA_TYPE.SECTIONS,
+  prepopulated = false,
 }: TopFailedSectionsCardProps) {
-  // Transform FailedSection[] to BarDataPoint[]
   const total = sections.reduce((sum, section) => sum + section.total, 0);
 
   const barData: BarDataPoint[] = sections.map((section) => ({
@@ -34,15 +38,15 @@ export function TopFailedSectionsCard({
       : "Top Failed Sections";
 
   return (
-    <Card
-      variant="base"
-      className="flex min-h-[372px] w-full flex-col sm:min-w-[500px]"
-    >
+    <Card variant="base" className="flex h-full min-h-[372px] w-full flex-col">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex flex-1 items-center justify-start">
-        <HorizontalBarChart data={barData} />
+        <HorizontalBarChart
+          data={barData}
+          useSeverityEmptyState={!prepopulated}
+        />
       </CardContent>
     </Card>
   );

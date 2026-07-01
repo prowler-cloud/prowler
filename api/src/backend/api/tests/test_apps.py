@@ -1,18 +1,20 @@
 import os
+import sys
+import types
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
-import pytest
-from django.conf import settings
-
+import api
 import api.apps as api_apps_module
+import pytest
 from api.apps import (
-    ApiConfig,
     PRIVATE_KEY_FILE,
     PUBLIC_KEY_FILE,
     SIGNING_KEY_ENV,
     VERIFYING_KEY_ENV,
+    ApiConfig,
 )
+from django.conf import settings
 
 
 @pytest.fixture(autouse=True)
@@ -150,3 +152,54 @@ def test_ensure_crypto_keys_skips_when_env_vars(monkeypatch, tmp_path):
 
     # Assert: orchestrator did not trigger generation when env present
     assert called["ensure"] is False
+
+
+@pytest.fixture(autouse=True)
+def stub_api_modules():
+    """Provide dummy modules imported during ApiConfig.ready()."""
+    created = []
+    for name in ("api.schema_extensions", "api.signals"):
+        if name not in sys.modules:
+            sys.modules[name] = types.ModuleType(name)
+            created.append(name)
+
+    yield
+
+    for name in created:
+        sys.modules.pop(name, None)
+
+
+def _set_argv(monkeypatch, argv):
+    monkeypatch.setattr(sys, "argv", argv, raising=False)
+
+
+def _set_testing(monkeypatch, value):
+    monkeypatch.setattr(settings, "TESTING", value, raising=False)
+
+
+def _make_app():
+    return ApiConfig("api", api)
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [
+        ["gunicorn"],
+        ["celery", "-A", "api"],
+        ["manage.py", "migrate"],
+    ],
+    ids=["api", "celery", "manage_py"],
+)
+def test_ready_never_eagerly_initializes_neo4j_driver(monkeypatch, argv):
+    """ready() must never contact Neo4j; the driver is created lazily on first use."""
+    config = _make_app()
+    _set_argv(monkeypatch, argv)
+    _set_testing(monkeypatch, False)
+
+    with (
+        patch.object(ApiConfig, "_ensure_crypto_keys", return_value=None),
+        patch("api.attack_paths.database.init_driver") as init_driver,
+    ):
+        config.ready()
+
+    init_driver.assert_not_called()

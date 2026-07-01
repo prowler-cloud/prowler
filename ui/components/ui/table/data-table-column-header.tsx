@@ -9,7 +9,6 @@ import {
   ArrowUpIcon,
   ChevronsLeftRightIcon,
 } from "@/components/icons";
-import { Button } from "@/components/shadcn";
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends HTMLAttributes<HTMLDivElement> {
@@ -65,32 +64,34 @@ export const DataTableColumnHeader = <TData, TValue>({
       currentSortParam === "" ||
       (currentSortParam !== param && currentSortParam !== `-${param}`)
     ) {
-      return <ChevronsLeftRightIcon size={14} className="ml-2 rotate-90" />;
+      return <ChevronsLeftRightIcon size={14} className="ml-1 rotate-90" />;
     }
     return currentSortParam === `-${param}` ? (
-      <ArrowDownIcon size={12} className="ml-2" />
+      <ArrowDownIcon size={12} className="ml-1" />
     ) : (
-      <ArrowUpIcon size={12} className="ml-2" />
+      <ArrowUpIcon size={12} className="ml-1" />
     );
   };
 
+  const baseClassName =
+    "text-text-neutral-primary flex h-8 items-center text-left align-middle text-sm font-semibold whitespace-nowrap outline-none -ml-px";
+
   if (!column.getCanSort()) {
     return (
-      <div className="text-text-neutral-primary flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none">
+      <div className={baseClassName}>
         <span className="block break-normal whitespace-nowrap">{title}</span>
       </div>
     );
   }
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      className="text-text-neutral-primary hover:text-text-neutral-tertiary -ml-3 flex items-center justify-between px-0 text-left align-middle text-sm font-semibold whitespace-nowrap outline-none hover:bg-transparent"
+    <button
+      type="button"
+      className={`${baseClassName} hover:text-text-neutral-tertiary cursor-pointer`}
       onClick={getToggleSortingHandler}
     >
       <span className="block break-normal whitespace-nowrap">{title}</span>
       {renderSortIcon()}
-    </Button>
+    </button>
   );
 };

@@ -62,4 +62,4 @@ We strive to resolve all problems as quickly as possible, and we would like to p
 
 ---
 
-For more information about our security policies, please refer to our [Security](https://docs.prowler.com/projects/prowler-open-source/en/latest/security/) section in our documentation.
+For more information about our security policies, please refer to our [Security](https://docs.prowler.com/security) section in our documentation.

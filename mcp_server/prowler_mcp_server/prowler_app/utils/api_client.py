@@ -2,15 +2,20 @@
 
 import asyncio
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict
+from enum import StrEnum
+from typing import Any
+from urllib.parse import urlparse
 
 import httpx
+
+from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 
+ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
 
-class HTTPMethod(str, Enum):
+
+class HTTPMethod(StrEnum):
     """HTTP methods enum."""
 
     GET = "GET"
@@ -26,7 +31,7 @@ class SingletonMeta(type):
     All calls to the constructor return the same instance.
     """
 
-    _instances: Dict[type, Any] = {}
+    _instances: dict[type, Any] = {}
 
     def __call__(cls, *args, **kwargs):
         """Control instance creation to ensure singleton behavior."""
@@ -187,6 +192,47 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         """
         return await self._make_request(HTTPMethod.DELETE, path, params=params)
 
+    async def fetch_external_url(self, url: str) -> str:
+        """Fetch content from an allowed external URL (unauthenticated).
+
+        Uses the existing singleton httpx client with a domain allowlist
+        to prevent SSRF attacks.
+
+        Args:
+            url: The external URL to fetch content from
+
+        Returns:
+            Raw text content from the URL
+
+        Raises:
+            ValueError: If the URL domain is not in the allowlist
+            Exception: If the HTTP request fails
+        """
+        parsed = urlparse(url)
+        if parsed.scheme != "https":
+            raise ValueError(f"Only HTTPS URLs are allowed, got '{parsed.scheme}'")
+        if parsed.hostname not in ALLOWED_EXTERNAL_DOMAINS:
+            raise ValueError(
+                f"Domain '{parsed.hostname}' is not allowed. "
+                f"Allowed domains: {', '.join(sorted(ALLOWED_EXTERNAL_DOMAINS))}"
+            )
+
+        try:
+            response = await self.client.get(
+                url,
+                headers={"User-Agent": f"prowler-mcp-server/{__version__}"},
+            )
+            response.raise_for_status()
+            return response.text
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching external URL {url}: {e}")
+            raise Exception(
+                f"Failed to fetch external URL: {e.response.status_code}"
+            ) from e
+        except Exception as e:
+            logger.error(f"Error fetching external URL {url}: {e}")
+            raise
+
     async def poll_task_until_complete(
         self,
         task_id: str,
@@ -228,7 +274,7 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
                 )
 
             # Fetch current task state
-            response = await self.get(f"/api/v1/tasks/{task_id}")
+            response = await self.get(f"/tasks/{task_id}")
             task_data = response.get("data", {})
             task_attrs = task_data.get("attributes", {})
             state = task_attrs.get("state")

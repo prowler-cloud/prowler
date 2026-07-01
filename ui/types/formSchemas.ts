@@ -13,6 +13,7 @@ export const addRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
@@ -25,26 +26,10 @@ export const editRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
-
-export const editScanFormSchema = (currentName: string) =>
-  z.object({
-    scanName: z
-      .string()
-      .refine((val) => val === "" || val.length >= 3, {
-        message: "Must be empty or have at least 3 characters.",
-      })
-      .refine((val) => val === "" || val.length <= 32, {
-        message: "Must not exceed 32 characters.",
-      })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
-      .optional(),
-    scanId: z.string(),
-  });
 
 export const onDemandScanFormSchema = () =>
   z.object({
@@ -80,50 +65,98 @@ export const addProviderFormSchema = z
       z.object({
         providerType: z.literal("aws"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(12, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("azure"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("m365"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("gcp"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("kubernetes"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
         awsCredentialsType: z.string().optional(),
       }),
       z.object({
         providerType: z.literal("github"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("iac"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("image"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("oraclecloud"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
-        providerUid: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
       }),
       z.object({
         providerType: z.literal("mongodbatlas"),
         [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("alibabacloud"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Provider ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("cloudflare"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
         providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("openstack"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string(),
+      }),
+      z.object({
+        providerType: z.literal("googleworkspace"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .regex(
+            /^C[0-9a-zA-Z]+$/,
+            "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+          ),
+      }),
+      z.object({
+        providerType: z.literal("vercel"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Team ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("okta"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(
+            /^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com)$/,
+            "Org Domain must be an Okta-managed domain (e.g. acme.okta.com), without scheme or path",
+          ),
       }),
     ]),
   );
@@ -245,9 +278,133 @@ export const addCredentialsFormSchema = (
                               .string()
                               .min(1, "Atlas Private Key is required"),
                           }
-                        : {}),
+                        : providerType === "alibabacloud"
+                          ? {
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]:
+                                z.string().min(1, "Access Key ID is required"),
+                              [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]:
+                                z
+                                  .string()
+                                  .min(1, "Access Key Secret is required"),
+                            }
+                          : providerType === "image"
+                            ? {
+                                [ProviderCredentialFields.REGISTRY_USERNAME]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_PASSWORD]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.REGISTRY_TOKEN]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.IMAGE_FILTER]: z
+                                  .string()
+                                  .optional(),
+                                [ProviderCredentialFields.TAG_FILTER]: z
+                                  .string()
+                                  .optional(),
+                              }
+                            : providerType === "cloudflare"
+                              ? {
+                                  [ProviderCredentialFields.CLOUDFLARE_API_TOKEN]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_KEY]:
+                                    z.string().optional(),
+                                  [ProviderCredentialFields.CLOUDFLARE_API_EMAIL]:
+                                    z
+                                      .string()
+                                      .superRefine((val, ctx) => {
+                                        if (val && val.trim() !== "") {
+                                          const emailRegex =
+                                            /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                                          if (!emailRegex.test(val)) {
+                                            ctx.addIssue({
+                                              code: z.ZodIssueCode.custom,
+                                              message:
+                                                "Please enter a valid email address",
+                                            });
+                                          }
+                                        }
+                                      })
+                                      .optional(),
+                                }
+                              : providerType === "googleworkspace"
+                                ? {
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CUSTOMER_ID]:
+                                      z
+                                        .string()
+                                        .trim()
+                                        .regex(
+                                          /^C[0-9a-zA-Z]+$/,
+                                          "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
+                                        ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_CREDENTIALS_CONTENT]:
+                                      z.string().refine(
+                                        (val) => {
+                                          try {
+                                            const parsed = JSON.parse(val);
+                                            return (
+                                              typeof parsed === "object" &&
+                                              parsed !== null &&
+                                              !Array.isArray(parsed)
+                                            );
+                                          } catch {
+                                            return false;
+                                          }
+                                        },
+                                        {
+                                          message:
+                                            "Invalid JSON format. Please provide a valid Service Account JSON.",
+                                        },
+                                      ),
+                                    [ProviderCredentialFields.GOOGLEWORKSPACE_DELEGATED_USER]:
+                                      z.email({
+                                        error:
+                                          "Please enter a valid email address",
+                                      }),
+                                  }
+                                : providerType === "openstack"
+                                  ? {
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CONTENT]:
+                                        z
+                                          .string()
+                                          .min(
+                                            1,
+                                            "Clouds YAML content is required",
+                                          ),
+                                      [ProviderCredentialFields.OPENSTACK_CLOUDS_YAML_CLOUD]:
+                                        z
+                                          .string()
+                                          .min(1, "Cloud name is required"),
+                                    }
+                                  : providerType === "vercel"
+                                    ? {
+                                        [ProviderCredentialFields.VERCEL_API_TOKEN]:
+                                          z
+                                            .string()
+                                            .trim()
+                                            .min(1, "API Token is required"),
+                                      }
+                                    : providerType === "okta"
+                                      ? {
+                                          [ProviderCredentialFields.OKTA_CLIENT_ID]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(1, "Client ID is required"),
+                                          [ProviderCredentialFields.OKTA_PRIVATE_KEY]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(
+                                                1,
+                                                "Private Key is required",
+                                              ),
+                                        }
+                                      : {}),
     })
-    .superRefine((data: Record<string, any>, ctx) => {
+    .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
         // Validate based on the via parameter
         if (via === "app_client_secret") {
@@ -307,6 +464,70 @@ export const addCredentialsFormSchema = (
           }
         }
       }
+
+      if (providerType === "image") {
+        const token = data[ProviderCredentialFields.REGISTRY_TOKEN];
+        const username = data[ProviderCredentialFields.REGISTRY_USERNAME];
+        const password = data[ProviderCredentialFields.REGISTRY_PASSWORD];
+
+        // When a token is provided, username/password validation is skipped (matches API behavior)
+        if (!token || token.trim() === "") {
+          if (
+            username &&
+            username.trim() !== "" &&
+            (!password || password.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Password is required when providing a username",
+              path: [ProviderCredentialFields.REGISTRY_PASSWORD],
+            });
+          }
+          if (
+            password &&
+            password.trim() !== "" &&
+            (!username || username.trim() === "")
+          ) {
+            ctx.addIssue({
+              code: "custom",
+              message:
+                "Registry Username is required when providing a password",
+              path: [ProviderCredentialFields.REGISTRY_USERNAME],
+            });
+          }
+        }
+      }
+      if (providerType === "cloudflare") {
+        // For Cloudflare, validation depends on the 'via' parameter
+        if (via === "api_token") {
+          const apiToken = data[ProviderCredentialFields.CLOUDFLARE_API_TOKEN];
+          if (!apiToken || apiToken.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Token is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_TOKEN],
+            });
+          }
+        } else if (via === "api_key") {
+          const apiKey = data[ProviderCredentialFields.CLOUDFLARE_API_KEY];
+          const apiEmail = data[ProviderCredentialFields.CLOUDFLARE_API_EMAIL];
+          if (!apiKey || apiKey.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "API Key is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_KEY],
+            });
+          }
+          if (!apiEmail || apiEmail.trim() === "") {
+            ctx.addIssue({
+              code: "custom",
+              message: "Email is required",
+              path: [ProviderCredentialFields.CLOUDFLARE_API_EMAIL],
+            });
+          }
+        }
+      }
     });
 
 export const addCredentialsRoleFormSchema = (providerType: string) =>
@@ -328,21 +549,58 @@ export const addCredentialsRoleFormSchema = (providerType: string) =>
           [ProviderCredentialFields.ROLE_SESSION_NAME]: z.string().optional(),
           [ProviderCredentialFields.CREDENTIALS_TYPE]: z.string().optional(),
         })
-        .refine(
-          (data) =>
+        .superRefine((data, ctx) => {
+          if (
             data[ProviderCredentialFields.CREDENTIALS_TYPE] !==
-              "access-secret-key" ||
-            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] &&
-              data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY]),
-          {
-            message: "AWS Access Key ID and Secret Access Key are required.",
-            path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
-          },
-        )
-    : z.object({
-        providerId: z.string(),
-        providerType: z.string(),
-      });
+            "access-secret-key"
+          ) {
+            return;
+          }
+
+          const hasAccessKey =
+            (data[ProviderCredentialFields.AWS_ACCESS_KEY_ID] || "").trim()
+              .length > 0;
+          const hasSecretAccessKey =
+            (data[ProviderCredentialFields.AWS_SECRET_ACCESS_KEY] || "").trim()
+              .length > 0;
+
+          if (!hasAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Access Key ID is required.",
+              path: [ProviderCredentialFields.AWS_ACCESS_KEY_ID],
+            });
+          }
+
+          if (!hasSecretAccessKey) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "AWS Secret Access Key is required.",
+              path: [ProviderCredentialFields.AWS_SECRET_ACCESS_KEY],
+            });
+          }
+        })
+    : providerType === "alibabacloud"
+      ? z.object({
+          [ProviderCredentialFields.PROVIDER_ID]: z.string(),
+          [ProviderCredentialFields.PROVIDER_TYPE]: z.string(),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_ARN]: z
+            .string()
+            .min(1, "RAM Role ARN is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_ID]: z
+            .string()
+            .min(1, "Access Key ID is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ACCESS_KEY_SECRET]: z
+            .string()
+            .min(1, "Access Key Secret is required"),
+          [ProviderCredentialFields.ALIBABACLOUD_ROLE_SESSION_NAME]: z
+            .string()
+            .optional(),
+        })
+      : z.object({
+          providerId: z.string(),
+          providerType: z.string(),
+        });
 
 export const addCredentialsServiceAccountFormSchema = (
   providerType: ProviderType,
@@ -462,5 +720,32 @@ export const mutedFindingsConfigFormSchema = z.object({
         });
       }
     }),
+  id: z.string().optional(),
+});
+
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
+export const scanConfigurationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { error: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
+  provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });

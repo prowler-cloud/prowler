@@ -2,6 +2,8 @@ import { test } from "@playwright/test";
 import {
   ProvidersPage,
   AWSProviderData,
+  AWSOrganizationsProviderCredential,
+  AWSOrganizationsProviderData,
   AWSProviderCredential,
   AWS_CREDENTIAL_OPTIONS,
   AZUREProviderData,
@@ -22,8 +24,19 @@ import {
   OCIProviderData,
   OCIProviderCredential,
   OCI_CREDENTIAL_OPTIONS,
+  AlibabaCloudProviderData,
+  AlibabaCloudProviderCredential,
+  ALIBABACLOUD_CREDENTIAL_OPTIONS,
+  GoogleWorkspaceProviderData,
+  GoogleWorkspaceProviderCredential,
+  GOOGLEWORKSPACE_CREDENTIAL_OPTIONS,
+  OktaProviderData,
+  OktaProviderCredential,
+  OKTA_CREDENTIAL_OPTIONS,
+  VercelProviderData,
+  VercelProviderCredential,
+  VERCEL_CREDENTIAL_OPTIONS,
 } from "./providers-page";
-import { ScansPage } from "../scans/scans-page";
 import fs from "fs";
 import { deleteProviderIfExists } from "../helpers";
 
@@ -31,25 +44,19 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add AWS Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
     // Test data from environment variables
-    const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID;
-    const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY;
-    const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY;
-    const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN;
-
-    // Validate required environment variables
-    if (!accountId) {
-      throw new Error(
-        "E2E_AWS_PROVIDER_ACCOUNT_ID environment variable is not set",
-      );
-    }
+    const accountId = process.env.E2E_AWS_PROVIDER_ACCOUNT_ID ?? "";
+    const accessKey = process.env.E2E_AWS_PROVIDER_ACCESS_KEY ?? "";
+    const secretKey = process.env.E2E_AWS_PROVIDER_SECRET_KEY ?? "";
+    const roleArn = process.env.E2E_AWS_PROVIDER_ROLE_ARN ?? "";
+    const organizationId = process.env.E2E_AWS_ORGANIZATION_ID ?? "";
+    const organizationRoleArn = process.env.E2E_AWS_ORGANIZATION_ROLE_ARN ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(!accountId, "E2E_AWS_PROVIDER_ACCOUNT_ID is not set");
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, accountId);
+      await deleteProviderIfExists(providersPage, accountId!);
     });
 
     // Use admin authentication for provider management
@@ -114,16 +121,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillStaticCredentials(staticCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to provider page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(accountId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          accountId,
+        );
       },
     );
 
@@ -187,16 +188,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to provider page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(accountId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          accountId,
+        );
       },
     );
 
@@ -213,9 +208,8 @@ test.describe("Add Provider", () => {
         ],
       },
       async ({ page }) => {
-
         // Validate required environment variables
-        if (!accountId  || !roleArn) {
+        if (!accountId || !roleArn) {
           throw new Error(
             "E2E_AWS_PROVIDER_ACCOUNT_ID, and E2E_AWS_PROVIDER_ROLE_ARN environment variables are not set",
           );
@@ -263,16 +257,84 @@ test.describe("Add Provider", () => {
         await providersPage.fillRoleCredentials(roleCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          accountId,
+        );
+      },
+    );
+
+    test(
+      "should add multiple AWS accounts using AWS Organizations",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@aws",
+          "@serial",
+          "@PROVIDER-E2E-016",
+        ],
+      },
+      async ({ page }) => {
+        // AWS Organizations (multi-account onboarding) is a Cloud-only feature,
+        // so this test must never run in the OSS CI. Gate explicitly on the
+        // Cloud env flag instead of relying on the org env vars being absent.
+        test.skip(
+          process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true",
+          "AWS Organizations multi-account onboarding is a Cloud-only feature",
+        );
+
+        if (!organizationId || !organizationRoleArn) {
+          test.skip(
+            true,
+            "E2E_AWS_ORGANIZATION_ID and E2E_AWS_ORGANIZATION_ROLE_ARN environment variables are not set",
+          );
+          return;
+        }
+
+        const awsOrganizationId = organizationId;
+        const awsOrganizationRoleArn = organizationRoleArn;
+
+        await deleteProviderIfExists(providersPage, awsOrganizationId);
+
+        const awsOrganizationData: AWSOrganizationsProviderData = {
+          organizationId: awsOrganizationId,
+          organizationName: "Test E2E AWS Organization",
+        };
+        const organizationsCredentials: AWSOrganizationsProviderCredential = {
+          roleArn: awsOrganizationRoleArn,
+          stackSetDeployed: true,
+        };
+
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        await providersPage.selectAWSProvider();
+        await providersPage.selectAWSOrganizationsMethod();
+
+        await providersPage.fillAWSOrganizationsProviderDetails(
+          awsOrganizationData,
+        );
         await providersPage.clickNext();
 
-        // Wait for redirect to provider page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
+        await providersPage.verifyOrganizationsAuthenticationStepLoaded();
+        await providersPage.fillAWSOrganizationsCredentials(
+          organizationsCredentials,
+        );
+        await providersPage.clickNext();
 
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(accountId);
+        await providersPage.verifyOrganizationsAccountSelectionStepLoaded();
+        await providersPage.clickNext();
+
+        await providersPage.verifyOrganizationsLaunchStepLoaded();
+        await providersPage.chooseOrganizationsScanSchedule("daily");
+        await providersPage.clickNext();
+
+        await providersPage.verifyLoadProviderPageAfterNewProvider();
       },
     );
   });
@@ -280,26 +342,21 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add AZURE Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
-    const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID;
-    const clientId = process.env.E2E_AZURE_CLIENT_ID;
-    const clientSecret = process.env.E2E_AZURE_SECRET_ID;
-    const tenantId = process.env.E2E_AZURE_TENANT_ID;
-
-    // Validate required environment variables
-    if (!subscriptionId || !clientId || !clientSecret || !tenantId) {
-      throw new Error(
-        "E2E_AZURE_SUBSCRIPTION_ID, E2E_AZURE_CLIENT_ID, E2E_AZURE_SECRET_ID, and E2E_AZURE_TENANT_ID environment variables are not set",
-      );
-    }
+    const subscriptionId = process.env.E2E_AZURE_SUBSCRIPTION_ID ?? "";
+    const clientId = process.env.E2E_AZURE_CLIENT_ID ?? "";
+    const clientSecret = process.env.E2E_AZURE_SECRET_ID ?? "";
+    const tenantId = process.env.E2E_AZURE_TENANT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !subscriptionId || !clientId || !clientSecret || !tenantId,
+        "Azure E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, subscriptionId);
+      await deleteProviderIfExists(providersPage, subscriptionId!);
     });
 
     // Use admin authentication for provider management
@@ -351,16 +408,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillAZURECredentials(azureCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(subscriptionId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          subscriptionId,
+        );
       },
     );
   });
@@ -368,25 +419,20 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add M365 Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
-    const domainId = process.env.E2E_M365_DOMAIN_ID;
-    const clientId = process.env.E2E_M365_CLIENT_ID;
-    const tenantId = process.env.E2E_M365_TENANT_ID;
-
-    // Validate required environment variables
-    if (!domainId || !clientId || !tenantId) {
-      throw new Error(
-        "E2E_M365_DOMAIN_ID, E2E_M365_CLIENT_ID, and E2E_M365_TENANT_ID environment variables are not set",
-      );
-    }
+    const domainId = process.env.E2E_M365_DOMAIN_ID ?? "";
+    const clientId = process.env.E2E_M365_CLIENT_ID ?? "";
+    const tenantId = process.env.E2E_M365_TENANT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !domainId || !clientId || !tenantId,
+        "M365 E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, domainId);
+      await deleteProviderIfExists(providersPage, domainId!);
     });
 
     // Use admin authentication for provider management
@@ -406,7 +452,7 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        const clientSecret = process.env.E2E_M365_SECRET_ID;
+        const clientSecret = process.env.E2E_M365_SECRET_ID ?? "";
 
         if (!clientSecret) {
           throw new Error("E2E_M365_SECRET_ID environment variable is not set");
@@ -452,16 +498,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillM365Credentials(m365Credentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(domainId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          domainId,
+        );
       },
     );
 
@@ -479,7 +519,8 @@ test.describe("Add Provider", () => {
       },
       async ({ page }) => {
         // Validate required environment variables
-        const certificateContent = process.env.E2E_M365_CERTIFICATE_CONTENT;
+        const certificateContent =
+          process.env.E2E_M365_CERTIFICATE_CONTENT ?? "";
 
         if (!certificateContent) {
           throw new Error(
@@ -528,16 +569,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillM365CertificateCredentials(m365Credentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(domainId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          domainId,
+        );
       },
     );
   });
@@ -545,25 +580,19 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add Kubernetes Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
-    const context = process.env.E2E_KUBERNETES_CONTEXT;
-    const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH;
-
-    // Validate required environment variables
-    if (!context || !kubeconfigPath) {
-      throw new Error(
-        "E2E_KUBERNETES_CONTEXT and E2E_KUBERNETES_KUBECONFIG_PATH environment variables are not set",
-      );
-    }
-
+    const context = process.env.E2E_KUBERNETES_CONTEXT ?? "";
+    const kubeconfigPath = process.env.E2E_KUBERNETES_KUBECONFIG_PATH ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !context || !kubeconfigPath,
+        "Kubernetes E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, context);
+      await deleteProviderIfExists(providersPage, context!);
     });
 
     // Use admin authentication for provider management
@@ -633,16 +662,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillKubernetesCredentials(kubernetesCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to provider page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(context);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          context,
+        );
       },
     );
   });
@@ -650,21 +673,15 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add GCP Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
-    const projectId = process.env.E2E_GCP_PROJECT_ID;
-
-    // Validate required environment variables
-    if (!projectId) {
-      throw new Error("E2E_GCP_PROJECT_ID environment variable is not set");
-    }
+    const projectId = process.env.E2E_GCP_PROJECT_ID ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(!projectId, "E2E_GCP_PROJECT_ID is not set");
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, projectId);
+      await deleteProviderIfExists(providersPage, projectId!);
     });
 
     // Use admin authentication for provider management
@@ -685,7 +702,7 @@ test.describe("Add Provider", () => {
       async ({ page }) => {
         // Validate required environment variables
         const serviceAccountKeyB64 =
-          process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY;
+          process.env.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY ?? "";
 
         // Verify service account key is base64 encoded
         if (!serviceAccountKeyB64) {
@@ -744,16 +761,10 @@ test.describe("Add Provider", () => {
         await providersPage.fillGCPServiceAccountKeyCredentials(gcpCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
-        await providersPage.clickNext();
-
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
-
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(projectId);
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          projectId,
+        );
       },
     );
   });
@@ -761,22 +772,15 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add GitHub Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     test.describe("Add GitHub provider with username", () => {
-      // Test data from environment variables
-      const username = process.env.E2E_GITHUB_USERNAME;
-
-      // Validate required environment variables
-      if (!username) {
-        throw new Error("E2E_GITHUB_USERNAME environment variable is not set");
-      }
+      const username = process.env.E2E_GITHUB_USERNAME ?? "";
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
+        test.skip(!username, "E2E_GITHUB_USERNAME is not set");
         providersPage = new ProvidersPage(page);
-        // Clean up existing provider to ensure clean test state
-        await deleteProviderIfExists(providersPage, username);
+        await deleteProviderIfExists(providersPage, username!);
       });
 
       // Use admin authentication for provider management
@@ -797,7 +801,7 @@ test.describe("Add Provider", () => {
         async ({ page }) => {
           // Validate required environment variables
           const personalAccessToken =
-            process.env.E2E_GITHUB_PERSONAL_ACCESS_TOKEN;
+            process.env.E2E_GITHUB_PERSONAL_ACCESS_TOKEN ?? "";
 
           // Verify username and personal access token are set in environment variables
           if (!personalAccessToken) {
@@ -847,16 +851,10 @@ test.describe("Add Provider", () => {
           );
           await providersPage.clickNext();
 
-          // Launch scan
-          await providersPage.verifyLaunchScanPageLoaded();
-          await providersPage.clickNext();
-
-          // Wait for redirect to scan page
-          scansPage = new ScansPage(page);
-          await scansPage.verifyPageLoaded();
-
-          // Verify scan status is "Scheduled scan"
-          await scansPage.verifyScheduledScanStatus(username);
+          // Confirm the provider connection without launching a scan
+          await providersPage.completeProviderConnectionWithoutLaunchingScan(
+            username,
+          );
         },
       );
       test(
@@ -873,10 +871,9 @@ test.describe("Add Provider", () => {
         },
         async ({ page }) => {
           // Validate required environment variables
-          const githubAppId =
-            process.env.E2E_GITHUB_APP_ID;
+          const githubAppId = process.env.E2E_GITHUB_APP_ID ?? "";
           const githubAppPrivateKeyB64 =
-            process.env.E2E_GITHUB_BASE64_APP_PRIVATE_KEY;
+            process.env.E2E_GITHUB_BASE64_APP_PRIVATE_KEY ?? "";
 
           // Verify github app id and private key are set in environment variables
           if (!githubAppId || !githubAppPrivateKeyB64) {
@@ -927,40 +924,24 @@ test.describe("Add Provider", () => {
           await providersPage.verifyGitHubAppPageLoaded();
 
           // Fill static github app credentials details
-          await providersPage.fillGitHubAppCredentials(
-            githubCredentials,
+          await providersPage.fillGitHubAppCredentials(githubCredentials);
+          await providersPage.clickNext();
+
+          // Confirm the provider connection without launching a scan
+          await providersPage.completeProviderConnectionWithoutLaunchingScan(
+            username,
           );
-          await providersPage.clickNext();
-
-          // Launch scan
-          await providersPage.verifyLaunchScanPageLoaded();
-          await providersPage.clickNext();
-
-          // Wait for redirect to scan page
-          scansPage = new ScansPage(page);
-          await scansPage.verifyPageLoaded();
-
-          // Verify scan status is "Scheduled scan"
-          await scansPage.verifyScheduledScanStatus(username);
         },
       );
     });
     test.describe("Add GitHub provider with organization", () => {
-      // Test data from environment variables
-      const organization = process.env.E2E_GITHUB_ORGANIZATION;
-
-      // Validate required environment variables
-      if (!organization) {
-        throw new Error(
-          "E2E_GITHUB_ORGANIZATION environment variable is not set",
-        );
-      }
+      const organization = process.env.E2E_GITHUB_ORGANIZATION ?? "";
 
       // Setup before each test
       test.beforeEach(async ({ page }) => {
+        test.skip(!organization, "E2E_GITHUB_ORGANIZATION is not set");
         providersPage = new ProvidersPage(page);
-        // Clean up existing provider to ensure clean test state
-        await deleteProviderIfExists(providersPage, organization);
+        await deleteProviderIfExists(providersPage, organization!);
       });
 
       // Use admin authentication for provider management
@@ -980,7 +961,7 @@ test.describe("Add Provider", () => {
         async ({ page }) => {
           // Validate required environment variables
           const organizationAccessToken =
-            process.env.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN;
+            process.env.E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN ?? "";
 
           // Verify username and personal access token are set in environment variables
           if (!organizationAccessToken) {
@@ -1030,16 +1011,10 @@ test.describe("Add Provider", () => {
           );
           await providersPage.clickNext();
 
-          // Launch scan
-          await providersPage.verifyLaunchScanPageLoaded();
-          await providersPage.clickNext();
-
-          // Wait for redirect to scan page
-          scansPage = new ScansPage(page);
-          await scansPage.verifyPageLoaded();
-
-          // Verify scan status is "Scheduled scan"
-          await scansPage.verifyScheduledScanStatus(organization);
+          // Confirm the provider connection without launching a scan
+          await providersPage.completeProviderConnectionWithoutLaunchingScan(
+            organization,
+          );
         },
       );
     });
@@ -1048,27 +1023,22 @@ test.describe("Add Provider", () => {
   test.describe.serial("Add OCI Provider", () => {
     // Providers page object
     let providersPage: ProvidersPage;
-    let scansPage: ScansPage;
 
     // Test data from environment variables
-    const tenancyId = process.env.E2E_OCI_TENANCY_ID;
-    const userId = process.env.E2E_OCI_USER_ID;
-    const fingerprint = process.env.E2E_OCI_FINGERPRINT;
-    const keyContent = process.env.E2E_OCI_KEY_CONTENT;
-    const region = process.env.E2E_OCI_REGION;
-
-    // Validate required environment variables
-    if (!tenancyId || !userId || !fingerprint || !keyContent || !region) {
-      throw new Error(
-        "E2E_OCI_TENANCY_ID, E2E_OCI_USER_ID, E2E_OCI_FINGERPRINT, E2E_OCI_KEY_CONTENT, and E2E_OCI_REGION environment variables are not set",
-      );
-    }
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID ?? "";
+    const userId = process.env.E2E_OCI_USER_ID ?? "";
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const region = process.env.E2E_OCI_REGION ?? "";
 
     // Setup before each test
     test.beforeEach(async ({ page }) => {
+      test.skip(
+        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        "OCI E2E env vars are not set",
+      );
       providersPage = new ProvidersPage(page);
-      // Clean up existing provider to ensure clean test state
-      await deleteProviderIfExists(providersPage, tenancyId);
+      await deleteProviderIfExists(providersPage, tenancyId!);
     });
 
     // Use admin authentication for provider management
@@ -1125,16 +1095,488 @@ test.describe("Add Provider", () => {
         await providersPage.fillOCICredentials(ociCredentials);
         await providersPage.clickNext();
 
-        // Launch scan
-        await providersPage.verifyLaunchScanPageLoaded();
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          tenancyId,
+        );
+      },
+    );
+  });
+
+  test.describe.serial("Add AlibabaCloud Provider", () => {
+    // Providers page object
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables
+    const accountId = process.env.E2E_ALIBABACLOUD_ACCOUNT_ID ?? "";
+    const accessKeyId = process.env.E2E_ALIBABACLOUD_ACCESS_KEY_ID ?? "";
+    const accessKeySecret =
+      process.env.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET ?? "";
+    const roleArn = process.env.E2E_ALIBABACLOUD_ROLE_ARN ?? "";
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      test.skip(!accountId, "E2E_ALIBABACLOUD_ACCOUNT_ID is not set");
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, accountId!);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new AlibabaCloud provider with static credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@alibabacloud",
+          "@serial",
+          "@PROVIDER-E2E-014",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accessKeyId || !accessKeySecret) {
+          throw new Error(
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID and E2E_ALIBABACLOUD_ACCESS_KEY_SECRET environment variables are not set",
+          );
+        }
+
+        // Prepare test data for AlibabaCloud provider
+        const alibabacloudProviderData: AlibabaCloudProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AlibabaCloud Account - Static Credentials",
+        };
+
+        // Prepare static credentials
+        const staticCredentials: AlibabaCloudProviderCredential = {
+          type: ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS,
+          accessKeyId: accessKeyId,
+          accessKeySecret: accessKeySecret,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AlibabaCloud provider
+        await providersPage.selectAlibabaCloudProvider();
+
+        // Fill provider details
+        await providersPage.fillAlibabaCloudProviderDetails(
+          alibabacloudProviderData,
+        );
         await providersPage.clickNext();
 
-        // Wait for redirect to scan page
-        scansPage = new ScansPage(page);
-        await scansPage.verifyPageLoaded();
+        // Verify credentials page is loaded
+        await providersPage.verifyAlibabaCloudCredentialsPageLoaded();
 
-        // Verify scan status is "Scheduled scan"
-        await scansPage.verifyScheduledScanStatus(tenancyId);
+        // Select static credentials type
+        await providersPage.selectAlibabaCloudCredentialsType(
+          ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_CREDENTIALS,
+        );
+
+        // Verify static credentials page is loaded
+        await providersPage.verifyAlibabaCloudStaticCredentialsPageLoaded();
+
+        // Fill static credentials
+        await providersPage.fillAlibabaCloudStaticCredentials(
+          staticCredentials,
+        );
+        await providersPage.clickNext();
+
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          accountId,
+        );
+      },
+    );
+
+    test(
+      "should add a new AlibabaCloud provider with RAM Role credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@alibabacloud",
+          "@serial",
+          "@PROVIDER-E2E-015",
+        ],
+      },
+      async ({ page }) => {
+        // Validate required environment variables
+        if (!accessKeyId || !accessKeySecret || !roleArn) {
+          throw new Error(
+            "E2E_ALIBABACLOUD_ACCESS_KEY_ID, E2E_ALIBABACLOUD_ACCESS_KEY_SECRET, and E2E_ALIBABACLOUD_ROLE_ARN environment variables are not set",
+          );
+        }
+
+        // Prepare test data for AlibabaCloud provider
+        const alibabacloudProviderData: AlibabaCloudProviderData = {
+          accountId: accountId,
+          alias: "Test E2E AlibabaCloud Account - RAM Role Credentials",
+        };
+
+        // Prepare RAM Role credentials
+        const roleCredentials: AlibabaCloudProviderCredential = {
+          type: ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE,
+          accessKeyId: accessKeyId,
+          accessKeySecret: accessKeySecret,
+          roleArn: roleArn,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select AlibabaCloud provider
+        await providersPage.selectAlibabaCloudProvider();
+
+        // Fill provider details
+        await providersPage.fillAlibabaCloudProviderDetails(
+          alibabacloudProviderData,
+        );
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyAlibabaCloudCredentialsPageLoaded();
+
+        // Select RAM Role credentials type
+        await providersPage.selectAlibabaCloudCredentialsType(
+          ALIBABACLOUD_CREDENTIAL_OPTIONS.ALIBABACLOUD_ROLE,
+        );
+
+        // Verify RAM Role credentials page is loaded
+        await providersPage.verifyAlibabaCloudRoleCredentialsPageLoaded();
+
+        // Fill RAM Role credentials
+        await providersPage.fillAlibabaCloudRoleCredentials(roleCredentials);
+        await providersPage.clickNext();
+
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          accountId,
+        );
+      },
+    );
+  });
+
+  test.describe.serial("Add Google Workspace Provider", () => {
+    let providersPage: ProvidersPage;
+
+    const customerId = process.env.E2E_GOOGLEWORKSPACE_CUSTOMER_ID ?? "";
+    const serviceAccountJson =
+      process.env.E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON ?? "";
+    const delegatedUser = process.env.E2E_GOOGLEWORKSPACE_DELEGATED_USER ?? "";
+
+    test.beforeEach(async ({ page }) => {
+      test.skip(
+        !customerId || !serviceAccountJson || !delegatedUser,
+        "Google Workspace E2E env vars are not set",
+      );
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, customerId!);
+    });
+
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Google Workspace provider with service account credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@googleworkspace",
+          "@serial",
+          "@PROVIDER-E2E-017",
+        ],
+      },
+      async ({ page }) => {
+        const googleWorkspaceProviderData: GoogleWorkspaceProviderData = {
+          customerId: customerId,
+          alias: "Test E2E Google Workspace - Service Account",
+        };
+
+        const googleWorkspaceCredentials: GoogleWorkspaceProviderCredential = {
+          type: GOOGLEWORKSPACE_CREDENTIAL_OPTIONS.GOOGLEWORKSPACE_SERVICE_ACCOUNT,
+          serviceAccountJson: serviceAccountJson,
+          delegatedUser: delegatedUser,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Google Workspace provider
+        await providersPage.selectGoogleWorkspaceProvider();
+
+        // Fill provider details (customer ID and alias)
+        await providersPage.fillGoogleWorkspaceProviderDetails(
+          googleWorkspaceProviderData,
+        );
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyGoogleWorkspaceCredentialsPageLoaded();
+
+        // Fill credentials
+        await providersPage.fillGoogleWorkspaceCredentials(
+          googleWorkspaceCredentials,
+        );
+        await providersPage.clickNext();
+
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          customerId,
+        );
+      },
+    );
+  });
+
+  test.describe.serial("Add Vercel Provider", () => {
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables
+    const teamId = process.env.E2E_VERCEL_TEAM_ID ?? "";
+    const apiToken = process.env.E2E_VERCEL_API_TOKEN ?? "";
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      test.skip(!teamId || !apiToken, "Vercel E2E env vars are not set");
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, teamId!);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Vercel provider with API token",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@vercel",
+          "@serial",
+          "@PROVIDER-E2E-018",
+        ],
+      },
+      async ({ page }) => {
+        // Prepare test data for Vercel provider (Team ID is the provider UID)
+        const vercelProviderData: VercelProviderData = {
+          teamId: teamId,
+          alias: "Test E2E Vercel Account - API Token",
+        };
+
+        // Prepare API token credentials
+        const vercelCredentials: VercelProviderCredential = {
+          type: VERCEL_CREDENTIAL_OPTIONS.VERCEL_API_TOKEN,
+          apiToken: apiToken,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Vercel provider
+        await providersPage.selectVercelProvider();
+
+        // Fill provider details (team ID and alias)
+        await providersPage.fillVercelProviderDetails(vercelProviderData);
+        await providersPage.clickNext();
+
+        // Verify credentials page is loaded
+        await providersPage.verifyVercelCredentialsPageLoaded();
+
+        // Fill credentials (API token)
+        await providersPage.fillVercelCredentials(vercelCredentials);
+        await providersPage.clickNext();
+
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          teamId,
+        );
+      },
+    );
+  });
+
+  test.describe.serial("Add Okta Provider", () => {
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables
+    // Org Domain is lowercased by the form, so normalize here to match the
+    // stored provider UID used for cleanup.
+    const orgDomain = (process.env.E2E_OKTA_DOMAIN ?? "").toLowerCase();
+    const clientId = process.env.E2E_OKTA_CLIENT_ID ?? "";
+    const privateKeyB64 = process.env.E2E_OKTA_BASE64_PRIVATE_KEY ?? "";
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      test.skip(
+        !orgDomain || !clientId || !privateKeyB64,
+        "Okta E2E env vars are not set",
+      );
+      providersPage = new ProvidersPage(page);
+      await deleteProviderIfExists(providersPage, orgDomain!);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should add a new Okta provider with OAuth 2.0 Private Key JWT credentials",
+      {
+        tag: [
+          "@critical",
+          "@e2e",
+          "@providers",
+          "@okta",
+          "@serial",
+          "@PROVIDER-E2E-019",
+        ],
+      },
+      async ({ page }) => {
+        // The Okta app private key is PEM-encoded (multi-line), so it is passed
+        // base64-encoded via the environment variable and decoded here.
+        const privateKey = Buffer.from(privateKeyB64, "base64").toString(
+          "utf8",
+        );
+
+        // Prepare test data for Okta provider
+        const oktaProviderData: OktaProviderData = {
+          orgDomain: orgDomain,
+          alias: "Test E2E Okta Account - Private Key JWT",
+        };
+
+        // Prepare OAuth 2.0 Private Key JWT credentials
+        const oktaCredentials: OktaProviderCredential = {
+          type: OKTA_CREDENTIAL_OPTIONS.OKTA_PRIVATE_KEY_JWT,
+          clientId: clientId,
+          privateKey: privateKey,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Start adding new provider
+        await providersPage.clickAddProvider();
+        await providersPage.verifyConnectAccountPageLoaded();
+
+        // Select Okta provider
+        await providersPage.selectOktaProvider();
+
+        // Fill provider details (org domain and alias)
+        await providersPage.fillOktaProviderDetails(oktaProviderData);
+        await providersPage.clickNext();
+
+        // Verify Okta credentials page is loaded
+        await providersPage.verifyOktaCredentialsPageLoaded();
+
+        // Fill OAuth 2.0 Private Key JWT credentials
+        await providersPage.fillOktaCredentials(oktaCredentials);
+        await providersPage.clickNext();
+
+        // Confirm the provider connection without launching a scan
+        await providersPage.completeProviderConnectionWithoutLaunchingScan(
+          orgDomain,
+        );
+      },
+    );
+  });
+});
+
+test.describe("Update Provider Credentials", () => {
+  test.describe.serial("Update OCI Provider Credentials", () => {
+    let providersPage: ProvidersPage;
+
+    // Test data from environment variables (same as add OCI provider test)
+    const tenancyId = process.env.E2E_OCI_TENANCY_ID ?? "";
+    const userId = process.env.E2E_OCI_USER_ID ?? "";
+    const fingerprint = process.env.E2E_OCI_FINGERPRINT ?? "";
+    const keyContent = process.env.E2E_OCI_KEY_CONTENT ?? "";
+    const region = process.env.E2E_OCI_REGION ?? "";
+
+    // Setup before each test
+    test.beforeEach(async ({ page }) => {
+      test.skip(
+        !tenancyId || !userId || !fingerprint || !keyContent || !region,
+        "OCI E2E env vars are not set",
+      );
+      providersPage = new ProvidersPage(page);
+    });
+
+    // Use admin authentication for provider management
+    test.use({ storageState: "playwright/.auth/admin_user.json" });
+
+    test(
+      "should update OCI provider credentials successfully",
+      {
+        tag: ["@e2e", "@providers", "@oci", "@serial", "@PROVIDER-E2E-013"],
+      },
+      async () => {
+        // Prepare updated credentials
+        const ociCredentials: OCIProviderCredential = {
+          type: OCI_CREDENTIAL_OPTIONS.OCI_API_KEY,
+          tenancyId: tenancyId,
+          userId: userId,
+          fingerprint: fingerprint,
+          keyContent: keyContent,
+          region: region,
+        };
+
+        // Navigate to providers page
+        await providersPage.goto();
+        await providersPage.verifyPageLoaded();
+
+        // Verify OCI provider exists in the table
+        const providerExists =
+          await providersPage.verifySingleRowForProviderUID(tenancyId);
+        if (!providerExists) {
+          throw new Error(
+            `OCI provider with tenancy ID ${tenancyId} not found. Run the add OCI provider test first.`,
+          );
+        }
+
+        // Click update credentials for the OCI provider
+        await providersPage.clickUpdateCredentials(tenancyId);
+
+        // Verify update credentials page is loaded
+        await providersPage.verifyUpdateCredentialsPageLoaded();
+
+        // Verify OCI credentials form fields are visible (confirms providerUid is loaded)
+        // Note: Tenancy OCID is hidden in update flow (auto-populated from provider UID)
+        await providersPage.verifyOCIUpdateCredentialsPageLoaded();
+
+        // Fill updated credentials
+        await providersPage.fillOCICredentials(ociCredentials);
+
+        // Click Next to submit
+        await providersPage.clickNext();
+
+        // Verify successful navigation to test connection page
+        await providersPage.verifyTestConnectionPageLoaded();
       },
     );
   });

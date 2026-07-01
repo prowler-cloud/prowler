@@ -149,3 +149,64 @@ class Test_repository_branch_delete_on_merge_enabled_test:
                 result[0].status_extended
                 == f"Repository {repo_name} does delete branches on merge in default branch ({default_branch})."
             )
+
+    def test_branch_deletion_insufficient_permissions(self):
+        repository_client = mock.MagicMock
+        repo_name = "repo3"
+        default_branch = "main"
+        repository_client.repositories = {
+            3: Repo(
+                id=3,
+                name=repo_name,
+                owner="account-name",
+                full_name="account-name/repo3",
+                default_branch=Branch(
+                    name=default_branch,
+                    protected=False,
+                    default_branch=True,
+                    require_pull_request=False,
+                    approval_count=0,
+                    required_linear_history=False,
+                    allow_force_pushes=True,
+                    branch_deletion=True,
+                    status_checks=False,
+                    enforce_admins=False,
+                    require_code_owner_reviews=False,
+                    require_signed_commits=False,
+                    conversation_resolution=False,
+                ),
+                private=False,
+                archived=False,
+                pushed_at=datetime.now(timezone.utc),
+                securitymd=False,
+                codeowners_exists=False,
+                secret_scanning_enabled=False,
+                dependabot_alerts_enabled=False,
+                delete_branch_on_merge=None,  # Insufficient permissions
+            ),
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_branch_delete_on_merge_enabled.repository_branch_delete_on_merge_enabled.repository_client",
+                new=repository_client,
+            ),
+        ):
+            from prowler.providers.github.services.repository.repository_branch_delete_on_merge_enabled.repository_branch_delete_on_merge_enabled import (
+                repository_branch_delete_on_merge_enabled,
+            )
+
+            check = repository_branch_delete_on_merge_enabled()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].resource_id == 3
+            assert result[0].resource_name == repo_name
+            assert result[0].status == "MANUAL"
+            assert (
+                result[0].status_extended
+                == f"Repository {repo_name} branch deletion setting could not be checked in default branch ({default_branch}) due to insufficient permissions. Requires Administration: Read and Write permission."
+            )

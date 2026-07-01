@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsElbLoadBalancer",
+  "ResourceGroup": "network",
   "Description": "Classic Load Balancer HTTPS/SSL listeners use **AWS Certificate Manager** certificates that are **Amazon-issued** (certificate type `AMAZON_ISSUED`).",
   "Risk": "Using imported or non Amazon-issued certificates reduces control over issuance and rotation, increasing chances of **expired or weak TLS**. This can trigger **service outages** and enable **man-in-the-middle** interception, compromising data **confidentiality** and **integrity**.",
   "RelatedUrl": "",

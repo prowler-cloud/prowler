@@ -8,6 +8,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "VMInstance",
+  "ResourceGroup": "compute",
   "Description": "Checks if NHN Compute instances have administrative login users.",
   "Risk": "",
   "RelatedUrl": "",

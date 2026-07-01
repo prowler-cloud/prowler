@@ -1,0 +1,91 @@
+{
+  "Framework": "ISO27001",
+  "Name": "ISO/IEC 27001 Information Security Management Standard 2022",
+  "Version": "2022",
+  "Provider": "AWS",
+  "Description": "ISO (the International Organization for Standardization) and IEC (the International Electrotechnical Commission) form the specialized system for worldwide standardization. This framework maps AWS security controls to ISO 27001:2022 requirements.",
+  "Requirements": [
+    {
+      "Id": "A.5.1",
+      "Description": "Information security policy and topic-specific policies should be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+      "Name": "Policies for information security",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.1",
+          "Objetive_Name": "Policies for information security",
+          "Check_Summary": "Verify that information security policies are defined and implemented through security monitoring services."
+        }
+      ],
+      "Checks": [
+        "securityhub_enabled",
+        "wellarchitected_workload_no_high_or_medium_risks"
+      ]
+    },
+    {
+      "Id": "A.5.2",
+      "Description": "Information security roles and responsibilities should be defined and allocated according to the organisation needs.",
+      "Name": "Roles and Responsibilities",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.2",
+          "Objetive_Name": "Roles and Responsibilities",
+          "Check_Summary": "Verify that IAM roles and responsibilities are properly defined."
+        }
+      ],
+      "Checks": []
+    },
+    {
+      "Id": "A.5.3",
+      "Description": "Conflicting duties and conflicting areas of responsibility should be segregated.",
+      "Name": "Segregation of Duties",
+      "Attributes": [
+        {
+          "Category": "A.5 Organizational controls",
+          "Objetive_ID": "A.5.3",
+          "Objetive_Name": "Segregation of Duties",
+          "Check_Summary": "Verify that duties are segregated through separate IAM roles."
+        }
+      ],
+      "Checks": [
+        "iam_securityaudit_role_created"
+      ]
+    },
+    {
+      "Id": "A.8.1",
+      "Description": "User end point devices should be protected.",
+      "Name": "User End Point Devices",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.1",
+          "Objetive_Name": "User End Point Devices",
+          "Check_Summary": "Verify that endpoint protection and monitoring are enabled."
+        }
+      ],
+      "Checks": [
+        "guardduty_is_enabled",
+        "ssm_managed_compliant_patching"
+      ]
+    },
+    {
+      "Id": "A.8.24",
+      "Description": "Rules for the effective use of cryptography, including cryptographic key management, should be defined and implemented.",
+      "Name": "Use of Cryptography",
+      "Attributes": [
+        {
+          "Category": "A.8 Technological controls",
+          "Objetive_ID": "A.8.24",
+          "Objetive_Name": "Use of Cryptography",
+          "Check_Summary": "Verify that encryption is enabled for data at rest and in transit."
+        }
+      ],
+      "Checks": [
+        "s3_bucket_default_encryption",
+        "rds_instance_storage_encrypted",
+        "ec2_ebs_volume_encryption"
+      ]
+    }
+  ]
+}

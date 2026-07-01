@@ -11,6 +11,7 @@
   "ResourceIdTemplate": "",
   "Severity": "high",
   "ResourceType": "AwsGuardDutyDetector",
+  "ResourceGroup": "security",
   "Description": "**Amazon GuardDuty detectors** with **Lambda Protection** enabled analyze **Lambda invocation network activity logs** across your account.\n\nEvaluation determines whether the detector has `Lambda Protection` turned on.",
   "Risk": "Without **Lambda Protection**, Lambda network traffic is uninspected, enabling:\n- **C2 callbacks** and data exfiltration (confidentiality)\n- Malicious code altering data or configs (integrity)\n- Lateral movement or abuse causing disruption (availability)",
   "RelatedUrl": "",

@@ -1,0 +1,21 @@
+---
+title: 'Networking'
+---
+
+## Egress IP Addresses
+
+Prowler Cloud makes outbound API calls to scan cloud provider accounts and connect to integrations. Allowlist these IPs in firewalls or security groups to restrict access to Prowler Cloud only.
+
+| Region | IP Address |
+|--------|------------|
+| EU (Ireland) | `52.48.254.174` |
+
+Resolve the egress IP via DNS:
+
+```bash
+dig egress.prowler.com +short
+```
+
+## Contact
+
+For questions about networking, visit the [Support page](/support).

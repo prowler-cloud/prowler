@@ -64,7 +64,7 @@ def mock_clusters_list_clusters(_):
             pit_enabled=True,
             connection_strings={"standard": "mongodb://cluster.mongodb.net"},
             tags=[{"key": "environment", "value": "test"}],
-            location="US_EAST_1",
+            location="us_east_1",
         )
     }
 
@@ -109,4 +109,4 @@ class Test_Clusters_Service:
         assert cluster.connection_strings["standard"] == "mongodb://cluster.mongodb.net"
         assert cluster.tags[0]["key"] == "environment"
         assert cluster.tags[0]["value"] == "test"
-        assert cluster.location == "US_EAST_1"
+        assert cluster.location == "us_east_1"

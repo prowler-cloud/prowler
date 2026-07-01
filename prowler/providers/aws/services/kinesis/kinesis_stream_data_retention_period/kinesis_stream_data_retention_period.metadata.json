@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "AwsKinesisStream",
+  "ResourceGroup": "messaging",
   "Description": "**Kinesis Data Streams** retention window is evaluated to confirm records are kept for at least the configured minimum duration (default `168` hours).",
   "Risk": "Insufficient retention causes records to expire before consumers read or reprocess them, undermining **availability** and analytics **integrity**. Backlogs or outages can create irreversible data gaps, hinder investigations and recovery, and enable denial-of-service-by-lag against event pipelines.",
   "RelatedUrl": "",

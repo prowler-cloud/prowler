@@ -10,6 +10,7 @@
   "ResourceIdTemplate": "",
   "Severity": "low",
   "ResourceType": "AwsRdsDbCluster",
+  "ResourceGroup": "database",
   "Description": "Neptune DB cluster is configured to copy all tags to snapshots when snapshots are created.",
   "Risk": "**Missing snapshot tags** weakens governance across confidentiality, integrity, and availability.\n\n- **Access control**: Tag-based IAM conditions may not apply to snapshots, enabling unauthorized restore or copy\n- **Operational**: Recovery, retention, and cost tracking can fail due to unidentifiable or orphaned snapshots",
   "RelatedUrl": "",

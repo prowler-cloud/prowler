@@ -12,6 +12,7 @@
   "ResourceIdTemplate": "",
   "Severity": "medium",
   "ResourceType": "Other",
+  "ResourceGroup": "compute",
   "Description": "**Amazon AppStream fleets** are assessed for the `EnableDefaultInternetAccess` setting, identifying fleets where streaming instances have default Internet connectivity.",
   "Risk": "**Direct Internet access** gives streaming instances public exposure. Threats include:\n- Remote exploitation and malware, undermining **confidentiality** and **integrity**\n- Uncontrolled egress enabling **data exfiltration**\n\nIt also enforces ~100-instance limits, reducing **availability** for high-concurrency deployments.",
   "RelatedUrl": "",

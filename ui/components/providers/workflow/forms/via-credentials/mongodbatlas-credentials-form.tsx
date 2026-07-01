@@ -1,6 +1,6 @@
 import { Control } from "react-hook-form";
 
-import { CustomInput } from "@/components/ui/custom";
+import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { MongoDBAtlasCredentials } from "@/types";
 
@@ -20,7 +20,7 @@ export const MongoDBAtlasCredentialsForm = ({
           with read access to the resources you want Prowler to assess.
         </div>
       </div>
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ATLAS_PUBLIC_KEY}
         type="text"
@@ -30,7 +30,7 @@ export const MongoDBAtlasCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <CustomInput
+      <WizardInputField
         control={control}
         name={ProviderCredentialFields.ATLAS_PRIVATE_KEY}
         type="password"
