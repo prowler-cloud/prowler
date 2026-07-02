@@ -12,7 +12,7 @@ export function ConfigurationSection({
   title: string;
 }) {
   return (
-    <section className="border-border-neutral-secondary grid gap-6 border-b px-4 py-8 md:grid-cols-[220px_minmax(0,1fr)] md:px-5">
+    <section className="grid gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
       <div className="flex gap-3">
         <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-8 shrink-0 items-center justify-center rounded-[8px] border">
           {icon}

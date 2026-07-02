@@ -140,7 +140,7 @@ export function LighthouseV2ConfigPage({
       padding="none"
       role="region"
       aria-label="Lighthouse AI settings"
-      className="w-full gap-0 overflow-hidden"
+      className="w-full gap-4 p-4 md:p-5"
     >
       {businessContextConfig ? (
         <LighthouseV2BusinessContextForm
@@ -149,43 +149,35 @@ export function LighthouseV2ConfigPage({
           initialBusinessContext={businessContextConfig.businessContext}
         />
       ) : (
-        <section
+        <Card
+          variant="inner"
+          padding="md"
           data-slot="lighthouse-v2-business-context-empty"
-          className="border-border-neutral-secondary text-text-neutral-secondary border-b px-4 py-4 text-sm md:px-5"
+          className="text-text-neutral-secondary text-sm"
         >
           Configure a provider first to add shared business context.
-        </section>
+        </Card>
       )}
 
-      <div className="grid min-h-0 flex-1 gap-0 xl:grid-cols-[320px_auto_minmax(0,1fr)]">
-        <div className="min-w-0 p-4 md:p-5">
-          <LighthouseV2ProviderRail
-            configurations={localConfigurations}
-            providers={providers}
-            selectedProvider={selectedProvider}
-            onSelectProvider={setSelectedProvider}
-          />
-        </div>
-
-        <div
-          data-slot="settings-separator"
-          aria-hidden="true"
-          className="border-border-neutral-secondary border-t xl:border-t-0 xl:border-l"
+      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+        <LighthouseV2ProviderRail
+          configurations={localConfigurations}
+          providers={providers}
+          selectedProvider={selectedProvider}
+          onSelectProvider={setSelectedProvider}
         />
 
-        <div className="flex min-h-0 w-full min-w-0">
-          <LighthouseV2ConfigurationForm
-            key={selectedProvider}
-            configuration={selectedConfig}
-            provider={selectedProviderDefinition}
-            onConfigurationSaved={handleConfigurationSaved}
-            onConfigurationDeleted={handleConfigurationDeleted}
-            onConfigurationTested={handleConfigurationTested}
-            onFeedback={(feedback) => {
-              if (feedback) showFeedback(feedback);
-            }}
-          />
-        </div>
+        <LighthouseV2ConfigurationForm
+          key={selectedProvider}
+          configuration={selectedConfig}
+          provider={selectedProviderDefinition}
+          onConfigurationSaved={handleConfigurationSaved}
+          onConfigurationDeleted={handleConfigurationDeleted}
+          onConfigurationTested={handleConfigurationTested}
+          onFeedback={(feedback) => {
+            if (feedback) showFeedback(feedback);
+          }}
+        />
       </div>
     </Card>
   );

@@ -31,6 +31,7 @@ import {
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import { Modal } from "@/components/shadcn/modal";
 
 import { ConfigurationSection } from "./configuration-section";
@@ -189,92 +190,105 @@ export function LighthouseV2ConfigurationForm({
   };
 
   return (
-    <section className="flex h-full w-full min-w-0 flex-col">
-      <div className="border-border-neutral-secondary flex flex-col gap-4 border-b px-4 py-6 md:flex-row md:items-start md:justify-between md:px-5">
-        <div className="flex min-w-0 gap-3">
-          <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
-            <ProviderIcon
-              provider={providerType}
-              className="text-text-neutral-secondary size-6"
-            />
-          </div>
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-text-neutral-primary text-xl font-semibold">
-                {provider.name}
-              </h3>
-              <StatusBadge status={status} />
-              <span className="text-text-neutral-tertiary text-xs">
-                {formatLastChecked(configuration?.connectionLastCheckedAt)}
-              </span>
-            </div>
-            <p className="text-text-neutral-secondary mt-1 max-w-2xl text-sm">
-              {configuration
-                ? "Stored provider configuration. Rotate credentials only when needed."
-                : "Create provider configuration before Lighthouse AI can use this model family."}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleTestConnection}
-            disabled={!configuration || testing}
-          >
-            {testing ? <Loader2 className="animate-spin" /> : <PlugZap />}
-            {testing ? "Testing connection…" : "Test connection"}
-          </Button>
-        </div>
-      </div>
-
-      <form
-        className="flex h-full min-h-0 w-full flex-1 flex-col"
-        onSubmit={form.handleSubmit(handleSave)}
-        noValidate
+    <>
+      <Card
+        variant="inner"
+        padding="none"
+        className="h-full min-w-0 p-4 md:p-5"
       >
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <ConfigurationSection
-            icon={<KeyRound className="size-4" />}
-            title="Credentials"
-            description={
-              configuration
-                ? "Leave blank to keep existing credentials."
-                : "Credentials are required for new configurations."
-            }
-          >
-            <CredentialFields
-              errors={form.formState.errors}
-              provider={providerType}
-              register={form.register}
-            />
-          </ConfigurationSection>
-        </div>
+        <section className="flex h-full w-full min-w-0 flex-col gap-4">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
+                <ProviderIcon
+                  provider={providerType}
+                  className="text-text-neutral-secondary size-6"
+                />
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="text-text-neutral-primary text-xl font-semibold">
+                    {provider.name}
+                  </h3>
+                  <StatusBadge status={status} />
+                  <span className="text-text-neutral-tertiary text-xs">
+                    {formatLastChecked(configuration?.connectionLastCheckedAt)}
+                  </span>
+                </div>
+                <p className="text-text-neutral-secondary mt-1 max-w-2xl text-sm">
+                  {configuration
+                    ? "Stored provider configuration. Rotate credentials only when needed."
+                    : "Create provider configuration before Lighthouse AI can use this model family."}
+                </p>
+              </div>
+            </div>
 
-        <div className="border-border-neutral-secondary mt-auto flex flex-col gap-4 border-t px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5">
-          <div className="text-text-neutral-secondary text-sm">
-            {configuration
-              ? "Saving updates may change chat behavior immediately."
-              : "Save provider before testing the connection."}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleTestConnection}
+                disabled={!configuration || testing}
+              >
+                {testing ? <Loader2 className="animate-spin" /> : <PlugZap />}
+                {testing ? "Testing connection…" : "Test connection"}
+              </Button>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="submit" disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : <Save />}
-              Save
-            </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={() => setDeleteOpen(true)}
-              disabled={!configuration || deleting}
-            >
-              {deleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
-              Delete
-            </Button>
-          </div>
-        </div>
-      </form>
+
+          <div
+            aria-hidden="true"
+            className="border-border-neutral-secondary border-t"
+          />
+
+          <form
+            className="flex min-h-0 w-full flex-1 flex-col gap-4"
+            onSubmit={form.handleSubmit(handleSave)}
+            noValidate
+          >
+            <div className="min-h-0 overflow-y-auto">
+              <ConfigurationSection
+                icon={<KeyRound className="size-4" />}
+                title="Credentials"
+                description={
+                  configuration
+                    ? "Leave blank to keep existing credentials."
+                    : "Credentials are required for new configurations."
+                }
+              >
+                <CredentialFields
+                  errors={form.formState.errors}
+                  provider={providerType}
+                  register={form.register}
+                />
+              </ConfigurationSection>
+            </div>
+
+            <div className="mt-auto flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-text-neutral-secondary text-sm">
+                {configuration
+                  ? "Saving updates may change chat behavior immediately."
+                  : "Save provider before testing the connection."}
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button type="submit" disabled={saving}>
+                  {saving ? <Loader2 className="animate-spin" /> : <Save />}
+                  Save
+                </Button>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setDeleteOpen(true)}
+                  disabled={!configuration || deleting}
+                >
+                  {deleting ? <Loader2 className="animate-spin" /> : <Trash2 />}
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </Card>
 
       <Modal
         open={deleteOpen}
@@ -302,6 +316,6 @@ export function LighthouseV2ConfigurationForm({
           </Button>
         </div>
       </Modal>
-    </section>
+    </>
   );
 }

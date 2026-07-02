@@ -6,6 +6,7 @@ import { useState } from "react";
 import { updateLighthouseV2Configuration } from "@/app/(prowler)/lighthouse/_actions";
 import { BUSINESS_CONTEXT_LIMIT } from "@/app/(prowler)/lighthouse/_lib/config";
 import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import { Field, FieldError, FieldLabel } from "@/components/shadcn/field/field";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
 import { cn } from "@/lib/utils";
@@ -56,11 +57,13 @@ export function LighthouseV2BusinessContextForm({
   };
 
   return (
-    <section
+    <Card
+      variant="inner"
+      padding="none"
       data-slot="lighthouse-v2-business-context"
-      className="border-border-neutral-secondary border-b"
+      className="gap-4 p-4 md:p-5"
     >
-      <div className="border-border-neutral-secondary flex items-start gap-3 border-b px-4 py-4 md:px-5">
+      <div className="flex items-start gap-3">
         <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex size-12 shrink-0 items-center justify-center rounded-[10px] border">
           <Bot className="text-text-neutral-secondary size-6" />
         </div>
@@ -74,7 +77,7 @@ export function LighthouseV2BusinessContextForm({
         </div>
       </div>
 
-      <div className="flex flex-col gap-4 px-4 py-4 md:px-5">
+      <div className="flex flex-col gap-4">
         <Field>
           <div className="flex items-center justify-between gap-3">
             <FieldLabel htmlFor="lighthouse-v2-business-context">
@@ -120,6 +123,6 @@ export function LighthouseV2BusinessContextForm({
           </Button>
         </div>
       </div>
-    </section>
+    </Card>
   );
 }
