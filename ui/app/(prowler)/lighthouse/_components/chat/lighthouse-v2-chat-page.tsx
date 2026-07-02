@@ -516,6 +516,13 @@ const LIGHTHOUSE_V2_PROVIDER_PRIORITY = [
   LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI_COMPATIBLE,
 ] as const;
 
+// Fallback model per provider when the configuration has no remembered model.
+const LIGHTHOUSE_V2_PREFERRED_DEFAULT_MODEL: Partial<
+  Record<LighthouseV2ProviderType, string>
+> = {
+  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI]: "gpt-5.5",
+};
+
 function resolveInitialModelSelection(
   connectedConfigurations: LighthouseV2Configuration[],
   modelsByProvider: Record<
@@ -535,14 +542,19 @@ function resolveInitialModelSelection(
   for (const configuration of orderedConfigurations) {
     const providerModels = modelsByProvider[configuration.providerType] ?? [];
     if (providerModels.length === 0) continue;
-    // Prefer the provider's remembered model when it is still supported;
-    // otherwise fall back to the first supported model.
+    // Prefer the provider's remembered model when it is still supported, then
+    // the provider's preferred default, then the first supported model.
     const rememberedModel = providerModels.find(
       (model) => model.id === configuration.defaultModel,
     );
+    const preferredModel = providerModels.find(
+      (model) =>
+        model.id ===
+        LIGHTHOUSE_V2_PREFERRED_DEFAULT_MODEL[configuration.providerType],
+    );
     return {
       providerType: configuration.providerType,
-      modelId: (rememberedModel ?? providerModels[0]).id,
+      modelId: (rememberedModel ?? preferredModel ?? providerModels[0]).id,
     };
   }
 

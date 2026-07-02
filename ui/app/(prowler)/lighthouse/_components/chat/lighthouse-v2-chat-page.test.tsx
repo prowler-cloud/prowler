@@ -219,6 +219,25 @@ describe("LighthouseV2ChatPage", () => {
     expect(within(currentModel).getByText("GPT-5.1")).toBeInTheDocument();
   });
 
+  it("defaults to gpt-5.5 when OpenAI has no remembered model", () => {
+    // Given / When
+    renderPage({
+      configurations: [
+        { ...configurations[0], defaultModel: null, connected: true },
+        { ...configurations[1], connected: false },
+      ],
+      modelsByProvider: {
+        openai: [model("gpt-4.1", "GPT-4.1"), model("gpt-5.5", "GPT-5.5")],
+        bedrock: [model("anthropic.claude-4")],
+        "openai-compatible": [model("llama-3.3")],
+      },
+    });
+
+    // Then
+    const currentModel = screen.getByLabelText("Current model: OpenAI GPT-5.5");
+    expect(within(currentModel).getByText("GPT-5.5")).toBeInTheDocument();
+  });
+
   it("uses the AWS onboarding quick prompt instead of the docs prompt", async () => {
     // Given
     const user = userEvent.setup();
