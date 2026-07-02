@@ -1,3 +1,5 @@
+from typing import List
+
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
@@ -10,7 +12,15 @@ PUBLIC_ACL_URIS = {
 
 
 class s3_bucket_object_public(Check):
-    def execute(self):
+    """Spot-check a sample of S3 bucket objects for public ACL grants."""
+
+    def execute(self) -> List[Check_Report_AWS]:
+        """Evaluate sampled object ACLs for AllUsers/AuthenticatedUsers grants.
+
+        Returns:
+            List[Check_Report_AWS]: One report per sampled bucket (empty when the
+            check is disabled via configuration).
+        """
         findings = []
 
         if not s3_client.audit_config.get("s3_bucket_object_public_enabled", False):

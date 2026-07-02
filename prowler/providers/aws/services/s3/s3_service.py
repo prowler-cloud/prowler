@@ -495,6 +495,12 @@ class S3(AWSService):
         logger.info("S3 - Spot-checking bucket objects for public ACLs...")
         max_objects = self.audit_config.get("s3_bucket_object_public_max_objects", 100)
         sample_size = self.audit_config.get("s3_bucket_object_public_sample_size", 3)
+        # Guard against misconfigured non-positive values: a zero sample size would
+        # raise ZeroDivisionError and a negative one would silently sample nothing.
+        if not isinstance(max_objects, int) or max_objects <= 0:
+            max_objects = 100
+        if not isinstance(sample_size, int) or sample_size <= 0:
+            sample_size = 3
         sampling = BucketObjectSampling(performed=True)
         regional_client = None
         try:
