@@ -2,6 +2,7 @@ export * from "./authFormSchema";
 export * from "./components";
 export * from "./filters";
 export * from "./findings-table";
+export * from "./findings-triage";
 export * from "./formSchemas";
 export * from "./organizations";
 export * from "./processors";

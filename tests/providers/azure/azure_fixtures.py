@@ -9,6 +9,8 @@ from prowler.providers.azure.models import AzureIdentityInfo, AzureRegionConfig
 AZURE_SUBSCRIPTION_ID = str(uuid4())
 AZURE_SUBSCRIPTION_NAME = "Subscription Name"
 AZURE_SUBSCRIPTION_DISPLAY = f"{AZURE_SUBSCRIPTION_NAME} ({AZURE_SUBSCRIPTION_ID})"
+RESOURCE_GROUP = "rg"
+RESOURCE_GROUP_LIST = [RESOURCE_GROUP, "rg2"]
 
 # Azure Identity
 IDENTITY_ID = "00000000-0000-0000-0000-000000000000"
@@ -30,6 +32,7 @@ def set_mocked_azure_provider(
     audit_config: dict = None,
     azure_region_config: AzureRegionConfig = AzureRegionConfig(),
     locations: list = None,
+    resource_groups: dict = None,
 ) -> AzureProvider:
 
     provider = MagicMock()
@@ -39,5 +42,6 @@ def set_mocked_azure_provider(
     provider.identity = identity
     provider.audit_config = audit_config
     provider.region_config = azure_region_config
+    provider.resource_groups = resource_groups
 
     return provider

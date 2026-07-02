@@ -57,6 +57,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
 from botocore.exceptions import ClientError, NoCredentialsError
@@ -7218,6 +7219,26 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
 
+    def test_findings_updated_at_range_too_large_with_inserted_at_filter(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[updated_at.gte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+                "filter[updated_at.lte]": TODAY,
+            },
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/updated_at"
+        )
+
     def test_findings_list(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"), {"filter[inserted_at]": TODAY}
@@ -7228,6 +7249,170 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
         )
+
+    def test_findings_list_inserted_at_accepts_timestamp_precision_filters(
+        self, authenticated_client, scans_fixture
+    ):
+        scan, *_ = scans_fixture
+
+        def create_finding(uid, inserted_at):
+            finding = Finding.objects.create(
+                id=datetime_to_uuid7(inserted_at),
+                tenant_id=scan.tenant_id,
+                uid=uid,
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="timestamp precision status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="timestamp_precision_check",
+                check_metadata={
+                    "CheckId": "timestamp_precision_check",
+                    "Description": "timestamp precision check",
+                    "servicename": "ec2",
+                },
+                first_seen_at=inserted_at,
+            )
+            Finding.all_objects.filter(pk=finding.pk).update(
+                inserted_at=inserted_at,
+                updated_at=inserted_at,
+            )
+            finding.refresh_from_db()
+            return finding
+
+        create_finding(
+            "timestamp_precision_early",
+            datetime(2026, 1, 15, 10, 30, 0, 100000, tzinfo=UTC),
+        )
+        late_finding = create_finding(
+            "timestamp_precision_late",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {"filter[inserted_at]": "2026-01-15T10:30:00.200Z"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+    def test_findings_list_updated_at_accepts_timestamp_precision_filters(
+        self, authenticated_client, findings_fixture
+    ):
+        early_finding, late_finding, *_ = findings_fixture
+        early_updated_at = datetime(2026, 1, 15, 10, 30, 0, 100000, tzinfo=UTC)
+        late_updated_at = datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC)
+        Finding.all_objects.filter(pk=early_finding.pk).update(
+            updated_at=early_updated_at
+        )
+        Finding.all_objects.filter(pk=late_finding.pk).update(
+            updated_at=late_updated_at
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[updated_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T10:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {"filter[updated_at]": "2026-01-15T10:30:00.200Z"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+    def test_findings_list_inserted_at_and_updated_at_filters_are_combined(
+        self, authenticated_client, scans_fixture
+    ):
+        scan, *_ = scans_fixture
+
+        def create_finding(uid, inserted_at, updated_at):
+            finding = Finding.objects.create(
+                id=datetime_to_uuid7(inserted_at),
+                tenant_id=scan.tenant_id,
+                uid=uid,
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="timestamp precision status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="timestamp_precision_check",
+                check_metadata={
+                    "CheckId": "timestamp_precision_check",
+                    "Description": "timestamp precision check",
+                    "servicename": "ec2",
+                },
+                first_seen_at=inserted_at,
+            )
+            Finding.all_objects.filter(pk=finding.pk).update(
+                inserted_at=inserted_at,
+                updated_at=updated_at,
+            )
+            finding.refresh_from_db()
+            return finding
+
+        matching_finding = create_finding(
+            "timestamp_precision_combined_match",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 11, 30, 0, 200000, tzinfo=UTC),
+        )
+        create_finding(
+            "timestamp_precision_combined_inserted_only",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 12, 30, 0, 200000, tzinfo=UTC),
+        )
+        create_finding(
+            "timestamp_precision_combined_updated_only",
+            datetime(2026, 1, 15, 9, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 11, 30, 0, 200000, tzinfo=UTC),
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
+                "filter[updated_at.gte]": "2026-01-15T11:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T11:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {matching_finding.uid}
 
     def test_findings_list_resource_tags_no_n_plus_one(
         self, authenticated_client, findings_fixture
@@ -7693,6 +7878,23 @@ class TestFindingViewSet:
                 }
             ]
         }
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        ["inserted_at", "inserted_at.gte", "inserted_at.lte"],
+    )
+    def test_findings_metadata_rejects_timestamp_precision_filters(
+        self, authenticated_client, filter_name
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {f"filter[{filter_name}]": "2048-01-01T10:30:00Z"},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Enter a valid date."
+        assert error["code"] == "invalid"
 
     def test_findings_metadata_backfill(
         self, authenticated_client, scans_fixture, findings_fixture

@@ -10,6 +10,7 @@ metadata:
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
+    - "Reviewing Prowler UI components"
     - "Working on Prowler UI structure (actions/adapters/types/hooks)"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
@@ -38,6 +39,18 @@ HeroUI 2.8.4 (LEGACY - do not add new components)
 
 - **ALWAYS**: Use `shadcn/ui` + Tailwind (`components/shadcn/`)
 - **NEVER**: Add new HeroUI components (`components/ui/` is legacy only)
+
+## Design System Discipline (REQUIRED)
+
+Applies to ALL UI work. The design system is the single source of truth — reuse it exactly, extend it deliberately.
+
+- **Reuse first, never reinvent.** Before building anything, search `components/shadcn/` and existing usages in the codebase for an equivalent. Do NOT create a custom component, modal wrapper, or primitive when one already exists.
+- **Use exactly the defined variants/styles — no more, no less.** At the call site, drive appearance through the component's `variant`/`size`/`tone` props. Never add ad-hoc visual `className` (color, opacity, hover/focus/disabled, spacing-for-looks) to shared controls (`Button`, `SelectTrigger`, `SelectItem`, `Modal`, badges…), and never skip the correct semantic variant.
+- **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`.
+- **Colors**: reuse existing semantic tokens from `ui/styles/globals.css`. No raw Tailwind color utilities (e.g. `bg-blue-950/40`), no hex. If no token fits, STOP and ask the design owner — do not invent or near-duplicate tokens.
+- **Need a genuinely new variant/token?** That is a design-system change: add it to the shared component API (with design sign-off), then consume it. It is never a call-site decision.
+
+When reviewing UI PRs, flag: custom modals/primitives that duplicate shadcn, call-site visual `className` on shared controls, raw color utilities, and new variants/tokens introduced without going through the shared component API.
 
 ## DECISION TREES
 

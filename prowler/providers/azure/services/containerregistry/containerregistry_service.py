@@ -19,8 +19,12 @@ class ContainerRegistry(AzureService):
         registries = {}
         for subscription, client in self.clients.items():
             try:
-                registries_list = client.registries.list()
                 registries.update({subscription: {}})
+                registries_list = self.list_with_rg_scope(
+                    subscription,
+                    client.registries.list,
+                    client.registries.list_by_resource_group,
+                )
 
                 for registry in registries_list:
                     resource_group = self._get_resource_group(registry.id)

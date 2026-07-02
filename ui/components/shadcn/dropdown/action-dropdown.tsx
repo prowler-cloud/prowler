@@ -44,10 +44,21 @@ export function ActionDropdown({
 }: ActionDropdownProps) {
   const [open, setOpen] = useState(false);
 
-  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events)
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events),
+  // but ignore scrolls originating inside a nested dialog (e.g. pasting into a modal
+  // textarea) so they don't unmount a modal rendered within this menu.
   useEffect(() => {
     if (!open) return;
-    const handleScroll = () => setOpen(false);
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-slot="dialog-content"]')
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [open]);
