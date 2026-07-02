@@ -385,8 +385,6 @@ class Exchange(M365Service):
         try:
             policies_data = self.powershell.get_application_access_policies()
 
-            if policies_data is None:
-                return None
             if not policies_data:
                 return application_access_policies
 
@@ -616,6 +614,8 @@ class ApplicationAccessPolicy(BaseModel):
     app_id: str
     access_right: str
     description: str
+
+
 class Mailbox(BaseModel):
     """
     Model for an Exchange Online recipient-facing mailbox.

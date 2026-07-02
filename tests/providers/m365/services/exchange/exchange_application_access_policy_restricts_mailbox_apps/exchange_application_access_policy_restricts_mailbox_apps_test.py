@@ -269,4 +269,3 @@ class Test_exchange_application_access_policy_restricts_mailbox_apps:
             "is not restricted using an Application Access Policy"
             in result[0].status_extended
         )
-
