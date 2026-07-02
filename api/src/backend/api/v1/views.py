@@ -1003,6 +1003,13 @@ class UserViewSet(BaseUserViewset):
             status=status.HTTP_200_OK,
         )
 
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id != self.request.user.id:
+            raise ValidationError("Only the current user can be updated.")
+
+        return super().partial_update(request, *args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
             raise ValidationError("Only the current user can be deleted.")
