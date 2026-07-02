@@ -34,6 +34,13 @@ SYNC_RESULT_EMPTY = {
 
 @pytest.mark.django_db
 class TestAttackPathsRun:
+    @pytest.fixture(autouse=True)
+    def mock_graph_database_preflight(self):
+        with patch(
+            "tasks.jobs.attack_paths.scan.graph_database.verify_scan_databases_available"
+        ) as mock_preflight:
+            yield mock_preflight
+
     # Patching with decorators as we got a `SyntaxError: too many statically nested blocks` error if we use context managers
     @patch("tasks.jobs.attack_paths.scan.graph_database.drop_database")
     @patch(
@@ -189,6 +196,64 @@ class TestAttackPathsRun:
         # is_migrated is flipped to True only after the sync succeeds, so reads
         # don't switch to the new catalog/sink before the graph is live.
         mock_set_scan_migrated.assert_called_once_with(attack_paths_scan, True, "neo4j")
+
+    def test_run_preflight_failure_does_not_start_scan(
+        self,
+        mock_graph_database_preflight,
+        tenants_fixture,
+        providers_fixture,
+        scans_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan = AttackPathsScan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            scan=scan,
+            state=StateChoices.SCHEDULED,
+        )
+        mock_graph_database_preflight.side_effect = RuntimeError("graph unavailable")
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.scan.rls_transaction",
+                new=lambda *args, **kwargs: nullcontext(),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.initialize_prowler_provider",
+                return_value=MagicMock(_enabled_regions=["us-east-1"]),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.get_ingest_uri",
+                return_value="bolt://neo4j",
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.retrieve_attack_paths_scan",
+                return_value=attack_paths_scan,
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.get_cartography_ingestion_function",
+                return_value=MagicMock(return_value={}),
+            ),
+            patch(
+                "tasks.jobs.attack_paths.scan.db_utils.starting_attack_paths_scan"
+            ) as mock_starting,
+            patch(
+                "tasks.jobs.attack_paths.scan.graph_database.create_database"
+            ) as mock_create_db,
+        ):
+            with pytest.raises(RuntimeError, match="graph unavailable"):
+                attack_paths_run(str(tenant.id), str(scan.id), "task-123")
+
+        mock_graph_database_preflight.assert_called_once_with()
+        mock_starting.assert_not_called()
+        mock_create_db.assert_not_called()
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -1835,6 +1900,12 @@ def _make_session_ctx(session, call_order=None, name=None):
 
 
 class TestSyncNodes:
+    def test_iter_sink_batches_rejects_zero_batch_size(self):
+        with pytest.raises(
+            ValueError, match="Sink batch size must be greater than zero"
+        ):
+            list(sync_module._iter_sink_batches([], batch_size=0))
+
     def test_sync_nodes_passes_isolation_labels_to_sink(self):
         row = {
             "internal_id": 1,
@@ -1940,6 +2011,51 @@ class TestSyncNodes:
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
 
+    def test_sync_nodes_chunks_expanded_list_rows_before_sink_write(self):
+        row = {
+            "internal_id": 1,
+            "element_id": "elem-1",
+            "labels": ["SomeLabel"],
+            "props": {"values": ["a", "b", "c", "d", "e"]},
+        }
+        normalized_lists = [
+            sync_module.NormalizedList(
+                "SomeLabel",
+                "values",
+                "SomeLabelValuesItem",
+                "HAS_VALUES",
+            )
+        ]
+
+        src_1 = MagicMock()
+        src_1.run.return_value = [row]
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+        sink = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(src_2),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        ):
+            result = sync_module.sync_nodes(
+                "src", "tgt", "t-1", "p-1", sink, normalized_lists
+            )
+
+        assert result == {"parents": 1, "children": 5, "parent_child_rels": 5}
+        assert [
+            len(call_args.args[2]) for call_args in sink.write_nodes.call_args_list[1:]
+        ] == [2, 2, 1]
+        assert [
+            len(call_args.args[3])
+            for call_args in sink.write_relationships.call_args_list
+        ] == [2, 2, 1]
+
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
@@ -2029,6 +2145,42 @@ class TestSyncRelationships:
         assert sink.write_relationships.call_count == 2
         assert src_1.run.call_args.args[1]["last_id"] == -1
         assert src_2.run.call_args.args[1]["last_id"] == 1
+
+    def test_sync_relationships_chunks_grouped_rows_before_sink_write(self):
+        rows = [
+            {
+                "internal_id": idx,
+                "rel_type": "HAS",
+                "start_element_id": f"s-{idx}",
+                "end_element_id": f"e-{idx}",
+                "props": {},
+            }
+            for idx in range(1, 6)
+        ]
+
+        src_1 = MagicMock()
+        src_1.run.return_value = rows
+        src_2 = MagicMock()
+        src_2.run.return_value = []
+        sink = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.attack_paths.sync.graph_database.get_session",
+                side_effect=[
+                    _make_session_ctx(src_1),
+                    _make_session_ctx(src_2),
+                ],
+            ),
+            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        ):
+            total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
+
+        assert total == 5
+        assert [
+            len(call_args.args[3])
+            for call_args in sink.write_relationships.call_args_list
+        ] == [2, 2, 1]
 
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()

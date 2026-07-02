@@ -106,6 +106,31 @@ def verify_connectivity() -> None:
     sink_module.get_backend().verify_connectivity()
 
 
+def verify_scan_databases_available() -> None:
+    """Raise if either graph database needed by an Attack Paths scan is unavailable."""
+    errors: list[str] = []
+    first_error: Exception | None = None
+
+    try:
+        ingest.get_driver().verify_connectivity()
+    except Exception as exc:
+        errors.append(f"ingest Neo4j: {exc}")
+        first_error = exc
+
+    try:
+        get_driver().verify_connectivity()
+    except Exception as exc:
+        errors.append(f"sink {settings.ATTACK_PATHS_SINK_DATABASE}: {exc}")
+        if first_error is None:
+            first_error = exc
+
+    if errors:
+        raise RuntimeError(
+            "Attack Paths graph database unavailable before scan start: "
+            + "; ".join(errors)
+        ) from first_error
+
+
 def get_uri() -> str:
     """Return the sink URI. Retained for backwards compatibility."""
     if settings.ATTACK_PATHS_SINK_DATABASE == "neptune":

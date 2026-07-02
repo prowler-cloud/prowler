@@ -125,7 +125,9 @@
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
               "user-guide/tutorials/prowler-import-findings",
+              "user-guide/tutorials/prowler-scan-scheduling",
               "user-guide/tutorials/prowler-alerts",
+              "user-guide/tutorials/prowler-app-scan-configuration",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -357,7 +359,8 @@
                 "group": "Okta",
                 "pages": [
                   "user-guide/providers/okta/getting-started-okta",
-                  "user-guide/providers/okta/authentication"
+                  "user-guide/providers/okta/authentication",
+                  "user-guide/providers/okta/retry-configuration"
                 ]
               },
               {
@@ -396,6 +399,7 @@
               "developer-guide/provider",
               "developer-guide/services",
               "developer-guide/checks",
+              "developer-guide/secret-scanning-checks",
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",

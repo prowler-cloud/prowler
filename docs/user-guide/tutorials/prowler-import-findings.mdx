@@ -4,16 +4,15 @@ description: 'Upload OCSF scan results to Prowler Cloud from external sources or
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.19.0" />
 
 Findings Ingestion enables uploading OCSF (Open Cybersecurity Schema Framework) scan results to Prowler Cloud. This feature supports importing findings from Prowler CLI output files that use the [Detection Finding](https://schema.ocsf.io/classes/detection_finding) class.
 
-<Note>
-This feature is available exclusively in **Prowler Cloud** and **Prowler Enterprise** with a [paid subscription](https://prowler.com/pricing).
-</Note>
+<SubscriptionBanner />
 
-## OCSF Detection Finding format
+## OCSF Detection Finding Format
 
 The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Detection Finding records. Each finding represents a security check result from Prowler.
 
@@ -130,7 +129,7 @@ The ingestion API accepts `.ocsf.json` files containing a JSON array of OCSF Det
 Only **Detection Finding** (`class_uid: 2004`) records are accepted. Other OCSF classes are not supported for ingestion.
 </Note>
 
-## Required permissions
+## Required Permissions
 
 The **Manage Ingestions** RBAC permission controls access to the ingestion endpoints. Without this permission, findings cannot be submitted via the API or `--push-to-cloud`.
 
@@ -145,7 +144,7 @@ The `--push-to-cloud` flag uploads scan results directly to Prowler Cloud after 
 - A valid Prowler Cloud API key (see [API Keys](/user-guide/tutorials/prowler-app-api-keys))
 - The `PROWLER_CLOUD_API_KEY` environment variable configured
 
-### Basic usage
+### Basic Usage
 
 ```bash
 export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
@@ -153,7 +152,7 @@ export PROWLER_CLOUD_API_KEY="pk_your_api_key_here"
 prowler aws --push-to-cloud
 ```
 
-### Combining with output formats
+### Combining with Output Formats
 
 When using `--push-to-cloud` with custom output formats that exclude OCSF, Prowler generates a temporary OCSF file for upload:
 
@@ -169,7 +168,7 @@ When default output formats include OCSF, Prowler reuses the existing file. Defa
 prowler aws --services accessanalyzer --push-to-cloud -o /tmp/scan-output
 ```
 
-### CLI output examples
+### CLI Output Examples
 
 **Successful upload:**
 ```
@@ -228,7 +227,7 @@ curl -X POST \
   https://api.prowler.com/api/v1/ingestions
 ```
 
-### Submit an ingestion batch
+### Submit an Ingestion Batch
 
 Upload a `.ocsf.json` file containing a JSON array of OCSF Detection Finding records. See [OCSF Detection Finding format](#ocsf-detection-finding-format) for the expected structure.
 
@@ -266,7 +265,7 @@ curl -X POST \
 }
 ```
 
-### Get ingestion status
+### Get Ingestion Status
 
 Monitor the progress of an ingestion job.
 
@@ -304,7 +303,7 @@ curl -X GET \
 }
 ```
 
-### List ingestion jobs
+### List Ingestion Jobs
 
 Retrieve a list of ingestion jobs for the tenant.
 
@@ -332,7 +331,7 @@ curl -X GET \
   "https://api.prowler.com/api/v1/ingestions?filter[status]=completed&page[size]=10"
 ```
 
-### Get ingestion errors
+### Get Ingestion Errors
 
 Retrieve error details for a specific ingestion job.
 
@@ -346,7 +345,7 @@ curl -X GET \
   https://api.prowler.com/api/v1/ingestions/3650fef9-8e5f-4808-a95f-74f0afae8499/errors
 ```
 
-## Ingestion status values
+## Ingestion Status Values
 
 | Status | Description |
 |--------|-------------|
@@ -355,7 +354,7 @@ curl -X GET \
 | `completed` | All records processed successfully |
 | `failed` | Job encountered errors during processing |
 
-## CI/CD integration
+## CI/CD Integration
 
 Automate findings ingestion in CI/CD pipelines by setting the API key as a secret.
 
@@ -391,7 +390,7 @@ prowler_scan:
     PROWLER_CLOUD_API_KEY: $PROWLER_CLOUD_API_KEY
 ```
 
-## Billing impact
+## Billing Impact
 
 Each unique cloud account discovered in ingested OCSF findings counts as one **provider** in the Prowler Cloud subscription.
 

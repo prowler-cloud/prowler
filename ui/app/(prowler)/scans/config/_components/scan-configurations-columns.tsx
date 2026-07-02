@@ -3,15 +3,19 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Pencil, Trash2 } from "lucide-react";
 
-import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownDangerZone,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown";
 import { DateWithTime } from "@/components/ui/entities";
 import { DataTableColumnHeader } from "@/components/ui/table";
-import { ScanConfigData } from "@/types/scan-configs";
+import { ScanConfigurationData } from "@/types/scan-configurations";
 
-export const createScanConfigsColumns = (
-  onEdit: (config: ScanConfigData) => void,
-  onDelete: (config: ScanConfigData) => void,
-): ColumnDef<ScanConfigData>[] => [
+export const createScanConfigurationsColumns = (
+  onEdit: (config: ScanConfigurationData) => void,
+  onDelete: (config: ScanConfigurationData) => void,
+): ColumnDef<ScanConfigurationData>[] => [
   {
     accessorKey: "attributes.name",
     header: ({ column }) => (
@@ -28,7 +32,7 @@ export const createScanConfigsColumns = (
   {
     id: "providers_count",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Accounts" />
+      <DataTableColumnHeader column={column} title="Providers" />
     ),
     cell: ({ row }) => {
       const count = row.original.attributes.providers?.length ?? 0;
@@ -36,10 +40,10 @@ export const createScanConfigsColumns = (
         <span className="text-text-neutral-primary text-sm">
           {count === 0 ? (
             <span className="text-text-neutral-tertiary italic">
-              No accounts
+              No providers
             </span>
           ) : (
-            `${count} ${count === 1 ? "account" : "accounts"}`
+            `${count} ${count === 1 ? "provider" : "providers"}`
           )}
         </span>
       );
@@ -61,26 +65,24 @@ export const createScanConfigsColumns = (
     id: "actions",
     header: () => null,
     cell: ({ row }) => (
-      <div className="flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onEdit(row.original)}
-          aria-label={`Edit ${row.original.attributes.name}`}
+      <div className="relative flex items-center justify-end gap-2">
+        <ActionDropdown
+          ariaLabel={`Open actions menu for ${row.original.attributes.name}`}
         >
-          <Pencil className="size-4" />
-          Edit
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => onDelete(row.original)}
-          aria-label={`Delete ${row.original.attributes.name}`}
-        >
-          <Trash2 className="size-4" />
-        </Button>
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit"
+            onSelect={() => onEdit(row.original)}
+          />
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete"
+              destructive
+              onSelect={() => onDelete(row.original)}
+            />
+          </ActionDropdownDangerZone>
+        </ActionDropdown>
       </div>
     ),
     enableSorting: false,

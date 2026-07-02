@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
+from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
@@ -750,16 +751,48 @@ class Entra(M365Service):
         logger.info("Entra - Getting groups...")
         groups = []
         try:
-            groups_data = await self.client.groups.get()
-            for group in groups_data.value:
-                groups.append(
-                    Group(
-                        id=group.id,
-                        name=group.display_name,
-                        groupTypes=group.group_types,
-                        membershipRule=group.membership_rule,
-                    )
+            query_parameters = (
+                GroupsRequestBuilder.GroupsRequestBuilderGetQueryParameters(
+                    select=[
+                        "id",
+                        "displayName",
+                        "groupTypes",
+                        "membershipRule",
+                        "isAssignableToRole",
+                        "isManagementRestricted",
+                    ],
                 )
+            )
+            request_configuration = RequestConfiguration(
+                query_parameters=query_parameters,
+            )
+            groups_data = await self.client.groups.get(
+                request_configuration=request_configuration,
+            )
+
+            while groups_data:
+                for group in groups_data.value:
+                    groups.append(
+                        Group(
+                            id=group.id,
+                            name=group.display_name,
+                            groupTypes=group.group_types or [],
+                            membershipRule=group.membership_rule,
+                            is_assignable_to_role=getattr(
+                                group, "is_assignable_to_role", False
+                            )
+                            or False,
+                            is_management_restricted=getattr(
+                                group, "is_management_restricted", False
+                            )
+                            or False,
+                        )
+                    )
+
+                next_link = getattr(groups_data, "odata_next_link", None)
+                if not next_link:
+                    break
+                groups_data = await self.client.groups.with_url(next_link).get()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1933,6 +1966,8 @@ class Group(BaseModel):
     name: str
     groupTypes: List[str]
     membershipRule: Optional[str]
+    is_assignable_to_role: bool = False
+    is_management_restricted: bool = False
 
 
 class AdminConsentPolicy(BaseModel):

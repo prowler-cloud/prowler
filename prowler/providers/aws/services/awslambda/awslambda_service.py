@@ -10,6 +10,10 @@ from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -18,8 +22,16 @@ class Lambda(AWSService):
     def __init__(self, provider):
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
+        # Functions are listed first, then trimmed to the subset selected for
+        # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.security_groups_in_use = set()
+        self.regions_with_functions = set()
+        self.function_limit = get_resource_scan_limit(
+            self.audit_config, "max_lambda_functions"
+        )
         self.__threading_call__(self._list_functions)
+        self._select_functions_for_analysis()
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
@@ -30,24 +42,29 @@ class Lambda(AWSService):
         try:
             list_functions_paginator = regional_client.get_paginator("list_functions")
             for page in list_functions_paginator.paginate():
-                for function in page["Functions"]:
-                    if not self.audit_resources or (
-                        is_resource_filtered(
-                            function["FunctionArn"], self.audit_resources
-                        )
+                for function in page.get("Functions", []):
+                    if not self.audit_resources or is_resource_filtered(
+                        function["FunctionArn"], self.audit_resources
                     ):
                         lambda_name = function["FunctionName"]
                         lambda_arn = function["FunctionArn"]
                         vpc_config = function.get("VpcConfig", {})
+                        security_groups = vpc_config.get("SecurityGroupIds", [])
+                        self.security_groups_in_use.update(security_groups)
+                        self.regions_with_functions.add(regional_client.region)
                         # We must use the Lambda ARN as the dict key since we could have Lambdas in different regions with the same name
                         self.functions[lambda_arn] = Function(
                             name=lambda_name,
                             arn=lambda_arn,
-                            security_groups=vpc_config.get("SecurityGroupIds", []),
+                            security_groups=security_groups,
                             vpc_id=vpc_config.get("VpcId"),
                             subnet_ids=set(vpc_config.get("SubnetIds", [])),
                             region=regional_client.region,
                         )
+                        if "LastModified" in function:
+                            self.functions[lambda_arn].last_modified = function[
+                                "LastModified"
+                            ]
                         if "Runtime" in function:
                             self.functions[lambda_arn].runtime = function["Runtime"]
                         if "Environment" in function:
@@ -76,31 +93,83 @@ class Lambda(AWSService):
                 f" {error}"
             )
 
+    def _select_functions_for_analysis(self):
+        self.functions = {
+            function.arn: function
+            for function in limit_resources(
+                sorted(
+                    self.functions.values(),
+                    key=lambda f: f.last_modified or "",
+                    reverse=True,
+                ),
+                self.function_limit,
+            )
+        }
+
     def _list_event_source_mappings(self, regional_client):
         logger.info("Lambda - Listing Event Source Mappings...")
         try:
             paginator = regional_client.get_paginator("list_event_source_mappings")
-            for page in paginator.paginate():
-                for mapping in page.get("EventSourceMappings", []):
-                    function_arn = mapping.get("FunctionArn", "")
-                    # Normalise to unqualified ARN (strip :qualifier suffix if present)
-                    base_arn = ":".join(function_arn.split(":")[:7])
-                    if base_arn not in self.functions:
-                        continue
-                    self.functions[base_arn].event_source_mappings.append(
-                        EventSourceMapping(
-                            uuid=mapping["UUID"],
-                            event_source_arn=mapping.get("EventSourceArn", ""),
-                            state=mapping.get("State", ""),
-                            batch_size=mapping.get("BatchSize"),
-                            starting_position=mapping.get("StartingPosition"),
+            if not self.function_limit:
+                for page in paginator.paginate():
+                    self._add_event_source_mappings(page.get("EventSourceMappings", []))
+                return
+
+            for function in self.functions.values():
+                if function.region != regional_client.region:
+                    continue
+                try:
+                    for page in paginator.paginate(FunctionName=function.name):
+                        self._add_event_source_mappings(
+                            page.get("EventSourceMappings", [])
                         )
-                    )
+                except ClientError as error:
+                    if (
+                        error.response.get("Error", {}).get("Code")
+                        == "InvalidParameterValueException"
+                    ):
+                        logger.warning(
+                            f"{function.region} --"
+                            f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                            f" {error}"
+                        )
+                    else:
+                        logger.error(
+                            f"{function.region} --"
+                            f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                            f" {error}"
+                        )
+                        raise
+        except ClientError as error:
+            if self.function_limit:
+                raise
+            logger.error(
+                f"{regional_client.region} --"
+                f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
+                f" {error}"
+            )
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
                 f" {error.__class__.__name__}[{error.__traceback__.tb_lineno}]:"
                 f" {error}"
+            )
+
+    def _add_event_source_mappings(self, event_source_mappings):
+        for mapping in event_source_mappings:
+            function_arn = mapping.get("FunctionArn", "")
+            # Normalise to unqualified ARN (strip :qualifier suffix if present)
+            base_arn = ":".join(function_arn.split(":")[:7])
+            if base_arn not in self.functions:
+                continue
+            self.functions[base_arn].event_source_mappings.append(
+                EventSourceMapping(
+                    uuid=mapping["UUID"],
+                    event_source_arn=mapping.get("EventSourceArn", ""),
+                    state=mapping.get("State", ""),
+                    batch_size=mapping.get("BatchSize"),
+                    starting_position=mapping.get("StartingPosition"),
+                )
             )
 
     def _get_function_code(self):
@@ -158,7 +227,6 @@ class Lambda(AWSService):
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
                             self.functions[function.arn].policy = {}
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
@@ -187,7 +255,6 @@ class Lambda(AWSService):
                     except ClientError as e:
                         if e.response["Error"]["Code"] == "ResourceNotFoundException":
                             self.functions[function.arn].url_config = None
-
         except Exception as error:
             logger.error(
                 f"{regional_client.region} --"
@@ -206,10 +273,9 @@ class Lambda(AWSService):
                 except ClientError as e:
                     if e.response["Error"]["Code"] == "ResourceNotFoundException":
                         function.tags = []
-
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
 
@@ -259,6 +325,7 @@ class Function(BaseModel):
     name: str
     arn: str
     security_groups: list
+    last_modified: Optional[str] = None
     runtime: Optional[str] = None
     environment: Optional[dict] = None
     region: str
