@@ -142,6 +142,10 @@ class Provider(ABC):
 
     _cli_help_text: str = ""
 
+    # CLI/SDK-only provider, hidden from the app (API/UI). Defaults True; a
+    # provider opts into the app with ``sdk_only = False``. See get_app_providers().
+    sdk_only: bool = True
+
     @classmethod
     def from_cli_args(cls, arguments: Namespace, fixer_config: dict) -> "Provider":
         """Instantiate the provider from CLI arguments and return the instance.
@@ -208,6 +212,65 @@ class Provider(ABC):
         raise NotImplementedError(
             f"{self.__class__.__name__} has not implemented get_mutelist_finding_args()"
         )
+
+    @classmethod
+    def get_scan_arguments(
+        cls,
+        provider_uid: str,
+        secret: dict,
+        mutelist_content: Optional[dict] = None,
+    ) -> dict:
+        """Build the provider constructor kwargs from a stored uid and secret.
+
+        This is the programmatic construction interface intended for callers
+        that will persist a provider as a single ``uid`` plus a ``secret`` dict
+        (e.g. the API), as opposed to the CLI which passes explicit per-provider
+        flags.
+
+        The base implementation is a default: it passes the secret through, adds
+        the mutelist, and intentionally drops ``provider_uid``. The API consumes
+        this contract for external providers, so an external provider whose uid
+        is part of the scan scope (e.g. a subscription or project id) or that
+        renames/filters secret keys overrides this to inject the uid into the
+        right kwarg; until it does, the base default is not the final shape for
+        that provider. Built-in providers whose scope derives from the uid are
+        mapped on the API side and do not go through this method.
+        """
+        kwargs = {**secret}
+        if mutelist_content is not None:
+            kwargs["mutelist_content"] = mutelist_content
+        return kwargs
+
+    @classmethod
+    def get_connection_arguments(cls, provider_uid: str, secret: dict) -> dict:
+        """Build the ``test_connection`` kwargs from a stored uid and secret.
+
+        Companion to :meth:`get_scan_arguments` for the connection check, which
+        often needs a different shape than the constructor. The base passes the
+        secret through and intentionally drops ``provider_uid``. An external
+        provider whose uid is part of the scope overrides this to add its
+        identity kwarg (and ``provider_id`` where its ``test_connection``
+        expects it); built-in providers are mapped on the API side and do not go
+        through this method.
+        """
+        return {**secret}
+
+    @classmethod
+    def get_credentials_schema(cls) -> dict:
+        """Return the provider's credential schemas keyed by secret type.
+
+        Maps each secret type the provider accepts (``"static"``, ``"role"`` or
+        ``"service_account"``) to the pydantic model that validates a secret of
+        that type. The provider declares which type each schema belongs to, so
+        the API validates a secret against the model for the secret type it is
+        created with and the chosen type stays bound to the shape it claims.
+
+        Each model documents each field via ``Field(description=...)`` and
+        whether it is required (no default) or optional. An empty dict means no
+        schema is declared: the secret is accepted as an object and validated by
+        :meth:`test_connection`.
+        """
+        return {}
 
     def display_compliance_table(
         self,
@@ -571,6 +634,12 @@ class Provider(ABC):
                             arguments, "okta_private_key_file", ""
                         ),
                         okta_scopes=getattr(arguments, "okta_scopes", None),
+                        okta_retries_max_attempts=getattr(
+                            arguments, "okta_retries_max_attempts", None
+                        ),
+                        okta_requests_per_second=getattr(
+                            arguments, "okta_requests_per_second", None
+                        ),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
@@ -637,6 +706,28 @@ class Provider(ABC):
         for ep in importlib.metadata.entry_points(group="prowler.providers"):
             providers.add(ep.name)
         return sorted(providers)
+
+    @staticmethod
+    def get_app_providers() -> list[str]:
+        """Return the providers the app (API/UI) may expose: those with
+        ``sdk_only = False``.
+
+        Counterpart of :meth:`get_available_providers`, which lists every
+        provider for the CLI. A provider whose class cannot be imported is
+        treated as ``sdk_only`` (excluded) so a broken plug-in never leaks in.
+        """
+        app_providers = []
+        for name in Provider.get_available_providers():
+            try:
+                provider_class = Provider.get_class(name)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                continue
+            if not getattr(provider_class, "sdk_only", True):
+                app_providers.append(name)
+        return app_providers
 
     @staticmethod
     def is_tool_wrapper_provider(provider: str) -> bool:

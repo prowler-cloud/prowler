@@ -722,3 +722,30 @@ export const mutedFindingsConfigFormSchema = z.object({
     }),
   id: z.string().optional(),
 });
+
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
+export const scanConfigurationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { error: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
+  provider_ids: z.array(z.uuid()).optional().default([]),
+  id: z.string().optional(),
+});

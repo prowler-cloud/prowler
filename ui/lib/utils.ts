@@ -17,3 +17,14 @@ export function calculatePercentage(value: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((value / total) * 100);
 }
+
+/**
+ * Normalizes a value into an optional display string.
+ * @param value - The value to normalize
+ * @returns The original string when it is non-empty and not the "-" placeholder, otherwise undefined
+ */
+export function getOptionalText(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0 && value !== "-"
+    ? value
+    : undefined;
+}

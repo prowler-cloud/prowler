@@ -28,6 +28,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       sm: "px-3 py-2",
       md: "px-4 py-3",
       lg: "px-5 py-4",
+      xl: "p-8",
       none: "p-0",
     },
   },

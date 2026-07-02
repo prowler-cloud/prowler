@@ -59,5 +59,6 @@ export function findingToFindingResourceRow(
     mutedReason: finding.attributes.muted_reason,
     firstSeenAt: finding.attributes.first_seen_at,
     lastSeenAt: finding.attributes.updated_at,
+    triage: finding.triage,
   };
 }

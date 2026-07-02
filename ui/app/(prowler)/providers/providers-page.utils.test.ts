@@ -18,6 +18,10 @@ const schedulesActionsMock = vi.hoisted(() => ({
   getSchedules: vi.fn(),
 }));
 
+const manageGroupsActionsMock = vi.hoisted(() => ({
+  getAllProviderGroups: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
@@ -25,6 +29,7 @@ vi.mock(
 );
 vi.mock("@/actions/scans", () => scansActionsMock);
 vi.mock("@/actions/schedules", () => schedulesActionsMock);
+vi.mock("@/actions/manage-groups/manage-groups", () => manageGroupsActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProvidersApiResponse } from "@/types/providers";

@@ -344,6 +344,84 @@ class TestProviderDiscovery:
         assert help_text["nohelptext"] == ""
 
 
+class TestSdkOnly:
+    """The ``sdk_only`` flag (default True) and Provider.get_app_providers."""
+
+    def test_base_contract_defaults_to_sdk_only(self):
+        # The default must be True so nothing leaks into the app implicitly.
+        assert Provider.sdk_only is True
+
+    def test_external_provider_without_flag_is_sdk_only(self):
+        # FakeExternalProvider does not override the flag -> inherits True.
+        assert FakeExternalProvider.sdk_only is True
+
+    @patch("prowler.providers.common.provider.Provider.get_class")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_app_providers_filters_out_sdk_only(
+        self, mock_available, mock_get_class
+    ):
+        app_cls = type("AppProvider", (Provider,), {"sdk_only": False})
+        sdk_cls = type("SdkProvider", (Provider,), {"sdk_only": True})
+        mock_available.return_value = ["appone", "sdkone", "apptwo"]
+        mock_get_class.side_effect = lambda name: {
+            "appone": app_cls,
+            "sdkone": sdk_cls,
+            "apptwo": app_cls,
+        }[name]
+
+        app_providers = Provider.get_app_providers()
+
+        assert app_providers == ["appone", "apptwo"]
+
+    @patch("prowler.providers.common.provider.Provider.get_class")
+    @patch("prowler.providers.common.provider.Provider.get_available_providers")
+    def test_get_app_providers_excludes_provider_that_fails_to_load(
+        self, mock_available, mock_get_class
+    ):
+        # A provider whose class cannot be imported is treated as sdk_only
+        # (excluded) so a broken plug-in never leaks into the app.
+        app_cls = type("AppProvider", (Provider,), {"sdk_only": False})
+        mock_available.return_value = ["appone", "broken"]
+
+        def _get_class(name):
+            if name == "broken":
+                raise ImportError("missing transitive dep")
+            return app_cls
+
+        mock_get_class.side_effect = _get_class
+
+        assert Provider.get_app_providers() == ["appone"]
+
+    def test_app_exposed_builtins_declare_sdk_only_false(self):
+        # The providers implemented end-to-end in the API/UI must opt in.
+        app_providers = set(Provider.get_app_providers())
+        for name in (
+            "aws",
+            "azure",
+            "gcp",
+            "kubernetes",
+            "m365",
+            "github",
+            "mongodbatlas",
+            "iac",
+            "oraclecloud",
+            "alibabacloud",
+            "cloudflare",
+            "openstack",
+            "image",
+            "googleworkspace",
+            "vercel",
+            "okta",
+        ):
+            assert name in app_providers, f"{name} should be exposed to the app"
+
+    def test_sdk_only_builtins_are_hidden_from_app(self):
+        # Built-ins not implemented in the API stay SDK-only via the default.
+        app_providers = set(Provider.get_app_providers())
+        for name in ("llm", "nhn", "scaleway", "stackit"):
+            assert name not in app_providers, f"{name} must be hidden from the app"
+
+
 class TestIsToolWrapperProvider:
     """Tests for Provider.is_tool_wrapper_provider — the helper that combines the
     built-in EXTERNAL_TOOL_PROVIDERS frozenset with the is_external_tool_provider
@@ -1456,7 +1534,7 @@ class TestCompliance:
 
         dirs = _get_ep_compliance_dirs()
 
-        assert dirs["fakeexternal"] == "/path/to/compliance"
+        assert dirs["fakeexternal"] == ["/path/to/compliance"]
 
     @patch("prowler.config.config.importlib.metadata.entry_points")
     def test_get_ep_compliance_dirs_file_fallback(self, mock_ep):
@@ -1472,7 +1550,7 @@ class TestCompliance:
 
         dirs = _get_ep_compliance_dirs()
 
-        assert dirs["ext"] == "/path/to/compliance"
+        assert dirs["ext"] == ["/path/to/compliance"]
 
     @patch("prowler.config.config.importlib.metadata.entry_points")
     def test_get_ep_compliance_dirs_handles_load_exception(self, mock_ep):
@@ -1502,7 +1580,7 @@ class TestCompliance:
             with open(json_path, "w") as f:
                 json.dump({"Framework": "Custom", "Provider": "ext"}, f)
 
-            mock_dirs.return_value = {"ext": tmpdir}
+            mock_dirs.return_value = {"ext": [tmpdir]}
 
             frameworks = get_available_compliance_frameworks("ext")
 
@@ -2167,6 +2245,37 @@ class TestDispatchFallbacks:
 
 class TestBaseContractDefaults:
     """Tests for Provider base class default implementations."""
+
+    def test_get_scan_arguments_passes_secret_through(self):
+        """Base get_scan_arguments returns the secret unchanged when no mutelist."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments("uid", {"token": "x"})
+
+        assert kwargs == {"token": "x"}
+
+    def test_get_scan_arguments_adds_mutelist_content(self):
+        """Base get_scan_arguments adds mutelist_content when provided."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments(
+            "uid", {"token": "x"}, {"Mutelist": {}}
+        )
+
+        assert kwargs == {"token": "x", "mutelist_content": {"Mutelist": {}}}
+
+    def test_get_scan_arguments_preserves_empty_mutelist_content(self):
+        """Base get_scan_arguments passes an explicit empty mutelist through so it
+        is not mistaken for an absent mutelist that triggers provider defaults."""
+        kwargs = FakeProviderNoHelpText.get_scan_arguments("uid", {"token": "x"}, {})
+
+        assert kwargs == {"token": "x", "mutelist_content": {}}
+
+    def test_get_connection_arguments_passes_secret_through(self):
+        """Base get_connection_arguments returns the secret unchanged."""
+        kwargs = FakeProviderNoHelpText.get_connection_arguments("uid", {"token": "x"})
+
+        assert kwargs == {"token": "x"}
+
+    def test_get_credentials_schema_defaults_to_empty(self):
+        """Base get_credentials_schema declares no schema by default."""
+        assert FakeProviderNoHelpText.get_credentials_schema() == {}
 
     def test_from_cli_args_raises_not_implemented(self):
         """Base Provider.from_cli_args raises NotImplementedError."""
