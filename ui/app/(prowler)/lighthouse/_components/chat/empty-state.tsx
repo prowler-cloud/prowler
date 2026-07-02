@@ -3,7 +3,7 @@
 import { Cloud, FileCheck2, Network, ShieldAlert } from "lucide-react";
 import { type ReactNode, type SubmitEvent } from "react";
 
-import { LighthouseIcon } from "@/components/icons/Icons";
+import { LighthouseIconWithAura } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 
 import { ChatComposerPanel } from "./composer";
@@ -54,7 +54,7 @@ export function ChatEmptyState({
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5">
-        <LighthouseIcon className="size-20" />
+        <LighthouseIconWithAura className="size-20" />
         <div className="space-y-2 text-center">
           <h1 className="text-text-neutral-primary text-3xl font-semibold">
             <DecryptedText
