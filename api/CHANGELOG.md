@@ -18,6 +18,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
 
+### 🔐 Security
+
+- User profile updates are now restricted to the authenticated user's own record, preventing same-tenant account credential changes [(#11792)](https://github.com/prowler-cloud/prowler/pull/11792)
+
 ---
 
 ## [1.32.2] (Prowler UNRELEASED)
