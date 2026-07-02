@@ -458,3 +458,31 @@ class AWSProviderConfig(ProviderConfigBase):
         le=8760,
         description="Hours of Kinesis stream retention. Range: 24..8760 (1 day .. 1 year).",
     )
+
+    # --- S3 --------------------------------------------------------------
+    s3_bucket_object_public_enabled: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Enable the s3_bucket_object_public spot-check, which samples object "
+            "ACLs per bucket. Disabled by default because it lists and reads object "
+            "ACLs, which is expensive on large buckets."
+        ),
+    )
+    s3_bucket_object_public_max_objects: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description=(
+            "Max objects to list per bucket as the sampling pool. Range: 1..1000 "
+            "(ListObjectsV2 returns at most 1000 keys per page)."
+        ),
+    )
+    s3_bucket_object_public_sample_size: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description=(
+            "Number of objects sampled from the listed pool for ACL inspection. "
+            "Range: 1..1000. Must be positive to avoid a no-op or invalid sample."
+        ),
+    )

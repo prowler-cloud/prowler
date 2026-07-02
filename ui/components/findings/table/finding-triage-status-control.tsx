@@ -3,7 +3,6 @@
 import { type ComponentProps, useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Select,
@@ -19,8 +18,10 @@ import {
   type FindingTriageManualStatus,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  getFindingTriageMuteInfoCopy,
   isManualStatus,
   isMutelistShortcutStatus,
+  isTriageStatusLocked,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -32,7 +33,7 @@ type TriageStatusPickerSize = NonNullable<
   ComponentProps<typeof SelectTrigger>["size"]
 >;
 
-const TRIAGE_STATUS_TEXT_CLASS = {
+export const TRIAGE_STATUS_TEXT_CLASS = {
   open: "text-text-error-primary",
   under_review: "text-text-warning-primary",
   remediating: "text-bg-data-info",
@@ -43,8 +44,6 @@ const TRIAGE_STATUS_TEXT_CLASS = {
 } as const satisfies Record<FindingTriageStatus, string>;
 
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
-const MUTELIST_CONFIRMATION_COPY =
-  "Changing to this triage status will mute the finding.";
 
 function TriageStatusPicker({
   disabled,
@@ -119,7 +118,7 @@ export function FindingTriageStatusControl(
   if (props.origin === FINDING_TRIAGE_ORIGIN.MODAL) {
     return (
       <TriageStatusPicker
-        disabled={!triage.canEdit}
+        disabled={!triage.canEdit || isTriageStatusLocked(triage.status)}
         value={props.value}
         onValueChange={props.onValueChange}
       />
@@ -127,7 +126,10 @@ export function FindingTriageStatusControl(
   }
 
   const canMutateFromTable =
-    triage.canEdit && Boolean(props.onTriageUpdateAction) && !isTableUpdating;
+    triage.canEdit &&
+    Boolean(props.onTriageUpdateAction) &&
+    !isTableUpdating &&
+    !isTriageStatusLocked(triage.status);
 
   const applyTableStatus = async (status: FindingTriageManualStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {
@@ -174,16 +176,14 @@ export function FindingTriageStatusControl(
 
   return (
     <>
-      <InfoField label="Triage" variant="compact">
-        <div className="w-32">
-          <TriageStatusPicker
-            disabled={!canMutateFromTable}
-            size="xs"
-            value={triage.status}
-            onValueChange={handleTableValueChange}
-          />
-        </div>
-      </InfoField>
+      <div className="w-32">
+        <TriageStatusPicker
+          disabled={!canMutateFromTable}
+          size="xs"
+          value={triage.status}
+          onValueChange={handleTableValueChange}
+        />
+      </div>
       {tableUpdateError && (
         <span className="sr-only" role="alert">
           {tableUpdateError}
@@ -197,7 +197,11 @@ export function FindingTriageStatusControl(
           }
         }}
         title={MUTELIST_CONFIRMATION_TITLE}
-        description={MUTELIST_CONFIRMATION_COPY}
+        description={
+          pendingShortcutStatus
+            ? getFindingTriageMuteInfoCopy(pendingShortcutStatus)
+            : undefined
+        }
         size="sm"
       >
         <div className="flex justify-end gap-2 pt-2">

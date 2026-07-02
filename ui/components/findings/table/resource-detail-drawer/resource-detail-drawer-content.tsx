@@ -84,6 +84,7 @@ import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
 import {
   FindingNoteActionItem,
+  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
@@ -560,6 +561,7 @@ export function ResourceDetailDrawerContent({
           {findingIsMuted !== undefined && (
             <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
+          {findingTriage && <FindingTriageStatusBadge triage={findingTriage} />}
         </div>
 
         {showCheckMetaContent ? (

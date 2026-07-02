@@ -30,17 +30,18 @@ updates:
   #     - "pip"
   #     - "component/api"
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 25
-    target-branch: master
-    labels:
-      - "dependencies"
-      - "github_actions"
-    cooldown:
-      default-days: 7
+  # Dependabot version updates disabled - migrated to Renovate - 2026/07/02
+  # - package-ecosystem: "github-actions"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 25
+  #   target-branch: master
+  #   labels:
+  #     - "dependencies"
+  #     - "github_actions"
+  #   cooldown:
+  #     default-days: 7
 
   # Dependabot Updates are temporary disabled - 2025/03/19
   # - package-ecosystem: "npm"
@@ -54,17 +55,18 @@ updates:
   #     - "npm"
   #     - "component/ui"
 
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "monthly"
-    open-pull-requests-limit: 25
-    target-branch: master
-    labels:
-      - "dependencies"
-      - "docker"
-    cooldown:
-      default-days: 7
+  # Dependabot version updates disabled - migrated to Renovate - 2026/07/02
+  # - package-ecosystem: "docker"
+  #   directory: "/"
+  #   schedule:
+  #     interval: "monthly"
+  #   open-pull-requests-limit: 25
+  #   target-branch: master
+  #   labels:
+  #     - "dependencies"
+  #     - "docker"
+  #   cooldown:
+  #     default-days: 7
 
   # - package-ecosystem: "pre-commit"
   #   directory: "/"

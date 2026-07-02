@@ -24,8 +24,13 @@ class Network(AzureService):
         security_groups = {}
         for subscription, client in self.clients.items():
             try:
+                security_groups_list = self.list_with_rg_scope(
+                    subscription,
+                    client.network_security_groups.list_all,
+                    client.network_security_groups.list,
+                )
+
                 security_groups.update({subscription: []})
-                security_groups_list = client.network_security_groups.list_all()
                 for security_group in security_groups_list:
                     security_groups[subscription].append(
                         SecurityGroup(
@@ -64,8 +69,8 @@ class Network(AzureService):
         network_watchers = {}
         for subscription, client in self.clients.items():
             try:
-                network_watchers.update({subscription: []})
                 network_watchers_list = client.network_watchers.list_all()
+                network_watchers.update({subscription: []})
                 for network_watcher in network_watchers_list:
                     flow_logs = self._get_flow_logs(
                         subscription, network_watcher.name, network_watcher.id
@@ -164,8 +169,13 @@ class Network(AzureService):
         bastion_hosts = {}
         for subscription, client in self.clients.items():
             try:
+                bastion_hosts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.bastion_hosts.list,
+                    client.bastion_hosts.list_by_resource_group,
+                )
+
                 bastion_hosts.update({subscription: []})
-                bastion_hosts_list = client.bastion_hosts.list()
                 for bastion_host in bastion_hosts_list:
                     bastion_hosts[subscription].append(
                         BastionHost(
@@ -186,8 +196,13 @@ class Network(AzureService):
         public_ip_addresses = {}
         for subscription, client in self.clients.items():
             try:
+                public_ip_addresses_list = self.list_with_rg_scope(
+                    subscription,
+                    client.public_ip_addresses.list_all,
+                    client.public_ip_addresses.list,
+                )
+
                 public_ip_addresses.update({subscription: []})
-                public_ip_addresses_list = client.public_ip_addresses.list_all()
                 for public_ip_address in public_ip_addresses_list:
                     public_ip_addresses[subscription].append(
                         PublicIp(
@@ -207,13 +222,17 @@ class Network(AzureService):
     def _get_virtual_networks(self):
         logger.info("Network - Getting Virtual Networks...")
         virtual_networks = {}
-        for subscription, client in self.clients.items():
+        for subscription_id, client in self.clients.items():
             try:
-                virtual_networks[subscription] = []
-                vnet_list = client.virtual_networks.list_all()
-                for vnet in vnet_list:
+                virtual_networks[subscription_id] = []
+                virtual_networks_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.virtual_networks.list_all,
+                    client.virtual_networks.list,
+                )
+                for virtual_network in virtual_networks_list:
                     subnets = []
-                    for subnet in getattr(vnet, "subnets", []) or []:
+                    for subnet in getattr(virtual_network, "subnets", []) or []:
                         nsg = getattr(subnet, "network_security_group", None)
                         subnets.append(
                             VNetSubnet(
@@ -222,20 +241,20 @@ class Network(AzureService):
                                 nsg_id=getattr(nsg, "id", None) if nsg else None,
                             )
                         )
-                    virtual_networks[subscription].append(
+                    virtual_networks[subscription_id].append(
                         VirtualNetwork(
-                            id=vnet.id,
-                            name=vnet.name,
-                            location=vnet.location,
+                            id=virtual_network.id,
+                            name=virtual_network.name,
+                            location=virtual_network.location,
                             enable_ddos_protection=getattr(
-                                vnet, "enable_ddos_protection", False
+                                virtual_network, "enable_ddos_protection", False
                             ),
                             subnets=subnets,
                         )
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return virtual_networks
 
