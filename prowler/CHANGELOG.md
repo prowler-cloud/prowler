@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.33.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `amplify_app_no_secrets_in_environment` check for AWS provider to detect plaintext secrets in Amplify app environment variables, branch environment variables, and build settings (build spec)
+
+---
+
 ## [5.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
