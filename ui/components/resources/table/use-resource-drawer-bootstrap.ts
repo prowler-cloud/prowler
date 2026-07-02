@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 
 import { getResourceDrawerData } from "@/actions/resources";
+import {
+  applyOptimisticTriageSummaryUpdate,
+  getOptimisticTriageMutedReason,
+  shouldMarkFindingMutedForTriageUpdate,
+} from "@/lib/finding-triage";
 import { MetaDataProps } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { OrganizationResource } from "@/types/organizations";
 
 import { ResourceFinding } from "./resource-findings-columns";
@@ -26,6 +32,7 @@ interface UseResourceDrawerBootstrapReturn {
   hasInitiallyLoaded: boolean;
   providerOrg: OrganizationResource | null;
   resourceTags: Record<string, string>;
+  patchTriageUpdate: (input: UpdateFindingTriageInput) => void;
 }
 
 export function useResourceDrawerBootstrap({
@@ -47,6 +54,31 @@ export function useResourceDrawerBootstrap({
   const [providerOrg, setProviderOrg] = useState<OrganizationResource | null>(
     null,
   );
+
+  const patchTriageUpdate = (input: UpdateFindingTriageInput) => {
+    setFindingsData((findings) =>
+      findings.map((finding) => {
+        if (!finding.triage || finding.triage.findingId !== input.findingId) {
+          return finding;
+        }
+
+        const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+
+        return {
+          ...finding,
+          triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
+          attributes: {
+            ...finding.attributes,
+            muted: shouldMarkMuted ? true : finding.attributes.muted,
+            muted_reason:
+              shouldMarkMuted && input.isMuted !== true && input.status
+                ? getOptimisticTriageMutedReason(input.status)
+                : finding.attributes.muted_reason,
+          },
+        };
+      }),
+    );
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -111,5 +143,6 @@ export function useResourceDrawerBootstrap({
     hasInitiallyLoaded,
     providerOrg,
     resourceTags,
+    patchTriageUpdate,
   };
 }

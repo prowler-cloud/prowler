@@ -42,7 +42,7 @@ When adding a new configurable check to Prowler, update the following files:
   ```
 - **Provider Schema:** Add the typed field to the provider's Pydantic schema in `prowler/config/schema/<provider>.py`. This is required: the loader validates user configs against these schemas and the shipped `config.yaml` must round-trip with zero warnings. See [Adding a Parameter to the Provider Schema](#adding-a-parameter-to-the-provider-schema) below.
 - **Test Fixtures:** If tests depend on this configuration, add the variable to `tests/config/fixtures/config.yaml`.
-- **Documentation:** Document the new variable in the list of configurable checks in `docs/tutorials/configuration_file.md`.
+- **Documentation:** Document the new variable in the list of configurable checks in [Configuration File](/user-guide/cli/tutorials/configuration_file) (`docs/user-guide/cli/tutorials/configuration_file.mdx`).
 
 For a complete list of checks that already support configuration, see the [Configuration File Tutorial](/user-guide/cli/tutorials/configuration_file).
 

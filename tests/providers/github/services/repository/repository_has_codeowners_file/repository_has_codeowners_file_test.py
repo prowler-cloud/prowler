@@ -145,3 +145,55 @@ class Test_repository_has_codeowners_file:
                 result[0].status_extended
                 == f"Repository {repo_name} does have a CODEOWNERS file."
             )
+
+    def test_archived_repository_no_codeowners_is_skipped(self):
+        repository_client = mock.MagicMock
+        repo_name = "archived-repo"
+        repository_client.repositories = {
+            3: Repo(
+                id=3,
+                name=repo_name,
+                owner="account-name",
+                full_name="account-name/archived-repo",
+                default_branch=Branch(
+                    name="main",
+                    protected=False,
+                    default_branch=True,
+                    require_pull_request=False,
+                    approval_count=0,
+                    required_linear_history=False,
+                    allow_force_pushes=True,
+                    branch_deletion=True,
+                    status_checks=False,
+                    enforce_admins=False,
+                    require_code_owner_reviews=False,
+                    require_signed_commits=False,
+                    conversation_resolution=False,
+                ),
+                private=False,
+                securitymd=True,
+                codeowners_exists=False,
+                secret_scanning_enabled=False,
+                archived=True,
+                pushed_at=datetime.now(timezone.utc),
+                delete_branch_on_merge=False,
+            ),
+        }
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_github_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.github.services.repository.repository_has_codeowners_file.repository_has_codeowners_file.repository_client",
+                new=repository_client,
+            ),
+        ):
+            from prowler.providers.github.services.repository.repository_has_codeowners_file.repository_has_codeowners_file import (
+                repository_has_codeowners_file,
+            )
+
+            check = repository_has_codeowners_file()
+            result = check.execute()
+            assert len(result) == 0

@@ -22,7 +22,9 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
 - CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
 - CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
+- AWS Bedrock AgentCore privilege escalation paths in the IAM privilege escalation checks, covering Runtime, Harness, Code Interpreter and Custom Browser [(#11726)](https://github.com/prowler-cloud/prowler/pull/11726)
 - `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- `apigateway_restapi_no_secrets_in_stage_variables` check for AWS provider, scanning API Gateway REST API stage variables for hardcoded secrets such as passwords, API keys, and tokens [(#11188)](https://github.com/prowler-cloud/prowler/pull/11188)
 
 ### 🔄 Changed
 
@@ -32,6 +34,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
+- GitHub `repository_has_codeowners_file` check no longer flags archived repositories, since they are read-only and cannot be updated without first being unarchived, making the finding not actionable [(#11735)](https://github.com/prowler-cloud/prowler/pull/11735)
 - Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Key the `cloudwatch_log_group_no_secrets_in_logs` secret scan by log group ARN instead of name, so same-named log groups and streams in different regions no longer collide and reuse each other's findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)

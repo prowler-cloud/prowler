@@ -1,7 +1,7 @@
 "use client";
 
 import { cva, type VariantProps } from "class-variance-authority";
-import { ComponentProps, forwardRef } from "react";
+import type { ComponentProps, Ref } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -20,31 +20,46 @@ const textareaVariants = cva(
         sm: "min-h-12 px-3 py-2 text-xs",
         lg: "min-h-24 px-5 py-4",
       },
+      font: {
+        sans: "",
+        mono: "font-mono",
+      },
     },
     defaultVariants: {
       variant: "default",
       textareaSize: "default",
+      font: "sans",
     },
   },
 );
 
 export interface TextareaProps
   extends Omit<ComponentProps<"textarea">, "size">,
-    VariantProps<typeof textareaVariants> {}
+    VariantProps<typeof textareaVariants> {
+  ref?: Ref<HTMLTextAreaElement>;
+}
 
-const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, variant, textareaSize, ...props }, ref) => {
-    return (
-      <textarea
-        ref={ref}
-        data-slot="textarea"
-        className={cn(textareaVariants({ variant, textareaSize, className }))}
-        {...props}
-      />
-    );
-  },
-);
+export const Textarea = ({
+  className,
+  variant,
+  textareaSize,
+  font,
+  ref,
+  ...props
+}: TextareaProps) => {
+  return (
+    <textarea
+      ref={ref}
+      data-slot="textarea"
+      className={cn(
+        textareaVariants({ variant, textareaSize, font }),
+        className,
+      )}
+      {...props}
+    />
+  );
+};
 
 Textarea.displayName = "Textarea";
 
-export { Textarea, textareaVariants };
+export { textareaVariants };

@@ -10,15 +10,27 @@ import {
   StatusFindingBadge,
 } from "@/components/ui/table";
 import { getRegionFlag } from "@/lib/region-flags";
+import { getOptionalText } from "@/lib/utils";
 import { FindingProps, ProviderType } from "@/types";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
 
+import { DataTableRowActions } from "./data-table-row-actions";
 import { FindingDetailDrawer } from "./finding-detail-drawer";
+import { FindingTriageStatusCell } from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { DeltaValues, NotificationIndicator } from "./notification-indicator";
 import { ProviderIconCell } from "./provider-icon-cell";
 
 interface GetStandaloneFindingColumnsOptions {
   includeUpdatedAt?: boolean;
   openFindingId?: string | null;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 const getFindingsData = (row: { original: FindingProps }) => {
@@ -68,6 +80,8 @@ function FindingTitleCell({
 export function getStandaloneFindingColumns({
   includeUpdatedAt = false,
   openFindingId = null,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: GetStandaloneFindingColumnsOptions = {}): ColumnDef<FindingProps>[] {
   const columns: ColumnDef<FindingProps>[] = [
     {
@@ -129,14 +143,8 @@ export function getStandaloneFindingColumns({
       cell: ({ row }) => {
         const name = getResourceData(row, "name");
         const uid = getResourceData(row, "uid");
-        const entityAlias =
-          typeof name === "string" && name.trim().length > 0 && name !== "-"
-            ? name
-            : undefined;
-        const entityId =
-          typeof uid === "string" && uid.trim().length > 0 && uid !== "-"
-            ? uid
-            : undefined;
+        const entityAlias = getOptionalText(name);
+        const entityId = getOptionalText(uid);
 
         return (
           <div className="max-w-[240px]">
@@ -209,7 +217,7 @@ export function getStandaloneFindingColumns({
         const regionFlag =
           typeof region === "string" ? getRegionFlag(region) : "";
         return (
-          <span className="text-text-neutral-primary flex max-w-[140px] items-center gap-1.5 truncate text-sm">
+          <span className="text-text-neutral-primary flex max-w-[140px] min-w-0 items-center gap-1.5 truncate text-sm whitespace-nowrap">
             {regionFlag && (
               <span className="translate-y-px text-base leading-none">
                 {regionFlag}
@@ -241,6 +249,49 @@ export function getStandaloneFindingColumns({
       },
     });
   }
+
+  columns.push(
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          onTriageUpdateAction={onTriageUpdateAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    {
+      id: "actions",
+      size: 56,
+      header: () => <div className="w-10" />,
+      cell: ({ row }) => {
+        const resourceName = getResourceData(row, "name");
+        const providerAlias = getProviderData(row, "alias");
+        const providerType = getProviderData(row, "provider");
+
+        return (
+          <DataTableRowActions
+            row={row}
+            findingContext={{
+              title: row.original.attributes.check_metadata.checktitle,
+              resource: getOptionalText(resourceName),
+              provider: getOptionalText(providerAlias),
+              providerType: getOptionalText(providerType) as
+                | ProviderType
+                | undefined,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+            onTriageNoteLoadAction={onTriageNoteLoadAction}
+          />
+        );
+      },
+      enableSorting: false,
+    },
+  );
 
   return columns;
 }
