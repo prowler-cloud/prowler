@@ -328,6 +328,43 @@
     max-width: 100% !important;
     height: auto;
   }
+
+  /* Lighthouse overview banner animated gradient layers */
+  .lighthouse-banner-gradient-neutral {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-neutral-tertiary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-hover {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-hover) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-press {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-press) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
 }
 
 /* ===== UTILITY LAYER ===== */
