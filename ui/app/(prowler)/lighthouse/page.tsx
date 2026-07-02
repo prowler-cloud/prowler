@@ -92,7 +92,9 @@ export default async function AIChatbot({
     return (
       <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
         <LighthouseV2NavigationModeSync />
-        <div className="h-[calc(100dvh-6.5rem)] min-h-0">
+        {/* [contain:layout] traps streamdown's fixed fullscreen overlay inside
+            the chat area so it never covers the sidebar or navbar. */}
+        <div className="h-[calc(100dvh-6.5rem)] min-h-0 [contain:layout]">
           <LighthouseV2ChatPage
             key={chatRouteKey}
             configurations={configurations}

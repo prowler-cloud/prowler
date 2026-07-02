@@ -58,7 +58,7 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
           className={cn(
             "max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm",
             isUser
-              ? "bg-button-primary text-black"
+              ? "bg-button-primary text-slate-950"
               : "bg-bg-neutral-tertiary text-text-neutral-primary",
           )}
         >
