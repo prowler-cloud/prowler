@@ -1,7 +1,7 @@
 {
   "Provider": "kubernetes",
   "CheckID": "core_readonly_root_filesystem_enabled",
-  "CheckTitle": "Ensure containers run with a read-only root filesystem",
+  "CheckTitle": "Containers should run with a read-only root filesystem",
   "CheckType": [],
   "ServiceName": "core",
   "SubServiceName": "",

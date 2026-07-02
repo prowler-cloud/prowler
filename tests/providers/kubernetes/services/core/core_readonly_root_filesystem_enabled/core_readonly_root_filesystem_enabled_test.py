@@ -52,9 +52,7 @@ class TestCoreReadonlyRootFilesystemEnabled:
         )
 
     def test_readonly_root_filesystem_unset_fail(self):
-        pod = make_pod(
-            containers={"app": make_container(security_context={})}
-        )
+        pod = make_pod(containers={"app": make_container(security_context={})})
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
 
@@ -66,9 +64,7 @@ class TestCoreReadonlyRootFilesystemEnabled:
         )
 
     def test_no_security_context_fail(self):
-        pod = make_pod(
-            containers={"app": make_container(security_context=None)}
-        )
+        pod = make_pod(containers={"app": make_container(security_context=None)})
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
 

@@ -8,9 +8,7 @@ class core_readonly_root_filesystem_enabled(Check):
         for pod in core_client.pods.values():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
             report.status = "PASS"
-            report.status_extended = (
-                f"Pod {pod.name} has read-only root filesystem enabled for all containers."
-            )
+            report.status_extended = f"Pod {pod.name} has read-only root filesystem enabled for all containers."
 
             for container in pod.containers.values():
                 if (
