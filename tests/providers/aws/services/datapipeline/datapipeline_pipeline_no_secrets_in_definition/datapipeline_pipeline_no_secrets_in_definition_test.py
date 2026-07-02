@@ -105,6 +105,48 @@ class Test_datapipeline_pipeline_no_secrets_in_definition:
         assert "parameter value databasePassword" in result[0].status_extended
         assert "super-secret" not in result[0].status_extended
 
+    def test_pipeline_with_verified_secret_escalates_severity(self):
+        from prowler.lib.check.models import Severity
+
+        pipeline = _build_pipeline(
+            definition={
+                "parameterValues": [
+                    {
+                        "id": "databasePassword",
+                        "stringValue": "verified-secret-value",
+                    }
+                ]
+            }
+        )
+        datapipeline_client = mock.MagicMock()
+        datapipeline_client.pipelines = {pipeline.arn: pipeline}
+        datapipeline_client.audit_config = {
+            "secrets_ignore_patterns": [],
+            "secrets_validate": True,
+        }
+
+        with mock.patch(
+            "prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition.detect_secrets_scan_batch",
+            return_value={
+                0: [
+                    {
+                        "type": "Generic Password",
+                        "line_number": 1,
+                        "filename": "data",
+                        "hashed_secret": "x",
+                        "is_verified": True,
+                    }
+                ]
+            },
+        ) as scan_batch:
+            result = _execute_check(datapipeline_client)
+
+        assert scan_batch.call_args.kwargs.get("validate") is True
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert result[0].check_metadata.Severity == Severity.critical
+        assert "confirmed to be live" in result[0].status_extended
+
     def test_scan_error_marks_all_scannable_pipelines_manual(self):
         first_pipeline = _build_pipeline(
             pipeline_id="df-first",

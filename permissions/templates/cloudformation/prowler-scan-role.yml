@@ -109,6 +109,7 @@ Resources:
                   - "codebuild:BatchGet*"
                   - "codebuild:ListReportGroups"
                   - "cognito-idp:GetUserPoolMfaConfig"
+                  - "datapipeline:DescribePipelines"
                   - "datapipeline:GetPipelineDefinition"
                   - "datapipeline:ListPipelines"
                   - "dlm:Get*"

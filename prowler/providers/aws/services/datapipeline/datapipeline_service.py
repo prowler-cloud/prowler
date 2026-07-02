@@ -66,11 +66,20 @@ class DataPipeline(AWSService):
         logger.info(f"DataPipeline - Getting definition for pipeline {pipeline.id}...")
         try:
             regional_client = self.regional_clients[pipeline.region]
-            pipeline_descriptions = regional_client.describe_pipelines(
-                pipelineIds=[pipeline.id]
-            ).get("pipelineDescriptionList", [])
-            if pipeline_descriptions:
-                pipeline.tags = pipeline_descriptions[0].get("tags", [])
+            try:
+                pipeline_descriptions = regional_client.describe_pipelines(
+                    pipelineIds=[pipeline.id]
+                ).get("pipelineDescriptionList", [])
+                if pipeline_descriptions:
+                    pipeline.tags = pipeline_descriptions[0].get("tags", [])
+            except ClientError as error:
+                logger.error(
+                    f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+            except Exception as error:
+                logger.error(
+                    f"{pipeline.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
             definition = regional_client.get_pipeline_definition(pipelineId=pipeline.id)
             pipeline.definition = {
                 "pipelineObjects": definition.get("pipelineObjects", []),
