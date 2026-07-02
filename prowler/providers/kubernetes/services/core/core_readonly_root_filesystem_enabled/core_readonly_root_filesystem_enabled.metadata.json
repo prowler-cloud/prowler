@@ -1,0 +1,37 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_readonly_root_filesystem_enabled",
+  "CheckTitle": "Ensure containers run with a read-only root filesystem",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "Pod",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Pods** are evaluated to ensure every container sets `readOnlyRootFilesystem: true` in its `securityContext`. A writable root filesystem lets an attacker who gains code execution modify binaries, drop tools, or persist malicious files inside the container.",
+  "Risk": "Without a read-only root filesystem an attacker with code execution inside a container can tamper with binaries or libraries (**integrity**), write credential files or exfiltration tools (**confidentiality**), and persist across process restarts (**availability**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/tasks/configure-pod-container/security-context/",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open your Kubernetes Dashboard (or your cloud provider's Kubernetes console) and locate the workload managing the failing Pod (Deployment/StatefulSet/DaemonSet)\n2. Click Edit to modify the manifest (YAML)\n3. For each container missing `securityContext.readOnlyRootFilesystem: true`, add or set it to `true`\n4. If the container needs write access, mount a writable `emptyDir` or `persistentVolumeClaim` at the specific paths that require writes instead of making the entire root filesystem writable\n5. Save/Apply the changes to trigger a rollout\n6. Verify new Pods have `securityContext.readOnlyRootFilesystem` set to `true`",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"main\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n      security_context {\n        read_only_root_filesystem = true # Critical: enforce a read-only root filesystem\n      }\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Set `readOnlyRootFilesystem: true` for every container. Mount writable `emptyDir` volumes only at the specific paths that genuinely need write access (e.g., `/tmp`, `/var/cache`). Enforce this at admission time via Pod Security Admission or OPA/Gatekeeper policies.",
+      "Url": "https://hub.prowler.com/check/core_readonly_root_filesystem_enabled"
+    }
+  },
+  "Categories": [
+    "container-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Only regular containers are evaluated; init and ephemeral containers are excluded. Workloads that genuinely require root filesystem writes should mount writable volumes at specific paths and may be exempted via Prowler's mutelist."
+}
