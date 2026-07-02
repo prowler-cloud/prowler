@@ -24,35 +24,31 @@ Finding Groups rows do not show triage controls because a group row represents s
 
 ![Findings Triage Table](/images/prowler-app/findings-triage/findings-triage-table.png)
 
-## Required Access
+## Required Permissions
 
-Findings Triage write access requires:
+To update triage statuses and notes, the user role must have the **Manage Scans** permission. For more information, see [Role-Based Access Control (RBAC)](/user-guide/tutorials/prowler-app-rbac).
 
-- An active Prowler Cloud or Prowler Enterprise subscription
-- The **Manage Scans** permission
-
-Users without write access can still see existing triage context when it is available, but cannot change statuses or save notes.
+Users without this permission can still see existing triage context when it is available, but cannot change statuses or save notes.
 
 ## Triage Statuses
 
-The status selector includes the manual statuses a user can set:
+The status selector includes manual statuses. Prowler also sets automatic statuses after scans.
 
-| Status | Use It When |
-| --- | --- |
-| **Open** | A failed finding has not been reviewed yet. |
-| **Under Review** | A team is investigating the finding. |
-| **Remediating** | Work is in progress to fix the finding. |
-| **Risk Accepted** | The team accepts the risk and wants to mute the finding. |
-| **False Positive** | The finding does not apply and should be muted. |
+| Status | Type | Use It When |
+| --- | --- | --- |
+| **Open** | Manual | A failed finding has not been reviewed yet. A failed finding with no saved triage state also appears as **Open**. |
+| **Under Review** | Manual | A team is investigating the finding. |
+| **Remediating** | Manual | Work is in progress to fix the finding. |
+| **Risk Accepted** | Manual | The team accepts the risk and wants to mute the finding. |
+| **False Positive** | Manual | The finding does not apply and should be muted. |
+| **Resolved** | Automatic | A finding changed from `FAIL` to `PASS` in a later scan. A passed finding with no saved triage state also appears as **Resolved**. |
+| **Reopened** | Automatic | A finding changed from `PASS` to `FAIL` in a later scan. |
 
 ![Findings Triage Status Selector](/images/prowler-app/findings-triage/findings-triage-status-dropdown.png)
 
-Prowler also manages two automatic statuses:
-
-- **Resolved:** A finding changed from `FAIL` to `PASS` in a later scan.
-- **Reopened:** A finding changed from `PASS` to `FAIL` in a later scan.
-
 Resolved and Reopened are not manual selector options.
+
+These automatic states keep triage tied to the finding UID across scans, even when each scan creates a new finding snapshot.
 
 ## Change a Triage Status
 
@@ -71,7 +67,7 @@ Resolved and Reopened are not manual selector options.
   </Step>
 </Steps>
 
-Changing a finding to **Risk Accepted** or **False Positive** uses the Mutelist flow. Prowler asks for confirmation and creates a mute rule for the finding.
+Changing a finding to **Risk Accepted** or **False Positive** will mute the finding. Prowler asks for confirmation and creates a mute rule for the finding.
 
 ## Add or Edit a Triage Note
 
@@ -109,17 +105,6 @@ Use [Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) to revi
 Muting a finding does not fix the underlying configuration. Review the finding before using **Risk Accepted** or **False Positive**.
 </Warning>
 
-## Automatic Status Updates
-
-Prowler updates some triage states after scans:
-
-- A failed finding that later passes changes to **Resolved**.
-- A passed finding that fails again changes to **Reopened**.
-- A failed finding with no saved triage state appears as **Open**.
-- A passed finding with no saved triage state appears as **Resolved**.
-
-These automatic states keep triage tied to the finding UID across scans, even when each scan creates a new finding snapshot.
-
 ## Troubleshooting
 
 ### Triage controls do not appear
@@ -128,7 +113,7 @@ Make sure the row is an individual finding row. Finding Groups rows do not show 
 
 ### Changes cannot be saved
 
-Confirm that the organization has an active subscription and that the user role has **Manage Scans** permission. Self-hosted Prowler App does not support Findings Triage writes.
+Confirm that the user role has **Manage Scans** permission. Self-hosted Prowler App does not support Findings Triage writes.
 
 ### Resolved or Reopened is missing from the selector
 
