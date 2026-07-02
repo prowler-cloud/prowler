@@ -401,6 +401,38 @@ describe("column-finding-resources", () => {
     expect(screen.getByText(EDITING_UNAVAILABLE_COPY)).toBeInTheDocument();
   });
 
+  it("should keep the compact Triage label on resource cells for headerless nested rows", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({ triage: makeTriageSummary() }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then — expanded finding-group rows render without a header row, so the
+    // cell itself must carry the label, like Service/Region/Last seen do.
+    expect(screen.getByText("Triage")).toBeInTheDocument();
+  });
+
   it("should disable non-paying Cloud triage control with only-in-Cloud tooltip copy", () => {
     // Given
     const columns = getColumnFindingResources({
