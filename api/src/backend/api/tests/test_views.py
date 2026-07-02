@@ -244,7 +244,7 @@ class TestUserViewSet:
         create_test_user.refresh_from_db()
         assert create_test_user.company_name == new_company_name
 
-    def test_users_partial_update_other_tenant_member_password_denied(
+    def test_users_partial_update_same_tenant_other_user_password_denied(
         self, authenticated_client, tenants_fixture
     ):
         original_password = "OriginalPassword123@"
@@ -273,7 +273,7 @@ class TestUserViewSet:
         assert target_user.check_password(original_password)
         assert not target_user.check_password(new_password)
 
-    def test_users_partial_update_other_tenant_member_email_denied(
+    def test_users_partial_update_same_tenant_other_user_email_denied(
         self, authenticated_client, tenants_fixture
     ):
         original_email = "target-email-update@example.com"

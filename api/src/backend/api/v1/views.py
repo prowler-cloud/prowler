@@ -1008,7 +1008,14 @@ class UserViewSet(BaseUserViewset):
         if user.id != self.request.user.id:
             raise ValidationError("Only the current user can be updated.")
 
-        return super().partial_update(request, *args, **kwargs)
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(user, "_prefetched_objects_cache", None):
+            user._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
