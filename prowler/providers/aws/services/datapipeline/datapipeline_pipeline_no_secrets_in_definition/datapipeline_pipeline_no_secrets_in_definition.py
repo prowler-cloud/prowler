@@ -23,18 +23,17 @@ class datapipeline_pipeline_no_secrets_in_definition(Check):
         validate = datapipeline_client.audit_config.get("secrets_validate", False)
         pipelines = list(datapipeline_client.pipelines.values())
         line_context_by_pipeline = {}
-
-        def payloads():
-            for pipeline_index, pipeline in enumerate(pipelines):
-                payload, line_context = _build_definition_payload(pipeline.definition)
-                line_context_by_pipeline[pipeline_index] = line_context
-                if payload:
-                    yield pipeline_index, payload
+        payloads = []
+        for pipeline_index, pipeline in enumerate(pipelines):
+            payload, line_context = _build_definition_payload(pipeline.definition)
+            line_context_by_pipeline[pipeline_index] = line_context
+            if payload:
+                payloads.append((pipeline_index, payload))
 
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads, excluded_secrets=secrets_ignore_patterns, validate=validate
             )
         except SecretsScanError as error:
             batch_results = {}

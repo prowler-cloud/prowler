@@ -30,6 +30,7 @@ pipeline_definition = {
     "parameterObjects": [],
     "parameterValues": [],
 }
+pipeline_tags = [{"key": "Environment", "value": "test"}]
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -37,6 +38,16 @@ make_api_call = botocore.client.BaseClient._make_api_call
 def mock_make_api_call(self, operation_name, kwarg):
     if operation_name == "ListPipelines":
         return {"pipelineIdList": [{"id": pipeline_id, "name": pipeline_name}]}
+    if operation_name == "DescribePipelines":
+        return {
+            "pipelineDescriptionList": [
+                {
+                    "pipelineId": pipeline_id,
+                    "name": pipeline_name,
+                    "tags": pipeline_tags,
+                }
+            ]
+        }
     if operation_name == "GetPipelineDefinition":
         return pipeline_definition
     return make_api_call(self, operation_name, kwarg)
@@ -71,4 +82,4 @@ class TestDataPipelineService:
         assert pipeline.arn == pipeline_arn
         assert pipeline.region == AWS_REGION_US_EAST_1
         assert pipeline.definition == pipeline_definition
-        assert pipeline.tags == []
+        assert pipeline.tags == pipeline_tags

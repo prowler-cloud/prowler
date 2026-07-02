@@ -1,5 +1,6 @@
 from unittest import mock
 
+from prowler.lib.utils.utils import SecretsScanError
 from prowler.providers.aws.services.datapipeline.datapipeline_service import Pipeline
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -104,10 +105,56 @@ class Test_datapipeline_pipeline_no_secrets_in_definition:
         assert "parameter value databasePassword" in result[0].status_extended
         assert "super-secret" not in result[0].status_extended
 
+    def test_scan_error_marks_all_scannable_pipelines_manual(self):
+        first_pipeline = _build_pipeline(
+            pipeline_id="df-first",
+            pipeline_name="first-pipeline",
+            definition={
+                "pipelineObjects": [
+                    {
+                        "id": "Default",
+                        "name": "Default",
+                        "fields": [{"key": "type", "stringValue": "Default"}],
+                    }
+                ]
+            },
+        )
+        second_pipeline = _build_pipeline(
+            pipeline_id="df-second",
+            pipeline_name="second-pipeline",
+            definition={
+                "parameterValues": [
+                    {"id": "databasePassword", "stringValue": "secret-value"}
+                ]
+            },
+        )
+        datapipeline_client = mock.MagicMock()
+        datapipeline_client.pipelines = {
+            first_pipeline.arn: first_pipeline,
+            second_pipeline.arn: second_pipeline,
+        }
+        datapipeline_client.audit_config = {"secrets_ignore_patterns": []}
 
-def _build_pipeline(definition: dict) -> Pipeline:
-    pipeline_id = "df-1234567890"
-    pipeline_name = "test-pipeline"
+        with mock.patch(
+            "prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition.detect_secrets_scan_batch",
+            side_effect=SecretsScanError("scanner unavailable"),
+        ) as scan_batch:
+            result = _execute_check(datapipeline_client)
+
+        scan_payloads = scan_batch.call_args.args[0]
+        assert len(scan_payloads) == 2
+        assert len(result) == 2
+        assert {report.status for report in result} == {"MANUAL"}
+        assert all(
+            "manual review is required" in report.status_extended for report in result
+        )
+
+
+def _build_pipeline(
+    definition: dict,
+    pipeline_id: str = "df-1234567890",
+    pipeline_name: str = "test-pipeline",
+) -> Pipeline:
     pipeline_arn = (
         f"arn:aws:datapipeline:{AWS_REGION_US_EAST_1}:"
         f"{AWS_ACCOUNT_NUMBER}:pipeline/{pipeline_id}"
