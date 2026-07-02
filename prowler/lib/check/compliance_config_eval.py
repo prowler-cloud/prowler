@@ -395,6 +395,12 @@ def accumulate_group_status(
 ) -> None:
     """Count a finding once per group, upgrading a counted PASS to FAIL on conflict (mutates ``counts``/``seen``)."""
     previous = seen.get(index)
+    if status == "MANUAL":
+        # MANUAL findings come from manual, checks-less requirements and are
+        # informational only: they have no PASS/FAIL/Muted column in the section
+        # tally, so counting them would raise KeyError on counts[status] += 1.
+        # Skip them (an unexpected status still raises loudly below).
+        return
     if previous is None:
         seen[index] = status
         counts[status] += 1
