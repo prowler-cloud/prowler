@@ -67,7 +67,7 @@ export function ChatEmptyState({
           </h1>
           <p className="text-text-neutral-secondary text-base italic">
             <DecryptedText
-              text="Understand and secure your cloud."
+              text="Find and remediate which actually matters."
               animateOn="view"
               sequential
               speed={40}
