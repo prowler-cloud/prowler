@@ -162,11 +162,6 @@ describe("finding triage cells", () => {
     await user.click(statusControl);
 
     // Then
-    expect(screen.getByText("Triage").parentElement).toHaveClass(
-      "text-text-neutral-secondary",
-      "text-[10px]",
-      "whitespace-nowrap",
-    );
     expect(statusControl.parentElement).toHaveClass("w-32");
     expect(statusControl).toHaveAttribute("data-size", "xs");
     expect(within(statusControl).getByText("Under Review")).toHaveClass(

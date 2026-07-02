@@ -3,7 +3,6 @@
 import { type ComponentProps, useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Select,
@@ -174,16 +173,14 @@ export function FindingTriageStatusControl(
 
   return (
     <>
-      <InfoField label="Triage" variant="compact">
-        <div className="w-32">
-          <TriageStatusPicker
-            disabled={!canMutateFromTable}
-            size="xs"
-            value={triage.status}
-            onValueChange={handleTableValueChange}
-          />
-        </div>
-      </InfoField>
+      <div className="w-32">
+        <TriageStatusPicker
+          disabled={!canMutateFromTable}
+          size="xs"
+          value={triage.status}
+          onValueChange={handleTableValueChange}
+        />
+      </div>
       {tableUpdateError && (
         <span className="sr-only" role="alert">
           {tableUpdateError}
