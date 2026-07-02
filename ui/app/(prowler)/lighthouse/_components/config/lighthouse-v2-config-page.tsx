@@ -152,7 +152,7 @@ export function LighthouseV2ConfigPage({
         <Card
           variant="inner"
           padding="md"
-          data-slot="lighthouse-v2-business-context-empty"
+          data-lighthouse-v2-business-context-empty=""
           className="text-text-neutral-secondary text-sm"
         >
           Configure a provider first to add shared business context.

@@ -108,14 +108,23 @@ describe("LighthouseV2ConfigPage", () => {
     const settingsSeparator = container.querySelector(
       '[data-slot="settings-separator"]',
     );
+    const innerCards = settingsCard.querySelectorAll('[data-slot="card"]');
 
     expect(settingsCard).toHaveAttribute("data-slot", "card");
-    expect(settingsCard).toHaveClass("w-full", "gap-0", "overflow-hidden");
-    expect(settingsCard).not.toHaveClass("mx-auto", "max-w-7xl");
-    expect(settingsSeparator).toHaveClass(
-      "border-t",
-      "xl:border-t-0",
-      "xl:border-l",
+    expect(settingsCard).toHaveClass("w-full", "gap-4", "p-4", "md:p-5");
+    expect(settingsCard).not.toHaveClass(
+      "gap-0",
+      "overflow-hidden",
+      "mx-auto",
+      "max-w-7xl",
+    );
+    expect(settingsSeparator).toBeNull();
+    expect(innerCards).toHaveLength(3);
+    innerCards.forEach((card) =>
+      expect(card).toHaveClass(
+        "border-border-neutral-tertiary",
+        "bg-bg-neutral-tertiary",
+      ),
     );
     expect(settingsCard).toContainElement(openAIProvider);
     expect(openAIProvider).toHaveAttribute("aria-pressed", "true");

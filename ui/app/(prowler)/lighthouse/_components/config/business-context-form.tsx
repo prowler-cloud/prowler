@@ -60,7 +60,7 @@ export function LighthouseV2BusinessContextForm({
     <Card
       variant="inner"
       padding="none"
-      data-slot="lighthouse-v2-business-context"
+      data-lighthouse-v2-business-context=""
       className="gap-4 p-4 md:p-5"
     >
       <div className="flex items-start gap-3">
