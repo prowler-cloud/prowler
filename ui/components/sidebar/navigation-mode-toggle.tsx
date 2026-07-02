@@ -19,10 +19,12 @@ export function SidebarNavigationModeToggle({
   isOpen,
   value,
   onChange,
+  chatEnabled = true,
 }: {
   isOpen: boolean;
   value: SidebarNavigationMode;
   onChange: (value: SidebarNavigationMode) => void;
+  chatEnabled?: boolean;
 }) {
   const router = useRouter();
   const modes = [
@@ -38,7 +40,8 @@ export function SidebarNavigationModeToggle({
     },
   ] as const;
 
-  const handleModeChange = (mode: SidebarNavigationMode) => {
+  const handleModeChange = (mode: SidebarNavigationMode, disabled: boolean) => {
+    if (disabled) return;
     onChange(mode);
     if (mode === SIDEBAR_NAVIGATION_MODE.CHAT) {
       router.push("/lighthouse");
@@ -56,11 +59,16 @@ export function SidebarNavigationModeToggle({
         {modes.map((mode) => {
           const Icon = mode.icon;
           const active = value === mode.value;
+          const disabled =
+            mode.value === SIDEBAR_NAVIGATION_MODE.CHAT && !chatEnabled;
           const button = (
             <button
               key={mode.value}
               type="button"
               aria-label={mode.label}
+              // aria-disabled (not disabled) keeps the button hoverable and
+              // focusable so the availability tooltip can fire.
+              aria-disabled={disabled || undefined}
               className={cn(
                 "flex h-8 items-center justify-center rounded-[6px] border px-2 text-sm transition-all duration-200 ease-out",
                 isOpen ? "min-w-0 gap-2" : "w-8",
@@ -70,22 +78,30 @@ export function SidebarNavigationModeToggle({
                   ? "border-border-input-primary bg-bg-neutral-primary text-text-neutral-primary shadow-md"
                   : "text-text-neutral-secondary hover:text-text-neutral-primary border-transparent",
                 isOpen && (active ? "flex-[11]" : "flex-[9]"),
+                disabled &&
+                  "hover:text-text-neutral-secondary cursor-not-allowed opacity-50",
               )}
-              onClick={() => handleModeChange(mode.value)}
+              onClick={() => handleModeChange(mode.value, disabled)}
             >
               <Icon className="size-4 shrink-0" />
               {isOpen && <span className="truncate">{mode.label}</span>}
             </button>
           );
 
-          if (isOpen) {
+          const tooltipContent = disabled
+            ? "Available in Prowler Cloud"
+            : !isOpen
+              ? mode.label
+              : null;
+
+          if (!tooltipContent) {
             return button;
           }
 
           return (
             <Tooltip key={mode.value} delayDuration={100}>
               <TooltipTrigger asChild>{button}</TooltipTrigger>
-              <TooltipContent side="right">{mode.label}</TooltipContent>
+              <TooltipContent side="right">{tooltipContent}</TooltipContent>
             </Tooltip>
           );
         })}

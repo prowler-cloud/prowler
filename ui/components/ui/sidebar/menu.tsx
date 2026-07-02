@@ -116,13 +116,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         </Tooltip>
       </div>
 
-      {isCloudEnv && (
-        <SidebarNavigationModeToggle
-          isOpen={isOpen}
-          value={navigationMode}
-          onChange={setNavigationMode}
-        />
-      )}
+      <SidebarNavigationModeToggle
+        isOpen={isOpen}
+        value={navigationMode}
+        onChange={setNavigationMode}
+        chatEnabled={isCloudEnv}
+      />
 
       {/* Menu Items */}
       <div className="flex-1 overflow-hidden">

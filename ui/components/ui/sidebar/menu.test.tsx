@@ -162,6 +162,19 @@ describe("Menu", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
   });
+
+  it("shows the mode toggle with Chat disabled outside cloud", () => {
+    pathnameValue.current = "/findings";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(<MenuComponent isOpen />);
+
+    expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chat" })).toHaveAttribute(
+      "aria-disabled",
+      "true",
+    );
+  });
 });
 
 describe("SidebarNavigationModeToggle", () => {
@@ -208,6 +221,36 @@ describe("SidebarNavigationModeToggle", () => {
 
     // Then
     expect(onChange).toHaveBeenCalledWith(SIDEBAR_NAVIGATION_MODE.BROWSE);
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("blocks Chat and shows the cloud tooltip when chat is unavailable", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+
+    render(
+      <SidebarNavigationModeToggleComponent
+        isOpen
+        value={SIDEBAR_NAVIGATION_MODE.BROWSE}
+        onChange={onChange}
+        chatEnabled={false}
+      />,
+    );
+
+    // When
+    const chatButton = screen.getByRole("button", { name: "Chat" });
+    await user.hover(chatButton);
+
+    // Then
+    const tooltip = await screen.findByRole("tooltip");
+    expect(tooltip).toHaveTextContent("Available in Prowler Cloud");
+
+    // When
+    await user.click(chatButton);
+
+    // Then
+    expect(onChange).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
   });
 });
