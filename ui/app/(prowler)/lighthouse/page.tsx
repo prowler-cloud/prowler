@@ -13,11 +13,8 @@ import {
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
 import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
+import { loadLighthouseV2ConnectedModels } from "@/app/(prowler)/lighthouse/_lib/model-loading";
 import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
-import type {
-  LighthouseV2ProviderType,
-  LighthouseV2SupportedModel,
-} from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/ui";
@@ -53,25 +50,14 @@ export default async function AIChatbot({
       return redirect("/lighthouse/settings");
     }
 
-    const modelsEntries = await Promise.all(
-      configurations.map(async (configuration) => {
-        const result = await getLighthouseV2SupportedModels(
-          configuration.providerType,
-        );
-        return [configuration.providerType, result] as const;
-      }),
-    );
-    const modelsByProvider = Object.fromEntries(
-      modelsEntries.map(([providerType, result]) => [
-        providerType,
-        "data" in result ? result.data : [],
-      ]),
-    ) as Record<LighthouseV2ProviderType, LighthouseV2SupportedModel[]>;
-    // Surface (rather than silently swallow to []) providers whose models
-    // failed to load, so an empty model list reads as a real backend failure.
-    const failedModelProviders = modelsEntries
-      .filter(([, result]) => !("data" in result))
-      .map(([providerType]) => providerType);
+    const { modelsByProvider, failedModelProviders } =
+      await loadLighthouseV2ConnectedModels(
+        configurations,
+        getLighthouseV2SupportedModels,
+      );
+    // Surface (rather than silently swallow to []) connected providers whose
+    // models failed to load, so their empty list reads as a real backend
+    // failure. Disconnected providers are never fetched (see model-loading.ts).
     const modelsError =
       failedModelProviders.length > 0
         ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
