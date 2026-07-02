@@ -2,7 +2,7 @@
 
 import { CornerDownLeft, Settings, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { type ReactNode, type SubmitEvent } from "react";
+import { useRef, type ReactNode, type SubmitEvent } from "react";
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
@@ -13,6 +13,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 
 interface ChatComposerPanelProps {
   feedback: string | null;
@@ -100,12 +101,19 @@ function ChatComposer({
   onSubmit,
   onSubmitText,
 }: ChatComposerProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useMountEffect(() => {
+    textareaRef.current?.focus();
+  });
+
   return (
     <form
       className="border-border-neutral-secondary bg-bg-neutral-tertiary has-[textarea:focus]:border-border-input-primary-press flex min-h-[150px] w-full flex-col overflow-hidden rounded-[8px] border shadow-xs transition-all"
       onSubmit={onSubmit}
     >
       <Textarea
+        ref={textareaRef}
         aria-label="Message"
         value={input}
         onChange={(event) => onInputChange(event.target.value)}
