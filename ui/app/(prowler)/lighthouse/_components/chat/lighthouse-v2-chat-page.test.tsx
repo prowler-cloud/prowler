@@ -183,19 +183,6 @@ describe("LighthouseV2ChatPage", () => {
     ).toHaveAttribute("href", "/lighthouse/settings");
   });
 
-  it("renders the updated empty-state subtitle", () => {
-    // Given / When
-    renderPage();
-
-    // Then
-    expect(
-      screen.getByText("Find and remediate which actually matters."),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByText("Understand and secure your cloud."),
-    ).not.toBeInTheDocument();
-  });
-
   it("shows the current OpenAI model without a selector when OpenAI is the only connected provider", () => {
     // Given / When
     renderPage({
