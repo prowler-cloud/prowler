@@ -2,7 +2,7 @@
 
 import { CornerDownLeft, Settings, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-import { useRef, type ReactNode, type SubmitEvent } from "react";
+import { type ReactNode, type SubmitEvent, useRef } from "react";
 
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
