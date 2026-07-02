@@ -17,7 +17,7 @@ from api.models import (
     StatusChoices,
     Task,
 )
-from django.db import connection
+from django.db import DEFAULT_DB_ALIAS
 from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from tasks.jobs.attack_paths import findings as findings_module
@@ -2261,7 +2261,7 @@ class TestAttackPathsDbUtilsGraphDataReady:
         attack_paths_scan_id = uuid4()
         now = datetime.now(tz=UTC)
 
-        with rls_transaction(str(tenant.id)), connection.cursor() as cursor:
+        with rls_transaction(str(tenant.id), using=DEFAULT_DB_ALIAS) as cursor:
             cursor.execute(
                 """
                 INSERT INTO attack_paths_scans (
