@@ -5,14 +5,24 @@ import { type FormEvent, useRef, useState } from "react";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { CustomLink } from "@/components/ui/custom/custom-link";
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageStatus,
+  getFindingTriageMuteInfoCopy,
   isMutelistShortcutStatus,
+  isTriageStatusLocked,
 } from "@/types/findings-triage";
 import type { ProviderType } from "@/types/providers";
 
@@ -37,10 +47,8 @@ interface FindingNoteModalProps {
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
-const MUTELIST_INFO_COPY =
-  "This finding will be muted through the existing Mutelist flow.";
 const REMEDIATING_INFO_COPY =
-  "Once this finding is fixed and passes in the next scan, it will be automatically changed to Resolved.";
+  "Once this finding is remediated, if in the following scan its status changes to Pass, it will be automatically changed to Resolved";
 
 export function FindingNoteModal({
   open,
@@ -68,6 +76,7 @@ export function FindingNoteModal({
     isMutelistShortcutStatus(selectedStatus);
   const shouldShowRemediatingInfo =
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
+  const isStatusLocked = isTriageStatusLocked(triage.status);
   // Opened from a dropdown item: move focus into the dialog on mount so Radix's
   // aria-hidden is not applied to the still-focused dropdown that opened it.
   const handleOpenAutoFocus = (event: Event) => {
@@ -118,7 +127,10 @@ export function FindingNoteModal({
       title="Add Triage Note"
       size="lg"
     >
-      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      {/* min-w-0: the form is a grid item of DialogContent; without it, long
+          unbreakable content (e.g. resource UIDs) widens the grid track past
+          the modal instead of truncating. */}
+      <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex items-center gap-4">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
             {findingContext.providerType ? (
@@ -129,12 +141,17 @@ export function FindingNoteModal({
               </span>
             )}
           </div>
-          <div>
-            <p className="text-text-neutral-primary text-sm font-semibold">
-              {findingContext.title}
-            </p>
+          <div className="min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-text-neutral-primary truncate text-sm font-semibold">
+                  {findingContext.title}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>{findingContext.title}</TooltipContent>
+            </Tooltip>
             {(findingContext.resource || findingContext.provider) && (
-              <p className="text-text-neutral-secondary mt-1 text-xs">
+              <p className="text-text-neutral-secondary mt-1 truncate text-xs">
                 {[findingContext.resource, findingContext.provider]
                   .filter(Boolean)
                   .join(" · ")}
@@ -143,27 +160,44 @@ export function FindingNoteModal({
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center justify-end gap-3">
           <span className="text-text-neutral-primary text-sm font-semibold">
             Status:
           </span>
-          <FindingTriageStatusControl
-            origin={FINDING_TRIAGE_ORIGIN.MODAL}
-            triage={triage}
-            value={selectedStatus}
-            onValueChange={setSelectedStatus}
-          />
+          <div className="w-1/2 min-w-44">
+            <FindingTriageStatusControl
+              origin={FINDING_TRIAGE_ORIGIN.MODAL}
+              triage={triage}
+              value={selectedStatus}
+              onValueChange={setSelectedStatus}
+            />
+          </div>
         </div>
+
+        {isStatusLocked && (
+          <Alert variant="info">
+            <AlertDescription>
+              {FINDING_TRIAGE_RESOLVED_LOCKED_COPY}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {shouldShowMutelistInfo && (
           <Alert variant="warning">
-            <AlertDescription>{MUTELIST_INFO_COPY}</AlertDescription>
+            <AlertDescription>
+              {getFindingTriageMuteInfoCopy(selectedStatus)}
+            </AlertDescription>
           </Alert>
         )}
 
         {shouldShowRemediatingInfo && (
           <Alert variant="info">
-            <AlertDescription>{REMEDIATING_INFO_COPY}</AlertDescription>
+            <AlertDescription>
+              {REMEDIATING_INFO_COPY}.{" "}
+              <CustomLink href={DOCS_URLS.FINDINGS_TRIAGE} size="sm">
+                Learn more
+              </CustomLink>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -184,10 +218,7 @@ export function FindingNoteModal({
             textareaSize="lg"
             onChange={(event) => setNote(event.target.value)}
           />
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-text-neutral-tertiary text-xs">
-              {triage.privacyCopy}
-            </p>
+          <div className="flex items-center justify-end">
             <p className="text-text-neutral-tertiary shrink-0 text-xs">
               {note.length}/{triage.maxNoteLength}
             </p>
