@@ -151,7 +151,7 @@ export function FindingNoteModal({
           <span className="text-text-neutral-primary text-sm font-semibold">
             Status:
           </span>
-          <div className="w-1/2 min-w-44">
+          <div className="ml-auto w-1/2 min-w-44">
             <FindingTriageStatusControl
               origin={FINDING_TRIAGE_ORIGIN.MODAL}
               triage={triage}
