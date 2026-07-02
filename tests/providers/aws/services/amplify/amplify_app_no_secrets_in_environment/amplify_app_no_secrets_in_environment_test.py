@@ -86,7 +86,9 @@ class Test_amplify_app_no_secrets_in_environment:
 
         assert len(result) == 1
         assert result[0].status == "FAIL"
-        assert "branch 'dev' environment variable 'api_key'" in result[0].status_extended
+        assert (
+            "branch 'dev' environment variable 'api_key'" in result[0].status_extended
+        )
 
     def test_app_with_secrets_in_build_spec(self):
         app = _build_app(
@@ -104,13 +106,37 @@ class Test_amplify_app_no_secrets_in_environment:
         assert result[0].status == "FAIL"
         assert "app buildSpec line 6" in result[0].status_extended
 
+    def test_app_scan_error_marks_manual(self):
+        from prowler.lib.utils.utils import SecretsScanError
+
+        app = _build_app(
+            environment_variables={"key1": "val1"},
+            build_spec="version: 1",
+            branches=[],
+        )
+        amplify_client = mock.MagicMock()
+        amplify_client.apps = {app.arn: app}
+        amplify_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with mock.patch(
+            "prowler.providers.aws.services.amplify.amplify_app_no_secrets_in_environment.amplify_app_no_secrets_in_environment.detect_secrets_scan_batch",
+            side_effect=SecretsScanError("Scanner failure"),
+        ):
+            result = _execute_check(amplify_client)
+
+        assert len(result) == 1
+        assert result[0].status == "MANUAL"
+        assert (
+            "Could not scan Amplify app test-app environment variables for secrets: Scanner failure"
+            in result[0].status_extended
+        )
+
 
 def _build_app(environment_variables: dict, build_spec: str, branches: list) -> App:
     app_id = "app-12345"
     app_name = "test-app"
     app_arn = (
-        f"arn:aws:amplify:{AWS_REGION_US_EAST_1}:"
-        f"{AWS_ACCOUNT_NUMBER}:apps/{app_id}"
+        f"arn:aws:amplify:{AWS_REGION_US_EAST_1}:" f"{AWS_ACCOUNT_NUMBER}:apps/{app_id}"
     )
     return App(
         id=app_id,

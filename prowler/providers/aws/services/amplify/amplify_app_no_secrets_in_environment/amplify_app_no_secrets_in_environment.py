@@ -21,17 +21,19 @@ class amplify_app_no_secrets_in_environment(Check):
         apps = list(amplify_client.apps.values())
         line_context_by_app = {}
 
-        def payloads():
-            for app_index, app in enumerate(apps):
-                payload, line_context = _build_app_payload(app)
-                line_context_by_app[app_index] = line_context
-                if payload:
-                    yield app_index, payload
+        payloads_list = []
+        for app_index, app in enumerate(apps):
+            payload, line_context = _build_app_payload(app)
+            line_context_by_app[app_index] = line_context
+            if payload:
+                payloads_list.append((app_index, payload))
 
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
-                payloads(), excluded_secrets=secrets_ignore_patterns, validate=validate
+                payloads_list,
+                excluded_secrets=secrets_ignore_patterns,
+                validate=validate,
             )
         except SecretsScanError as error:
             batch_results = {}
@@ -41,9 +43,7 @@ class amplify_app_no_secrets_in_environment(Check):
             report = Check_Report_AWS(metadata=self.metadata(), resource=app)
             report.resource_tags = app.tags
             report.status = "PASS"
-            report.status_extended = (
-                f"No secrets found in Amplify app {app.name} environment variables or build settings."
-            )
+            report.status_extended = f"No secrets found in Amplify app {app.name} environment variables or build settings."
 
             line_context = line_context_by_app.get(app_index, {})
             if line_context:
@@ -98,6 +98,8 @@ def _build_app_payload(app) -> tuple[str, dict[int, str]]:
     # Branch environment variables
     for branch in app.branches:
         for var_name, var_value in branch.environment_variables.items():
-            add_line(f"branch '{branch.name}' environment variable '{var_name}'", var_value)
+            add_line(
+                f"branch '{branch.name}' environment variable '{var_name}'", var_value
+            )
 
     return "\n".join(lines), line_context
