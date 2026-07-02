@@ -270,6 +270,7 @@ class Test_keyvault_service:
 class Test_KeyVault_get_key_vaults:
     def test_get_key_vaults_no_resource_groups(self):
         mock_client = MagicMock()
+        mock_client.vaults = MagicMock()
         mock_client.vaults.list_by_subscription.return_value = []
 
         mock_provider = MagicMock()
@@ -309,6 +310,7 @@ class Test_KeyVault_get_key_vaults:
 
     def test_get_key_vaults_with_resource_group(self):
         mock_client = MagicMock()
+        mock_client.vaults = MagicMock()
         mock_client.vaults.list_by_resource_group.return_value = []
 
         mock_provider = MagicMock()
@@ -350,6 +352,7 @@ class Test_KeyVault_get_key_vaults:
 
     def test_get_key_vaults_empty_resource_group_for_subscription(self):
         mock_client = MagicMock()
+        mock_client.vaults = MagicMock()
 
         mock_provider = MagicMock()
         mock_provider.identity = MagicMock()
@@ -388,6 +391,7 @@ class Test_KeyVault_get_key_vaults:
 
     def test_get_key_vaults_with_multiple_resource_groups(self):
         mock_client = MagicMock()
+        mock_client.vaults = MagicMock()
         mock_client.vaults.list_by_resource_group.return_value = []
 
         mock_provider = MagicMock()
@@ -429,6 +433,7 @@ class Test_KeyVault_get_key_vaults:
 
     def test_get_key_vaults_with_mixed_case_resource_group(self):
         mock_client = MagicMock()
+        mock_client.vaults = MagicMock()
         mock_client.vaults.list_by_resource_group.return_value = []
 
         mock_provider = MagicMock()
