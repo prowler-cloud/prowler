@@ -5,6 +5,11 @@ import { type FormEvent, useRef, useState } from "react";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DOCS_URLS } from "@/lib/external-urls";
@@ -122,7 +127,10 @@ export function FindingNoteModal({
       title="Add Triage Note"
       size="lg"
     >
-      <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+      {/* min-w-0: the form is a grid item of DialogContent; without it, long
+          unbreakable content (e.g. resource UIDs) widens the grid track past
+          the modal instead of truncating. */}
+      <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
         <div className="flex items-center gap-4">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
             {findingContext.providerType ? (
@@ -133,12 +141,17 @@ export function FindingNoteModal({
               </span>
             )}
           </div>
-          <div>
-            <p className="text-text-neutral-primary text-sm font-semibold">
-              {findingContext.title}
-            </p>
+          <div className="min-w-0">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-text-neutral-primary truncate text-sm font-semibold">
+                  {findingContext.title}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>{findingContext.title}</TooltipContent>
+            </Tooltip>
             {(findingContext.resource || findingContext.provider) && (
-              <p className="text-text-neutral-secondary mt-1 text-xs">
+              <p className="text-text-neutral-secondary mt-1 truncate text-xs">
                 {[findingContext.resource, findingContext.provider]
                   .filter(Boolean)
                   .join(" · ")}
