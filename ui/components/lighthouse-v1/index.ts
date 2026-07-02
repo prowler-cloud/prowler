@@ -1,4 +1,3 @@
-export * from "./banner";
 export * from "./chat";
 export * from "./connect-llm-provider";
 export * from "./lighthouse-settings";
