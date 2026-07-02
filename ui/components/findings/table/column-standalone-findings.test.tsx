@@ -5,6 +5,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh: vi.fn() }),
 }));
 
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));

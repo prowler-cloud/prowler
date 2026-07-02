@@ -6,12 +6,15 @@ import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-ty
 import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { CustomLink } from "@/components/ui/custom/custom-link";
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageStatus,
+  getFindingTriageMuteInfoCopy,
   isMutelistShortcutStatus,
 } from "@/types/findings-triage";
 import type { ProviderType } from "@/types/providers";
@@ -37,10 +40,8 @@ interface FindingNoteModalProps {
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }
 
-const MUTELIST_INFO_COPY =
-  "This finding will be muted through the existing Mutelist flow.";
 const REMEDIATING_INFO_COPY =
-  "Once this finding is fixed and passes in the next scan, it will be automatically changed to Resolved.";
+  "Once this finding is remediated, if in the following scan its status changes to Pass, it will be automatically changed to Resolved";
 
 export function FindingNoteModal({
   open,
@@ -157,13 +158,20 @@ export function FindingNoteModal({
 
         {shouldShowMutelistInfo && (
           <Alert variant="warning">
-            <AlertDescription>{MUTELIST_INFO_COPY}</AlertDescription>
+            <AlertDescription>
+              {getFindingTriageMuteInfoCopy(selectedStatus)}
+            </AlertDescription>
           </Alert>
         )}
 
         {shouldShowRemediatingInfo && (
           <Alert variant="info">
-            <AlertDescription>{REMEDIATING_INFO_COPY}</AlertDescription>
+            <AlertDescription>
+              {REMEDIATING_INFO_COPY}.{" "}
+              <CustomLink href={DOCS_URLS.FINDINGS_TRIAGE} size="sm">
+                Learn more
+              </CustomLink>
+            </AlertDescription>
           </Alert>
         )}
 
@@ -184,10 +192,7 @@ export function FindingNoteModal({
             textareaSize="lg"
             onChange={(event) => setNote(event.target.value)}
           />
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-text-neutral-tertiary text-xs">
-              {triage.privacyCopy}
-            </p>
+          <div className="flex items-center justify-end">
             <p className="text-text-neutral-tertiary shrink-0 text-xs">
               {note.length}/{triage.maxNoteLength}
             </p>

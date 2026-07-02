@@ -18,6 +18,7 @@ import {
   type FindingTriageManualStatus,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  getFindingTriageMuteInfoCopy,
   isManualStatus,
   isMutelistShortcutStatus,
   type UpdateFindingTriageInput,
@@ -42,8 +43,6 @@ export const TRIAGE_STATUS_TEXT_CLASS = {
 } as const satisfies Record<FindingTriageStatus, string>;
 
 const MUTELIST_CONFIRMATION_TITLE = "Mute finding?";
-const MUTELIST_CONFIRMATION_COPY =
-  "Changing to this triage status will mute the finding.";
 
 function TriageStatusPicker({
   disabled,
@@ -194,7 +193,11 @@ export function FindingTriageStatusControl(
           }
         }}
         title={MUTELIST_CONFIRMATION_TITLE}
-        description={MUTELIST_CONFIRMATION_COPY}
+        description={
+          pendingShortcutStatus
+            ? getFindingTriageMuteInfoCopy(pendingShortcutStatus)
+            : undefined
+        }
         size="sm"
       >
         <div className="flex justify-end gap-2 pt-2">

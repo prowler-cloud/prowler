@@ -54,6 +54,9 @@ export const isMutelistShortcutStatus = (status: unknown): boolean => {
   );
 };
 
+export const getFindingTriageMuteInfoCopy = (status: FindingTriageStatus) =>
+  `Changing triage to ${FINDING_TRIAGE_STATUS_LABELS[status]} will mute the finding`;
+
 export const FINDING_TRIAGE_DISABLED_REASON = {
   CLOUD_ONLY: "cloud_only",
   FORBIDDEN: "forbidden",
@@ -69,8 +72,6 @@ export const FINDING_TRIAGE_ORIGIN = {
 } as const;
 
 export const FINDING_TRIAGE_NOTE_MAX_LENGTH = 500 as const;
-export const FINDING_TRIAGE_NOTE_PRIVACY_COPY =
-  "This note is only visible to your team." as const;
 export const FINDING_TRIAGE_BILLING_HREF =
   "https://prowler.com/pricing" as const;
 
@@ -92,7 +93,6 @@ export interface FindingTriageDetail extends FindingTriageSummary {
   noteId: string | null;
   noteBody: string;
   maxNoteLength: typeof FINDING_TRIAGE_NOTE_MAX_LENGTH;
-  privacyCopy: typeof FINDING_TRIAGE_NOTE_PRIVACY_COPY;
 }
 
 export interface UpdateFindingTriageInput {

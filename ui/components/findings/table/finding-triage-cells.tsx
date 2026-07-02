@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_ORIGIN,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
@@ -62,7 +61,6 @@ const getTriageDetailFromSummary = (
   noteId: loadedNote?.noteId ?? null,
   noteBody: loadedNote?.noteBody ?? "",
   maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
 });
 
 export function FindingTriageStatusCell({

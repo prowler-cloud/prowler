@@ -7,6 +7,13 @@ import type {
 } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/shadcn", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>

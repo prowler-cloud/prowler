@@ -8,14 +8,17 @@ vi.mock("@/components/shadcn/modal", () => ({
     children,
     open,
     title,
+    description,
   }: {
     children: ReactNode;
     open: boolean;
     title?: string;
+    description?: string;
   }) =>
     open ? (
       <div role="dialog" aria-label={title}>
         <h2>{title}</h2>
+        {description && <p>{description}</p>}
         {children}
       </div>
     ) : null,
@@ -25,6 +28,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+}));
+
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -659,6 +669,11 @@ describe("finding triage cells", () => {
 
     // Then: the user is warned before the server action handles muting.
     expect(screen.getByRole("dialog", { name: "Mute finding?" })).toBeVisible();
+    expect(
+      screen.getByText(
+        "Changing triage to False Positive will mute the finding",
+      ),
+    ).toBeVisible();
     expect(onTriageUpdateAction).not.toHaveBeenCalled();
 
     // When
