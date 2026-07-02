@@ -251,6 +251,44 @@ describe("FindingNoteModal", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  it("should lock the status picker for resolved findings while keeping the note editable", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    renderNoteModal({
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+      }),
+      onTriageUpdateAction,
+    });
+
+    // Then — automation owns the transition out of Resolved.
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Triage status is managed automatically once the finding is resolved.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeEnabled();
+
+    // When — the note itself can still be updated.
+    const textarea = screen.getByLabelText("Note text");
+    await user.clear(textarea);
+    await user.type(textarea, "Documenting the resolution.");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // Then
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Documenting the resolution." }),
+    );
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.not.objectContaining({ status: expect.anything() }),
+    );
+  });
+
   it("should render counter and cancel/update actions without privacy copy", async () => {
     // Given
     const user = userEvent.setup();

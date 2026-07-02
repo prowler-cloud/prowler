@@ -11,11 +11,13 @@ import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type FindingTriageStatus,
   getFindingTriageMuteInfoCopy,
   isMutelistShortcutStatus,
+  isTriageStatusLocked,
 } from "@/types/findings-triage";
 import type { ProviderType } from "@/types/providers";
 
@@ -69,6 +71,7 @@ export function FindingNoteModal({
     isMutelistShortcutStatus(selectedStatus);
   const shouldShowRemediatingInfo =
     selectedStatus === FINDING_TRIAGE_STATUS.REMEDIATING;
+  const isStatusLocked = isTriageStatusLocked(triage.status);
   // Opened from a dropdown item: move focus into the dialog on mount so Radix's
   // aria-hidden is not applied to the still-focused dropdown that opened it.
   const handleOpenAutoFocus = (event: Event) => {
@@ -155,6 +158,14 @@ export function FindingNoteModal({
             onValueChange={setSelectedStatus}
           />
         </div>
+
+        {isStatusLocked && (
+          <Alert variant="info">
+            <AlertDescription>
+              {FINDING_TRIAGE_RESOLVED_LOCKED_COPY}
+            </AlertDescription>
+          </Alert>
+        )}
 
         {shouldShowMutelistInfo && (
           <Alert variant="warning">

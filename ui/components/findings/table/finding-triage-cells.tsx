@@ -14,11 +14,13 @@ import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  isTriageStatusLocked,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -38,12 +40,19 @@ export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 const getDisabledCopy = ({
   triage,
   hasUpdateHandler,
+  lockResolved = false,
 }: {
   triage: FindingTriageSummary;
   hasUpdateHandler: boolean;
+  lockResolved?: boolean;
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
     return CLOUD_ONLY_TOOLTIP_COPY;
+  }
+
+  // Status-picker only: notes stay available on resolved findings.
+  if (lockResolved && isTriageStatusLocked(triage.status)) {
+    return FINDING_TRIAGE_RESOLVED_LOCKED_COPY;
   }
 
   if (triage.canEdit && !hasUpdateHandler) {
@@ -151,6 +160,7 @@ export function FindingTriageStatusCell({
   const disabledCopy = getDisabledCopy({
     triage,
     hasUpdateHandler: Boolean(onTriageUpdateAction),
+    lockResolved: true,
   });
   if (!disabledCopy) {
     return control;

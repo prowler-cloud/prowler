@@ -21,6 +21,7 @@ import {
   getFindingTriageMuteInfoCopy,
   isManualStatus,
   isMutelistShortcutStatus,
+  isTriageStatusLocked,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -117,7 +118,7 @@ export function FindingTriageStatusControl(
   if (props.origin === FINDING_TRIAGE_ORIGIN.MODAL) {
     return (
       <TriageStatusPicker
-        disabled={!triage.canEdit}
+        disabled={!triage.canEdit || isTriageStatusLocked(triage.status)}
         value={props.value}
         onValueChange={props.onValueChange}
       />
@@ -125,7 +126,10 @@ export function FindingTriageStatusControl(
   }
 
   const canMutateFromTable =
-    triage.canEdit && Boolean(props.onTriageUpdateAction) && !isTableUpdating;
+    triage.canEdit &&
+    Boolean(props.onTriageUpdateAction) &&
+    !isTableUpdating &&
+    !isTriageStatusLocked(triage.status);
 
   const applyTableStatus = async (status: FindingTriageManualStatus) => {
     if (!props.onTriageUpdateAction || status === triage.status) {

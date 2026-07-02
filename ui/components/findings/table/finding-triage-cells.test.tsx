@@ -244,6 +244,57 @@ describe("finding triage cells", () => {
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
   });
 
+  it("should lock the table status picker for resolved findings", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+
+    // When
+    await user.click(statusControl);
+
+    // Then — automation owns the transition out of Resolved.
+    expect(statusControl).toBeDisabled();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "Triage status is managed automatically once the finding is resolved.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+  });
+
+  it("should keep the note action available for resolved findings", () => {
+    // Given
+    render(
+      <FindingNoteActionItem
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          hasVisibleNote: false,
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then — the lock only applies to status transitions, not notes.
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
+  });
+
   it("should not open an editable empty-note modal for an existing note without a loader", async () => {
     // Given
     const user = userEvent.setup();

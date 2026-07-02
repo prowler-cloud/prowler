@@ -57,6 +57,14 @@ export const isMutelistShortcutStatus = (status: unknown): boolean => {
 export const getFindingTriageMuteInfoCopy = (status: FindingTriageStatus) =>
   `Changing triage to ${FINDING_TRIAGE_STATUS_LABELS[status]} will mute the finding`;
 
+// Only RESOLVED locks manual edits: automation owns the transition out of it
+// (REOPENED on a failing rescan), while REOPENED invites human re-triage.
+export const isTriageStatusLocked = (status: FindingTriageStatus): boolean =>
+  status === FINDING_TRIAGE_STATUS.RESOLVED;
+
+export const FINDING_TRIAGE_RESOLVED_LOCKED_COPY =
+  "Triage status is managed automatically once the finding is resolved." as const;
+
 export const FINDING_TRIAGE_DISABLED_REASON = {
   CLOUD_ONLY: "cloud_only",
   FORBIDDEN: "forbidden",
