@@ -7,6 +7,13 @@ import type {
 } from "react";
 import { describe, expect, it, vi } from "vitest";
 
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/shadcn", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
@@ -392,6 +399,38 @@ describe("column-finding-resources", () => {
       screen.getByRole("button", { name: "Triage status" }),
     ).toBeDisabled();
     expect(screen.getByText(EDITING_UNAVAILABLE_COPY)).toBeInTheDocument();
+  });
+
+  it("should keep the compact Triage label on resource cells for headerless nested rows", () => {
+    // Given
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 1,
+    });
+    const triageColumn = columns.find(
+      (col) => (col as { id?: string }).id === "triage",
+    );
+    if (!triageColumn?.cell) {
+      throw new Error("triage column not found");
+    }
+    const CellComponent = triageColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    // When
+    render(
+      <div>
+        {CellComponent({
+          row: {
+            original: makeResource({ triage: makeTriageSummary() }),
+          },
+        })}
+      </div>,
+    );
+
+    // Then — expanded finding-group rows render without a header row, so the
+    // cell itself must carry the label, like Service/Region/Last seen do.
+    expect(screen.getByText("Triage")).toBeInTheDocument();
   });
 
   it("should disable non-paying Cloud triage control with only-in-Cloud tooltip copy", () => {

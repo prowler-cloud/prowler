@@ -400,7 +400,6 @@ describe("adaptFindingTriageDetailResponse", () => {
         canEdit: true,
         noteBody: "Current note visible only inside the modal.",
         maxNoteLength: 500,
-        privacyCopy: "This note is only visible to your team.",
       }),
     );
   });

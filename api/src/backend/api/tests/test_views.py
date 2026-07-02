@@ -245,7 +245,7 @@ class TestUserViewSet:
         assert create_test_user.company_name == new_company_name
 
     def test_users_partial_update_same_tenant_other_user_password_denied(
-        self, authenticated_client, tenants_fixture
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
     ):
         original_password = "OriginalPassword123@"
         new_password = "UpdatedPassword123@"
@@ -262,7 +262,7 @@ class TestUserViewSet:
             },
         }
 
-        response = authenticated_client.patch(
+        response = authenticated_client_no_permissions_rbac.patch(
             reverse("user-detail", kwargs={"pk": target_user.id}),
             data=payload,
             content_type="application/vnd.api+json",
@@ -274,7 +274,7 @@ class TestUserViewSet:
         assert not target_user.check_password(new_password)
 
     def test_users_partial_update_same_tenant_other_user_email_denied(
-        self, authenticated_client, tenants_fixture
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
     ):
         original_email = "target-email-update@example.com"
         new_email = "updated-target-email@example.com"
@@ -291,7 +291,7 @@ class TestUserViewSet:
             },
         }
 
-        response = authenticated_client.patch(
+        response = authenticated_client_no_permissions_rbac.patch(
             reverse("user-detail", kwargs={"pk": target_user.id}),
             data=payload,
             content_type="application/vnd.api+json",

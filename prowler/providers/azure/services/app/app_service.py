@@ -22,8 +22,12 @@ class App(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                apps_list = client.web_apps.list()
                 apps.update({subscription_id: {}})
+                apps_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.web_apps.list,
+                    client.web_apps.list_by_resource_group,
+                )
 
                 for app in apps_list:
                     # Filter function apps
@@ -117,8 +121,12 @@ class App(AzureService):
 
         for subscription_id, client in self.clients.items():
             try:
-                functions_list = client.web_apps.list()
                 functions.update({subscription_id: {}})
+                functions_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.web_apps.list,
+                    client.web_apps.list_by_resource_group,
+                )
 
                 for function in functions_list:
                     # Filter function apps

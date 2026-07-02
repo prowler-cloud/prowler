@@ -9,16 +9,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_ORIGIN,
+  FINDING_TRIAGE_RESOLVED_LOCKED_COPY,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
   type FindingTriageLoadedNote,
   type FindingTriageStatus,
   type FindingTriageSummary,
+  isTriageStatusLocked,
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
@@ -29,6 +31,7 @@ import {
 import {
   FindingTriageStatusControl,
   type FindingTriageUpdateHandler,
+  TRIAGE_STATUS_TEXT_CLASS,
 } from "./finding-triage-status-control";
 
 export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
@@ -37,12 +40,19 @@ export const EDITING_UNAVAILABLE_COPY = "Editing is currently unavailable.";
 const getDisabledCopy = ({
   triage,
   hasUpdateHandler,
+  lockResolved = false,
 }: {
   triage: FindingTriageSummary;
   hasUpdateHandler: boolean;
+  lockResolved?: boolean;
 }): string | undefined => {
   if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
     return CLOUD_ONLY_TOOLTIP_COPY;
+  }
+
+  // Status-picker only: notes stay available on resolved findings.
+  if (lockResolved && isTriageStatusLocked(triage.status)) {
+    return FINDING_TRIAGE_RESOLVED_LOCKED_COPY;
   }
 
   if (triage.canEdit && !hasUpdateHandler) {
@@ -60,7 +70,6 @@ const getTriageDetailFromSummary = (
   noteId: loadedNote?.noteId ?? null,
   noteBody: loadedNote?.noteBody ?? "",
   maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
 });
 
 export function FindingTriageStatusCell({
@@ -151,6 +160,7 @@ export function FindingTriageStatusCell({
   const disabledCopy = getDisabledCopy({
     triage,
     hasUpdateHandler: Boolean(onTriageUpdateAction),
+    lockResolved: true,
   });
   if (!disabledCopy) {
     return control;
@@ -159,12 +169,33 @@ export function FindingTriageStatusCell({
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        {/* Block-level so the tooltip wrapper doesn't add inline baseline spacing
-            that would push the compact "Triage" label below the sibling columns. */}
+        {/* Block-level wrapper keeps the picker aligned with the sibling columns. */}
         <span className="flex">{control}</span>
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
+  );
+}
+
+// Read-only triage status indicator, e.g. for the side drawer header where the
+// editable picker would be out of place among the status/severity badges.
+export function FindingTriageStatusBadge({
+  triage,
+}: {
+  triage: FindingTriageSummary;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-text-neutral-tertiary text-xs">Triage:</span>
+      <span
+        className={cn(
+          "text-xs font-medium",
+          TRIAGE_STATUS_TEXT_CLASS[triage.status],
+        )}
+      >
+        {triage.label}
+      </span>
+    </div>
   );
 }
 
