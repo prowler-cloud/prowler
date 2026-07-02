@@ -317,6 +317,17 @@
     min-width: 100%;
     width: max-content;
   }
+
+  .lighthouse-markdown [data-streamdown="mermaid-block"] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  /* !important beats the inline max-width px that mermaid sets on the svg */
+  .lighthouse-markdown [data-streamdown="mermaid-block"] svg {
+    max-width: 100% !important;
+    height: auto;
+  }
 }
 
 /* ===== UTILITY LAYER ===== */

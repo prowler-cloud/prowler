@@ -26,6 +26,21 @@ vi.mock("streamdown", () => ({
       );
     }
 
+    if (text.includes("graph TD")) {
+      // Mirrors streamdown's real mermaid DOM: pan/zoom wrapper + inline max-width on the svg
+      return (
+        <div data-streamdown="mermaid-block">
+          <div className="my-4 overflow-hidden">
+            <div role="application">
+              <div aria-label="Mermaid chart" role="img">
+                <svg aria-hidden="true" style={{ maxWidth: "1024px" }} />
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return <>{children}</>;
   },
   defaultRehypePlugins: { katex: undefined, harden: undefined },
@@ -85,6 +100,30 @@ describe("MessageBubble", () => {
     );
     expect(markdown.parentElement?.parentElement?.parentElement).toHaveClass(
       "min-w-0",
+    );
+  });
+
+  it("keeps Mermaid diagrams inside the constrained markdown wrapper", () => {
+    // Given
+    const mermaidMessage = buildAssistantMessage([
+      textPart("part-1", "```mermaid\ngraph TD\n  A --> B\n```"),
+    ]);
+
+    // When
+    render(<MessageBubble message={mermaidMessage} />);
+
+    // Then
+    const mermaid = screen.getByRole("img", { name: "Mermaid chart" });
+    const markdown = mermaid.closest(".lighthouse-markdown");
+    if (!(markdown instanceof HTMLElement)) {
+      throw new Error("Expected markdown wrapper around Mermaid diagram");
+    }
+
+    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
+    expect(markdown.parentElement).toHaveClass("min-w-0");
+    expect(markdown.parentElement?.parentElement).toHaveClass(
+      "min-w-0",
+      "max-w-full",
     );
   });
 });
