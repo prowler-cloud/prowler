@@ -688,6 +688,7 @@ class TestLimitedVisibility:
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(
         self,
         authenticated_client_rbac_limited,
@@ -709,6 +710,7 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     @pytest.mark.parametrize(
         "endpoint_name",
         [
@@ -744,6 +746,7 @@ class TestLimitedVisibility:
         data = response.json()["data"]["attributes"].values()
         assert all(value == 0 for value in data)
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_services(
         self,
         authenticated_client_rbac_limited,
