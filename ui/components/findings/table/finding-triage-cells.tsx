@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
@@ -29,6 +30,7 @@ import {
 import {
   FindingTriageStatusControl,
   type FindingTriageUpdateHandler,
+  TRIAGE_STATUS_TEXT_CLASS,
 } from "./finding-triage-status-control";
 
 export const CLOUD_ONLY_TOOLTIP_COPY = "Available in Prowler Cloud";
@@ -164,6 +166,28 @@ export function FindingTriageStatusCell({
       </TooltipTrigger>
       <TooltipContent>{disabledCopy}</TooltipContent>
     </Tooltip>
+  );
+}
+
+// Read-only triage status indicator, e.g. for the side drawer header where the
+// editable picker would be out of place among the status/severity badges.
+export function FindingTriageStatusBadge({
+  triage,
+}: {
+  triage: FindingTriageSummary;
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <span className="text-text-neutral-tertiary text-xs">Triage:</span>
+      <span
+        className={cn(
+          "text-xs font-medium",
+          TRIAGE_STATUS_TEXT_CLASS[triage.status],
+        )}
+      >
+        {triage.label}
+      </span>
+    </div>
   );
 }
 

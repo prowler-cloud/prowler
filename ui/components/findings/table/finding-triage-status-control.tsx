@@ -31,7 +31,7 @@ type TriageStatusPickerSize = NonNullable<
   ComponentProps<typeof SelectTrigger>["size"]
 >;
 
-const TRIAGE_STATUS_TEXT_CLASS = {
+export const TRIAGE_STATUS_TEXT_CLASS = {
   open: "text-text-error-primary",
   under_review: "text-text-warning-primary",
   remediating: "text-bg-data-info",

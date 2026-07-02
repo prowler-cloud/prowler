@@ -66,6 +66,7 @@ import {
 
 import {
   FindingNoteActionItem,
+  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 
@@ -190,6 +191,22 @@ describe("finding triage cells", () => {
         "False Positive",
       ),
     ).toHaveClass("text-text-neutral-secondary");
+  });
+
+  it("renders a read-only triage status badge with the status color", () => {
+    // Given / When
+    render(
+      <FindingTriageStatusBadge
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.REMEDIATING,
+          label: "Remediating",
+        })}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Triage:")).toBeInTheDocument();
+    expect(screen.getByText("Remediating")).toHaveClass("text-bg-data-info");
   });
 
   it("should disable table status mutation when no update handler is wired", async () => {
