@@ -12,6 +12,7 @@ import {
   DrawerTitle,
 } from "@/components/shadcn";
 import type { FindingResourceRow } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -31,6 +32,7 @@ interface ResourceDetailDrawerProps {
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
+  onTriageUpdate?: (input: UpdateFindingTriageInput) => void;
 }
 
 export function ResourceDetailDrawer({
@@ -48,6 +50,7 @@ export function ResourceDetailDrawer({
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
+  onTriageUpdate,
 }: ResourceDetailDrawerProps) {
   return (
     <Drawer direction="right" open={open} onOpenChange={onOpenChange}>
@@ -76,6 +79,7 @@ export function ResourceDetailDrawer({
             onNavigatePrev={onNavigatePrev}
             onNavigateNext={onNavigateNext}
             onMuteComplete={onMuteComplete}
+            onTriageUpdate={onTriageUpdate}
           />
         )}
       </DrawerContent>

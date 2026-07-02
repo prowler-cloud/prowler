@@ -39,8 +39,8 @@ Pipeline steps:
 
 7. Sync the temp database into the tenant database:
    - Drop the old provider subgraph (matched by dynamic _Provider_{uuid} label).
-     graph_data_ready is set to False for all scans of this provider while
-     the swap happens so the API doesn't serve partial data.
+     graph_data_ready is set to False for scans of this provider in the
+     target sink while the swap happens so the API doesn't serve partial data.
    - Copy nodes and relationships in batches. Every synced node gets a
      _ProviderResource label and dynamic _Tenant_{uuid} / _Provider_{uuid}
      isolation labels, plus a _provider_element_id property for MERGE keys.
@@ -64,10 +64,17 @@ from api.models import StateChoices
 from api.utils import initialize_prowler_provider
 from cartography.config import Config as CartographyConfig
 from cartography.intel import analysis as cartography_analysis
-from cartography.intel import create_indexes as cartography_create_indexes
 from cartography.intel import ontology as cartography_ontology
 from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths import db_utils, findings, indexes, internet, sync, utils
+from django.conf import settings
+from tasks.jobs.attack_paths import (
+    db_utils,
+    findings,
+    indexes,
+    internet,
+    sync,
+    utils,
+)
 from tasks.jobs.attack_paths.config import get_cartography_ingestion_function
 
 # Without this Celery goes crazy with Cartography logging
@@ -96,7 +103,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     attack_paths_scan = db_utils.retrieve_attack_paths_scan(tenant_id, scan_id)
 
     # Idempotency guard: cleanup may have flipped this row to a terminal state
-    # while the message was still in flight. Bail out before touching state.
+    # while the message was still in flight. Bail out before touching state
     if attack_paths_scan and attack_paths_scan.state in (
         StateChoices.FAILED,
         StateChoices.COMPLETED,
@@ -125,7 +132,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     else:
         if not attack_paths_scan:
-            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row.
+            # Safety net for in-flight messages or direct task invocations; dispatcher normally pre-creates the row
             logger.warning(
                 f"No Attack Paths Scan found for scan {scan_id} and tenant {tenant_id}, let's create it then"
             )
@@ -143,10 +150,18 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     tenant_database_name = graph_database.get_database_name(
         prowler_api_provider.tenant_id
     )
+    target_sink_backend = settings.ATTACK_PATHS_SINK_DATABASE
+    target_description = (
+        f"tenant Neo4j database {tenant_database_name}"
+        if target_sink_backend == "neo4j"
+        else f"{target_sink_backend} sink"
+    )
 
     # While creating the Cartography configuration, attributes `neo4j_user` and `neo4j_password` are not really needed in this config object
     tmp_cartography_config = CartographyConfig(
-        neo4j_uri=graph_database.get_uri(),
+        # The temp ingest database is always Neo4j, so use the ingest URI here
+        # rather than the sink URI (which points at Neptune when configured).
+        neo4j_uri=graph_database.get_ingest_uri(),
         neo4j_database=tmp_database_name,
         update_tag=int(time.time()),
     )
@@ -155,6 +170,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         neo4j_database=tenant_database_name,
         update_tag=tmp_cartography_config.update_tag,
     )
+
+    graph_database.verify_scan_databases_available()
 
     # Starting the Attack Paths scan
     if not db_utils.starting_attack_paths_scan(
@@ -168,7 +185,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
     scan_t0 = time.perf_counter()
     logger.info(
         f"Starting Attack Paths scan ({attack_paths_scan.id}) for "
-        f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id}"
+        f"{prowler_api_provider.provider.upper()} provider {prowler_api_provider.id} "
+        f"(staging=Neo4j database {tmp_database_name}, target={target_description})"
     )
 
     subgraph_dropped = False
@@ -177,7 +195,8 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     try:
         logger.info(
-            f"Creating Neo4j database {tmp_cartography_config.neo4j_database} for tenant {prowler_api_provider.tenant_id}"
+            f"Creating staging Neo4j database {tmp_cartography_config.neo4j_database} "
+            f"for tenant {prowler_api_provider.tenant_id}"
         )
 
         graph_database.create_database(tmp_cartography_config.neo4j_database)
@@ -191,7 +210,9 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             tmp_cartography_config.neo4j_database
         ) as tmp_neo4j_session:
             # Indexes creation
-            cartography_create_indexes.run(tmp_neo4j_session, tmp_cartography_config)
+            indexes.create_cartography_indexes(
+                tmp_neo4j_session, tmp_cartography_config
+            )
             indexes.create_findings_indexes(tmp_neo4j_session)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 2)
 
@@ -223,7 +244,7 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             cartography_analysis.run(tmp_neo4j_session, tmp_cartography_config)
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 95)
 
-            # Creating Internet node and CAN_ACCESS relationships
+            # Creating Internet node and `CAN_ACCESS` relationships
             logger.info(
                 f"Creating Internet graph for AWS account {prowler_api_provider.uid}"
             )
@@ -247,23 +268,41 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.update_attack_paths_scan_progress(attack_paths_scan, 97)
 
         logger.info(
-            f"Clearing Neo4j cache for database {tmp_cartography_config.neo4j_database}"
+            f"Clearing Neo4j cache for staging database {tmp_cartography_config.neo4j_database}"
         )
         graph_database.clear_cache(tmp_cartography_config.neo4j_database)
 
+        t0 = time.perf_counter()
         logger.info(
-            f"Ensuring tenant database {tenant_database_name}, and its indexes, exists for tenant {prowler_api_provider.tenant_id}"
+            f"Preparing target {target_description} for tenant {prowler_api_provider.tenant_id}"
         )
         graph_database.create_database(tenant_database_name)
-        with graph_database.get_session(tenant_database_name) as tenant_neo4j_session:
-            cartography_create_indexes.run(
-                tenant_neo4j_session, tenant_cartography_config
-            )
-            indexes.create_findings_indexes(tenant_neo4j_session)
-            indexes.create_sync_indexes(tenant_neo4j_session)
+        # Sink-side index creation: Neptune auto-manages indexes and rejects
+        # `CREATE INDEX`, so only run it when the sink is Neo4j
+        # The temp ingest DB is always Neo4j and is always indexed above
+        if target_sink_backend != "neptune":
+            logger.info(f"Ensuring indexes exist for {target_description}")
+            with graph_database.get_session(
+                tenant_database_name
+            ) as tenant_neo4j_session:
+                indexes.create_cartography_indexes(
+                    tenant_neo4j_session, tenant_cartography_config
+                )
+                indexes.create_findings_indexes(tenant_neo4j_session)
+                indexes.create_sync_indexes(tenant_neo4j_session)
+        else:
+            logger.info("Skipping tenant database indexes for neptune sink")
+        logger.info(
+            f"Prepared target {target_description} in {time.perf_counter() - t0:.3f}s"
+        )
 
-        logger.info(f"Deleting existing provider graph in {tenant_database_name}")
-        db_utils.set_provider_graph_data_ready(attack_paths_scan, False)
+        logger.info(
+            f"Deleting existing provider graph from {target_description} "
+            f"(tenant={prowler_api_provider.tenant_id}, provider={prowler_api_provider.id})"
+        )
+        db_utils.set_provider_graph_data_ready(
+            attack_paths_scan, False, target_sink_backend
+        )
         provider_gated = True
 
         t0 = time.perf_counter()
@@ -272,14 +311,17 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             provider_id=str(prowler_api_provider.id),
         )
         logger.info(
-            f"Deleted existing provider graph in {time.perf_counter() - t0:.3f}s "
-            f"(deleted_nodes={deleted_nodes})"
+            f"Deleted existing provider graph from {target_description} "
+            f"in {time.perf_counter() - t0:.3f}s (deleted_nodes={deleted_nodes})"
         )
         subgraph_dropped = True
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 98)
 
         logger.info(
-            f"Syncing graph from {tmp_database_name} into {tenant_database_name}"
+            f"Syncing staging graph {tmp_database_name} into {target_description} "
+            f"for provider {prowler_api_provider.id} "
+            f"(tenant {prowler_api_provider.tenant_id}, "
+            f"type {prowler_api_provider.provider})"
         )
         t0 = time.perf_counter()
         sync_result = sync.sync_graph(
@@ -287,17 +329,34 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             target_database=tenant_database_name,
             tenant_id=str(prowler_api_provider.tenant_id),
             provider_id=str(prowler_api_provider.id),
+            provider_type=prowler_api_provider.provider,
         )
+        elapsed = time.perf_counter() - t0
+        total_nodes = sync_result["nodes"] + sync_result["child_nodes"]
+        elements = total_nodes + sync_result["relationships"]
+        rate = elements / elapsed if elapsed else 0
         logger.info(
-            f"Synced graph in {time.perf_counter() - t0:.3f}s "
-            f"(nodes={sync_result['nodes']}, relationships={sync_result['relationships']})"
+            f"Synced staging graph into {target_description} in {elapsed:.3f}s - "
+            f"nodes={total_nodes} (source={sync_result['nodes']}, "
+            f"items={sync_result['child_nodes']}), "
+            f"relationships={sync_result['relationships']} "
+            f"(structural={sync_result['structural_relationships']}, "
+            f"items={sync_result['item_relationships']}), "
+            f"~{rate:.0f} elem/s"
         )
         sync_completed = True
+        # Flip metadata only now: the new schema is live in the target sink, so
+        # reads can switch to the current catalog/backend. The target-sink gate
+        # is already closed, so the switch is atomic from the API's view.
+        db_utils.set_scan_migrated(attack_paths_scan, True, target_sink_backend)
         db_utils.set_graph_data_ready(attack_paths_scan, True)
         db_utils.update_attack_paths_scan_progress(attack_paths_scan, 99)
 
-        logger.info(f"Clearing Neo4j cache for database {tenant_database_name}")
-        graph_database.clear_cache(tenant_database_name)
+        if target_sink_backend == "neptune":
+            logger.info("Skipping cache clear for neptune sink")
+        else:
+            logger.info(f"Clearing Neo4j cache for target {target_description}")
+            graph_database.clear_cache(tenant_database_name)
 
         logger.info(f"Dropping temporary Neo4j database {tmp_database_name}")
         graph_database.drop_database(tmp_database_name)
@@ -316,14 +375,16 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
         logger.exception(exception_message)
         ingestion_exceptions["global_error"] = exception_message
 
-        # Recover graph_data_ready based on how far the swap got.
-        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False`
-        # with data partially deleted, so we prefer that over permanently blocked queries.
+        # Recover `graph_data_ready` based on how far the swap got
+        # Partial drop (mid-batch failure) may leave `subgraph_dropped=False` with data partially deleted,
+        # so we prefer that over permanently blocked queries
         try:
             if sync_completed:
                 db_utils.set_graph_data_ready(attack_paths_scan, True)
             elif provider_gated and not subgraph_dropped:
-                db_utils.set_provider_graph_data_ready(attack_paths_scan, True)
+                db_utils.set_provider_graph_data_ready(
+                    attack_paths_scan, True, target_sink_backend
+                )
 
         except Exception:
             logger.error(

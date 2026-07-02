@@ -924,6 +924,14 @@
         "cloudsql_instance_automated_backups",
         "cloudstorage_bucket_log_retention_policy_lock",
         "cloudstorage_bucket_sufficient_retention_period"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudstorage_bucket_sufficient_retention_period",
+          "ConfigKey": "storage_min_retention_days",
+          "Operator": "gte",
+          "Value": 30
+        }
       ]
     },
     {
@@ -5841,6 +5849,20 @@
       "Checks": [
         "iam_sa_user_managed_key_unused",
         "iam_service_account_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_sa_user_managed_key_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_service_account_unused",
+          "ConfigKey": "max_unused_account_days",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {

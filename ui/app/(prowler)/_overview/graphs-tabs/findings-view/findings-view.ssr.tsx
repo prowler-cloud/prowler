@@ -5,7 +5,7 @@ import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";
 import { DataTable } from "@/components/ui/table";
-import { FINDINGS_FILTERED_SORT } from "@/lib";
+import { FINDINGS_FILTERED_SORT, MUTED_FILTER } from "@/lib";
 import { createDict } from "@/lib/helper";
 import { FindingProps, SearchParamsProps } from "@/types";
 
@@ -22,6 +22,7 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
   const defaultFilters = {
     "filter[status]": "FAIL",
     "filter[delta]": "new",
+    "filter[muted]": MUTED_FILTER.EXCLUDE,
   };
 
   const filters = pickFilterParams(searchParams);

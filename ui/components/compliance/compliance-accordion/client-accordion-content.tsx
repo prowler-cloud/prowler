@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -8,9 +9,11 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { Alert, AlertDescription } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
+import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { Requirement } from "@/types/compliance";
 import { FindingProps, FindingsResponse } from "@/types/components";
@@ -199,6 +202,13 @@ export const ClientAccordionContent = ({
 
   return (
     <div className="w-full">
+      {requirement.invalid_config && (
+        <Alert variant="warning" className="mb-3">
+          <AlertTriangle />
+          <AlertDescription>{INVALID_CONFIG_NOTE}</AlertDescription>
+        </Alert>
+      )}
+
       {renderDetails()}
 
       {checks.length > 0 && (

@@ -1,8 +1,10 @@
 import { Suspense } from "react";
 
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { ContentLayout } from "@/components/ui";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
@@ -42,15 +44,18 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const [providersData, lighthouseBannerHref] = await Promise.all([
-    getAllProviders(),
-    getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
-  ]);
+  const [providersData, providerGroupsData, lighthouseBannerHref] =
+    await Promise.all([
+      getAllProviders(),
+      getAllProviderGroups(),
+      getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
+    ]);
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
+        <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
       {lighthouseBannerHref ? (

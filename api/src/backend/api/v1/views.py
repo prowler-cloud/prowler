@@ -50,6 +50,7 @@ from api.filters import (
     FindingGroupAggregatedComputedFilter,
     FindingGroupFilter,
     FindingGroupSummaryFilter,
+    FindingMetadataFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -1888,8 +1889,8 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         description=(
             "Download a specific compliance report as an OCSF JSON file. "
             "Only universal frameworks that declare an output configuration "
-            "produce this artifact (currently 'dora_2022_2554' and 'csa_ccm_4.0'); any "
-            "other framework returns 404."
+            "produce this artifact (currently 'dora_2022_2554', 'csa_ccm_4.0' "
+            "and 'cis_controls_8.1'); any other framework returns 404."
         ),
         parameters=[
             OpenApiParameter(
@@ -2876,13 +2877,22 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        active_sink_backend = django_settings.ATTACK_PATHS_SINK_DATABASE
 
         latest_per_provider = queryset.annotate(
+            active_sink_rank=Case(
+                When(sink_backend=active_sink_backend, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
             latest_scan_rank=Window(
                 expression=RowNumber(),
                 partition_by=[F("provider_id")],
-                order_by=[F("inserted_at").desc()],
-            )
+                order_by=[
+                    F("active_sink_rank").asc(),
+                    F("inserted_at").desc(),
+                ],
+            ),
         ).filter(latest_scan_rank=1)
 
         page = self.paginate_queryset(latest_per_provider)
@@ -2909,7 +2919,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        queries = get_queries_for_provider(
+            attack_paths_scan.provider.provider,
+            is_migrated=attack_paths_scan.is_migrated,
+        )
 
         if not queries:
             return Response(
@@ -2942,7 +2956,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-        query_definition = get_query_by_id(serializer.validated_data["id"])
+        # TODO: drop the is_migrated argument after Neptune cutover
+        query_definition = get_query_by_id(
+            serializer.validated_data["id"],
+            is_migrated=attack_paths_scan.is_migrated,
+        )
         if (
             query_definition is None
             or query_definition.provider != attack_paths_scan.provider.provider
@@ -2968,6 +2986,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3035,6 +3054,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3091,7 +3111,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         provider_id = str(attack_paths_scan.provider_id)
 
         schema = attack_paths_views_helpers.get_cartography_schema(
-            database_name, provider_id
+            database_name, provider_id, attack_paths_scan
         )
         if not schema:
             return Response(
@@ -3814,6 +3834,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action in ["latest", "metadata_latest"]:
             return LatestFindingFilter
+        if self.action == "metadata":
+            return FindingMetadataFilter
         return FindingFilter
 
     def get_queryset(self):

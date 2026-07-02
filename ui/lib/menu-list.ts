@@ -8,6 +8,7 @@ import {
   Puzzle,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
@@ -105,6 +106,19 @@ export const getMenuList = ({
       groupLabel: "",
       menus: [
         {
+          href: "/scans",
+          label: "Scans",
+          icon: Timer,
+          // Exact match so it isn't also marked active on the `/scans/config`
+          // sub-route (mirrors the top-level Lighthouse entry).
+          active: pathname === "/scans",
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
           href: "/resources",
           label: "Resources",
           icon: Warehouse,
@@ -135,9 +149,16 @@ export const getMenuList = ({
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            { href: "/scans", label: "Scan Jobs", icon: Timer },
+            {
+              href: "/scans/config",
+              label: "Scan",
+              icon: SlidersHorizontal,
+              active: isCloudEnv && pathname.startsWith("/scans/config"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/roles", label: "Roles", icon: UserCog },
             { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
@@ -154,6 +175,7 @@ export const getMenuList = ({
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
+            { href: "/roles", label: "Roles", icon: UserCog },
           ],
           defaultOpen: false,
         },

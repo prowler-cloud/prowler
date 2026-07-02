@@ -109,6 +109,48 @@ describe("getMenuList", () => {
     );
   });
 
+  it("should show Scan as disabled Cloud-only in OSS when Cloud is disabled", () => {
+    // Given / When
+    const scanConfig = findSubmenu("Scan");
+
+    // Then
+    expect(scanConfig).toEqual(
+      expect.objectContaining({
+        href: "/scans/config",
+        disabled: true,
+        cloudOnly: true,
+        highlight: true,
+        active: false,
+      }),
+    );
+  });
+
+  it("should show Scan as new under Configuration when Cloud is enabled", () => {
+    // Given
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
+
+    // When
+    const menus = getMenuList({ pathname: "/scans/config" }).flatMap(
+      (group) => group.menus,
+    );
+    const scanConfig = menus
+      .flatMap((menu) => menu.submenus ?? [])
+      .find((submenu) => submenu.label === "Scan");
+    const scans = menus.find((menu) => menu.label === "Scans");
+
+    // Then
+    expect(scanConfig).toEqual(
+      expect.objectContaining({
+        href: "/scans/config",
+        active: true,
+        highlight: true,
+      }),
+    );
+    // The top-level Scans item uses an exact-match active rule, so it must stay
+    // inactive on the `/scans/config` sub-route.
+    expect(scans).toEqual(expect.objectContaining({ active: false }));
+  });
+
   it("should remove the new highlight from Attack Paths", () => {
     // Given / When
     const attackPaths = findMenu("Attack Paths");

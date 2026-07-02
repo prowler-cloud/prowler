@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
+import {
+  SCANS_PROVIDER_FILTER_FIELD,
+  type ScansFilterParam,
+} from "@/actions/scans/scans-filters";
 import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
@@ -28,7 +33,6 @@ import {
 } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
-  FilterType,
   ProviderProps,
   SCAN_JOBS_TAB,
   SCAN_TRIGGER,
@@ -41,29 +45,22 @@ import {
 } from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
-// Pending schedule rows must honor the same provider filters as real scan rows.
-// The `__in` keys reuse the shared FilterType; the singular variants have no
-// FilterType equivalent, so they stay as literals.
-const PENDING_ROW_PROVIDER_FILTER = {
-  PROVIDER_IN: FilterType.PROVIDER,
-  PROVIDER: "provider",
-  PROVIDER_TYPE_IN: FilterType.PROVIDER_TYPE,
-  PROVIDER_TYPE: "provider_type",
-} as const;
-
-type PendingRowProviderFilter =
-  (typeof PENDING_ROW_PROVIDER_FILTER)[keyof typeof PENDING_ROW_PROVIDER_FILTER];
-type PendingRowProviderFilterParam = `filter[${PendingRowProviderFilter}]`;
-
+// Pending schedule rows are derived from provider schedules, but must honor the
+// same provider filters as real scan rows. The filter keys live with the scans
+// action (SCANS_PROVIDER_FILTER_FIELD) so they stay in sync with ScansFilterParam.
 const PROVIDER_ID_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const PROVIDER_TYPE_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
+
+const PROVIDER_GROUP_FILTER_KEYS = [
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_GROUPS_IN}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const getFilterSearchQuery = (
   filters: Record<string, string | string[]>,
@@ -86,7 +83,7 @@ const parseCsvParam = (value?: string | string[]): string[] => {
 
 const getFirstSearchParam = (
   searchParams: SearchParamsProps,
-  keys: ReadonlyArray<PendingRowProviderFilterParam>,
+  keys: ReadonlyArray<ScansFilterParam>,
 ): string | string[] | undefined => {
   for (const key of keys) {
     const value = searchParams[key];
@@ -107,11 +104,18 @@ const filterProvidersForPendingRows = (
   const types = parseCsvParam(
     getFirstSearchParam(searchParams, PROVIDER_TYPE_FILTER_KEYS),
   );
+  const groups = parseCsvParam(
+    getFirstSearchParam(searchParams, PROVIDER_GROUP_FILTER_KEYS),
+  );
 
   return providers.filter(
     (provider) =>
       (ids.length === 0 || ids.includes(provider.id)) &&
-      (types.length === 0 || types.includes(provider.attributes.provider)),
+      (types.length === 0 || types.includes(provider.attributes.provider)) &&
+      (groups.length === 0 ||
+        (provider.relationships?.provider_groups?.data ?? []).some((group) =>
+          groups.includes(group.id),
+        )),
   );
 };
 
@@ -177,8 +181,12 @@ export default async function Scans({
   const session = await auth();
   const resolvedSearchParams = await searchParams;
 
-  const providersData = await getAllProviders();
+  const [providersData, providerGroupsData] = await Promise.all([
+    getAllProviders(),
+    getAllProviderGroups(),
+  ]);
   const providers = providersData?.data ?? [];
+  const providerGroups = providerGroupsData?.data ?? [];
 
   const connectedProviders = providers.filter(
     (provider: ProviderProps) =>
@@ -213,7 +221,7 @@ export default async function Scans({
 
   return (
     <ContentLayout
-      title="Scan Jobs"
+      title="Scans"
       icon="lucide:timer"
       onboardingAction={onboardingAction}
     >
@@ -229,6 +237,7 @@ export default async function Scans({
       ) : (
         <ScansPageShell
           providers={providers}
+          providerGroups={providerGroups}
           hasManageScansPermission={hasManageScansPermission}
           activeScanCount={activeScanCount}
         >
