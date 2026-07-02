@@ -25,6 +25,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - AWS Bedrock AgentCore privilege escalation paths in the IAM privilege escalation checks, covering Runtime, Harness, Code Interpreter and Custom Browser [(#11726)](https://github.com/prowler-cloud/prowler/pull/11726)
 - `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - `apigateway_restapi_no_secrets_in_stage_variables` check for AWS provider, scanning API Gateway REST API stage variables for hardcoded secrets such as passwords, API keys, and tokens [(#11188)](https://github.com/prowler-cloud/prowler/pull/11188)
+- `s3_bucket_object_public` check for AWS provider, spot-checking a configurable sample of object ACLs in each bucket and flagging objects granted to the AllUsers or AuthenticatedUsers groups; disabled by default and opted into via the `s3_bucket_object_public_enabled` configuration option [(#9517)](https://github.com/prowler-cloud/prowler/pull/9517)
 
 ### 🔄 Changed
 

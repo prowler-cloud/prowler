@@ -1,11 +1,12 @@
-import random
-
-from botocore.exceptions import ClientError
-
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.s3.s3_client import s3_client
 
-ALL_USERS_URI = "http://acs.amazonaws.com/groups/global/AllUsers"
+# ACL grantee groups that make an object effectively public. AllUsers is anyone on
+# the internet; AuthenticatedUsers is any authenticated AWS principal (any account).
+PUBLIC_ACL_URIS = {
+    "http://acs.amazonaws.com/groups/global/AllUsers",
+    "http://acs.amazonaws.com/groups/global/AuthenticatedUsers",
+}
 
 
 class s3_bucket_object_public(Check):
@@ -15,51 +16,47 @@ class s3_bucket_object_public(Check):
         if not s3_client.audit_config.get("s3_bucket_object_public_enabled", False):
             return findings
 
-        max_objects = s3_client.audit_config.get(
-            "s3_bucket_object_public_max_objects", 100
-        )
-        sample_size = s3_client.audit_config.get(
-            "s3_bucket_object_public_sample_size", 3
-        )
-
         for bucket in s3_client.buckets.values():
+            sampling = bucket.object_sampling
+            # Sampling is populated by the service layer only when the check is
+            # enabled; skip any bucket that was not sampled.
+            if sampling is None or not sampling.performed:
+                continue
+
             report = Check_Report_AWS(metadata=self.metadata(), resource=bucket)
 
-            try:
-                regional_client = s3_client.regional_clients[bucket.region]
-                objects = regional_client.list_objects_v2(
-                    Bucket=bucket.name, MaxKeys=max_objects
-                )
+            if sampling.error_code is not None:
+                report.status = "MANUAL"
+                if sampling.error_code == "AccessDenied":
+                    report.status_extended = (
+                        f"Access Denied when spot-checking objects in bucket "
+                        f"{bucket.name}."
+                    )
+                else:
+                    report.status_extended = (
+                        f"Could not spot-check objects in bucket {bucket.name}: "
+                        f"{sampling.error_message}."
+                    )
+            elif sampling.is_empty:
+                report.status = "PASS"
+                report.status_extended = f"S3 Bucket {bucket.name} is empty."
+            else:
+                public_objects = [
+                    obj.key
+                    for obj in sampling.objects
+                    if any(
+                        grantee.type == "Group" and grantee.URI in PUBLIC_ACL_URIS
+                        for grantee in obj.grantees
+                    )
+                ]
+                sampled = len(sampling.objects)
 
-                contents = objects.get("Contents", [])
-                if not contents:
-                    report.status = "PASS"
-                    report.status_extended = f"S3 Bucket {bucket.name} is empty."
-                    findings.append(report)
-                    continue
-
-                all_keys = [obj["Key"] for obj in contents]
-                sample_keys = random.sample(all_keys, min(len(all_keys), sample_size))
-                sampled = len(sample_keys)
-
-                public_objects_found = []
-                for key in sample_keys:
-                    acl = regional_client.get_object_acl(Bucket=bucket.name, Key=key)
-                    for grant in acl.get("Grants", []):
-                        grantee = grant.get("Grantee", {})
-                        if (
-                            grantee.get("Type") == "Group"
-                            and grantee.get("URI") == ALL_USERS_URI
-                        ):
-                            public_objects_found.append(key)
-                            break
-
-                if public_objects_found:
+                if public_objects:
                     report.status = "FAIL"
                     report.status_extended = (
                         f"S3 Bucket {bucket.name} has public objects detected in "
                         f"spot-check sample of {sampled} objects: "
-                        f"{', '.join(public_objects_found)}."
+                        f"{', '.join(public_objects)}."
                     )
                 else:
                     report.status = "PASS"
@@ -68,19 +65,6 @@ class s3_bucket_object_public(Check):
                         f"{sampled} objects in bucket {bucket.name}. For complete "
                         f"assurance, ensure ACLs are disabled via Object Ownership "
                         f"settings."
-                    )
-
-            except ClientError as error:
-                report.status = "MANUAL"
-                if error.response["Error"]["Code"] == "AccessDenied":
-                    report.status_extended = (
-                        f"Access Denied when spot-checking objects in bucket "
-                        f"{bucket.name}."
-                    )
-                else:
-                    report.status_extended = (
-                        f"Could not spot-check objects in bucket {bucket.name}: "
-                        f"{error}."
                     )
 
             findings.append(report)

@@ -10,6 +10,12 @@ CHECK_MODULE = (
     "prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public"
 )
 
+ENABLED_CONFIG = {
+    "s3_bucket_object_public_enabled": True,
+    "s3_bucket_object_public_max_objects": 100,
+    "s3_bucket_object_public_sample_size": 3,
+}
+
 
 class Test_s3_bucket_object_public:
     @mock_aws
@@ -19,6 +25,7 @@ class Test_s3_bucket_object_public:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
+        # No audit_config -> check disabled by default
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with mock.patch(
@@ -37,10 +44,11 @@ class Test_s3_bucket_object_public:
                 assert result == []
 
     @mock_aws
-    def test_bucket_empty_passes(self):
+    def test_service_does_not_sample_when_disabled(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
-        bucket_name = "bucket-empty"
+        bucket_name = "bucket-not-sampled"
         s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+        s3_client_us_east_1.put_object(Bucket=bucket_name, Key="a.txt", Body=b"x")
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
@@ -51,11 +59,26 @@ class Test_s3_bucket_object_public:
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
-            s3_service.audit_config = {
-                "s3_bucket_object_public_enabled": True,
-                "s3_bucket_object_public_max_objects": 100,
-                "s3_bucket_object_public_sample_size": 3,
-            }
+            bucket = next(iter(s3_service.buckets.values()))
+            assert bucket.object_sampling is None
+
+    @mock_aws
+    def test_bucket_empty_passes(self):
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket-empty"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            s3_service = S3(aws_provider)
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
                     s3_bucket_object_public,
@@ -86,18 +109,15 @@ class Test_s3_bucket_object_public:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
-            s3_service.audit_config = {
-                "s3_bucket_object_public_enabled": True,
-                "s3_bucket_object_public_max_objects": 100,
-                "s3_bucket_object_public_sample_size": 3,
-            }
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
                     s3_bucket_object_public,
@@ -130,18 +150,15 @@ class Test_s3_bucket_object_public:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
-            s3_service.audit_config = {
-                "s3_bucket_object_public_enabled": True,
-                "s3_bucket_object_public_max_objects": 100,
-                "s3_bucket_object_public_sample_size": 3,
-            }
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
                     s3_bucket_object_public,
@@ -159,6 +176,40 @@ class Test_s3_bucket_object_public:
                 ) in result[0].status_extended
 
     @mock_aws
+    def test_bucket_with_authenticated_users_object_fails(self):
+        s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
+        bucket_name = "bucket-authenticated-object"
+        public_key = "authenticated.txt"
+        s3_client_us_east_1.create_bucket(Bucket=bucket_name)
+        s3_client_us_east_1.put_object(Bucket=bucket_name, Key=public_key, Body=b"x")
+        s3_client_us_east_1.put_object_acl(
+            Bucket=bucket_name, Key=public_key, ACL="authenticated-read"
+        )
+
+        from prowler.providers.aws.services.s3.s3_service import S3
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
+
+        with mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ):
+            s3_service = S3(aws_provider)
+            with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
+                from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
+                    s3_bucket_object_public,
+                )
+
+                check = s3_bucket_object_public()
+                result = check.execute()
+
+                assert len(result) == 1
+                assert result[0].status == "FAIL"
+                assert public_key in result[0].status_extended
+
+    @mock_aws
     def test_access_denied_on_list_objects_reports_manual(self):
         s3_client_us_east_1 = client("s3", region_name=AWS_REGION_US_EAST_1)
         bucket_name = "bucket-access-denied"
@@ -166,25 +217,27 @@ class Test_s3_bucket_object_public:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
-            s3_service.audit_config = {
-                "s3_bucket_object_public_enabled": True,
-                "s3_bucket_object_public_max_objects": 100,
-                "s3_bucket_object_public_sample_size": 3,
-            }
 
+            # Simulate AccessDenied when sampling and re-run sampling for the bucket
             regional_client = mock.MagicMock()
+            regional_client.region = AWS_REGION_US_EAST_1
             regional_client.list_objects_v2.side_effect = ClientError(
                 {"Error": {"Code": "AccessDenied", "Message": "denied"}},
                 "ListObjectsV2",
             )
             s3_service.regional_clients[AWS_REGION_US_EAST_1] = regional_client
+            bucket = next(iter(s3_service.buckets.values()))
+            bucket.object_sampling = None
+            s3_service._get_public_objects(bucket)
 
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
@@ -209,25 +262,26 @@ class Test_s3_bucket_object_public:
 
         from prowler.providers.aws.services.s3.s3_service import S3
 
-        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config=ENABLED_CONFIG
+        )
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
             s3_service = S3(aws_provider)
-            s3_service.audit_config = {
-                "s3_bucket_object_public_enabled": True,
-                "s3_bucket_object_public_max_objects": 100,
-                "s3_bucket_object_public_sample_size": 3,
-            }
 
             regional_client = mock.MagicMock()
+            regional_client.region = AWS_REGION_US_EAST_1
             regional_client.list_objects_v2.side_effect = ClientError(
                 {"Error": {"Code": "InternalError", "Message": "boom"}},
                 "ListObjectsV2",
             )
             s3_service.regional_clients[AWS_REGION_US_EAST_1] = regional_client
+            bucket = next(iter(s3_service.buckets.values()))
+            bucket.object_sampling = None
+            s3_service._get_public_objects(bucket)
 
             with mock.patch(f"{CHECK_MODULE}.s3_client", new=s3_service):
                 from prowler.providers.aws.services.s3.s3_bucket_object_public.s3_bucket_object_public import (
