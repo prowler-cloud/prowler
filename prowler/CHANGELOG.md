@@ -2,11 +2,11 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.32.0] (Prowler UNRELEASED)
+## [5.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
 
-- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
+- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it. Applied across all compliance outputs: CSV, OCSF, and console tables [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
 - `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
 - `entra_conditional_access_policy_groups_management_restricted` check for M365 provider, verifying every security group referenced by an enabled or report-only Conditional Access policy is management-restricted or role-assignable [(#11342)](https://github.com/prowler-cloud/prowler/pull/11342)
@@ -31,6 +31,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - Removed the `detect_secrets_plugins` configuration option, which is no longer used by the new secret-scanning engine [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
 - `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
+- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
 
 ### 🐞 Fixed
 
@@ -43,10 +44,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
 - GitHub default branch protection checks now evaluate repository rulesets in addition to classic branch protection, avoiding false positives for repositories that enforce protection through rulesets [(#11723)](https://github.com/prowler-cloud/prowler/pull/11723)
 - Okta, Alibaba Cloud and OpenStack scan-config sections are now validated against a registered schema instead of being silently accepted, so their configurable thresholds (session/idle timeouts, retention days, image-sharing and secret-scanning settings) log a warning and fall back to the built-in default whenever a value is out of range [(#11725)](https://github.com/prowler-cloud/prowler/pull/11725)
-
-### 🔄 Changed
-
-- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
 
 ---
 
