@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
 - `exchange_application_access_policy_restricts_mailbox_apps` check for M365 provider, verifying every service principal with Microsoft Graph application-level Exchange mailbox permissions is restricted by an Exchange Online Application Access Policy, preventing tenant-wide mailbox access by unscoped applications [(#11247)](https://github.com/prowler-cloud/prowler/pull/11247)
 - Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
