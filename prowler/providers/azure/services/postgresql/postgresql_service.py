@@ -215,18 +215,20 @@ class PostgreSQL(AzureService):
             return None
 
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name, server_type):
-            client = self.clients[subscription]
-            # Choose the correct key based on the server type
-            config_key = "logfiles.retention_days" if server_type == "flexible_server" else "log_retention_days"
-            
-            try:
-                log_retention_days = client.configurations.get(
-                    resouce_group_name, server_name, config_key
-                )
-                log_retention_days = log_retention_days.value
-            except Exception:
-                log_retention_days = None
-            return log_retention_days
+        client = self.clients[subscription]
+        # Choose the correct key based on the server type
+        config_key = (
+            "logfiles.retention_days" if server_type == "flexible_server" else "log_retention_days"
+        )
+        
+        try:
+            log_retention_days = client.configurations.get(
+                resouce_group_name, server_name, config_key
+            )
+            log_retention_days = log_retention_days.value
+        except Exception:
+            log_retention_days = None
+        return log_retention_days
 
     def _get_firewall(self, subscription, resource_group, server_name):
         client = self.clients[subscription]
