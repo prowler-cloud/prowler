@@ -93,7 +93,7 @@ describe("LaunchStep", () => {
       );
 
       // Then
-      expect(screen.getByText("Account Connected!")).toBeInTheDocument();
+      expect(screen.getByText("Provider Connected!")).toBeInTheDocument();
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
       ).toBeChecked();
