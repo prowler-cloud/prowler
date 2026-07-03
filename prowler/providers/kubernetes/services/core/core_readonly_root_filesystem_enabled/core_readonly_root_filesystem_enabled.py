@@ -3,7 +3,14 @@ from prowler.providers.kubernetes.services.core.core_client import core_client
 
 
 class core_readonly_root_filesystem_enabled(Check):
-    def execute(self) -> Check_Report_Kubernetes:
+    """Check whether every container in each Pod has readOnlyRootFilesystem set to true."""
+
+    def execute(self) -> list[Check_Report_Kubernetes]:
+        """Execute the Kubernetes read-only root filesystem check.
+
+        Returns:
+            List of check reports for Kubernetes pods.
+        """
         findings = []
         for pod in core_client.pods.values():
             report = Check_Report_Kubernetes(metadata=self.metadata(), resource=pod)
