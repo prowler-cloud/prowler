@@ -11,7 +11,7 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { Alert, AlertDescription } from "@/components/shadcn";
+import { Alert, AlertDescription, Button } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
@@ -50,20 +50,26 @@ export const ClientAccordionContent = ({
 
   const checks = requirement.check_ids || [];
 
-  const { findings, expandedFindings, patchTriageUpdate, reload } =
-    useRequirementFindings({
-      enabled:
-        !disableFindings &&
-        checks.length > 0 &&
-        requirement.status !== "No findings",
-      checkIds: checks,
-      scanId,
-      pageNumber,
-      pageSize,
-      sort,
-      region,
-      mutedFilter,
-    });
+  const {
+    findings,
+    expandedFindings,
+    isLoading,
+    error,
+    patchTriageUpdate,
+    reload,
+  } = useRequirementFindings({
+    enabled:
+      !disableFindings &&
+      checks.length > 0 &&
+      requirement.status !== "No findings",
+    checkIds: checks,
+    scanId,
+    pageNumber,
+    pageSize,
+    sort,
+    region,
+    mutedFilter,
+  });
 
   const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
     await updateFindingTriage(input);
@@ -125,7 +131,26 @@ export const ClientAccordionContent = ({
   ];
 
   const renderFindingsTable = () => {
-    if (findings === null && requirement.status !== "MANUAL") {
+    if (error) {
+      return (
+        <Alert variant="error" className="mt-3">
+          <AlertTriangle />
+          <AlertDescription className="flex flex-wrap items-center gap-2">
+            <span>{error}</span>
+            <Button
+              variant="link"
+              size="link-sm"
+              className="h-auto p-0"
+              onClick={reload}
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (isLoading && requirement.status !== "MANUAL") {
       return <SkeletonTableFindings />;
     }
 

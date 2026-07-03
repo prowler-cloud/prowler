@@ -31,4 +31,12 @@ describe("client accordion content", () => {
     expect(source).not.toContain("useEffect");
     expect(source).not.toContain("useRef");
   });
+
+  it("gates the skeleton on the hook loading state and surfaces fetch errors", () => {
+    // A disabled fetch (e.g. "No findings" status) must not skeleton forever,
+    // and a failed fetch must offer a retry instead of hanging.
+    expect(source).toContain("isLoading && requirement.status");
+    expect(source).not.toContain("findings === null");
+    expect(source).toContain("Try again");
+  });
 });

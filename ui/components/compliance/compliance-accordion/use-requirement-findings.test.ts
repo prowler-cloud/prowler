@@ -122,6 +122,97 @@ describe("useRequirementFindings", () => {
     expect(findingsActionsMock.getFindings).not.toHaveBeenCalled();
   });
 
+  it("should not report loading when the fetch is disabled", async () => {
+    // Given / When
+    const disabled = renderHook(() =>
+      useRequirementFindings(defaultOptions({ enabled: false })),
+    );
+    const withoutChecks = renderHook(() =>
+      useRequirementFindings(defaultOptions({ checkIds: [] })),
+    );
+    await flushAsync();
+
+    // Then — a skipped fetch must not look like a pending one.
+    expect(disabled.result.current.isLoading).toBe(false);
+    expect(withoutChecks.result.current.isLoading).toBe(false);
+  });
+
+  it("should report loading until the fetch settles", async () => {
+    // Given
+    let resolveFetch: (value: unknown) => void = () => {};
+    findingsActionsMock.getFindings.mockImplementationOnce(
+      () => new Promise((resolve) => (resolveFetch = resolve)),
+    );
+
+    // When
+    const { result } = renderHook(() =>
+      useRequirementFindings(defaultOptions()),
+    );
+
+    // Then
+    expect(result.current.isLoading).toBe(true);
+
+    // When
+    act(() => {
+      resolveFetch(makeFindingsResponse());
+    });
+    await flushAsync();
+
+    // Then
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should expose an error and stop loading when the fetch fails", async () => {
+    // Given
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    findingsActionsMock.getFindings.mockRejectedValue(
+      new Error("network down"),
+    );
+
+    // When
+    const { result } = renderHook(() =>
+      useRequirementFindings(defaultOptions()),
+    );
+    await flushAsync();
+
+    // Then — the caller can render an error state instead of a skeleton.
+    expect(result.current.error).toBe("Could not load findings.");
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.findings).toBeNull();
+
+    consoleErrorSpy.mockRestore();
+  });
+
+  it("should clear the error and recover on reload", async () => {
+    // Given: first fetch fails, retry succeeds
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    findingsActionsMock.getFindings
+      .mockRejectedValueOnce(new Error("network down"))
+      .mockResolvedValueOnce(makeFindingsResponse());
+
+    const { result } = renderHook(() =>
+      useRequirementFindings(defaultOptions()),
+    );
+    await flushAsync();
+    expect(result.current.error).toBe("Could not load findings.");
+
+    // When
+    act(() => {
+      result.current.reload();
+    });
+    await flushAsync();
+
+    // Then
+    expect(result.current.error).toBeNull();
+    expect(result.current.findings).not.toBeNull();
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it("should not refetch when only the checkIds array identity changes", async () => {
     // Given
     const { rerender } = renderHook((props) => useRequirementFindings(props), {

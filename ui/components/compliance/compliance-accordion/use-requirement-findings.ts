@@ -22,9 +22,13 @@ interface UseRequirementFindingsOptions {
 interface UseRequirementFindingsReturn {
   findings: FindingsResponse | null;
   expandedFindings: FindingProps[];
+  isLoading: boolean;
+  error: string | null;
   patchTriageUpdate: (input: UpdateFindingTriageInput) => void;
   reload: () => void;
 }
+
+const FINDINGS_LOAD_ERROR = "Could not load findings.";
 
 export function useRequirementFindings({
   enabled,
@@ -38,20 +42,26 @@ export function useRequirementFindings({
 }: UseRequirementFindingsOptions): UseRequirementFindingsReturn {
   const [findings, setFindings] = useState<FindingsResponse | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   // Depend on the joined value, not the array: the requirement prop gets a
   // fresh identity on every parent render and must not retrigger the fetch.
   const checkIdsKey = checkIds.join(",");
+  const isFetchEnabled = enabled && checkIdsKey.length > 0;
+  // A skipped fetch is not a pending one; without this the caller would show
+  // a skeleton forever for requirements whose fetch never runs.
+  const isLoading = isFetchEnabled && findings === null && error === null;
 
   useEffect(() => {
-    if (!enabled || !checkIdsKey) {
+    if (!isFetchEnabled) {
       return;
     }
 
     let cancelled = false;
 
     const loadFindings = async () => {
+      setError(null);
       try {
         const findingsData = await getFindings({
           filters: {
@@ -80,7 +90,7 @@ export function useRequirementFindings({
               const resource =
                 resourceDict[finding.relationships?.resources?.data?.[0]?.id];
               const provider =
-                providerDict[scan?.relationships?.provider?.data?.id];
+                providerDict[scan?.relationships?.provider?.data?.id ?? ""];
 
               return {
                 ...finding,
@@ -93,6 +103,7 @@ export function useRequirementFindings({
       } catch (error) {
         if (!cancelled) {
           console.error("Error loading findings:", error);
+          setError(FINDINGS_LOAD_ERROR);
         }
       }
     };
@@ -103,7 +114,7 @@ export function useRequirementFindings({
       cancelled = true;
     };
   }, [
-    enabled,
+    isFetchEnabled,
     checkIdsKey,
     scanId,
     pageNumber,
@@ -124,5 +135,12 @@ export function useRequirementFindings({
     setReloadNonce((value) => value + 1);
   };
 
-  return { findings, expandedFindings, patchTriageUpdate, reload };
+  return {
+    findings,
+    expandedFindings,
+    isLoading,
+    error,
+    patchTriageUpdate,
+    reload,
+  };
 }
