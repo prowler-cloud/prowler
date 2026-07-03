@@ -1,0 +1,37 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_ami_account_block_public_access",
+  "CheckTitle": "AMI block public access is enabled at the account level",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "Effects/Data Exposure"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Image",
+  "ResourceGroup": "compute",
+  "Description": "AMI block public access configuration is assessed to see whether public sharing of AMIs is blocked in the account and region.",
+  "Risk": "Without blocking public access, AMIs could be accidentally or maliciously shared publicly, potentially exposing sensitive data, keys, and configurations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 enable-image-block-public-access --image-block-public-access-state block-new-sharing",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure AMI block public access is enabled in the account.",
+      "Url": "https://hub.prowler.com/check/ec2_ami_account_block_public_access"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
