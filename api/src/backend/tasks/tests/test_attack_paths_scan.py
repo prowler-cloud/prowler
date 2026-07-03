@@ -2,8 +2,10 @@ from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, call, patch
+from uuid import uuid4
 
 import pytest
+from api.db_utils import rls_transaction
 from api.models import (
     AttackPathsScan,
     Finding,
@@ -15,6 +17,7 @@ from api.models import (
     StatusChoices,
     Task,
 )
+from django.db import DEFAULT_DB_ALIAS
 from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from tasks.jobs.attack_paths import findings as findings_module
@@ -2243,6 +2246,58 @@ class TestInternetAnalysis:
 @pytest.mark.django_db
 class TestAttackPathsDbUtilsGraphDataReady:
     """Tests for db_utils functions related to graph_data_ready lifecycle."""
+
+    def test_database_defaults_allow_legacy_insert_without_cutover_columns(
+        self, tenants_fixture, providers_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        provider.provider = Provider.ProviderChoices.AWS
+        provider.save()
+        scan = scans_fixture[0]
+        scan.provider = provider
+        scan.save()
+
+        attack_paths_scan_id = uuid4()
+        now = datetime.now(tz=UTC)
+
+        with rls_transaction(str(tenant.id), using=DEFAULT_DB_ALIAS) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO attack_paths_scans (
+                    id,
+                    inserted_at,
+                    updated_at,
+                    state,
+                    progress,
+                    graph_data_ready,
+                    started_at,
+                    tenant_id,
+                    provider_id,
+                    scan_id
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                [
+                    attack_paths_scan_id,
+                    now,
+                    now,
+                    StateChoices.SCHEDULED,
+                    0,
+                    False,
+                    now,
+                    tenant.id,
+                    provider.id,
+                    scan.id,
+                ],
+            )
+
+            attack_paths_scan = AttackPathsScan.objects.get(id=attack_paths_scan_id)
+
+        assert attack_paths_scan.is_migrated is False
+        assert (
+            attack_paths_scan.sink_backend == AttackPathsScan.SinkBackendChoices.NEO4J
+        )
 
     def test_create_attack_paths_scan_first_scan_defaults_to_false(
         self, tenants_fixture, providers_fixture, scans_fixture
