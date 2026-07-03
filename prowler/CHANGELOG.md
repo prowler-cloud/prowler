@@ -2,11 +2,13 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## Unreleased
+## [5.32.1] (Prowler UNRELEASED)
 
 ### 🐛 Fixed
 
 - `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
+
+---
 
 ## [5.32.0] (Prowler v5.32.0)
 
