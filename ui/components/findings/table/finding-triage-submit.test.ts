@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
 } from "@/types/findings-triage";
@@ -26,7 +25,6 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
-    privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
     ...overrides,
   };
 }

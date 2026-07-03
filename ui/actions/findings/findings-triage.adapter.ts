@@ -1,7 +1,6 @@
 import {
   FINDING_TRIAGE_BILLING_HREF,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_STATUS,
   FINDING_TRIAGE_STATUS_LABELS,
   type FindingTriageDetail,
@@ -215,6 +214,5 @@ export function adaptFindingTriageDetailResponse(
     noteId: attributes.note_id || null,
     noteBody,
     maxNoteLength: FINDING_TRIAGE_NOTE_MAX_LENGTH,
-    privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   };
 }

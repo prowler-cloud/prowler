@@ -9,6 +9,13 @@ vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ),
 }));
 
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/shadcn/modal", () => ({
   Modal: ({
     children,
@@ -44,7 +51,6 @@ beforeAll(() => {
 
 import {
   FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type UpdateFindingTriageInput,
@@ -72,7 +78,6 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: 500,
-    privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
     ...overrides,
   };
 }
@@ -246,7 +251,45 @@ describe("FindingNoteModal", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
-  it("should render counter, privacy copy, and cancel/update actions", async () => {
+  it("should lock the status picker for resolved findings while keeping the note editable", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    renderNoteModal({
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+      }),
+      onTriageUpdateAction,
+    });
+
+    // Then — automation owns the transition out of Resolved.
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Triage status is managed automatically once the finding is resolved.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeEnabled();
+
+    // When — the note itself can still be updated.
+    const textarea = screen.getByLabelText("Note text");
+    await user.clear(textarea);
+    await user.type(textarea, "Documenting the resolution.");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // Then
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Documenting the resolution." }),
+    );
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.not.objectContaining({ status: expect.anything() }),
+    );
+  });
+
+  it("should render counter and cancel/update actions without privacy copy", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -258,7 +301,9 @@ describe("FindingNoteModal", () => {
 
     // Then
     expect(screen.getByText("3/500")).toBeInTheDocument();
-    expect(screen.getByText(FINDING_TRIAGE_NOTE_PRIVACY_COPY)).toBeVisible();
+    expect(
+      screen.queryByText("This note is only visible to your team."),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
     expect(
@@ -305,7 +350,11 @@ describe("FindingNoteModal", () => {
     await user.click(screen.getByRole("option", { name: "Risk Accepted" }));
 
     // Then
-    expect(screen.getByText(/will be muted/i)).toBeVisible();
+    expect(
+      screen.getByText(
+        "Changing triage to Risk Accepted will mute the finding",
+      ),
+    ).toBeVisible();
     await waitFor(() =>
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument(),
     );
