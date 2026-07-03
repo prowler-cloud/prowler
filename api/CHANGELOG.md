@@ -31,6 +31,8 @@ All notable changes to the **Prowler API** are documented in this file.
 - Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
 - `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
 
+---
+
 ## [1.32.1] (Prowler v5.31.1)
 
 ### 🐞 Fixed
