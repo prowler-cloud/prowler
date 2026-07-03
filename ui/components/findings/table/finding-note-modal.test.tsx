@@ -154,7 +154,7 @@ describe("FindingNoteModal", () => {
 
     // Then
     const docsLink = screen.getByRole("link", {
-      name: /docs/i,
+      name: /triage documentation/i,
     });
     expect(docsLink).toHaveAttribute("href", DOCS_URLS.FINDINGS_TRIAGE);
     expect(docsLink).toHaveAttribute("target", "_blank");

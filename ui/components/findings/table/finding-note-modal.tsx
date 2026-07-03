@@ -141,7 +141,7 @@ export function FindingNoteModal({
               rel="noopener noreferrer"
             >
               <ExternalLink className="size-3.5 shrink-0" />
-              <span>docs</span>
+              <span>Triage documentation</span>
             </a>
           </Button>
         </div>
