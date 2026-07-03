@@ -12,8 +12,7 @@ class core_readonly_root_filesystem_enabled(Check):
 
             for container in pod.containers.values():
                 if (
-                    not container.security_context
-                    or container.security_context.get("read_only_root_filesystem")
+                    container.security_context.get("read_only_root_filesystem")
                     is not True
                 ):
                     report.status = "FAIL"

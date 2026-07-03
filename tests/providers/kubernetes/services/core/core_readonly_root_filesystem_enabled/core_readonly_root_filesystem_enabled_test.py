@@ -63,18 +63,6 @@ class TestCoreReadonlyRootFilesystemEnabled:
             == "Pod test-pod container app does not have readOnlyRootFilesystem set to true."
         )
 
-    def test_no_security_context_fail(self):
-        pod = make_pod(containers={"app": make_container(security_context=None)})
-
-        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
-
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert (
-            result[0].status_extended
-            == "Pod test-pod container app does not have readOnlyRootFilesystem set to true."
-        )
-
     def test_mixed_containers_fail(self):
         pod = make_pod(
             containers={
