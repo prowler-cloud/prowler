@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.33.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Attack Paths: Scan rows now have database defaults for `is_migrated` and `sink_backend` so `scan-perform-scheduled` inserts survive deploy skew [(#11826)](https://github.com/prowler-cloud/prowler/pull/11826)
+
+---
+
 ## [1.33.0] (Prowler v5.32.0)
 
 ### 🚀 Added
