@@ -116,9 +116,16 @@ class Test_batch_job_definition_no_secrets:
         batch_client.job_definitions = {jd.arn: jd}
         batch_client.audit_config = {"secrets_ignore_patterns": []}
 
-        with mock.patch(
-            "prowler.providers.aws.services.batch.batch_job_definition_no_secrets.batch_job_definition_no_secrets.detect_secrets_scan_batch",
-            side_effect=SecretsScanError("Scanner failure"),
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.batch.batch_job_definition_no_secrets.batch_job_definition_no_secrets.detect_secrets_scan_batch",
+                side_effect=SecretsScanError("Scanner failure"),
+            ),
         ):
             result = _execute_check(batch_client)
 

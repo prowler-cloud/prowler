@@ -13,6 +13,17 @@ class batch_job_definition_no_secrets(Check):
     """Check that AWS Batch job definitions contain no hardcoded secrets in their environment variables or command parameters."""
 
     def execute(self) -> list[Check_Report_AWS]:
+        """Scans Batch job definitions for secrets.
+
+        Uses `detect_secrets_scan_batch` to scan the environment variables and
+        command parameters of Batch job definitions. If `SecretsScanError` is raised,
+        the scan is skipped and the check returns a MANUAL report. Otherwise, it returns
+        a list of `Check_Report_AWS` with a status of PASS (no secrets found) or FAIL
+        (secrets found).
+
+        Returns:
+            list[Check_Report_AWS]: A list of check reports.
+        """
         findings = []
         secrets_ignore_patterns = batch_client.audit_config.get(
             "secrets_ignore_patterns", []
