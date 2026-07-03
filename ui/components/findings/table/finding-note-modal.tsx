@@ -12,7 +12,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -208,12 +207,7 @@ export function FindingNoteModal({
 
         {shouldShowRemediatingInfo && (
           <Alert variant="info">
-            <AlertDescription>
-              {REMEDIATING_INFO_COPY}.{" "}
-              <CustomLink href={DOCS_URLS.FINDINGS_TRIAGE} size="sm">
-                Learn more
-              </CustomLink>
-            </AlertDescription>
+            <AlertDescription>{REMEDIATING_INFO_COPY}.</AlertDescription>
           </Alert>
         )}
 
