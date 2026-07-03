@@ -235,7 +235,9 @@ export function FindingNoteModal({
           </div>
         </div>
 
-        <div className="flex w-full justify-between gap-4">
+        {/* mt-3 lifts the gap-5 form spacing to 32px so the distance to the
+            footer matches the launch scan and alert modals. */}
+        <div className="mt-3 flex w-full justify-between gap-4">
           <Button
             type="button"
             variant="outline"
