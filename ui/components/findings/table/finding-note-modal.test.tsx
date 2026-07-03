@@ -49,6 +49,7 @@ beforeAll(() => {
   });
 });
 
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
@@ -145,6 +146,21 @@ describe("FindingNoteModal", () => {
     expect(
       within(dialog).getByText(/automatically changed to Resolved/i),
     ).toBeVisible();
+  });
+
+  it("should render a documentation link without requiring Remediating status", () => {
+    // Given / When
+    renderNoteModal();
+
+    // Then
+    const docsLink = screen.getByRole("link", {
+      name: /docs/i,
+    });
+    expect(docsLink).toHaveAttribute("href", DOCS_URLS.FINDINGS_TRIAGE);
+    expect(docsLink).toHaveAttribute("target", "_blank");
+    expect(
+      screen.queryByText(/automatically changed to Resolved/i),
+    ).not.toBeInTheDocument();
   });
 
   it("should send existing note changes with noteId and without duplicate-note status payload", async () => {

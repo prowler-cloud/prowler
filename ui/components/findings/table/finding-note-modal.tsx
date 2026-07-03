@@ -1,5 +1,6 @@
 "use client";
 
+import { ExternalLink, Info } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
@@ -131,6 +132,21 @@ export function FindingNoteModal({
           unbreakable content (e.g. resource UIDs) widens the grid track past
           the modal instead of truncating. */}
       <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
+        <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
+          <Info className="size-4 shrink-0" />
+          <span>Learn how triage states work in the</span>
+          <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
+            <a
+              href={DOCS_URLS.FINDINGS_TRIAGE}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="size-3.5 shrink-0" />
+              <span>docs</span>
+            </a>
+          </Button>
+        </div>
+
         <div className="flex items-center gap-4">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
             {findingContext.providerType ? (

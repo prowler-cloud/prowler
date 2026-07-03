@@ -28,3 +28,18 @@ export function getOptionalText(value: unknown): string | undefined {
     ? value
     : undefined;
 }
+
+// Helper function to create dictionaries by type
+export function createDict(type: string, data: any) {
+  const includedField = data?.included?.filter(
+    (item: { type: string }) => item.type === type,
+  );
+
+  if (!includedField || includedField.length === 0) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    includedField.map((item: { id: string }) => [item.id, item]),
+  );
+}

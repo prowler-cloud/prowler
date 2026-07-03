@@ -2,9 +2,11 @@
 
 import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
 
-import { getFindings } from "@/actions/findings/findings";
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
@@ -12,11 +14,14 @@ import {
 import { Alert, AlertDescription } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
-import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
+import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { Requirement } from "@/types/compliance";
-import { FindingProps, FindingsResponse } from "@/types/components";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+
+import { useRequirementFindings } from "./use-requirement-findings";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
@@ -31,100 +36,47 @@ export const ClientAccordionContent = ({
   scanId,
   disableFindings = false,
 }: ClientAccordionContentProps) => {
-  const [findings, setFindings] = useState<FindingsResponse | null>(null);
-  const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
   const pageSize = searchParams.get("pageSize") || "10";
   const complianceId = searchParams.get("complianceId");
   const openFindingId = searchParams.get("id");
   const sort = searchParams.get("sort") || FINDINGS_DEFAULT_SORT;
-  const loadedPageRef = useRef<string | null>(null);
-  const loadedPageSizeRef = useRef<string | null>(null);
-  const loadedSortRef = useRef<string | null>(null);
-  const loadedMutedRef = useRef<string | null>(null);
-  const isExpandedRef = useRef(false);
   const region = searchParams.get("filter[region__in]") || "";
   // Respect the user's muted preference from the URL; default to EXCLUDE
   // so the requirement view stays consistent with every other findings
   // surface in the app (findings page, resource drawer, overview widgets).
   const mutedFilter = searchParams.get("filter[muted]") || MUTED_FILTER.EXCLUDE;
 
-  useEffect(() => {
-    async function loadFindings() {
-      if (
+  const checks = requirement.check_ids || [];
+
+  const { findings, expandedFindings, patchTriageUpdate, reload } =
+    useRequirementFindings({
+      enabled:
         !disableFindings &&
-        requirement.check_ids?.length > 0 &&
-        requirement.status !== "No findings" &&
-        (loadedPageRef.current !== pageNumber ||
-          loadedPageSizeRef.current !== pageSize ||
-          loadedSortRef.current !== sort ||
-          loadedMutedRef.current !== mutedFilter ||
-          !isExpandedRef.current)
-      ) {
-        loadedPageRef.current = pageNumber;
-        loadedPageSizeRef.current = pageSize;
-        loadedSortRef.current = sort;
-        loadedMutedRef.current = mutedFilter;
-        isExpandedRef.current = true;
+        checks.length > 0 &&
+        requirement.status !== "No findings",
+      checkIds: checks,
+      scanId,
+      pageNumber,
+      pageSize,
+      sort,
+      region,
+      mutedFilter,
+    });
 
-        try {
-          const checkIds = requirement.check_ids;
-          const encodedSort = sort.replace(/^\+/, "");
-          const findingsData = await getFindings({
-            filters: {
-              "filter[check_id__in]": checkIds.join(","),
-              "filter[scan]": scanId,
-              "filter[muted]": mutedFilter,
-              ...(region && { "filter[region__in]": region }),
-            },
-            page: parseInt(pageNumber, 10),
-            pageSize: parseInt(pageSize, 10),
-            sort: encodedSort,
-          });
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    await updateFindingTriage(input);
 
-          setFindings(findingsData);
-
-          if (findingsData?.data) {
-            // Create dictionaries for resources, scans, and providers
-            const resourceDict = createDict("resources", findingsData);
-            const scanDict = createDict("scans", findingsData);
-            const providerDict = createDict("providers", findingsData);
-
-            // Expand each finding with its corresponding resource, scan, and provider
-            const expandedData = findingsData.data.map(
-              (finding: FindingProps) => {
-                const scan = scanDict[finding.relationships?.scan?.data?.id];
-                const resource =
-                  resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-                const provider =
-                  providerDict[scan?.relationships?.provider?.data?.id];
-
-                return {
-                  ...finding,
-                  relationships: { scan, resource, provider },
-                };
-              },
-            );
-            setExpandedFindings(expandedData);
-          }
-        } catch (error) {
-          console.error("Error loading findings:", error);
-        }
-      }
+    // Mutelist-shortcut statuses mute the finding server-side; refetch so the
+    // list honors the muted filter, matching the resource drawer behavior.
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      reload();
+      return;
     }
 
-    loadFindings();
-  }, [
-    requirement,
-    scanId,
-    pageNumber,
-    pageSize,
-    sort,
-    region,
-    mutedFilter,
-    disableFindings,
-  ]);
+    patchTriageUpdate(input);
+  };
 
   const renderDetails = () => {
     if (!complianceId) {
@@ -148,7 +100,6 @@ export const ClientAccordionContent = ({
     );
   }
 
-  const checks = requirement.check_ids || [];
   const checksList = (
     <div className="flex items-center px-2 text-sm">
       <div className="w-full flex-col">
@@ -184,8 +135,12 @@ export const ClientAccordionContent = ({
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
-            columns={getStandaloneFindingColumns({ openFindingId })}
-            data={expandedFindings || []}
+            columns={getStandaloneFindingColumns({
+              openFindingId,
+              onTriageUpdateAction: handleTriageUpdate,
+              onTriageNoteLoadAction: loadLatestFindingTriageNote,
+            })}
+            data={expandedFindings}
             metadata={findings?.meta}
             disableScroll={true}
           />

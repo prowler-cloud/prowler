@@ -13,4 +13,22 @@ describe("client accordion content", () => {
     expect(source).toContain("getStandaloneFindingColumns");
     expect(source).not.toContain("getColumnFindings");
   });
+
+  it("wires triage update and note loading actions into compliance findings", () => {
+    expect(source).toContain("updateFindingTriage");
+    expect(source).toContain("loadLatestFindingTriageNote");
+    expect(source).toContain("onTriageUpdateAction");
+    expect(source).toContain("onTriageNoteLoadAction");
+  });
+
+  it("refetches findings after mutelist-shortcut triage updates like the resource drawer", () => {
+    expect(source).toContain("shouldRefreshAfterTriageUpdate");
+    expect(source).toContain("reload()");
+  });
+
+  it("delegates data fetching to the hook instead of effect/ref choreography", () => {
+    expect(source).toContain("useRequirementFindings");
+    expect(source).not.toContain("useEffect");
+    expect(source).not.toContain("useRef");
+  });
 });
