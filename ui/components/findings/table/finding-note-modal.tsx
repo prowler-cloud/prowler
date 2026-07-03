@@ -146,7 +146,7 @@ export function FindingNoteModal({
           </Button>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="border-border-neutral-secondary flex items-center gap-4 rounded-lg border p-3">
           <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
             {findingContext.providerType ? (
               <ProviderTypeIcon type={findingContext.providerType} size={22} />
