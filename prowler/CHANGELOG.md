@@ -6,6 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
+- `batch_job_definition_no_secrets` check for AWS provider to detect plaintext secrets in Batch job definitions environment variables or command parameters
 - `amplify_app_no_secrets_in_environment` check for AWS provider to detect plaintext secrets in Amplify app environment variables, branch environment variables, and build settings (build spec)
 
 ---
