@@ -948,8 +948,8 @@ class UserViewSet(BaseUserViewset):
         """
         Returns the required permissions based on the request method.
         """
-        if self.action == "me":
-            # No permissions required for me request
+        if self.action in ["me", "partial_update"]:
+            # No permissions required for me and partial_update requests
             self.required_permissions = []
         else:
             # Require permission for the rest of the requests
@@ -1002,6 +1002,24 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id != self.request.user.id:
+            role = get_role(self.request.user, self.request.tenant_id)
+            if not getattr(role, Permissions.MANAGE_USERS.value, False):
+                raise ValidationError(
+                    "Only users with manage users permission can update other users."
+                )
+
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(user, "_prefetched_objects_cache", None):
+            user._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
