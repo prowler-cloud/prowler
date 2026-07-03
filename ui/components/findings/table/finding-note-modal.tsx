@@ -235,10 +235,10 @@ export function FindingNoteModal({
           </div>
         </div>
 
-        <div className="flex w-full justify-end gap-3">
+        <div className="flex w-full justify-between gap-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="lg"
             onClick={() => onOpenChange(false)}
           >
@@ -258,7 +258,7 @@ export function FindingNoteModal({
               {isSubmitting
                 ? "Saving..."
                 : canSubmit || isCloudOnly
-                  ? "Save changes"
+                  ? "Save"
                   : "Unavailable"}
             </Button>
           </span>

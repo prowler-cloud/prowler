@@ -173,7 +173,7 @@ describe("FindingNoteModal", () => {
     const textarea = screen.getByLabelText("Note text");
     await user.clear(textarea);
     await user.type(textarea, "Documented owner follow-up.");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -205,7 +205,7 @@ describe("FindingNoteModal", () => {
     // When
     const textarea = screen.getByLabelText("Note text");
     await user.type(textarea, " Initial triage note. ");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -230,7 +230,7 @@ describe("FindingNoteModal", () => {
 
     // When
     await user.clear(screen.getByLabelText("Note text"));
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -255,7 +255,7 @@ describe("FindingNoteModal", () => {
     // When
     await user.clear(screen.getByLabelText("Note text"));
     await user.type(screen.getByLabelText("Note text"), "Changed note");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(
@@ -294,7 +294,7 @@ describe("FindingNoteModal", () => {
     const textarea = screen.getByLabelText("Note text");
     await user.clear(textarea);
     await user.type(textarea, "Documenting the resolution.");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith(
@@ -322,9 +322,7 @@ describe("FindingNoteModal", () => {
     ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(
-      screen.getByRole("button", { name: "Save changes" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
   it("should disable controls and show the Cloud upsell badge for non-paying users", () => {
@@ -341,7 +339,7 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(
       screen.getByRole("link", { name: "Available in Prowler Cloud" }),
     ).toHaveAttribute("href", "https://prowler.com/pricing");
@@ -376,7 +374,7 @@ describe("FindingNoteModal", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     await waitFor(() =>
