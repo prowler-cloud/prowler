@@ -84,7 +84,10 @@ class Test_glue_catalog_connection_no_secrets:
                 "ConnectionType": "JDBC",
                 "ConnectionProperties": {
                     "JDBC_CONNECTION_URL": "jdbc:mysql://db.example.com:3306/test",
-                    "PASSWORD": "AKIAsupersecretkey1234",
+                    # A syntactically valid JSON Web Token that Kingfisher flags
+                    # as a secret (a bare high-entropy string is treated as a
+                    # placeholder and ignored by the offline scanner).
+                    "PASSWORD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
                 },
             }
         )
