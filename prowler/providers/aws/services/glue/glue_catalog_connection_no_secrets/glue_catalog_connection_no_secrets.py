@@ -32,17 +32,14 @@ class glue_catalog_connection_no_secrets(Check):
         validate = glue_client.audit_config.get("secrets_validate", False)
         connections = list(glue_client.connections)
 
-        # Collect every connection property across all connections and scan them in
-        # batched Kingfisher invocations instead of one subprocess per property.
-        # Findings are keyed by (connection index, property name).
+        # Scan each connection's properties as a single indented-JSON payload so
+        # every property value sits on its own line; a finding is mapped back to
+        # its property via the finding's line number. Findings are keyed by
+        # connection index.
         def payloads():
             for conn_index, conn in enumerate(connections):
                 if conn.properties:
-                    for prop_name, prop_value in conn.properties.items():
-                        yield (
-                            (conn_index, prop_name),
-                            json.dumps({prop_name: prop_value}),
-                        )
+                    yield (conn_index, json.dumps(conn.properties, indent=2))
 
         scan_error = None
         try:
@@ -58,33 +55,34 @@ class glue_catalog_connection_no_secrets(Check):
             report.status = "PASS"
             report.status_extended = f"No secrets found in Glue Data Catalog connection {conn.name} properties."
 
-            if conn.properties and scan_error:
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"Could not scan Glue Data Catalog connection {conn.name} "
-                    f"properties for secrets: {scan_error}; manual review is required."
-                )
-                findings.append(report)
-                continue
-
             if conn.properties:
-                secrets_found = []
-                all_secrets = []
-                for prop_name in conn.properties:
-                    detect_secrets_output = batch_results.get((conn_index, prop_name))
-                    if detect_secrets_output:
-                        all_secrets.extend(detect_secrets_output)
-                        secrets_found.extend(
-                            [
-                                f"{secret['type']} in property {prop_name}"
-                                for secret in detect_secrets_output
-                            ]
-                        )
+                if scan_error:
+                    report.status = "MANUAL"
+                    report.status_extended = (
+                        f"Could not scan Glue Data Catalog connection {conn.name} "
+                        f"properties for secrets: {scan_error}; manual review is required."
+                    )
+                    findings.append(report)
+                    continue
 
-                if secrets_found:
+                detect_secrets_output = batch_results.get(conn_index)
+                if detect_secrets_output:
+                    property_names = list(conn.properties.keys())
+                    secrets_string = ", ".join(
+                        [
+                            f"{secret['type']} in property "
+                            f"{property_names[secret['line_number'] - 2]}"
+                            for secret in detect_secrets_output
+                        ]
+                    )
                     report.status = "FAIL"
-                    report.status_extended = f"Potential secrets found in Glue Data Catalog connection {conn.name} properties: {', '.join(secrets_found)}."
-                    annotate_verified_secrets(report, all_secrets)
+                    report.status_extended = (
+                        f"Potential "
+                        f"{'secrets' if len(detect_secrets_output) > 1 else 'secret'} "
+                        f"found in Glue Data Catalog connection {conn.name} "
+                        f"properties: {secrets_string}."
+                    )
+                    annotate_verified_secrets(report, detect_secrets_output)
 
             findings.append(report)
 

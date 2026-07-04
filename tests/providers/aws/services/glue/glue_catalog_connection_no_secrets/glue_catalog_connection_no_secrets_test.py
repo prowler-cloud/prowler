@@ -113,9 +113,9 @@ class Test_glue_catalog_connection_no_secrets:
 
                 assert len(result) == 1
                 assert result[0].status == "FAIL"
-                assert "Potential secrets found" in result[0].status_extended
+                assert "Potential secret" in result[0].status_extended
                 assert connection_name in result[0].status_extended
-                assert "PASSWORD" in result[0].status_extended
+                assert "in property PASSWORD" in result[0].status_extended
                 assert result[0].resource_id == connection_name
 
     @mock_aws
