@@ -1,0 +1,38 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_hostpath_volume_mounts",
+  "CheckTitle": "Pod does not use hostPath volumes",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Pods** are evaluated for volumes of type `hostPath`, which mount paths from the node filesystem into a pod.",
+  "Risk": "`hostPath` volumes weaken the container boundary by exposing node files to workloads. A compromised container can read sensitive host data, tamper with node files, or use writable mounts to escalate privileges and affect node availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/storage/volumes/#hostpath",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Identify the workload that owns the failing Pod (Deployment/DaemonSet/StatefulSet/Job) or confirm it is a standalone Pod\n2. Edit the Pod template and remove volumes that define `hostPath`\n3. Replace hostPath with a safer volume type such as ConfigMap, Secret, emptyDir, persistentVolumeClaim, or a CSI volume when appropriate\n4. Apply the updated manifest and allow the workload to recreate Pods without hostPath volumes",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n    }\n    # Do not define host_path blocks under volume.\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disallow `hostPath` volumes by default with Pod Security Admission or policy-as-code controls. Permit narrow, read-only exceptions only for trusted system workloads, and prefer Kubernetes-native volume types that do not expose the node filesystem.",
+      "Url": "https://hub.prowler.com/check/core_minimize_hostpath_volume_mounts"
+    }
+  },
+  "Categories": [
+    "container-security",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Exceptions for hostPath volumes should be narrowly scoped, read-only where possible, and monitored."
+}
