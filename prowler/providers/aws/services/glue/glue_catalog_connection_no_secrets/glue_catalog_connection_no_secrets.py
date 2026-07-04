@@ -17,7 +17,14 @@ class glue_catalog_connection_no_secrets(Check):
     should be stored in Secrets Manager or Parameter Store instead.
     """
 
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
+        """Scan every Glue Data Catalog connection's properties for secrets.
+
+        Returns:
+            One Check_Report_AWS per connection, with status PASS when no
+            secrets are detected, FAIL when a property resembles a secret,
+            or MANUAL when the secret scan could not be completed.
+        """
         findings = []
         secrets_ignore_patterns = glue_client.audit_config.get(
             "secrets_ignore_patterns", []
