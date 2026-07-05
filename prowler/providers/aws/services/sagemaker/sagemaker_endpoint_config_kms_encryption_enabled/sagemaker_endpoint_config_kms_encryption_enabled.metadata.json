@@ -21,7 +21,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aws sagemaker create-endpoint-config --endpoint-config-name <example_resource_name> --kms-key-id <example_resource_id> --production-variants file://production-variants.json",
       "NativeIaC": "```yaml\n# CloudFormation: SageMaker endpoint config with KMS encryption\nResources:\n  <example_resource_name>:\n    Type: AWS::SageMaker::EndpointConfig\n    Properties:\n      KmsKeyId: <example_resource_id>  # Critical: encrypts the endpoint config's EBS volume with the specified KMS key\n```",
       "Other": "1. Open the AWS Console > Amazon SageMaker > Endpoint configurations\n2. Note the details of the failing endpoint configuration\n3. Click Create endpoint configuration\n4. Enter name and details identical to the previous one\n5. In Encryption key, select your KMS key\n6. Create the endpoint configuration\n7. Update any endpoints using the old config to use the new config\n8. Delete the old unencrypted endpoint configuration",
       "Terraform": "```hcl\n# SageMaker endpoint config with KMS encryption\nresource \"aws_sagemaker_endpoint_configuration\" \"<example_resource_name>\" {\n  name          = \"<example_resource_name>\"\n  kms_key_arn   = \"<example_resource_arn>\"  # Critical: enables EBS encryption using this KMS key\n}\n```"
