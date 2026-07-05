@@ -37,12 +37,13 @@ class sagemaker_notebook_instance_no_secrets(Check):
         )
         validate = sagemaker_client.audit_config.get("secrets_validate", False)
 
-        manual_review_indices = set()
+        manual_review_resources = set()
 
         def payloads():
-            for index, notebook_instance in enumerate(notebook_instances):
+            for notebook_instance in notebook_instances:
                 if not notebook_instance.lifecycle_config_name:
                     continue
+
                 try:
                     regional_client = sagemaker_client.regional_clients[
                         notebook_instance.region
@@ -59,7 +60,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                         f"{notebook_instance.lifecycle_config_name} for notebook "
                         f"instance {notebook_instance.name}: {error}"
                     )
-                    manual_review_indices.add(index)
+                    manual_review_resources.add(notebook_instance.arn)
                     continue
 
                 for hook_name in ("OnCreate", "OnStart"):
@@ -68,6 +69,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                         content_b64 = script.get("Content")
                         if not content_b64:
                             continue
+
                         try:
                             decoded = base64.b64decode(content_b64).decode(
                                 "utf-8", errors="ignore"
@@ -78,9 +80,15 @@ class sagemaker_notebook_instance_no_secrets(Check):
                                 f"Could not decode {hook_name}[{script_index}] script "
                                 f"for notebook instance {notebook_instance.name}: {error}"
                             )
-                            manual_review_indices.add(index)
+                            manual_review_resources.add(
+                                notebook_instance.arn
+                            )
                             continue
-                        yield (index, f"{hook_name}[{script_index}]"), decoded
+
+                        yield (
+                            notebook_instance.arn,
+                            f"{hook_name}[{script_index}]",
+                        ), decoded
 
         scan_error = None
         try:
@@ -108,15 +116,20 @@ class sagemaker_notebook_instance_no_secrets(Check):
             return findings
 
         findings_by_instance = {}
-        for (index, fragment), fragment_findings in batch_results.items():
-            findings_by_instance.setdefault(index, {})[fragment] = fragment_findings
+        for (
+            resource_id,
+            fragment,
+        ), fragment_findings in batch_results.items():
+            findings_by_instance.setdefault(
+                resource_id, {}
+            )[fragment] = fragment_findings
 
-        for index, notebook_instance in enumerate(notebook_instances):
+        for notebook_instance in notebook_instances:
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=notebook_instance
             )
 
-            if index in manual_review_indices:
+            if notebook_instance.arn in manual_review_resources:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Could not fully scan SageMaker notebook instance "
@@ -132,24 +145,33 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 f"{notebook_instance.name} lifecycle configuration."
             )
 
-            fragments_with_secrets = findings_by_instance.get(index)
+            fragments_with_secrets = findings_by_instance.get(
+                notebook_instance.arn
+            )
+
             if fragments_with_secrets:
                 all_secrets = []
                 secrets_findings = []
-                for fragment, fragment_findings in fragments_with_secrets.items():
+
+                for fragment, fragment_findings in (
+                    fragments_with_secrets.items()
+                ):
                     all_secrets.extend(fragment_findings)
                     secrets_string = ", ".join(
                         f"{secret['type']} on line {secret['line_number']}"
                         for secret in fragment_findings
                     )
-                    secrets_findings.append(f"{fragment}: {secrets_string}")
+                    secrets_findings.append(
+                        f"{fragment}: {secrets_string}"
+                    )
 
                 final_output_string = "; ".join(secrets_findings)
                 report.status = "FAIL"
                 report.status_extended = (
                     f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} "
-                    f"found in SageMaker notebook instance {notebook_instance.name} "
-                    f"lifecycle configuration -> {final_output_string}."
+                    f"found in SageMaker notebook instance "
+                    f"{notebook_instance.name} lifecycle configuration -> "
+                    f"{final_output_string}."
                 )
                 annotate_verified_secrets(report, all_secrets)
 
