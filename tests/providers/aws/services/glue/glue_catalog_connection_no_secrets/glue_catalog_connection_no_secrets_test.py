@@ -100,9 +100,17 @@ class Test_glue_catalog_connection_no_secrets:
             "prowler.providers.common.provider.Provider.get_global_provider",
             return_value=aws_provider,
         ):
+            glue = Glue(aws_provider)
+            # Older moto versions omit ConnectionProperties from get_connections,
+            # so set the secret-bearing properties directly to keep the scan
+            # deterministic regardless of the installed moto version.
+            glue.connections[0].properties = {
+                "JDBC_CONNECTION_URL": "jdbc:mysql://db.example.com:3306/test",
+                "PASSWORD": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+            }
             with mock.patch(
                 "prowler.providers.aws.services.glue.glue_catalog_connection_no_secrets.glue_catalog_connection_no_secrets.glue_client",
-                new=Glue(aws_provider),
+                new=glue,
             ):
                 from prowler.providers.aws.services.glue.glue_catalog_connection_no_secrets.glue_catalog_connection_no_secrets import (
                     glue_catalog_connection_no_secrets,
