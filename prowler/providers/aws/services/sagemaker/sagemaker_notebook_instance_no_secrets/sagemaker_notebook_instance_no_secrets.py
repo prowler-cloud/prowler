@@ -80,9 +80,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                                 f"Could not decode {hook_name}[{script_index}] script "
                                 f"for notebook instance {notebook_instance.name}: {error}"
                             )
-                            manual_review_resources.add(
-                                notebook_instance.arn
-                            )
+                            manual_review_resources.add(notebook_instance.arn)
                             continue
 
                         yield (
@@ -120,9 +118,9 @@ class sagemaker_notebook_instance_no_secrets(Check):
             resource_id,
             fragment,
         ), fragment_findings in batch_results.items():
-            findings_by_instance.setdefault(
-                resource_id, {}
-            )[fragment] = fragment_findings
+            findings_by_instance.setdefault(resource_id, {})[
+                fragment
+            ] = fragment_findings
 
         for notebook_instance in notebook_instances:
             report = Check_Report_AWS(
@@ -139,11 +137,19 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 findings.append(report)
                 continue
 
+            # This block was previously un-indented
             report.status = "PASS"
-            report.status_extended = (
-                f"No secrets found in SageMaker notebook instance "
-                f"{notebook_instance.name} lifecycle configuration."
-            )
+
+            if not notebook_instance.lifecycle_config_name:
+                report.status_extended = (
+                    f"SageMaker notebook instance {notebook_instance.name} "
+                    f"does not have a lifecycle configuration."
+                )
+            else:
+                report.status_extended = (
+                    f"No secrets found in SageMaker notebook instance "
+                    f"{notebook_instance.name} lifecycle configuration."
+                )
 
             fragments_with_secrets = findings_by_instance.get(
                 notebook_instance.arn
@@ -153,17 +159,13 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 all_secrets = []
                 secrets_findings = []
 
-                for fragment, fragment_findings in (
-                    fragments_with_secrets.items()
-                ):
+                for fragment, fragment_findings in fragments_with_secrets.items():
                     all_secrets.extend(fragment_findings)
                     secrets_string = ", ".join(
                         f"{secret['type']} on line {secret['line_number']}"
                         for secret in fragment_findings
                     )
-                    secrets_findings.append(
-                        f"{fragment}: {secrets_string}"
-                    )
+                    secrets_findings.append(f"{fragment}: {secrets_string}")
 
                 final_output_string = "; ".join(secrets_findings)
                 report.status = "FAIL"
