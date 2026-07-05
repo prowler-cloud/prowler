@@ -91,7 +91,6 @@ class Test_sagemaker_notebook_instance_no_secrets:
             region=AWS_REGION_EU_WEST_1,
             lifecycle_config_name="test-lifecycle-config",
         )
-
         regional_client = mock.MagicMock()
         regional_client.describe_notebook_instance_lifecycle_config.return_value = {
             "OnCreate": [{"Content": "ZWNobyBBUElfS0VZPTEyMzQ1"}],
@@ -106,7 +105,6 @@ class Test_sagemaker_notebook_instance_no_secrets:
         }
 
         fake_secret = {"type": "Secret Keyword", "line_number": 1}
-
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         with (
@@ -120,7 +118,8 @@ class Test_sagemaker_notebook_instance_no_secrets:
             ),
             mock.patch(
                 "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_no_secrets.sagemaker_notebook_instance_no_secrets.detect_secrets_scan_batch",
-                return_value={(0, "OnCreate[0]"): [fake_secret]},
+                # Updated mock return key to use notebook_instance_arn instead of index 0
+                return_value={(notebook_instance_arn, "OnCreate[0]"): [fake_secret]},
             ),
             mock.patch(
                 "prowler.providers.aws.services.sagemaker.sagemaker_notebook_instance_no_secrets.sagemaker_notebook_instance_no_secrets.annotate_verified_secrets",
@@ -147,7 +146,6 @@ class Test_sagemaker_notebook_instance_no_secrets:
             region=AWS_REGION_EU_WEST_1,
             lifecycle_config_name="test-lifecycle-config",
         )
-
         regional_client = mock.MagicMock()
         regional_client.describe_notebook_instance_lifecycle_config.return_value = {
             "OnCreate": [],
