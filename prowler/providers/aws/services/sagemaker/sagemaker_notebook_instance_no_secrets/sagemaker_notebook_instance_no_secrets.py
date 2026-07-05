@@ -1,5 +1,6 @@
 import base64
 
+from prowler.lib.logger import logger
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     SecretsScanError,
@@ -12,7 +13,20 @@ from prowler.providers.aws.services.sagemaker.sagemaker_client import (
 
 
 class sagemaker_notebook_instance_no_secrets(Check):
+    """Check for hardcoded secrets in SageMaker notebook instance lifecycle scripts.
+
+    Scans the OnCreate and OnStart lifecycle configuration scripts of each
+    SageMaker notebook instance for hardcoded secrets such as API keys,
+    passwords, tokens, and connection strings.
+    """
+
     def execute(self):
+        """Execute the sagemaker_notebook_instance_no_secrets check.
+
+        Returns:
+            list[Check_Report_AWS]: One report per SageMaker notebook
+                instance, with status PASS, FAIL, or MANUAL.
+        """
         findings = []
         notebook_instances = sagemaker_client.sagemaker_notebook_instances
         if not notebook_instances:
@@ -22,6 +36,8 @@ class sagemaker_notebook_instance_no_secrets(Check):
             "secrets_ignore_patterns", []
         )
         validate = sagemaker_client.audit_config.get("secrets_validate", False)
+
+        manual_review_indices = set()
 
         def payloads():
             for index, notebook_instance in enumerate(notebook_instances):
@@ -36,7 +52,14 @@ class sagemaker_notebook_instance_no_secrets(Check):
                             NotebookInstanceLifecycleConfigName=notebook_instance.lifecycle_config_name
                         )
                     )
-                except Exception:
+                except Exception as error:
+                    logger.error(
+                        f"{notebook_instance.region} -- {error.__class__.__name__}: "
+                        f"Could not describe lifecycle configuration "
+                        f"{notebook_instance.lifecycle_config_name} for notebook "
+                        f"instance {notebook_instance.name}: {error}"
+                    )
+                    manual_review_indices.add(index)
                     continue
 
                 for hook_name in ("OnCreate", "OnStart"):
@@ -49,7 +72,13 @@ class sagemaker_notebook_instance_no_secrets(Check):
                             decoded = base64.b64decode(content_b64).decode(
                                 "utf-8", errors="ignore"
                             )
-                        except Exception:
+                        except Exception as error:
+                            logger.error(
+                                f"{notebook_instance.region} -- {error.__class__.__name__}: "
+                                f"Could not decode {hook_name}[{script_index}] script "
+                                f"for notebook instance {notebook_instance.name}: {error}"
+                            )
+                            manual_review_indices.add(index)
                             continue
                         yield (index, f"{hook_name}[{script_index}]"), decoded
 
@@ -86,6 +115,17 @@ class sagemaker_notebook_instance_no_secrets(Check):
             report = Check_Report_AWS(
                 metadata=self.metadata(), resource=notebook_instance
             )
+
+            if index in manual_review_indices:
+                report.status = "MANUAL"
+                report.status_extended = (
+                    f"Could not fully scan SageMaker notebook instance "
+                    f"{notebook_instance.name} lifecycle configuration for "
+                    f"secrets; manual review is required."
+                )
+                findings.append(report)
+                continue
+
             report.status = "PASS"
             report.status_extended = (
                 f"No secrets found in SageMaker notebook instance "
