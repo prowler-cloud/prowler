@@ -224,6 +224,10 @@ class SageMaker(AWSService):
                 notebook_instance.direct_internet_access = True
             if "KmsKeyId" in describe_notebook_instance:
                 notebook_instance.kms_key_id = describe_notebook_instance["KmsKeyId"]
+            if "NotebookInstanceLifecycleConfigName" in describe_notebook_instance:
+                notebook_instance.lifecycle_config_name = describe_notebook_instance[
+                    "NotebookInstanceLifecycleConfigName"
+                ]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -497,6 +501,7 @@ class NotebookInstance(BaseModel):
     subnet_id: str = None
     direct_internet_access: bool = None
     kms_key_id: str = None
+    lifecycle_config_name: str = None
     tags: Optional[list] = []
 
 
