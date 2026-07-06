@@ -56,6 +56,44 @@ describe("auth callback URL helpers", () => {
 
       expect(result).toBe("/");
     });
+
+    it("should reject backslash-normalized callback URLs", () => {
+      const params = new URLSearchParams({ state: "/\\attacker.example" });
+
+      const result = getSafeCallbackPath(params);
+
+      expect(result).toBe("/");
+    });
+
+    it("should reject callback URLs with control characters before the host", () => {
+      const params = new URLSearchParams({ state: "/\t/attacker.example" });
+
+      const result = getSafeCallbackPath(params);
+
+      expect(result).toBe("/");
+    });
+
+    it("should preserve the query string of relative callback paths", () => {
+      const params = new URLSearchParams({
+        state: "/invitation/accept?invitation_token=test-token&foo=bar",
+      });
+
+      const result = getSafeCallbackPath(params);
+
+      expect(result).toBe(
+        "/invitation/accept?invitation_token=test-token&foo=bar",
+      );
+    });
+  });
+
+  describe("when appending OAuth state for unsafe paths", () => {
+    it("should not add a backslash-normalized path as provider state", () => {
+      const authUrl = "https://accounts.example.com/oauth?client_id=client";
+
+      const result = appendCallbackState(authUrl, "/\\attacker.example");
+
+      expect(new URL(result).searchParams.has("state")).toBe(false);
+    });
   });
 
   describe("when reading invitation tokens", () => {
