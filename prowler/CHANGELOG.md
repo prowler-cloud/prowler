@@ -6,6 +6,10 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ## [5.33.0] (Prowler v5.33.0)
 
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11853)](https://github.com/prowler-cloud/prowler/pull/11853)
+
 ### 🐞 Fixed
 
 - Azure resource group scoped scans now keep subscription entries when scoped resource listing fails, clarify helper documentation and test organization, and align the resource group documentation example with the described values [(#11796)](https://github.com/prowler-cloud/prowler/pull/11796)
