@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.32.1] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- RBAC role forms now explain Unlimited Visibility in a dedicated section and preserve explicit visibility choices when admin permissions are toggled [(#11851)](https://github.com/prowler-cloud/prowler/pull/11851)
+
+---
+
 ## [1.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
