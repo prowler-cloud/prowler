@@ -339,8 +339,15 @@ export const getCrossProviderCompliancePdf = async (
   taskId: string,
 ): Promise<ScanBinaryResult> => {
   const headers = await getAuthHeaders({ contentType: false });
+  // ``taskId`` reaches the URL path, so constrain it to the task-id charset
+  // (UUIDs) before interpolating — this closes the SSRF vector of a value
+  // smuggling ``/``, ``..`` or a host into the request path.
+  const safeTaskId = taskId.trim();
+  if (!/^[A-Za-z0-9_-]+$/.test(safeTaskId)) {
+    return { error: "Invalid task identifier." };
+  }
   const url = new URL(
-    `${apiBaseUrl}/cross-provider-compliance-overviews/generate-pdf/${taskId}/download`,
+    `${apiBaseUrl}/cross-provider-compliance-overviews/generate-pdf/${encodeURIComponent(safeTaskId)}/download`,
   );
 
   try {
