@@ -23,6 +23,10 @@ title: 'Getting Started with Kubernetes'
 
 For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate. Paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
 
+<Note>
+Kubeconfigs that use `users[].user.exec` authentication are not supported in Prowler Cloud/App. For security reasons, Prowler Cloud does not run commands declared by uploaded kubeconfigs. Use kubeconfig credentials that do not rely on `exec` authentication, such as the ServiceAccount token flow documented below.
+</Note>
+
 By default, the `kubeconfig` file is located at `~/.kube/config`.
 
 ![Kubernetes Credentials](/images/kubernetes-credentials.png)
