@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.33.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- `awslambda_layer_no_secrets_in_code` check for AWS provider, scanning Lambda layer package contents for hardcoded secrets [(#11861)](https://github.com/prowler-cloud/prowler/pull/11861)
+
+---
+
 ## [5.32.1] (Prowler v5.32.1)
 
 ### 🐞 Fixed
