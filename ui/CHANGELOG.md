@@ -2,8 +2,6 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-<<<<<<< HEAD
-=======
 ## [1.32.1] (Prowler v5.32.1)
 
 ### 🐞 Fixed
@@ -12,7 +10,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ---
 
->>>>>>> 81c3152eb (chore(changelog): prepare for 5.32.1 (#11856))
 ## [1.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
