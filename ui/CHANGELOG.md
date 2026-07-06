@@ -2,7 +2,24 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+## [1.32.0] (Prowler v5.32.0)
+
+### 🚀 Added
+
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
+- CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+
+---
+
+## [1.31.1] (Prowler v5.31.1)
+
+### 🔄 Changed
+
+- Schedule Scans provider table and launch flows now use provider schedule fields, restore OSS daily scheduling, default to the next local scan hour, and clarify provider selection in launch scan [(#11684)](https://github.com/prowler-cloud/prowler/pull/11684)
+
+---
+
+## [1.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
 

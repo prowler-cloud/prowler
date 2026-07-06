@@ -32,7 +32,7 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     disabled,
   }: {
     label: string;
-    onSelect: () => void;
+    onSelect?: () => void;
     disabled?: boolean;
   }) => (
     <button onClick={onSelect} disabled={disabled}>
@@ -45,7 +45,45 @@ vi.mock("@/components/shadcn/spinner/spinner", () => ({
   Spinner: () => <span>Loading</span>,
 }));
 
-import { DataTableRowActions } from "./data-table-row-actions";
+vi.mock("./finding-note-modal", () => ({
+  FindingNoteModal: ({
+    open,
+    triage,
+  }: {
+    open: boolean;
+    triage: {
+      noteBody: string;
+      canEdit: boolean;
+      disabledReason?: string;
+      billingHref: string;
+    };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Note">
+        <textarea
+          aria-label="Note text"
+          value={triage.noteBody}
+          disabled={!triage.canEdit}
+          readOnly
+        />
+        {triage.disabledReason === "cloud_only" && (
+          <a href={triage.billingHref}>Available in Prowler Cloud</a>
+        )}
+        <button disabled={!triage.canEdit}>Save changes</button>
+      </div>
+    ) : null,
+}));
+
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
+
+import {
+  DataTableRowActions,
+  type FindingRowData,
+} from "./data-table-row-actions";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 function deferredPromise<T>() {
@@ -57,6 +95,40 @@ function deferredPromise<T>() {
   });
 
   return { promise, resolve, reject };
+}
+
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
+
+function makeFindingRow(overrides?: Partial<FindingRowData>) {
+  return {
+    original: {
+      id: "finding-1",
+      attributes: {
+        muted: false,
+        check_metadata: {
+          checktitle: "S3 public access",
+        },
+      },
+      triage: makeTriageSummary(),
+      ...overrides,
+    },
+  } as never;
 }
 
 describe("DataTableRowActions", () => {
@@ -178,5 +250,77 @@ describe("DataTableRowActions", () => {
     expect(
       screen.getByRole("button", { name: "Mute Finding Group" }),
     ).toBeDisabled();
+  });
+
+  it("shows Add Triage Note for editable findings without a note", () => {
+    // Given / When
+    render(
+      <DataTableRowActions
+        row={makeFindingRow()}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
+  });
+
+  it("loads an existing note before opening the note modal", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageNoteLoadAction = vi.fn().mockResolvedValue({
+      noteId: "note-1",
+      noteBody: "Loaded existing note",
+    });
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          triage: makeTriageSummary({ hasVisibleNote: true, notesCount: 1 }),
+        })}
+        onTriageUpdateAction={vi.fn()}
+        onTriageNoteLoadAction={onTriageNoteLoadAction}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Open note" }));
+
+    // Then
+    expect(onTriageNoteLoadAction).toHaveBeenCalledWith(
+      expect.objectContaining({ triageId: "triage-1", notesCount: 1 }),
+    );
+    expect(await screen.findByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toHaveValue(
+      "Loaded existing note",
+    );
+  });
+
+  it("opens a disabled Cloud-only note modal from finding actions", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={makeFindingRow({
+          triage: makeTriageSummary({
+            canEdit: false,
+            hasVisibleNote: false,
+            disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+          }),
+        })}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
+
+    // Then
+    expect(screen.getByRole("dialog", { name: "Note" })).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(
+      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
+    ).toHaveAttribute("href", "https://prowler.com/pricing");
   });
 });

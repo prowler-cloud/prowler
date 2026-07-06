@@ -1,3 +1,5 @@
+import { adaptFindingTriageSummariesResponse } from "@/actions/findings/findings-triage.adapter";
+import { getFindingTriageAdapterOptions } from "@/actions/findings/findings-triage.options";
 import type {
   FindingGroupRow,
   FindingResourceRow,
@@ -72,6 +74,7 @@ export function adaptFindingGroupsResponse(
   }
 
   const data = (apiResponse as { data: FindingGroupApiItem[] }).data;
+
   return data.map((item) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.GROUP,
@@ -146,6 +149,9 @@ interface FindingGroupResourceAttributes {
   first_seen_at: string | null;
   last_seen_at: string | null;
   muted_reason?: string | null;
+  finding_uid?: string;
+  triage_status?: string;
+  triage_has_note?: boolean;
 }
 
 interface FindingGroupResourceApiItem {
@@ -153,6 +159,26 @@ interface FindingGroupResourceApiItem {
   id: string;
   attributes: FindingGroupResourceAttributes;
 }
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === "object";
+
+const isFindingGroupResourceApiItem = (
+  value: unknown,
+): value is FindingGroupResourceApiItem => {
+  if (!isRecord(value) || typeof value.id !== "string") {
+    return false;
+  }
+
+  const attributes = value.attributes;
+
+  return (
+    isRecord(attributes) &&
+    typeof attributes.finding_id === "string" &&
+    isRecord(attributes.resource) &&
+    isRecord(attributes.provider)
+  );
+};
 
 /**
  * Transforms the API response for finding group resources (drill-down)
@@ -171,8 +197,15 @@ export function adaptFindingGroupResourcesResponse(
     return [];
   }
 
-  const data = (apiResponse as { data: FindingGroupResourceApiItem[] }).data;
-  return data.map((item) => ({
+  const data = (apiResponse as { data: unknown[] }).data.filter(
+    isFindingGroupResourceApiItem,
+  );
+  const triageSummaries = adaptFindingTriageSummariesResponse(
+    { ...apiResponse, data },
+    getFindingTriageAdapterOptions(),
+  );
+
+  return data.map((item, index) => ({
     id: item.id,
     rowType: FINDINGS_ROW_TYPE.RESOURCE,
     findingId: item.attributes.finding_id || item.id,
@@ -194,5 +227,6 @@ export function adaptFindingGroupResourcesResponse(
     mutedReason: item.attributes.muted_reason || undefined,
     firstSeenAt: item.attributes.first_seen_at,
     lastSeenAt: item.attributes.last_seen_at,
+    triage: triageSummaries[index],
   }));
 }

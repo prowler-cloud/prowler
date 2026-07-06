@@ -20,6 +20,15 @@ import {
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
+import type {
+  ScanScheduleCapability,
+  ScanScheduleProvider,
+} from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -103,9 +112,15 @@ function countSelectedLeaves(rows: Row<ProvidersTableRow>[]): number {
 export function getColumnProviders(
   rowSelection: RowSelectionState,
   testableProviderIds: string[],
+  selectedScheduleProviderIds: string[],
+  selectedScheduleProviders: ScanScheduleProvider[],
   onClearSelection: () => void,
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
+  scanScheduleCapability?: ScanScheduleCapability,
+  scanConfigs: ScanConfigurationData[] = [],
+  scanConfigStatus: ScanConfigurationListStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  scanConfigIdByProviderId: ReadonlyMap<string, string> = new Map(),
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -220,22 +235,25 @@ export function getColumnProviders(
           return <span className="text-text-neutral-tertiary text-sm">-</span>;
         }
 
-        const lastCheckedAt = (row.original as ProvidersProviderRow).attributes
-          .connection.last_checked_at;
+        const provider = row.original as ProvidersProviderRow;
+        const lastScanAt =
+          provider.lastScanAt !== undefined
+            ? provider.lastScanAt
+            : provider.attributes.connection.last_checked_at;
 
-        if (!lastCheckedAt) {
+        if (!lastScanAt) {
           return (
             <span className="text-text-neutral-tertiary text-sm">Never</span>
           );
         }
 
-        return <DateWithTime dateTime={lastCheckedAt} showTime />;
+        return <DateWithTime dateTime={lastScanAt} showTime />;
       },
       enableSorting: false,
     },
     {
       id: "scanSchedule",
-      size: 140,
+      size: 180,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Scan Schedule" />
       ),
@@ -248,12 +266,7 @@ export function getColumnProviders(
           );
         }
 
-        return (
-          <LinkToScans
-            hasSchedule={row.original.hasSchedule}
-            schedule={row.original.scheduleSummary}
-          />
-        );
+        return <LinkToScans schedule={row.original.scheduleSummary} />;
       },
       enableSorting: false,
     },
@@ -310,6 +323,9 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         const hasSelection = Object.values(rowSelection).some(Boolean);
+        const currentScanConfigId = isProvidersOrganizationRow(row.original)
+          ? null
+          : (scanConfigIdByProviderId.get(row.original.id) ?? null);
 
         return (
           <DataTableRowActions
@@ -317,9 +333,15 @@ export function getColumnProviders(
             hasSelection={hasSelection}
             isRowSelected={row.getIsSelected()}
             testableProviderIds={testableProviderIds}
+            selectedScheduleProviderIds={selectedScheduleProviderIds}
+            selectedScheduleProviders={selectedScheduleProviders}
             onClearSelection={onClearSelection}
             onOpenProviderWizard={onOpenProviderWizard}
             onOpenOrganizationWizard={onOpenOrganizationWizard}
+            scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
+            currentScanConfigId={currentScanConfigId}
+            capability={scanScheduleCapability}
           />
         );
       },

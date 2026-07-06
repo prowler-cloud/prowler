@@ -3,11 +3,26 @@ import json
 import re
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.db_router import MainRouter
+from api.exceptions import ProviderConnectionError, ProviderDeletedException
+from api.models import (
+    Finding,
+    MuteRule,
+    Provider,
+    Resource,
+    ResourceScanSummary,
+    Scan,
+    ScanSummary,
+    StateChoices,
+    StatusChoices,
+)
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
@@ -28,22 +43,6 @@ from tasks.jobs.scan import (
     update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
-
-from api.db_router import MainRouter
-from api.exceptions import ProviderConnectionError
-from api.models import (
-    Finding,
-    MuteRule,
-    Provider,
-    Resource,
-    ResourceScanSummary,
-    Scan,
-    ScanSummary,
-    StateChoices,
-    StatusChoices,
-)
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 
 
 @contextmanager
@@ -262,6 +261,75 @@ class TestPerformScan:
         provider.refresh_from_db()
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
+
+    def test_perform_prowler_scan_provider_deleted_during_progress_update(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        def scan_results():
+            Provider.objects.filter(pk=provider_id).delete()
+            yield 50, []
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.logger.error") as mock_logger_error,
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = scan_results()
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            with pytest.raises(ProviderDeletedException):
+                perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        mock_logger_error.assert_not_called()
+        assert not Scan.objects.filter(pk=scan_id).exists()
+
+    def test_perform_prowler_scan_sets_final_progress_when_progress_updates_are_throttled(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        providers_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = providers_fixture[0]
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_DELTA", 200),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", 3600),
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(99, []), (100, [])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.COMPLETED
+        assert scan.progress == 100
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
@@ -1335,9 +1403,9 @@ class TestPerformScan:
             )
 
             # Capture time before and after scan
-            before_scan = datetime.now(timezone.utc)
+            before_scan = datetime.now(UTC)
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
-            after_scan = datetime.now(timezone.utc)
+            after_scan = datetime.now(UTC)
 
         # Verify muted_at is within the scan time window
         finding_db = Finding.objects.get(uid=finding_uid)
@@ -1473,7 +1541,7 @@ class TestProcessFindingMicroBatch:
             partition="aws-old",
         )
 
-        previous_first_seen = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        previous_first_seen = datetime(2024, 1, 1, tzinfo=UTC)
 
         finding = FakeFinding(
             uid="finding-muted",
@@ -2123,7 +2191,7 @@ class TestCreateComplianceRequirements:
                 tags={},
                 check_id=existing_finding.check_id,
                 check_metadata={"CheckId": existing_finding.check_id},
-                first_seen_at=datetime.now(timezone.utc),
+                first_seen_at=datetime.now(UTC),
                 muted=False,
             )
             resource = existing_finding.resources.first()
@@ -2313,7 +2381,7 @@ class TestComplianceRequirementCopy:
     def test_persist_compliance_requirement_rows_fallback(
         self, mock_copy, mock_rls_transaction, mock_bulk_create
     ):
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
         row = {
             "id": uuid.uuid4(),
             "tenant_id": str(uuid.uuid4()),
@@ -2394,7 +2462,7 @@ class TestComplianceRequirementCopy:
 
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2644,10 +2712,10 @@ class TestComplianceRequirementCopy:
             # Note: inserted_at is intentionally missing
         }
 
-        before_call = datetime.now(timezone.utc)
+        before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
             _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
-        after_call = datetime.now(timezone.utc)
+        after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2811,7 +2879,7 @@ class TestComplianceRequirementCopy:
             {
                 "id": uuid.uuid4(),
                 "tenant_id": tenant_id,
-                "inserted_at": datetime.now(timezone.utc),
+                "inserted_at": datetime.now(UTC),
                 "compliance_id": "test",
                 "framework": "Test",
                 "version": "1.0",
@@ -2846,7 +2914,7 @@ class TestComplianceRequirementCopy:
         row = {
             "id": uuid.uuid4(),
             "tenant_id": tenant_id,
-            "inserted_at": datetime.now(timezone.utc),
+            "inserted_at": datetime.now(UTC),
             "compliance_id": "test",
             "framework": "Test",
             "version": "1.0",
@@ -2886,7 +2954,7 @@ class TestComplianceRequirementCopy:
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2968,7 +3036,7 @@ class TestComplianceRequirementCopy:
         tenant_id = str(uuid.uuid4())
         row_id = uuid.uuid4()
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         row = {
             "id": row_id,
@@ -4461,7 +4529,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4538,7 +4606,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4591,8 +4659,9 @@ class TestScanIsFullScope:
         # If the SDK adds a new filter, this test still passes via the
         # introspection-driven derivation; if it adds a non-filter kwarg
         # (e.g. provider-like), keep the exclusion list in sync in models.py.
-        from prowler.lib.scan.scan import Scan as ProwlerScan
         import inspect
+
+        from prowler.lib.scan.scan import Scan as ProwlerScan
 
         expected = tuple(
             name

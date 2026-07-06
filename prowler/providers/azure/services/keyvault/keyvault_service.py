@@ -35,7 +35,11 @@ class KeyVault(AzureService):
         for subscription, client in self.clients.items():
             try:
                 key_vaults[subscription] = []
-                vaults_list = list(client.vaults.list_by_subscription())
+                vaults_list = self.list_with_rg_scope(
+                    subscription,
+                    client.vaults.list_by_subscription,
+                    client.vaults.list_by_resource_group,
+                )
 
                 if not vaults_list:
                     continue

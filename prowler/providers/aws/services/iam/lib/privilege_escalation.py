@@ -19,6 +19,7 @@ from prowler.providers.aws.services.iam.lib.policy import get_effective_actions
 # - https://github.com/RhinoSecurityLabs/Security-Research/blob/master/tools/aws-pentest-tools/aws_escalate.py
 # - https://rhinosecuritylabs.com/aws/aws-privilege-escalation-methods-mitigation/
 # - https://github.com/DataDog/pathfinding.cloud (AWS IAM Privilege Escalation Path Library)
+# - https://www.beyondtrust.com/blog/entry/aws-agentcore-privilege-escalation (AWS Bedrock AgentCore)
 
 privilege_escalation_policies_combination = {
     # IAM self-escalation and policy manipulation
@@ -299,12 +300,47 @@ privilege_escalation_policies_combination = {
     "PassRole+AgentCoreCreateInterpreter+InvokeInterpreter": {
         "iam:PassRole",
         "bedrock-agentcore:CreateCodeInterpreter",
+        "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
     },
     # Prerequisite: Existing Bedrock code interpreter with admin role
     "AgentCoreSessionInvoke": {
         "bedrock-agentcore:StartCodeInterpreterSession",
         "bedrock-agentcore:InvokeCodeInterpreter",
+    },
+    # Prerequisite: Existing AgentCore Runtime or Harness with admin execution role.
+    # InvokeAgentRuntimeCommand runs shell commands as root inside the microVM and
+    # reads the execution role credentials from MMDS, bypassing the agent and guardrails.
+    "AgentCoreInvokeRuntimeCommand": {
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    "PassRole+AgentCoreCreateRuntime+InvokeRuntimeCommand": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateAgentRuntime",
+        "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+        "bedrock-agentcore:CreateWorkloadIdentity",
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    "PassRole+AgentCoreCreateHarness+InvokeRuntimeCommand": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateHarness",
+        "bedrock-agentcore:CreateAgentRuntime",
+        "bedrock-agentcore:CreateAgentRuntimeEndpoint",
+        "bedrock-agentcore:CreateWorkloadIdentity",
+        "bedrock-agentcore:GetAgentRuntime",
+        "bedrock-agentcore:InvokeAgentRuntimeCommand",
+    },
+    # Prerequisite: Existing AgentCore Custom Browser with admin execution role.
+    # A remote CDP driver on the browser session reads the role credentials from MMDS.
+    "AgentCoreBrowserSessionConnect": {
+        "bedrock-agentcore:StartBrowserSession",
+        "bedrock-agentcore:ConnectBrowserAutomationStream",
+    },
+    "PassRole+AgentCoreCreateBrowser+ConnectBrowser": {
+        "iam:PassRole",
+        "bedrock-agentcore:CreateBrowser",
+        "bedrock-agentcore:StartBrowserSession",
+        "bedrock-agentcore:ConnectBrowserAutomationStream",
     },
     # TO-DO: We have to handle AssumeRole just if the resource is * and without conditions
     # "sts:AssumeRole": {"sts:AssumeRole"},

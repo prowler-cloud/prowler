@@ -8,6 +8,7 @@ import importlib
 import pkgutil
 
 from fastmcp import FastMCP
+
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
 

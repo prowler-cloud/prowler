@@ -140,6 +140,7 @@ from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from prowler.providers.e2e.models import E2eOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
@@ -147,6 +148,7 @@ from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.image.exceptions.exceptions import ImageBaseException
 from prowler.providers.image.models import ImageOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.linode.models import LinodeOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
@@ -156,7 +158,6 @@ from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
 from prowler.providers.stackit.models import StackITOutputOptions
-from prowler.providers.e2e.models import E2eOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -442,6 +443,10 @@ def prowler():
         )
     elif provider == "scaleway":
         output_options = ScalewayOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "linode":
+        output_options = LinodeOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     else:

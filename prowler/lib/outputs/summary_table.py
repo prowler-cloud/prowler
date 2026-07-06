@@ -124,6 +124,11 @@ def display_summary_table(
         elif provider.type == "scaleway":
             entity_type = "Organization"
             audited_entities = provider.identity.organization_id
+        elif provider.type == "linode":
+            entity_type = "Account"
+            audited_entities = (
+                provider.identity.username or provider.identity.email or "linode"
+            )
         else:
             # Dynamic fallback: any external/custom provider
             entity_type, audited_entities = provider.get_summary_entity()

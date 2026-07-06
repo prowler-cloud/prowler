@@ -1,10 +1,18 @@
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import openai
 import pytest
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+    Task,
+)
 from botocore.exceptions import ClientError
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
@@ -29,15 +37,6 @@ from tasks.tasks import (
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
-)
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
-    Scan,
-    StateChoices,
-    Task,
 )
 
 
@@ -1478,9 +1477,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -2328,7 +2327,7 @@ class TestPerformScheduledScanTask:
             task_id=task_id,
             task_name="scan-perform-scheduled",
             status="STARTED",
-            date_created=datetime.now(timezone.utc),
+            date_created=datetime.now(UTC),
         )
         Task.objects.create(
             id=task_id, task_runner_task=task_result, tenant_id=tenant_id
@@ -2416,7 +2415,7 @@ class TestPerformScheduledScanTask:
             state=StateChoices.SCHEDULED,
         )
         assert scheduled_scans.count() == 1
-        assert scheduled_scans.first().scheduled_at > datetime.now(timezone.utc)
+        assert scheduled_scans.first().scheduled_at > datetime.now(UTC)
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -2452,7 +2451,7 @@ class TestPerformScheduledScanTask:
             name="Daily scheduled scan",
             trigger=Scan.TriggerChoices.SCHEDULED,
             state=StateChoices.SCHEDULED,
-            scheduled_at=datetime.now(timezone.utc),
+            scheduled_at=datetime.now(UTC),
             scheduler_task_id=periodic_task.id,
         )
         duplicate_scan = Scan.objects.create(
@@ -2582,7 +2581,7 @@ class TestReaggregateAllFindingGroupSummaries:
         scan_id_today_p1 = uuid.uuid4()
         scan_id_yesterday_p1 = uuid.uuid4()
         scan_id_today_p2 = uuid.uuid4()
-        today = datetime.now(tz=timezone.utc)
+        today = datetime.now(tz=UTC)
         yesterday = today - timedelta(days=1)
 
         mock_outer_group_result = MagicMock()
@@ -2663,7 +2662,7 @@ class TestReaggregateAllFindingGroupSummaries:
         provider_id = uuid.uuid4()
         latest_scan_today = uuid.uuid4()
         earlier_scan_today = uuid.uuid4()
-        today_late = datetime.now(tz=timezone.utc)
+        today_late = datetime.now(tz=UTC)
         today_early = today_late - timedelta(hours=4)
 
         mock_outer_group_result = MagicMock()

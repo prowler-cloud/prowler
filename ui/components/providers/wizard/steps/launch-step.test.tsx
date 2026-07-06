@@ -3,6 +3,11 @@ import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  ACTION_ERROR_API_MESSAGES,
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import { SCAN_JOBS_TAB } from "@/types";
 import {
@@ -74,7 +79,7 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
-    it("defaults to run now and locks schedule mode outside Cloud", async () => {
+    it("defaults to daily schedule mode and locks advanced cadence outside Cloud", async () => {
       // Given
       const onFooterChange = vi.fn();
       seedConnectedProvider();
@@ -88,20 +93,21 @@ describe("LaunchStep", () => {
       );
 
       // Then
-      expect(screen.getByText("Account Connected!")).toBeInTheDocument();
-      expect(screen.getByRole("radio", { name: "Run now" })).toBeChecked();
+      expect(screen.getByText("Provider Connected!")).toBeInTheDocument();
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
-      ).toBeDisabled();
+      ).toBeChecked();
+      expect(screen.getByRole("radio", { name: "Run now" })).not.toBeChecked();
       expect(
-        screen.queryByRole("combobox", { name: /repeats/i }),
-      ).not.toBeInTheDocument();
+        screen.getByRole("radio", { name: "On a schedule" }),
+      ).toBeEnabled();
+      expect(screen.getByRole("combobox", { name: /repeats/i })).toBeDisabled();
 
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
-      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Launch scan");
+      expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe("Save");
     });
 
-    it("launches only an on-demand scan and never creates a legacy daily schedule", async () => {
+    it("saves a legacy daily schedule by default", async () => {
       // Given
       const onClose = vi.fn();
       const onFooterChange = vi.fn();
@@ -122,9 +128,43 @@ describe("LaunchStep", () => {
       });
 
       // Then
-      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
-      const sentFormData = scanOnDemandMock.mock.calls[0]?.[0] as FormData;
+      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
+      const sentFormData = scheduleDailyMock.mock.calls[0]?.[0] as FormData;
       expect(sentFormData.get("providerId")).toBe("provider-1");
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("launches only an on-demand scan when run now is selected", async () => {
+      // Given
+      const user = userEvent.setup();
+      const onClose = vi.fn();
+      const onFooterChange = vi.fn();
+      seedConnectedProvider();
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={onClose}
+          onFooterChange={onFooterChange}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+
+      // When
+      await user.click(screen.getByRole("radio", { name: "Run now" }));
+      await waitFor(() =>
+        expect(lastFooterConfig(onFooterChange)?.actionLabel).toBe(
+          "Launch scan",
+        ),
+      );
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
       expect(scheduleDailyMock).not.toHaveBeenCalled();
       expect(updateScheduleMock).not.toHaveBeenCalled();
       expect(onClose).toHaveBeenCalledTimes(1);
@@ -295,6 +335,36 @@ describe("LaunchStep", () => {
         expect.objectContaining({ title: "Unable to save scan schedule" }),
       );
     });
+
+    it("disables launch actions while schedule capability is loading", async () => {
+      // Given
+      const onFooterChange = vi.fn();
+      seedConnectedProvider();
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+          isScheduleCapabilityLoading
+        />,
+      );
+
+      // When
+      await screen.findByText("Loading scan options...");
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      expect(lastFooterConfig(onFooterChange)?.backDisabled).toBe(true);
+      expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(true);
+      expect(scanOnDemandMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
+      expect(scheduleDailyMock).not.toHaveBeenCalled();
+    });
   });
 
   describe("Prowler Cloud trial/onboarding (manual scan only)", () => {
@@ -346,6 +416,47 @@ describe("LaunchStep", () => {
       expect(onClose).toHaveBeenCalledTimes(1);
     });
 
+    it("uses the shared subscription error copy when a manual scan is blocked", async () => {
+      // Given
+      const onClose = vi.fn();
+      const onFooterChange = vi.fn();
+      const rawError =
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED];
+      seedConnectedProvider();
+      scanOnDemandMock.mockResolvedValue({
+        error: rawError,
+        status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+      });
+
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={onClose}
+          onFooterChange={onFooterChange}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+      await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
+
+      // When
+      await act(async () => {
+        lastFooterConfig(onFooterChange)?.onAction?.();
+      });
+
+      // Then
+      await waitFor(() => expect(scanOnDemandMock).toHaveBeenCalledTimes(1));
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: "destructive",
+          title: "Unable to launch scan",
+          description:
+            ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+        }),
+      );
+      expect(toastMock.mock.calls[0]?.[0].description).not.toContain(rawError);
+      expect(onClose).not.toHaveBeenCalled();
+    });
+
     it("disables the action and shows the limit copy when over limit", async () => {
       // Given
       const onFooterChange = vi.fn();
@@ -362,7 +473,7 @@ describe("LaunchStep", () => {
       );
 
       // Then
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(true);
     });

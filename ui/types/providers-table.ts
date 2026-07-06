@@ -1,4 +1,4 @@
-import { MetaDataProps } from "./components";
+import { MetaDataProps, ProviderGroup } from "./components";
 import { FilterOption } from "./filters";
 import {
   OrganizationResource,
@@ -55,6 +55,8 @@ export interface ProvidersProviderRow
   hasSchedule: boolean;
   /** Cadence/next-run summary when the provider has a configured schedule. */
   scheduleSummary?: ScanScheduleSummary;
+  /** Completed-at timestamp for the provider's last scan when exposed by API. */
+  lastScanAt?: string | null;
   subRows?: ProvidersTableRow[];
 }
 
@@ -67,6 +69,7 @@ export interface ProvidersOrganizationRow {
   parentExternalId: string | null;
   organizationId: string | null;
   providerCount: number;
+  providerIds: string[];
   subRows: ProvidersTableRow[];
 }
 
@@ -83,6 +86,7 @@ export interface ProvidersAccountsViewData {
   filters: FilterOption[];
   metadata?: MetaDataProps;
   providers: ProviderProps[];
+  providerGroups: ProviderGroup[];
   rows: ProvidersTableRow[];
 }
 

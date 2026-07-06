@@ -2,6 +2,7 @@
 
 from unittest import mock
 
+from prowler.lib.check.models import Severity
 from prowler.providers.openstack.services.objectstorage.objectstorage_service import (
     ObjectStorageContainer,
 )
@@ -157,7 +158,7 @@ class Test_objectstorage_container_metadata_sensitive_data:
                 history_location="",
                 sync_to="",
                 sync_key="",
-                metadata={"db_password": "supersecret123"},
+                metadata={"db_password": "Tr0ub4dor3xKq9vLmZ"},
             )
         ]
 
@@ -217,7 +218,7 @@ class Test_objectstorage_container_metadata_sensitive_data:
                 history_location="",
                 sync_to="",
                 sync_key="",
-                metadata={"admin_password": "secret123"},
+                metadata={"admin_password": "Tr0ub4dor3xKq9vLmZ"},
             ),
         ]
 
@@ -241,3 +242,63 @@ class Test_objectstorage_container_metadata_sensitive_data:
             assert len(result) == 2
             assert len([r for r in result if r.status == "PASS"]) == 1
             assert len([r for r in result if r.status == "FAIL"]) == 1
+
+    def test_container_verified_secret_escalates_to_critical(self):
+        """Test that a confirmed live secret escalates the finding to CRITICAL (FAIL)."""
+        objectstorage_client = mock.MagicMock()
+        objectstorage_client.audit_config = {"secrets_validate": True}
+        objectstorage_client.containers = [
+            ObjectStorageContainer(
+                id="container-verified",
+                name="verified-secret",
+                region=OPENSTACK_REGION,
+                project_id=OPENSTACK_PROJECT_ID,
+                object_count=0,
+                bytes_used=0,
+                read_ACL="",
+                write_ACL="",
+                versioning_enabled=False,
+                versions_location="",
+                history_location="",
+                sync_to="",
+                sync_key="",
+                metadata={"api_key": "placeholder"},
+            )
+        ]
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_openstack_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.objectstorage.objectstorage_container_metadata_sensitive_data.objectstorage_container_metadata_sensitive_data.objectstorage_client",
+                new=objectstorage_client,
+            ),
+            mock.patch(
+                "prowler.providers.openstack.services.objectstorage.objectstorage_container_metadata_sensitive_data.objectstorage_container_metadata_sensitive_data.detect_secrets_scan_batch",
+                return_value={
+                    0: [
+                        {
+                            "type": "JSON Web Token (base64url-encoded)",
+                            "line_number": 2,
+                            "filename": "data",
+                            "hashed_secret": "x",
+                            "is_verified": True,
+                        }
+                    ]
+                },
+            ) as mock_scan,
+        ):
+            from prowler.providers.openstack.services.objectstorage.objectstorage_container_metadata_sensitive_data.objectstorage_container_metadata_sensitive_data import (
+                objectstorage_container_metadata_sensitive_data,
+            )
+
+            check = objectstorage_container_metadata_sensitive_data()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].check_metadata.Severity == Severity.critical
+            assert "confirmed to be live" in result[0].status_extended
+            assert mock_scan.call_args.kwargs.get("validate") is True

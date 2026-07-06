@@ -1,3 +1,5 @@
+import type { ScheduleFrequency } from "./schedules";
+
 export const PROVIDER_TYPES = [
   "aws",
   "azure",
@@ -65,6 +67,15 @@ export interface ProviderProps {
     };
     inserted_at: string;
     updated_at: string;
+    scan_frequency?: ScheduleFrequency | null;
+    scan_hour?: number | null;
+    scan_day_of_week?: number | null;
+    scan_day_of_month?: number | null;
+    scan_interval_hours?: number | null;
+    scan_timezone?: string | null;
+    scan_enabled?: boolean | null;
+    next_scan_at?: string | null;
+    last_scan_at?: string | null;
     created_by: {
       object: string;
       id: string;

@@ -761,6 +761,87 @@ class TestFinding:
         assert finding_output.metadata.Severity == Severity.high
         assert finding_output.metadata.ResourceType == "mock_resource_type"
 
+    def _build_linode_check_output(self):
+        check_output = MagicMock()
+        check_output.resource_id = "12345"
+        check_output.resource_name = "test-instance"
+        check_output.resource_details = ""
+        check_output.resource_tags = {}
+        check_output.region = "us-east"
+        check_output.status = Status.PASS
+        check_output.status_extended = "Instance is compliant"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="linode")
+        check_output.resource = {}
+        check_output.compliance = {}
+        return check_output
+
+    def test_generate_output_linode(self):
+        """Test Linode output generation when the account ID is available."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username="admin",
+            email="admin@example.com",
+            account_id="E1AF1B6C-1111-2222-3333-444455556666",
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.provider == "linode"
+        assert finding_output.auth_method == "api_token"
+        assert finding_output.account_uid == "E1AF1B6C-1111-2222-3333-444455556666"
+        assert finding_output.account_name == "admin"
+
+    def test_generate_output_linode_without_account_id_falls_back_to_username(self):
+        """account_uid is required; when account_id is None it must fall back to
+        the username so findings are never silently dropped."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username="admin",
+            email="admin@example.com",
+            account_id=None,
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        # Must not raise a ValidationError and must use the username fallback
+        assert finding_output.account_uid == "admin"
+
+    def test_generate_output_linode_without_account_id_or_username(self):
+        """When neither account_id nor username/email is available, account_uid
+        falls back to the literal provider name."""
+        from prowler.providers.linode.models import LinodeIdentityInfo
+
+        provider = MagicMock()
+        provider.type = "linode"
+        provider.identity = LinodeIdentityInfo(
+            username=None,
+            email=None,
+            account_id=None,
+        )
+
+        check_output = self._build_linode_check_output()
+        output_options = MagicMock()
+        output_options.unix_timestamp = False
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert finding_output.account_uid == "linode"
+
     def test_generate_output_iac_remote(self):
         # Mock provider
         provider = MagicMock()

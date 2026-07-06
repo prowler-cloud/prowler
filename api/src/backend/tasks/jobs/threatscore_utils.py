@@ -1,13 +1,12 @@
+from api.db_router import READ_REPLICA_ALIAS
+from api.db_utils import rls_transaction
+from api.models import Finding, Scan, StatusChoices
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from django.db.models import Count, F, Q, Window
 from django.db.models.functions import RowNumber
-from tasks.jobs.reports.config import MAX_FINDINGS_PER_CHECK
-
-from api.db_router import READ_REPLICA_ALIAS
-from api.db_utils import rls_transaction
-from api.models import Finding, Scan, StatusChoices
 from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.jobs.reports.config import MAX_FINDINGS_PER_CHECK
 
 logger = get_task_logger(__name__)
 

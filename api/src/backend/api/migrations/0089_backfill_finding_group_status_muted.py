@@ -1,8 +1,7 @@
-from django.db import migrations
-from tasks.tasks import backfill_finding_group_summaries_task
-
 from api.db_router import MainRouter
 from api.rls import Tenant
+from django.db import migrations
+from tasks.tasks import backfill_finding_group_summaries_task
 
 
 def trigger_backfill_task(apps, schema_editor):
