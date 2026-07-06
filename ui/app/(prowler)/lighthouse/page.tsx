@@ -18,6 +18,7 @@ import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stre
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/ui";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { isCloud } from "@/lib/shared/env";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,7 @@ export default async function AIChatbot({
     );
 
     if (connectedConfigurations.length === 0) {
-      return redirect("/lighthouse/settings");
+      return redirect(LIGHTHOUSE_ROUTE.SETTINGS);
     }
 
     const { modelsByProvider, failedModelProviders } =
@@ -115,7 +116,7 @@ export default async function AIChatbot({
   const hasConfig = await isLighthouseConfigured();
 
   if (!hasConfig) {
-    return redirect("/lighthouse/settings");
+    return redirect(LIGHTHOUSE_ROUTE.SETTINGS);
   }
 
   // Fetch provider configuration with default models
@@ -123,7 +124,7 @@ export default async function AIChatbot({
 
   // Handle errors or missing configuration
   if (providersConfig.errors || !providersConfig.providers) {
-    return redirect("/lighthouse/settings");
+    return redirect(LIGHTHOUSE_ROUTE.SETTINGS);
   }
 
   return (

@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { ConnectLLMProvider } from "@/components/lighthouse-v1/connect-llm-provider";
 import { SelectBedrockAuthMethod } from "@/components/lighthouse-v1/select-bedrock-auth-method";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 export const BEDROCK_AUTH_MODES = {
@@ -44,7 +45,7 @@ function ConnectContent() {
 
 export default function ConnectLLMProviderPage() {
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-    redirect("/lighthouse/settings");
+    redirect(LIGHTHOUSE_ROUTE.SETTINGS);
   }
 
   return (

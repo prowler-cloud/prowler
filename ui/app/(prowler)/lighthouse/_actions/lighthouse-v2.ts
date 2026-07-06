@@ -14,7 +14,10 @@ import type {
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
 import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import type { JsonApiDocument } from "@/types/jsonapi";
+import type { ServerActionResult } from "@/types/server-actions";
 
 import {
   buildLighthouseV2ConfigurationPayload,
@@ -23,7 +26,6 @@ import {
   buildLighthouseV2SessionCreatePayload,
   buildLighthouseV2SessionUpdatePayload,
   getJsonApiArray,
-  type JsonApiDocument,
   mapLighthouseV2Configuration,
   mapLighthouseV2Message,
   mapLighthouseV2Model,
@@ -36,23 +38,20 @@ import {
 
 type TaskResource = Parameters<typeof mapLighthouseV2Task>[0];
 
-export type LighthouseV2ActionResult<T> =
-  | {
-      data: T;
-      meta?: Record<string, unknown>;
-      links?: Record<string, string | null>;
-      status?: number;
-    }
-  | {
-      error: string;
-      errors?: unknown[];
-      status?: number;
-    };
+export type LighthouseV2ActionResult<T> = ServerActionResult<T>;
+
+const CONFIG_ENDPOINT = "/lighthouse/config";
+const SESSIONS_ENDPOINT = "/lighthouse/sessions";
+const SUPPORTED_PROVIDERS_ENDPOINT = "/lighthouse/supported-providers";
+
+// 20 attempts x 3s: ~60s ceiling for the provider connection-check task.
+const CONNECTION_TEST_MAX_ATTEMPTS = 20;
+const CONNECTION_TEST_DELAY_MS = 3000;
 
 export async function getLighthouseV2Configurations(): Promise<
   LighthouseV2ActionResult<LighthouseV2Configuration[]>
 > {
-  return getCollection("/lighthouse/config", mapLighthouseV2Configuration);
+  return getCollection(CONFIG_ENDPOINT, mapLighthouseV2Configuration);
 }
 
 export async function createLighthouseV2Configuration(
@@ -64,13 +63,13 @@ export async function createLighthouseV2Configuration(
   }
 
   return mutateSingle(
-    "/lighthouse/config",
+    CONFIG_ENDPOINT,
     {
       method: "POST",
       body: JSON.stringify(buildLighthouseV2ConfigurationPayload(input)),
     },
     mapLighthouseV2Configuration,
-    "/lighthouse/settings",
+    LIGHTHOUSE_ROUTE.SETTINGS,
   );
 }
 
@@ -79,7 +78,7 @@ export async function updateLighthouseV2Configuration(
   input: LighthouseV2ConfigurationUpdateInput,
 ): Promise<LighthouseV2ActionResult<LighthouseV2Configuration>> {
   return mutateSingle(
-    `/lighthouse/config/${encodeURIComponent(configId)}`,
+    `${CONFIG_ENDPOINT}/${encodeURIComponent(configId)}`,
     {
       method: "PATCH",
       body: JSON.stringify(
@@ -87,7 +86,7 @@ export async function updateLighthouseV2Configuration(
       ),
     },
     mapLighthouseV2Configuration,
-    "/lighthouse/settings",
+    LIGHTHOUSE_ROUTE.SETTINGS,
   );
 }
 
@@ -95,9 +94,9 @@ export async function deleteLighthouseV2Configuration(
   configId: string,
 ): Promise<LighthouseV2ActionResult<true>> {
   return mutateEmpty(
-    `/lighthouse/config/${encodeURIComponent(configId)}`,
+    `${CONFIG_ENDPOINT}/${encodeURIComponent(configId)}`,
     { method: "DELETE" },
-    "/lighthouse/settings",
+    LIGHTHOUSE_ROUTE.SETTINGS,
   );
 }
 
@@ -110,7 +109,7 @@ export async function testLighthouseV2ConfigurationConnection(
   try {
     const response = await fetch(
       buildApiUrl(
-        `/lighthouse/config/${encodeURIComponent(configId)}/connection`,
+        `${CONFIG_ENDPOINT}/${encodeURIComponent(configId)}/connection`,
       ),
       { method: "POST", headers: await getAuthHeaders({ contentType: false }) },
     );
@@ -124,8 +123,8 @@ export async function testLighthouseV2ConfigurationConnection(
     const settled = await pollTaskUntilSettled(
       mapLighthouseV2Task(document.data).id,
       {
-        maxAttempts: 20,
-        delayMs: 3000,
+        maxAttempts: CONNECTION_TEST_MAX_ATTEMPTS,
+        delayMs: CONNECTION_TEST_DELAY_MS,
       },
     );
     if (!settled.ok) {
@@ -151,17 +150,14 @@ export async function testLighthouseV2ConfigurationConnection(
 export async function getLighthouseV2SupportedProviders(): Promise<
   LighthouseV2ActionResult<LighthouseV2SupportedProvider[]>
 > {
-  return getCollection(
-    "/lighthouse/supported-providers",
-    mapLighthouseV2Provider,
-  );
+  return getCollection(SUPPORTED_PROVIDERS_ENDPOINT, mapLighthouseV2Provider);
 }
 
 export async function getLighthouseV2SupportedModels(
   provider: LighthouseV2ProviderType,
 ): Promise<LighthouseV2ActionResult<LighthouseV2SupportedModel[]>> {
   return getCollection(
-    `/lighthouse/supported-providers/${encodeURIComponent(toLighthouseV2ApiProviderType(provider))}/models`,
+    `${SUPPORTED_PROVIDERS_ENDPOINT}/${encodeURIComponent(toLighthouseV2ApiProviderType(provider))}/models`,
     mapLighthouseV2Model,
   );
 }
@@ -169,14 +165,14 @@ export async function getLighthouseV2SupportedModels(
 export async function getLighthouseV2Sessions(): Promise<
   LighthouseV2ActionResult<LighthouseV2Session[]>
 > {
-  return getCollection("/lighthouse/sessions", mapLighthouseV2Session);
+  return getCollection(SESSIONS_ENDPOINT, mapLighthouseV2Session);
 }
 
 export async function getLighthouseV2Session(
   sessionId: string,
 ): Promise<LighthouseV2ActionResult<LighthouseV2Session>> {
   return getSingle(
-    `/lighthouse/sessions/${encodeURIComponent(sessionId)}`,
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(sessionId)}`,
     mapLighthouseV2Session,
   );
 }
@@ -189,7 +185,7 @@ export async function createLighthouseV2Session(
   // re-run the server component and remount the chat, killing the live stream.
   // The sidebar refreshes client-side via notifyLighthouseV2SessionsChanged().
   return mutateSingle(
-    "/lighthouse/sessions",
+    SESSIONS_ENDPOINT,
     {
       method: "POST",
       body: JSON.stringify(buildLighthouseV2SessionCreatePayload(title)),
@@ -204,7 +200,7 @@ export async function updateLighthouseV2Session(
   attributes: { title?: string | null; isArchived?: boolean },
 ): Promise<LighthouseV2ActionResult<LighthouseV2Session>> {
   return mutateSingle(
-    `/lighthouse/sessions/${encodeURIComponent(sessionId)}`,
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(sessionId)}`,
     {
       method: "PATCH",
       body: JSON.stringify(
@@ -212,7 +208,7 @@ export async function updateLighthouseV2Session(
       ),
     },
     mapLighthouseV2Session,
-    "/lighthouse",
+    LIGHTHOUSE_ROUTE.CHAT,
   );
 }
 
@@ -226,7 +222,7 @@ export async function getLighthouseV2Messages(
   sessionId: string,
 ): Promise<LighthouseV2ActionResult<LighthouseV2Message[]>> {
   return getCollection(
-    `/lighthouse/sessions/${encodeURIComponent(sessionId)}/messages`,
+    `${SESSIONS_ENDPOINT}/${encodeURIComponent(sessionId)}/messages`,
     mapLighthouseV2Message,
   );
 }
@@ -237,7 +233,7 @@ export async function sendLighthouseV2Message(
   try {
     const response = await fetch(
       buildApiUrl(
-        `/lighthouse/sessions/${encodeURIComponent(input.sessionId)}/messages`,
+        `${SESSIONS_ENDPOINT}/${encodeURIComponent(input.sessionId)}/messages`,
       ),
       {
         method: "POST",

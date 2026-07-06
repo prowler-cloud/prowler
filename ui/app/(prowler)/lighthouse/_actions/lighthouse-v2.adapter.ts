@@ -14,22 +14,11 @@ import {
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
 } from "@/app/(prowler)/lighthouse/_types";
-
-export interface JsonApiResource<TAttributes> {
-  id: string;
-  type: string;
-  attributes: TAttributes;
-  meta?: Record<string, unknown>;
-}
-
-export interface JsonApiDocument<TData> {
-  data?: TData;
-  meta?: Record<string, unknown>;
-  links?: Record<string, string | null>;
-  error?: string;
-  errors?: unknown[];
-  status?: number;
-}
+import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
+import type {
+  TaskAttributes as ApiTaskAttributes,
+  TaskState,
+} from "@/types/tasks";
 
 interface ConfigurationAttributes {
   provider_type: string;
@@ -85,13 +74,14 @@ type UnknownPartResource =
   | JsonApiResource<PartAttributes>
   | (PartAttributes & { id?: string });
 
-interface TaskAttributes {
+// Extends the shared task attributes: the Lighthouse task resource always
+// carries `state` plus scheduling metadata.
+interface TaskAttributes extends ApiTaskAttributes {
+  state: TaskState;
   inserted_at?: string;
   completed_at?: string | null;
   name?: string | null;
-  state: string;
   metadata?: unknown;
-  result?: unknown;
 }
 
 interface ValidationSuccess {

@@ -16,6 +16,7 @@ import { WorkflowConnectLLM } from "@/components/lighthouse-v1/workflow";
 import { Button } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { NavigationHeader } from "@/components/ui";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 interface ConnectLLMLayoutProps {
@@ -54,7 +55,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
     await updateTenantConfig({
       default_provider: provider,
     });
-    router.push("/lighthouse/settings");
+    router.push(LIGHTHOUSE_ROUTE.SETTINGS);
   };
 
   if (!provider) {
@@ -78,7 +79,7 @@ export default function ConnectLLMLayout({ children }: ConnectLLMLayoutProps) {
       <NavigationHeader
         title={isEditMode ? "Configure LLM Provider" : "Connect LLM Provider"}
         icon="icon-park-outline:close-small"
-        href="/lighthouse/settings"
+        href={LIGHTHOUSE_ROUTE.SETTINGS}
       />
       <Spacer y={8} />
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">

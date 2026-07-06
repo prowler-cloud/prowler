@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
 interface ChatComposerPanelProps {
   feedback: string | null;
@@ -143,7 +144,7 @@ function ChatComposer({
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Button type="button" variant="outline" size="icon-sm" asChild>
             <Link
-              href="/lighthouse/settings"
+              href={LIGHTHOUSE_ROUTE.SETTINGS}
               aria-label="Lighthouse AI settings"
             >
               <Settings className="size-4" />

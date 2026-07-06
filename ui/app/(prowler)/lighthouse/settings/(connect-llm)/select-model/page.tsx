@@ -4,6 +4,7 @@ import { redirect, useRouter, useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 import { SelectModel } from "@/components/lighthouse-v1/select-model";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 function SelectModelContent() {
@@ -20,14 +21,14 @@ function SelectModelContent() {
     <SelectModel
       provider={provider}
       mode={mode}
-      onSelect={() => router.push("/lighthouse/settings")}
+      onSelect={() => router.push(LIGHTHOUSE_ROUTE.SETTINGS)}
     />
   );
 }
 
 export default function SelectModelPage() {
   if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
-    redirect("/lighthouse/settings");
+    redirect(LIGHTHOUSE_ROUTE.SETTINGS);
   }
 
   return (
