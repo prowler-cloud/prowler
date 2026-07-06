@@ -70,7 +70,7 @@ def display_summary_table(
         elif provider.type == "nhn":
             entity_type = "Tenant Domain"
             audited_entities = provider.identity.tenant_domain
-        elif provider.type == "e2e":
+        elif provider.type == "e2enetworks":
             entity_type = "Project"
             audited_entities = str(provider.identity.project_id)
         elif provider.type == "stackit":

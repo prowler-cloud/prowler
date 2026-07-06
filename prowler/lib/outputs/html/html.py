@@ -1397,15 +1397,15 @@ class HTML(Output):
             return ""
 
     @staticmethod
-    def get_e2e_assessment_summary(provider: Provider) -> str:
-        """Get the HTML assessment summary for the E2E Cloud provider."""
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
         try:
             locations = ", ".join(provider.identity.locations)
             return f"""
                 <div class="col-md-2">
                     <div class="card">
                         <div class="card-header">
-                            E2E Cloud Assessment Summary
+                            E2E Networks Assessment Summary
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
@@ -1420,7 +1420,7 @@ class HTML(Output):
                 <div class="col-md-4">
                     <div class="card">
                         <div class="card-header">
-                            E2E Cloud Credentials
+                            E2E Networks Credentials
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">

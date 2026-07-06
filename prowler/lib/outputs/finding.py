@@ -342,7 +342,7 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = check_output.location
 
-            elif provider.type == "e2e":
+            elif provider.type == "e2enetworks":
                 output_data["auth_method"] = "api_key_and_bearer_token"
                 output_data["account_uid"] = str(
                     get_nested_attribute(provider, "identity.project_id")

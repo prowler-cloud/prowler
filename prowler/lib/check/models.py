@@ -1287,19 +1287,19 @@ class CheckReportNHN(Check_Report):
 
 
 @dataclass
-class CheckReportE2e(Check_Report):
-    """Contains the E2E Cloud Check's finding information."""
+class CheckReportE2eNetworks(Check_Report):
+    """Contains the E2E Networks Check's finding information."""
 
     resource_name: str
     resource_id: str
     location: str
 
     def __init__(self, metadata: Dict, resource: Any) -> None:
-        """Initialize the E2E Cloud Check's finding information.
+        """Initialize the E2E Networks Check's finding information.
 
         Args:
             metadata: The metadata of the check.
-            resource: Basic information about the E2E Cloud resource.
+            resource: Basic information about the E2E Networks resource.
         """
         super().__init__(metadata, resource)
         self.resource_name = getattr(

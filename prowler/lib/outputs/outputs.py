@@ -24,7 +24,7 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.location
     elif finding.check_metadata.Provider == "nhn":
         details = finding.location
-    elif finding.check_metadata.Provider == "e2e":
+    elif finding.check_metadata.Provider == "e2enetworks":
         details = finding.location
     elif finding.check_metadata.Provider == "stackit":
         details = finding.location

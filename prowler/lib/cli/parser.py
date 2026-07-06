@@ -48,7 +48,7 @@ class ProwlerArgumentParser:
             "nhn",
             "mongodbatlas",
             "vercel",
-            "e2e",
+            "e2enetworks",
             "okta",
             "scaleway",
             "stackit",
@@ -75,10 +75,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2e,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2enetworks,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2e{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2enetworks{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -100,7 +100,7 @@ Available Cloud Providers:
     scaleway            Scaleway Provider
     vercel              Vercel Provider
     linode              Linode Provider
-    e2e                 E2E Cloud Provider{extra_providers_text}
+    e2enetworks         E2E Networks Provider{extra_providers_text}
 
 
 Available components:

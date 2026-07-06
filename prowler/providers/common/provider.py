@@ -625,12 +625,12 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
-                elif arguments.provider == "e2e":
+                elif arguments.provider == "e2enetworks":
                     provider_class(
-                        api_key=getattr(arguments, "e2e_api_key", None),
-                        auth_token=getattr(arguments, "e2e_auth_token", None),
-                        project_id=getattr(arguments, "e2e_project_id", None),
-                        locations=getattr(arguments, "e2e_location", None),
+                        api_key=getattr(arguments, "e2e_networks_api_key", None),
+                        auth_token=getattr(arguments, "e2e_networks_auth_token", None),
+                        project_id=getattr(arguments, "e2e_networks_project_id", None),
+                        locations=getattr(arguments, "e2e_networks_location", None),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
