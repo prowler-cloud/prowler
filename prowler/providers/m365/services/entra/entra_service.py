@@ -1,4 +1,5 @@
 import asyncio
+import importlib
 import json
 from asyncio import gather
 from datetime import datetime, timezone
@@ -9,9 +10,6 @@ from uuid import UUID
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from msgraph.generated.groups.groups_request_builder import GroupsRequestBuilder
 from msgraph.generated.models.o_data_errors.o_data_error import ODataError
-from msgraph.generated.security.microsoft_graph_security_run_hunting_query.run_hunting_query_post_request_body import (
-    RunHuntingQueryPostRequestBody,
-)
 from msgraph.generated.users.users_request_builder import UsersRequestBuilder
 from pydantic.v1 import BaseModel, validator
 
@@ -19,6 +17,10 @@ from prowler.lib.logger import logger
 from prowler.providers.m365.lib.service.service import M365Service
 from prowler.providers.m365.m365_provider import M365Provider
 
+run_hunting_query_body = importlib.import_module(
+    "msgraph.generated.security.microsoft_graph_security_run_hunting_query."
+    "run_hunting_query_post_request_body"
+)
 # Sentinel identifiers used in Conditional Access ``conditions.users``
 # collections that do not correspond to real directory objects and must not be
 # resolved against Graph. Shared by the resolver below and the check that reads
@@ -84,6 +86,7 @@ class Entra(M365Service):
         self.tenant_domain = provider.identity.tenant_domain
         self.tenant_id = getattr(provider.identity, "tenant_id", None)
         self.user_registration_details_error: Optional[str] = None
+        self.exchange_mailbox_permission_service_principals_error: Optional[str] = None
         attributes = loop.run_until_complete(
             gather(
                 self._get_authorization_policy(),
@@ -98,6 +101,7 @@ class Entra(M365Service):
                 self._get_authentication_method_configurations(),
                 self._get_service_principals(),
                 self._get_app_registrations(),
+                self._get_exchange_mailbox_permission_service_principals(),
             )
         )
 
@@ -115,6 +119,9 @@ class Entra(M365Service):
         ] = attributes[9]
         self.service_principals: Dict[str, "ServicePrincipal"] = attributes[10]
         self.app_registrations: Dict[str, "AppRegistration"] = attributes[11]
+        self.exchange_mailbox_permission_service_principals: Dict[
+            str, "ServicePrincipal"
+        ] = attributes[12]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -1054,7 +1061,9 @@ OAuthAppInfo
 | project OAuthAppId, AppName, AppStatus, PrivilegeLevel, Permissions,
           ServicePrincipalId, IsAdminConsented, LastUsedTime, AppOrigin
 """
-            request_body = RunHuntingQueryPostRequestBody(query=query)
+            request_body = run_hunting_query_body.RunHuntingQueryPostRequestBody(
+                query=query
+            )
 
             result = await self.client.security.microsoft_graph_security_run_hunting_query.post(
                 request_body
@@ -1380,6 +1389,112 @@ OAuthAppInfo
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return service_principals
+
+    async def _get_exchange_mailbox_permission_service_principals(self):
+        """Retrieve service principals with Exchange mailbox Graph app roles."""
+        logger.info(
+            "Entra - Getting service principals with Exchange mailbox permissions..."
+        )
+        self.exchange_mailbox_permission_service_principals_error = None
+        service_principals = {}
+        graph_service_principal = None
+        candidate_service_principals = []
+
+        try:
+            sp_response = await self.client.service_principals.get()
+            while sp_response:
+                for sp in getattr(sp_response, "value", []) or []:
+                    app_id = getattr(sp, "app_id", None)
+                    if app_id == MICROSOFT_GRAPH_APP_ID:
+                        graph_service_principal = sp
+                        continue
+
+                    if not getattr(sp, "account_enabled", True):
+                        continue
+
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    app_owner_org_id = str(raw_owner).lower() if raw_owner else None
+                    if app_owner_org_id in MICROSOFT_FIRST_PARTY_TENANT_IDS:
+                        continue
+
+                    candidate_service_principals.append(sp)
+
+                next_link = getattr(sp_response, "odata_next_link", None)
+                if not next_link:
+                    break
+                sp_response = await self.client.service_principals.with_url(
+                    next_link
+                ).get()
+
+            if graph_service_principal is None:
+                return service_principals
+
+            graph_service_principal_id = getattr(graph_service_principal, "id", None)
+            exchange_app_roles = {}
+            for role in getattr(graph_service_principal, "app_roles", []) or []:
+                role_value = getattr(role, "value", "") or ""
+                allowed_member_types = getattr(role, "allowed_member_types", []) or []
+                if (
+                    role_value in EXCHANGE_MAILBOX_GRAPH_PERMISSIONS
+                    and "Application" in allowed_member_types
+                ):
+                    exchange_app_roles[str(getattr(role, "id", ""))] = role_value
+
+            if not graph_service_principal_id or not exchange_app_roles:
+                return service_principals
+
+            for sp in candidate_service_principals:
+                assignments_response = (
+                    await self.client.service_principals.by_service_principal_id(
+                        sp.id
+                    ).app_role_assignments.get()
+                )
+                exchange_permissions = set()
+
+                while assignments_response:
+                    for assignment in getattr(assignments_response, "value", []) or []:
+                        resource_id = str(getattr(assignment, "resource_id", ""))
+                        app_role_id = str(getattr(assignment, "app_role_id", ""))
+                        if resource_id == graph_service_principal_id:
+                            permission = exchange_app_roles.get(app_role_id)
+                            if permission:
+                                exchange_permissions.add(permission)
+
+                    next_link = getattr(assignments_response, "odata_next_link", None)
+                    if not next_link:
+                        break
+                    assignments_response = (
+                        await self.client.service_principals.by_service_principal_id(
+                            sp.id
+                        )
+                        .app_role_assignments.with_url(next_link)
+                        .get()
+                    )
+
+                if exchange_permissions:
+                    raw_owner = getattr(sp, "app_owner_organization_id", None)
+                    service_principals[sp.id] = ServicePrincipal(
+                        id=sp.id,
+                        name=getattr(sp, "display_name", "") or "",
+                        app_id=getattr(sp, "app_id", "") or "",
+                        app_owner_organization_id=(
+                            str(raw_owner).lower() if raw_owner else None
+                        ),
+                        account_enabled=getattr(sp, "account_enabled", True),
+                        service_principal_type=getattr(
+                            sp, "service_principal_type", "Application"
+                        ),
+                        exchange_mailbox_permissions=sorted(exchange_permissions),
+                    )
+        except Exception as error:
+            self.exchange_mailbox_permission_service_principals_error = (
+                f"{error.__class__.__name__}: {error}"
+            )
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
         return service_principals
 
     async def _get_app_registrations(self) -> Dict[str, "AppRegistration"]:
@@ -2064,6 +2179,27 @@ TIER_0_ROLE_TEMPLATE_IDS = {
     "e00e864a-17c5-4a4b-9c06-f5b95a8d5bd8",  # Partner Tier2 Support
 }
 
+MICROSOFT_GRAPH_APP_ID = "00000003-0000-0000-c000-000000000000"
+
+MICROSOFT_FIRST_PARTY_TENANT_IDS = {
+    "72f988bf-86f1-41af-91ab-2d7cd011db47",
+    "f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+}
+
+EXCHANGE_MAILBOX_GRAPH_PERMISSIONS = {
+    "Calendars.Read",
+    "Calendars.ReadWrite",
+    "Contacts.Read",
+    "Contacts.ReadWrite",
+    "Mail.Read",
+    "Mail.ReadBasic",
+    "Mail.ReadBasic.All",
+    "Mail.ReadWrite",
+    "Mail.Send",
+    "MailboxSettings.Read",
+    "MailboxSettings.ReadWrite",
+}
+
 
 class ServicePrincipal(BaseModel):
     """Model representing a Microsoft Entra ID service principal.
@@ -2096,6 +2232,9 @@ class ServicePrincipal(BaseModel):
     password_credentials: List[PasswordCredential] = []
     key_credentials: List[KeyCredential] = []
     directory_role_template_ids: List[str] = []
+    account_enabled: bool = True
+    service_principal_type: str = "Application"
+    exchange_mailbox_permissions: List[str] = []
     sp_owner_ids: List[str] = []
     app_owner_ids: List[str] = []
 

@@ -814,9 +814,10 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
     # still using the previous graph shape. Query catalog selection uses this
     # flag; physical read routing uses sink_backend below.
     # TODO: drop after Neptune cutover
-    is_migrated = models.BooleanField(default=False)
+    is_migrated = models.BooleanField(default=False, db_default=False)
     sink_backend = models.CharField(
         choices=SinkBackendChoices.choices,
+        db_default=SinkBackendChoices.NEO4J,
         default=SinkBackendChoices.NEO4J,
         max_length=16,
     )

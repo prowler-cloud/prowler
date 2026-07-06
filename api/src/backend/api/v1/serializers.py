@@ -3147,6 +3147,9 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 
 class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
+    callback_url = serializers.CharField(
+        required=False, allow_blank=True, max_length=2048
+    )
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"

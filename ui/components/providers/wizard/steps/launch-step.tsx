@@ -296,11 +296,11 @@ export function LaunchStep({
 
       <div className="flex items-center gap-3">
         <TreeStatusIcon status={TREE_ITEM_STATUS.SUCCESS} className="size-6" />
-        <h3 className="text-sm font-semibold">Account Connected!</h3>
+        <h3 className="text-sm font-semibold">Provider Connected!</h3>
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Your account is connected to Prowler and ready to Scan!
+        Your provider is connected to Prowler and ready to Scan!
       </p>
 
       {!providerId && (

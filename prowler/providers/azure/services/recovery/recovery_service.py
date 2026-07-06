@@ -56,9 +56,14 @@ class Recovery(AzureService):
         try:
             vaults_dict: dict[str, dict[str, BackupVault]] = {}
             for subscription_id, client in self.clients.items():
-                vaults = client.vaults.list_by_subscription_id()
+                vaults_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.vaults.list_by_subscription_id,
+                    client.vaults.list_by_resource_group,
+                )
+
                 vaults_dict[subscription_id] = {}
-                for vault in vaults:
+                for vault in vaults_list:
                     vault_obj = BackupVault(
                         id=vault.id,
                         name=vault.name,

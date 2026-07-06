@@ -26,6 +26,7 @@ class AzureService:
         )
 
         self.subscriptions = provider.identity.subscriptions
+        self.resource_groups = provider.resource_groups
         self.locations = provider.locations
         self.audit_config = provider.audit_config
         self.fixer_config = provider.fixer_config
@@ -48,6 +49,26 @@ class AzureService:
                 pass
 
         return results
+
+    def list_with_rg_scope(self, subscription_id, list_all_fn, list_by_rg_fn):
+        if not self.resource_groups:
+            return list(list_all_fn())
+        resource_groups = self.resource_groups.get(subscription_id, [])
+        if not resource_groups:
+            logger.info(
+                f"No valid resource groups for subscription {subscription_id}, skipping."
+            )
+            return []
+        output = []
+        for resource_group in resource_groups:
+            try:
+                output += list(list_by_rg_fn(resource_group_name=resource_group))
+            except Exception as error:
+                logger.warning(
+                    f"Subscription ID: {subscription_id} -- Resource Group: {resource_group} -- "
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return output
 
     def __set_clients__(self, identity, session, service, region_config):
         clients = {}

@@ -19,8 +19,13 @@ class PostgreSQL(AzureService):
         flexible_servers = {}
         for subscription, client in self.clients.items():
             try:
+                flexible_servers_list = self.list_with_rg_scope(
+                    subscription,
+                    client.servers.list,
+                    client.servers.list_by_resource_group,
+                )
+
                 flexible_servers.update({subscription: []})
-                flexible_servers_list = client.servers.list()
                 for postgresql_server in flexible_servers_list:
                     # Isolate each server: a failure collecting one server must
                     # not abort collection of the remaining servers in the

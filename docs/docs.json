@@ -128,6 +128,7 @@
               "user-guide/tutorials/prowler-scan-scheduling",
               "user-guide/tutorials/prowler-alerts",
               "user-guide/tutorials/prowler-app-scan-configuration",
+              "user-guide/tutorials/prowler-app-findings-triage",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -237,6 +238,7 @@
                   "user-guide/providers/azure/authentication",
                   "user-guide/providers/azure/use-non-default-cloud",
                   "user-guide/providers/azure/subscriptions",
+                  "user-guide/providers/azure/resource-groups",
                   "user-guide/providers/azure/create-prowler-service-principal"
                 ]
               },
