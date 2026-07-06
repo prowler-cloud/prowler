@@ -61,6 +61,7 @@ from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import TokenSerializer
 from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
 from botocore.exceptions import ClientError, NoCredentialsError
+from celery import states
 from conftest import (
     API_JSON_CONTENT_TYPE,
     TEST_PASSWORD,
@@ -3640,21 +3641,15 @@ class TestScanViewSet:
             ),
         ],
     )
-    @patch("api.v1.views.Task.objects.get")
-    @patch("api.v1.views.perform_scan_task.apply_async")
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
     def test_scans_create_valid(
         self,
-        mock_perform_scan_task,
-        mock_task_get,
+        mock_enqueue_scan_execution,
         authenticated_client,
         scan_json_payload,
         _expected_scanner_args,
         providers_fixture,
-        tasks_fixture,
     ):
-        prowler_task = tasks_fixture[0]
-        mock_perform_scan_task.return_value.id = prowler_task.id
-        mock_task_get.return_value = prowler_task
         *_, provider5 = providers_fixture
         # Provider5 has these scanner_args
         # scanner_args={"key1": "value1", "key2": {"key21": "value21"}}
@@ -3679,7 +3674,120 @@ class TestScanViewSet:
         assert scan.name == scan_json_payload["data"]["attributes"]["name"]
         assert scan.provider == provider5
         assert scan.trigger == Scan.TriggerChoices.MANUAL
+        mock_enqueue_scan_execution.assert_called_once()
         # assert scan.scanner_args == expected_scanner_args
+
+    @patch("tasks.tasks.perform_scan_task.apply_async")
+    def test_scans_create_queues_scan_when_provider_has_active_scan(
+        self,
+        mock_perform_scan_task,
+        authenticated_client,
+        providers_fixture,
+        tenants_fixture,
+        django_capture_on_commit_callbacks,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, *_ = providers_fixture
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-perform",
+            status=states.PENDING,
+        )
+        prowler_task = Task.objects.create(
+            id=task_result.task_id,
+            tenant_id=tenant.id,
+            task_runner_task=task_result,
+        )
+        Scan.objects.create(
+            name="Active scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            tenant_id=tenant.id,
+            task=prowler_task,
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = authenticated_client.post(
+                reverse("scan-list"),
+                data={
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "Duplicate Scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "providers", "id": str(provider.id)}
+                            }
+                        },
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.json()["data"]["id"] != str(prowler_task.id)
+        assert Scan.objects.count() == 2
+        queued_scan = Scan.objects.exclude(task=prowler_task).get()
+        assert queued_scan.trigger == Scan.TriggerChoices.MANUAL
+        assert queued_scan.state == StateChoices.AVAILABLE
+        assert queued_scan.task.task_runner_task.status == "QUEUED"
+        mock_perform_scan_task.assert_not_called()
+
+    @patch("tasks.tasks.perform_scan_task.apply_async")
+    def test_scans_create_queues_scan_when_scheduled_scan_is_claimed(
+        self,
+        mock_perform_scan_task,
+        authenticated_client,
+        providers_fixture,
+        tenants_fixture,
+        django_capture_on_commit_callbacks,
+    ):
+        tenant, *_ = tenants_fixture
+        provider, *_ = providers_fixture
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid4()),
+            task_name="scan-perform-scheduled",
+            status=states.STARTED,
+        )
+        prowler_task = Task.objects.create(
+            id=task_result.task_id,
+            tenant_id=tenant.id,
+            task_runner_task=task_result,
+        )
+        Scan.objects.create(
+            name="Claimed scheduled scan",
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            tenant_id=tenant.id,
+            task=prowler_task,
+        )
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = authenticated_client.post(
+                reverse("scan-list"),
+                data={
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "Manual Scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {"type": "providers", "id": str(provider.id)}
+                            }
+                        },
+                    }
+                },
+                content_type=API_JSON_CONTENT_TYPE,
+            )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert response.json()["data"]["id"] != str(prowler_task.id)
+        assert Scan.objects.count() == 2
+        queued_scan = Scan.objects.exclude(task=prowler_task).get()
+        assert queued_scan.trigger == Scan.TriggerChoices.MANUAL
+        assert queued_scan.state == StateChoices.AVAILABLE
+        assert queued_scan.task.task_runner_task.status == "QUEUED"
+        mock_perform_scan_task.assert_not_called()
 
     @pytest.mark.parametrize(
         "scan_json_payload, error_code",

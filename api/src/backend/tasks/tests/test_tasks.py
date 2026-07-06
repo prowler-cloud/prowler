@@ -14,6 +14,7 @@ from api.models import (
     Task,
 )
 from botocore.exceptions import ClientError
+from celery import states
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
@@ -2286,6 +2287,51 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
         assert Scan.objects.filter(id=available_scan_other_task.id).exists()
 
+    def test_cleanup_keeps_db_queued_scheduled_scans(
+        self, tenants_fixture, providers_fixture
+    ):
+        """DB-queued scheduled scans have a task and must not be deleted as orphans."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=task_result.task_id,
+            task_runner_task=task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Queued scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+            task=queued_task,
+        )
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=queued_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
 
 @pytest.mark.django_db
 class TestPerformScheduledScanTask:
@@ -2334,10 +2380,10 @@ class TestPerformScheduledScanTask:
         )
         return task_result
 
-    def test_skip_when_scheduled_scan_executing(
+    def test_queues_scheduled_scan_when_scheduled_scan_is_executing(
         self, tenants_fixture, providers_fixture
     ):
-        """Skip a scheduled run when another scheduled scan is already executing."""
+        """Queue a scheduled run when another scheduled scan is executing."""
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
@@ -2364,8 +2410,16 @@ class TestPerformScheduledScanTask:
 
         mock_scan.assert_not_called()
         mock_complete_tasks.assert_not_called()
-        assert result["id"] == str(executing_scan.id)
-        assert result["state"] == StateChoices.EXECUTING
+        assert result["id"] != str(executing_scan.id)
+        assert result["state"] == StateChoices.AVAILABLE
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert queued_scheduled_scan.task.task_runner_task.status == "QUEUED"
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -2373,7 +2427,133 @@ class TestPerformScheduledScanTask:
                 trigger=Scan.TriggerChoices.SCHEDULED,
                 state=StateChoices.SCHEDULED,
             ).count()
-            == 0
+            == 1
+        )
+
+    def test_queues_scheduled_scan_when_manual_scan_is_pending(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Queue one scheduled run when a manual scan is already dispatched."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        manual_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status=states.PENDING,
+        )
+        manual_task = Task.objects.create(
+            id=manual_task_result.task_id,
+            task_runner_task=manual_task_result,
+            tenant_id=tenant.id,
+        )
+        manual_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=manual_task,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] != str(manual_scan.id)
+        assert result["state"] == StateChoices.AVAILABLE
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert queued_scheduled_scan.task.task_runner_task.status == "QUEUED"
+        scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+        )
+        assert scheduled_scan.scheduled_at > datetime.now(UTC)
+
+    def test_coalesces_scheduled_scan_when_one_is_already_queued(
+        self, tenants_fixture, providers_fixture
+    ):
+        """Reuse the existing queued scheduled scan instead of adding another."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        manual_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status=states.PENDING,
+        )
+        manual_task = Task.objects.create(
+            id=manual_task_result.task_id,
+            task_runner_task=manual_task_result,
+            tenant_id=tenant.id,
+        )
+        Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=manual_task,
+        )
+        queued_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=queued_task_result.task_id,
+            task_runner_task=queued_task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+            task=queued_task,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.AVAILABLE,
+            ).count()
+            == 1
         )
 
     def test_creates_next_scheduled_scan_after_completion(
@@ -2548,6 +2728,71 @@ class TestPerformScanTask:
         assert result is None
         mock_scan.assert_not_called()
         mock_complete_tasks.assert_not_called()
+
+    def test_dispatches_next_queued_scan_after_completion(
+        self,
+        tenants_fixture,
+        providers_fixture,
+        django_capture_on_commit_callbacks,
+    ):
+        """Dispatch the next queued scan for the provider after completion."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        current_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Running scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+        queued_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=queued_task_result.task_id,
+            task_runner_task=queued_task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Queued scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=queued_task,
+        )
+
+        def _complete_scan(tenant_id, scan_id, provider_id, checks_to_execute=None):
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch("tasks.tasks.perform_scan_task.apply_async") as mock_apply_async,
+        ):
+            with django_capture_on_commit_callbacks(execute=True):
+                result = perform_scan_task.run(
+                    tenant_id=str(tenant.id),
+                    scan_id=str(current_scan.id),
+                    provider_id=str(provider.id),
+                )
+
+        queued_task_result.refresh_from_db()
+        assert result == {"status": "ok"}
+        assert queued_task_result.status == states.PENDING
+        mock_apply_async.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(tenant.id),
+                "scan_id": str(queued_scan.id),
+                "provider_id": str(provider.id),
+            },
+            task_id=str(queued_task.id),
+        )
 
 
 @pytest.mark.django_db
