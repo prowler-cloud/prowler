@@ -9,6 +9,7 @@ import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
+import { ProviderBadgeIcon } from "@/components/icons/providers-badge/provider-badge-icon";
 import { Alert, AlertDescription } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
@@ -16,10 +17,7 @@ import { StatusFindingBadge } from "@/components/ui/table/status-finding-badge";
 import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import {
-  getProviderBadge,
-  getProviderLabel,
-} from "@/lib/providers/provider-display";
+import { getProviderLabel } from "@/lib/providers/provider-display";
 import {
   CrossProviderRequirement,
   Requirement,
@@ -64,6 +62,7 @@ export const ClientAccordionContent = ({
   const loadedPageSizeRef = useRef<string | null>(null);
   const loadedSortRef = useRef<string | null>(null);
   const loadedMutedRef = useRef<string | null>(null);
+  const loadedScopeRef = useRef<string | null>(null);
   const isExpandedRef = useRef(false);
   const region = searchParams.get("filter[region__in]") || "";
   // Respect the user's muted preference from the URL; default to EXCLUDE
@@ -80,6 +79,15 @@ export const ClientAccordionContent = ({
   const providersBreakdown = xprov.providers;
   const isCrossProvider =
     !!scanIdsByProvider && Object.keys(scanIdsByProvider).length > 0;
+  // Identifies *what* findings this requirement should show — which scans,
+  // checks and region it's scoped to. Provider-type/account/region filters
+  // on the page narrow the fetch server-side without necessarily changing
+  // page/sort/mute, so those alone aren't enough to tell a stale fetch from
+  // a fresh one: an already-expanded row would otherwise keep showing
+  // findings from providers or regions the user just filtered out.
+  const scopeSignature = isCrossProvider
+    ? JSON.stringify({ scanIdsByProvider, checkIdsByProvider, region })
+    : `${scanId}|${(requirement.check_ids || []).join(",")}|${region}`;
 
   useEffect(() => {
     // Guard against a slower earlier request resolving after a newer one and
@@ -93,16 +101,20 @@ export const ClientAccordionContent = ({
         loadedPageSizeRef.current === pageSize &&
         loadedSortRef.current === sort &&
         loadedMutedRef.current === mutedFilter &&
+        loadedScopeRef.current === scopeSignature &&
         isExpandedRef.current
       ) {
         return;
       }
 
-      loadedPageRef.current = pageNumber;
-      loadedPageSizeRef.current = pageSize;
-      loadedSortRef.current = sort;
-      loadedMutedRef.current = mutedFilter;
-      isExpandedRef.current = true;
+      // Mark "loaded" for these exact params only once the fetch actually
+      // commits (below, right before each ``setFindings``) — not here. If a
+      // dependency changes (e.g. a sibling re-render gives ``requirement`` a
+      // new identity) while this fetch is in flight, the effect cleanup
+      // flips ``cancelled`` and the commit is skipped; marking the refs
+      // upfront would make the *next* effect run see "already loaded" and
+      // skip re-fetching too, permanently stranding the component with
+      // ``findings`` stuck at ``null``.
 
       try {
         const encodedSort = sort.replace(/^\+/, "");
@@ -182,6 +194,12 @@ export const ClientAccordionContent = ({
             },
           };
           if (cancelled) return;
+          loadedPageRef.current = pageNumber;
+          loadedPageSizeRef.current = pageSize;
+          loadedSortRef.current = sort;
+          loadedMutedRef.current = mutedFilter;
+          loadedScopeRef.current = scopeSignature;
+          isExpandedRef.current = true;
           setFindings(merged);
           return;
         }
@@ -202,6 +220,12 @@ export const ClientAccordionContent = ({
         });
 
         if (cancelled) return;
+        loadedPageRef.current = pageNumber;
+        loadedPageSizeRef.current = pageSize;
+        loadedSortRef.current = sort;
+        loadedMutedRef.current = mutedFilter;
+        loadedScopeRef.current = scopeSignature;
+        isExpandedRef.current = true;
         setFindings(findingsData);
       } catch (error) {
         console.error("Error loading findings:", error);
@@ -221,6 +245,7 @@ export const ClientAccordionContent = ({
     sort,
     region,
     mutedFilter,
+    scopeSignature,
     disableFindings,
     isCrossProvider,
     scanIdsByProvider,
@@ -413,7 +438,6 @@ export const ClientAccordionContent = ({
     <div className="flex flex-col gap-3 px-3 pb-2">
       {checkIdsByProviderEntries.map(([providerKey, ids], idx) => {
         const label = getProviderLabel(providerKey);
-        const Badge = getProviderBadge(providerKey);
         return (
           <div
             key={providerKey}
@@ -424,24 +448,32 @@ export const ClientAccordionContent = ({
             }`}
           >
             <div className="flex items-center gap-2">
-              {Badge ? <Badge size={16} /> : null}
-              <span className="text-text-default text-xs font-semibold tracking-wider uppercase">
+              <ProviderBadgeIcon providerKey={providerKey} size={16} />
+              <span className="text-text-neutral-primary text-xs font-semibold">
                 {label}
               </span>
               <span className="text-text-neutral-secondary text-xs">
                 {ids.length} {ids.length === 1 ? "check" : "checks"}
               </span>
             </div>
-            <div className="flex flex-wrap gap-1.5 pl-6">
+            {/* Soft filled chips, no border: bordered pills read as a "wall
+                of boxes" once there are 5-10 of them, but bare text (no
+                fill at all) reads as unstyled/unfinished and a fixed-width
+                grid left ragged gaps for the shorter ids. A tinted
+                background gives each check enough visual weight to look
+                intentional while staying quiet — flex-wrap sizes every
+                chip to its own content so nothing is cramped or stranded
+                in dead space regardless of how long the check id is. */}
+            <ul className="flex flex-wrap gap-1.5 pl-6">
               {ids.map((id) => (
-                <span
+                <li
                   key={id}
-                  className="border-border-neutral-secondary inline-block rounded border bg-gray-50 px-2 py-0.5 font-mono text-[11px] text-gray-700 dark:bg-gray-900/50 dark:text-gray-200"
+                  className="bg-default-100 hover:bg-default-200 text-text-neutral-secondary dark:bg-default-100/10 dark:hover:bg-default-100/20 rounded-md px-2 py-1 font-mono text-[11px] transition-colors"
                 >
                   {id}
-                </span>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         );
       })}

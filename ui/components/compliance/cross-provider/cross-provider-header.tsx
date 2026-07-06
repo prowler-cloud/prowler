@@ -1,10 +1,14 @@
 "use client";
 
+import { SquareArrowOutUpRight } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { Button } from "@/components/shadcn/button/button";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import type { CrossProviderInsights } from "@/lib/compliance/cross-provider-insights";
+import { getProwlerHubComplianceUrl } from "@/lib/compliance/prowler-hub";
 
 import { ProviderCoveragePanel } from "./provider-coverage-panel";
 import { ScoreDonut } from "./score-donut";
@@ -19,6 +23,9 @@ interface CrossProviderHeaderProps {
   version: string;
   /** Long description from the universal JSON. */
   description: string;
+  /** Universal framework id (e.g. ``cis_controls_8.1``) — builds the
+   *  Prowler Hub reference link. */
+  complianceId: string;
   insights: CrossProviderInsights;
   /** Click handler when a top-failing-domain entry is selected. */
   onDomainSelect?: (domainName: string) => void;
@@ -45,6 +52,7 @@ export const CrossProviderHeader = ({
   name,
   version,
   description,
+  complianceId,
   insights,
   onDomainSelect,
 }: CrossProviderHeaderProps) => {
@@ -76,6 +84,22 @@ export const CrossProviderHeader = ({
               <span className="border-border-neutral-secondary text-text-neutral-secondary rounded border px-1.5 py-0.5 text-[10px] font-semibold tracking-wider uppercase">
                 Universal
               </span>
+              <Button
+                variant="link"
+                size="link-xs"
+                className="shrink-0 whitespace-nowrap"
+                asChild
+              >
+                <Link
+                  href={getProwlerHubComplianceUrl(complianceId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  prefetch={false}
+                >
+                  View on Prowler Hub
+                  <SquareArrowOutUpRight className="size-3" />
+                </Link>
+              </Button>
             </div>
             {description && (
               <p className="text-text-neutral-secondary mt-1 line-clamp-2 text-xs">

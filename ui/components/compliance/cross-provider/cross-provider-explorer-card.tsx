@@ -3,6 +3,7 @@
 import { Maximize2, Minimize2, X } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
+import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import {
@@ -28,6 +29,7 @@ import type {
 } from "@/types/compliance";
 
 import { CrossProviderDomainTitle } from "./cross-provider-domain-title";
+import { GeneratePdfButton } from "./generate-pdf-button";
 
 interface CrossProviderExplorerCardProps {
   attributes: CrossProviderComplianceOverviewAttributes;
@@ -36,6 +38,18 @@ interface CrossProviderExplorerCardProps {
    *  wants forced-open. Driven by the "Top Failing Domains" panel so a
    *  click expands and scrolls to the target row. */
   forcedExpandedSectionKey?: string | null;
+  /** Raw ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
+   *  ``filter[provider_groups__in]`` values currently applied via
+   *  ``CrossProviderFilters`` — threaded through to ``GeneratePdfButton``
+   *  so the generated PDF respects the same narrowing as the on-screen
+   *  view. */
+  providerTypeFilter?: string;
+  providerIdFilter?: string;
+  providerGroupsFilter?: string;
+  /** A previously-generated PDF matching the current filters, resolved
+   *  server-side — ``null`` means "Generate PDF" should show, not
+   *  "Download PDF". */
+  latestPdfReport: LatestCrossProviderPdfReport | null;
 }
 
 const STATUS_OPTIONS: Array<{
@@ -68,6 +82,10 @@ export const CrossProviderExplorerCard = ({
   attributes,
   insights,
   forcedExpandedSectionKey,
+  providerTypeFilter,
+  providerIdFilter,
+  providerGroupsFilter,
+  latestPdfReport,
 }: CrossProviderExplorerCardProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchKey, setSearchKey] = useState(0);
@@ -204,6 +222,19 @@ export const CrossProviderExplorerCard = ({
             right border on intermediate viewports.
           */}
           <div className="ml-auto flex max-w-full min-w-0 shrink-0 flex-wrap items-center justify-end gap-2">
+            <GeneratePdfButton
+              complianceId={attributes.compliance_id}
+              scanIds={attributes.scan_ids}
+              providerTypes={providerTypeFilter}
+              providerIds={providerIdFilter}
+              providerGroups={providerGroupsFilter}
+              latestPdfReport={latestPdfReport}
+              frameworkLabel={
+                attributes.name ||
+                attributes.framework ||
+                attributes.compliance_id
+              }
+            />
             <Button
               variant="ghost"
               size="sm"
@@ -276,7 +307,7 @@ export const CrossProviderExplorerCard = ({
                       <CrossProviderDomainTitle
                         name={section.categoryName}
                         stats={stats}
-                        compatibleProviders={insights.compatibleProviders}
+                        providers={insights.scannedProviders}
                       />
                     ) : (
                       <span>{section.categoryName}</span>

@@ -6,6 +6,7 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import { CrossProviderPdfWatcher } from "@/components/compliance/cross-provider/cross-provider-pdf-watcher";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
@@ -105,6 +106,10 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
+          {/* Single mount point so cross-provider PDF generations keep being
+              polled — and their "ready" toast still fires — after the user
+              navigates away from the page they were generated on. */}
+          <CrossProviderPdfWatcher />
           <Toaster />
         </Providers>
       </body>

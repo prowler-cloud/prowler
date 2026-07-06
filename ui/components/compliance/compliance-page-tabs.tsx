@@ -100,25 +100,42 @@ export const CompliancePageTabs = ({
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              {/* The wrapper span (not the disabled TabsTrigger) is the hover
-                  target so the tooltip still fires when the tab is disabled in
-                  OSS. The span makes the trigger the first child of its own
-                  element, which drops the TabsList's inter-tab ``pl-4`` and
-                  keeps a trailing ``border-r``; restore the left padding so the
-                  label clears the Per-Scan divider and drop the divider so the
-                  cloud badge isn't crammed against it. */}
-              <span className="inline-flex items-center">
-                <TabsTrigger
-                  value={COMPLIANCE_PAGE_TAB.CROSS_PROVIDER}
-                  disabled={!crossProviderEnabled}
-                  className="border-r-0 pl-4"
-                >
+              {crossProviderEnabled ? (
+                // Plain trigger, direct child of TabsList — same shape as
+                // "Per Scan" and as ProviderPageTabs' tabs. shadcn's active
+                // underline sizes itself off ``:not(:first-child)`` /
+                // ``:last-child`` selectors on the trigger's OWN position
+                // among its siblings; wrapping it in an extra element (as
+                // the disabled branch below has to, for the tooltip-on-
+                // disabled + badge requirements) breaks that and requires
+                // hand-restoring every dropped padding/inset rule. Skipping
+                // the wrapper whenever it isn't structurally necessary
+                // keeps the common (enabled) case correct for free.
+                <TabsTrigger value={COMPLIANCE_PAGE_TAB.CROSS_PROVIDER}>
                   Cross-Provider
                 </TabsTrigger>
-                {!crossProviderEnabled && (
+              ) : (
+                // Disabled in OSS: the wrapper span (not the disabled
+                // TabsTrigger) is the hover target so the tooltip still
+                // fires, and it also hosts the upsell badge next to the
+                // label. That makes the trigger the first/only child of the
+                // span instead of TabsList, dropping the
+                // ``[&:not(:first-child)]`` padding and the matching
+                // ``[&:not(:first-child)]:after:left-4`` underline inset —
+                // restore both by hand or the (invisible, disabled) active
+                // underline would sit misaligned if this tab were ever
+                // reachable.
+                <span className="inline-flex items-center">
+                  <TabsTrigger
+                    value={COMPLIANCE_PAGE_TAB.CROSS_PROVIDER}
+                    disabled
+                    className="border-r-0 pl-4 after:left-4"
+                  >
+                    Cross-Provider
+                  </TabsTrigger>
                   <CloudFeatureBadgeLink size="sm" className="ml-3" />
-                )}
-              </span>
+                </span>
+              )}
             </TooltipTrigger>
             <TooltipContent side="bottom" sideOffset={6}>
               {crossProviderEnabled

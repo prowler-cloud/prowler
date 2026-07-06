@@ -4,12 +4,20 @@ import {
   AlibabaCloudProviderBadge,
   AWSProviderBadge,
   AzureProviderBadge,
+  CloudflareProviderBadge,
   GCPProviderBadge,
+  GitHubProviderBadge,
+  GoogleWorkspaceProviderBadge,
   KS8ProviderBadge,
   M365ProviderBadge,
+  MongoDBAtlasProviderBadge,
+  OktaProviderBadge,
+  OpenStackProviderBadge,
   OracleCloudProviderBadge,
+  VercelProviderBadge,
 } from "@/components/icons/providers-badge";
 import type { IconSvgProps } from "@/types/components";
+import { PROVIDER_DISPLAY_NAMES, type ProviderType } from "@/types/providers";
 
 /**
  * Single source of truth for provider display metadata. Kept in
@@ -29,21 +37,35 @@ export const PROVIDER_BADGE_BY_KEY: Record<string, FC<IconSvgProps>> = {
   oraclecloud: OracleCloudProviderBadge,
   kubernetes: KS8ProviderBadge,
   m365: M365ProviderBadge,
+  github: GitHubProviderBadge,
+  googleworkspace: GoogleWorkspaceProviderBadge,
+  okta: OktaProviderBadge,
+  cloudflare: CloudflareProviderBadge,
+  mongodbatlas: MongoDBAtlasProviderBadge,
+  openstack: OpenStackProviderBadge,
+  vercel: VercelProviderBadge,
 };
 
-export const PROVIDER_LABEL_BY_KEY: Record<string, string> = {
-  aws: "AWS",
-  azure: "Azure",
-  gcp: "GCP",
-  alibabacloud: "Alibaba Cloud",
-  oraclecloud: "Oracle Cloud",
-  kubernetes: "Kubernetes",
-  m365: "Microsoft 365",
+/**
+ * Labels for providers the SDK's universal compliance templates can declare
+ * (e.g. cross-provider CIS Controls) that aren't onboarded as a
+ * ``ProviderType`` yet — no icon, account selector, or scan config exists
+ * for them, so they only ever reach ``getProviderLabel``'s fallback badge.
+ * Real providers must NOT be duplicated here: ``PROVIDER_DISPLAY_NAMES`` in
+ * ``@/types/providers`` is the single source of truth for those.
+ */
+const FALLBACK_ONLY_PROVIDER_LABELS: Record<string, string> = {
+  linode: "Linode",
+  stackit: "STACKIT",
+  nhn: "NHN Cloud",
+  scaleway: "Scaleway",
 };
 
 /** Resolve a provider label, falling back to an uppercased key. */
 export const getProviderLabel = (providerKey: string): string =>
-  PROVIDER_LABEL_BY_KEY[providerKey] ?? providerKey.toUpperCase();
+  PROVIDER_DISPLAY_NAMES[providerKey as ProviderType] ??
+  FALLBACK_ONLY_PROVIDER_LABELS[providerKey] ??
+  providerKey.toUpperCase();
 
 /** Resolve the badge component, returning ``undefined`` when no icon
  *  is registered for the given key (the consumer renders a fallback). */

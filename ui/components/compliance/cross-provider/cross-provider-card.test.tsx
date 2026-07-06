@@ -34,4 +34,30 @@ describe("CrossProviderCard", () => {
     expect(source).toContain("compatibleProviders");
     expect(source).toContain("ProviderChip");
   });
+
+  it("renders each provider as a compact icon, not a full uppercase-label pill", () => {
+    // Regression guard: frameworks can declare 15+ compatible providers (CIS
+    // Controls 8.1 has 18) — one full-width uppercase-label pill per
+    // provider used to wrap across 4-5 rows, dwarfing every other card in
+    // the same grid. The fix reuses the same compact icon-square language
+    // as the per-domain provider heatmap on the detail page
+    // (CrossProviderDomainTitle) instead of spelling out each provider name.
+    expect(source).toContain("ProviderBadgeIcon");
+    // ``{providerKey}`` as JSX *text content* (old pill label) vs. as a prop
+    // value (``providerKey={providerKey}``, still expected) — only the
+    // former is the regression this guards against.
+    expect(source).not.toMatch(/>\s*\{providerKey\}\s*</);
+  });
+
+  it("links the info button next to the title to the framework's Prowler Hub page", () => {
+    expect(source).toContain("getProwlerHubComplianceUrl(complianceId)");
+    expect(source).toContain('target="_blank"');
+  });
+
+  it("stops the info button's click from also triggering the card's own drill-down navigation", () => {
+    // Regression guard: the whole card is a click target (onClick={navigateToDetail}).
+    // Without stopPropagation, opening the Hub link would also navigate the
+    // card to the detail page underneath the new tab.
+    expect(source).toContain("e.stopPropagation()");
+  });
 });

@@ -2,14 +2,28 @@
 
 import { useCallback, useMemo, useRef, useState } from "react";
 
+import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import { computeCrossProviderInsights } from "@/lib/compliance/cross-provider-insights";
 import type { CrossProviderComplianceOverviewAttributes } from "@/types/compliance";
+import type { ProviderGroup } from "@/types/components";
+import type { ProviderProps } from "@/types/providers";
 
 import { CrossProviderExplorerCard } from "./cross-provider-explorer-card";
+import { CrossProviderFilters } from "./cross-provider-filters";
 import { CrossProviderHeader } from "./cross-provider-header";
 
 interface CrossProviderDetailClientProps {
   attributes: CrossProviderComplianceOverviewAttributes;
+  providers: ProviderProps[];
+  providerGroups: ProviderGroup[];
+  /** Raw ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
+   *  ``filter[provider_groups__in]`` values from the URL — threaded down to
+   *  the "Generate PDF" button so it respects the same narrowing as this
+   *  already-filtered ``attributes`` payload. */
+  providerTypeFilter?: string;
+  providerIdFilter?: string;
+  providerGroupsFilter?: string;
+  latestPdfReport: LatestCrossProviderPdfReport | null;
 }
 
 /**
@@ -33,6 +47,12 @@ interface CrossProviderDetailClientProps {
  */
 export const CrossProviderDetailClient = ({
   attributes,
+  providers,
+  providerGroups,
+  providerTypeFilter,
+  providerIdFilter,
+  providerGroupsFilter,
+  latestPdfReport,
 }: CrossProviderDetailClientProps) => {
   const insights = useMemo(
     () => computeCrossProviderInsights(attributes),
@@ -74,11 +94,17 @@ export const CrossProviderDetailClient = ({
 
   return (
     <div className="flex flex-col gap-6">
+      <CrossProviderFilters
+        providers={providers}
+        providerGroups={providerGroups}
+      />
+
       <CrossProviderHeader
         framework={attributes.framework}
         name={attributes.name}
         version={attributes.version}
         description={attributes.description}
+        complianceId={attributes.compliance_id}
         insights={insights}
         onDomainSelect={handleDomainSelect}
       />
@@ -88,6 +114,10 @@ export const CrossProviderDetailClient = ({
           attributes={attributes}
           insights={insights}
           forcedExpandedSectionKey={forcedExpandedSectionKey}
+          providerTypeFilter={providerTypeFilter}
+          providerIdFilter={providerIdFilter}
+          providerGroupsFilter={providerGroupsFilter}
+          latestPdfReport={latestPdfReport}
         />
       </div>
     </div>

@@ -13,7 +13,12 @@ export const getTask = async (taskId: string) => {
       headers,
     });
 
-    return handleApiResponse(response);
+    // Must be awaited here, not just returned: ``handleApiResponse`` is
+    // itself async and throws on non-2xx — a bare `return` hands back its
+    // promise without this function's own `try` ever observing a rejection,
+    // so `catch` below never runs and callers get an unhandled rejection
+    // instead of the documented `{error}` shape.
+    return await handleApiResponse(response);
   } catch (error) {
     return handleApiError(error);
   }

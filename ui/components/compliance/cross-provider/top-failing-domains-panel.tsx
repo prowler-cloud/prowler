@@ -60,7 +60,7 @@ export const TopFailingDomainsPanel = ({
                     aria-hidden="true"
                   />
                   <div className="flex min-w-0 flex-1 flex-col">
-                    <span className="text-text-default truncate text-xs font-semibold">
+                    <span className="text-text-neutral-primary truncate text-xs font-semibold">
                       {domain.name}
                     </span>
                     <span className="text-text-neutral-secondary font-mono text-[10px]">

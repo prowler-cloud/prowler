@@ -188,9 +188,15 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported (not just used internally by `downloadCompliancePdf`/`downloadComplianceCsv`
+ * /`downloadComplianceOcsf`) so other binary-download flows built on the
+ * same `ScanBinaryResult`-shaped server action result — e.g. the ad-hoc
+ * cross-provider compliance PDF — can reuse the exact same base64→Blob→click
+ * download mechanics instead of re-implementing them.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,

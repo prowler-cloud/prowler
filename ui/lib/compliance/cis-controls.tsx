@@ -6,8 +6,8 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import {
   AttributesData,
   CISControlsAttributesMetadata,
+  CrossProviderRequirement,
   Framework,
-  Requirement,
   REQUIREMENT_STATUS,
   RequirementsData,
   RequirementStatus,
@@ -62,6 +62,14 @@ export const mapComplianceData = (
     const description = attributeItem.attributes.description;
     const status = requirementData.attributes.status || "";
     const checks = attributeItem.attributes.attributes.check_ids || [];
+    // Optional cross-provider augmentations (only present when the attribute
+    // item came from ``crossProviderToMapperInput``).
+    const providersForRequirement =
+      attributeItem.attributes.attributes.providers;
+    const checkIdsByProvider =
+      attributeItem.attributes.attributes.check_ids_by_provider;
+    const scanIdsByProvider =
+      attributeItem.attributes.attributes.scan_ids_by_provider;
 
     const framework = findOrCreateFramework(frameworks, frameworkName);
     const category = findOrCreateCategory(framework.categories, categoryName);
@@ -69,7 +77,7 @@ export const mapComplianceData = (
     const control = findOrCreateControl(category.controls, categoryName);
 
     const finalStatus: RequirementStatus = status as RequirementStatus;
-    const requirement: Requirement = {
+    const requirement: CrossProviderRequirement = {
       name: requirementName ? `${id} - ${requirementName}` : id,
       description,
       status: finalStatus,
@@ -78,6 +86,9 @@ export const mapComplianceData = (
       function: attrs.Function ?? undefined,
       asset_type: attrs.AssetType ?? undefined,
       implementation_groups: attrs.ImplementationGroups ?? undefined,
+      providers: providersForRequirement,
+      check_ids_by_provider: checkIdsByProvider,
+      scan_ids_by_provider: scanIdsByProvider,
     };
 
     control.requirements.push(requirement);
@@ -122,6 +133,7 @@ export const toAccordionItems = (
               type=""
               name={requirement.name}
               status={requirement.status as FindingStatus}
+              providers={requirement.providers}
             />
           ),
           content: (

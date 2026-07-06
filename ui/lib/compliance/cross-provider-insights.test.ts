@@ -79,7 +79,7 @@ describe("computeCrossProviderInsights", () => {
     expect(insights.total).toBe(5);
   });
 
-  it("builds providerCoverage for every compatible provider, including non-contributing ones", () => {
+  it("builds providerCoverage for every scanned provider, contributing or not", () => {
     const insights = computeCrossProviderInsights(buildAttributes());
     const byKey = Object.fromEntries(
       insights.providerCoverage.map((c) => [c.key, c]),
@@ -99,12 +99,36 @@ describe("computeCrossProviderInsights", () => {
     expect(byKey.azure.total).toBe(2);
     expect(byKey.azure.scorePercent).toBe(100);
 
-    // GCP is in compatible_providers but the API marks it as
-    // non-contributing — surfaces with zeroed counts so the panel can
-    // dim it instead of hiding it.
+    // GCP HAS a scan (it's in scan_ids_by_provider) but the API marks it
+    // non-contributing (no requirement row) — it still surfaces (scanned),
+    // with zeroed counts so the panel can dim it.
     expect(byKey.gcp.contributing).toBe(false);
     expect(byKey.gcp.total).toBe(0);
     expect(byKey.gcp.scorePercent).toBe(0);
+  });
+
+  it("shows only scanned providers in the detail (hides compatible providers with no scan)", () => {
+    const noGcpScan: CrossProviderComplianceOverviewAttributes = {
+      ...buildAttributes(),
+      // gcp stays compatible but is NOT scanned (dropped from scan_ids_by_provider).
+      providers: ["aws", "azure"],
+      scan_ids_by_provider: { aws: ["scan-aws"], azure: ["scan-azure"] },
+      scan_ids: ["scan-aws", "scan-azure"],
+    };
+    const insights = computeCrossProviderInsights(noGcpScan);
+
+    // Detail surfaces (coverage panel, heatmap columns) only include scanned.
+    expect(insights.scannedProviders).toEqual(["aws", "azure"]);
+    expect(insights.providerCoverage.map((c) => c.key)).toEqual([
+      "aws",
+      "azure",
+    ]);
+    for (const domain of insights.domainStats) {
+      expect(Object.keys(domain.byProvider)).not.toContain("gcp");
+    }
+
+    // ...but the full compatible set is still reported (the overview uses it).
+    expect(insights.compatibleProviders).toContain("gcp");
   });
 
   it("aggregates per-domain stats by Section attribute, with an Other bucket fallback", () => {
@@ -183,7 +207,7 @@ describe("computeCrossProviderInsights", () => {
     expect(insights.scorePercent).toBe(0);
     expect(insights.domainStats).toEqual([]);
     expect(insights.domainsByFailCount).toEqual([]);
-    // Compatible providers still surface (empty stats) so the coverage
+    // Scanned providers still surface (empty stats) so the coverage
     // panel doesn't disappear.
     expect(insights.providerCoverage).toHaveLength(3);
   });

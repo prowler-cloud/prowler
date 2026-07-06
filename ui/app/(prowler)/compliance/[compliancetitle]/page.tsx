@@ -9,8 +9,11 @@ import {
   getComplianceRequirements,
   getCompliancesOverview,
   getCrossProviderComplianceOverview,
+  getLatestCrossProviderCompliancePdf,
 } from "@/actions/compliances";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getThreatScore } from "@/actions/overview";
+import { getAllProviders } from "@/actions/providers";
 import { getScan } from "@/actions/scans";
 import {
   ClientAccordionWrapper,
@@ -54,6 +57,8 @@ interface ComplianceDetailSearchParams {
   mode?: string;
   "filter[region__in]"?: string;
   "filter[provider_type__in]"?: string;
+  "filter[provider_id__in]"?: string;
+  "filter[provider_groups__in]"?: string;
   "filter[cis_profile_level]"?: string;
   page?: string;
   pageSize?: string;
@@ -71,6 +76,9 @@ export default async function ComplianceDetail({
   const { complianceId, version, scanId, section, mode } = resolvedSearchParams;
   const regionFilter = resolvedSearchParams["filter[region__in]"];
   const providerTypeFilter = resolvedSearchParams["filter[provider_type__in]"];
+  const providerIdFilter = resolvedSearchParams["filter[provider_id__in]"];
+  const providerGroupsFilter =
+    resolvedSearchParams["filter[provider_groups__in]"];
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
@@ -85,11 +93,32 @@ export default async function ComplianceDetail({
     }
 
     const crossProviderTitle = compliancetitle.split("-").join(" ");
-    const crossProviderResponse = await getCrossProviderComplianceOverview({
-      complianceId,
-      providerTypes: providerTypeFilter,
-      regions: regionFilter,
-    });
+    const [
+      crossProviderResponse,
+      providersData,
+      providerGroupsData,
+      latestPdfReport,
+    ] = await Promise.all([
+      getCrossProviderComplianceOverview({
+        complianceId,
+        providerTypes: providerTypeFilter,
+        providerIds: providerIdFilter,
+        providerGroups: providerGroupsFilter,
+        regions: regionFilter,
+      }),
+      getAllProviders(),
+      getAllProviderGroups(),
+      // Independent of the overview fetch above — the backend resolves the
+      // same "latest scan per filtered provider" rule from these same raw
+      // filters, so this can run in parallel instead of waterfalling behind
+      // the overview response just to read its resolved scan_ids.
+      getLatestCrossProviderCompliancePdf({
+        complianceId,
+        providerTypes: providerTypeFilter,
+        providerIds: providerIdFilter,
+        providerGroups: providerGroupsFilter,
+      }),
+    ]);
 
     if (!crossProviderResponse || "redirectTo" in crossProviderResponse) {
       return (
@@ -124,9 +153,27 @@ export default async function ComplianceDetail({
     }
 
     const headerTitle = crossProviderData.attributes.name || crossProviderTitle;
+    const compatibleProviderTypes = new Set(
+      crossProviderData.attributes.compatible_providers,
+    );
+    const compatibleProviders = (providersData?.data || []).filter((provider) =>
+      compatibleProviderTypes.has(provider.attributes.provider),
+    );
     return (
       <ContentLayout title={headerTitle}>
-        <CrossProviderDetail attributes={crossProviderData.attributes} />
+        <CrossProviderDetail
+          attributes={crossProviderData.attributes}
+          providers={compatibleProviders}
+          providerGroups={providerGroupsData?.data || []}
+          providerTypeFilter={providerTypeFilter}
+          providerIdFilter={providerIdFilter}
+          providerGroupsFilter={providerGroupsFilter}
+          latestPdfReport={
+            "available" in latestPdfReport && latestPdfReport.available
+              ? latestPdfReport
+              : null
+          }
+        />
       </ContentLayout>
     );
   }

@@ -62,9 +62,14 @@ export interface CrossProviderInsights {
   compatibleProviders: string[];
   /** Provider keys that contributed at least one row. */
   contributingProviders: string[];
-  /** One coverage entry per compatible provider (always present, even
-   *  for non-contributing ones — coverage UI dims them rather than
-   *  hiding them). */
+  /** Providers we actually have scans for (a subset of
+   *  ``compatibleProviders`` — the ones present in ``scan_ids_by_provider``),
+   *  in display order. The detail view shows only these; the overview keeps
+   *  showing every compatible provider (scanned or not). */
+  scannedProviders: string[];
+  /** One coverage entry per SCANNED provider. (The overview lists every
+   *  compatible provider and dims the unscanned ones; the detail view
+   *  intentionally hides providers with no scan.) */
   providerCoverage: ProviderCoverage[];
   /** Domain stats keyed by section name, in declared order. */
   domainStats: DomainStats[];
@@ -163,7 +168,16 @@ export const computeCrossProviderInsights = (
   }
 
   const contributingSet = new Set(contributing);
-  const providerCoverage: ProviderCoverage[] = compatible.map((key) => {
+
+  // Providers we actually have scans for. The detail view shows only these
+  // (framework-compatible providers with no scan belong on the overview,
+  // where they're listed dimmed as "no scan yet"). Kept in ``compatible``
+  // display order for a stable layout; a scan can only ever exist for a
+  // compatible provider, so filtering ``compatible`` covers every case.
+  const scannedSet = new Set(Object.keys(scanIdsByProvider ?? {}));
+  const scannedProviders = compatible.filter((key) => scannedSet.has(key));
+
+  const providerCoverage: ProviderCoverage[] = scannedProviders.map((key) => {
     const total = providerTotal.get(key) || 0;
     const pass = providerPass.get(key) || 0;
     const scorePct = total > 0 ? Math.floor((pass / total) * 100) : 0;
@@ -183,7 +197,7 @@ export const computeCrossProviderInsights = (
   const domainStats: DomainStats[] = Array.from(domainAcc.entries()).map(
     ([name, acc]) => {
       const byProvider: Record<string, DomainProviderStatus> = {};
-      for (const providerKey of compatible) {
+      for (const providerKey of scannedProviders) {
         const statuses = acc.perProvider.get(providerKey) ?? [];
         byProvider[providerKey] = aggregateDomainProviderStatuses(statuses);
       }
@@ -208,6 +222,7 @@ export const computeCrossProviderInsights = (
     total,
     compatibleProviders: compatible,
     contributingProviders: contributing,
+    scannedProviders,
     providerCoverage,
     domainStats,
     domainsByFailCount,

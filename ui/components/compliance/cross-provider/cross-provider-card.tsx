@@ -1,10 +1,13 @@
 "use client";
 
-import { Check, Circle } from "lucide-react";
+import { Info } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { ProviderBadgeIcon } from "@/components/icons/providers-badge/provider-badge-icon";
+import { Button } from "@/components/shadcn/button/button";
 import { Card, CardContent } from "@/components/shadcn/card/card";
 import { Progress } from "@/components/shadcn/progress";
 import {
@@ -12,10 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { getProwlerHubComplianceUrl } from "@/lib/compliance/prowler-hub";
 import {
   getScoreIndicatorClass,
   type ScoreColorVariant,
 } from "@/lib/compliance/score-utils";
+import { getProviderLabel } from "@/lib/providers/provider-display";
 import { cn } from "@/lib/utils";
 
 export interface CrossProviderCardProps {
@@ -52,25 +57,31 @@ interface ProviderChipProps {
   active: boolean;
 }
 
+/**
+ * Icon-only chip, not a text pill: universal frameworks can declare 15+
+ * compatible providers (CIS Controls 8.1 alone has 18), and one full-width
+ * uppercase-label pill per provider used to wrap across 4-5 rows on a card
+ * that also has to fit a title, score bar and description — every other
+ * card in the same grid stayed a fraction of that height. Same compact
+ * heatmap-cell language as the per-domain provider row on the detail page
+ * (``CrossProviderDomainTitle``): one row of small icon squares regardless
+ * of provider count, with the full name available on hover/focus.
+ */
 const ProviderChip = ({ providerKey, active }: ProviderChipProps) => {
-  const Icon = active ? Check : Circle;
+  const label = getProviderLabel(providerKey);
+  const tooltip = active ? `${label}: scan available` : `${label}: no scan yet`;
   return (
     <span
+      title={tooltip}
+      aria-label={tooltip}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5",
-        "text-[10px] font-semibold tracking-wide uppercase",
+        "flex size-6 shrink-0 items-center justify-center rounded-md border",
         active
-          ? "border-bg-pass/40 bg-bg-pass/10 text-bg-pass"
-          : "border-border-neutral-secondary text-text-neutral-secondary",
+          ? "border-bg-pass/40 bg-bg-pass/10"
+          : "border-border-neutral-secondary opacity-40",
       )}
-      title={
-        active
-          ? `${providerKey.toUpperCase()}: scan available`
-          : `${providerKey.toUpperCase()}: no scan yet`
-      }
     >
-      <Icon className="size-3 shrink-0" strokeWidth={active ? 3 : 2} />
-      {providerKey}
+      <ProviderBadgeIcon providerKey={providerKey} size={14} />
     </span>
   );
 };
@@ -146,18 +157,40 @@ export const CrossProviderCard: React.FC<CrossProviderCardProps> = ({
               </div>
             )}
             <div className="flex min-w-0 flex-1 flex-col">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <h4 className="text-small truncate leading-5 font-bold">
+              <div className="flex min-w-0 items-center gap-1">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <h4 className="text-small min-w-0 truncate leading-5 font-bold">
+                      {formatTitle(title)}
+                      {version ? ` - ${version}` : ""}
+                    </h4>
+                  </TooltipTrigger>
+                  <TooltipContent>
                     {formatTitle(title)}
                     {version ? ` - ${version}` : ""}
-                  </h4>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {formatTitle(title)}
-                  {version ? ` - ${version}` : ""}
-                </TooltipContent>
-              </Tooltip>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="bare" size="icon-xs" asChild>
+                      <Link
+                        href={getProwlerHubComplianceUrl(complianceId)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        prefetch={false}
+                        aria-label="View on Prowler Hub"
+                        // The card's own onClick navigates to the detail
+                        // page — without this, clicking the info button
+                        // would open the Hub tab AND drill into the card.
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Info className="size-3.5" />
+                      </Link>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>View on Prowler Hub</TooltipContent>
+                </Tooltip>
+              </div>
               {description && (
                 <small className="text-text-neutral-secondary mt-0.5 line-clamp-2 text-xs">
                   {description}
