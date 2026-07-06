@@ -2,7 +2,23 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.32.0] (Prowler UNRELEASED)
+## [5.32.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Azure resource group scoped scans now keep subscription entries when scoped resource listing fails, clarify helper documentation and test organization, and align the resource group documentation example with the described values [(#11796)](https://github.com/prowler-cloud/prowler/pull/11796)
+
+---
+
+## [5.32.1] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
+
+---
+
+## [5.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
 
