@@ -22,72 +22,72 @@ Numeric thresholds enforce hard limits. A value outside the accepted range is dr
 
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
-| `acmpca_certificate_authority_pqc_key_algorithm`              | `acmpca_pqc_key_algorithms`                      | List of Strings |
-| `apigateway_restapi_no_secrets_in_stage_variables`            | `secrets_ignore_patterns`                        | List of Strings |
-| `appstream_fleet_maximum_session_duration`                    | `max_session_duration_seconds`                   | Integer         |
-| `appstream_fleet_session_disconnect_timeout`                  | `max_disconnect_timeout_in_seconds`              | Integer         |
-| `appstream_fleet_session_idle_disconnect_timeout`             | `max_idle_disconnect_timeout_in_seconds`         | Integer         |
-| `autoscaling_find_secrets_ec2_launch_configuration`           | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_no_secrets_in_code`                       | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_no_secrets_in_variables`                  | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_using_supported_runtimes`                 | `obsolete_lambda_runtimes`                       | Integer         |
-| `awslambda_function_vpc_is_in_multi_azs`                      | `lambda_min_azs`                                 | Integer         |
-| `cloudformation_stack_outputs_find_secrets`                   | `secrets_ignore_patterns`                        | List of Strings |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_actions`           | List of Strings |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_entropy`           | Integer         |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_minutes`           | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_actions`  | List of Strings |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_entropy`  | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
-| `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
-| `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
-| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
-| `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
-| `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
-| `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
-| `drs_job_exist`                                               | `mute_non_default_regions`                       | Boolean         |
-| `ec2_elastic_ip_shodan`                                       | `shodan_api_key`                                 | String          |
-| `ec2_instance_older_than_specific_days`                       | `max_ec2_instance_age_in_days`                   | Integer         |
-| `ec2_instance_secrets_user_data`                              | `secrets_ignore_patterns`                        | List of Strings |
-| `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_high_risk_ports`                    | List of Integer |
-| `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
-| `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
-| `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
-| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
-| `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
-| `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
-| `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
-| `rolesanywhere_trust_anchor_pqc_pki`                          | `rolesanywhere_pqc_pca_key_algorithms`           | List of Strings |
-| `cloudfront_distributions_pqc_tls_enabled`                    | `cloudfront_pqc_min_protocol_versions`           | List of Strings |
-| `apigateway_domain_name_pqc_tls_enabled`                      | `apigateway_pqc_tls_allowed_policies`            | List of Strings |
-| `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
-| `iam_user_access_not_stale_to_sagemaker`                      | `max_unused_sagemaker_access_days`               | Integer         |
-| `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
-| `iam_user_console_access_unused`                              | `max_console_access_days`                        | Integer         |
-| `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
-| `organizations_scp_check_deny_regions`                        | `organizations_enabled_regions`                  | List of Strings |
-| `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
-| `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
-| `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
-| `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
-| `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
-| `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
-| `transfer_server_pqc_ssh_kex_enabled`                        | `transfer_pqc_ssh_allowed_policies`              | List of Strings |
-| `dynamodb_table_cross_account_access`                         | `trusted_account_ids`                            | List of Strings |
-| `eventbridge_bus_cross_account_access`                        | `trusted_account_ids`                            | List of Strings |
-| `eventbridge_schema_registry_cross_account_access`            | `trusted_account_ids`                            | List of Strings |
-| `s3_bucket_cross_account_access`                              | `trusted_account_ids`                            | List of Strings |
-| `ssm_documents_set_as_public`                                 | `trusted_account_ids`                            | List of Strings |
-| `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
-| `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
-| `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
+| Check Name                                                             | Value                                             | Type            | Default                                                                                                                              |
+|------------------------------------------------------------------------|---------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `acm_certificates_expiration_check`                                    | `days_to_expire_threshold`                        | Integer         | `7`                                                                                                                                  |
+| `acmpca_certificate_authority_pqc_key_algorithm`                       | `acmpca_pqc_key_algorithms`                       | List of Strings | `["ML_DSA_44", "ML_DSA_65", "ML_DSA_87"]`                                                                                            |
+| `apigateway_restapi_no_secrets_in_stage_variables`                     | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `appstream_fleet_maximum_session_duration`                             | `max_session_duration_seconds`                    | Integer         | `36000`                                                                                                                              |
+| `appstream_fleet_session_disconnect_timeout`                           | `max_disconnect_timeout_in_seconds`               | Integer         | `300`                                                                                                                                |
+| `appstream_fleet_session_idle_disconnect_timeout`                      | `max_idle_disconnect_timeout_in_seconds`          | Integer         | `600`                                                                                                                                |
+| `autoscaling_find_secrets_ec2_launch_configuration`                    | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_no_secrets_in_code`                                | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_no_secrets_in_variables`                           | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | Integer         | See `config.yaml`                                                                                                                    |
+| `awslambda_function_vpc_is_in_multi_azs`                               | `lambda_min_azs`                                  | Integer         | `2`                                                                                                                                  |
+| `cloudformation_stack_outputs_find_secrets`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_actions`            | List of Strings | See `config.yaml`                                                                                                                    |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_threshold`          | Float           | `0.3`                                                                                                                                |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_minutes`            | Integer         | `1440`                                                                                                                               |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_actions`   | List of Strings | See `config.yaml`                                                                                                                    |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_threshold` | Float           | `0.2`                                                                                                                                |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_minutes`   | Integer         | `1440`                                                                                                                               |
+| `cloudwatch_log_group_no_secrets_in_logs`                              | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `cloudwatch_log_group_retention_policy_specific_days_enabled`          | `log_group_retention_days`                        | Integer         | `365`                                                                                                                                |
+| `codebuild_github_allowed_organizations`                               | `github_allowed_organizations`                    | List of Strings | `[]`                                                                                                                                 |
+| `codebuild_project_no_secrets_in_variables`                            | `excluded_sensitive_environment_variables`        | List of Strings | `[]`                                                                                                                                 |
+| `codebuild_project_no_secrets_in_variables`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `config_recorder_all_regions_enabled`                                  | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `drs_job_exist`                                                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `ec2_elastic_ip_shodan`                                                | `shodan_api_key`                                  | String          | `null`                                                                                                                               |
+| `ec2_instance_older_than_specific_days`                                | `max_ec2_instance_age_in_days`                    | Integer         | `180`                                                                                                                                |
+| `ec2_instance_secrets_user_data`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ec2_launch_template_no_secrets`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`            | `ec2_allowed_instance_owners`                     | List of Strings | `["amazon-elb"]`                                                                                                                     |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`            | `ec2_allowed_interface_types`                     | List of Strings | `["api_gateway_managed", "vpc_endpoint"]`                                                                                            |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports` | `ec2_high_risk_ports`                             | List of Integer | `[25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088]`                                                                       |
+| `ec2_securitygroup_with_many_ingress_egress_rules`                     | `max_security_group_rules`                        | Integer         | `50`                                                                                                                                 |
+| `ecs_task_definitions_no_environment_secrets`                          | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ecr_repositories_scan_vulnerabilities_in_latest_image`                | `ecr_repository_vulnerability_minimum_severity`   | String          | `"MEDIUM"`                                                                                                                           |
+| `eks_cluster_uses_a_supported_version`                                 | `eks_cluster_oldest_version_supported`            | String          | `"1.28"`                                                                                                                             |
+| `eks_control_plane_logging_all_types_enabled`                          | `eks_required_log_types`                          | List of Strings | `["api", "audit", "authenticator", "controllerManager", "scheduler"]`                                                                |
+| `elasticache_redis_cluster_backup_enabled`                             | `minimum_snapshot_retention_period`               | Integer         | `7`                                                                                                                                  |
+| `elb_is_in_multiple_az`                                                | `elb_min_azs`                                     | Integer         | `2`                                                                                                                                  |
+| `elbv2_is_in_multiple_az`                                              | `elbv2_min_azs`                                   | Integer         | `2`                                                                                                                                  |
+| `rolesanywhere_trust_anchor_pqc_pki`                                   | `rolesanywhere_pqc_pca_key_algorithms`            | List of Strings | `["ML_DSA_44", "ML_DSA_65", "ML_DSA_87"]`                                                                                            |
+| `cloudfront_distributions_pqc_tls_enabled`                             | `cloudfront_pqc_min_protocol_versions`            | List of Strings | `["TLSv1.3_2025"]`                                                                                                                   |
+| `apigateway_domain_name_pqc_tls_enabled`                               | `apigateway_pqc_tls_allowed_policies`             | List of Strings | `["SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09", "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09", "SecurityPolicy_TLS13_1_2_PQ_2025_09"]` |
+| `guardduty_is_enabled`                                                 | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `iam_user_access_not_stale_to_sagemaker`                               | `max_unused_sagemaker_access_days`                | Integer         | `90`                                                                                                                                 |
+| `iam_user_accesskey_unused`                                            | `max_unused_access_keys_days`                     | Integer         | `45`                                                                                                                                 |
+| `iam_user_console_access_unused`                                       | `max_console_access_days`                         | Integer         | `45`                                                                                                                                 |
+| `organizations_delegated_administrators`                               | `organizations_trusted_delegated_administrators`  | List of Strings | `[]`                                                                                                                                 |
+| `organizations_scp_check_deny_regions`                                 | `organizations_enabled_regions`                   | List of Strings | `[]`                                                                                                                                 |
+| `rds_instance_backup_enabled`                                          | `check_rds_instance_replicas`                     | Boolean         | `False`                                                                                                                              |
+| `securityhub_enabled`                                                  | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `secretsmanager_secret_unused`                                         | `max_days_secret_unused`                          | Integer         | `90`                                                                                                                                 |
+| `secretsmanager_secret_rotated_periodically`                           | `max_days_secret_unrotated`                       | Integer         | `90`                                                                                                                                 |
+| `ssm_document_secrets`                                                 | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `trustedadvisor_premium_support_plan_subscribed`                       | `verify_premium_support_plans`                    | Boolean         | `True`                                                                                                                               |
+| `transfer_server_pqc_ssh_kex_enabled`                                  | `transfer_pqc_ssh_allowed_policies`               | List of Strings | `["TransferSecurityPolicy-2025-03", "TransferSecurityPolicy-FIPS-2025-03", "TransferSecurityPolicy-AS2Restricted-2025-07"]`          |
+| `dynamodb_table_cross_account_access`                                  | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `eventbridge_bus_cross_account_access`                                 | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `eventbridge_schema_registry_cross_account_access`                     | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `s3_bucket_cross_account_access`                                       | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `ssm_documents_set_as_public`                                          | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `vpc_endpoint_connections_trust_boundaries`                            | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `vpc_endpoint_services_allowed_principals_trust_boundaries`            | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `opensearch_service_domains_not_publicly_accessible`                   | `trusted_ips`                                     | List of Strings | `[]`                                                                                                                                 |
 
 ### Resource Scan Limit
 
@@ -180,20 +180,20 @@ Secret validation makes outbound network calls that authenticate with each disco
 ### Configurable Checks
 The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `network_public_ip_shodan`                                    | `shodan_api_key`                                 | String          |
-| `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
-| `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
-| `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
-| `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
-| `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
-| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
-| `storage_smb_channel_encryption_with_secure_algorithm`        | `recommended_smb_channel_encryption_algorithms`  | List of Strings |
-| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_actions`      | List of Strings |
+| Check Name                                               | Value                                           | Type            | Default                                                    |
+|----------------------------------------------------------|-------------------------------------------------|-----------------|------------------------------------------------------------|
+| `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
+| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.2"`                                                    |
+| `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
+| `app_ensure_java_version_is_latest`                      | `java_latest_version`                           | String          | `"17"`                                                     |
+| `sqlserver_recommended_minimal_tls_version`              | `recommended_minimal_tls_versions`              | List of Strings | `["1.2", "1.3"]`                                           |
+| `vm_sufficient_daily_backup_retention_period`            | `vm_backup_min_daily_retention_days`            | Integer         | `7`                                                        |
+| `vm_desired_sku_size`                                    | `desired_vm_sku_sizes`                          | List of Strings | `["Standard_A8_v2", "Standard_DS3_v2", "Standard_D4s_v3"]` |
+| `storage_smb_channel_encryption_with_secure_algorithm`   | `recommended_smb_channel_encryption_algorithms` | List of Strings | `["AES-256-GCM"]`                                          |
+| `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_actions`     | List of Strings | See `config.yaml`                                          |
 
 
 ## GCP
@@ -201,23 +201,23 @@ The following list includes all the Azure checks with configurable variables tha
 ### Configurable Checks
 The following list includes all the GCP checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `compute_configuration_changes`                              | `compute_audit_log_lookback_days`                | Integer         |
-| `compute_instance_group_multiple_zones`                      | `mig_min_zones`                                  | Integer         |
+| Check Name                              | Value                             | Type    | Default |
+|-----------------------------------------|-----------------------------------|---------|---------|
+| `compute_configuration_changes`         | `compute_audit_log_lookback_days` | Integer | —       |
+| `compute_instance_group_multiple_zones` | `mig_min_zones`                   | Integer | `2`     |
 
 ## Kubernetes
 
 ### Configurable Checks
 The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `audit_log_maxbackup`                                         | `audit_log_maxbackup`                            | String          |
-| `audit_log_maxsize`                                           | `audit_log_maxsize`                              | String          |
-| `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
-| `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
-| `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
+| Check Name                    | Value                      | Type   | Default                                                                                |
+|-------------------------------|----------------------------|--------|----------------------------------------------------------------------------------------|
+| `audit_log_maxbackup`         | `audit_log_maxbackup`      | String | `10`                                                                                   |
+| `audit_log_maxsize`           | `audit_log_maxsize`        | String | `100`                                                                                  |
+| `audit_log_maxage`            | `audit_log_maxage`         | String | `30`                                                                                   |
+| `apiserver_strong_ciphers`    | `apiserver_strong_ciphers` | String | `["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]` |
+| `kubelet_strong_ciphers_only` | `kubelet_strong_ciphers`   | String | See `config.yaml`                                                                      |
 
 
 ## M365
@@ -225,11 +225,11 @@ The following list includes all the Kubernetes checks with configurable variable
 ### Configurable Checks
 The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
-| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
-| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
+| Check Name                                    | Value                                           | Type            | Default |
+|-----------------------------------------------|-------------------------------------------------|-----------------|---------|
+| `entra_admin_users_sign_in_frequency_enabled` | `sign_in_frequency`                             | Integer         | `4`     |
+| `teams_external_file_sharing_restricted`      | `allowed_cloud_storage_services`                | List of Strings | `[]`    |
+| `exchange_organization_mailtips_enabled`      | `recommended_mailtips_large_audience_threshold` | Integer         | `25`    |
 
 
 ## GitHub
@@ -237,35 +237,35 @@ The following list includes all the Microsoft 365 checks with configurable varia
 ### Configurable Checks
 The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                 | Value                                       | Type    |
-|--------------------------------------------|---------------------------------------------|---------|
-| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
+| Check Name                         | Value                                  | Type    | Default |
+|------------------------------------|----------------------------------------|---------|---------|
+| `repository_inactive_not_archived` | `inactive_not_archived_days_threshold` | Integer | `180`   |
 
 ## Vercel
 
 ### Configurable Checks
 The following list includes all the Vercel checks with configurable variables that can be changed in the configuration YAML file:
 
-| Check Name                                          | Value                              | Type            |
-|-----------------------------------------------------|------------------------------------|-----------------|
-| `authentication_no_stale_tokens`                    | `stale_token_threshold_days`       | Integer         |
-| `authentication_token_not_expired`                  | `days_to_expire_threshold`         | Integer         |
-| `deployment_production_uses_stable_target`          | `stable_branches`                  | List of Strings |
-| `domain_ssl_certificate_valid`                      | `days_to_expire_threshold`         | Integer         |
-| `project_environment_no_secrets_in_plain_type`      | `secret_suffixes`                  | List of Strings |
-| `team_member_role_least_privilege`                   | `max_owner_percentage`             | Integer         |
-| `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
-| `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
+| Check Name                                     | Value                             | Type            | Default                                                                  |
+|------------------------------------------------|-----------------------------------|-----------------|--------------------------------------------------------------------------|
+| `authentication_no_stale_tokens`               | `stale_token_threshold_days`      | Integer         | `90`                                                                     |
+| `authentication_token_not_expired`             | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
+| `deployment_production_uses_stable_target`     | `stable_branches`                 | List of Strings | `["main", "master"]`                                                     |
+| `domain_ssl_certificate_valid`                 | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
+| `project_environment_no_secrets_in_plain_type` | `secret_suffixes`                 | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `team_member_role_least_privilege`             | `max_owner_percentage`            | Integer         | `20`                                                                     |
+| `team_member_role_least_privilege`             | `max_owners`                      | Integer         | `3`                                                                      |
+| `team_no_stale_invitations`                    | `stale_invitation_threshold_days` | Integer         | `30`                                                                     |
 
 ## Okta
 
 ### Configurable Checks
 The following list includes all the Okta checks with configurable variables that can be changed in the configuration YAML file:
 
-| Check Name                                                    | Value                              | Type    |
-|---------------------------------------------------------------|------------------------------------|---------|
-| `application_admin_console_session_idle_timeout_15min`        | `okta_admin_console_idle_timeout_max_minutes` | Integer |
-| `signon_global_session_idle_timeout_15min`                    | `okta_max_session_idle_minutes`    | Integer |
+| Check Name                                             | Value                                         | Type    | Default |
+|--------------------------------------------------------|-----------------------------------------------|---------|---------|
+| `application_admin_console_session_idle_timeout_15min` | `okta_admin_console_idle_timeout_max_minutes` | Integer | `15`    |
+| `signon_global_session_idle_timeout_15min`             | `okta_max_session_idle_minutes`               | Integer | `15`    |
 
 ## Config YAML File Structure
 
