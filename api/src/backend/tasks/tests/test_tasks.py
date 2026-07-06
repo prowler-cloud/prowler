@@ -2615,6 +2615,41 @@ class TestPerformScheduledScanTask:
             == 1
         )
 
+    def test_next_scheduled_scan_failure_does_not_mask_completed_scan(
+        self, tenants_fixture, providers_fixture, caplog
+    ):
+        """Keep scheduled scan success when next-run creation fails."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch(
+                "tasks.tasks._get_or_create_next_scheduled_scan",
+                side_effect=RuntimeError("scheduler unavailable"),
+            ),
+            patch("tasks.tasks._dispatch_next_queued_provider_scan") as mock_dispatch,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+            caplog.at_level("ERROR"),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        assert result == {"status": "ok"}
+        mock_dispatch.assert_called_once_with(str(tenant.id), str(provider.id))
+        assert "Failed to ensure next scheduled scan" in caplog.text
+
     def test_dedupes_multiple_scheduled_scans_before_run(
         self, tenants_fixture, providers_fixture
     ):
@@ -2793,6 +2828,39 @@ class TestPerformScanTask:
             },
             task_id=str(queued_task.id),
         )
+
+    def test_dispatch_failure_does_not_mask_completed_scan(
+        self, tenants_fixture, providers_fixture, caplog
+    ):
+        """Keep scan success when queued dispatch fails after completion."""
+        tenant = tenants_fixture[0]
+        provider = providers_fixture[0]
+        current_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Running scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", return_value={"status": "ok"}),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch(
+                "tasks.tasks._dispatch_next_queued_provider_scan",
+                side_effect=RuntimeError("dispatch unavailable"),
+            ) as mock_dispatch,
+            caplog.at_level("ERROR"),
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=str(current_scan.id),
+                provider_id=str(provider.id),
+            )
+
+        assert result == {"status": "ok"}
+        mock_dispatch.assert_called_once_with(str(tenant.id), str(provider.id))
+        assert "Failed to dispatch next queued scan" in caplog.text
 
 
 @pytest.mark.django_db

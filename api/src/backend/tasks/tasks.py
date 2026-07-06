@@ -261,6 +261,17 @@ def _dispatch_next_queued_provider_scan(tenant_id: str, provider_id: str):
         return queued_scan
 
 
+def _dispatch_next_queued_provider_scan_best_effort(
+    tenant_id: str, provider_id: str
+) -> None:
+    try:
+        _dispatch_next_queued_provider_scan(tenant_id, provider_id)
+    except Exception:
+        logger.exception(
+            "Failed to dispatch next queued scan for provider %s", provider_id
+        )
+
+
 def _get_or_create_next_scheduled_scan(
     tenant_id: str,
     provider_id: str,
@@ -279,6 +290,26 @@ def _get_or_create_next_scheduled_scan(
         scheduled_at=next_scan_datetime,
         update_state=True,
     )
+
+
+def _ensure_next_scheduled_scan_best_effort(
+    tenant_id: str,
+    provider_id: str,
+    periodic_task_instance: PeriodicTask,
+    next_scan_datetime: datetime,
+) -> None:
+    try:
+        with rls_transaction(tenant_id):
+            _get_or_create_next_scheduled_scan(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                periodic_task_instance=periodic_task_instance,
+                next_scan_datetime=next_scan_datetime,
+            )
+    except Exception:
+        logger.exception(
+            "Failed to ensure next scheduled scan for provider %s", provider_id
+        )
 
 
 def _cleanup_orphan_scheduled_scans(
@@ -497,7 +528,7 @@ def perform_scan_task(
         _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
         return result
     finally:
-        _dispatch_next_queued_provider_scan(tenant_id, provider_id)
+        _dispatch_next_queued_provider_scan_best_effort(tenant_id, provider_id)
 
 
 # acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
@@ -606,14 +637,13 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
         return result
     finally:
-        with rls_transaction(tenant_id):
-            _get_or_create_next_scheduled_scan(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                periodic_task_instance=periodic_task_instance,
-                next_scan_datetime=next_scan_datetime,
-            )
-        _dispatch_next_queued_provider_scan(tenant_id, provider_id)
+        _ensure_next_scheduled_scan_best_effort(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            periodic_task_instance=periodic_task_instance,
+            next_scan_datetime=next_scan_datetime,
+        )
+        _dispatch_next_queued_provider_scan_best_effort(tenant_id, provider_id)
 
 
 @shared_task(name="scan-summary", queue="overview")
