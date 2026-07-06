@@ -24,7 +24,7 @@ from prowler.providers.e2enetworks.models import (
 )
 
 
-class E2eNetworksProvider(Provider):
+class E2enetworksProvider(Provider):
     """Provider class for E2E Networks."""
 
     _type: str = "e2enetworks"
@@ -56,7 +56,7 @@ class E2eNetworksProvider(Provider):
 
         if not self._api_key or not self._auth_token or self._project_id is None:
             raise E2eNetworksCredentialsError(
-                message="E2eNetworksProvider requires api_key, auth_token, and project_id."
+                message="E2enetworksProvider requires api_key, auth_token, and project_id."
             )
 
         self._fixer_config = fixer_config if fixer_config else {}
@@ -71,7 +71,7 @@ class E2eNetworksProvider(Provider):
                 mutelist_path = get_default_mute_file_path(self._type)
             self._mutelist = E2eNetworksMutelist(mutelist_path=mutelist_path)
 
-        self._session = E2eNetworksProvider.setup_session(
+        self._session = E2enetworksProvider.setup_session(
             api_key=self._api_key,
             auth_token=self._auth_token,
             project_id=self._project_id,
@@ -227,7 +227,7 @@ class E2eNetworksProvider(Provider):
                     message="E2E Networks test_connection requires api_key, auth_token, and project_id."
                 )
 
-            session = E2eNetworksProvider.setup_session(
+            session = E2enetworksProvider.setup_session(
                 api_key=api_key,
                 auth_token=auth_token,
                 project_id=project_id_int,

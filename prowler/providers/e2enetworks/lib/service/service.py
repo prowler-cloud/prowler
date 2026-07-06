@@ -1,11 +1,11 @@
-from prowler.providers.e2enetworks.e2enetworks_provider import E2eNetworksProvider
+from prowler.providers.e2enetworks.e2enetworks_provider import E2enetworksProvider
 from prowler.providers.e2enetworks.lib.api.client import E2eNetworksAPIClient
 
 
 class E2eNetworksService:
     """Base class for E2E Networks services."""
 
-    def __init__(self, service: str, provider: E2eNetworksProvider):
+    def __init__(self, service: str, provider: E2enetworksProvider):
         """Initialize an E2E Networks service client.
 
         Args:
