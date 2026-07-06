@@ -8,19 +8,28 @@ import {
 import { Field, FieldError, FieldLabel } from "@/components/shadcn/field/field";
 import { Input } from "@/components/shadcn/input/input";
 
+// Stored secrets are never sent back by the API, so the fields would look
+// empty even when a key exists; the masked placeholder stands in for it.
+const STORED_SECRET_PLACEHOLDER = "•".repeat(36);
+
 export function CredentialFields({
   errors,
+  hasStoredCredentials = false,
   provider,
   register,
 }: {
   errors: ReturnType<
     typeof useForm<LighthouseV2ConfigFormValues>
   >["formState"]["errors"];
+  hasStoredCredentials?: boolean;
   provider: LighthouseV2ProviderType;
   register: ReturnType<
     typeof useForm<LighthouseV2ConfigFormValues>
   >["register"];
 }) {
+  const secretPlaceholder = hasStoredCredentials
+    ? STORED_SECRET_PLACEHOLDER
+    : undefined;
   return (
     <div className="grid gap-4">
       {(provider === LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI ||
@@ -31,6 +40,7 @@ export function CredentialFields({
             id="lighthouse-v2-api-key"
             type="password"
             autoComplete="off"
+            placeholder={secretPlaceholder}
             aria-invalid={Boolean(errors.apiKey)}
             {...register("apiKey")}
           />
@@ -65,6 +75,7 @@ export function CredentialFields({
               id="lighthouse-v2-access-key"
               type="password"
               autoComplete="off"
+              placeholder={secretPlaceholder}
               aria-invalid={Boolean(errors.awsAccessKeyId)}
               {...register("awsAccessKeyId")}
             />
@@ -81,6 +92,7 @@ export function CredentialFields({
               id="lighthouse-v2-secret-key"
               type="password"
               autoComplete="off"
+              placeholder={secretPlaceholder}
               aria-invalid={Boolean(errors.awsSecretAccessKey)}
               {...register("awsSecretAccessKey")}
             />
