@@ -224,4 +224,19 @@ describe("EditRoleForm", () => {
       screen.queryByText(/remove this automatic visibility grant/i),
     ).not.toBeInTheDocument();
   });
+
+  it("keeps existing inconsistent Manage Providers and Unlimited Visibility values on initial render", () => {
+    // Given / When
+    renderEditRoleForm({ manageProviders: true, unlimitedVisibility: false });
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    ).toBeChecked();
+    const unlimitedVisibilityCheckbox = screen.getByRole("checkbox", {
+      name: "Enable Unlimited Visibility for this role",
+    });
+    expect(unlimitedVisibilityCheckbox).not.toBeChecked();
+    expect(unlimitedVisibilityCheckbox).toBeEnabled();
+  });
 });

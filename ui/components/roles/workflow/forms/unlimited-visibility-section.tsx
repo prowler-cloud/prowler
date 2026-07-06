@@ -1,3 +1,4 @@
+import { Checkbox } from "@heroui/checkbox";
 import { Eye } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -48,5 +49,42 @@ export const UnlimitedVisibilitySection = ({
         <div className="pt-1">{children}</div>
       </div>
     </section>
+  );
+};
+
+export const UnlimitedVisibilityField = ({
+  isSelected,
+  isDisabled,
+  onValueChange,
+}: {
+  isSelected: boolean;
+  isDisabled: boolean;
+  onValueChange: (checked: boolean) => void;
+}) => {
+  return (
+    <UnlimitedVisibilitySection>
+      <Checkbox
+        name="unlimited_visibility"
+        isSelected={isSelected}
+        isDisabled={isDisabled}
+        onValueChange={onValueChange}
+        classNames={{
+          label: "text-small font-medium",
+          wrapper: "checkbox-update",
+        }}
+        color="default"
+      >
+        Enable Unlimited Visibility for this role
+      </Checkbox>
+      {isDisabled && (
+        <p className="text-small mt-2 text-orange-900 dark:text-orange-100">
+          Manage Providers is selected, so Unlimited Visibility stays enabled in
+          this form. If Manage Providers enabled it automatically, clearing
+          Manage Providers also clears that automatic selection. If Unlimited
+          Visibility was already enabled, clearing Manage Providers only lets
+          you edit it separately.
+        </p>
+      )}
+    </UnlimitedVisibilitySection>
   );
 };

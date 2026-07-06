@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type {
   FieldValues,
   Path,
@@ -6,14 +6,10 @@ import type {
   UseFormReturn,
 } from "react-hook-form";
 
-import { permissionFormFields } from "@/lib";
-
 type RolePermissionValues = {
   manage_providers?: boolean;
   unlimited_visibility?: boolean;
 };
-
-const hiddenOutsideCloudFields = ["manage_billing", "manage_alerts"];
 
 const setBooleanFormValue = <T extends FieldValues>(
   form: Pick<UseFormReturn<T>, "setValue">,
@@ -26,17 +22,6 @@ const setBooleanFormValue = <T extends FieldValues>(
     shouldTouch: true,
   });
 };
-
-export const getVisiblePermissionFormFields = (isCloudEnvironment: boolean) =>
-  permissionFormFields.filter(
-    (permission) =>
-      permission.field !== "unlimited_visibility" &&
-      (!hiddenOutsideCloudFields.includes(permission.field) ||
-        isCloudEnvironment),
-  );
-
-export const getUnlimitedVisibilityField = () =>
-  permissionFormFields.find(({ field }) => field === "unlimited_visibility");
 
 export const useManageProvidersUnlimitedVisibility = <
   T extends FieldValues & RolePermissionValues,
@@ -77,15 +62,9 @@ export const useManageProvidersUnlimitedVisibility = <
     }
   };
 
-  useEffect(() => {
-    if (manageProviders && unlimitedVisibility === false) {
-      autoEnabledUnlimitedVisibility.current = true;
-      setBooleanFormValue(form, "unlimited_visibility" as Path<T>, true);
-    }
-  }, [form, manageProviders, unlimitedVisibility]);
-
   return {
-    isUnlimitedVisibilityRequiredByManageProviders: !!manageProviders,
+    isUnlimitedVisibilityRequiredByManageProviders:
+      !!manageProviders && !!unlimitedVisibility,
     setPermissionValue,
     setUnlimitedVisibility,
   };

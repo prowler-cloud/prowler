@@ -15,15 +15,15 @@ import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-s
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
+import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
 import { getErrorMessage } from "@/lib";
-import { addRoleFormSchema, ApiError } from "@/types";
-
 import {
   getUnlimitedVisibilityField,
   getVisiblePermissionFormFields,
-  useManageProvidersUnlimitedVisibility,
-} from "./role-permissions";
-import { UnlimitedVisibilitySection } from "./unlimited-visibility-section";
+} from "@/lib/role-permissions";
+import { addRoleFormSchema, ApiError } from "@/types";
+
+import { UnlimitedVisibilityField } from "./unlimited-visibility-section";
 
 type FormValues = z.input<typeof addRoleFormSchema>;
 
@@ -153,31 +153,11 @@ export const AddRoleForm = ({
         />
 
         {unlimitedVisibilityField && (
-          <UnlimitedVisibilitySection>
-            <Checkbox
-              {...form.register("unlimited_visibility")}
-              isSelected={!!form.watch("unlimited_visibility")}
-              isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
-              onValueChange={setUnlimitedVisibility}
-              classNames={{
-                label: "text-small font-medium",
-                wrapper: "checkbox-update",
-              }}
-              color="default"
-            >
-              Enable Unlimited Visibility for this role
-            </Checkbox>
-            {isUnlimitedVisibilityRequiredByManageProviders && (
-              <p className="text-small mt-2 text-orange-900 dark:text-orange-100">
-                Manage Providers is selected, so Unlimited Visibility stays
-                enabled in this form. If Manage Providers enabled it
-                automatically, clearing Manage Providers also clears that
-                automatic selection. If Unlimited Visibility was already
-                enabled, clearing Manage Providers only lets you edit it
-                separately.
-              </p>
-            )}
-          </UnlimitedVisibilitySection>
+          <UnlimitedVisibilityField
+            isSelected={!!form.watch("unlimited_visibility")}
+            isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
+            onValueChange={setUnlimitedVisibility}
+          />
         )}
 
         <div className="flex flex-col gap-4">
