@@ -4,20 +4,20 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from prowler.providers.common.models import Connection
-from prowler.providers.e2enetworks.e2enetworks_provider import E2eNetworksProvider
+from prowler.providers.e2enetworks.e2enetworks_provider import E2enetworksProvider
 from prowler.providers.e2enetworks.exceptions.exceptions import (
     E2eNetworksCredentialsError,
 )
 
 
-class TestE2eNetworksProvider:
+class TestE2enetworksProvider:
     @patch(
         "prowler.providers.e2enetworks.e2enetworks_provider.load_and_validate_config_file"
     )
     def test_e2enetworks_provider_init_success(self, mock_load_config):
         mock_load_config.return_value = {}
 
-        provider = E2eNetworksProvider(
+        provider = E2enetworksProvider(
             api_key="test-api-key",
             auth_token="test-auth-token",
             project_id="12345",
@@ -40,7 +40,7 @@ class TestE2eNetworksProvider:
         mock_load_config.return_value = {}
 
         with pytest.raises(E2eNetworksCredentialsError):
-            E2eNetworksProvider(api_key="", auth_token="token", project_id="1")
+            E2enetworksProvider(api_key="", auth_token="token", project_id="1")
 
     @patch.dict(
         os.environ,
@@ -58,14 +58,14 @@ class TestE2eNetworksProvider:
     def test_e2enetworks_provider_init_from_env(self, mock_load_config):
         mock_load_config.return_value = {}
 
-        provider = E2eNetworksProvider()
+        provider = E2enetworksProvider()
 
         assert provider.session.api_key == "env-api-key"
         assert provider.session.project_id == 99
         assert provider.session.locations == ["Chennai"]
 
     @patch(
-        "prowler.providers.e2enetworks.e2enetworks_provider.E2eNetworksProvider.setup_session"
+        "prowler.providers.e2enetworks.e2enetworks_provider.E2enetworksProvider.setup_session"
     )
     def test_e2enetworks_test_connection_success(self, mock_setup_session):
         mock_session = MagicMock()
@@ -77,7 +77,7 @@ class TestE2eNetworksProvider:
         mock_session.base_url = "https://api.e2enetworks.com/myaccount/api/v1"
         mock_setup_session.return_value = mock_session
 
-        result = E2eNetworksProvider.test_connection(
+        result = E2enetworksProvider.test_connection(
             api_key="key",
             auth_token="token",
             project_id=1,
@@ -88,6 +88,6 @@ class TestE2eNetworksProvider:
 
     def test_e2enetworks_test_connection_missing_credentials(self):
         with pytest.raises(E2eNetworksCredentialsError):
-            E2eNetworksProvider.test_connection(
+            E2enetworksProvider.test_connection(
                 api_key="", auth_token="", project_id=None
             )

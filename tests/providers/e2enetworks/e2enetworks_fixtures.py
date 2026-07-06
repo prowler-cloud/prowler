@@ -2,7 +2,7 @@ import importlib
 import sys
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.e2enetworks.e2enetworks_provider import E2eNetworksProvider
+from prowler.providers.e2enetworks.e2enetworks_provider import E2enetworksProvider
 from prowler.providers.e2enetworks.models import (
     E2eNetworksIdentityInfo,
     E2eNetworksSession,
@@ -37,7 +37,7 @@ def set_mocked_e2enetworks_provider(
     fixer_config: dict | None = None,
 ):
     """Create a mocked E2E provider for tests without network calls."""
-    provider = MagicMock(spec=E2eNetworksProvider)
+    provider = MagicMock(spec=E2enetworksProvider)
     provider.type = "e2enetworks"
     provider.audit_config = audit_config or {}
     provider.fixer_config = fixer_config or {}
