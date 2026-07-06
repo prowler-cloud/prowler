@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import {
+  LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+  notifyLighthouseV2SessionArchived,
+} from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type {
   LighthouseV2Configuration,
   LighthouseV2Message,
@@ -594,6 +597,44 @@ describe("LighthouseV2ChatPage", () => {
       expect(getMessagesMock).toHaveBeenCalledWith("session-1"),
     );
     expect(source.close).toHaveBeenCalled();
+  });
+
+  it("resets to a new chat when the live-created session is archived from the sidebar", async () => {
+    // Given: a session created in this chat (its URL was set via replaceState,
+    // so the sidebar cannot see it in Next's search params)
+    const user = userEvent.setup();
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalled());
+
+    // When: the sidebar archives that same session
+    act(() => notifyLighthouseV2SessionArchived("session-1"));
+
+    // Then: the chat resets in place and the URL leaves the dead session
+    await waitFor(() =>
+      expect(replaceStateSpy).toHaveBeenCalledWith(null, "", "/lighthouse"),
+    );
+    expect(screen.queryByText("Summarize findings")).not.toBeInTheDocument();
+    expect(eventSources[0].close).toHaveBeenCalled();
+    replaceStateSpy.mockRestore();
+  });
+
+  it("keeps the conversation when a different session is archived", async () => {
+    // Given
+    renderPage({
+      initialSessionId: "session-2",
+      initialMessages: [message("message-1", "assistant", "Existing answer")],
+    });
+
+    // When
+    act(() => notifyLighthouseV2SessionArchived("session-other"));
+
+    // Then
+    expect(screen.getByText("Existing answer")).toBeInTheDocument();
   });
 
   it("surfaces a connection error when the stream closes without retrying", async () => {
