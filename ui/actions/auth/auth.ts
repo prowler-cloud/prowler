@@ -13,10 +13,11 @@ export async function authenticate(
 ) {
   try {
     addAuthEvent("login", { email: formData.email });
-    await signIn("credentials", {
+    const result = await signIn("credentials", {
       ...formData,
       redirect: false,
     });
+
     return {
       message: "Success",
     };
@@ -31,10 +32,19 @@ export async function authenticate(
               credentials: "Invalid email or password",
             },
           };
-        case "CallbackRouteError":
+        case "CallbackRouteError": {
+          const errMsg = error.cause?.err?.message;
+          if (errMsg && errMsg.startsWith("mfa_required:")) {
+            const mfaData = JSON.parse(errMsg.replace("mfa_required:", ""));
+            return {
+              message: "mfa_required",
+              mfaData,
+            };
+          }
           return {
-            message: error.cause?.err?.message,
+            message: errMsg,
           };
+        }
         default:
           return {
             message: "Unknown error",
@@ -117,9 +127,18 @@ export const getToken = async (formData: SignInFormData) => {
       body: JSON.stringify(bodyData),
     });
 
-    if (!response.ok) return null;
-
     const parsedResponse = await response.json();
+
+    // Handle MFA required response
+    if (parsedResponse.data?.attributes?.mfa_required) {
+      return {
+        mfaRequired: true,
+        email: parsedResponse.data.attributes.email,
+        tenantId: parsedResponse.data.attributes.tenant_id,
+      };
+    }
+
+    if (!response.ok) return null;
 
     const accessToken = parsedResponse.data.attributes.access;
     const refreshToken = parsedResponse.data.attributes.refresh;
@@ -191,3 +210,45 @@ export const getUserByMe = async (accessToken: string) => {
 export async function logOut() {
   await signOut({ redirectTo: "/sign-in" });
 }
+
+export const validateTotp = async (formData: {
+  email: string;
+  password: string;
+  totpCode: string;
+  tenantId?: string;
+}) => {
+  const url = new URL(`${apiBaseUrl}/totp/validate`);
+
+  const bodyData = {
+    data: {
+      type: "totp-validate",
+      attributes: {
+        email: formData.email,
+        password: formData.password,
+        totp_code: formData.totpCode,
+        ...(formData.tenantId && { tenant_id: formData.tenantId }),
+      },
+    },
+  };
+
+  try {
+    const response = await fetch(url.toString(), {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/vnd.api+json",
+        Accept: "application/vnd.api+json",
+      },
+      body: JSON.stringify(bodyData),
+    });
+
+    const parsedResponse = await response.json();
+    if (!response.ok) return null;
+
+    return {
+      accessToken: parsedResponse.data.attributes.access,
+      refreshToken: parsedResponse.data.attributes.refresh,
+    };
+  } catch (_error) {
+    return null;
+  }
+};
