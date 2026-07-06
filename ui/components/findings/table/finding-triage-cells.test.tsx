@@ -373,7 +373,7 @@ describe("finding triage cells", () => {
       screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(
       screen.getByRole("link", { name: "Available in Prowler Cloud" }),
     ).toHaveAttribute("href", "https://prowler.com/pricing");
