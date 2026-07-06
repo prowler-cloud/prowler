@@ -1,10 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.e2e.services.network.network_service import Network, Vpc
+from prowler.providers.e2enetworks.services.network.network_service import Network, Vpc
 
 
 class TestNetworkService:
-    @patch("prowler.providers.e2e.services.network.network_service.E2eService.__init__")
+    @patch(
+        "prowler.providers.e2enetworks.services.network.network_service.E2eNetworksService.__init__"
+    )
     def test_fetch_vpcs_and_tunnels(self, mock_super_init):
         mock_super_init.return_value = None
 

@@ -2,11 +2,14 @@ import importlib
 import sys
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.e2e.e2e_provider import E2eProvider
-from prowler.providers.e2e.models import E2eIdentityInfo, E2eSession
+from prowler.providers.e2enetworks.e2enetworks_provider import E2eNetworksProvider
+from prowler.providers.e2enetworks.models import (
+    E2eNetworksIdentityInfo,
+    E2eNetworksSession,
+)
 
 
-def run_e2e_check(
+def run_e2enetworks_check(
     check_module_path: str, client_patch_path: str, client_attr: str, resources: list
 ):
     """Execute an E2E check with mocked client resources."""
@@ -16,7 +19,7 @@ def run_e2e_check(
 
     with patch(
         "prowler.providers.common.provider.Provider.get_global_provider",
-        return_value=set_mocked_e2e_provider(),
+        return_value=set_mocked_e2enetworks_provider(),
     ):
         if check_module_path in sys.modules:
             module = importlib.reload(sys.modules[check_module_path])
@@ -27,22 +30,22 @@ def run_e2e_check(
             return getattr(module, check_class_name)().execute()
 
 
-def set_mocked_e2e_provider(
+def set_mocked_e2enetworks_provider(
     project_id: int = 12345,
     locations: list[str] | None = None,
     audit_config: dict | None = None,
     fixer_config: dict | None = None,
 ):
     """Create a mocked E2E provider for tests without network calls."""
-    provider = MagicMock(spec=E2eProvider)
-    provider.type = "e2e"
+    provider = MagicMock(spec=E2eNetworksProvider)
+    provider.type = "e2enetworks"
     provider.audit_config = audit_config or {}
     provider.fixer_config = fixer_config or {}
-    provider.identity = E2eIdentityInfo(
+    provider.identity = E2eNetworksIdentityInfo(
         project_id=project_id,
         locations=locations or ["Delhi"],
     )
-    provider.session = E2eSession(
+    provider.session = E2eNetworksSession(
         api_key="test-api-key",
         auth_token="test-auth-token",
         project_id=project_id,

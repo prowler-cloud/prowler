@@ -1,10 +1,12 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.e2e.services.storage.storage_service import Storage
+from prowler.providers.e2enetworks.services.storage.storage_service import Storage
 
 
 class TestStorageService:
-    @patch("prowler.providers.e2e.services.storage.storage_service.E2eService.__init__")
+    @patch(
+        "prowler.providers.e2enetworks.services.storage.storage_service.E2eNetworksService.__init__"
+    )
     def test_fetch_efs_and_epfs(self, mock_super_init):
         mock_super_init.return_value = None
 

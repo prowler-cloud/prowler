@@ -1,7 +1,9 @@
 from unittest import mock
 
-from prowler.providers.e2e.services.network.network_service import Vpc
-from tests.providers.e2e.e2e_fixtures import set_mocked_e2e_provider
+from prowler.providers.e2enetworks.services.network.network_service import Vpc
+from tests.providers.e2enetworks.e2enetworks_fixtures import (
+    set_mocked_e2enetworks_provider,
+)
 
 
 class TestNetworkVpcIsActiveCheck:
@@ -27,14 +29,14 @@ class TestNetworkVpcIsActiveCheck:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_e2e_provider(),
+                return_value=set_mocked_e2enetworks_provider(),
             ),
             mock.patch(
-                "prowler.providers.e2e.services.network.network_vpc_is_active.network_vpc_is_active.network_client",
+                "prowler.providers.e2enetworks.services.network.network_vpc_is_active.network_vpc_is_active.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.e2e.services.network.network_vpc_is_active.network_vpc_is_active import (
+            from prowler.providers.e2enetworks.services.network.network_vpc_is_active.network_vpc_is_active import (
                 network_vpc_is_active,
             )
 
@@ -51,14 +53,14 @@ class TestNetworkVpcIsActiveCheck:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_e2e_provider(),
+                return_value=set_mocked_e2enetworks_provider(),
             ),
             mock.patch(
-                "prowler.providers.e2e.services.network.network_vpc_is_active.network_vpc_is_active.network_client",
+                "prowler.providers.e2enetworks.services.network.network_vpc_is_active.network_vpc_is_active.network_client",
                 new=network_client,
             ),
         ):
-            from prowler.providers.e2e.services.network.network_vpc_is_active.network_vpc_is_active import (
+            from prowler.providers.e2enetworks.services.network.network_vpc_is_active.network_vpc_is_active import (
                 network_vpc_is_active,
             )
 

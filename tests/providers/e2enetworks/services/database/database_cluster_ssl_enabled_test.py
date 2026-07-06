@@ -1,7 +1,11 @@
 from unittest import mock
 
-from prowler.providers.e2e.services.database.database_service import DatabaseCluster
-from tests.providers.e2e.e2e_fixtures import set_mocked_e2e_provider
+from prowler.providers.e2enetworks.services.database.database_service import (
+    DatabaseCluster,
+)
+from tests.providers.e2enetworks.e2enetworks_fixtures import (
+    set_mocked_e2enetworks_provider,
+)
 
 
 class TestDatabaseClusterSslEnabledCheck:
@@ -25,14 +29,14 @@ class TestDatabaseClusterSslEnabledCheck:
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_e2e_provider(),
+                return_value=set_mocked_e2enetworks_provider(),
             ),
             mock.patch(
-                "prowler.providers.e2e.services.database.database_cluster_ssl_enabled.database_cluster_ssl_enabled.database_client",
+                "prowler.providers.e2enetworks.services.database.database_cluster_ssl_enabled.database_cluster_ssl_enabled.database_client",
                 new=database_client,
             ),
         ):
-            from prowler.providers.e2e.services.database.database_cluster_ssl_enabled.database_cluster_ssl_enabled import (
+            from prowler.providers.e2enetworks.services.database.database_cluster_ssl_enabled.database_cluster_ssl_enabled import (
                 database_cluster_ssl_enabled,
             )
 

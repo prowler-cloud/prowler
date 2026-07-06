@@ -1,11 +1,11 @@
 from unittest.mock import MagicMock, patch
 
-from prowler.providers.e2e.services.database.database_service import Database
+from prowler.providers.e2enetworks.services.database.database_service import Database
 
 
 class TestDatabaseService:
     @patch(
-        "prowler.providers.e2e.services.database.database_service.E2eService.__init__"
+        "prowler.providers.e2enetworks.services.database.database_service.E2eNetworksService.__init__"
     )
     def test_fetch_clusters_enriches_detail(self, mock_super_init):
         mock_super_init.return_value = None

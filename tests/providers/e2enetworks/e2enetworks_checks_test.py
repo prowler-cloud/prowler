@@ -1,64 +1,64 @@
-from prowler.providers.e2e.services.database.database_service import (
+from prowler.providers.e2enetworks.services.database.database_service import (
     DatabaseCluster,
     DatabaseInstance,
 )
-from prowler.providers.e2e.services.loadbalancer.loadbalancer_service import LoadBalancer
-from prowler.providers.e2e.services.network.network_service import (
+from prowler.providers.e2enetworks.services.loadbalancer.loadbalancer_service import (
+    LoadBalancer,
+)
+from prowler.providers.e2enetworks.services.network.network_service import (
     ReservedIp,
     Vpc,
     VpcTunnel,
 )
-from prowler.providers.e2e.services.node.nodes_service import Node
-from prowler.providers.e2e.services.securitygroup.securitygroup_service import (
+from prowler.providers.e2enetworks.services.node.node_service import Node
+from prowler.providers.e2enetworks.services.securitygroup.securitygroup_service import (
     NodeSecurityGroup,
     SecurityGroupResource,
     SecurityGroupRule,
 )
-from prowler.providers.e2e.services.storage.storage_service import (
+from prowler.providers.e2enetworks.services.storage.storage_service import (
     BlockVolume,
     EfsVolume,
     StorageBucket,
 )
-from tests.providers.e2e.e2e_fixtures import run_e2e_check
+from tests.providers.e2enetworks.e2enetworks_fixtures import run_e2enetworks_check
 
 
 def _database_client_path(check_name: str) -> str:
     return (
-        f"prowler.providers.e2e.services.database.{check_name}.{check_name}"
+        f"prowler.providers.e2enetworks.services.database.{check_name}.{check_name}"
         ".database_client"
     )
 
 
 def _network_client_path(check_name: str) -> str:
     return (
-        f"prowler.providers.e2e.services.network.{check_name}.{check_name}"
+        f"prowler.providers.e2enetworks.services.network.{check_name}.{check_name}"
         ".network_client"
     )
 
 
 def _node_client_path(check_name: str) -> str:
-    return (
-        f"prowler.providers.e2e.services.node.{check_name}.{check_name}.nodes_client"
-    )
+    return f"prowler.providers.e2enetworks.services.node.{check_name}.{check_name}.node_client"
 
 
 def _storage_client_path(check_name: str) -> str:
     return (
-        f"prowler.providers.e2e.services.storage.{check_name}.{check_name}"
+        f"prowler.providers.e2enetworks.services.storage.{check_name}.{check_name}"
         ".storage_client"
     )
 
 
 def _loadbalancer_client_path(check_name: str) -> str:
     return (
-        f"prowler.providers.e2e.services.loadbalancer.{check_name}.{check_name}"
+        f"prowler.providers.e2enetworks.services.loadbalancer.{check_name}.{check_name}"
         ".loadbalancer_client"
     )
 
 
 def _securitygroup_client_path(check_name: str) -> str:
     return (
-        f"prowler.providers.e2e.services.securitygroup.{check_name}.{check_name}"
+        f"prowler.providers.e2enetworks.services.securitygroup.{check_name}.{check_name}"
         ".securitygroup_client"
     )
 
@@ -80,8 +80,8 @@ class TestDatabaseChecks:
                 backup_enabled=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "clusters",
             resources,
@@ -106,8 +106,8 @@ class TestDatabaseChecks:
                 master_username="admin",
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "clusters",
             resources,
@@ -133,8 +133,8 @@ class TestDatabaseChecks:
                 whitelisted_ips=[],
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "clusters",
             resources,
@@ -159,8 +159,8 @@ class TestDatabaseChecks:
                 master_has_public_ip=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "clusters",
             resources,
@@ -184,8 +184,8 @@ class TestDatabaseChecks:
                 status="STOPPED",
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "clusters",
             resources,
@@ -215,8 +215,8 @@ class TestDatabaseChecks:
                 has_public_ip=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.database.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.database.{check}.{check}",
             _database_client_path(check),
             "instances",
             resources,
@@ -246,8 +246,8 @@ class TestNetworkChecks:
                 floating_ip_attached_nodes_count=0,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.network.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.network.{check}.{check}",
             _network_client_path(check),
             "reserved_ips",
             resources,
@@ -275,8 +275,8 @@ class TestNetworkChecks:
                 vm_id=None,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.network.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.network.{check}.{check}",
             _network_client_path(check),
             "reserved_ips",
             resources,
@@ -290,8 +290,8 @@ class TestNetworkChecks:
             Vpc(network_id="1", name="ok", location="Delhi", vm_count=2),
             Vpc(network_id="2", name="bad", location="Delhi", vm_count=0),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.network.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.network.{check}.{check}",
             _network_client_path(check),
             "vpcs",
             resources,
@@ -319,8 +319,8 @@ class TestNetworkChecks:
                 is_peer_vpc_external=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.network.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.network.{check}.{check}",
             _network_client_path(check),
             "vpc_tunnels",
             resources,
@@ -350,8 +350,8 @@ class TestNodeChecks:
                 is_accidental_protection=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.node.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.node.{check}.{check}",
             _node_client_path(check),
             "nodes",
             resources,
@@ -379,8 +379,8 @@ class TestNodeChecks:
                 is_node_compliance=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.node.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.node.{check}.{check}",
             _node_client_path(check),
             "nodes",
             resources,
@@ -408,8 +408,8 @@ class TestNodeChecks:
                 is_encryption_enabled=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.node.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.node.{check}.{check}",
             _node_client_path(check),
             "nodes",
             resources,
@@ -437,8 +437,8 @@ class TestNodeChecks:
                 rescue_mode_status="Enabled",
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.node.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.node.{check}.{check}",
             _node_client_path(check),
             "nodes",
             resources,
@@ -466,8 +466,8 @@ class TestNodeChecks:
                 is_vpc_attached=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.node.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.node.{check}.{check}",
             _node_client_path(check),
             "nodes",
             resources,
@@ -494,8 +494,8 @@ class TestStorageChecks:
                 is_attached=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "block_volumes",
             resources,
@@ -519,8 +519,8 @@ class TestStorageChecks:
                 is_encryption_enabled=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "buckets",
             resources,
@@ -544,8 +544,8 @@ class TestStorageChecks:
                 lifecycle_configuration_status="Disabled",
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "buckets",
             resources,
@@ -569,8 +569,8 @@ class TestStorageChecks:
                 is_lock_enabled=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "buckets",
             resources,
@@ -594,8 +594,8 @@ class TestStorageChecks:
                 is_public_access_enabled=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "buckets",
             resources,
@@ -619,8 +619,8 @@ class TestStorageChecks:
                 versioning_status="Off",
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "buckets",
             resources,
@@ -644,8 +644,8 @@ class TestStorageChecks:
                 is_all_vpc_resources_allowed=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.storage.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.storage.{check}.{check}",
             _storage_client_path(check),
             "efs_volumes",
             resources,
@@ -673,8 +673,8 @@ class TestLoadBalancerChecks:
                 ssl_certificate_id=None,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.loadbalancer.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.loadbalancer.{check}.{check}",
             _loadbalancer_client_path(check),
             "load_balancers",
             resources,
@@ -700,8 +700,8 @@ class TestLoadBalancerChecks:
                 backends=[{}],
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.loadbalancer.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.loadbalancer.{check}.{check}",
             _loadbalancer_client_path(check),
             "load_balancers",
             resources,
@@ -725,8 +725,8 @@ class TestLoadBalancerChecks:
                 enable_bitninja=False,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.loadbalancer.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.loadbalancer.{check}.{check}",
             _loadbalancer_client_path(check),
             "load_balancers",
             resources,
@@ -752,8 +752,8 @@ class TestSecurityGroupChecks:
                 is_all_traffic_rule=True,
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.securitygroup.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.securitygroup.{check}.{check}",
             _securitygroup_client_path(check),
             "security_groups",
             resources,
@@ -793,8 +793,8 @@ class TestSecurityGroupChecks:
                 rules=[permissive_rule],
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.securitygroup.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.securitygroup.{check}.{check}",
             _securitygroup_client_path(check),
             "security_groups",
             resources,
@@ -834,8 +834,8 @@ class TestSecurityGroupChecks:
                 rules=[permissive_rule],
             ),
         ]
-        findings = run_e2e_check(
-            f"prowler.providers.e2e.services.securitygroup.{check}.{check}",
+        findings = run_e2enetworks_check(
+            f"prowler.providers.e2enetworks.services.securitygroup.{check}.{check}",
             _securitygroup_client_path(check),
             "node_security_groups",
             resources,

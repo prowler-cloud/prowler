@@ -1294,12 +1294,12 @@ class TestReport:
             report([finding], provider, output_options)
             mocked_print.assert_called()
 
-    def test_report_with_e2e_provider(self):
+    def test_report_with_e2enetworks_provider(self):
         finding = MagicMock()
         finding.status = "PASS"
         finding.muted = False
         finding.location = "Delhi"
-        finding.check_metadata.Provider = "e2e"
+        finding.check_metadata.Provider = "e2enetworks"
         finding.status_extended = "Node has no public IP assigned"
 
         output_options = MagicMock()
@@ -1308,7 +1308,7 @@ class TestReport:
         output_options.fixer = False
 
         provider = MagicMock()
-        provider.type = "e2e"
+        provider.type = "e2enetworks"
 
         with mock.patch("builtins.print") as mocked_print:
             report([finding], provider, output_options)

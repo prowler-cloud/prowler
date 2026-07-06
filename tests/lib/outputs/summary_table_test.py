@@ -72,9 +72,9 @@ class TestDisplaySummaryTable:
         assert "Project" in captured.out
         assert "my-prod-env" in captured.out
 
-    def test_e2e_summary(self, capsys):
+    def test_e2enetworks_summary(self, capsys):
         provider = SimpleNamespace(
-            type="e2e",
+            type="e2enetworks",
             identity=SimpleNamespace(project_id=12345),
         )
         output_options = SimpleNamespace(
@@ -88,7 +88,7 @@ class TestDisplaySummaryTable:
                 muted=False,
                 check_metadata=SimpleNamespace(
                     ServiceName="node",
-                    Provider="e2e",
+                    Provider="e2enetworks",
                     Severity="high",
                 ),
             )

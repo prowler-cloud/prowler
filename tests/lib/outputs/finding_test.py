@@ -1631,9 +1631,9 @@ class TestFinding:
         "prowler.lib.outputs.finding.get_check_compliance",
         new=mock_get_check_compliance,
     )
-    def test_generate_output_e2e(self):
+    def test_generate_output_e2enetworks(self):
         provider = MagicMock()
-        provider.type = "e2e"
+        provider.type = "e2enetworks"
         provider.identity.project_id = 12345
 
         check_output = MagicMock()
@@ -1644,7 +1644,7 @@ class TestFinding:
         check_output.status = Status.PASS
         check_output.status_extended = "mock_status_extended"
         check_output.muted = False
-        check_output.check_metadata = mock_check_metadata(provider="e2e")
+        check_output.check_metadata = mock_check_metadata(provider="e2enetworks")
         check_output.resource = {}
         check_output.compliance = {}
 
