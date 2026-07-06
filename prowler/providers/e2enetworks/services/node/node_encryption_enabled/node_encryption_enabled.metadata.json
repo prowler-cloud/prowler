@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "node_encryption_enabled",
+  "CheckTitle": "Check if E2E Networks nodes have encryption enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "This check verifies that E2E Networks nodes have disk encryption enabled so data stored on node volumes and snapshots is protected at rest.",
+  "Risk": "Unencrypted nodes increase the risk of data exposure if disks or snapshots are accessed outside normal operating controls.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\" -d '{\"isEncryptionEnabled\":true}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable disk encryption on nodes to protect data at rest on volumes and snapshots.",
+      "Url": "https://hub.prowler.com/check/node_encryption_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}

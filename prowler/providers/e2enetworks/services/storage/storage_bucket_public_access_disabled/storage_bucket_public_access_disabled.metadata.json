@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "storage_bucket_public_access_disabled",
+  "CheckTitle": "Check if E2E Networks object storage buckets do not allow public access",
+  "CheckType": [],
+  "ServiceName": "storage",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "storage",
+  "Description": "Check if E2E Networks object storage buckets have public access disabled.",
+  "Risk": "Public object storage buckets can expose sensitive data to anonymous internet access, weakening confidentiality and increasing data breach risk.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/storage/buckets/<BUCKET_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\" -d '{\"is_public_access_enabled\":false}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable public access on object storage buckets.",
+      "Url": "https://hub.prowler.com/check/storage_bucket_public_access_disabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/storage/object-storage/"
+  ]
+}

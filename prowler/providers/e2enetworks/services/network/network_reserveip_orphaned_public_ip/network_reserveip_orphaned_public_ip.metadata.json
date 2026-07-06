@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "network_reserveip_orphaned_public_ip",
+  "CheckTitle": "Check if E2E Networks public or addon IPs are attached",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "This check verifies that E2E Networks public and addon reserved IP addresses are attached to a resource, identifying orphaned addresses that remain internet-reachable without an owner.",
+  "Risk": "Orphaned public IPs remain internet-reachable resources that can be misused or reassigned without ownership controls.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X DELETE -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" \"https://api.e2enetworks.com/myaccount/api/v1/reserve_ips/<RESERVE_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach orphaned public or addon IPs to a resource, or delete them to remove unused internet-reachable addresses.",
+      "Url": "https://hub.prowler.com/check/network_reserveip_orphaned_public_ip"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/reserve-ip/"
+  ]
+}

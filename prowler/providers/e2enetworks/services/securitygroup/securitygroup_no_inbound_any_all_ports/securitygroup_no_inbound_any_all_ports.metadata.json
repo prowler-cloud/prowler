@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "securitygroup_no_inbound_any_all_ports",
+  "CheckTitle": "Check if E2E Networks security groups do not allow inbound all-protocol traffic from any source",
+  "CheckType": [],
+  "ServiceName": "securitygroup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "Check if E2E Networks security groups do not allow inbound all-protocol traffic from any source.",
+  "Risk": "Inbound all-protocol rules from any source expose services to the entire internet and increase the likelihood of unauthorized access.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X DELETE -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" \"https://api.e2enetworks.com/myaccount/api/v1/security_group/<SG_ID>/rules/<RULE_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\"",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace overly permissive inbound rules with least-privilege access.",
+      "Url": "https://hub.prowler.com/check/securitygroup_no_inbound_any_all_ports"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
+  ]
+}

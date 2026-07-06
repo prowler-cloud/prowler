@@ -1,0 +1,34 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "node_compliance_enabled",
+  "CheckTitle": "Check if E2E Networks nodes have compliance mode enabled",
+  "CheckType": [],
+  "ServiceName": "node",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "compute",
+  "Description": "This check verifies that E2E Networks nodes run with compliance mode enabled so required security controls are enforced and workload activity remains auditable.",
+  "Risk": "Nodes without compliance mode enabled may not enforce required security controls, increasing misconfiguration risk and weakening auditability of compute workloads.",
+  "RelatedUrl": "",
+  "Remediation": {
+    "Code": {
+      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/nodes/<NODE_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\" -d '{\"is_node_compliance\":true}'",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable compliance mode on nodes to enforce required security controls and maintain auditability.",
+      "Url": "https://hub.prowler.com/check/node_compliance_enabled"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ]
+}
