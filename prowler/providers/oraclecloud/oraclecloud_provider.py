@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 import os
 import pathlib
 import re
@@ -74,7 +75,7 @@ class OraclecloudProvider(Provider):
         self,
         oci_config_file: str = None,
         profile: str = None,
-        region: set = None,
+        region: str | Iterable[str] = None,
         compartment_ids: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -130,13 +131,17 @@ class OraclecloudProvider(Provider):
 
         logger.info("Initializing OCI provider ...")
 
-        # Check if the configuration is scanning a single region
-        single_region = None
-        if isinstance(region, str):
-            single_region = region
-        elif region:
-            single_region = sorted(region)[0]
-        bootstrap_region = single_region or self._bootstrap_region
+        # Check if the configuration is scanning exactly one explicit region.
+        explicit_regions = self._normalize_region_input(region)
+        single_region = (
+            next(iter(explicit_regions))
+            if explicit_regions and len(explicit_regions) == 1
+            else None
+        )
+        has_direct_credentials = user and fingerprint and tenancy
+        bootstrap_region = single_region or (
+            self._bootstrap_region if has_direct_credentials else None
+        )
 
         # Setup OCI Session
         logger.info("Setting up OCI session ...")
@@ -159,7 +164,7 @@ class OraclecloudProvider(Provider):
         logger.info("Validating OCI credentials ...")
         self._identity = self.set_identity(
             session=self._session,
-            region=bootstrap_region,
+            region=single_region,
             compartment_ids=compartment_ids,
         )
         logger.info("OCI credentials validated")
@@ -252,6 +257,22 @@ class OraclecloudProvider(Provider):
         mutelist method returns the provider's mutelist.
         """
         return self._mutelist
+
+    @staticmethod
+    def _normalize_region_input(region: str | Iterable[str] = None) -> set[str] | None:
+        """Normalize OCI region input while treating strings as one region.
+
+        Args:
+            region: Region input as a string, iterable of strings, or None.
+
+        Returns:
+            A set of region names, or None when no region is provided.
+        """
+        if isinstance(region, str):
+            return {region} if region else None
+        if region:
+            return set(region)
+        return None
 
     @staticmethod
     def setup_session(
@@ -563,7 +584,7 @@ class OraclecloudProvider(Provider):
 
         return True
 
-    def get_regions_to_audit(self, region_set: set = None) -> list:
+    def get_regions_to_audit(self, region_set: str | Iterable[str] = None) -> list:
         """
         get_regions_to_audit returns the list of regions to audit.
 
@@ -575,11 +596,7 @@ class OraclecloudProvider(Provider):
         """
         regions = []
 
-        explicit_regions = None
-        if isinstance(region_set, str):
-            explicit_regions = {region_set}
-        elif region_set:
-            explicit_regions = set(region_set)
+        explicit_regions = self._normalize_region_input(region_set)
 
         # Audit all subscribed regions
         try:
@@ -615,8 +632,12 @@ class OraclecloudProvider(Provider):
             logger.info(f"Found {len(regions)} subscribed regions")
         except Exception as error:
             if not explicit_regions or len(explicit_regions) != 1:
+                logger.critical(
+                    f"OCISetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
+                )
                 raise OCISetUpSessionError(
                     original_exception=error,
+                    file=pathlib.Path(__file__).name,
                     message=(
                         "Could not retrieve OCI subscribed regions. "
                         "Configure an explicit region to preserve legacy single-region scans, "
