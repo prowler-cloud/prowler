@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+## [1.33.0] (Prowler UNRELEASED)
+
+### 🚀 Added
+
+- Cross-provider compliance view for universal frameworks, with a per-provider breakdown, provider/account/group filters, and combined PDF report generation [(#11745)](https://github.com/prowler-cloud/prowler/pull/11745)
+
+---
+
 ## [1.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
