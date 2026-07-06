@@ -2,11 +2,12 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.32.1] (Prowler UNRELEASED)
+## [5.33.0] (Prowler UNRELEASED)
 
 ### 🐞 Fixed
 
 - `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
+- `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11850)](https://github.com/prowler-cloud/prowler/pull/11850)
 
 ---
 

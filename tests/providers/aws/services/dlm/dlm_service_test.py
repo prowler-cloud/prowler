@@ -34,6 +34,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                 }
             ]
         }
+    if operation_name == "DescribeSnapshots":
+        return {"Snapshots": [{"SnapshotId": "snap-1234567890abcdef0"}]}
 
     return make_api_call(self, operation_name, kwargs)
 
@@ -92,3 +94,49 @@ class Test_DLM_Service:
                 )
             }
         }
+
+    def test_get_regions_with_snapshots(self):
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: True}
+
+
+class FakeEC2RegionalClient:
+    def __init__(self, responses):
+        self.region = AWS_REGION_US_EAST_1
+        self.requests = []
+        self.responses = list(responses)
+
+    def describe_snapshots(self, **kwargs):
+        self.requests.append(kwargs)
+        return self.responses.pop(0)
+
+
+class Test_DLM_Regions_With_Snapshots:
+    def test_get_regions_without_snapshots(self):
+        dlm = DLM.__new__(DLM)
+        dlm.regions_with_snapshots = {}
+        regional_client = FakeEC2RegionalClient([{"Snapshots": []}])
+
+        dlm._get_regions_with_snapshots(regional_client)
+
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: False}
+        assert regional_client.requests == [{"OwnerIds": ["self"], "MaxResults": 5}]
+
+    def test_get_regions_with_snapshots_after_pagination(self):
+        dlm = DLM.__new__(DLM)
+        dlm.regions_with_snapshots = {}
+        regional_client = FakeEC2RegionalClient(
+            [
+                {"Snapshots": [], "NextToken": "next-page"},
+                {"Snapshots": [{"SnapshotId": "snap-1234567890abcdef0"}]},
+            ]
+        )
+
+        dlm._get_regions_with_snapshots(regional_client)
+
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: True}
+        assert regional_client.requests == [
+            {"OwnerIds": ["self"], "MaxResults": 5},
+            {"OwnerIds": ["self"], "MaxResults": 5, "NextToken": "next-page"},
+        ]
