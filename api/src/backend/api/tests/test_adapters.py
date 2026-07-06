@@ -5,7 +5,7 @@ import pytest
 from allauth.socialaccount.models import SocialLogin
 from api.adapters import ProwlerSocialAccountAdapter
 from api.db_router import MainRouter
-from api.models import SAMLConfiguration
+from api.models import Invitation, Membership, SAMLConfiguration, Tenant
 from django.contrib.auth import get_user_model
 
 User = get_user_model()
@@ -187,6 +187,44 @@ class TestProwlerSocialAccountAdapter:
         assert call_args is not None
         _, called_user = call_args[0]
         assert called_user.email == create_test_user.email
+
+    def test_save_user_social_with_invitation_joins_invited_tenant(
+        self, rf, create_test_user, tenants_fixture
+    ):
+        adapter = ProwlerSocialAccountAdapter()
+        invited_tenant = tenants_fixture[2]
+        invited_email = "frank-invited@example.com"
+        invitation = Invitation.objects.create(
+            tenant=invited_tenant,
+            email=invited_email,
+            inviter=create_test_user,
+        )
+        request = rf.post("/", data={"invitation_token": invitation.token})
+        request.session = {}
+
+        sociallogin = MagicMock(spec=SocialLogin)
+        sociallogin.provider = MagicMock()
+        sociallogin.provider.id = "google"
+        sociallogin.account = MagicMock()
+        sociallogin.account.extra_data = {"name": "Frank"}
+
+        real_user = User.objects.create_user(
+            name="Frank", email=invited_email, password="Secret123!"
+        )
+        tenants_before = Tenant.objects.count()
+
+        with patch("api.adapters.super") as mock_super:
+            mock_super.return_value.save_user.return_value = real_user
+            adapter.save_user(request, sociallogin)
+
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.ACCEPTED
+        assert Tenant.objects.count() == tenants_before
+        assert Membership.objects.filter(
+            user=real_user,
+            tenant=invited_tenant,
+            role=Membership.RoleChoices.MEMBER,
+        ).exists()
 
     def test_save_user_saml_sets_session_flag(self, rf):
         adapter = ProwlerSocialAccountAdapter()
