@@ -3,11 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getResourceDrawerData } from "@/actions/resources";
-import {
-  applyOptimisticTriageSummaryUpdate,
-  getOptimisticTriageMutedReason,
-  shouldMarkFindingMutedForTriageUpdate,
-} from "@/lib/finding-triage";
+import { applyOptimisticFindingTriageRowsUpdate } from "@/lib/finding-triage";
 import { MetaDataProps } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { OrganizationResource } from "@/types/organizations";
@@ -57,26 +53,7 @@ export function useResourceDrawerBootstrap({
 
   const patchTriageUpdate = (input: UpdateFindingTriageInput) => {
     setFindingsData((findings) =>
-      findings.map((finding) => {
-        if (!finding.triage || finding.triage.findingId !== input.findingId) {
-          return finding;
-        }
-
-        const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
-
-        return {
-          ...finding,
-          triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
-          attributes: {
-            ...finding.attributes,
-            muted: shouldMarkMuted ? true : finding.attributes.muted,
-            muted_reason:
-              shouldMarkMuted && input.isMuted !== true && input.status
-                ? getOptimisticTriageMutedReason(input.status)
-                : finding.attributes.muted_reason,
-          },
-        };
-      }),
+      applyOptimisticFindingTriageRowsUpdate(findings, input),
     );
   };
 
