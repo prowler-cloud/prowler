@@ -65,8 +65,6 @@ interface LighthouseV2ChatPageProps {
   supportedProviders: LighthouseV2SupportedProvider[];
   initialSessionId?: string;
   initialMessages: LighthouseV2Message[];
-  initialActiveTaskId?: string | null;
-  initialStreamUrl?: string;
   initialPrompt?: string;
   initialError?: string;
 }
@@ -77,8 +75,6 @@ export function LighthouseV2ChatPage({
   supportedProviders,
   initialSessionId,
   initialMessages,
-  initialActiveTaskId,
-  initialStreamUrl,
   initialPrompt,
   initialError,
 }: LighthouseV2ChatPageProps) {
@@ -106,7 +102,7 @@ export function LighthouseV2ChatPage({
     null,
   );
   const [streamState, setStreamState] = useState<LighthouseV2StreamState>(() =>
-    createInitialLighthouseV2StreamState(initialActiveTaskId ?? null),
+    createInitialLighthouseV2StreamState(),
   );
   const selectedConfiguration = selectedModelSelection
     ? connectedConfigurations.find(
@@ -350,11 +346,8 @@ export function LighthouseV2ChatPage({
     void submitMessage(input);
   };
 
+  // Close any open EventSource when the chat unmounts (e.g. route/session change).
   useMountEffect(() => {
-    if (initialSessionId && initialActiveTaskId && initialStreamUrl) {
-      startStream(initialStreamUrl, initialSessionId);
-    }
-
     return () => closeStream();
   });
 

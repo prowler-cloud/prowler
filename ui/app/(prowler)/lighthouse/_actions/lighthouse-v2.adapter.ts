@@ -50,7 +50,6 @@ interface SessionAttributes {
   is_archived: boolean;
   inserted_at: string;
   updated_at: string;
-  active_celery_task_id?: string | null;
 }
 
 interface MessageAttributes {
@@ -161,7 +160,6 @@ export function mapLighthouseV2Session(
     isArchived: resource.attributes.is_archived,
     insertedAt: resource.attributes.inserted_at,
     updatedAt: resource.attributes.updated_at,
-    activeTaskId: resource.attributes.active_celery_task_id,
   };
 }
 

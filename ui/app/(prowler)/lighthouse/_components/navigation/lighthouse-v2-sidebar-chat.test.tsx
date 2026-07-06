@@ -72,7 +72,6 @@ function session(
     isArchived: false,
     insertedAt: "2026-06-30T09:00:00Z",
     updatedAt: new Date().toISOString(),
-    activeTaskId: null,
     ...overrides,
   };
 }

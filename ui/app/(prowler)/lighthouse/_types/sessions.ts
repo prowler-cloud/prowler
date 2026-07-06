@@ -23,7 +23,6 @@ export interface LighthouseV2Session {
   isArchived: boolean;
   insertedAt: string;
   updatedAt: string;
-  activeTaskId?: string | null;
 }
 
 export interface LighthouseV2Part {

@@ -248,7 +248,6 @@ function session(
     isArchived: false,
     insertedAt: "2026-06-25T09:00:00Z",
     updatedAt: "2026-06-25T09:00:00Z",
-    activeTaskId: null,
     ...overrides,
   };
 }

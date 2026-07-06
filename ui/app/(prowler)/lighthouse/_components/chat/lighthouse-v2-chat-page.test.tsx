@@ -152,7 +152,6 @@ describe("LighthouseV2ChatPage", () => {
         isArchived: false,
         insertedAt: "2026-06-24T10:00:00Z",
         updatedAt: "2026-06-24T10:00:00Z",
-        activeTaskId: null,
       },
     });
     getMessagesMock.mockResolvedValue({ data: [] });
@@ -627,8 +626,6 @@ function renderPage(props?: RenderPageProps) {
     initialSessionId: props?.initialSessionId,
     initialMessages: props?.initialMessages ?? [],
     initialPrompt: props?.initialPrompt,
-    initialActiveTaskId: props?.initialActiveTaskId,
-    initialStreamUrl: props?.initialStreamUrl,
   } satisfies Parameters<typeof LighthouseV2ChatPage>[0];
 
   return render(<LighthouseV2ChatPage {...componentProps} />);

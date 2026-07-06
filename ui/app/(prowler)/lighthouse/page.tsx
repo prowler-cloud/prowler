@@ -7,14 +7,12 @@ import {
 import {
   getLighthouseV2Configurations,
   getLighthouseV2Messages,
-  getLighthouseV2Session,
   getLighthouseV2SupportedModels,
   getLighthouseV2SupportedProviders,
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
 import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
 import { loadLighthouseV2ConnectedModels } from "@/app/(prowler)/lighthouse/_lib/model-loading";
-import { buildLighthouseV2StreamUrl } from "@/app/(prowler)/lighthouse/_lib/stream-url";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/ui";
@@ -64,30 +62,17 @@ export default async function AIChatbot({
         ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
         : undefined;
 
-    const [initialMessages, activeSession] = activeSessionId
-      ? await Promise.all([
-          getLighthouseV2Messages(activeSessionId),
-          getLighthouseV2Session(activeSessionId),
-        ])
-      : [{ data: [] }, undefined];
+    const initialMessages = activeSessionId
+      ? await getLighthouseV2Messages(activeSessionId)
+      : { data: [] };
     // Treat the ?session= id as valid when its messages load (you can't fetch
     // messages for a non-existent session, so this is the authoritative
     // "session exists" check). A stale/deleted id fails here and is dropped so
-    // the client starts fresh instead of sending against a dead session. The
-    // session-metadata read stays best-effort — it only supplies activeTaskId,
-    // so a flaky metadata read must NOT discard an otherwise-valid session.
+    // the client starts fresh instead of sending against a dead session.
     const sessionLoaded = Boolean(activeSessionId) && "data" in initialMessages;
     const validSessionId = sessionLoaded ? activeSessionId : undefined;
     const chatMessages =
       sessionLoaded && "data" in initialMessages ? initialMessages.data : [];
-    const initialActiveTaskId =
-      sessionLoaded && activeSession && "data" in activeSession
-        ? (activeSession.data.activeTaskId ?? null)
-        : null;
-    const initialStreamUrl =
-      validSessionId && initialActiveTaskId
-        ? buildLighthouseV2StreamUrl(validSessionId)
-        : undefined;
     const chatRouteKey = validSessionId ?? initialPrompt ?? "new";
 
     return (
@@ -103,8 +88,6 @@ export default async function AIChatbot({
             supportedProviders={supportedProviders}
             initialSessionId={validSessionId}
             initialMessages={chatMessages}
-            initialActiveTaskId={initialActiveTaskId}
-            initialStreamUrl={initialStreamUrl}
             initialPrompt={initialPrompt}
             initialError={modelsError}
           />

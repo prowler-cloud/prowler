@@ -168,15 +168,6 @@ export async function getLighthouseV2Sessions(): Promise<
   return getCollection(SESSIONS_ENDPOINT, mapLighthouseV2Session);
 }
 
-export async function getLighthouseV2Session(
-  sessionId: string,
-): Promise<LighthouseV2ActionResult<LighthouseV2Session>> {
-  return getSingle(
-    `${SESSIONS_ENDPOINT}/${encodeURIComponent(sessionId)}`,
-    mapLighthouseV2Session,
-  );
-}
-
 export async function createLighthouseV2Session(
   title?: string | null,
 ): Promise<LighthouseV2ActionResult<LighthouseV2Session>> {
@@ -303,28 +294,6 @@ async function getCollectionFromUrl<TResource, TOutput>(
       meta: first.meta,
       links: first.links,
     };
-  } catch (error) {
-    return handleApiError(error);
-  }
-}
-
-async function getSingle<TResource, TOutput>(
-  path: string,
-  mapper: (resource: TResource) => TOutput,
-): Promise<LighthouseV2ActionResult<TOutput>> {
-  try {
-    const response = await fetch(buildApiUrl(path), {
-      method: "GET",
-      headers: await getAuthHeaders({ contentType: false }),
-      cache: "no-store",
-    });
-    const document = (await handleApiResponse(
-      response,
-    )) as JsonApiDocument<TResource>;
-    if (isErrorDocument(document) || !document.data) {
-      return toErrorResult(document);
-    }
-    return { data: mapper(document.data), meta: document.meta };
   } catch (error) {
     return handleApiError(error);
   }
