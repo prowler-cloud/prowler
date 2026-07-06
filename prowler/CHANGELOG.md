@@ -2,7 +2,15 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.32.0] (Prowler UNRELEASED)
+## [5.33.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11740)](https://github.com/prowler-cloud/prowler/pull/11740)
+
+---
+
+## [5.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
 
@@ -20,10 +28,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
 - CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
 - CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
-
-### 🔄 Changed
-
-- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11565)](https://github.com/prowler-cloud/prowler/pull/11565)
 
 ### 🐞 Fixed
 
