@@ -354,17 +354,20 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Triage
+    // Triage — keep the compact label: these cells also render inside
+    // expanded finding-group rows, which have no header row of their own.
     {
       id: "triage",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Triage" />
       ),
       cell: ({ row }) => (
-        <FindingTriageStatusCell
-          triage={row.original.triage}
-          onTriageUpdateAction={onTriageUpdateAction}
-        />
+        <InfoField label="Triage" variant="compact">
+          <FindingTriageStatusCell
+            triage={row.original.triage}
+            onTriageUpdateAction={onTriageUpdateAction}
+          />
+        </InfoField>
       ),
       enableSorting: false,
     },

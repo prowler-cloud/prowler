@@ -2,28 +2,34 @@
 
 import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo } from "react";
 
-import { getFindings } from "@/actions/findings/findings";
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import {
   getStandaloneFindingColumns,
   SkeletonTableFindings,
 } from "@/components/findings/table";
 import { ProviderBadgeIcon } from "@/components/icons/providers-badge/provider-badge-icon";
-import { Alert, AlertDescription } from "@/components/shadcn";
+import { Alert, AlertDescription, Button } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
 import { StatusFindingBadge } from "@/components/ui/table/status-finding-badge";
-import { createDict, FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
+import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getProviderLabel } from "@/lib/providers/provider-display";
 import {
   CrossProviderRequirement,
   Requirement,
   RequirementStatus,
 } from "@/types/compliance";
-import { FindingProps, FindingsResponse } from "@/types/components";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+
+import { useRequirementFindings } from "./use-requirement-findings";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
@@ -31,14 +37,6 @@ interface ClientAccordionContentProps {
   framework: string;
   disableFindings?: boolean;
 }
-
-// ``included`` is part of the JSON:API envelope but the ``FindingsResponse``
-// interface only models ``data`` + ``meta``. Carry it locally so ``createDict``
-// (which inspects ``data.included`` at runtime) can resolve the
-// provider/scan/resource relationships per row.
-type FindingsResponseLike = FindingsResponse & {
-  included?: { type: string; id: string }[];
-};
 
 const toFindingStatus = (status: RequirementStatus) => {
   // FindingStatus shares the same wire values for PASS/FAIL/MANUAL.
@@ -51,19 +49,12 @@ export const ClientAccordionContent = ({
   scanId,
   disableFindings = false,
 }: ClientAccordionContentProps) => {
-  const [findings, setFindings] = useState<FindingsResponse | null>(null);
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
   const pageSize = searchParams.get("pageSize") || "10";
   const complianceId = searchParams.get("complianceId");
   const openFindingId = searchParams.get("id");
   const sort = searchParams.get("sort") || FINDINGS_DEFAULT_SORT;
-  const loadedPageRef = useRef<string | null>(null);
-  const loadedPageSizeRef = useRef<string | null>(null);
-  const loadedSortRef = useRef<string | null>(null);
-  const loadedMutedRef = useRef<string | null>(null);
-  const loadedScopeRef = useRef<string | null>(null);
-  const isExpandedRef = useRef(false);
   const region = searchParams.get("filter[region__in]") || "";
   // Respect the user's muted preference from the URL; default to EXCLUDE
   // so the requirement view stays consistent with every other findings
@@ -79,6 +70,9 @@ export const ClientAccordionContent = ({
   const providersBreakdown = xprov.providers;
   const isCrossProvider =
     !!scanIdsByProvider && Object.keys(scanIdsByProvider).length > 0;
+
+  const checks = requirement.check_ids || [];
+
   // Identifies *what* findings this requirement should show — which scans,
   // checks and region it's scoped to. Provider-type/account/region filters
   // on the page narrow the fetch server-side without necessarily changing
@@ -87,190 +81,45 @@ export const ClientAccordionContent = ({
   // findings from providers or regions the user just filtered out.
   const scopeSignature = isCrossProvider
     ? JSON.stringify({ scanIdsByProvider, checkIdsByProvider, region })
-    : `${scanId}|${(requirement.check_ids || []).join(",")}|${region}`;
+    : `${scanId}|${checks.join(",")}|${region}`;
 
-  useEffect(() => {
-    // Guard against a slower earlier request resolving after a newer one and
-    // clobbering the table (race on fast page/sort/filter changes).
-    let cancelled = false;
-
-    async function loadFindings() {
-      if (disableFindings || requirement.status === "No findings") return;
-      if (
-        loadedPageRef.current === pageNumber &&
-        loadedPageSizeRef.current === pageSize &&
-        loadedSortRef.current === sort &&
-        loadedMutedRef.current === mutedFilter &&
-        loadedScopeRef.current === scopeSignature &&
-        isExpandedRef.current
-      ) {
-        return;
-      }
-
-      // Mark "loaded" for these exact params only once the fetch actually
-      // commits (below, right before each ``setFindings``) — not here. If a
-      // dependency changes (e.g. a sibling re-render gives ``requirement`` a
-      // new identity) while this fetch is in flight, the effect cleanup
-      // flips ``cancelled`` and the commit is skipped; marking the refs
-      // upfront would make the *next* effect run see "already loaded" and
-      // skip re-fetching too, permanently stranding the component with
-      // ``findings`` stuck at ``null``.
-
-      try {
-        const encodedSort = sort.replace(/^\+/, "");
-
-        if (isCrossProvider) {
-          // Fetch findings scoped to each contributing scan in parallel
-          // and merge the JSON:API ``data`` + ``included`` arrays so
-          // the unified table can resolve the provider/scan/resource
-          // relationships per row. Server-side filters apply per scan
-          // (the API enforces RLS on each query individually).
-          //
-          // ``scanIdsByProvider[providerKey]`` is a list because a
-          // tenant can have N accounts of the same type — fan out one
-          // ``filter[scan]`` request per account, all under the same
-          // provider key.
-          const entries = Object.entries(scanIdsByProvider!);
-          const jobs = entries.flatMap(([providerKey, scanIds]) => {
-            const checks = (checkIdsByProvider?.[providerKey] ?? []).join(",");
-            if (!checks || !Array.isArray(scanIds) || scanIds.length === 0) {
-              return [];
-            }
-            return scanIds.map((scanIdForAccount) => ({
-              providerKey,
-              scanIdForAccount,
-              checks,
-            }));
-          });
-          const responses = await Promise.all(
-            jobs.map(({ scanIdForAccount, checks }) =>
-              getFindings({
-                filters: {
-                  "filter[check_id__in]": checks,
-                  "filter[scan]": scanIdForAccount,
-                  "filter[muted]": mutedFilter,
-                  ...(region && { "filter[region__in]": region }),
-                },
-                page: parseInt(pageNumber, 10),
-                sort: encodedSort,
-              }),
-            ),
-          );
-
-          const allData: FindingProps[] = [];
-          const allIncluded: { type: string; id: string }[] = [];
-          let totalCount = 0;
-          for (const r of responses) {
-            if (!r || !("data" in r)) continue;
-            const typedResponse = r as FindingsResponseLike;
-            allData.push(...(typedResponse.data || []));
-            allIncluded.push(...(typedResponse.included || []));
-            totalCount += typedResponse?.meta?.pagination?.count || 0;
-          }
-
-          // Each scan response includes its provider/scan record;
-          // across N responses the same provider object appears N
-          // times. Dedupe by ``(type, id)`` so the subsequent
-          // ``createDict`` passes stop allocating duplicate entries.
-          const dedupedIncluded: typeof allIncluded = [];
-          const seenIncluded = new Set<string>();
-          for (const entry of allIncluded) {
-            const key = `${entry.type}|${entry.id}`;
-            if (seenIncluded.has(key)) continue;
-            seenIncluded.add(key);
-            dedupedIncluded.push(entry);
-          }
-
-          const merged: FindingsResponseLike = {
-            data: allData,
-            included: dedupedIncluded,
-            meta: {
-              pagination: {
-                page: parseInt(pageNumber, 10),
-                pages: 1,
-                count: totalCount,
-              },
-              version: "",
-            },
-          };
-          if (cancelled) return;
-          loadedPageRef.current = pageNumber;
-          loadedPageSizeRef.current = pageSize;
-          loadedSortRef.current = sort;
-          loadedMutedRef.current = mutedFilter;
-          loadedScopeRef.current = scopeSignature;
-          isExpandedRef.current = true;
-          setFindings(merged);
-          return;
-        }
-
-        // Per-scan branch (existing behaviour).
-        if (!requirement.check_ids?.length) return;
-        const checkIds = requirement.check_ids;
-        const findingsData = await getFindings({
-          filters: {
-            "filter[check_id__in]": checkIds.join(","),
-            "filter[scan]": scanId,
-            "filter[muted]": mutedFilter,
-            ...(region && { "filter[region__in]": region }),
-          },
-          page: parseInt(pageNumber, 10),
-          pageSize: parseInt(pageSize, 10),
-          sort: encodedSort,
-        });
-
-        if (cancelled) return;
-        loadedPageRef.current = pageNumber;
-        loadedPageSizeRef.current = pageSize;
-        loadedSortRef.current = sort;
-        loadedMutedRef.current = mutedFilter;
-        loadedScopeRef.current = scopeSignature;
-        isExpandedRef.current = true;
-        setFindings(findingsData);
-      } catch (error) {
-        console.error("Error loading findings:", error);
-      }
-    }
-
-    loadFindings();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    requirement,
+  const {
+    findings,
+    expandedFindings,
+    isLoading,
+    error,
+    patchTriageUpdate,
+    reload,
+  } = useRequirementFindings({
+    enabled:
+      !disableFindings &&
+      checks.length > 0 &&
+      requirement.status !== "No findings",
+    checkIds: checks,
     scanId,
     pageNumber,
     pageSize,
     sort,
     region,
     mutedFilter,
-    scopeSignature,
-    disableFindings,
     isCrossProvider,
     scanIdsByProvider,
     checkIdsByProvider,
-  ]);
+    scopeSignature,
+  });
 
-  // Expand each finding with its resource/scan/provider. Derived from
-  // ``findings`` rather than stored as separate state so the table can never
-  // drift out of sync with the fetched rows.
-  const expandedFindings = useMemo<FindingProps[]>(() => {
-    if (!findings?.data) return [];
-    const resourceDict = createDict("resources", findings);
-    const scanDict = createDict("scans", findings);
-    const providerDict = createDict("providers", findings);
-    return findings.data.map((finding: FindingProps) => {
-      const scan = scanDict[finding.relationships?.scan?.data?.id];
-      const resource =
-        resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-      const provider = providerDict[scan?.relationships?.provider?.data?.id];
-      return {
-        ...finding,
-        relationships: { scan, resource, provider },
-      };
-    }) as unknown as FindingProps[];
-  }, [findings]);
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    await updateFindingTriage(input);
+
+    // Mutelist-shortcut statuses mute the finding server-side; refetch so the
+    // list honors the muted filter, matching the resource drawer behavior.
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      reload();
+      return;
+    }
+
+    patchTriageUpdate(input);
+  };
 
   // Per-provider finding tallies for the cross-provider breakdown. Derived
   // from the merged ``findings`` (mapping each row to its provider via
@@ -419,7 +268,6 @@ export const ClientAccordionContent = ({
     );
   }
 
-  const checks = requirement.check_ids || [];
   // In cross-provider mode the universal framework declares the same
   // requirement against multiple providers, often with disjoint check
   // sets. Show a per-provider grouping so the user can audit which checks
@@ -503,7 +351,26 @@ export const ClientAccordionContent = ({
   ];
 
   const renderFindingsTable = () => {
-    if (findings === null && requirement.status !== "MANUAL") {
+    if (error) {
+      return (
+        <Alert variant="error" className="mt-3">
+          <AlertTriangle />
+          <AlertDescription className="flex flex-wrap items-center gap-2">
+            <span>{error}</span>
+            <Button
+              variant="link"
+              size="link-sm"
+              className="h-auto p-0"
+              onClick={reload}
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (isLoading && requirement.status !== "MANUAL") {
       return <SkeletonTableFindings />;
     }
 
@@ -513,8 +380,12 @@ export const ClientAccordionContent = ({
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
 
           <DataTable
-            columns={getStandaloneFindingColumns({ openFindingId })}
-            data={expandedFindings || []}
+            columns={getStandaloneFindingColumns({
+              openFindingId,
+              onTriageUpdateAction: handleTriageUpdate,
+              onTriageNoteLoadAction: loadLatestFindingTriageNote,
+            })}
+            data={expandedFindings}
             metadata={findings?.meta}
             disableScroll={true}
           />

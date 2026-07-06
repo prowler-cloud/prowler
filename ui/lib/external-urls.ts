@@ -6,6 +6,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
   FINDINGS_INGESTION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
+  FINDINGS_TRIAGE:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",

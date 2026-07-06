@@ -67,7 +67,7 @@ function FindingTitleCell({
       finding={finding}
       defaultOpen={defaultOpen}
       trigger={
-        <div className="max-w-[500px]">
+        <div className="max-w-[500px] min-w-[160px]">
           <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
             {finding.attributes.check_metadata.checktitle}
           </p>

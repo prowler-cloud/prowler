@@ -8,14 +8,17 @@ vi.mock("@/components/shadcn/modal", () => ({
     children,
     open,
     title,
+    description,
   }: {
     children: ReactNode;
     open: boolean;
     title?: string;
+    description?: string;
   }) =>
     open ? (
       <div role="dialog" aria-label={title}>
         <h2>{title}</h2>
+        {description && <p>{description}</p>}
         {children}
       </div>
     ) : null,
@@ -25,6 +28,13 @@ vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+}));
+
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }));
 
 vi.mock("@/components/shadcn/dropdown", () => ({
@@ -66,6 +76,7 @@ import {
 
 import {
   FindingNoteActionItem,
+  FindingTriageStatusBadge,
   FindingTriageStatusCell,
 } from "./finding-triage-cells";
 
@@ -162,11 +173,6 @@ describe("finding triage cells", () => {
     await user.click(statusControl);
 
     // Then
-    expect(screen.getByText("Triage").parentElement).toHaveClass(
-      "text-text-neutral-secondary",
-      "text-[10px]",
-      "whitespace-nowrap",
-    );
     expect(statusControl.parentElement).toHaveClass("w-32");
     expect(statusControl).toHaveAttribute("data-size", "xs");
     expect(within(statusControl).getByText("Under Review")).toHaveClass(
@@ -197,6 +203,22 @@ describe("finding triage cells", () => {
     ).toHaveClass("text-text-neutral-secondary");
   });
 
+  it("renders a read-only triage status badge with the status color", () => {
+    // Given / When
+    render(
+      <FindingTriageStatusBadge
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.REMEDIATING,
+          label: "Remediating",
+        })}
+      />,
+    );
+
+    // Then
+    expect(screen.getByText("Triage:")).toBeInTheDocument();
+    expect(screen.getByText("Remediating")).toHaveClass("text-bg-data-info");
+  });
+
   it("should disable table status mutation when no update handler is wired", async () => {
     // Given
     const user = userEvent.setup();
@@ -220,6 +242,57 @@ describe("finding triage cells", () => {
     // Then
     expect(statusControl).toBeDisabled();
     expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+  });
+
+  it("should lock the table status picker for resolved findings", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    render(
+      <FindingTriageStatusCell
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+        })}
+        onTriageUpdateAction={onTriageUpdateAction}
+      />,
+    );
+
+    const statusControl = screen.getByRole("combobox", {
+      name: "Triage status",
+    });
+
+    // When
+    await user.click(statusControl);
+
+    // Then — automation owns the transition out of Resolved.
+    expect(statusControl).toBeDisabled();
+    expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText(
+        "Triage status is managed automatically once the finding is resolved.",
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(onTriageUpdateAction).not.toHaveBeenCalled();
+  });
+
+  it("should keep the note action available for resolved findings", () => {
+    // Given
+    render(
+      <FindingNoteActionItem
+        triage={makeTriageSummary({
+          status: FINDING_TRIAGE_STATUS.RESOLVED,
+          label: "Resolved",
+          hasVisibleNote: false,
+        })}
+        onTriageUpdateAction={vi.fn()}
+      />,
+    );
+
+    // Then — the lock only applies to status transitions, not notes.
+    expect(
+      screen.getByRole("button", { name: "Add Triage Note" }),
+    ).toBeEnabled();
   });
 
   it("should not open an editable empty-note modal for an existing note without a loader", async () => {
@@ -300,7 +373,7 @@ describe("finding triage cells", () => {
       screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(
       screen.getByRole("link", { name: "Available in Prowler Cloud" }),
     ).toHaveAttribute("href", "https://prowler.com/pricing");
@@ -647,6 +720,11 @@ describe("finding triage cells", () => {
 
     // Then: the user is warned before the server action handles muting.
     expect(screen.getByRole("dialog", { name: "Mute finding?" })).toBeVisible();
+    expect(
+      screen.getByText(
+        "Changing triage to False Positive will mute the finding",
+      ),
+    ).toBeVisible();
     expect(onTriageUpdateAction).not.toHaveBeenCalled();
 
     // When

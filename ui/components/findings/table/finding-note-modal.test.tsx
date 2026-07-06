@@ -9,6 +9,13 @@ vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ),
 }));
 
+// CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
+vi.mock("@/components/ui/custom/custom-link", () => ({
+  CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
+}));
+
 vi.mock("@/components/shadcn/modal", () => ({
   Modal: ({
     children,
@@ -42,9 +49,9 @@ beforeAll(() => {
   });
 });
 
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_NOTE_PRIVACY_COPY,
   FINDING_TRIAGE_STATUS,
   type FindingTriageDetail,
   type UpdateFindingTriageInput,
@@ -72,7 +79,6 @@ function makeTriageDetail(
     noteId: "note-1",
     noteBody: "Existing investigation note",
     maxNoteLength: 500,
-    privacyCopy: FINDING_TRIAGE_NOTE_PRIVACY_COPY,
     ...overrides,
   };
 }
@@ -142,6 +148,21 @@ describe("FindingNoteModal", () => {
     ).toBeVisible();
   });
 
+  it("should render a documentation link without requiring Remediating status", () => {
+    // Given / When
+    renderNoteModal();
+
+    // Then
+    const docsLink = screen.getByRole("link", {
+      name: /triage documentation/i,
+    });
+    expect(docsLink).toHaveAttribute("href", DOCS_URLS.FINDINGS_TRIAGE);
+    expect(docsLink).toHaveAttribute("target", "_blank");
+    expect(
+      screen.queryByText(/automatically changed to Resolved/i),
+    ).not.toBeInTheDocument();
+  });
+
   it("should send existing note changes with noteId and without duplicate-note status payload", async () => {
     // Given
     const user = userEvent.setup();
@@ -152,7 +173,7 @@ describe("FindingNoteModal", () => {
     const textarea = screen.getByLabelText("Note text");
     await user.clear(textarea);
     await user.type(textarea, "Documented owner follow-up.");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -184,7 +205,7 @@ describe("FindingNoteModal", () => {
     // When
     const textarea = screen.getByLabelText("Note text");
     await user.type(textarea, " Initial triage note. ");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -209,7 +230,7 @@ describe("FindingNoteModal", () => {
 
     // When
     await user.clear(screen.getByLabelText("Note text"));
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(onTriageUpdateAction).toHaveBeenCalledWith({
@@ -234,7 +255,7 @@ describe("FindingNoteModal", () => {
     // When
     await user.clear(screen.getByLabelText("Note text"));
     await user.type(screen.getByLabelText("Note text"), "Changed note");
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     expect(
@@ -246,7 +267,45 @@ describe("FindingNoteModal", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
-  it("should render counter, privacy copy, and cancel/update actions", async () => {
+  it("should lock the status picker for resolved findings while keeping the note editable", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onTriageUpdateAction = vi.fn();
+    renderNoteModal({
+      triage: makeTriageDetail({
+        status: FINDING_TRIAGE_STATUS.RESOLVED,
+        label: "Resolved",
+      }),
+      onTriageUpdateAction,
+    });
+
+    // Then — automation owns the transition out of Resolved.
+    expect(
+      screen.getByRole("combobox", { name: "Triage status" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByText(
+        "Triage status is managed automatically once the finding is resolved.",
+      ),
+    ).toBeVisible();
+    expect(screen.getByLabelText("Note text")).toBeEnabled();
+
+    // When — the note itself can still be updated.
+    const textarea = screen.getByLabelText("Note text");
+    await user.clear(textarea);
+    await user.type(textarea, "Documenting the resolution.");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    // Then
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.objectContaining({ note: "Documenting the resolution." }),
+    );
+    expect(onTriageUpdateAction).toHaveBeenCalledWith(
+      expect.not.objectContaining({ status: expect.anything() }),
+    );
+  });
+
+  it("should render counter and cancel/update actions without privacy copy", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -258,12 +317,12 @@ describe("FindingNoteModal", () => {
 
     // Then
     expect(screen.getByText("3/500")).toBeInTheDocument();
-    expect(screen.getByText(FINDING_TRIAGE_NOTE_PRIVACY_COPY)).toBeVisible();
+    expect(
+      screen.queryByText("This note is only visible to your team."),
+    ).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Cancel" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(
-      screen.getByRole("button", { name: "Save changes" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
   it("should disable controls and show the Cloud upsell badge for non-paying users", () => {
@@ -280,7 +339,7 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(
       screen.getByRole("link", { name: "Available in Prowler Cloud" }),
     ).toHaveAttribute("href", "https://prowler.com/pricing");
@@ -305,13 +364,17 @@ describe("FindingNoteModal", () => {
     await user.click(screen.getByRole("option", { name: "Risk Accepted" }));
 
     // Then
-    expect(screen.getByText(/will be muted/i)).toBeVisible();
+    expect(
+      screen.getByText(
+        "Changing triage to Risk Accepted will mute the finding",
+      ),
+    ).toBeVisible();
     await waitFor(() =>
       expect(screen.queryByRole("listbox")).not.toBeInTheDocument(),
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Save changes" }));
+    await user.click(screen.getByRole("button", { name: "Save" }));
 
     // Then
     await waitFor(() =>

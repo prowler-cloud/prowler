@@ -389,21 +389,6 @@ export const checkTaskStatus = async (
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to create dictionaries by type
-export function createDict(type: string, data: any) {
-  const includedField = data?.included?.filter(
-    (item: { type: string }) => item.type === type,
-  );
-
-  if (!includedField || includedField.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    includedField.map((item: { id: string }) => [item.id, item]),
-  );
-}
-
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
