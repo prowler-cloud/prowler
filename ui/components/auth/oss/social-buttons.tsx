@@ -1,10 +1,89 @@
-import { Tooltip } from "@heroui/tooltip";
 import { Icon } from "@iconify/react";
 import type { ReactNode } from "react";
 
-import { Button } from "@/components/shadcn";
+import {
+  Button,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 import { CustomLink } from "@/components/ui/custom/custom-link";
 import { appendCallbackState } from "@/lib/auth-callback-url";
+
+type SocialProvider = {
+  key: string;
+  label: string;
+  url?: string;
+  isOAuthEnabled?: boolean;
+  enabledIcon: string;
+  disabledIcon: string;
+  disabledDocs: {
+    message: string;
+    href: string;
+  };
+};
+
+const SocialButton = ({
+  provider,
+  isDisabled,
+  disabledTooltipContent,
+}: {
+  provider: SocialProvider;
+  isDisabled: boolean;
+  disabledTooltipContent: ReactNode;
+}) => {
+  const button = (
+    <Button
+      variant="outline"
+      className="w-full"
+      asChild={!isDisabled}
+      disabled={isDisabled}
+    >
+      {isDisabled ? (
+        <span className="flex items-center gap-2">
+          <Icon
+            icon={
+              provider.isOAuthEnabled
+                ? provider.enabledIcon
+                : provider.disabledIcon
+            }
+            width={24}
+          />
+          {provider.label}
+        </span>
+      ) : (
+        <a href={provider.url} className="flex items-center gap-2">
+          <Icon icon={provider.enabledIcon} width={24} />
+          {provider.label}
+        </a>
+      )}
+    </Button>
+  );
+
+  if (!isDisabled) {
+    return button;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="flex w-full">{button}</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="w-96">
+        {provider.isOAuthEnabled ? (
+          disabledTooltipContent
+        ) : (
+          <div className="flex-inline text-small">
+            {provider.disabledDocs.message}{" "}
+            <CustomLink href={provider.disabledDocs.href}>
+              Read the docs
+            </CustomLink>
+          </div>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
+};
 
 export const SocialButtons = ({
   googleAuthUrl,
@@ -29,98 +108,46 @@ export const SocialButtons = ({
   const githubUrl = githubAuthUrl
     ? appendCallbackState(githubAuthUrl, callbackUrl)
     : undefined;
-  const isGoogleDisabled = isDisabled || !isGoogleOAuthEnabled || !googleUrl;
-  const isGithubDisabled = isDisabled || !isGithubOAuthEnabled || !githubUrl;
   const socialDisabledTooltip =
     disabledTooltipContent || "Social login is currently unavailable.";
 
+  const providers: SocialProvider[] = [
+    {
+      key: "google",
+      label: "Continue with Google",
+      url: googleUrl,
+      isOAuthEnabled: isGoogleOAuthEnabled,
+      enabledIcon: "flat-color-icons:google",
+      disabledIcon: "simple-icons:google",
+      disabledDocs: {
+        message: "Social Login with Google is not enabled.",
+        href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration",
+      },
+    },
+    {
+      key: "github",
+      label: "Continue with Github",
+      url: githubUrl,
+      isOAuthEnabled: isGithubOAuthEnabled,
+      enabledIcon: "simple-icons:github",
+      disabledIcon: "simple-icons:github",
+      disabledDocs: {
+        message: "Social Login with Github is not enabled.",
+        href: "https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration",
+      },
+    },
+  ];
+
   return (
     <>
-      <Tooltip
-        content={
-          isGoogleOAuthEnabled ? (
-            socialDisabledTooltip
-          ) : (
-            <div className="flex-inline text-small">
-              Social Login with Google is not enabled.{" "}
-              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#google-oauth-configuration">
-                Read the docs
-              </CustomLink>
-            </div>
-          )
-        }
-        placement="top"
-        shadow="sm"
-        isDisabled={!isGoogleDisabled}
-        className="w-96"
-      >
-        <span>
-          <Button
-            variant="outline"
-            className="w-full"
-            asChild={!isGoogleDisabled}
-            disabled={isGoogleDisabled}
-          >
-            {isGoogleDisabled ? (
-              <span className="flex items-center gap-2">
-                <Icon
-                  icon={
-                    isGoogleOAuthEnabled
-                      ? "flat-color-icons:google"
-                      : "simple-icons:google"
-                  }
-                  width={24}
-                />
-                Continue with Google
-              </span>
-            ) : (
-              <a href={googleUrl} className="flex items-center gap-2">
-                <Icon icon="flat-color-icons:google" width={24} />
-                Continue with Google
-              </a>
-            )}
-          </Button>
-        </span>
-      </Tooltip>
-      <Tooltip
-        content={
-          isGithubOAuthEnabled ? (
-            socialDisabledTooltip
-          ) : (
-            <div className="flex-inline text-small">
-              Social Login with Github is not enabled.{" "}
-              <CustomLink href="https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app-social-login/#github-oauth-configuration">
-                Read the docs
-              </CustomLink>
-            </div>
-          )
-        }
-        placement="top"
-        shadow="sm"
-        isDisabled={!isGithubDisabled}
-        className="w-96"
-      >
-        <span>
-          <Button
-            variant="outline"
-            className="w-full"
-            asChild={!isGithubDisabled}
-            disabled={isGithubDisabled}
-          >
-            {isGithubDisabled ? (
-              <span className="flex items-center gap-2">
-                <Icon icon="simple-icons:github" width={24} />
-                Continue with Github
-              </span>
-            ) : (
-              <a href={githubUrl} className="flex items-center gap-2">
-                <Icon icon="simple-icons:github" width={24} />
-                Continue with Github
-              </a>
-            )}
-          </Button>
-        </span>
-      </Tooltip>
+      {providers.map((provider) => (
+        <SocialButton
+          key={provider.key}
+          provider={provider}
+          isDisabled={isDisabled || !provider.isOAuthEnabled || !provider.url}
+          disabledTooltipContent={socialDisabledTooltip}
+        />
+      ))}
     </>
   );
 };

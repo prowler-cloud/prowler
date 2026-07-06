@@ -68,9 +68,8 @@ export async function GET(req: Request) {
     }
   } catch (error) {
     console.error("Error in Github callback:", error);
-    return NextResponse.json(
-      { error: (error as Error).message },
-      { status: 500 },
+    return NextResponse.redirect(
+      new URL("/sign-in?error=AuthenticationFailed", baseUrl),
     );
   }
 }
