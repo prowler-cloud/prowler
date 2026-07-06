@@ -186,6 +186,25 @@ def _session_ctx(session: MagicMock) -> MagicMock:
     return ctx
 
 
+def _count_result(key: str, count: int) -> MagicMock:
+    return MagicMock(single=MagicMock(return_value={key: count}))
+
+
+def _directed_drop_results(
+    outgoing_rels: int,
+    incoming_rels: int,
+    nodes: int,
+) -> list[MagicMock]:
+    return [
+        _count_result("deleted_rels_count", outgoing_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_rels_count", incoming_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_nodes_count", nodes),
+        _count_result("deleted_nodes_count", 0),
+    ]
+
+
 class TestNeo4jSinkSyncWrites:
     def test_ensure_sync_indexes_runs_create_index_idempotent(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
@@ -310,65 +329,48 @@ class TestNeptuneSinkSyncWrites:
 
 
 class TestNeptuneSinkDropSubgraph:
-    def test_drop_subgraph_deletes_rels_before_nodes_in_bounded_batches(self):
+    def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
         from api.attack_paths.sink.neptune import NeptuneSink
 
         sink = NeptuneSink()
         session = MagicMock()
-
-        rel_record_first = MagicMock()
-        rel_record_first.__getitem__ = lambda _self, key: 50
-        rel_record_drain = MagicMock()
-        rel_record_drain.__getitem__ = lambda _self, key: 0
-        node_record_first = MagicMock()
-        node_record_first.__getitem__ = lambda _self, key: 10
-        node_record_drain = MagicMock()
-        node_record_drain.__getitem__ = lambda _self, key: 0
-
-        run_results = [
-            MagicMock(single=MagicMock(return_value=rel_record_first)),
-            MagicMock(single=MagicMock(return_value=rel_record_drain)),
-            MagicMock(single=MagicMock(return_value=node_record_first)),
-            MagicMock(single=MagicMock(return_value=node_record_drain)),
-        ]
-        session.run.side_effect = run_results
+        session.run.side_effect = _directed_drop_results(
+            outgoing_rels=50,
+            incoming_rels=30,
+            nodes=10,
+        )
 
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
             deleted = sink.drop_subgraph("ignored", "provider-1")
 
         assert deleted == 10
-        first_query = session.run.call_args_list[0].args[0]
-        assert "DELETE r" in first_query
-        assert "DETACH DELETE" not in first_query
-        # DISTINCT avoids double-counting relationships matched from both ends.
-        assert "DISTINCT r" in first_query
-        third_query = session.run.call_args_list[2].args[0]
-        assert "DELETE n" in third_query
+        assert session.run.call_count == 6
+        queries = [call.args[0] for call in session.run.call_args_list]
+
+        assert ")-[r]->()" in queries[0]
+        assert ")<-[r]-()" in queries[2]
+        assert "DELETE n" in queries[4]
+        assert all("DETACH DELETE" not in query for query in queries)
+        assert all("DISTINCT r" not in query for query in queries)
+
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
 
 
 class TestNeo4jSinkDropSubgraph:
     """Neo4j drop deletes relationships then nodes in batches (no ``DETACH DELETE``)."""
 
-    def test_drop_subgraph_deletes_rels_before_nodes_in_bounded_batches(self):
+    def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
 
         sink = Neo4jSink()
         session = MagicMock()
-
-        rel_first = MagicMock()
-        rel_first.get = lambda key, default=0: 50
-        rel_drain = MagicMock()
-        rel_drain.get = lambda key, default=0: 0
-        node_first = MagicMock()
-        node_first.get = lambda key, default=0: 10
-        node_drain = MagicMock()
-        node_drain.get = lambda key, default=0: 0
-        session.run.side_effect = [
-            MagicMock(single=MagicMock(return_value=rel_first)),
-            MagicMock(single=MagicMock(return_value=rel_drain)),
-            MagicMock(single=MagicMock(return_value=node_first)),
-            MagicMock(single=MagicMock(return_value=node_drain)),
-        ]
+        session.run.side_effect = _directed_drop_results(
+            outgoing_rels=50,
+            incoming_rels=30,
+            nodes=10,
+        )
 
         provider_id = "00000000-0000-0000-0000-000000000abc"
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
@@ -376,19 +378,20 @@ class TestNeo4jSinkDropSubgraph:
 
         # Only phase-2 node counts contribute to the return value.
         assert deleted == 10
-        assert session.run.call_count == 4
+        assert session.run.call_count == 6
 
         queries = [call.args[0] for call in session.run.call_args_list]
         # Regression guard: the memory blow-up was caused by DETACH DELETE.
         assert all("DETACH DELETE" not in query for query in queries)
+        assert all("DISTINCT r" not in query for query in queries)
 
         first_query = queries[0]
         assert "DELETE r" in first_query
-        # DISTINCT avoids double-counting relationships matched from both ends.
-        assert "DISTINCT r" in first_query
+        assert ")-[r]->()" in first_query
         assert ":`_Provider_00000000000000000000000000000abc`" in first_query
 
-        assert "DELETE n" in queries[2]
+        assert ")<-[r]-()" in queries[2]
+        assert "DELETE n" in queries[4]
 
         # Relationships must be fully drained before nodes are deleted.
         first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)

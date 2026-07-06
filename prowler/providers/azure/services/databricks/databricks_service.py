@@ -38,8 +38,13 @@ class Databricks(AzureService):
         for subscription, client in self.clients.items():
             try:
                 workspaces[subscription] = {}
+                workspaces_list = self.list_with_rg_scope(
+                    subscription,
+                    client.workspaces.list_by_subscription,
+                    client.workspaces.list_by_resource_group,
+                )
 
-                for workspace in client.workspaces.list_by_subscription():
+                for workspace in workspaces_list:
                     workspace_parameters = getattr(workspace, "parameters", None)
                     workspace_managed_disk_encryption = getattr(
                         getattr(

@@ -723,11 +723,10 @@ export const mutedFindingsConfigFormSchema = z.object({
   id: z.string().optional(),
 });
 
-// The editor owns content validation: live YAML syntax + schema (ranges/enums)
-// checks run through `validateScanConfigurationPayload(yamlString, schema)` in
-// `lib/yaml.ts` and surface in a single inline panel. Here we only enforce the
-// form-level shape (a name and a non-empty configuration) so we don't render the
-// same YAML error twice.
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
 export const scanConfigurationFormSchema = z.object({
   name: z
     .string()
@@ -737,7 +736,16 @@ export const scanConfigurationFormSchema = z.object({
   configuration: z
     .string()
     .trim()
-    .min(1, { error: "Configuration is required" }),
+    .min(1, { error: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
   provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });
