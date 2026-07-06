@@ -2,6 +2,17 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
+<<<<<<< HEAD
+=======
+## [1.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
+---
+
+>>>>>>> 81c3152eb (chore(changelog): prepare for 5.32.1 (#11856))
 ## [1.32.0] (Prowler v5.32.0)
 
 ### 🚀 Added
