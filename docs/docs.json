@@ -371,6 +371,13 @@
                   "user-guide/providers/linode/getting-started-linode",
                   "user-guide/providers/linode/authentication"
                 ]
+              },
+              {
+                "group": "E2E Networks",
+                "pages": [
+                  "user-guide/providers/e2enetworks/getting-started-e2enetworks",
+                  "user-guide/providers/e2enetworks/authentication"
+                ]
               }
             ]
           },
