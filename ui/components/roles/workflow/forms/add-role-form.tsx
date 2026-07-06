@@ -7,7 +7,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import clsx from "clsx";
 import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -16,8 +15,15 @@ import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-s
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { Form, FormButtons } from "@/components/ui/form";
-import { getErrorMessage, permissionFormFields } from "@/lib";
+import { getErrorMessage } from "@/lib";
 import { addRoleFormSchema, ApiError } from "@/types";
+
+import {
+  getUnlimitedVisibilityField,
+  getVisiblePermissionFormFields,
+  useManageProvidersUnlimitedVisibility,
+} from "./role-permissions";
+import { UnlimitedVisibilitySection } from "./unlimited-visibility-section";
 
 type FormValues = z.input<typeof addRoleFormSchema>;
 
@@ -29,11 +35,9 @@ export const AddRoleForm = ({
   const { toast } = useToast();
   const router = useRouter();
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const visiblePermissionFormFields = permissionFormFields.filter(
-    (permission) =>
-      !["manage_billing", "manage_alerts"].includes(permission.field) ||
-      isCloudEnvironment,
-  );
+  const visiblePermissionFormFields =
+    getVisiblePermissionFormFields(isCloudEnvironment);
+  const unlimitedVisibilityField = getUnlimitedVisibilityField();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(addRoleFormSchema),
@@ -52,30 +56,18 @@ export const AddRoleForm = ({
     },
   });
 
-  const { watch, setValue } = form;
-
-  const manageProviders = watch("manage_providers");
-  const unlimitedVisibility = watch("unlimited_visibility");
-
-  useEffect(() => {
-    if (manageProviders && !unlimitedVisibility) {
-      setValue("unlimited_visibility", true, {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    }
-  }, [manageProviders, unlimitedVisibility, setValue]);
+  const {
+    isUnlimitedVisibilityRequiredByManageProviders,
+    setPermissionValue,
+    setUnlimitedVisibility,
+  } = useManageProvidersUnlimitedVisibility(form);
+  const unlimitedVisibility = form.watch("unlimited_visibility");
 
   const isLoading = form.formState.isSubmitting;
 
   const onSelectAllChange = (checked: boolean) => {
     visiblePermissionFormFields.forEach(({ field }) => {
-      form.setValue(field as keyof FormValues, checked, {
-        shouldValidate: true,
-        shouldDirty: true,
-        shouldTouch: true,
-      });
+      setPermissionValue(field, checked);
     });
   };
 
@@ -160,6 +152,34 @@ export const AddRoleForm = ({
           isRequired
         />
 
+        {unlimitedVisibilityField && (
+          <UnlimitedVisibilitySection>
+            <Checkbox
+              {...form.register("unlimited_visibility")}
+              isSelected={!!form.watch("unlimited_visibility")}
+              isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
+              onValueChange={setUnlimitedVisibility}
+              classNames={{
+                label: "text-small font-medium",
+                wrapper: "checkbox-update",
+              }}
+              color="default"
+            >
+              Enable Unlimited Visibility for this role
+            </Checkbox>
+            {isUnlimitedVisibilityRequiredByManageProviders && (
+              <p className="text-small mt-2 text-orange-900 dark:text-orange-100">
+                Manage Providers is selected, so Unlimited Visibility stays
+                enabled in this form. If Manage Providers enabled it
+                automatically, clearing Manage Providers also clears that
+                automatic selection. If Unlimited Visibility was already
+                enabled, clearing Manage Providers only lets you edit it
+                separately.
+              </p>
+            )}
+          </UnlimitedVisibilitySection>
+        )}
+
         <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
@@ -168,7 +188,7 @@ export const AddRoleForm = ({
             isSelected={visiblePermissionFormFields.every((perm) =>
               form.watch(perm.field as keyof FormValues),
             )}
-            onChange={(e) => onSelectAllChange(e.target.checked)}
+            onValueChange={onSelectAllChange}
             classNames={{
               label: "text-small",
               wrapper: "checkbox-update",
@@ -186,6 +206,9 @@ export const AddRoleForm = ({
                   <Checkbox
                     {...form.register(field as keyof FormValues)}
                     isSelected={!!form.watch(field as keyof FormValues)}
+                    onValueChange={(checked) =>
+                      setPermissionValue(field, checked)
+                    }
                     classNames={{
                       label: "text-small",
                       wrapper: "checkbox-update",
