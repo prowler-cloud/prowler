@@ -65,17 +65,21 @@ export const getMenuList = ({
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
-          active: pathname === "/lighthouse",
-        },
-      ],
-    },
+    ...(isCloudEnv
+      ? []
+      : [
+          {
+            groupLabel: "",
+            menus: [
+              {
+                href: "/lighthouse",
+                label: "Lighthouse AI",
+                icon: LighthouseIcon,
+                active: pathname === "/lighthouse",
+              },
+            ],
+          },
+        ]),
     {
       groupLabel: "",
       menus: [
@@ -155,7 +159,7 @@ export const getMenuList = ({
               cloudOnly: !isCloudEnv,
             },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
