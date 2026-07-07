@@ -4,9 +4,9 @@ import json
 import random
 import re
 import time
-import uuid
 from collections import defaultdict
 from collections.abc import Iterable
+from contextlib import ExitStack
 from datetime import UTC, datetime
 from typing import Any
 
@@ -71,6 +71,7 @@ from tasks.jobs.queries import (
     COMPLIANCE_UPSERT_TENANT_SUMMARY_SQL,
 )
 from tasks.utils import CustomEncoder, batched
+from uuid6 import uuid7
 
 logger = get_task_logger(__name__)
 
@@ -99,6 +100,17 @@ COMPLIANCE_REQUIREMENT_COPY_COLUMNS = (
 FINDINGS_MICRO_BATCH_SIZE = env.int("DJANGO_FINDINGS_MICRO_BATCH_SIZE", default=3000)
 # Controls how many rows each ORM bulk_create/bulk_update call sends to Postgres.
 SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=1000)
+# Controls how many rows each compliance-overview COPY batch streams to Postgres.
+# Smaller batches keep each COPY (and its commit/fsync) short so the writer can
+# checkpoint and autovacuum between flushes, avoiding the FreeableMemory cliff
+# observed when a single client streams back-to-back multi-second COPY statements.
+COMPLIANCE_COPY_BATCH_SIZE = env.int("DJANGO_COMPLIANCE_COPY_BATCH_SIZE", default=5000)
+# Optional pause (seconds) inserted between compliance-overview COPY batches so the
+# writer gets breathing room for checkpoints/autovacuum under sustained ingest.
+# Default 0 preserves current behavior; ops can raise it to spread the write load.
+COMPLIANCE_COPY_THROTTLE_SECONDS = env.float(
+    "DJANGO_COMPLIANCE_COPY_THROTTLE_SECONDS", default=0.0
+)
 # Throttle scan progress persistence: minimum progress delta (fraction 0-1)
 # between two persisted progress updates.
 PROGRESS_THROTTLE_DELTA = env.float("DJANGO_SCAN_PROGRESS_THROTTLE_DELTA", default=0.01)
@@ -357,15 +369,21 @@ def _bulk_update_resource_failed_findings_counts(
 
 
 def _copy_compliance_requirement_rows(
-    tenant_id: str, rows: list[dict[str, Any]]
+    connection, tenant_id: str, rows: list[dict[str, Any]]
 ) -> None:
     """Stream compliance requirement rows into Postgres using COPY.
 
-    We leverage the admin connection (when available) to bypass the COPY + RLS
-    restriction, writing only the fields required by
-    ``ComplianceRequirementOverview``.
+    Runs on a caller-supplied admin connection (which bypasses the COPY + RLS
+    restriction), writing only the fields required by
+    ``ComplianceRequirementOverview``. Each batch is committed on its own so the
+    writer releases locks and can checkpoint between flushes; the connection
+    itself is reused across batches to avoid per-batch reconnection churn. The
+    tenant GUC is set inside every batch's transaction because
+    ``SET_CONFIG_QUERY`` uses ``is_local=TRUE`` (transaction-scoped), so it is
+    cleared on each commit.
 
     Args:
+        connection: Open admin psycopg connection (``autocommit=False``).
         tenant_id: Target tenant UUID.
         rows: List of row dictionaries prepared by
             :func:`create_compliance_requirements`.
@@ -405,34 +423,38 @@ def _copy_compliance_requirement_rows(
     )
 
     try:
-        with psycopg_connection(MainRouter.admin_db) as connection:
-            connection.autocommit = False
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
-                    cursor.copy_expert(copy_sql, csv_buffer)
-                connection.commit()
-            except Exception:
-                connection.rollback()
-                raise
+        with connection.cursor() as cursor:
+            # is_local=TRUE ⇒ must be re-applied inside each batch's transaction.
+            cursor.execute(SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id])
+            cursor.copy_expert(copy_sql, csv_buffer)
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
     finally:
         csv_buffer.close()
 
 
 def _persist_compliance_requirement_rows(
-    tenant_id: str, rows: Iterable[dict[str, Any]], batch_size: int = 10000
+    tenant_id: str,
+    rows: Iterable[dict[str, Any]],
+    batch_size: int = COMPLIANCE_COPY_BATCH_SIZE,
+    throttle_seconds: float = COMPLIANCE_COPY_THROTTLE_SECONDS,
 ) -> int:
     """Persist compliance requirement rows using batched COPY with ORM fallback.
 
     ``rows`` is consumed lazily in batches, so peak memory stays at ~``batch_size``
-    rows instead of the full set. A batch that fails COPY falls back to an ORM
-    ``bulk_create`` of just that batch.
+    rows instead of the full set. A single admin connection is reused across all
+    batches (each batch committed separately); an optional pause between batches
+    lets the writer checkpoint/autovacuum under sustained ingest. A batch that
+    fails COPY falls back to an ORM ``bulk_create`` of just that batch.
 
     Args:
         tenant_id: Target tenant UUID.
         rows: Iterable of row dictionaries reflecting the compliance overview
             state for a scan.
-        batch_size: Number of rows per COPY batch (default: 10000).
+        batch_size: Number of rows per COPY batch.
+        throttle_seconds: Optional pause between batches (0 disables throttling).
 
     Returns:
         int: total number of rows persisted.
@@ -440,49 +462,63 @@ def _persist_compliance_requirement_rows(
     total_rows = 0
     batch_num = 0
 
-    for batch, _is_last in batched(rows, batch_size):
-        if not batch:
-            continue
-        batch_num += 1
-        try:
-            _copy_compliance_requirement_rows(tenant_id, batch)
-        except Exception as error:
-            logger.exception(
-                f"COPY bulk insert for compliance requirements batch {batch_num} "
-                "failed; falling back to ORM bulk_create for this batch",
-                exc_info=error,
-            )
-            fallback_objects = [
-                ComplianceRequirementOverview(
-                    id=row["id"],
-                    tenant_id=row["tenant_id"],
-                    inserted_at=row["inserted_at"],
-                    compliance_id=row["compliance_id"],
-                    framework=row["framework"],
-                    version=row["version"],
-                    description=row["description"],
-                    region=row["region"],
-                    requirement_id=row["requirement_id"],
-                    requirement_status=row["requirement_status"],
-                    passed_checks=row["passed_checks"],
-                    failed_checks=row["failed_checks"],
-                    total_checks=row["total_checks"],
-                    passed_findings=row.get("passed_findings", 0),
-                    total_findings=row.get("total_findings", 0),
-                    scan_id=row["scan_id"],
+    # A single admin connection is opened lazily (only when the first non-empty
+    # batch arrives) and reused for every batch; ``ExitStack`` guarantees it is
+    # closed on exit. A COPY failure rolls back inside
+    # ``_copy_compliance_requirement_rows``, leaving the connection reusable, so
+    # the same connection is kept for the ORM-fallback path and later batches.
+    with ExitStack() as stack:
+        copy_connection = None
+        for batch, _is_last in batched(rows, batch_size):
+            if not batch:
+                continue
+            batch_num += 1
+            if throttle_seconds > 0 and batch_num > 1:
+                time.sleep(throttle_seconds)
+            try:
+                if copy_connection is None:
+                    copy_connection = stack.enter_context(
+                        psycopg_connection(MainRouter.admin_db)
+                    )
+                    copy_connection.autocommit = False
+                _copy_compliance_requirement_rows(copy_connection, tenant_id, batch)
+            except Exception as error:
+                logger.exception(
+                    f"COPY bulk insert for compliance requirements batch {batch_num} "
+                    "failed; falling back to ORM bulk_create for this batch",
+                    exc_info=error,
                 )
-                for row in batch
-            ]
-            with rls_transaction(tenant_id):
-                ComplianceRequirementOverview.objects.bulk_create(
-                    fallback_objects, batch_size=500
-                )
+                fallback_objects = [
+                    ComplianceRequirementOverview(
+                        id=row["id"],
+                        tenant_id=row["tenant_id"],
+                        inserted_at=row["inserted_at"],
+                        compliance_id=row["compliance_id"],
+                        framework=row["framework"],
+                        version=row["version"],
+                        description=row["description"],
+                        region=row["region"],
+                        requirement_id=row["requirement_id"],
+                        requirement_status=row["requirement_status"],
+                        passed_checks=row["passed_checks"],
+                        failed_checks=row["failed_checks"],
+                        total_checks=row["total_checks"],
+                        passed_findings=row.get("passed_findings", 0),
+                        total_findings=row.get("total_findings", 0),
+                        scan_id=row["scan_id"],
+                    )
+                    for row in batch
+                ]
+                with rls_transaction(tenant_id):
+                    ComplianceRequirementOverview.objects.bulk_create(
+                        fallback_objects, batch_size=500
+                    )
 
-        total_rows += len(batch)
-        logger.info(
-            f"Compliance COPY batch {batch_num}: inserted {len(batch)} rows "
-            f"({total_rows} total)"
-        )
+            total_rows += len(batch)
+            logger.info(
+                f"Compliance COPY batch {batch_num}: inserted {len(batch)} rows "
+                f"({total_rows} total)"
+            )
 
     return total_rows
 
@@ -885,15 +921,19 @@ def _process_finding_micro_batch(
                         # Denormalized resource arrays populated directly on insert
                         # (was previously a separate bulk_update; saves a CASE WHEN
                         # over thousands of rows per micro-batch).
-                        resource_regions=[resource_instance.region]
-                        if resource_instance.region
-                        else [],
-                        resource_services=[resource_instance.service]
-                        if resource_instance.service
-                        else [],
-                        resource_types=[resource_instance.type]
-                        if resource_instance.type
-                        else [],
+                        resource_regions=(
+                            [resource_instance.region]
+                            if resource_instance.region
+                            else []
+                        ),
+                        resource_services=(
+                            [resource_instance.service]
+                            if resource_instance.service
+                            else []
+                        ),
+                        resource_types=(
+                            [resource_instance.type] if resource_instance.type else []
+                        ),
                     )
                     findings_to_create.append(finding_instance)
                     resource_denormalized_data.append(
@@ -1746,7 +1786,10 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                                 requirement_statuses[key]["pass_count"] += 1
 
                             yield {
-                                "id": uuid.uuid4(),
+                                # UUIDv7 so the COPY-inserted rows route to the
+                                # dated partitions of compliance_requirements_overviews
+                                # (uuid4 would always land in the default partition).
+                                "id": uuid7(),
                                 "tenant_id": tenant_id_str,
                                 "inserted_at": utc_datetime_now,
                                 "compliance_id": compliance_id,
@@ -1765,8 +1808,15 @@ def create_compliance_requirements(tenant_id: str, scan_id: str):
                             }
 
             # Idempotent re-run: clear this scan's rows before re-inserting.
+            # First-run scans have no prior rows, so skip the DELETE entirely to
+            # avoid an empty write transaction and needless dead-tuple churn; the
+            # ``.exists()`` probe is an index-only lookup on cro_scan_comp_reg_idx.
             with rls_transaction(tenant_id):
-                ComplianceRequirementOverview.objects.filter(scan_id=scan_id).delete()
+                existing_rows = ComplianceRequirementOverview.objects.filter(
+                    scan_id=scan_id
+                )
+                if existing_rows.exists():
+                    existing_rows.delete()
 
             requirements_created = _persist_compliance_requirement_rows(
                 tenant_id, _iter_compliance_requirement_rows()

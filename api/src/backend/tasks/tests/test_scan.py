@@ -2409,25 +2409,15 @@ class TestCreateComplianceRequirements:
 
 
 class TestComplianceRequirementCopy:
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_streams_csv(
-        self, mock_psycopg_connection, settings
+        self
     ):
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         captured = {}
 
@@ -2454,9 +2444,8 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
-        mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
         cursor.execute.assert_called_once()
         cursor.copy_expert.assert_called_once()
@@ -2466,6 +2455,7 @@ class TestComplianceRequirementCopy:
         assert csv_rows[0][5] == ""
         assert csv_rows[0][-1] == str(row["scan_id"])
 
+    @patch("tasks.jobs.scan.psycopg_connection")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2473,7 +2463,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_psycopg_connection
     ):
         inserted_at = datetime.now(UTC)
         row = {
@@ -2495,6 +2485,10 @@ class TestComplianceRequirementCopy:
 
         tenant_id = row["tenant_id"]
 
+        conn = MagicMock()
+        mock_psycopg_connection.return_value.__enter__.return_value = conn
+        mock_psycopg_connection.return_value.__exit__.return_value = False
+
         ctx = MagicMock()
         ctx.__enter__.return_value = None
         ctx.__exit__.return_value = False
@@ -2502,7 +2496,7 @@ class TestComplianceRequirementCopy:
 
         _persist_compliance_requirement_rows(tenant_id, [row])
 
-        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_copy.assert_called_once_with(conn, tenant_id, [row])
         mock_rls_transaction.assert_called_once_with(tenant_id)
         mock_bulk_create.assert_called_once()
 
@@ -2525,26 +2519,16 @@ class TestComplianceRequirementCopy:
         mock_rls_transaction.assert_not_called()
         mock_bulk_create.assert_not_called()
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_multiple_rows(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test COPY with multiple rows to ensure batch processing works correctly."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         captured = {}
 
@@ -2610,9 +2594,8 @@ class TestComplianceRequirementCopy:
         ]
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(tenant_id, rows)
+            _copy_compliance_requirement_rows(connection, tenant_id, rows)
 
-        mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
         cursor.execute.assert_called_once()
         cursor.copy_expert.assert_called_once()
@@ -2644,26 +2627,16 @@ class TestComplianceRequirementCopy:
         assert csv_rows[2][5] == "2.0"
         assert csv_rows[2][9] == "MANUAL"
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_null_values(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test COPY handles NULL/None values correctly in nullable fields."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         captured = {}
 
@@ -2691,7 +2664,7 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2700,26 +2673,16 @@ class TestComplianceRequirementCopy:
         assert csv_rows[0][5] == ""  # version
         assert csv_rows[0][6] == ""  # description
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_special_characters(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test COPY correctly escapes special characters in CSV."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         captured = {}
 
@@ -2747,7 +2710,7 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
         # Verify CSV was generated (csv module handles escaping automatically)
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2759,26 +2722,16 @@ class TestComplianceRequirementCopy:
         assert "quotes" in csv_rows[0][6]
         assert "commas" in csv_rows[0][6]
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_missing_inserted_at(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test COPY uses current datetime when inserted_at is missing."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         captured = {}
 
@@ -2808,7 +2761,7 @@ class TestComplianceRequirementCopy:
 
         before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
         after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2819,26 +2772,16 @@ class TestComplianceRequirementCopy:
         inserted_at = datetime.fromisoformat(inserted_at_str)
         assert before_call <= inserted_at <= after_call
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_transaction_rollback_on_copy_error(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test transaction is rolled back when copy_expert fails."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         # Simulate copy_expert failure
         cursor.copy_expert.side_effect = Exception("COPY command failed")
@@ -2861,32 +2804,22 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="COPY command failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test transaction is rolled back when SET_CONFIG fails."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         # Simulate cursor.execute failure
         cursor.execute.side_effect = Exception("SET prowler.tenant_id failed")
@@ -2909,32 +2842,22 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
 
-    @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_commit_on_success(
-        self, mock_psycopg_connection, settings
+        self
     ):
         """Test transaction is committed on successful COPY."""
-        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
-
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
         cursor_context.__enter__.return_value = cursor
         cursor_context.__exit__.return_value = False
         connection.cursor.return_value = cursor_context
-        connection.__enter__.return_value = connection
-        connection.__exit__.return_value = False
-
-        context_manager = MagicMock()
-        context_manager.__enter__.return_value = connection
-        context_manager.__exit__.return_value = False
-        mock_psycopg_connection.return_value = context_manager
 
         cursor.copy_expert.return_value = None  # Success
 
@@ -2955,18 +2878,23 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
 
         # Verify commit was called and rollback was not
         connection.commit.assert_called_once()
         connection.rollback.assert_not_called()
-        # Verify autocommit was disabled
-        assert connection.autocommit is False
 
+    @patch("tasks.jobs.scan.psycopg_connection")
     @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
-    def test_persist_compliance_requirement_rows_success(self, mock_copy):
+    def test_persist_compliance_requirement_rows_success(
+        self, mock_copy, mock_psycopg_connection
+    ):
         """Test successful COPY path without fallback to ORM."""
         mock_copy.return_value = None  # Success, no exception
+
+        conn = MagicMock()
+        mock_psycopg_connection.return_value.__enter__.return_value = conn
+        mock_psycopg_connection.return_value.__exit__.return_value = False
 
         tenant_id = str(uuid.uuid4())
         rows = [
@@ -2991,8 +2919,9 @@ class TestComplianceRequirementCopy:
         _persist_compliance_requirement_rows(tenant_id, rows)
 
         # Verify COPY was called
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        mock_copy.assert_called_once_with(conn, tenant_id, rows)
 
+    @patch("tasks.jobs.scan.psycopg_connection")
     @patch("tasks.jobs.scan.logger")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
@@ -3001,7 +2930,12 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("COPY failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_logging(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+        self,
+        mock_copy,
+        mock_rls_transaction,
+        mock_bulk_create,
+        mock_logger,
+        mock_psycopg_connection,
     ):
         """Test logger.exception is called when COPY fails and fallback occurs."""
         tenant_id = str(uuid.uuid4())
@@ -3036,6 +2970,7 @@ class TestComplianceRequirementCopy:
         assert "falling back to ORM" in args[0]
         assert kwargs.get("exc_info") is not None
 
+    @patch("tasks.jobs.scan.psycopg_connection")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3043,7 +2978,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_multiple_rows(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_psycopg_connection
     ):
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
@@ -3085,6 +3020,10 @@ class TestComplianceRequirementCopy:
             },
         ]
 
+        conn = MagicMock()
+        mock_psycopg_connection.return_value.__enter__.return_value = conn
+        mock_psycopg_connection.return_value.__exit__.return_value = False
+
         ctx = MagicMock()
         ctx.__enter__.return_value = None
         ctx.__exit__.return_value = False
@@ -3092,7 +3031,7 @@ class TestComplianceRequirementCopy:
 
         _persist_compliance_requirement_rows(tenant_id, rows)
 
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        mock_copy.assert_called_once_with(conn, tenant_id, rows)
         mock_rls_transaction.assert_called_once_with(tenant_id)
         mock_bulk_create.assert_called_once()
 
@@ -3117,6 +3056,7 @@ class TestComplianceRequirementCopy:
         assert objects[1].passed_checks == 2
         assert objects[1].failed_checks == 3
 
+    @patch("tasks.jobs.scan.psycopg_connection")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3124,7 +3064,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_all_fields(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_psycopg_connection
     ):
         """Test ORM fallback correctly maps all fields from row dict to model."""
         tenant_id = str(uuid.uuid4())

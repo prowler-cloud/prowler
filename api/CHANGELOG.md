@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.35.0] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Partitioned `compliance_requirements_overviews` and hardened its COPY ingest (batched, single reused connection, first-run DELETE skipped) to stop the database writer from running out of memory during compliance overview ingestion [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+
+---
+
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added

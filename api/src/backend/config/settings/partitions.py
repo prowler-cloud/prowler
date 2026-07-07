@@ -14,3 +14,17 @@ FINDINGS_TABLE_PARTITION_COUNT = env.int("FINDINGS_TABLE_PARTITION_COUNT", 7)
 FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS = env.int(
     "FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS", None
 )
+
+# Compliance requirement overviews partitioning (RANGE by UUIDv7 id).
+# Mirrors the findings settings; kept separate so the ingest-heavy compliance
+# table can be tuned (and aged out) independently from findings.
+COMPLIANCE_REQ_OVERVIEW_PARTITION_MONTHS = env.int(
+    "COMPLIANCE_REQ_OVERVIEW_PARTITION_MONTHS", 1
+)
+COMPLIANCE_REQ_OVERVIEW_PARTITION_COUNT = env.int(
+    "COMPLIANCE_REQ_OVERVIEW_PARTITION_COUNT", 7
+)
+# Setting this to None keeps partitions indefinitely (matches findings default).
+COMPLIANCE_REQ_OVERVIEW_PARTITION_MAX_AGE_MONTHS = env.int(
+    "COMPLIANCE_REQ_OVERVIEW_PARTITION_MAX_AGE_MONTHS", None
+)

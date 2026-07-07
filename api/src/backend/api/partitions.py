@@ -1,7 +1,7 @@
 from collections.abc import Generator
 from datetime import UTC, datetime
 
-from api.models import Finding, ResourceFindingMapping
+from api.models import ComplianceRequirementOverview, Finding, ResourceFindingMapping
 from api.rls import RowLevelSecurityConstraint
 from api.uuid_utils import datetime_to_uuid7
 from dateutil.relativedelta import relativedelta
@@ -194,6 +194,23 @@ manager = PostgresPartitioningManager(
                 ),
                 name_format="%Y_%b",
                 rls_statements=["SELECT"],
+            ),
+        ),
+        # ComplianceRequirementOverview: partition by its own UUIDv7 id so old
+        # scans' compliance rows age out via DROP PARTITION instead of DELETE.
+        PostgresPartitioningConfig(
+            model=ComplianceRequirementOverview,
+            strategy=PostgresUUIDv7PartitioningStrategy(
+                start_date=datetime.now(UTC),
+                size=PostgresTimePartitionSize(
+                    months=settings.COMPLIANCE_REQ_OVERVIEW_PARTITION_MONTHS
+                ),
+                count=settings.COMPLIANCE_REQ_OVERVIEW_PARTITION_COUNT,
+                max_age=relative_days_or_none(
+                    settings.COMPLIANCE_REQ_OVERVIEW_PARTITION_MAX_AGE_MONTHS
+                ),
+                name_format="%Y_%b",
+                rls_statements=["SELECT", "INSERT", "DELETE"],
             ),
         ),
     ]

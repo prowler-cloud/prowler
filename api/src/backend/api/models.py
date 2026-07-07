@@ -1587,8 +1587,25 @@ class ComplianceOverview(RowLevelSecurityProtectedModel):
         resource_name = "compliance-overviews"
 
 
-class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+class ComplianceRequirementOverview(
+    PostgresPartitionedModel, RowLevelSecurityProtectedModel
+):
+    """
+    Per-requirement compliance rows, materialized once per scan via COPY.
+
+    Partitioned RANGE by the UUIDv7 ``id`` (same strategy as ``Finding``) so that
+    ageing scans' compliance rows can be reclaimed with ``DROP PARTITION`` instead
+    of ``DELETE`` + CASCADE, removing the autovacuum churn that a per-scan delete
+    otherwise generates.
+
+    Note when creating migrations you must use ``python manage.py pgmakemigrations``.
+    """
+
+    class PartitioningMeta:
+        method = PostgresPartitioningMethod.RANGE
+        key = ["id"]
+
+    id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
     compliance_id = models.TextField(blank=False)
     framework = models.TextField(blank=False)
@@ -1613,21 +1630,23 @@ class ComplianceRequirementOverview(RowLevelSecurityProtectedModel):
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "compliance_requirements_overviews"
+        base_manager_name = "objects"
 
+        # No UniqueConstraint on (tenant, scan, compliance, requirement, region):
+        # Postgres would force the partition key ``id`` into it, making it trivial
+        # (``id`` is the PK). Business-level dedup is guaranteed by the
+        # delete-then-reinsert ingest in ``create_compliance_requirements`` instead
+        # (same approach as the partitioned ``Finding`` model, which has none).
         constraints = [
-            models.UniqueConstraint(
-                fields=(
-                    "tenant_id",
-                    "scan_id",
-                    "compliance_id",
-                    "requirement_id",
-                    "region",
-                ),
-                name="unique_tenant_compliance_requirement_overview",
-            ),
             RowLevelSecurityConstraint(
                 field="tenant_id",
                 name="rls_on_%(class)s",
+                statements=["SELECT", "INSERT", "DELETE"],
+            ),
+            RowLevelSecurityConstraint(
+                field="tenant_id",
+                name="rls_on_%(class)s_default",
+                partition_name="default",
                 statements=["SELECT", "INSERT", "DELETE"],
             ),
         ]
