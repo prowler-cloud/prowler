@@ -18,8 +18,13 @@ class CosmosDB(AzureService):
         accounts = {}
         for subscription, client in self.clients.items():
             try:
-                accounts_list = client.database_accounts.list()
                 accounts.update({subscription: []})
+                accounts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.database_accounts.list,
+                    client.database_accounts.list_by_resource_group,
+                )
+
                 for account in accounts_list:
                     accounts[subscription].append(
                         Account(

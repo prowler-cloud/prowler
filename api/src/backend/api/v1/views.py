@@ -7,109 +7,15 @@ import time
 import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
-from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
-from celery.result import AsyncResult
-from config.custom_logging import BackendLogger
-from config.env import env
-from config.version import RELEASE_ID
-from config.settings.social_login import (
-    GITHUB_OAUTH_CALLBACK_URL,
-    GOOGLE_OAUTH_CALLBACK_URL,
-)
-from dj_rest_auth.registration.views import SocialLoginView
-from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
-from django.contrib.postgres.search import SearchQuery
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
-from django.db.models import (
-    BooleanField,
-    Case,
-    CharField,
-    Count,
-    DecimalField,
-    Exists,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Max,
-    Min,
-    OuterRef,
-    Prefetch,
-    Q,
-    QuerySet,
-    Subquery,
-    Sum,
-    Value,
-    When,
-    Window,
-)
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.dateparse import parse_date
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_control
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiResponse,
-    extend_schema,
-    extend_schema_view,
-)
-from drf_spectacular.views import SpectacularAPIView
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from rest_framework import permissions, status
-from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    MethodNotAllowed,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-)
-from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
-from rest_framework_json_api import filters as jsonapi_filters
-from rest_framework_json_api.views import RelationshipView, Response
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    reaggregate_all_finding_group_summaries_task,
-    refresh_lighthouse_provider_models_task,
-)
-
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
@@ -144,6 +50,7 @@ from api.filters import (
     FindingGroupAggregatedComputedFilter,
     FindingGroupFilter,
     FindingGroupSummaryFilter,
+    FindingMetadataFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -222,6 +129,7 @@ from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
+    accept_invitation_for_user,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
@@ -328,12 +236,105 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain, states
+from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
+from config.env import env
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from config.version import RELEASE_ID
+from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
+from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    DecimalField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+    When,
+    Window,
+)
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.dateparse import parse_date
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
+from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAssumeRoleError,
     AWSCredentialsError,
 )
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
+)
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
+from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
+from rest_framework_json_api.views import RelationshipView, Response
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    delete_provider_task,
+    delete_tenant_task,
+    jira_integration_task,
+    mute_historical_findings_task,
+    perform_scan_task,
+    reaggregate_all_finding_group_summaries_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -542,6 +543,46 @@ class SchemaView(SpectacularAPIView):
         return super().get(request, *args, **kwargs)
 
 
+SAML_CALLBACK_SESSION_KEY = "saml_callback_url"
+
+
+def _safe_callback_path(value):
+    if not value or not isinstance(value, str):
+        return None
+    if not value.startswith("/") or value.startswith("//"):
+        return None
+    return value
+
+
+def _get_request_invitation_token(request):
+    for source_name in ("data", "POST"):
+        data = getattr(request, source_name, None) or {}
+        if not hasattr(data, "get"):
+            continue
+        invitation_token = data.get("invitation_token")
+        if invitation_token:
+            return invitation_token
+
+    wrapped_request = getattr(request, "_request", None)
+    if wrapped_request and wrapped_request is not request:
+        return _get_request_invitation_token(wrapped_request)
+
+    return None
+
+
+def _accept_social_invitation(request, user):
+    invitation_token = _get_request_invitation_token(request)
+    tenant_id = getattr(request, "prowler_invitation_tenant_id", None)
+    if invitation_token and not tenant_id:
+        invitation, _ = accept_invitation_for_user(
+            user=user,
+            invitation_token=invitation_token,
+            raise_not_found=True,
+        )
+        tenant_id = str(invitation.tenant_id)
+    return tenant_id
+
+
 @extend_schema(exclude=True)
 class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -552,7 +593,11 @@ class GoogleSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
             try:
                 serializer.is_valid(raise_exception=True)
             except TokenError as e:
@@ -577,7 +622,11 @@ class GithubSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
 
             try:
                 serializer.is_valid(raise_exception=True)
@@ -637,6 +686,10 @@ class CustomSAMLLoginView(LoginView):
 
         This approach maintains security while providing better UX.
         """
+        callback_url = _safe_callback_path(request.GET.get("callback_url"))
+        request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        if callback_url:
+            request.session[SAML_CALLBACK_SESSION_KEY] = callback_url
         if request.method == "GET":
             # Convert GET to POST while preserving parameters
             request.method = "POST"
@@ -681,6 +734,11 @@ class SAMLInitiateAPIView(GenericAPIView):
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
         login_url = urljoin(api_host, login_path)
+        callback_url = _safe_callback_path(
+            serializer.validated_data.get("callback_url")
+        )
+        if callback_url:
+            login_url = f"{login_url}?{urlencode({'callback_url': callback_url})}"
 
         return redirect(login_url)
 
@@ -896,7 +954,13 @@ class TenantFinishACSView(FinishACSView):
             token=token_data, user=user
         )
         callback_url = env.str("SAML_SSO_CALLBACK_URL")
-        redirect_url = f"{callback_url}?id={saml_token.id}"
+        redirect_params = {"id": str(saml_token.id)}
+        saml_callback_url = _safe_callback_path(
+            request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        )
+        if saml_callback_url:
+            redirect_params["callbackUrl"] = saml_callback_url
+        redirect_url = f"{callback_url}?{urlencode(redirect_params)}"
         request.session.pop("saml_user_created", None)
 
         return redirect(redirect_url)
@@ -948,8 +1012,8 @@ class UserViewSet(BaseUserViewset):
         """
         Returns the required permissions based on the request method.
         """
-        if self.action == "me":
-            # No permissions required for me request
+        if self.action in ["me", "partial_update"]:
+            # No permissions required for me and partial_update requests
             self.required_permissions = []
         else:
             # Require permission for the rest of the requests
@@ -1002,6 +1066,24 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id != self.request.user.id:
+            role = get_role(self.request.user, self.request.tenant_id)
+            if not getattr(role, Permissions.MANAGE_USERS.value, False):
+                raise ValidationError(
+                    "Only users with manage users permission can update other users."
+                )
+
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(user, "_prefetched_objects_cache", None):
+            user._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
@@ -1889,8 +1971,8 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         description=(
             "Download a specific compliance report as an OCSF JSON file. "
             "Only universal frameworks that declare an output configuration "
-            "produce this artifact (currently 'dora_2022_2554' and 'csa_ccm_4.0'); any "
-            "other framework returns 404."
+            "produce this artifact (currently 'dora_2022_2554', 'csa_ccm_4.0' "
+            "and 'cis_controls_8.1'); any other framework returns 404."
         ),
         parameters=[
             OpenApiParameter(
@@ -2877,13 +2959,22 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        active_sink_backend = django_settings.ATTACK_PATHS_SINK_DATABASE
 
         latest_per_provider = queryset.annotate(
+            active_sink_rank=Case(
+                When(sink_backend=active_sink_backend, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
             latest_scan_rank=Window(
                 expression=RowNumber(),
                 partition_by=[F("provider_id")],
-                order_by=[F("inserted_at").desc()],
-            )
+                order_by=[
+                    F("active_sink_rank").asc(),
+                    F("inserted_at").desc(),
+                ],
+            ),
         ).filter(latest_scan_rank=1)
 
         page = self.paginate_queryset(latest_per_provider)
@@ -2910,7 +3001,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        queries = get_queries_for_provider(
+            attack_paths_scan.provider.provider,
+            is_migrated=attack_paths_scan.is_migrated,
+        )
 
         if not queries:
             return Response(
@@ -2943,7 +3038,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-        query_definition = get_query_by_id(serializer.validated_data["id"])
+        # TODO: drop the is_migrated argument after Neptune cutover
+        query_definition = get_query_by_id(
+            serializer.validated_data["id"],
+            is_migrated=attack_paths_scan.is_migrated,
+        )
         if (
             query_definition is None
             or query_definition.provider != attack_paths_scan.provider.provider
@@ -2969,6 +3068,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3036,6 +3136,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3092,7 +3193,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         provider_id = str(attack_paths_scan.provider_id)
 
         schema = attack_paths_views_helpers.get_cartography_schema(
-            database_name, provider_id
+            database_name, provider_id, attack_paths_scan
         )
         if not schema:
             return Response(
@@ -3350,9 +3451,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3364,7 +3463,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3374,7 +3473,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -3418,7 +3517,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3488,7 +3587,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3817,6 +3916,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action in ["latest", "metadata_latest"]:
             return LatestFindingFilter
+        if self.action == "metadata":
+            return FindingMetadataFilter
         return FindingFilter
 
     def get_queryset(self):
@@ -3915,9 +4016,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3929,7 +4028,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3939,7 +4038,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -4354,25 +4453,12 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
         invitation_token = serializer.validated_data["invitation_token"]
         user_email = request.user.email
 
-        invitation = validate_invitation(
-            invitation_token, user_email, raise_not_found=True
-        )
-
-        # Proceed with accepting the invitation
         user = User.objects.using(MainRouter.admin_db).get(email=user_email)
-        membership = Membership.objects.using(MainRouter.admin_db).create(
+        invitation, membership = accept_invitation_for_user(
             user=user,
-            tenant=invitation.tenant,
+            invitation_token=invitation_token,
+            raise_not_found=True,
         )
-        user_role = []
-        for role in invitation.roles.all():
-            user_role.append(
-                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                    user=user, role=role, tenant=invitation.tenant
-                )
-            )
-        invitation.state = Invitation.State.ACCEPTED
-        invitation.save(using=MainRouter.admin_db)
 
         self.response_serializer_class = MembershipSerializer
         membership_serializer = self.get_serializer(membership)

@@ -153,9 +153,9 @@ def get_dynamic_filters_pairs(
         f"{host}/{endpoint}/metadata?{metadata_filters}",
         headers=get_auth_headers(token),
     )
-    assert (
-        response.status_code == 200
-    ), f"Failed to get resource filters values: {response.text}"
+    assert response.status_code == 200, (
+        f"Failed to get resource filters values: {response.text}"
+    )
     attributes = response.json()["data"]["attributes"]
 
     return {

@@ -47,6 +47,14 @@ vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));
 
+vi.mock("@/actions/findings", () => ({
+  getLatestFindings: vi.fn(),
+}));
+
+vi.mock("@/actions/organizations/organizations", () => ({
+  listOrganizationsSafe: vi.fn(),
+}));
+
 vi.mock("@/lib/provider-filters", () => ({
   appendSanitizedProviderTypeFilters: vi.fn(),
 }));
@@ -100,29 +108,6 @@ describe("getResourceEvents", () => {
     expect(calledUrl.searchParams.get("include_read_events")).toBe("true");
     expect(calledUrl.searchParams.get("lookback_days")).toBe("30");
     expect(calledUrl.searchParams.get("page[size]")).toBe("25");
-  });
-
-  it("returns parsed response on success", async () => {
-    // Given
-    const mockData = {
-      data: [
-        {
-          type: "resource-events",
-          id: "event-1",
-          attributes: { event_name: "CreateStack" },
-        },
-      ],
-    };
-    const mockResponse = new Response("", { status: 200 });
-    fetchMock.mockResolvedValue(mockResponse);
-    handleApiResponseMock.mockResolvedValue(mockData);
-
-    // When
-    const result = await getResourceEvents("resource-123");
-
-    // Then
-    expect(result).toEqual(mockData);
-    expect(handleApiResponseMock).toHaveBeenCalledWith(mockResponse);
   });
 
   it("returns error object for non-ok responses without calling handleApiResponse", async () => {

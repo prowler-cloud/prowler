@@ -81,6 +81,7 @@
     "@uiw/react-codemirror": "4.25.8",
     "@xyflow/react": "12.10.2",
     "ai": "6.0.203",
+    "ajv": "8.18.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
     "cmdk": "1.1.1",

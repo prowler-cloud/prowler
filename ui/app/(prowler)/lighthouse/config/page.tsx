@@ -1,14 +1,7 @@
-import { LighthouseSettings, LLMProvidersTable } from "@/components/lighthouse";
-import { ContentLayout } from "@/components/shadcn/content-layout";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
-export default async function ChatbotConfigPage() {
-  return (
-    <ContentLayout title="LLM Configuration">
-      <LLMProvidersTable />
-      <div className="h-8" />
-      <LighthouseSettings />
-    </ContentLayout>
-  );
+export default function LighthouseConfigRedirectPage() {
+  redirect(LIGHTHOUSE_ROUTE.SETTINGS);
 }

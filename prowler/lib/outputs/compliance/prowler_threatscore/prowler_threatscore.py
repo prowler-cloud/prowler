@@ -2,6 +2,13 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    accumulate_group_status,
+    accumulate_overview_status,
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 
 
@@ -20,18 +27,20 @@ def get_prowler_threatscore_table(
         "Score": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
     pillars = {}
     pillar_seen = {}
     provider = ""
     generic_score = 0
     max_generic_score = 0
-    counted_findings_generic = []
+    counted_findings_generic = {}
     score_per_pillar = {}
     max_score_per_pillar = {}
     counted_findings_per_pillar = {}
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -39,6 +48,12 @@ def get_prowler_threatscore_table(
             if compliance.Framework == "ProwlerThreatScore":
                 provider = compliance.Provider
                 for requirement in compliance.Requirements:
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         pillar = attribute.Section
 
@@ -51,57 +66,51 @@ def get_prowler_threatscore_table(
                         ):
                             score_per_pillar[pillar] = 0
                             max_score_per_pillar[pillar] = 0
-                            counted_findings_per_pillar[pillar] = []
+                            counted_findings_per_pillar[pillar] = {}
 
-                        if (
-                            index not in counted_findings_per_pillar[pillar]
-                            and not finding.muted
-                        ):
-                            if finding.status == "PASS":
-                                score_per_pillar[pillar] += (
-                                    attribute.LevelOfRisk * attribute.Weight
-                                )
-                            max_score_per_pillar[pillar] += (
-                                attribute.LevelOfRisk * attribute.Weight
-                            )
-                            counted_findings_per_pillar[pillar].append(index)
+                        # Revoke an earlier PASS score if a later requirement FAILs.
+                        if not finding.muted:
+                            contribution = attribute.LevelOfRisk * attribute.Weight
+                            counted = counted_findings_per_pillar[pillar]
+                            if index not in counted:
+                                max_score_per_pillar[pillar] += contribution
+                                if effective_status == "PASS":
+                                    score_per_pillar[pillar] += contribution
+                                    counted[index] = contribution
+                                else:
+                                    counted[index] = 0
+                            elif effective_status == "FAIL" and counted[index]:
+                                score_per_pillar[pillar] -= counted[index]
+                                counted[index] = 0
 
                         if pillar not in pillars:
                             pillars[pillar] = {"FAIL": 0, "PASS": 0, "Muted": 0}
-                            pillar_seen[pillar] = set()
+                            pillar_seen[pillar] = {}
 
-                        # Overview totals: count each finding once per framework
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                        elif finding.status == "FAIL":
-                            if index not in fail_count:
-                                fail_count.append(index)
-                        elif finding.status == "PASS":
-                            if index not in pass_count:
-                                pass_count.append(index)
+                        status = "Muted" if finding.muted else effective_status
+                        accumulate_overview_status(
+                            index, status, pass_count, fail_count, muted_count
+                        )
+                        accumulate_group_status(
+                            index, status, pillars[pillar], pillar_seen[pillar]
+                        )
 
-                        # Per-pillar counts: count each finding once per pillar
-                        # it belongs to (a finding can map to several pillars).
-                        if index not in pillar_seen[pillar]:
-                            pillar_seen[pillar].add(index)
-                            if finding.muted:
-                                pillars[pillar]["Muted"] += 1
-                            elif finding.status == "FAIL":
-                                pillars[pillar]["FAIL"] += 1
-                            elif finding.status == "PASS":
-                                pillars[pillar]["PASS"] += 1
-
-                        # Generic score
-                        if index not in counted_findings_generic and not finding.muted:
-                            if finding.status == "PASS":
-                                generic_score += (
-                                    attribute.LevelOfRisk * attribute.Weight
-                                )
-                            max_generic_score += (
-                                attribute.LevelOfRisk * attribute.Weight
-                            )
-                            counted_findings_generic.append(index)
+                        # Generic score, with the same PASS-revocation on FAIL.
+                        if not finding.muted:
+                            contribution = attribute.LevelOfRisk * attribute.Weight
+                            if index not in counted_findings_generic:
+                                max_generic_score += contribution
+                                if effective_status == "PASS":
+                                    generic_score += contribution
+                                    counted_findings_generic[index] = contribution
+                                else:
+                                    counted_findings_generic[index] = 0
+                            elif (
+                                effective_status == "FAIL"
+                                and counted_findings_generic[index]
+                            ):
+                                generic_score -= counted_findings_generic[index]
+                                counted_findings_generic[index] = 0
 
     no_findings_pillars = []
     bulk_compliance = (

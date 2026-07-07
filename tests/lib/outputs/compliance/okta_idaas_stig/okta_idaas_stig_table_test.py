@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig import (
     get_okta_idaas_stig_table,
@@ -8,18 +9,35 @@ from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig import (
 def _make_finding(check_id, status="PASS", muted=False):
     return SimpleNamespace(
         check_metadata=SimpleNamespace(CheckID=check_id),
+        check_id=check_id,
         status=status,
         muted=muted,
     )
 
 
-def _make_compliance(provider, sections, framework="Okta-IDaaS-STIG"):
-    """Build a per-check compliance covering the given sections."""
+def _make_compliance(
+    provider,
+    sections,
+    framework="Okta-IDaaS-STIG",
+    checks=None,
+    config_requirements=None,
+):
+    """Build a per-check compliance covering the given sections.
+
+    ``checks`` and ``config_requirements`` let a section's requirement declare
+    the checks it owns and the config constraints that gate it, so the table's
+    config-status override can be exercised.
+    """
     return SimpleNamespace(
         Framework=framework,
         Provider=provider,
         Requirements=[
-            SimpleNamespace(Attributes=[SimpleNamespace(Section=section)])
+            SimpleNamespace(
+                Id=f"REQ-{section}",
+                Checks=list(checks or []),
+                ConfigRequirements=list(config_requirements or []),
+                Attributes=[SimpleNamespace(Section=section)],
+            )
             for section in sections
         ],
     )
@@ -134,3 +152,60 @@ class TestOktaIDaaSSTIGTable:
         # The provider of the unrelated trailing framework must NOT leak into
         # the rendered table.
         assert "aws" not in captured.out
+
+    def test_config_status_override_forces_fail(self, capsys, tmp_path):
+        """A configurable check that PASSes but ran with a config too loose for
+        its requirement must be forced to FAIL in the table, honouring the
+        requirement's ConfigRequirements. Without the override check_a would be
+        PASS and no results table would render at all."""
+        constraint = {
+            "Check": "check_a",
+            "ConfigKey": "okta_max_session_idle_minutes",
+            "Operator": "lte",
+            "Value": 15,
+        }
+        bulk_metadata = {
+            "check_a": SimpleNamespace(
+                Compliance=[
+                    _make_compliance(
+                        "okta",
+                        ["IAM"],
+                        checks=["check_a"],
+                        config_requirements=[constraint],
+                    )
+                ]
+            ),
+            "check_b": SimpleNamespace(
+                Compliance=[_make_compliance("okta", ["Logging"])]
+            ),
+        }
+        # Both checks PASS on their own; the scan applied a 30-minute idle
+        # timeout, which is too loose for the 15-minute requirement.
+        findings = [
+            _make_finding("check_a", "PASS"),
+            _make_finding("check_b", "PASS"),
+        ]
+
+        with (
+            patch(
+                "prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig.get_scan_audit_config",
+                return_value={"okta_max_session_idle_minutes": 30},
+            ),
+            patch(
+                "prowler.lib.check.compliance_config_eval.get_scan_provider_type",
+                return_value="okta",
+            ),
+        ):
+            get_okta_idaas_stig_table(
+                findings,
+                bulk_metadata,
+                "okta_idaas_stig_1r2",
+                "output",
+                str(tmp_path),
+                False,
+            )
+
+        captured = capsys.readouterr()
+        # check_a was forced to FAIL by the config override, so its section
+        # (IAM) must report FAIL(1).
+        assert "FAIL(1)" in captured.out

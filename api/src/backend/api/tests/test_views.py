@@ -3,7 +3,7 @@ import io
 import json
 import os
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -15,31 +15,6 @@ import jwt
 import pytest
 from allauth.account.models import EmailAddress
 from allauth.socialaccount.models import SocialAccount, SocialApp
-from botocore.exceptions import ClientError, NoCredentialsError
-from conftest import (
-    API_JSON_CONTENT_TYPE,
-    TEST_PASSWORD,
-    TEST_USER,
-    TODAY,
-    today_after_n_days,
-)
-from django.conf import settings
-from django.db import connection
-from django.db.models import Count
-from django.http import JsonResponse
-from django.test import RequestFactory
-from django.test.utils import CaptureQueriesContext
-from django.urls import reverse
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
-from rest_framework.response import Response
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
-
 from api.attack_paths import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
@@ -82,10 +57,39 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import TokenSerializer
-from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from api.v1.views import (
+    ComplianceOverviewViewSet,
+    CustomSAMLLoginView,
+    TenantFinishACSView,
+)
+from botocore.exceptions import ClientError, NoCredentialsError
+from conftest import (
+    API_JSON_CONTENT_TYPE,
+    TEST_PASSWORD,
+    TEST_USER,
+    TODAY,
+    today_after_n_days,
+)
+from django.conf import settings
+from django.db import connection
+from django.db.models import Count
+from django.http import JsonResponse
+from django.test import RequestFactory
+from django.test.utils import CaptureQueriesContext
+from django.urls import reverse
+from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from rest_framework_simplejwt.tokens import RefreshToken
 
 
 class TestViewSet:
@@ -243,6 +247,63 @@ class TestUserViewSet:
         assert response.status_code == status.HTTP_200_OK
         create_test_user.refresh_from_db()
         assert create_test_user.company_name == new_company_name
+
+    def test_users_partial_update_same_tenant_other_user_password_denied(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        original_password = "OriginalPassword123@"
+        new_password = "UpdatedPassword123@"
+        target_user = User.objects.create_user(
+            password=original_password,
+            email="target-password-update@example.com",
+        )
+        Membership.objects.create(user=target_user, tenant=tenants_fixture[0])
+        payload = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"password": new_password},
+            },
+        }
+
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.check_password(original_password)
+        assert not target_user.check_password(new_password)
+
+    def test_users_partial_update_same_tenant_other_user_email_denied(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        original_email = "target-email-update@example.com"
+        new_email = "updated-target-email@example.com"
+        target_user = User.objects.create_user(
+            password="OriginalPassword123@",
+            email=original_email,
+        )
+        Membership.objects.create(user=target_user, tenant=tenants_fixture[0])
+        payload = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"email": new_email},
+            },
+        }
+
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=payload,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
 
     def test_users_partial_update_invalid_content_type(
         self, authenticated_client, create_test_user
@@ -1491,13 +1552,13 @@ class TestProviderViewSet:
             ("provider_groups", ["provider-groups"]),
         ],
     )
+    @pytest.mark.usefixtures("create_provider_group_relationship")
     def test_providers_list_include(
         self,
         include_values,
         expected_resources,
         authenticated_client,
         providers_fixture,
-        create_provider_group_relationship,
     ):
         response = authenticated_client.get(
             reverse("provider-list"), {"include": include_values}
@@ -1508,9 +1569,9 @@ class TestProviderViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     def test_providers_retrieve(self, authenticated_client, providers_fixture):
         provider1, *_ = providers_fixture
@@ -3542,7 +3603,7 @@ class TestScanViewSet:
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
     @pytest.mark.parametrize(
-        "scan_json_payload, expected_scanner_args",
+        "scan_json_payload, _expected_scanner_args",
         [
             # Case 1: No scanner_args in payload (should use provider's scanner_args)
             (
@@ -3591,7 +3652,7 @@ class TestScanViewSet:
         mock_task_get,
         authenticated_client,
         scan_json_payload,
-        expected_scanner_args,
+        _expected_scanner_args,
         providers_fixture,
         tasks_fixture,
     ):
@@ -4070,7 +4131,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         presigned_url = (
@@ -4176,7 +4237,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.TaskSerializer",
-            lambda *args, **kwargs: type("S", (), {"data": dummy}),
+            lambda *_args, **_kwargs: type("S", (), {"data": dummy}),
         )
 
         framework = get_compliance_frameworks(scan.provider.provider)[0]
@@ -4234,7 +4295,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         match_key = "path/compliance/mitre_attack_aws.csv"
@@ -4245,6 +4306,7 @@ class TestScanViewSet:
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {"Contents": [{"Key": match_key}]}
 
             def generate_presigned_url(self, ClientMethod, Params, ExpiresIn):
@@ -4276,7 +4338,7 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         old_key = "path/compliance/prowler-output-aws-20240101000000_cis_1.4_aws.csv"
@@ -4284,15 +4346,16 @@ class TestScanViewSet:
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {
                     "Contents": [
                         {
                             "Key": old_key,
-                            "LastModified": datetime(2024, 1, 1, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 1, 1, tzinfo=UTC),
                         },
                         {
                             "Key": latest_key,
-                            "LastModified": datetime(2024, 2, 2, tzinfo=timezone.utc),
+                            "LastModified": datetime(2024, 2, 2, tzinfo=UTC),
                         },
                     ]
                 }
@@ -4357,11 +4420,12 @@ class TestScanViewSet:
 
         monkeypatch.setattr(
             "api.v1.views.env",
-            type("env", (), {"str": lambda self, *args, **kwargs: "test-bucket"})(),
+            type("env", (), {"str": lambda self, *_args, **_kwargs: "test-bucket"})(),
         )
 
         class FakeS3Client:
             def list_objects_v2(self, Bucket, Prefix):
+                del Prefix
                 return {"Contents": []}
 
             def get_object(self, Bucket, Key):
@@ -4541,13 +4605,13 @@ class TestScanViewSet:
         )
         # `inserted_at` is `auto_now_add`, and within the test transaction the DB
         # `now()` is constant, so force distinct timestamps to make order_by stable.
-        base = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        base = datetime(2024, 1, 1, tzinfo=UTC)
         Task.objects.filter(pk=old_task.pk).update(inserted_at=base)
         Task.objects.filter(pk=new_task.pk).update(
             inserted_at=base + timedelta(hours=1)
         )
 
-        mock_task_serializer.side_effect = lambda instance, *a, **k: SimpleNamespace(
+        mock_task_serializer.side_effect = lambda instance, *_a, **_k: SimpleNamespace(
             data={"id": str(instance.id), "state": StateChoices.EXECUTING}
         )
 
@@ -4755,6 +4819,64 @@ class TestAttackPathsScanViewSet:
         assert first_attributes["provider_type"] == provider.provider
         assert first_attributes["provider_uid"] == provider.uid
 
+    def test_attack_paths_scans_list_prefers_active_sink_scan_on_rollback(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        provider = providers_fixture[0]
+
+        neo4j_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+        neptune_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neptune",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(neo4j_scan.id) in ids
+        assert str(neptune_scan.id) not in ids
+
+    def test_attack_paths_scans_list_falls_back_when_active_sink_has_no_scan(
+        self,
+        authenticated_client,
+        providers_fixture,
+        scans_fixture,
+        create_attack_paths_scan,
+        settings,
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        provider = providers_fixture[0]
+
+        legacy_scan = create_attack_paths_scan(
+            provider,
+            scan=scans_fixture[0],
+            state=StateChoices.COMPLETED,
+            graph_data_ready=True,
+            sink_backend="neo4j",
+        )
+
+        response = authenticated_client.get(reverse("attack-paths-scans-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        ids = {item["id"] for item in response.json()["data"]}
+        assert str(legacy_scan.id) in ids
+
     def test_attack_paths_scans_list_respects_provider_group_visibility(
         self,
         authenticated_client_no_permissions_rbac,
@@ -4875,7 +4997,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_queries.assert_called_once_with(provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_queries.assert_called_once_with(provider.provider, is_migrated=False)
         payload = response.json()["data"]
         assert len(payload) == 1
         assert payload[0]["id"] == "aws-rds"
@@ -4975,7 +5098,8 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_query.assert_called_once_with("aws-rds")
+        # TODO: drop the is_migrated argument after Neptune cutover
+        mock_get_query.assert_called_once_with("aws-rds", is_migrated=False)
         mock_get_db_name.assert_called_once_with(attack_paths_scan.provider.tenant_id)
         provider_id = str(attack_paths_scan.provider_id)
         mock_prepare.assert_called_once_with(
@@ -4989,6 +5113,7 @@ class TestAttackPathsScanViewSet:
             query_definition,
             prepared_parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         result = response.json()["data"]
         attributes = result["attributes"]
@@ -5340,6 +5465,7 @@ class TestAttackPathsScanViewSet:
             "db-test",
             "MATCH (n) RETURN n",
             str(attack_paths_scan.provider_id),
+            scan=attack_paths_scan,
         )
         attributes = response.json()["data"]["attributes"]
         assert len(attributes["nodes"]) == 1
@@ -5785,13 +5911,13 @@ class TestAttackPathsScanViewSet:
                     content_type=API_JSON_CONTENT_TYPE,
                 )
                 if i < 10:
-                    assert (
-                        response.status_code == status.HTTP_200_OK
-                    ), f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    assert response.status_code == status.HTTP_200_OK, (
+                        f"Request {i + 1} should succeed with 200 OK, got {response.status_code}"
+                    )
                 else:
-                    assert (
-                        response.status_code == status.HTTP_429_TOO_MANY_REQUESTS
-                    ), f"Request {i + 1} should be throttled"
+                    assert response.status_code == status.HTTP_429_TOO_MANY_REQUESTS, (
+                        f"Request {i + 1} should be throttled"
+                    )
 
     # -- Timeout simulation -------------------------------------------------------
 
@@ -5876,9 +6002,10 @@ class TestAttackPathsScanViewSet:
             )
 
         assert response.status_code == status.HTTP_200_OK
-        mock_get_schema.assert_called_once_with(
-            "db-test", str(attack_paths_scan.provider_id)
-        )
+        mock_get_schema.assert_called_once()
+        schema_args = mock_get_schema.call_args[0]
+        assert schema_args[:2] == ("db-test", str(attack_paths_scan.provider_id))
+        assert schema_args[2].id == attack_paths_scan.id
         attributes = response.json()["data"]["attributes"]
         assert attributes["provider"] == "aws"
         assert attributes["cartography_version"] == "0.129.0"
@@ -5994,9 +6121,9 @@ class TestResourceViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -6216,9 +6343,8 @@ class TestResourceViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_resources_metadata_retrieve(
-        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
-    ):
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_resources_metadata_retrieve(self, authenticated_client, resources_fixture):
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
             reverse("resource-metadata"),
@@ -6238,8 +6364,9 @@ class TestResourceViewSet:
         assert set(data["data"]["attributes"]["types"]) == expected_resource_types
         assert set(data["data"]["attributes"]["groups"]) == expected_groups
 
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
     def test_resources_metadata_resource_filter_retrieve(
-        self, authenticated_client, resources_fixture, backfill_scan_metadata_fixture
+        self, authenticated_client, resources_fixture
     ):
         resource_1, *_ = resources_fixture
         response = authenticated_client.get(
@@ -6588,9 +6715,9 @@ class TestResourceViewSet:
             (e for e in errors if e["source"]["parameter"] == expected_invalid_param),
             None,
         )
-        assert (
-            error is not None
-        ), f"Expected error for parameter '{expected_invalid_param}'"
+        assert error is not None, (
+            f"Expected error for parameter '{expected_invalid_param}'"
+        )
         assert error["code"] == "invalid"
         assert error["status"] == "400"  # Must be string per JSON:API spec
         assert expected_invalid_param in error["detail"]
@@ -6979,9 +7106,8 @@ class TestResourceViewSet:
         This ensures the endpoint follows API conventions where missing authentication
         returns 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]  # AWS provider from fixture
 
@@ -7054,9 +7180,8 @@ class TestResourceViewSet:
         This ensures authentication errors are properly distinguished from
         resource not found errors.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -7074,9 +7199,8 @@ class TestResourceViewSet:
         tenant = tenants_fixture[0]
         expired_payload = {
             "token_type": "access",
-            "exp": datetime.now(timezone.utc)
-            - timedelta(hours=1),  # Expired 1 hour ago
-            "iat": datetime.now(timezone.utc) - timedelta(hours=2),
+            "exp": datetime.now(UTC) - timedelta(hours=1),  # Expired 1 hour ago
+            "iat": datetime.now(UTC) - timedelta(hours=2),
             "jti": str(uuid4()),
             "user_id": str(uuid4()),
             "tenant_id": str(tenant.id),
@@ -7101,9 +7225,8 @@ class TestResourceViewSet:
 
         Malformed or invalid tokens should return 401 Unauthorized, not 404 Not Found.
         """
-        from rest_framework.test import APIClient
-
         from api.models import Resource
+        from rest_framework.test import APIClient
 
         aws_provider = providers_fixture[0]
 
@@ -7122,16 +7245,16 @@ class TestResourceViewSet:
         # Test with completely malformed token
         client.credentials(HTTP_AUTHORIZATION="Bearer not.a.valid.jwt.token")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for malformed token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for malformed token but got {response.status_code}"
+        )
 
         # Test with empty bearer token
         client.credentials(HTTP_AUTHORIZATION="Bearer ")
         response = client.get(reverse("resource-events", kwargs={"pk": resource.id}))
-        assert (
-            response.status_code == status.HTTP_401_UNAUTHORIZED
-        ), f"Expected 401 for empty bearer token but got {response.status_code}"
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED, (
+            f"Expected 401 for empty bearer token but got {response.status_code}"
+        )
 
 
 @pytest.mark.django_db
@@ -7160,6 +7283,26 @@ class TestFindingViewSet:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.json()["errors"][0]["code"] == "invalid"
 
+    def test_findings_updated_at_range_too_large_with_inserted_at_filter(
+        self, authenticated_client
+    ):
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at]": TODAY,
+                "filter[updated_at.gte]": today_after_n_days(
+                    -(settings.FINDINGS_MAX_DAYS_IN_RANGE + 1)
+                ),
+                "filter[updated_at.lte]": TODAY,
+            },
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.json()["errors"][0]["code"] == "invalid"
+        assert response.json()["errors"][0]["source"]["pointer"] == (
+            "/data/attributes/updated_at"
+        )
+
     def test_findings_list(self, authenticated_client, findings_fixture):
         response = authenticated_client.get(
             reverse("finding-list"), {"filter[inserted_at]": TODAY}
@@ -7170,6 +7313,170 @@ class TestFindingViewSet:
             response.json()["data"][0]["attributes"]["status"]
             == findings_fixture[0].status
         )
+
+    def test_findings_list_inserted_at_accepts_timestamp_precision_filters(
+        self, authenticated_client, scans_fixture
+    ):
+        scan, *_ = scans_fixture
+
+        def create_finding(uid, inserted_at):
+            finding = Finding.objects.create(
+                id=datetime_to_uuid7(inserted_at),
+                tenant_id=scan.tenant_id,
+                uid=uid,
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="timestamp precision status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="timestamp_precision_check",
+                check_metadata={
+                    "CheckId": "timestamp_precision_check",
+                    "Description": "timestamp precision check",
+                    "servicename": "ec2",
+                },
+                first_seen_at=inserted_at,
+            )
+            Finding.all_objects.filter(pk=finding.pk).update(
+                inserted_at=inserted_at,
+                updated_at=inserted_at,
+            )
+            finding.refresh_from_db()
+            return finding
+
+        create_finding(
+            "timestamp_precision_early",
+            datetime(2026, 1, 15, 10, 30, 0, 100000, tzinfo=UTC),
+        )
+        late_finding = create_finding(
+            "timestamp_precision_late",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {"filter[inserted_at]": "2026-01-15T10:30:00.200Z"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+    def test_findings_list_updated_at_accepts_timestamp_precision_filters(
+        self, authenticated_client, findings_fixture
+    ):
+        early_finding, late_finding, *_ = findings_fixture
+        early_updated_at = datetime(2026, 1, 15, 10, 30, 0, 100000, tzinfo=UTC)
+        late_updated_at = datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC)
+        Finding.all_objects.filter(pk=early_finding.pk).update(
+            updated_at=early_updated_at
+        )
+        Finding.all_objects.filter(pk=late_finding.pk).update(
+            updated_at=late_updated_at
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[updated_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T10:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {"filter[updated_at]": "2026-01-15T10:30:00.200Z"},
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {late_finding.uid}
+
+    def test_findings_list_inserted_at_and_updated_at_filters_are_combined(
+        self, authenticated_client, scans_fixture
+    ):
+        scan, *_ = scans_fixture
+
+        def create_finding(uid, inserted_at, updated_at):
+            finding = Finding.objects.create(
+                id=datetime_to_uuid7(inserted_at),
+                tenant_id=scan.tenant_id,
+                uid=uid,
+                scan=scan,
+                status=Status.FAIL,
+                status_extended="timestamp precision status",
+                impact=Severity.medium,
+                severity=Severity.medium,
+                check_id="timestamp_precision_check",
+                check_metadata={
+                    "CheckId": "timestamp_precision_check",
+                    "Description": "timestamp precision check",
+                    "servicename": "ec2",
+                },
+                first_seen_at=inserted_at,
+            )
+            Finding.all_objects.filter(pk=finding.pk).update(
+                inserted_at=inserted_at,
+                updated_at=updated_at,
+            )
+            finding.refresh_from_db()
+            return finding
+
+        matching_finding = create_finding(
+            "timestamp_precision_combined_match",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 11, 30, 0, 200000, tzinfo=UTC),
+        )
+        create_finding(
+            "timestamp_precision_combined_inserted_only",
+            datetime(2026, 1, 15, 10, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 12, 30, 0, 200000, tzinfo=UTC),
+        )
+        create_finding(
+            "timestamp_precision_combined_updated_only",
+            datetime(2026, 1, 15, 9, 30, 0, 200000, tzinfo=UTC),
+            datetime(2026, 1, 15, 11, 30, 0, 200000, tzinfo=UTC),
+        )
+
+        response = authenticated_client.get(
+            reverse("finding-list"),
+            {
+                "filter[inserted_at.gte]": "2026-01-15T10:30:00.150Z",
+                "filter[inserted_at.lte]": "2026-01-15T10:30:00.250Z",
+                "filter[updated_at.gte]": "2026-01-15T11:30:00.150Z",
+                "filter[updated_at.lte]": "2026-01-15T11:30:00.250Z",
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        returned_uids = {
+            finding["attributes"]["uid"] for finding in response.json()["data"]
+        }
+        assert returned_uids == {matching_finding.uid}
 
     def test_findings_list_resource_tags_no_n_plus_one(
         self, authenticated_client, findings_fixture
@@ -7266,9 +7573,9 @@ class TestFindingViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "filter_name, filter_value, expected_count",
@@ -7553,9 +7860,8 @@ class TestFindingViewSet:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_findings_metadata_retrieve(
-        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
-    ):
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
+    def test_findings_metadata_retrieve(self, authenticated_client, findings_fixture):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
             reverse("finding-metadata"),
@@ -7578,8 +7884,9 @@ class TestFindingViewSet:
         )
         # assert data["data"]["attributes"]["tags"] == expected_tags
 
+    @pytest.mark.usefixtures("backfill_scan_metadata_fixture")
     def test_findings_metadata_resource_filter_retrieve(
-        self, authenticated_client, findings_fixture, backfill_scan_metadata_fixture
+        self, authenticated_client, findings_fixture
     ):
         finding_1, *_ = findings_fixture
         response = authenticated_client.get(
@@ -7635,6 +7942,23 @@ class TestFindingViewSet:
                 }
             ]
         }
+
+    @pytest.mark.parametrize(
+        "filter_name",
+        ["inserted_at", "inserted_at.gte", "inserted_at.lte"],
+    )
+    def test_findings_metadata_rejects_timestamp_precision_filters(
+        self, authenticated_client, filter_name
+    ):
+        response = authenticated_client.get(
+            reverse("finding-metadata"),
+            {f"filter[{filter_name}]": "2048-01-01T10:30:00Z"},
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        error = response.json()["errors"][0]
+        assert error["detail"] == "Enter a valid date."
+        assert error["code"] == "invalid"
 
     def test_findings_metadata_backfill(
         self, authenticated_client, scans_fixture, findings_fixture
@@ -7748,9 +8072,8 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "security"}
 
-    def test_findings_metadata_latest_categories(
-        self, authenticated_client, latest_scan_finding_with_categories
-    ):
+    @pytest.mark.usefixtures("latest_scan_finding_with_categories")
+    def test_findings_metadata_latest_categories(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-metadata_latest"),
         )
@@ -7758,9 +8081,8 @@ class TestFindingViewSet:
         attributes = response.json()["data"]["attributes"]
         assert set(attributes["categories"]) == {"gen-ai", "iam"}
 
-    def test_findings_metadata_latest_groups(
-        self, authenticated_client, latest_scan_finding_with_categories
-    ):
+    @pytest.mark.usefixtures("latest_scan_finding_with_categories")
+    def test_findings_metadata_latest_groups(self, authenticated_client):
         response = authenticated_client.get(
             reverse("finding-metadata_latest"),
         )
@@ -7867,9 +8189,9 @@ class TestJWTFields:
             reverse("token-obtain"), data, format="json"
         )
 
-        assert (
-            response.status_code == status.HTTP_200_OK
-        ), f"Unexpected status code: {response.status_code}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Unexpected status code: {response.status_code}"
+        )
 
         access_token = response.data["attributes"]["access"]
         payload = jwt.decode(access_token, options={"verify_signature": False})
@@ -7883,28 +8205,28 @@ class TestJWTFields:
         # Verify expected fields
         for field in expected_fields:
             assert field in payload, f"The field '{field}' is not in the JWT"
-            assert (
-                payload[field] == expected_fields[field]
-            ), f"The value of '{field}' does not match"
+            assert payload[field] == expected_fields[field], (
+                f"The value of '{field}' does not match"
+            )
 
         # Verify time fields are integers
         for time_field in ["exp", "iat", "nbf"]:
             assert time_field in payload, f"The field '{time_field}' is not in the JWT"
-            assert isinstance(
-                payload[time_field], int
-            ), f"The field '{time_field}' is not an integer"
+            assert isinstance(payload[time_field], int), (
+                f"The field '{time_field}' is not an integer"
+            )
 
         # Verify identification fields are non-empty strings
         for id_field in ["jti", "sub", "tenant_id"]:
             assert id_field in payload, f"The field '{id_field}' is not in the JWT"
-            assert (
-                isinstance(payload[id_field], str) and payload[id_field]
-            ), f"The field '{id_field}' is not a valid string"
+            assert isinstance(payload[id_field], str) and payload[id_field], (
+                f"The field '{id_field}' is not a valid string"
+            )
 
 
 @pytest.mark.django_db
 class TestInvitationViewSet:
-    TOMORROW = datetime.now(timezone.utc) + timedelta(days=1, hours=1)
+    TOMORROW = datetime.now(UTC) + timedelta(days=1, hours=1)
     TOMORROW_ISO = TOMORROW.isoformat()
 
     def test_invitations_list(self, authenticated_client, invitations_fixture):
@@ -8027,9 +8349,7 @@ class TestInvitationViewSet:
                 "type": "invitations",
                 "attributes": {
                     "email": "thisisarandomemail@prowler.com",
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8056,7 +8376,7 @@ class TestInvitationViewSet:
         invitation, *_ = invitations_fixture
         role1, role2, *_ = roles_fixture
         new_email = "new_email@prowler.com"
-        new_expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+        new_expires_at = datetime.now(UTC) + timedelta(days=7)
         new_expires_at_iso = new_expires_at.isoformat()
         data = {
             "data": {
@@ -8143,9 +8463,7 @@ class TestInvitationViewSet:
                 "id": str(invitation.id),
                 "type": "invitations",
                 "attributes": {
-                    "expires_at": (
-                        datetime.now(timezone.utc) + timedelta(hours=23)
-                    ).isoformat(),
+                    "expires_at": (datetime.now(UTC) + timedelta(hours=23)).isoformat(),
                 },
             }
         }
@@ -8284,16 +8602,14 @@ class TestInvitationViewSet:
             expires_at=self.TOMORROW,
         )
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         assert not Membership.objects.filter(
             user__email__iexact=user.email, tenant=tenant
         ).exists()
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
         assert response.status_code == status.HTTP_201_CREATED
         invitation.refresh_from_db()
@@ -8302,13 +8618,46 @@ class TestInvitationViewSet:
         ).exists()
         assert invitation.state == Invitation.State.ACCEPTED.value
 
-    def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
-        data = {
-            "invitation_token": "invalid_token",
-        }
+    def test_invitations_accept_invitation_existing_membership(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+    ):
+        *_, tenant = tenants_fixture
+        user = create_test_user
+
+        invitation = Invitation.objects.create(
+            tenant=tenant,
+            email=TEST_USER,
+            inviter=user,
+            expires_at=self.TOMORROW,
+        )
+        Membership.objects.create(user=user, tenant=tenant)
+
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"),
+            data=data,
+            format="vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.ACCEPTED.value
+        assert (
+            Membership.objects.filter(
+                user__email__iexact=user.email, tenant=tenant
+            ).count()
+            == 1
+        )
+
+    def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
+        data = {"invitation_token": "invalid_token"}
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -8318,16 +8667,14 @@ class TestInvitationViewSet:
         self, authenticated_client, invitations_fixture
     ):
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_410_GONE
@@ -8337,7 +8684,7 @@ class TestInvitationViewSet:
     ):
         new_email = "new_email@prowler.com"
         invitation, *_ = invitations_fixture
-        invitation.expires_at = datetime.now(timezone.utc) - timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) - timedelta(days=1)
         invitation.email = new_email
         invitation.save()
 
@@ -8363,12 +8710,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -8386,12 +8731,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -9433,8 +9776,8 @@ class TestComplianceOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant_id=provider.tenant_id,
-            started_at=datetime.now(timezone.utc),
-            completed_at=datetime.now(timezone.utc),
+            started_at=datetime.now(UTC),
+            completed_at=datetime.now(UTC),
         )
 
     def _create_requirement(
@@ -10122,7 +10465,7 @@ class TestComplianceOverviewViewSet:
         assert gcp_provider.provider == Provider.ProviderChoices.GCP.value
         assert azure_provider.provider == Provider.ProviderChoices.AZURE.value
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         gcp_scan = Scan.objects.create(
             name="gcp scan",
             provider=gcp_provider,
@@ -10251,7 +10594,7 @@ class TestComplianceOverviewViewSet:
             provider_group=provider_group,
         )
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         allowed_scan = Scan.objects.create(
             name="allowed scan",
             provider=allowed_provider,
@@ -10467,9 +10810,8 @@ class TestOverviewViewSet:
         response = authenticated_client.put(reverse("overview-list"))
         assert response.status_code == status.HTTP_405_METHOD_NOT_ALLOWED
 
-    def test_overview_providers_list(
-        self, authenticated_client, scan_summaries_fixture, resources_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_providers_list(self, authenticated_client, resources_fixture):
         response = authenticated_client.get(reverse("overview-providers"))
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 1
@@ -10480,10 +10822,10 @@ class TestOverviewViewSet:
         # Aggregated resources include all AWS providers present in the tenant
         assert response.json()["data"][0]["attributes"]["resources"]["total"] == 3
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overview_providers_aggregates_same_provider_type(
         self,
         authenticated_client,
-        scan_summaries_fixture,
         resources_fixture,
         providers_fixture,
         tenants_fixture,
@@ -10534,10 +10876,10 @@ class TestOverviewViewSet:
         assert attributes["findings"]["muted"] == 7
         assert attributes["resources"]["total"] == 4
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overview_providers_count(
         self,
         authenticated_client,
-        scan_summaries_fixture,
         resources_fixture,
         providers_fixture,
         tenants_fixture,
@@ -10603,7 +10945,7 @@ class TestOverviewViewSet:
         assert denied_provider.provider not in aggregated
 
     def _create_scan(self, tenant, provider, name, started_at=None):
-        scan_started = started_at or datetime.now(timezone.utc) - timedelta(hours=1)
+        scan_started = started_at or datetime.now(UTC) - timedelta(hours=1)
         return Scan.objects.create(
             tenant=tenant,
             provider=provider,
@@ -10746,8 +11088,8 @@ class TestOverviewViewSet:
             failed_findings=35,
         )
 
-        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=timezone.utc)
-        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=timezone.utc)
+        older_inserted = datetime(2025, 1, 1, 12, 0, tzinfo=UTC)
+        newer_inserted = datetime(2025, 1, 2, 12, 0, tzinfo=UTC)
         ThreatScoreSnapshot.objects.filter(id=snapshot1.id).update(
             inserted_at=older_inserted
         )
@@ -11003,15 +11345,15 @@ class TestOverviewViewSet:
         assert data[0]["id"] == str(snapshot1.id)
         assert data[0]["attributes"]["overall_score"] == "55.55"
 
-    def test_overview_services_list_no_required_filters(
-        self, authenticated_client, scan_summaries_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_list_no_required_filters(self, authenticated_client):
         response = authenticated_client.get(reverse("overview-services"))
         assert response.status_code == status.HTTP_200_OK
         # Should return services from latest scans
         assert len(response.json()["data"]) == 2
 
-    def test_overview_regions_list(self, authenticated_client, scan_summaries_fixture):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_regions_list(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-regions"), {"filter[inserted_at]": TODAY}
         )
@@ -11037,7 +11379,8 @@ class TestOverviewViewSet:
         assert regions["aws:region2"]["fail"] == 1
         assert regions["aws:region2"]["muted"] == 3
 
-    def test_overview_services_list(self, authenticated_client, scan_summaries_fixture):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_list(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-services"), {"filter[inserted_at]": TODAY}
         )
@@ -11366,7 +11709,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 1, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create scan for day 3
@@ -11376,7 +11719,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 1, 3, 12, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for day 1
@@ -11449,7 +11792,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-scan-p2",
@@ -11457,7 +11800,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 2, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Create DailySeveritySummary for provider1
@@ -11521,7 +11864,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 12, 0, 0, tzinfo=UTC),
         )
         scan2 = Scan.objects.create(
             name="severity-over-time-filter-scan-p2",
@@ -11529,7 +11872,7 @@ class TestOverviewViewSet:
             trigger=Scan.TriggerChoices.MANUAL,
             state=StateChoices.COMPLETED,
             tenant=tenant,
-            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=timezone.utc),
+            completed_at=datetime(2024, 3, 1, 14, 0, 0, tzinfo=UTC),
         )
 
         # Provider 1 - critical=100
@@ -11685,9 +12028,8 @@ class TestOverviewViewSet:
         assert results_by_type["internet-exposed"]["total_findings"] == 10
         assert results_by_type["internet-exposed"]["failed_findings"] == 5
 
-    def test_overview_services_region_filter(
-        self, authenticated_client, scan_summaries_fixture
-    ):
+    @pytest.mark.usefixtures("scan_summaries_fixture")
+    def test_overview_services_region_filter(self, authenticated_client):
         response = authenticated_client.get(
             reverse("overview-services"),
             {"filter[region]": "region1"},
@@ -11755,7 +12097,7 @@ class TestOverviewViewSet:
         assert "gcp-service" not in service_ids
 
     @pytest.mark.parametrize(
-        "status_filter,field_to_check",
+        "status_filter,_field_to_check",
         [
             ("FAIL", "fail"),
             ("PASS", "_pass"),
@@ -11767,7 +12109,7 @@ class TestOverviewViewSet:
         tenants_fixture,
         providers_fixture,
         status_filter,
-        field_to_check,
+        _field_to_check,
     ):
         tenant = tenants_fixture[0]
         provider = providers_fixture[0]
@@ -12407,8 +12749,9 @@ class TestOverviewViewSet:
         assert data[0]["attributes"]["new_failed_findings"] == 5
         assert data[0]["attributes"]["resources_count"] == 10
 
+    @pytest.mark.usefixtures("tenant_compliance_summary_fixture")
     def test_compliance_watchlist_no_filters_uses_tenant_summary(
-        self, authenticated_client, tenant_compliance_summary_fixture
+        self, authenticated_client
     ):
         response = authenticated_client.get(reverse("overview-compliance-watchlist"))
         assert response.status_code == status.HTTP_200_OK
@@ -12428,10 +12771,10 @@ class TestOverviewViewSet:
         assert by_id["gdpr_aws"]["requirements_failed"] == 0
         assert by_id["gdpr_aws"]["total_requirements"] == 7
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_with_provider_filter_uses_provider_scores(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
     ):
         provider1 = providers_fixture[0]
@@ -12448,9 +12791,8 @@ class TestOverviewViewSet:
         assert by_id["aws_cis_2.0"]["requirements_manual"] == 1
         assert by_id["aws_cis_2.0"]["total_requirements"] == 3
 
-    def test_compliance_watchlist_fail_dominant_logic(
-        self, authenticated_client, provider_compliance_scores_fixture
-    ):
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
+    def test_compliance_watchlist_fail_dominant_logic(self, authenticated_client):
         response = authenticated_client.get(
             f"{reverse('overview-compliance-watchlist')}?filter[provider_type]=aws"
         )
@@ -12465,10 +12807,10 @@ class TestOverviewViewSet:
         assert aws_cis["requirements_manual"] == 1
         assert aws_cis["total_requirements"] == 3
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_provider_id_in_filter(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
     ):
         provider1, provider2, *_ = providers_fixture
@@ -12481,10 +12823,10 @@ class TestOverviewViewSet:
         data = response.json()["data"]
         assert len(data) >= 1
 
+    @pytest.mark.usefixtures("provider_compliance_scores_fixture")
     def test_compliance_watchlist_provider_groups_filter(
         self,
         authenticated_client,
-        provider_compliance_scores_fixture,
         providers_fixture,
         provider_groups_fixture,
         tenants_fixture,
@@ -12658,9 +13000,9 @@ class TestIntegrationViewSet:
 
         included_data = response.json()["included"]
         for expected_type in expected_resources:
-            assert any(
-                d.get("type") == expected_type for d in included_data
-            ), f"Expected type '{expected_type}' not found in included data"
+            assert any(d.get("type") == expected_type for d in included_data), (
+                f"Expected type '{expected_type}' not found in included data"
+            )
 
     @pytest.mark.parametrize(
         "integration_type, configuration, credentials",
@@ -13325,7 +13667,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=valid_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -13351,7 +13693,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=expired_token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+            expires_at=datetime.now(UTC) - timedelta(seconds=1),
         )
 
         url = reverse("token-saml")
@@ -13370,7 +13712,7 @@ class TestSAMLTokenValidation:
         saml_token = SAMLToken.objects.create(
             token=token_data,
             user=user,
-            expires_at=datetime.now(timezone.utc) + timedelta(seconds=10),
+            expires_at=datetime.now(UTC) + timedelta(seconds=10),
         )
 
         url = reverse("token-saml")
@@ -13385,6 +13727,26 @@ class TestSAMLTokenValidation:
 
 
 @pytest.mark.django_db
+class TestCustomSAMLLoginView:
+    def test_dispatch_clears_stale_callback_url_when_request_has_none(self):
+        request = RequestFactory().get("/api/v1/saml/login/testtenant/")
+        request.session = {
+            "saml_callback_url": "/invitation/accept?invitation_token=old-token"
+        }
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.LoginView.dispatch",
+            return_value=JsonResponse({}),
+        ):
+            response = CustomSAMLLoginView.as_view()(
+                request, organization_slug="testtenant"
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "saml_callback_url" not in request.session
+
+
+@pytest.mark.django_db
 class TestSAMLInitiateAPIView:
     def test_valid_email_domain_and_certificates(
         self, authenticated_client, saml_setup, monkeypatch
@@ -13395,7 +13757,7 @@ class TestSAMLInitiateAPIView:
         url = reverse("api_saml_initiate")
         payload = {"email_domain": saml_setup["email"]}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_302_FOUND
         assert (
@@ -13404,11 +13766,42 @@ class TestSAMLInitiateAPIView:
         )
         assert "SAMLRequest" not in response.url
 
+    def test_valid_email_domain_preserves_safe_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": callback_url,
+        }
+
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert query_params["callback_url"] == [callback_url]
+
+    def test_valid_email_domain_rejects_external_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": "https://attacker.example/invitation",
+        }
+
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert "callback_url" not in query_params
+
     def test_invalid_email_domain(self, authenticated_client):
         url = reverse("api_saml_initiate")
         payload = {"email_domain": "user@unauthorized.com"}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()["errors"]["detail"] == "Unauthorized domain."
@@ -13591,7 +13984,8 @@ class TestTenantFinishACSView:
             )
         )
         request.user = user
-        request.session = {}
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        request.session = {"saml_callback_url": callback_url}
 
         with (
             patch(
@@ -13633,6 +14027,7 @@ class TestTenantFinishACSView:
         assert parsed_url.netloc == expected_callback_host
         query_params = parse_qs(parsed_url.query)
         assert "id" in query_params
+        assert query_params["callbackUrl"] == [callback_url]
 
         token_id = query_params["id"][0]
         token_obj = SAMLToken.objects.get(id=token_id)
@@ -14368,9 +14763,9 @@ class TestLighthouseConfigViewSet:
         )
         # Check that API key is masked with asterisks only
         masked_api_key = data["attributes"]["api_key"]
-        assert all(
-            c == "*" for c in masked_api_key
-        ), "API key should contain only asterisks"
+        assert all(c == "*" for c in masked_api_key), (
+            "API key should contain only asterisks"
+        )
 
     @pytest.mark.parametrize(
         "field_name, invalid_value",
@@ -18036,10 +18431,10 @@ class TestFindingGroupViewSet:
         ],
         ids=["summary_path", "finding_level_path"],
     )
+    @pytest.mark.usefixtures("finding_groups_title_variants_fixture")
     def test_check_title_icontains_includes_all_title_variants(
         self,
         authenticated_client,
-        finding_groups_title_variants_fixture,
         extra_filters,
     ):
         """
@@ -18159,9 +18554,9 @@ class TestFindingGroupViewSet:
         assert len(data) == 2
         for item in data:
             resource = item["attributes"]["resource"]
-            assert (
-                resource["resource_group"] == "storage"
-            ), "resource_group must be 'storage'"
+            assert resource["resource_group"] == "storage", (
+                "resource_group must be 'storage'"
+            )
 
     def test_resources_name_icontains(
         self, authenticated_client, finding_groups_fixture
@@ -18475,12 +18870,12 @@ class TestFindingGroupViewSet:
         assert response_p1.status_code == status.HTTP_200_OK
         p1_check_ids = {item["id"] for item in response_p1.json()["data"]}
         # Provider1 has scan1 with 4 checks
-        assert (
-            len(p1_check_ids) == 4
-        ), f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
-        assert (
-            "cloudtrail_enabled" not in p1_check_ids
-        ), "cloudtrail_enabled should NOT be in provider1"
+        assert len(p1_check_ids) == 4, (
+            f"Provider1 should have 4 checks, got {len(p1_check_ids)}"
+        )
+        assert "cloudtrail_enabled" not in p1_check_ids, (
+            "cloudtrail_enabled should NOT be in provider1"
+        )
 
         # Get finding groups for provider2 only
         response_p2 = authenticated_client.get(
@@ -18490,12 +18885,12 @@ class TestFindingGroupViewSet:
         assert response_p2.status_code == status.HTTP_200_OK
         p2_check_ids = {item["id"] for item in response_p2.json()["data"]}
         # Provider2 has scan2 with 1 check
-        assert (
-            len(p2_check_ids) == 1
-        ), f"Provider2 should have 1 check, got {len(p2_check_ids)}"
-        assert (
-            "cloudtrail_enabled" in p2_check_ids
-        ), "cloudtrail_enabled should be in provider2"
+        assert len(p2_check_ids) == 1, (
+            f"Provider2 should have 1 check, got {len(p2_check_ids)}"
+        )
+        assert "cloudtrail_enabled" in p2_check_ids, (
+            "cloudtrail_enabled should be in provider2"
+        )
 
     # Test provider_type filter actually filters data
     def test_finding_groups_provider_type_filter_actually_filters(
@@ -18518,9 +18913,9 @@ class TestFindingGroupViewSet:
             {"filter[inserted_at]": TODAY, "filter[provider_type]": "gcp"},
         )
         assert response_gcp.status_code == status.HTTP_200_OK
-        assert (
-            len(response_gcp.json()["data"]) == 0
-        ), "GCP filter should return 0 results"
+        assert len(response_gcp.json()["data"]) == 0, (
+            "GCP filter should return 0 results"
+        )
 
     def test_finding_groups_pagination(
         self, authenticated_client, finding_groups_fixture
@@ -18786,7 +19181,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         latest_scan_provider2 = Scan.objects.create(
@@ -18794,7 +19189,7 @@ class TestFindingGroupViewSet:
             provider=provider2,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(UTC),
         )
 
         older_scan_provider1 = Scan.objects.create(
@@ -18802,7 +19197,7 @@ class TestFindingGroupViewSet:
             provider=provider1,
             state=StateChoices.COMPLETED,
             trigger=Scan.TriggerChoices.MANUAL,
-            completed_at=datetime.now(timezone.utc) - timedelta(days=1),
+            completed_at=datetime.now(UTC) - timedelta(days=1),
         )
 
         # Older scan — these should be excluded from /latest
@@ -18816,7 +19211,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(days=2),
+            first_seen_at=datetime.now(UTC) - timedelta(days=2),
             muted=False,
         )
 
@@ -18831,7 +19226,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_pass.add_resources([resource1])
@@ -18846,7 +19241,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p1_fail.add_resources([resource2])
@@ -18862,7 +19257,7 @@ class TestFindingGroupViewSet:
             impact="high",
             check_id=check_id,
             check_metadata={"CheckId": check_id, "checktitle": "Cross provider check"},
-            first_seen_at=datetime.now(timezone.utc) - timedelta(hours=1),
+            first_seen_at=datetime.now(UTC) - timedelta(hours=1),
             muted=False,
         )
         latest_p2.add_resources([resource3])
@@ -19396,7 +19791,7 @@ class TestFindingGroupViewSet:
         resource = resources_fixture[0]
         check_id = "overlap_regression_check"
 
-        t0 = datetime.now(timezone.utc) - timedelta(hours=5)
+        t0 = datetime.now(UTC) - timedelta(hours=5)
         t1 = t0 + timedelta(hours=1)
         t1_end = t1 + timedelta(minutes=30)
         t2 = t0 + timedelta(hours=4)

@@ -143,7 +143,6 @@ export default defineConfig(() => {
         "clsx",
         "tailwind-merge",
         "class-variance-authority",
-        "tailwind-variants",
 
         // App-level deps the page (or its children) pull in
         "@tanstack/react-table",

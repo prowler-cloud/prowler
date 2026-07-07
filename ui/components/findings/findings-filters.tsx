@@ -14,12 +14,14 @@ import {
   FilterSummaryStrip,
 } from "@/components/filters/filter-summary-strip";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { Button } from "@/components/shadcn";
 import { ExpandableSection } from "@/components/shadcn/expandable-section";
 import { DataTableFilterCustom } from "@/components/shadcn/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { FilterType, ScanEntity } from "@/types";
+import { FILTER_FIELD, ScanEntity } from "@/types";
+import { ProviderGroup } from "@/types/components";
 import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
@@ -31,6 +33,8 @@ import {
 interface FindingsFiltersProps {
   /** Provider data for provider/account filter controls. */
   providers: ProviderProps[];
+  /** Provider groups for the provider group filter control. */
+  providerGroups?: ProviderGroup[];
   completedScanIds: string[];
   scanDetails: { [key: string]: ScanEntity }[];
   uniqueRegions: string[];
@@ -70,6 +74,10 @@ const FILTER_GRID_ITEM_CLASS = "min-w-0";
 
 export const FindingsFilterBatchControls = ({
   providers,
+  // Undefined = caller opted out (the alert editor shares this component but
+  // loads no groups); an empty array still renders the control, so it stays
+  // visible even when a tenant has no groups yet.
+  providerGroups,
   completedScanIds,
   scanDetails,
   uniqueRegions,
@@ -97,7 +105,7 @@ export const FindingsFilterBatchControls = ({
 
   const customFilters = [
     ...filterFindings
-      .filter((filter) => !isAlertsEdit || filter.key !== FilterType.STATUS)
+      .filter((filter) => !isAlertsEdit || filter.key !== FILTER_FIELD.STATUS)
       .map((filter) => ({
         ...filter,
         labelFormatter: (value: string) =>
@@ -107,32 +115,32 @@ export const FindingsFilterBatchControls = ({
           }),
       })),
     {
-      key: FilterType.REGION,
+      key: FILTER_FIELD.REGION,
       labelCheckboxGroup: "Regions",
       values: uniqueRegions,
       index: 3,
     },
     {
-      key: FilterType.SERVICE,
+      key: FILTER_FIELD.SERVICE,
       labelCheckboxGroup: "Services",
       values: uniqueServices,
       index: 4,
     },
     {
-      key: FilterType.RESOURCE_TYPE,
+      key: FILTER_FIELD.RESOURCE_TYPE,
       labelCheckboxGroup: "Resource Type",
       values: uniqueResourceTypes,
       index: 8,
     },
     {
-      key: FilterType.CATEGORY,
+      key: FILTER_FIELD.CATEGORY,
       labelCheckboxGroup: "Category",
       values: uniqueCategories,
       labelFormatter: getCategoryLabel,
       index: 5,
     },
     {
-      key: FilterType.RESOURCE_GROUPS,
+      key: FILTER_FIELD.RESOURCE_GROUPS,
       labelCheckboxGroup: "Resource Group",
       values: uniqueGroups,
       labelFormatter: getGroupLabel,
@@ -142,14 +150,14 @@ export const FindingsFilterBatchControls = ({
       ? []
       : [
           {
-            key: FilterType.SCAN,
+            key: FILTER_FIELD.SCAN,
             labelCheckboxGroup: "Scan ID",
             values: completedScanIds,
             width: "wide" as const,
             valueLabelMapping: scanDetails,
             labelFormatter: (value: string) =>
               getFindingsFilterDisplayValue(
-                `filter[${FilterType.SCAN}]`,
+                `filter[${FILTER_FIELD.SCAN}]`,
                 value,
                 {
                   providers,
@@ -167,6 +175,7 @@ export const FindingsFilterBatchControls = ({
     appliedFilters,
     {
       providers,
+      providerGroups,
       scans: scanDetails,
     },
   );
@@ -174,6 +183,7 @@ export const FindingsFilterBatchControls = ({
     changedFilters,
     {
       providers,
+      providerGroups,
       scans: scanDetails,
     },
   );
@@ -199,15 +209,26 @@ export const FindingsFilterBatchControls = ({
       : undefined;
 
   const providerAccountControls = (className: string) => (
-    <ProviderAccountSelectors
-      providers={providers}
-      mode="batch"
-      selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
-      selectedAccounts={getFilterValue("filter[provider_id__in]")}
-      onBatchChange={setPending}
-      providerSelectorClassName={className}
-      accountSelectorClassName={className}
-    />
+    <>
+      <ProviderAccountSelectors
+        providers={providers}
+        mode="batch"
+        selectedProviderTypes={getFilterValue("filter[provider_type__in]")}
+        selectedAccounts={getFilterValue("filter[provider_id__in]")}
+        onBatchChange={setPending}
+        providerSelectorClassName={className}
+        accountSelectorClassName={className}
+      />
+      {providerGroups !== undefined && (
+        <div className={className}>
+          <ProviderGroupSelector
+            groups={providerGroups}
+            selectedValues={getFilterValue("filter[provider_groups__in]")}
+            onBatchChange={setPending}
+          />
+        </div>
+      )}
+    </>
   );
 
   const alertEditFilterGrid = hasCustomFilters ? (

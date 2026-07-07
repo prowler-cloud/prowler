@@ -39,6 +39,7 @@ describe("isOcsfSupported", () => {
   it("returns true for universal frameworks shipping an OCSF artifact", () => {
     expect(isOcsfSupported("dora_2022_2554")).toBe(true);
     expect(isOcsfSupported("csa_ccm_4.0")).toBe(true);
+    expect(isOcsfSupported("cis_controls_8.1")).toBe(true);
   });
 
   it("returns false for legacy/per-provider frameworks without OCSF output", () => {

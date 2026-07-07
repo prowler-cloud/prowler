@@ -1,23 +1,6 @@
 import base64
 import json
-from datetime import datetime, timedelta, timezone
-
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import update_last_login
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema_field
-from jwt.exceptions import InvalidKeyError
-from rest_framework.reverse import reverse
-from rest_framework.validators import UniqueTogetherValidator
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
-from rest_framework_json_api.serializers import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
+from datetime import UTC, datetime, timedelta
 
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
@@ -72,7 +55,23 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
+from drf_spectacular.utils import extend_schema_field
+from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from rest_framework.reverse import reverse
+from rest_framework.validators import UniqueTogetherValidator
+from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
+from rest_framework_json_api.serializers import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Base
 
@@ -1981,7 +1980,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
         return value
 
     def validate_expires_at(self, value):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if value and value < now + timedelta(hours=24):
             raise ValidationError(
                 "Expiry date must be at least 24 hours in the future."
@@ -3148,6 +3147,9 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 
 class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
+    callback_url = serializers.CharField(
+        required=False, allow_blank=True, max_length=2048
+    )
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"

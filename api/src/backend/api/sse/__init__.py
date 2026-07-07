@@ -7,7 +7,7 @@ enforces the tenant gate (:class:`api.sse.channelmanager.SSEChannelManager`),
 and the channel-name helpers (:func:`api.sse.utils.make_channel_name`).
 """
 
-from api.sse.utils import make_channel_name
 from api.sse.base_views import BaseSSEViewSet
+from api.sse.utils import make_channel_name
 
 __all__ = ["BaseSSEViewSet", "make_channel_name"]

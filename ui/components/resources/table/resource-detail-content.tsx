@@ -4,6 +4,10 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
@@ -31,8 +35,10 @@ import { EventsTimeline } from "@/components/shared/events-timeline/events-timel
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { getGroupLabel } from "@/lib/categories";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 import {
   getResourceFindingsColumns,
@@ -103,6 +109,7 @@ export const ResourceDetailContent = ({
     hasInitiallyLoaded,
     providerOrg,
     resourceTags,
+    patchTriageUpdate,
   } = useResourceDrawerBootstrap({
     resourceId,
     resourceUid: attributes.uid,
@@ -143,6 +150,17 @@ export const ResourceDetailContent = ({
     if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
   };
 
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    await updateFindingTriage(input);
+
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      setFindingsReloadNonce((value) => value + 1);
+      return;
+    }
+
+    patchTriageUpdate(input);
+  };
+
   const failedFindings = findingsData;
 
   const selectableRowCount = failedFindings.filter(
@@ -164,6 +182,8 @@ export const ResourceDetailContent = ({
     selectableRowCount,
     navigateToFinding,
     handleMuteComplete,
+    handleTriageUpdate,
+    loadLatestFindingTriageNote,
   );
 
   const findingTitle =

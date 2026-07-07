@@ -16,6 +16,10 @@ vi.mock("@/app/(prowler)/_overview/_components/provider-type-selector", () => ({
   ProviderTypeSelector: () => <div>Provider type selector</div>,
 }));
 
+vi.mock("@/components/filters/provider-group-selector", () => ({
+  ProviderGroupSelector: () => <div>Provider group selector</div>,
+}));
+
 vi.mock("@/components/filters/clear-filters-button", () => ({
   ClearFiltersButton: () => <button type="button">Clear</button>,
 }));

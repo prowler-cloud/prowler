@@ -40,6 +40,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Renaming or removing a data-tour-id attribute value               | `prowler-tour`      |
 | Restructuring routes or layouts covered by a tour                 | `prowler-tour`      |
 | Review changelog format and conventions                           | `prowler-changelog` |
+| Reviewing Prowler UI components                                   | `prowler-ui`        |
 | Testing hooks or utilities                                        | `vitest`            |
 | Update CHANGELOG.md in any component                              | `prowler-changelog` |
 | Using Zustand stores                                              | `zustand-5`         |

@@ -12,12 +12,11 @@ import uuid
 from unittest.mock import MagicMock
 
 import pytest
-from django.http import StreamingHttpResponse
-from rest_framework.test import APIRequestFactory, force_authenticate
-
 from api.sse.base_views import BaseSSEViewSet
 from api.sse.channelmanager import SSEChannelManager
 from api.sse.utils import make_channel_name, tenant_id_from_channel
+from django.http import StreamingHttpResponse
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 
 class TestMakeChannel:

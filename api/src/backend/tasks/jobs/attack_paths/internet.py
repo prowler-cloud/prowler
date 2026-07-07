@@ -7,11 +7,9 @@ in the temporary scan database before sync.
 """
 
 import neo4j
-
+from api.models import Provider
 from cartography.config import Config as CartographyConfig
 from celery.utils.log import get_task_logger
-
-from api.models import Provider
 from prowler.config import config as ProwlerConfig
 from tasks.jobs.attack_paths.config import get_root_node_label
 from tasks.jobs.attack_paths.queries import (

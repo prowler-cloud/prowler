@@ -38,7 +38,8 @@ vi.mock("@/components/ThemeSwitch", () => ({
   ThemeSwitch: () => <button type="button">Theme switch</button>,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   BreadcrumbNavigation: ({
     title,
     titleAction,

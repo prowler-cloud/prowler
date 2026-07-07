@@ -1,10 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BreadcrumbNavigation } from "./breadcrumb-navigation";
 
+const navigationMock = vi.hoisted(() => ({
+  pathname: "/findings",
+}));
+
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/findings",
+  usePathname: () => navigationMock.pathname,
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -13,6 +17,10 @@ vi.mock("@iconify/react", () => ({
 }));
 
 describe("BreadcrumbNavigation", () => {
+  afterEach(() => {
+    navigationMock.pathname = "/findings";
+  });
+
   it("renders the title action next to the current breadcrumb title", () => {
     // Given / When
     render(
@@ -29,6 +37,27 @@ describe("BreadcrumbNavigation", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Start product tour" }),
+    ).toBeInTheDocument();
+  });
+
+  it("does not render icons for secondary breadcrumb items", () => {
+    // Given
+    navigationMock.pathname = "/scans/config";
+
+    // When
+    render(
+      <BreadcrumbNavigation
+        mode="auto"
+        title="Configuration"
+        icon="lucide:sliders"
+      />,
+    );
+
+    // Then
+    expect(screen.getByLabelText("lucide:timer")).toBeInTheDocument();
+    expect(screen.queryByLabelText("lucide:sliders")).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Configuration" }),
     ).toBeInTheDocument();
   });
 });
