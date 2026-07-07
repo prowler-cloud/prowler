@@ -3,6 +3,11 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Container } from "lucide-react";
 
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { DateWithTime, EntityInfo } from "@/components/ui/entities";
 import {
   DataTableColumnHeader,
@@ -67,11 +72,17 @@ function FindingTitleCell({
       finding={finding}
       defaultOpen={defaultOpen}
       trigger={
-        <div className="max-w-[500px] min-w-[160px]">
-          <p className="text-text-neutral-primary hover:text-button-tertiary cursor-pointer text-left text-sm break-words whitespace-normal hover:underline">
+        // Single line always: ellipsis beyond the max, full title in the tooltip.
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="text-text-neutral-primary hover:text-button-tertiary max-w-[500px] min-w-[120px] cursor-pointer truncate text-left text-sm hover:underline">
+              {finding.attributes.check_metadata.checktitle}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-96">
             {finding.attributes.check_metadata.checktitle}
-          </p>
-        </div>
+          </TooltipContent>
+        </Tooltip>
       }
     />
   );
