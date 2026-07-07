@@ -8,11 +8,14 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Compliance PDF reports no longer require provider credentials: findings are enriched from the provider metadata stored in the database, so reports generate even after the provider secret is deleted or its credentials become invalid [(#11845)](https://github.com/prowler-cloud/prowler/pull/11845)
 
-## [1.33.1] (Prowler UNRELEASED)
+---
+
+## [1.33.1] (Prowler v5.32.1)
 
 ### 🐞 Fixed
 
 - Attack Paths: Scan rows now have database defaults for `is_migrated` and `sink_backend` so `scan-perform-scheduled` inserts survive deploy skew [(#11826)](https://github.com/prowler-cloud/prowler/pull/11826)
+- Invited users now keep their invitation context when completing authentication with Google, GitHub, or SAML, so the invitation is accepted during login [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
 
 ### 🔐 Security
 

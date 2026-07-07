@@ -41,12 +41,14 @@ const FORM_ERROR_TYPE = {
 
 export const SignUpForm = ({
   invitationToken,
+  isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
 }: {
   invitationToken?: string | null;
+  isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
@@ -54,6 +56,9 @@ export const SignUpForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
+  const callbackUrl = invitationToken
+    ? `/invitation/accept?invitation_token=${encodeURIComponent(invitationToken)}`
+    : "/";
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -75,8 +80,14 @@ export const SignUpForm = ({
     name: "password",
     defaultValue: "",
   });
+  const termsAccepted = useWatch({
+    control: form.control,
+    name: "termsAndConditions",
+    defaultValue: false,
+  });
 
   const isLoading = form.formState.isSubmitting;
+  const isSocialAuthDisabled = Boolean(isCloudEnv && !termsAccepted);
 
   const onSubmit = async (data: SignUpFormData) => {
     const newUser = await createNewUser(data);
@@ -88,7 +99,7 @@ export const SignUpForm = ({
       });
       form.reset();
 
-      if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      if (isCloudEnv) {
         router.push("/email-verification");
       } else {
         router.push("/sign-in");
@@ -200,7 +211,7 @@ export const SignUpForm = ({
             />
           )}
 
-          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+          {isCloudEnv && (
             <FormField
               control={form.control}
               name="termsAndConditions"
@@ -243,15 +254,18 @@ export const SignUpForm = ({
         </form>
       </Form>
 
-      {!invitationToken && (
+      {(!invitationToken || isCloudEnv) && (
         <>
           <AuthDivider />
           <div className="flex flex-col gap-2">
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
+              callbackUrl={callbackUrl}
               isGoogleOAuthEnabled={isGoogleOAuthEnabled}
               isGithubOAuthEnabled={isGithubOAuthEnabled}
+              isDisabled={isSocialAuthDisabled}
+              disabledTooltipContent="Accept the Terms of Service to continue."
             />
           </div>
         </>
