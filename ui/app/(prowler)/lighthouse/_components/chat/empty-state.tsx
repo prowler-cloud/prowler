@@ -45,10 +45,12 @@ interface ChatEmptyStateProps {
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
+  footer?: ReactNode;
 }
 
 export function ChatEmptyState({
   onInputChange,
+  footer,
   ...composerPanelProps
 }: ChatEmptyStateProps) {
   return (
@@ -101,6 +103,7 @@ export function ChatEmptyState({
             );
           })}
         </div>
+        {footer ? <div className="w-full max-w-4xl">{footer}</div> : null}
       </div>
     </div>
   );
