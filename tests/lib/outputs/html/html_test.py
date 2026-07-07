@@ -1016,6 +1016,21 @@ class TestHTML:
         assert "<b>Locations:</b> Delhi, Chennai" in summary
         assert "API Key + Bearer Token" in summary
 
+    def test_e2enetworks_get_assessment_summary_escapes_locations(self):
+        """Test E2E Networks HTML assessment summary escapes user-controlled locations."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "e2enetworks"
+        provider.identity.project_id = 12345
+        provider.identity.locations = ['Delhi"><script>alert(1)</script>']
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "<script>alert(1)</script>" not in summary
+        assert "Delhi&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""
         test_text = "This is **bold text** and this is **also bold**"

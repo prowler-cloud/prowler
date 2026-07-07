@@ -1,4 +1,5 @@
 import sys
+from html import escape
 from io import TextIOWrapper
 
 import markdown
@@ -1400,7 +1401,8 @@ class HTML(Output):
     def get_e2enetworks_assessment_summary(provider: Provider) -> str:
         """Get the HTML assessment summary for the E2E Networks provider."""
         try:
-            locations = ", ".join(provider.identity.locations)
+            locations = escape(", ".join(provider.identity.locations), quote=True)
+            project_id = escape(str(provider.identity.project_id), quote=True)
             return f"""
                 <div class="col-md-2">
                     <div class="card">
@@ -1409,7 +1411,7 @@ class HTML(Output):
                         </div>
                         <ul class="list-group list-group-flush">
                             <li class="list-group-item">
-                                <b>Project ID:</b> {provider.identity.project_id}
+                                <b>Project ID:</b> {project_id}
                             </li>
                             <li class="list-group-item">
                                 <b>Locations:</b> {locations}
