@@ -2314,9 +2314,9 @@ class TestCreateComplianceRequirements:
             create_compliance_requirements(tenant_id, scan_id)
 
             mock_persist.assert_called_once()
-            persisted_rows = mock_persist.call_args[0][1]
+            rows_factory = mock_persist.call_args[0][2]
             requirement_row = next(
-                row for row in persisted_rows if row["requirement_id"] == "1.1"
+                row for row in rows_factory() if row["requirement_id"] == "1.1"
             )
             assert requirement_row["requirement_status"] == "FAIL"
 
@@ -2454,18 +2454,26 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # One execute for set_config plus one for the scan's DELETE.
+        assert cursor.execute.call_count == 2
+        delete_sql, delete_params = cursor.execute.call_args_list[1][0]
+        assert "DELETE FROM compliance_requirements_overviews" in delete_sql
+        assert delete_params == [str(row["tenant_id"]), str(row["scan_id"])]
         cursor.copy_expert.assert_called_once()
+        connection.commit.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert csv_rows[0][0] == str(row["id"])
         assert csv_rows[0][5] == ""
         assert csv_rows[0][-1] == str(row["scan_id"])
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2473,7 +2481,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         inserted_at = datetime.now(UTC)
         row = {
@@ -2494,16 +2502,22 @@ class TestComplianceRequirementCopy:
         }
 
         tenant_id = row["tenant_id"]
+        scan_id = str(row["scan_id"])
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [row])
 
-        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_copy.assert_called_once()
+        assert mock_copy.call_args[0][0] == tenant_id
+        assert mock_copy.call_args[0][1] == scan_id
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        # The fallback replaces the scan's rows: delete + insert atomically.
+        mock_filter.assert_called_once_with(scan_id=scan_id)
+        mock_filter.return_value.delete.assert_called_once()
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -2515,13 +2529,18 @@ class TestComplianceRequirementCopy:
 
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
-    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows", return_value=0)
     def test_persist_compliance_requirement_rows_no_rows(
         self, mock_copy, mock_rls_transaction, mock_bulk_create
     ):
-        _persist_compliance_requirement_rows(str(uuid.uuid4()), [])
+        # Even with no rows the COPY path runs: it must clear the scan's
+        # previous rows so a re-run with fewer findings drops stale data.
+        total = _persist_compliance_requirement_rows(
+            str(uuid.uuid4()), str(uuid.uuid4()), lambda: []
+        )
 
-        mock_copy.assert_not_called()
+        assert total == 0
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_not_called()
         mock_bulk_create.assert_not_called()
 
@@ -2610,11 +2629,12 @@ class TestComplianceRequirementCopy:
         ]
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(tenant_id, rows)
+            _copy_compliance_requirement_rows(tenant_id, str(scan_id), rows, 2000)
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # set_config + DELETE of the scan's previous rows.
+        assert cursor.execute.call_count == 2
         cursor.copy_expert.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2643,6 +2663,60 @@ class TestComplianceRequirementCopy:
         assert csv_rows[2][3] == "aws_foundational_security_aws"
         assert csv_rows[2][5] == "2.0"
         assert csv_rows[2][9] == "MANUAL"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_batches_share_one_transaction(
+        self, mock_psycopg_connection, settings
+    ):
+        """Every COPY batch runs on the same connection with a single commit."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        inserted_at = datetime.now(UTC)
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": f"Requirement {index}",
+                "region": "us-east-1",
+                "requirement_id": f"req-{index}",
+                "requirement_status": "PASS",
+                "passed_checks": 1,
+                "failed_checks": 0,
+                "total_checks": 1,
+                "scan_id": scan_id,
+            }
+            for index in range(3)
+        ]
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            total = _copy_compliance_requirement_rows(tenant_id, scan_id, rows, 1)
+
+        assert total == 3
+        # One connection, three COPY statements, one commit for the whole scan.
+        mock_psycopg_connection.assert_called_once_with("admin")
+        assert cursor.copy_expert.call_count == 3
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_null_values(
@@ -2691,7 +2765,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2747,7 +2823,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify CSV was generated (csv module handles escaping automatically)
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2808,7 +2886,9 @@ class TestComplianceRequirementCopy:
 
         before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
         after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2861,7 +2941,9 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="COPY command failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
@@ -2909,7 +2991,9 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
@@ -2955,7 +3039,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify commit was called and rollback was not
         connection.commit.assert_called_once()
@@ -2966,9 +3052,10 @@ class TestComplianceRequirementCopy:
     @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
     def test_persist_compliance_requirement_rows_success(self, mock_copy):
         """Test successful COPY path without fallback to ORM."""
-        mock_copy.return_value = None  # Success, no exception
+        mock_copy.return_value = 1  # Success, no exception
 
         tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
         rows = [
             {
                 "id": uuid.uuid4(),
@@ -2984,16 +3071,21 @@ class TestComplianceRequirementCopy:
                 "passed_checks": 1,
                 "failed_checks": 0,
                 "total_checks": 1,
-                "scan_id": uuid.uuid4(),
+                "scan_id": scan_id,
             }
         ]
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: rows)
 
-        # Verify COPY was called
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 1
+        mock_copy.assert_called_once()
+        copy_args = mock_copy.call_args[0]
+        assert copy_args[0] == tenant_id
+        assert copy_args[1] == scan_id
+        assert list(copy_args[2]) == rows
 
     @patch("tasks.jobs.scan.logger")
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3001,7 +3093,12 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("COPY failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_logging(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+        self,
+        mock_copy,
+        mock_rls_transaction,
+        mock_bulk_create,
+        mock_filter,
+        mock_logger,
     ):
         """Test logger.exception is called when COPY fails and fallback occurs."""
         tenant_id = str(uuid.uuid4())
@@ -3027,7 +3124,9 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(
+            tenant_id, str(row["scan_id"]), lambda: [row]
+        )
 
         # Verify logger.exception was called
         mock_logger.exception.assert_called_once()
@@ -3036,6 +3135,7 @@ class TestComplianceRequirementCopy:
         assert "falling back to ORM" in args[0]
         assert kwargs.get("exc_info") is not None
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3043,7 +3143,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_multiple_rows(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
@@ -3090,10 +3190,14 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(
+            tenant_id, str(scan_id), lambda: rows
+        )
 
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 2
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_filter.assert_called_once_with(scan_id=str(scan_id))
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -3117,6 +3221,7 @@ class TestComplianceRequirementCopy:
         assert objects[1].passed_checks == 2
         assert objects[1].failed_checks == 3
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -3124,7 +3229,7 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_all_fields(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback correctly maps all fields from row dict to model."""
         tenant_id = str(uuid.uuid4())
@@ -3154,7 +3259,7 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, str(scan_id), lambda: [row])
 
         args, kwargs = mock_bulk_create.call_args
         objects = args[0]
