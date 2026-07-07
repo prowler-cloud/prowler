@@ -49,17 +49,17 @@ describe("ProviderTypeIcon", () => {
     expect(await screen.findByText("AWS")).toBeInTheDocument();
   });
 
-  it("renders a sized placeholder instead of crashing for an unknown type", () => {
-    // Regression guard for #9991: an unknown provider type must not throw.
+  it("renders the neutral generic glyph for an unknown type (no crash)", () => {
+    // Regression guard for #9991 + dynamic providers: an unknown provider type
+    // renders the shared generic glyph, not a brand badge or an empty box.
     const { container } = render(
       <ProviderTypeIcon type={UNKNOWN_TYPE} size={24} />,
     );
 
     expect(screen.queryByText("AWS")).not.toBeInTheDocument();
-    expect(container.querySelector("div")).toHaveStyle({
-      width: "24px",
-      height: "24px",
-    });
+    const glyph = container.querySelector("svg");
+    expect(glyph).toBeInTheDocument();
+    expect(glyph).toHaveAttribute("width", "24");
   });
 });
 
@@ -110,9 +110,10 @@ describe("ProviderTypeIconStack", () => {
     expect(screen.queryByText("Okta")).not.toBeInTheDocument();
   });
 
-  it("renders known icons and skips unknown types without crashing", async () => {
-    // Regression guard for #9991: an unknown type in the stack must not throw.
-    render(
+  it("renders known icons and the generic glyph for unknown types without crashing", async () => {
+    // Regression guard for #9991: an unknown type in the stack must not throw;
+    // it now renders the neutral generic glyph alongside the known badge.
+    const { container } = render(
       <ProviderTypeIconStack
         items={[
           { key: "a", type: "aws", tooltip: "111" },
@@ -122,5 +123,7 @@ describe("ProviderTypeIconStack", () => {
     );
 
     expect(await screen.findByText("AWS")).toBeInTheDocument();
+    // The unknown item renders the generic glyph (an svg), not an empty slot.
+    expect(container.querySelector("svg")).toBeInTheDocument();
   });
 });
