@@ -14,7 +14,7 @@
   "RelatedUrl": "",
   "Remediation": {
     "Code": {
-      "CLI": "curl -X PUT -H \"Authorization: Bearer $E2E_NETWORKS_AUTH_TOKEN\" -H \"Content-Type: application/json\" \"https://api.e2enetworks.com/myaccount/api/v1/appliances/<APPLIANCE_ID>/?apikey=$E2E_NETWORKS_API_KEY&project_id=$E2E_NETWORKS_PROJECT_ID&location=<LOCATION>\" -d '{\"enable_bitninja\":true}'",
+      "CLI": "",
       "NativeIaC": "",
       "Other": "",
       "Terraform": ""
