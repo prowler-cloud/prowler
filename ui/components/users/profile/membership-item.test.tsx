@@ -15,6 +15,11 @@ vi.mock("@/actions/users/tenants", () => ({
   switchTenant: vi.fn(),
   updateTenantName: vi.fn(),
   deleteTenant: vi.fn(),
+  switchThenDeleteTenant: vi.fn(),
+}));
+
+vi.mock("@/actions/auth", () => ({
+  logOut: vi.fn(),
 }));
 
 vi.mock("@/components/ui", () => ({
@@ -133,7 +138,7 @@ describe("MembershipItem", () => {
     expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
-  it("hides Delete button when membershipCount === 1", () => {
+  it("shows Delete button when isOrgOwner and membershipCount === 1", () => {
     render(
       <MembershipItem
         membership={baseMembership}
@@ -145,9 +150,7 @@ describe("MembershipItem", () => {
         membershipCount={1}
       />,
     );
-    expect(
-      screen.queryByRole("button", { name: /delete/i }),
-    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /delete/i })).toBeInTheDocument();
   });
 
   it("hides Delete button when not isOrgOwner", () => {
