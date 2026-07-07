@@ -169,6 +169,22 @@ def test_changelog_gate_tests_compile_workflow_changes():
     assert ".github/workflows/compile-changelogs.yml" in workflow
 
 
+def test_changelog_attribution_tests_use_pinned_python():
+    workflow = read_workflow("pr-check-changelog.yml")
+    match = re.search(
+        r"(?ms)^  test-changelog-attribution:\n(?P<body>.*?)^  check-changelog:",
+        workflow,
+    )
+
+    assert match is not None
+    job = match.group("body")
+    assert "uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c" in job
+    assert "python-version: '3.12'" in job
+    assert "python3 -m pip install" in job
+    assert "python3 -m pytest tests/github" in job
+    assert "objects.githubusercontent.com:443" in job
+
+
 def test_changelog_gate_rejects_common_manual_pr_link_forms():
     workflow = read_workflow("pr-check-changelog.yml")
 
@@ -236,6 +252,56 @@ def test_forward_sync_inserts_release_blocks_by_prowler_version_order():
     assert '[[ "$incoming_key" > "$existing_key" ]]' in workflow
     assert "already contains a block for Prowler v${incoming_release}" in workflow
     assert 'head -n "$marker_line" "$component/CHANGELOG.md"' not in workflow
+
+
+def test_compile_workflow_rejects_explicit_versions_that_do_not_bump():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert 'current=$(latest_released_version "$component")' in workflow
+    assert 'current_key=$(version_key "$current")' in workflow
+    assert 'effective_key=$(version_key "$effective")' in workflow
+    assert (
+        '[[ "$effective_key" < "$current_key" || "$effective_key" == "$current_key" ]]'
+        in workflow
+    )
+    assert (
+        "explicit version '${effective}' must be greater than the latest released version"
+        in workflow
+    )
+
+
+def test_compile_workflow_requires_target_branch_to_match_prowler_version():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert (
+        'IFS=. read -r prowler_major prowler_minor prowler_patch <<< "$PROWLER_VERSION"'
+        in workflow
+    )
+    assert "prowler_patch=$((10#$prowler_patch))" in workflow
+    assert 'if [ "$prowler_patch" -eq 0 ]; then' in workflow
+    assert "target_branch must be 'master' for Prowler ${PROWLER_VERSION}" in workflow
+    assert 'expected_target_branch="v${prowler_major}.${prowler_minor}"' in workflow
+    assert 'if [ "$TARGET_BRANCH" != "$expected_target_branch" ]; then' in workflow
+    assert (
+        "target_branch must be '${expected_target_branch}' for Prowler ${PROWLER_VERSION}"
+        in workflow
+    )
+
+
+def test_compile_workflow_normalizes_version_segments_before_arithmetic():
+    workflow = read_workflow("compile-changelogs.yml")
+
+    assert (
+        'printf \'%06d.%06d.%06d\' "$((10#$major))" "$((10#$minor))" "$((10#$patch))"'
+        in workflow
+    )
+    assert "major=$((10#$major))" in workflow
+    assert "minor=$((10#$minor))" in workflow
+    assert "patch=$((10#$patch))" in workflow
+    assert "current_major=$((10#$current_major))" in workflow
+    assert "effective_major=$((10#$effective_major))" in workflow
+    assert "effective_minor=$((10#$effective_minor))" in workflow
+    assert "effective_patch=$((10#$effective_patch))" in workflow
 
 
 def test_compile_workflow_requires_removed_fragments_in_major_releases():

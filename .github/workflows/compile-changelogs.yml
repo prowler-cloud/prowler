@@ -95,6 +95,22 @@ jobs:
             echo "::error::Invalid target_branch syntax: '$TARGET_BRANCH' (must be 'master' or vN.N, e.g. v5.31)"
             exit 1
           fi
+          IFS=. read -r prowler_major prowler_minor prowler_patch <<< "$PROWLER_VERSION"
+          prowler_major=$((10#$prowler_major))
+          prowler_minor=$((10#$prowler_minor))
+          prowler_patch=$((10#$prowler_patch))
+          if [ "$prowler_patch" -eq 0 ]; then
+            if [ "$TARGET_BRANCH" != "master" ]; then
+              echo "::error::target_branch must be 'master' for Prowler ${PROWLER_VERSION}; got '${TARGET_BRANCH}'"
+              exit 1
+            fi
+          else
+            expected_target_branch="v${prowler_major}.${prowler_minor}"
+            if [ "$TARGET_BRANCH" != "$expected_target_branch" ]; then
+              echo "::error::target_branch must be '${expected_target_branch}' for Prowler ${PROWLER_VERSION}; got '${TARGET_BRANCH}'"
+              exit 1
+            fi
+          fi
           for pair in "sdk_version:$SDK_VERSION" "api_version:$API_VERSION" "ui_version:$UI_VERSION" "mcp_version:$MCP_VERSION"; do
             input_name="${pair%%:*}"
             input_value="${pair#*:}"
@@ -117,6 +133,13 @@ jobs:
               ui) echo "$UI_VERSION" ;;
               mcp_server) echo "$MCP_VERSION" ;;
             esac
+          }
+
+          version_key() {
+            local version="$1"
+            local major minor patch
+            IFS=. read -r major minor patch <<< "$version"
+            printf '%06d.%06d.%06d' "$((10#$major))" "$((10#$minor))" "$((10#$patch))"
           }
 
           pending_fragments() {
@@ -163,32 +186,33 @@ jobs:
             if has_removed_fragments "$fragments"; then
               removed_fragments=true
             fi
-            current=""
-            if [ "$removed_fragments" = "true" ]; then
-              current=$(latest_released_version "$component")
-              if [ -z "$current" ]; then
-                echo "::error::${component}: could not read the latest released version from ${component}/CHANGELOG.md; provide its version input explicitly after restoring the released heading"
-                errors=1
-                continue
-              fi
+            current=$(latest_released_version "$component")
+            if [ -z "$current" ]; then
+              echo "::error::${component}: could not read the latest released version from ${component}/CHANGELOG.md; restore the released heading before compiling"
+              errors=1
+              continue
             fi
 
             if [ -n "$input" ]; then
               effective="$input"
               mode="explicit"
+              current_key=$(version_key "$current")
+              effective_key=$(version_key "$effective")
+              if [[ "$effective_key" < "$current_key" || "$effective_key" == "$current_key" ]]; then
+                echo "::error::${component}: explicit version '${effective}' must be greater than the latest released version (${current})"
+                errors=1
+                continue
+              fi
             else
               if [ "$removed_fragments" = "true" ]; then
                 echo "::error::${component}: pending 'removed' fragments imply a major bump (breaking change); provide its version input explicitly"
                 errors=1
                 continue
               fi
-              current=$(latest_released_version "$component")
-              if [ -z "$current" ]; then
-                echo "::error::${component}: could not read the latest released version from ${component}/CHANGELOG.md; provide its version input explicitly"
-                errors=1
-                continue
-              fi
               IFS=. read -r major minor patch <<< "$current"
+              major=$((10#$major))
+              minor=$((10#$minor))
+              patch=$((10#$patch))
               if echo "$fragments" | grep -qE '\.(added|changed|deprecated)(\.[0-9]+)?\.md$'; then
                 effective="${major}.$((minor + 1)).0"
               else
@@ -200,7 +224,11 @@ jobs:
 
             if [ "$removed_fragments" = "true" ]; then
               IFS=. read -r current_major _ <<< "$current"
+              current_major=$((10#$current_major))
               IFS=. read -r effective_major effective_minor effective_patch <<< "$effective"
+              effective_major=$((10#$effective_major))
+              effective_minor=$((10#$effective_minor))
+              effective_patch=$((10#$effective_patch))
               if [ "$effective_major" -le "$current_major" ] || [ "$effective_minor" -ne 0 ] || [ "$effective_patch" -ne 0 ]; then
                 echo "::error::${component}: removed fragments require a major component release (${current} -> X.0.0 with X > ${current_major}); got ${effective}"
                 errors=1
