@@ -21,6 +21,7 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   convertToYaml,
   defaultScanConfigurationYaml,
@@ -192,25 +193,16 @@ function ScanConfigurationForm({
         <ul className="text-default-500 text-tiny mb-1 list-disc pl-5">
           <li>
             Follows the structure of{" "}
-            <CustomLink
-              size="xs"
-              href="https://docs.prowler.com/user-guide/cli/tutorials/configuration_file"
-            >
+            <code className="bg-default-100 text-default-600 rounded px-1 py-0.5 font-mono">
               prowler/config/config.yaml
-            </CustomLink>
-            ; include only the keys you want to override.
-          </li>
-          <li>The configuration is validated on save.</li>
-          <li>
-            Learn more about configuring scans{" "}
-            <CustomLink
-              size="xs"
-              href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
-            >
+            </code>
+            ; include only the keys you want to override. Learn more{" "}
+            <CustomLink size="xs" href={DOCS_URLS.SCAN_CONFIGURATION}>
               here
             </CustomLink>
             .
           </li>
+          <li>The configuration is validated on save.</li>
         </ul>
         <Textarea
           id="scan-configuration-yaml"

@@ -237,7 +237,7 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
+from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -283,7 +283,6 @@ from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -322,17 +321,20 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
     check_lighthouse_provider_connection_task,
     check_provider_connection_task,
+    create_scan_task_record,
     delete_provider_task,
     delete_tenant_task,
+    enqueue_scan_execution_on_commit,
+    get_active_provider_scan,
     jira_integration_task,
     mute_historical_findings_task,
-    perform_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
@@ -2717,12 +2719,23 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        provider = input_serializer.validated_data.get("provider")
+        active_scan = None
 
         # Broker publish is deferred to on_commit so the worker cannot read
         # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
         pre_task_id = str(uuid.uuid4())
 
         with transaction.atomic():
+            if provider:
+                provider = Provider.objects.select_for_update().get(
+                    id=provider.id,
+                    tenant_id=self.request.tenant_id,
+                )
+                active_scan = get_active_provider_scan(
+                    self.request.tenant_id, provider.id
+                )
+
             scan = input_serializer.save()
             scan.task_id = pre_task_id
             scan.save(update_fields=["task_id"])
@@ -2733,29 +2746,18 @@ class ScanViewSet(BaseRLSViewSet):
                 provider_id=str(scan.provider_id),
             )
 
-            task_result, _ = TaskResult.objects.get_or_create(
-                task_id=pre_task_id,
-                defaults={"status": states.PENDING, "task_name": "scan-perform"},
-            )
-            prowler_task, _ = Task.objects.update_or_create(
-                id=pre_task_id,
+            prowler_task = create_scan_task_record(
                 tenant_id=self.request.tenant_id,
-                defaults={"task_runner_task": task_result},
+                task_id=pre_task_id,
+                task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
             )
 
-            scan_kwargs = {
-                "tenant_id": self.request.tenant_id,
-                "scan_id": str(scan.id),
-                "provider_id": str(scan.provider_id),
-                # Disabled for now
-                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-            }
-
-            transaction.on_commit(
-                lambda: perform_scan_task.apply_async(
-                    kwargs=scan_kwargs, task_id=pre_task_id
+            if not active_scan:
+                enqueue_scan_execution_on_commit(
+                    tenant_id=self.request.tenant_id,
+                    scan=scan,
+                    task_id=pre_task_id,
                 )
-            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)

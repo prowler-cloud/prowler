@@ -11,6 +11,7 @@ import {
   CardTitle,
 } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { CreateTenantForm } from "@/components/users/forms/create-tenant-form";
 import { MembershipDetailData, TenantDetailData } from "@/types/users";
 
@@ -51,7 +52,10 @@ export const MembershipsCardClient = ({
           <div className="flex flex-col gap-1">
             <CardTitle>Organizations</CardTitle>
             <p className="text-xs text-gray-500">
-              Organizations this user is associated with
+              Organizations this user is associated with.{" "}
+              <CustomLink href="https://docs.prowler.com/user-guide/tutorials/prowler-app-multi-tenant">
+                Learn more
+              </CustomLink>
             </p>
           </div>
           <CardAction>
