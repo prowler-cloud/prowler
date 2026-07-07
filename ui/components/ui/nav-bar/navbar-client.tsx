@@ -10,6 +10,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { SidePanelTrigger } from "@/components/side-panel";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { BreadcrumbNavigation } from "@/components/ui";
 import { useSidebar } from "@/hooks/use-sidebar";
@@ -127,6 +128,7 @@ export function NavbarClient({
           </Suspense>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
+          <SidePanelTrigger />
           <ThemeSwitch />
           {feedsSlot}
           <UserNav />

@@ -238,6 +238,30 @@ describe("NavbarClient", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("shows the Lighthouse AI side-panel trigger in cloud", () => {
+    // Given / When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(screen.getByTestId("side-panel-ai-trigger")).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Ask Lighthouse AI" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hides the Lighthouse AI side-panel trigger in self-hosted (OSS) deployments", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(
+      screen.queryByTestId("side-panel-ai-trigger"),
+    ).not.toBeInTheDocument();
+  });
+
   it("does not render a contextual onboarding button for unknown flows", () => {
     // Given / When
     render(

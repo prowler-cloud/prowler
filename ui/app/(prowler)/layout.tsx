@@ -12,6 +12,7 @@ import {
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
+import { GlobalSidePanel } from "@/components/side-panel";
 import MainLayout from "@/components/ui/main-layout/main-layout";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
 import { Toaster } from "@/components/ui/toast";
@@ -105,6 +106,8 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
+          {/* Cloud-only: OSS ships no side-panel markup at all. */}
+          {isCloud() && <GlobalSidePanel />}
           <Toaster />
         </Providers>
       </body>
