@@ -212,9 +212,9 @@ The following list includes all the Kubernetes checks with configurable variable
 
 | Check Name                    | Value                      | Type   | Default                                                                                |
 |-------------------------------|----------------------------|--------|----------------------------------------------------------------------------------------|
-| `audit_log_maxbackup`         | `audit_log_maxbackup`      | String | `10`                                                                                   |
-| `audit_log_maxsize`           | `audit_log_maxsize`        | String | `100`                                                                                  |
-| `audit_log_maxage`            | `audit_log_maxage`         | String | `30`                                                                                   |
+| `audit_log_maxbackup`         | `audit_log_maxbackup`      | Integer | `10`                                                                                   |
+| `audit_log_maxsize`           | `audit_log_maxsize`        | Integer | `100`                                                                                  |
+| `audit_log_maxage`            | `audit_log_maxage`         | Integer | `30`                                                                                   |
 | `apiserver_strong_ciphers`    | `apiserver_strong_ciphers` | List of Strings | `["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]` |
 | `kubelet_strong_ciphers_only` | `kubelet_strong_ciphers`   | List of Strings | See `config.yaml`                                                                      |
 
