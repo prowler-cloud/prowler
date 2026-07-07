@@ -1,5 +1,6 @@
 import { filterEmptyValues, getFormValue } from "@/lib";
 import { ProviderType } from "@/types";
+import { isConfigurableProvider } from "@/types/providers";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
 
@@ -533,10 +534,9 @@ export const buildSecretConfig = (
     }),
   };
 
-  const builder = secretBuilders[providerType];
-  if (!builder) {
+  if (!isConfigurableProvider(providerType)) {
     throw new Error(`Unsupported provider type: ${providerType}`);
   }
 
-  return builder();
+  return secretBuilders[providerType]();
 };

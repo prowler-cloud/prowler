@@ -198,6 +198,11 @@ export function getColumnProviders(
               cloudProvider={provider.attributes.provider}
               entityAlias={provider.attributes.alias}
               entityId={provider.attributes.uid}
+              nameAction={
+                provider.attributes.is_dynamic ? (
+                  <Badge variant="info">Custom</Badge>
+                ) : undefined
+              }
             />
           </DataTableExpandableCell>
         );

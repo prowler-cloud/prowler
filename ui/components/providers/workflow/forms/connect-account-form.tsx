@@ -14,7 +14,12 @@ import { ProviderTitleDocs } from "@/components/providers/workflow/provider-titl
 import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { Form } from "@/components/ui/form";
-import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
+import {
+  addProviderFormSchema,
+  ApiError,
+  KnownProviderType,
+  ProviderType,
+} from "@/types";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -156,7 +161,7 @@ function applyBackStep({
 
   setPrevStep((prev) => prev - 1);
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType, {
+    form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
     setAwsMethod(null);

@@ -64,6 +64,7 @@ const createProviderRow = (
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid,
       alias,
       status: "completed",

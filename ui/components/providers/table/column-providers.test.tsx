@@ -63,6 +63,7 @@ const providerRow: ProvidersProviderRow = {
   type: "providers",
   attributes: {
     provider: "aws",
+    is_dynamic: false,
     uid: "123456789012",
     alias: "Production",
     status: "completed",
