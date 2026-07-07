@@ -2409,9 +2409,7 @@ class TestCreateComplianceRequirements:
 
 
 class TestComplianceRequirementCopy:
-    def test_copy_compliance_requirement_rows_streams_csv(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_streams_csv(self):
         connection = MagicMock()
         cursor = MagicMock()
         cursor_context = MagicMock()
@@ -2519,9 +2517,7 @@ class TestComplianceRequirementCopy:
         mock_rls_transaction.assert_not_called()
         mock_bulk_create.assert_not_called()
 
-    def test_copy_compliance_requirement_rows_multiple_rows(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_multiple_rows(self):
         """Test COPY with multiple rows to ensure batch processing works correctly."""
         connection = MagicMock()
         cursor = MagicMock()
@@ -2627,9 +2623,7 @@ class TestComplianceRequirementCopy:
         assert csv_rows[2][5] == "2.0"
         assert csv_rows[2][9] == "MANUAL"
 
-    def test_copy_compliance_requirement_rows_null_values(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_null_values(self):
         """Test COPY handles NULL/None values correctly in nullable fields."""
         connection = MagicMock()
         cursor = MagicMock()
@@ -2673,9 +2667,7 @@ class TestComplianceRequirementCopy:
         assert csv_rows[0][5] == ""  # version
         assert csv_rows[0][6] == ""  # description
 
-    def test_copy_compliance_requirement_rows_special_characters(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_special_characters(self):
         """Test COPY correctly escapes special characters in CSV."""
         connection = MagicMock()
         cursor = MagicMock()
@@ -2722,9 +2714,7 @@ class TestComplianceRequirementCopy:
         assert "quotes" in csv_rows[0][6]
         assert "commas" in csv_rows[0][6]
 
-    def test_copy_compliance_requirement_rows_missing_inserted_at(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_missing_inserted_at(self):
         """Test COPY uses current datetime when inserted_at is missing."""
         connection = MagicMock()
         cursor = MagicMock()
@@ -2772,9 +2762,7 @@ class TestComplianceRequirementCopy:
         inserted_at = datetime.fromisoformat(inserted_at_str)
         assert before_call <= inserted_at <= after_call
 
-    def test_copy_compliance_requirement_rows_transaction_rollback_on_copy_error(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_transaction_rollback_on_copy_error(self):
         """Test transaction is rolled back when copy_expert fails."""
         connection = MagicMock()
         cursor = MagicMock()
@@ -2804,14 +2792,16 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="COPY command failed"):
-                _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    connection, str(row["tenant_id"]), [row]
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
 
     def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
-        self
+        self,
     ):
         """Test transaction is rolled back when SET_CONFIG fails."""
         connection = MagicMock()
@@ -2842,15 +2832,15 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
-                _copy_compliance_requirement_rows(connection, str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    connection, str(row["tenant_id"]), [row]
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
 
-    def test_copy_compliance_requirement_rows_commit_on_success(
-        self
-    ):
+    def test_copy_compliance_requirement_rows_commit_on_success(self):
         """Test transaction is committed on successful COPY."""
         connection = MagicMock()
         cursor = MagicMock()
