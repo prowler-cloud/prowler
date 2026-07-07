@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import { computeCrossProviderInsights } from "@/lib/compliance/cross-provider-insights";
@@ -54,10 +54,7 @@ export const CrossProviderDetailClient = ({
   providerGroupsFilter,
   latestPdfReport,
 }: CrossProviderDetailClientProps) => {
-  const insights = useMemo(
-    () => computeCrossProviderInsights(attributes),
-    [attributes],
-  );
+  const insights = computeCrossProviderInsights(attributes);
 
   const accordionContainerRef = useRef<HTMLDivElement>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -65,32 +62,37 @@ export const CrossProviderDetailClient = ({
     string | null
   >(null);
 
-  const handleDomainSelect = useCallback(
-    (domainName: string) => {
-      // Setting the forced key expands the target section. Selecting a domain
-      // is a user action, so the scroll + flash run here (not in a reactive
-      // effect): a single rAF lets the expansion commit before we locate the
-      // anchor and bring it into view.
-      setForcedExpandedSectionKey(`${attributes.framework}-${domainName}`);
+  // Clear any pending flash timer on unmount so its callback never runs
+  // against a detached anchor node.
+  useEffect(() => {
+    return () => {
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+    };
+  }, []);
 
-      requestAnimationFrame(() => {
-        const container = accordionContainerRef.current;
-        if (!container) return;
-        const anchor = container.querySelector(
-          `[data-domain-anchor="${CSS.escape(domainName)}"]`,
-        );
-        if (!(anchor instanceof HTMLElement)) return;
-        anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-        anchor.dataset.flash = "1";
-        if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-        flashTimeoutRef.current = setTimeout(() => {
-          delete anchor.dataset.flash;
-          flashTimeoutRef.current = null;
-        }, 1200);
-      });
-    },
-    [attributes.framework],
-  );
+  const handleDomainSelect = (domainName: string) => {
+    // Setting the forced key expands the target section. Selecting a domain
+    // is a user action, so the scroll + flash run here (not in a reactive
+    // effect): a single rAF lets the expansion commit before we locate the
+    // anchor and bring it into view.
+    setForcedExpandedSectionKey(`${attributes.framework}-${domainName}`);
+
+    requestAnimationFrame(() => {
+      const container = accordionContainerRef.current;
+      if (!container) return;
+      const anchor = container.querySelector(
+        `[data-domain-anchor="${CSS.escape(domainName)}"]`,
+      );
+      if (!(anchor instanceof HTMLElement)) return;
+      anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+      anchor.dataset.flash = "1";
+      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+      flashTimeoutRef.current = setTimeout(() => {
+        delete anchor.dataset.flash;
+        flashTimeoutRef.current = null;
+      }, 1200);
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6">

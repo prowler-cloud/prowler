@@ -136,6 +136,11 @@ export const CrossProviderPdfWatcher = () => {
                 task.data?.attributes?.result?.error ||
                 `The report generation task did not complete (state: ${taskState ?? "unknown"}).`,
             });
+          } catch (_error) {
+            // ``getTask`` is contracted to return a normalized ``{data}``/
+            // ``{error}`` shape rather than throw, so this is defense-in-depth:
+            // swallow any unexpected throw (from getTask/markCompleted/
+            // markFailed/toast) so it never becomes an unhandled rejection.
           } finally {
             state.busy = false;
           }

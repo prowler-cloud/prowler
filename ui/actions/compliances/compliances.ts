@@ -1,5 +1,7 @@
 "use server";
 
+import * as Sentry from "@sentry/nextjs";
+
 import type { ScanBinaryResult } from "@/actions/scans";
 import {
   apiBaseUrl,
@@ -8,6 +10,7 @@ import {
   getErrorMessage,
 } from "@/lib";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 async function getCrossProviderPdfErrorMessage(
   response: Response,
@@ -20,6 +23,37 @@ async function getCrossProviderPdfErrorMessage(
   }
 
   const errorData = await response.json().catch(() => null);
+
+  // Report unexpected server/parse failures to Sentry — the returned message
+  // stays sanitized (callers pass it through ``getErrorMessage``), but these
+  // PDF generate/download/latest endpoints would otherwise go unmonitored,
+  // unlike everything routed through ``handleApiResponse``.
+  if (response.status >= 500 || errorData === null) {
+    Sentry.captureException(
+      new Error(
+        `Cross-provider PDF request failed (${response.status}): ${response.statusText}`,
+      ),
+      {
+        tags: {
+          api_error: true,
+          status_code: response.status.toString(),
+          error_type:
+            response.status >= 500
+              ? SentryErrorType.SERVER_ERROR
+              : SentryErrorType.REQUEST_PROCESSING,
+          error_source: SentryErrorSource.SERVER_ACTION,
+        },
+        level: response.status >= 500 ? "error" : "warning",
+        contexts: {
+          api_response: {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+          },
+        },
+      },
+    );
+  }
 
   return (
     errorData?.errors?.[0]?.detail ||

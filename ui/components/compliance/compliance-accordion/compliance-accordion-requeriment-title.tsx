@@ -3,6 +3,7 @@ import { InfoTooltip } from "@/components/shadcn/info-field/info-field";
 import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getProviderLabel } from "@/lib/providers/provider-display";
+import { cn } from "@/lib/utils";
 import { RequirementStatus } from "@/types/compliance";
 
 interface ComplianceAccordionRequirementTitleProps {
@@ -63,10 +64,11 @@ export const ComplianceAccordionRequirementTitle = ({
                   <ProviderBadgeIcon providerKey={providerKey} size={12} />
                   <span className="text-[10px] font-semibold">{label}</span>
                   <span
-                    className={`size-1.5 rounded-full ${
+                    className={cn(
+                      "size-1.5 rounded-full",
                       STATUS_DOT_CLASS_BY_STATUS[providerStatus] ??
-                      "bg-text-neutral-secondary"
-                    }`}
+                        "bg-text-neutral-secondary",
+                    )}
                     aria-label={providerStatus}
                   />
                 </span>

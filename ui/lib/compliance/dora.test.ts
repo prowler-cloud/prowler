@@ -18,7 +18,11 @@ vi.mock(
   () => ({ ComplianceAccordionTitle: () => null }),
 );
 
-import type { CrossProviderComplianceOverviewAttributes } from "@/types/compliance";
+import type {
+  AttributesData,
+  CrossProviderComplianceOverviewAttributes,
+  RequirementsData,
+} from "@/types/compliance";
 
 import { crossProviderToMapperInput } from "./cross-provider-adapter";
 import { mapComplianceData, toAccordionItems } from "./dora";
@@ -125,9 +129,8 @@ describe("dora mapper — cross-provider augmentation", () => {
     };
 
     const frameworks = mapComplianceData(
-      perScanAttributesData as any,
-
-      perScanRequirementsData as any,
+      perScanAttributesData as unknown as AttributesData,
+      perScanRequirementsData as unknown as RequirementsData,
     );
     const requirement = frameworks[0].categories[0].controls[0].requirements[0];
 

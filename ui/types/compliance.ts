@@ -526,7 +526,13 @@ export interface CategoryData {
 export const CROSS_PROVIDER_COMPLIANCE_TYPE =
   "cross-provider-compliance-overviews" as const;
 
-export type CrossProviderRequirementStatus = "PASS" | "FAIL" | "MANUAL";
+export const CROSS_PROVIDER_REQUIREMENT_STATUS = {
+  PASS: "PASS",
+  FAIL: "FAIL",
+  MANUAL: "MANUAL",
+} as const;
+export type CrossProviderRequirementStatus =
+  (typeof CROSS_PROVIDER_REQUIREMENT_STATUS)[keyof typeof CROSS_PROVIDER_REQUIREMENT_STATUS];
 
 export interface CrossProviderRequirementData {
   id: string;

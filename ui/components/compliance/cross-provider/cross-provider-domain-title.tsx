@@ -1,5 +1,3 @@
-"use client";
-
 import { ProviderBadgeIcon } from "@/components/icons/providers-badge/provider-badge-icon";
 import type {
   DomainProviderStatus,
@@ -15,7 +13,7 @@ const HEATMAP_CELL_BY_STATUS: Record<DomainProviderStatus, string> = {
   NO_ROW: "bg-default-200 border-border-neutral-secondary opacity-40",
 };
 
-const STRIPE_CLASS_BY_DOMINANT = (stats: DomainStats): string => {
+const getStripeClassForDominantStatus = (stats: DomainStats): string => {
   if (stats.fail > 0) return "bg-bg-fail";
   if (stats.pass > 0) return "bg-bg-pass";
   if (stats.manual > 0) return "bg-bg-warning";
@@ -66,7 +64,7 @@ export const CrossProviderDomainTitle = ({
       <div
         className={cn(
           "w-1 shrink-0 rounded-sm",
-          STRIPE_CLASS_BY_DOMINANT(stats),
+          getStripeClassForDominantStatus(stats),
         )}
         aria-hidden="true"
       />

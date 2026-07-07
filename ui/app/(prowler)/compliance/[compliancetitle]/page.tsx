@@ -39,6 +39,7 @@ import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { UNIVERSAL_FRAMEWORKS } from "@/lib/compliance/universal-frameworks";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import {
@@ -121,6 +122,16 @@ export default async function ComplianceDetail({
     ]);
 
     if (!crossProviderResponse || "redirectTo" in crossProviderResponse) {
+      // A 402 (payment required) resolves to ``{ redirectTo: "/billing" }`` —
+      // send the user to the upgrade prompt instead of the generic
+      // "not available" state, which would swallow the billing signal.
+      if (
+        crossProviderResponse &&
+        "redirectTo" in crossProviderResponse &&
+        crossProviderResponse.redirectTo
+      ) {
+        redirect(crossProviderResponse.redirectTo);
+      }
       return (
         <ContentLayout title={crossProviderTitle}>
           <Alert variant="info">
@@ -153,8 +164,19 @@ export default async function ComplianceDetail({
     }
 
     const headerTitle = crossProviderData.attributes.name || crossProviderTitle;
+    // ``compatible_providers`` from the API is authoritative; fall back to the
+    // ``UNIVERSAL_FRAMEWORKS`` catalogue entry when it's missing or empty, so
+    // the detail view and provider filters stay populated — matching the
+    // overview grid's behavior instead of dropping every provider.
+    const apiCompatibleProviders =
+      crossProviderData.attributes.compatible_providers;
+    const catalogueProviders =
+      UNIVERSAL_FRAMEWORKS.find((entry) => entry.id === complianceId)
+        ?.providers ?? [];
     const compatibleProviderTypes = new Set(
-      crossProviderData.attributes.compatible_providers,
+      apiCompatibleProviders && apiCompatibleProviders.length > 0
+        ? apiCompatibleProviders
+        : catalogueProviders,
     );
     const compatibleProviders = (providersData?.data || []).filter((provider) =>
       compatibleProviderTypes.has(provider.attributes.provider),

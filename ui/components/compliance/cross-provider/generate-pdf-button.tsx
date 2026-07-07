@@ -2,7 +2,7 @@
 
 import { DownloadIcon, FileDown, Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import {
@@ -208,70 +208,59 @@ export const GeneratePdfButton = ({
   const currentSignatureRef = useRef(filterSignature);
   currentSignatureRef.current = filterSignature;
 
-  const handleGenerate = useCallback(
-    async (chosenName: string) => {
-      if (isGenerating) return;
-      setIsStarting(true);
-      const signature = currentSignatureRef.current;
-      // Snapshot the page URL (path + filters) now, so the watcher's "ready"
-      // toast can link back here even if the user has navigated elsewhere by
-      // the time generation finishes.
-      const reportUrl = window.location.pathname + window.location.search;
-      toast({
-        title: "Generating PDF report",
-        description:
-          "This may take a while — the report combines every provider's latest scan for the current filters. You'll get a notification when it's ready to download; you can keep browsing in the meantime.",
-      });
+  const handleGenerate = async (chosenName: string) => {
+    if (isGenerating) return;
+    setIsStarting(true);
+    const signature = currentSignatureRef.current;
+    // Snapshot the page URL (path + filters) now, so the watcher's "ready"
+    // toast can link back here even if the user has navigated elsewhere by
+    // the time generation finishes.
+    const reportUrl = window.location.pathname + window.location.search;
+    toast({
+      title: "Generating PDF report",
+      description:
+        "This may take a while — the report combines every provider's latest scan for the current filters. You'll get a notification when it's ready to download; you can keep browsing in the meantime.",
+    });
 
-      const trimmedName = chosenName.trim();
-      const result = await generateCrossProviderCompliancePdf({
-        complianceId,
-        scanIds,
-        providerTypes,
-        providerIds,
-        providerGroups,
-        // Empty → server falls back to a unique timestamped default.
-        reportName: trimmedName.length > 0 ? trimmedName : undefined,
-      });
-      setIsStarting(false);
-
-      if ("error" in result) {
-        toast({
-          variant: "destructive",
-          title: "Unable to start PDF generation",
-          description: result.error,
-        });
-        return;
-      }
-
-      // Hand off to the app-wide watcher: it polls to completion and fires the
-      // "ready" toast even if this button unmounts on navigation.
-      trackGeneration({ taskId: result.taskId, signature, reportUrl });
-    },
-    [
+    const trimmedName = chosenName.trim();
+    const result = await generateCrossProviderCompliancePdf({
       complianceId,
       scanIds,
       providerTypes,
       providerIds,
       providerGroups,
-      isGenerating,
-      trackGeneration,
-    ],
-  );
+      // Empty → server falls back to a unique timestamped default.
+      reportName: trimmedName.length > 0 ? trimmedName : undefined,
+    });
+    setIsStarting(false);
+
+    if ("error" in result) {
+      toast({
+        variant: "destructive",
+        title: "Unable to start PDF generation",
+        description: result.error,
+      });
+      return;
+    }
+
+    // Hand off to the app-wide watcher: it polls to completion and fires the
+    // "ready" toast even if this button unmounts on navigation.
+    trackGeneration({ taskId: result.taskId, signature, reportUrl });
+  };
 
   // Opening the dialog seeds the input with a descriptive default the user
   // can accept or overwrite.
-  const openNameDialog = useCallback(() => {
+  const openNameDialog = () => {
     setReportName(buildDefaultReportName(frameworkLabel));
     setNameDialogOpen(true);
-  }, [frameworkLabel]);
+  };
 
-  const confirmGenerate = useCallback(() => {
+  const confirmGenerate = () => {
     setNameDialogOpen(false);
     void handleGenerate(reportName);
-  }, [handleGenerate, reportName]);
+  };
 
-  const handleDownload = useCallback(async () => {
+  const handleDownload = async () => {
     if (!hasAvailableReport || isDownloading || isGenerating) return;
     setIsDownloading(true);
     toast({
@@ -311,13 +300,7 @@ export const GeneratePdfButton = ({
     } finally {
       setIsDownloading(false);
     }
-  }, [
-    availableReport.taskId,
-    hasAvailableReport,
-    isDownloading,
-    isGenerating,
-    removeGeneration,
-  ]);
+  };
 
   const buttonClassName = cn(
     "border-button-primary text-button-primary hover:bg-button-primary/10 h-8 px-2 text-xs",

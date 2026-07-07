@@ -18,7 +18,11 @@ vi.mock(
   () => ({ ComplianceAccordionTitle: () => null }),
 );
 
-import type { CrossProviderComplianceOverviewAttributes } from "@/types/compliance";
+import type {
+  AttributesData,
+  CrossProviderComplianceOverviewAttributes,
+  RequirementsData,
+} from "@/types/compliance";
 
 import { mapComplianceData, toAccordionItems } from "./cis-controls";
 import { crossProviderToMapperInput } from "./cross-provider-adapter";
@@ -128,9 +132,8 @@ describe("cis-controls mapper — cross-provider augmentation", () => {
     };
 
     const frameworks = mapComplianceData(
-      perScanAttributesData as any,
-
-      perScanRequirementsData as any,
+      perScanAttributesData as unknown as AttributesData,
+      perScanRequirementsData as unknown as RequirementsData,
     );
     const requirement = frameworks[0].categories[0].controls[0].requirements[0];
 

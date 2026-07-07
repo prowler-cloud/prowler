@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -351,8 +352,19 @@ const SSRCrossProviderGrid = async ({
   );
 
   const summaries: CrossProviderFrameworkSummary[] = [];
+  // A 402 (payment required) resolves to ``{ redirectTo: "/billing" }``.
+  // Cross-provider is a subscription-gated Cloud feature, so the gate applies
+  // tenant-wide — every framework returns the same redirect. Capture it and,
+  // if it leaves us with nothing to render, send the user to the upgrade
+  // prompt instead of the generic empty state.
+  let billingRedirect: string | null = null;
   for (const { entry, response } of responses) {
-    if (!response || "redirectTo" in response) continue;
+    if (!response || "redirectTo" in response) {
+      if (response && "redirectTo" in response && response.redirectTo) {
+        billingRedirect = response.redirectTo;
+      }
+      continue;
+    }
     const data = (response as { data?: CrossProviderComplianceOverviewData })
       .data;
     if (!data) {
@@ -391,6 +403,11 @@ const SSRCrossProviderGrid = async ({
   }
 
   if (summaries.length === 0) {
+    // Nothing to show and the only responses were billing-gated → surface the
+    // upgrade prompt rather than the generic "nothing available" message.
+    if (billingRedirect) {
+      redirect(billingRedirect);
+    }
     return (
       <ComplianceOverviewPanel>
         <Alert variant="info">

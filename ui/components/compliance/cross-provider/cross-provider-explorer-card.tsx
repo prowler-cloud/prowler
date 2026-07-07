@@ -1,7 +1,7 @@
 "use client";
 
 import { Maximize2, Minimize2, X } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
+import { useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
@@ -99,7 +99,7 @@ export const CrossProviderExplorerCard = ({
   // content. The unfiltered ``insights`` continue to feed the heatmap
   // matrix per section so global counts stay stable while the user
   // narrows their search.
-  const filteredAttributes = useMemo(() => {
+  const filteredAttributes = (() => {
     const lowerTerm = searchTerm.trim().toLowerCase();
     if (lowerTerm === "" && statusFilters.length === 0) {
       return attributes;
@@ -113,7 +113,7 @@ export const CrossProviderExplorerCard = ({
       return haystack.includes(lowerTerm);
     });
     return { ...attributes, requirements: filteredRequirements };
-  }, [attributes, searchTerm, statusFilters]);
+  })();
 
   const matchCount = filteredAttributes.requirements.length;
   const totalCount = attributes.requirements.length;
@@ -123,7 +123,7 @@ export const CrossProviderExplorerCard = ({
   // run this against the *filtered* attribute set so the list shrinks
   // as the user types — sections with no surviving requirements
   // disappear entirely instead of expanding to an empty body.
-  const { sections, allSectionKeys, statsByName } = useMemo(() => {
+  const { sections, allSectionKeys, statsByName } = (() => {
     const mapper = getComplianceMapper(filteredAttributes.framework);
     const { attributesData, requirementsData } =
       crossProviderToMapperInput(filteredAttributes);
@@ -150,43 +150,39 @@ export const CrossProviderExplorerCard = ({
       allSectionKeys: allSections.map((s) => s.key),
       statsByName: stats,
     };
-  }, [filteredAttributes, insights]);
+  })();
 
-  const expandedKeys = useMemo(() => {
+  const expandedKeys = (() => {
     if (allSectionsOpen) return allSectionKeys;
     const merged = new Set(openSectionKeys);
     if (forcedExpandedSectionKey) merged.add(forcedExpandedSectionKey);
     return Array.from(merged);
-  }, [
-    allSectionsOpen,
-    allSectionKeys,
-    openSectionKeys,
-    forcedExpandedSectionKey,
-  ]);
+  })();
 
-  const handleAccordionChange = useCallback((next: string[]) => {
+  const handleAccordionChange = (next: string[]) => {
     // Manually expanding/collapsing exits "all open" mode so the
     // user's last interaction is the source of truth.
     setAllSectionsOpen(false);
     setOpenSectionKeys(next);
-  }, []);
+  };
 
-  const handleToggleAll = useCallback(() => {
-    setAllSectionsOpen((prev) => {
-      const next = !prev;
-      setOpenSectionKeys(next ? allSectionKeys : []);
-      return next;
-    });
-  }, [allSectionKeys]);
+  const handleToggleAll = () => {
+    // Compute the next open/closed value once and drive both setters
+    // directly — nesting a ``setState`` inside another updater makes it
+    // impure (React Strict Mode double-invokes updaters to detect this).
+    const next = !allSectionsOpen;
+    setAllSectionsOpen(next);
+    setOpenSectionKeys(next ? allSectionKeys : []);
+  };
 
-  const handleResetFilters = useCallback(() => {
+  const handleResetFilters = () => {
     setSearchTerm("");
     // Cycling the controlled-input key flushes ``DataTableSearch``'s
     // internal debounce so a stale keystroke doesn't fire on top of
     // the just-cleared term.
     setSearchKey((k) => k + 1);
     setStatusFilters([]);
-  }, []);
+  };
 
   return (
     <Card variant="base" padding="md">

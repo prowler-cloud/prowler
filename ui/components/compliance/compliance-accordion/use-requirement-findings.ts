@@ -46,6 +46,11 @@ interface UseRequirementFindingsReturn {
   expandedFindings: FindingProps[];
   isLoading: boolean;
   error: string | null;
+  // Cross-provider only: true when at least one — but not every — per-scan
+  // request failed, so the merged view is missing some providers' findings.
+  // The caller surfaces a warning instead of presenting the partial data as
+  // complete.
+  isPartial: boolean;
   patchTriageUpdate: (input: UpdateFindingTriageInput) => void;
   reload: () => void;
 }
@@ -108,6 +113,7 @@ export function useRequirementFindings({
   const [findings, setFindings] = useState<FindingsResponse | null>(null);
   const [expandedFindings, setExpandedFindings] = useState<FindingProps[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isPartial, setIsPartial] = useState(false);
   const [reloadNonce, setReloadNonce] = useState(0);
 
   // Depend on the joined value, not the array: the requirement prop gets a
@@ -161,6 +167,7 @@ export function useRequirementFindings({
 
     const loadFindings = async () => {
       setError(null);
+      setIsPartial(false);
       try {
         const encodedSort = sort.replace(/^\+/, "");
 
@@ -196,6 +203,7 @@ export function useRequirementFindings({
                   ...(region && { "filter[region__in]": region }),
                 },
                 page: parseInt(pageNumber, 10),
+                pageSize: parseInt(pageSize, 10),
                 sort: encodedSort,
               }),
             ),
@@ -203,12 +211,29 @@ export function useRequirementFindings({
 
           if (cancelled) return;
 
+          // ``getFindings`` resolves to ``undefined`` on a failed request
+          // rather than throwing, so a per-scan failure would otherwise be
+          // silently dropped from the merge and the view would look complete.
+          const failedCount = responses.filter(
+            (r) => !r || typeof r !== "object" || !("data" in r),
+          ).length;
+
+          // Every request failed — treat it as a hard error (same surface as
+          // the per-scan branch) instead of rendering an empty "no findings".
+          if (jobs.length > 0 && failedCount === jobs.length) {
+            setError(FINDINGS_LOAD_ERROR);
+            return;
+          }
+
           const merged = mergeCrossProviderResponses(
             responses,
             parseInt(pageNumber, 10),
           );
           setFindings(merged);
           expandFindings(merged);
+          // Some — but not all — scans failed: keep the successful data but
+          // flag the merge as incomplete so the caller can warn the user.
+          setIsPartial(failedCount > 0);
           return;
         }
 
@@ -275,6 +300,7 @@ export function useRequirementFindings({
     expandedFindings,
     isLoading,
     error,
+    isPartial,
     patchTriageUpdate,
     reload,
   };

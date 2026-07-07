@@ -1,5 +1,13 @@
 import { create } from "zustand";
 
+export const PDF_GENERATION_STATUS = {
+  RUNNING: "running",
+  COMPLETED: "completed",
+  FAILED: "failed",
+} as const;
+export type PdfGenerationStatus =
+  (typeof PDF_GENERATION_STATUS)[keyof typeof PDF_GENERATION_STATUS];
+
 /** A single in-flight (or just-finished) cross-provider PDF generation. */
 export interface CrossProviderPdfGeneration {
   /** The generation task id returned by the server action. */
@@ -18,7 +26,7 @@ export interface CrossProviderPdfGeneration {
    * generated it — even if they navigated away while it was rendering.
    */
   reportUrl: string;
-  status: "running" | "completed" | "failed";
+  status: PdfGenerationStatus;
 }
 
 interface CrossProviderPdfState {
@@ -63,16 +71,27 @@ export const useCrossProviderPdfStore = create<CrossProviderPdfState>(
       set((state) => ({
         generations: {
           ...state.generations,
-          [entry.taskId]: { ...entry, status: "running" },
+          [entry.taskId]: {
+            ...entry,
+            status: PDF_GENERATION_STATUS.RUNNING,
+          },
         },
       })),
     markCompleted: (taskId) =>
       set((state) => ({
-        generations: setStatus(state.generations, taskId, "completed"),
+        generations: setStatus(
+          state.generations,
+          taskId,
+          PDF_GENERATION_STATUS.COMPLETED,
+        ),
       })),
     markFailed: (taskId) =>
       set((state) => ({
-        generations: setStatus(state.generations, taskId, "failed"),
+        generations: setStatus(
+          state.generations,
+          taskId,
+          PDF_GENERATION_STATUS.FAILED,
+        ),
       })),
     removeGeneration: (taskId) =>
       set((state) => {

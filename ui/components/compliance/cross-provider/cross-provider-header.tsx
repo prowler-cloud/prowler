@@ -13,6 +13,7 @@ import { getProwlerHubComplianceUrl } from "@/lib/compliance/prowler-hub";
 import { ProviderCoveragePanel } from "./provider-coverage-panel";
 import { ScoreDonut } from "./score-donut";
 import { TopFailingDomainsPanel } from "./top-failing-domains-panel";
+import { formatTitle } from "./utils";
 
 interface CrossProviderHeaderProps {
   /** Universal framework key (``CSA-CCM``). Drives the icon lookup. */
@@ -30,8 +31,6 @@ interface CrossProviderHeaderProps {
   /** Click handler when a top-failing-domain entry is selected. */
   onDomainSelect?: (domainName: string) => void;
 }
-
-const formatTitle = (title: string) => title.split("-").join(" ");
 
 /**
  * Three-pane operations header for the cross-provider compliance view.

@@ -23,6 +23,8 @@ import {
 import { getProviderLabel } from "@/lib/providers/provider-display";
 import { cn } from "@/lib/utils";
 
+import { formatTitle } from "./utils";
+
 export interface CrossProviderCardProps {
   /** Universal framework id (e.g. ``csa_ccm_4.0``). Used as the
    *  ``filter[compliance_id]`` value when navigating to the detail page. */
@@ -43,8 +45,6 @@ export interface CrossProviderCardProps {
    *  ``contributingProviders`` are dimmed to signal "no scan yet". */
   compatibleProviders: string[];
 }
-
-const formatTitle = (title: string) => title.split("-").join(" ");
 
 const getRatingVariant = (value: number): ScoreColorVariant => {
   if (value <= 10) return "danger";
@@ -86,7 +86,7 @@ const ProviderChip = ({ providerKey, active }: ProviderChipProps) => {
   );
 };
 
-export const CrossProviderCard: React.FC<CrossProviderCardProps> = ({
+export const CrossProviderCard = ({
   complianceId,
   title,
   version,
@@ -95,7 +95,7 @@ export const CrossProviderCard: React.FC<CrossProviderCardProps> = ({
   totalRequirements,
   contributingProviders,
   compatibleProviders,
-}) => {
+}: CrossProviderCardProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -141,6 +141,14 @@ export const CrossProviderCard: React.FC<CrossProviderCardProps> = ({
       padding="md"
       className="relative cursor-pointer transition-shadow hover:shadow-md"
       onClick={navigateToDetail}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          navigateToDetail();
+        }
+      }}
     >
       <CardContent className="p-0">
         <div className="flex w-full flex-col gap-3">

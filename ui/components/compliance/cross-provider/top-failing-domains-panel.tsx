@@ -3,6 +3,7 @@
 import { AlertTriangle, ChevronRight } from "lucide-react";
 
 import type { DomainStats } from "@/lib/compliance/cross-provider-insights";
+import { cn } from "@/lib/utils";
 
 interface TopFailingDomainsPanelProps {
   domains: DomainStats[];
@@ -49,11 +50,11 @@ export const TopFailingDomainsPanel = ({
                 <Tag
                   type={onSelect ? "button" : undefined}
                   onClick={onSelect ? () => onSelect(domain.name) : undefined}
-                  className={`border-border-neutral-secondary flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors ${
-                    onSelect
-                      ? "hover:border-bg-fail/40 hover:bg-bg-fail/5 cursor-pointer"
-                      : ""
-                  }`}
+                  className={cn(
+                    "border-border-neutral-secondary flex w-full items-center gap-3 rounded-md border px-3 py-2 text-left transition-colors",
+                    onSelect &&
+                      "hover:border-bg-fail/40 hover:bg-bg-fail/5 cursor-pointer",
+                  )}
                 >
                   <AlertTriangle
                     className="text-bg-fail size-4 shrink-0"

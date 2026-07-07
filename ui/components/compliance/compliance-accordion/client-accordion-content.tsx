@@ -2,7 +2,6 @@
 
 import { AlertTriangle } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useMemo } from "react";
 
 import {
   loadLatestFindingTriageNote,
@@ -88,6 +87,7 @@ export const ClientAccordionContent = ({
     expandedFindings,
     isLoading,
     error,
+    isPartial,
     patchTriageUpdate,
     reload,
   } = useRequirementFindings({
@@ -124,7 +124,7 @@ export const ClientAccordionContent = ({
   // Per-provider finding tallies for the cross-provider breakdown. Derived
   // from the merged ``findings`` (mapping each row to its provider via
   // ``scan_ids_by_provider``) so the counts always match the unified table.
-  const providerFindingStats = useMemo(() => {
+  const providerFindingStats = (() => {
     const count: Record<string, number> = {};
     const pass: Record<string, number> = {};
     const fail: Record<string, number> = {};
@@ -150,7 +150,7 @@ export const ClientAccordionContent = ({
       else if (status === "FAIL") fail[providerKey] += 1;
     }
     return { count, pass, fail };
-  }, [findings, isCrossProvider, scanIdsByProvider]);
+  })();
 
   const renderDetails = () => {
     if (!complianceId) {
@@ -175,16 +175,20 @@ export const ClientAccordionContent = ({
     const findingsLoaded = findings !== null;
     return (
       <div className="my-4">
-        <h4 className="mb-2 text-sm font-medium">Per-Provider Breakdown</h4>
-        <div className="border-border-neutral-secondary overflow-hidden rounded-md border">
+        <h4 className="text-text-neutral-secondary mb-2 text-[11px] font-semibold tracking-wider uppercase">
+          Per-Provider Breakdown
+        </h4>
+        <div className="border-border-neutral-secondary overflow-hidden rounded-lg border">
           <table className="w-full text-xs">
-            <thead className="bg-default-100">
+            <thead className="bg-default-100/60">
               <tr className="text-text-neutral-secondary text-left">
-                <th className="px-3 py-2 font-semibold">Provider</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
-                <th className="px-3 py-2 font-semibold">Findings</th>
-                <th className="px-3 py-2 font-semibold">Pass / Fail</th>
-                <th className="px-3 py-2 font-semibold">Scan ID</th>
+                <th className="px-3 py-2 font-medium">Provider</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+                <th className="px-3 py-2 text-right font-medium">Findings</th>
+                <th className="px-3 py-2 text-right font-medium">
+                  Pass / Fail
+                </th>
+                <th className="px-3 py-2 font-medium">Scans</th>
               </tr>
             </thead>
             <tbody>
@@ -199,29 +203,35 @@ export const ClientAccordionContent = ({
                 return (
                   <tr
                     key={providerKey}
-                    className="border-border-neutral-secondary border-t"
+                    className="border-border-neutral-secondary hover:bg-default-100/40 border-t transition-colors"
                   >
-                    <td className="px-3 py-2 align-top font-medium">
-                      <div className="flex flex-col gap-0.5">
-                        <span>{label}</span>
-                        {accountCount > 1 && (
-                          <span className="text-text-neutral-secondary text-[10px] tracking-wider uppercase">
-                            {accountCount} accounts
-                          </span>
-                        )}
+                    <td className="px-3 py-2.5 align-middle font-medium">
+                      <div className="flex items-center gap-2">
+                        <ProviderBadgeIcon
+                          providerKey={providerKey}
+                          size={18}
+                        />
+                        <div className="flex flex-col leading-tight">
+                          <span>{label}</span>
+                          {accountCount > 1 && (
+                            <span className="text-text-neutral-secondary text-[10px]">
+                              {accountCount} accounts
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </td>
-                    <td className="px-3 py-2 align-top">
+                    <td className="px-3 py-2.5 align-middle">
                       <StatusFindingBadge
                         status={toFindingStatus(providerStatus)}
                       />
                     </td>
-                    <td className="text-text-neutral-secondary px-3 py-2 align-top">
+                    <td className="text-text-neutral-secondary px-3 py-2.5 text-right align-middle tabular-nums">
                       {findingsLoaded ? (findingsCount ?? 0) : "—"}
                     </td>
-                    <td className="px-3 py-2 align-top">
+                    <td className="px-3 py-2.5 text-right align-middle">
                       {findingsLoaded ? (
-                        <span className="font-mono">
+                        <span className="font-mono tabular-nums">
                           <span className="text-bg-pass">{passCount}</span>
                           <span className="text-text-neutral-secondary">
                             {" / "}
@@ -232,18 +242,21 @@ export const ClientAccordionContent = ({
                         <span className="text-text-neutral-secondary">—</span>
                       )}
                     </td>
-                    <td
-                      className="text-text-neutral-secondary px-3 py-2 align-top font-mono text-[11px] break-all"
-                      title={scanIdsForProvider.join("\n")}
-                    >
+                    <td className="px-3 py-2.5 align-middle">
                       {accountCount === 0 ? (
-                        "—"
+                        <span className="text-text-neutral-secondary">—</span>
                       ) : (
-                        <ul className="flex flex-col gap-0.5">
+                        <div className="flex flex-col gap-1">
                           {scanIdsForProvider.map((sid) => (
-                            <li key={sid}>{sid}</li>
+                            <span
+                              key={sid}
+                              title="Click to select · scan id"
+                              className="bg-default-100 text-text-neutral-secondary w-fit rounded px-1.5 py-0.5 font-mono text-[10px] leading-relaxed select-all"
+                            >
+                              {sid}
+                            </span>
                           ))}
-                        </ul>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -378,6 +391,26 @@ export const ClientAccordionContent = ({
       return (
         <>
           <h4 className="mb-2 text-sm font-medium">Findings</h4>
+
+          {isPartial && (
+            <Alert variant="warning" className="mb-3">
+              <AlertTriangle />
+              <AlertDescription className="flex flex-wrap items-center gap-2">
+                <span>
+                  Some providers&apos; findings could not be loaded, so this
+                  view may be incomplete.
+                </span>
+                <Button
+                  variant="link"
+                  size="link-sm"
+                  className="h-auto p-0"
+                  onClick={reload}
+                >
+                  Try again
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <DataTable
             columns={getStandaloneFindingColumns({
