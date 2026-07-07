@@ -150,6 +150,10 @@ export function LighthouseV2ChatPage({
 
   const refreshMessages = async (sessionId: string): Promise<boolean> => {
     const result = await getLighthouseV2Messages(sessionId);
+    // The fetch is async, so a reset (new chat, or archiving this session) can
+    // land while it is in flight. Drop the stale result instead of repopulating
+    // a chat that no longer points at this session.
+    if (sessionId !== activeSessionIdRef.current) return false;
     if ("data" in result) {
       setMessages(result.data);
       return true;
@@ -389,7 +393,7 @@ export function LighthouseV2ChatPage({
   // chat instead of leaving a dead conversation and its URL on screen.
   useMountEffect(() => {
     const handleSessionArchived = (event: Event) => {
-      const archivedId = (event as CustomEvent<{ sessionId?: string }>).detail
+      const archivedId = (event as CustomEvent<{ sessionId: string }>).detail
         ?.sessionId;
       if (archivedId && archivedId === activeSessionIdRef.current) {
         resetToNewChat();

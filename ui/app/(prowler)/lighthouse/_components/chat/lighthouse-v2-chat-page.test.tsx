@@ -623,6 +623,41 @@ describe("LighthouseV2ChatPage", () => {
     replaceStateSpy.mockRestore();
   });
 
+  it("drops a stale message reload that resolves after the session is archived", async () => {
+    // Given: a live session whose message.end reload is still in flight
+    const user = userEvent.setup();
+    let resolveReload: (value: unknown) => void = () => {};
+    getMessagesMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveReload = resolve;
+      }),
+    );
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(eventSources).toHaveLength(1));
+
+    // When: the run ends (starting the async reload) and, before it resolves,
+    // the open session is archived and the chat resets
+    act(() => eventSources[0].emit("message.end", { message_id: "message-1" }));
+    await waitFor(() =>
+      expect(getMessagesMock).toHaveBeenCalledWith("session-1"),
+    );
+    act(() => notifyLighthouseV2SessionArchived("session-1"));
+
+    // The reload finally resolves with the (now archived) session's messages
+    await act(async () => {
+      resolveReload({
+        data: [message("message-1", "assistant", "Archived answer")],
+      });
+    });
+
+    // Then: the stale reload is ignored so the reset chat is not repopulated
+    expect(screen.queryByText("Archived answer")).not.toBeInTheDocument();
+  });
+
   it("keeps the conversation when a different session is archived", async () => {
     // Given
     renderPage({
