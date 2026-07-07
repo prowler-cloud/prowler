@@ -142,6 +142,14 @@ repos:
         files: { glob: ["mcp_server/**/*.py"] }
         priority: 20
 
+      - id: generate-provider-cards
+        name: "Docs - regenerate provider cards snippet"
+        entry: python docs/scripts/generate_provider_cards.py
+        language: system
+        files: { glob: ["docs/user-guide/providers/**/getting-started-*.mdx", "docs/scripts/generate_provider_cards.py", "api/src/backend/api/models.py"] }
+        pass_filenames: false
+        priority: 20
+
   ## PYTHON — uv (API + SDK)
   - repo: https://github.com/astral-sh/uv-pre-commit
     rev: 0.11.14
