@@ -14,6 +14,8 @@ on:
       - '.github/test-impact.yml'
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
+      - '!ui/CHANGELOG.md'
+      - '!api/CHANGELOG.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
