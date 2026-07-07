@@ -49,7 +49,7 @@ class _MutableTimestamp:
 
 timestamp = _MutableTimestamp(datetime.today())
 timestamp_utc = _MutableTimestamp(datetime.now(timezone.utc))
-prowler_version = "5.32.0"
+prowler_version = "5.33.0"
 html_logo_url = "https://github.com/prowler-cloud/prowler/"
 square_logo_img = "https://raw.githubusercontent.com/prowler-cloud/prowler/dc7d2d5aeb92fdf12e8604f42ef6472cd3e8e889/docs/img/prowler-logo-black.png"
 aws_logo = "https://user-images.githubusercontent.com/38561120/235953920-3e3fba08-0795-41dc-b480-9bea57db9f2e.png"
@@ -88,15 +88,22 @@ actual_directory = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
 
 
 def _get_ep_compliance_dirs() -> dict:
-    """Discover compliance directories from entry points. Returns {provider: path}."""
+    """Discover compliance directories from entry points. Returns {provider: [paths]}.
+
+    A provider may be contributed by several packages, so accumulate every
+    directory instead of overwriting.
+    """
     dirs = {}
     for ep in importlib.metadata.entry_points(group="prowler.compliance"):
         try:
             module = ep.load()
             if hasattr(module, "__path__"):
-                dirs[ep.name] = module.__path__[0]
+                path = module.__path__[0]
             elif hasattr(module, "__file__"):
-                dirs[ep.name] = os.path.dirname(module.__file__)
+                path = os.path.dirname(module.__file__)
+            else:
+                continue
+            dirs.setdefault(ep.name, []).append(path)
         except Exception as error:
             logger.warning(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -145,12 +152,15 @@ def get_available_compliance_frameworks(provider=None):
                             continue
                     if name not in available_compliance_frameworks:
                         available_compliance_frameworks.append(name)
-    # External per-provider compliance via entry points.
+    # External compliance via entry points; a provider may be served by
+    # several packages, so iterate every directory it contributes.
     ep_dirs = _get_ep_compliance_dirs()
-    for prov, path in ep_dirs.items():
+    for prov, paths in ep_dirs.items():
         if provider and prov != provider:
             continue
-        if os.path.isdir(path):
+        for path in paths:
+            if not os.path.isdir(path):
+                continue
             for file in os.scandir(path):
                 if file.is_file() and file.name.endswith(".json"):
                     name = file.name.removesuffix(".json")

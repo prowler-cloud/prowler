@@ -14,6 +14,8 @@ from prowler.providers.azure.services.vm.vm_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -465,3 +467,328 @@ class Test_VirtualMachine_SecurityProfile_Validation:
         assert isinstance(vm.security_profile.uefi_settings, UefiSettings)
         assert vm.security_profile.uefi_settings.secure_boot_enabled is True
         assert vm.security_profile.uefi_settings.v_tpm_enabled is True
+
+
+class Test_VM_get_virtual_machines:
+    def test_get_virtual_machines_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machines = MagicMock()
+        mock_client.virtual_machines.list_all.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = None
+
+        result = vm_service._get_virtual_machines()
+
+        mock_client.virtual_machines.list_all.assert_called_once()
+        mock_client.virtual_machines.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_virtual_machines_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machines = MagicMock()
+        mock_client.virtual_machines.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = vm_service._get_virtual_machines()
+
+        mock_client.virtual_machines.list.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.virtual_machines.list_all.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_virtual_machines_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machines = MagicMock()
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = vm_service._get_virtual_machines()
+
+        mock_client.virtual_machines.list.assert_not_called()
+        mock_client.virtual_machines.list_all.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+
+class Test_VM_get_disks:
+    def test_get_disks_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.disks = MagicMock()
+        mock_client.disks.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = None
+
+        result = vm_service._get_disks()
+
+        mock_client.disks.list.assert_called_once()
+        mock_client.disks.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_disks_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.disks = MagicMock()
+        mock_client.disks.list_by_resource_group.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = vm_service._get_disks()
+
+        mock_client.disks.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.disks.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_disks_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+        mock_client.disks = MagicMock()
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = vm_service._get_disks()
+
+        mock_client.disks.list_by_resource_group.assert_not_called()
+        mock_client.disks.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+
+class Test_VM_get_vm_scale_sets:
+    def test_get_vm_scale_sets_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machine_scale_sets = MagicMock()
+        mock_client.virtual_machine_scale_sets.list_all.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = None
+
+        result = vm_service._get_vm_scale_sets()
+
+        mock_client.virtual_machine_scale_sets.list_all.assert_called_once()
+        mock_client.virtual_machine_scale_sets.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_vm_scale_sets_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machine_scale_sets = MagicMock()
+        mock_client.virtual_machine_scale_sets.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = vm_service._get_vm_scale_sets()
+
+        mock_client.virtual_machine_scale_sets.list.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.virtual_machine_scale_sets.list_all.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_vm_scale_sets_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machine_scale_sets = MagicMock()
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = vm_service._get_vm_scale_sets()
+
+        mock_client.virtual_machine_scale_sets.list.assert_not_called()
+        mock_client.virtual_machine_scale_sets.list_all.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == {}
+
+    def test_get_virtual_machines_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machines = MagicMock()
+        mock_client.virtual_machines.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = vm_service._get_virtual_machines()
+
+        assert mock_client.virtual_machines.list.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_virtual_machines_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machines = MagicMock()
+        mock_client.virtual_machines.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        vm_service._get_virtual_machines()
+
+        mock_client.virtual_machines.list.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
+
+class Test_VM_get_disks_extra:
+    def test_get_disks_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.disks = MagicMock()
+        mock_client.disks.list_by_resource_group.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = vm_service._get_disks()
+
+        assert mock_client.disks.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_disks_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.disks = MagicMock()
+        mock_client.disks.list_by_resource_group.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        vm_service._get_disks()
+
+        mock_client.disks.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
+
+class Test_VM_get_vm_scale_sets_extra:
+    def test_get_vm_scale_sets_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machine_scale_sets = MagicMock()
+        mock_client.virtual_machine_scale_sets.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = vm_service._get_vm_scale_sets()
+
+        assert mock_client.virtual_machine_scale_sets.list.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_vm_scale_sets_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.virtual_machine_scale_sets = MagicMock()
+        mock_client.virtual_machine_scale_sets.list.return_value = []
+
+        with (
+            patch.object(VirtualMachines, "_get_virtual_machines", return_value={}),
+            patch.object(VirtualMachines, "_get_disks", return_value={}),
+            patch.object(VirtualMachines, "_get_vm_scale_sets", return_value={}),
+        ):
+            vm_service = VirtualMachines(set_mocked_azure_provider())
+
+        vm_service.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        vm_service.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        vm_service._get_vm_scale_sets()
+
+        mock_client.virtual_machine_scale_sets.list.assert_called_once_with(
+            resource_group_name="RG"
+        )

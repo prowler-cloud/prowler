@@ -1,0 +1,4554 @@
+{
+  "framework": "CIS-Controls",
+  "name": "CIS Controls v8.1",
+  "version": "8.1",
+  "description": "The CIS Critical Security Controls (CIS Controls) v8.1 are a prioritized set of Safeguards to mitigate the most prevalent cyber-attacks against systems and networks. They are organized into 18 top-level Controls and mapped to three Implementation Groups (IG1, IG2, IG3). This is a cross-provider mapping of Prowler checks to the CIS Controls Safeguards that can be assessed automatically against cloud and platform configurations.",
+  "icon": "cisecurity",
+  "attributes_metadata": [
+    {
+      "key": "Section",
+      "label": "CIS Control",
+      "type": "str",
+      "required": true,
+      "enum": [
+        "1. Inventory and Control of Enterprise Assets",
+        "2. Inventory and Control of Software Assets",
+        "3. Data Protection",
+        "4. Secure Configuration of Enterprise Assets and Software",
+        "5. Account Management",
+        "6. Access Control Management",
+        "7. Continuous Vulnerability Management",
+        "8. Audit Log Management",
+        "9. Email and Web Browser Protections",
+        "10. Malware Defenses",
+        "11. Data Recovery",
+        "12. Network Infrastructure Management",
+        "13. Network Monitoring and Defense",
+        "14. Security Awareness and Skills Training",
+        "15. Service Provider Management",
+        "16. Application Software Security",
+        "17. Incident Response Management",
+        "18. Penetration Testing"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Function",
+      "label": "Security Function",
+      "type": "str",
+      "required": false,
+      "enum": [
+        "Identify",
+        "Protect",
+        "Detect",
+        "Respond",
+        "Recover",
+        "Govern"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "AssetType",
+      "label": "Asset Type",
+      "type": "str",
+      "required": false,
+      "enum": [
+        "Data",
+        "Devices",
+        "Documentation",
+        "Network",
+        "Software",
+        "Users"
+      ],
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "ImplementationGroups",
+      "label": "Implementation Groups",
+      "type": "list_str",
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
+    },
+    "pdf_config": {
+      "language": "en",
+      "primary_color": "#cc0000",
+      "secondary_color": "#7a1f1f",
+      "bg_color": "#FAF0F0",
+      "group_by_field": "Section",
+      "sections": [
+        "1. Inventory and Control of Enterprise Assets",
+        "2. Inventory and Control of Software Assets",
+        "3. Data Protection",
+        "4. Secure Configuration of Enterprise Assets and Software",
+        "5. Account Management",
+        "6. Access Control Management",
+        "7. Continuous Vulnerability Management",
+        "8. Audit Log Management",
+        "9. Email and Web Browser Protections",
+        "10. Malware Defenses",
+        "11. Data Recovery",
+        "12. Network Infrastructure Management",
+        "13. Network Monitoring and Defense",
+        "14. Security Awareness and Skills Training",
+        "15. Service Provider Management",
+        "16. Application Software Security",
+        "17. Incident Response Management",
+        "18. Penetration Testing"
+      ],
+      "section_short_names": {
+        "1. Inventory and Control of Enterprise Assets": "CIS 1",
+        "2. Inventory and Control of Software Assets": "CIS 2",
+        "3. Data Protection": "CIS 3",
+        "4. Secure Configuration of Enterprise Assets and Software": "CIS 4",
+        "5. Account Management": "CIS 5",
+        "6. Access Control Management": "CIS 6",
+        "7. Continuous Vulnerability Management": "CIS 7",
+        "8. Audit Log Management": "CIS 8",
+        "9. Email and Web Browser Protections": "CIS 9",
+        "10. Malware Defenses": "CIS 10",
+        "11. Data Recovery": "CIS 11",
+        "12. Network Infrastructure Management": "CIS 12",
+        "13. Network Monitoring and Defense": "CIS 13",
+        "14. Security Awareness and Skills Training": "CIS 14",
+        "15. Service Provider Management": "CIS 15",
+        "16. Application Software Security": "CIS 16",
+        "17. Incident Response Management": "CIS 17",
+        "18. Penetration Testing": "CIS 18"
+      },
+      "charts": [
+        {
+          "id": "section_compliance",
+          "type": "horizontal_bar",
+          "group_by": "Section",
+          "title": "Compliance Score by CIS Control",
+          "y_label": "CIS Control",
+          "x_label": "Compliance %",
+          "value_source": "compliance_percent",
+          "color_mode": "by_value"
+        }
+      ],
+      "filter": {
+        "only_failed": true,
+        "include_manual": false
+      }
+    }
+  },
+  "requirements": [
+    {
+      "id": "1.1",
+      "name": "Establish and Maintain Detailed Enterprise Asset Inventory",
+      "description": "Establish and maintain an accurate, detailed, and up-to-date inventory of all enterprise assets with the potential to store or process data, to include: end-user devices (including portable and mobile), network devices, non-computing/IoT devices, and servers. Ensure the inventory records the network address (if static), hardware address, machine name, enterprise asset owner, department for each asset, and whether the asset has been approved to connect to the network. For mobile end-user devices, MDM type tools can support this process, where appropriate. This inventory includes assets connected to the infrastructure physically, virtually, remotely, and those within cloud environments. Additionally, it includes assets that are regularly connected to the enterprise's network infrastructure, even if they are not under control of the enterprise. Review and update the inventory of all enterprise assets bi-annually, or more frequently.",
+      "attributes": {
+        "Section": "1. Inventory and Control of Enterprise Assets",
+        "Function": "Identify",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "config_recorder_all_regions_enabled",
+          "resourceexplorer2_indexes_found"
+        ],
+        "gcp": [
+          "iam_cloud_asset_inventory_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "1.2",
+      "name": "Address Unauthorized Assets",
+      "description": "Ensure that a process exists to address unauthorized assets on a weekly basis. The enterprise may choose to remove the asset from the network, deny the asset from connecting remotely to the network, or quarantine the asset.",
+      "attributes": {
+        "Section": "1. Inventory and Control of Enterprise Assets",
+        "Function": "Respond",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "1.3",
+      "name": "Utilize an Active Discovery Tool",
+      "description": "Utilize an active discovery tool to identify assets connected to the enterprise's network. Configure the active discovery tool to execute daily, or more frequently.",
+      "attributes": {
+        "Section": "1. Inventory and Control of Enterprise Assets",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "1.4",
+      "name": "Use Dynamic Host Configuration Protocol (DHCP) Logging to Update Enterprise Asset Inventory",
+      "description": "Use DHCP logging on all DHCP servers or Internet Protocol (IP) address management tools to update the enterprise's asset inventory. Review and use logs to update the enterprise's asset inventory weekly, or more frequently.",
+      "attributes": {
+        "Section": "1. Inventory and Control of Enterprise Assets",
+        "Function": "Identify",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "1.5",
+      "name": "Use a Passive Asset Discovery Tool",
+      "description": "Use a passive discovery tool to identify assets connected to the enterprise's network. Review and use scans to update the enterprise's asset inventory at least weekly, or more frequently.",
+      "attributes": {
+        "Section": "1. Inventory and Control of Enterprise Assets",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "2.1",
+      "name": "Establish and Maintain a Software Inventory",
+      "description": "Establish and maintain a detailed inventory of all licensed software installed on enterprise assets. The software inventory must document the title, publisher, initial install/use date, and business purpose for each entry; where appropriate, include the Uniform Resource Locator (URL), app store(s), version(s), deployment mechanism, decommission date, and number of licenses. Review and update the software inventory bi-annually, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "2.2",
+      "name": "Ensure Authorized Software is Currently Supported",
+      "description": "Ensure that only currently supported software is designated as authorized in the software inventory for enterprise assets. If software is unsupported, yet necessary for the fulfillment of the enterprise's mission, document an exception detailing mitigating controls and residual risk acceptance. For any unsupported software without an exception documentation, designate as unauthorized. Review the software list to verify software support at least monthly, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_using_supported_runtimes",
+          "ec2_instance_with_outdated_ami",
+          "eks_cluster_uses_a_supported_version",
+          "kafka_cluster_uses_latest_version",
+          "rds_instance_deprecated_engine_version"
+        ]
+      }
+    },
+    {
+      "id": "2.3",
+      "name": "Address Unauthorized Software",
+      "description": "Ensure that unauthorized software is either removed from use on enterprise assets or receives a documented exception. Review monthly, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Respond",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "2.4",
+      "name": "Utilize Automated Software Inventory Tools",
+      "description": "Utilize software inventory tools, when possible, throughout the enterprise to automate the discovery and documentation of installed software.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Detect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "2.5",
+      "name": "Allowlist Authorized Software",
+      "description": "Use technical controls, such as application allowlisting, to ensure that only authorized software can execute or be accessed. Reassess bi-annually, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "googleworkspace": [
+          "chat_apps_installation_disabled",
+          "marketplace_apps_access_restricted",
+          "security_app_access_restricted"
+        ],
+        "m365": [
+          "entra_admin_consent_workflow_enabled",
+          "entra_policy_restricts_user_consent_for_apps",
+          "entra_thirdparty_integrated_apps_not_allowed"
+        ]
+      }
+    },
+    {
+      "id": "2.6",
+      "name": "Allowlist Authorized Libraries",
+      "description": "Use technical controls to ensure that only authorized software libraries, such as specific .dll, .ocx, and .so files, are allowed to load into a system process. Block unauthorized libraries from loading into a system process. Reassess bi-annually, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "2.7",
+      "name": "Allowlist Authorized Scripts",
+      "description": "Use technical controls, such as digital signatures and version control, to ensure that only authorized scripts, such as specific .ps1, and .py files are allowed to execute. Block unauthorized scripts from executing. Reassess bi-annually, or more frequently.",
+      "attributes": {
+        "Section": "2. Inventory and Control of Software Assets",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.1",
+      "name": "Establish and Maintain a Data Management Process",
+      "description": "Establish and maintain a documented data management process. In the process, address data sensitivity, data owner, handling of data, data retention limits, and disposal requirements, based on sensitivity and retention standards for the enterprise. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Govern",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.2",
+      "name": "Establish and Maintain a Data Inventory",
+      "description": "Establish and maintain a data inventory based on the enterprise's data management process. Inventory sensitive data, at a minimum. Review and update inventory annually, at a minimum, with a priority on sensitive data.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Identify",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "macie_automated_sensitive_data_discovery_enabled",
+          "macie_is_enabled"
+        ]
+      }
+    },
+    {
+      "id": "3.3",
+      "name": "Configure Data Access Control Lists",
+      "description": "Configure data access control lists based on a user's need to know. Apply data access control lists, also known as access permissions, to local and remote file systems, databases, and applications.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "actiontrail_oss_bucket_not_publicly_accessible",
+          "oss_bucket_not_publicly_accessible",
+          "rds_instance_no_public_access_whitelist"
+        ],
+        "aws": [
+          "awslambda_function_not_publicly_accessible",
+          "cloudtrail_logs_s3_bucket_is_not_publicly_accessible",
+          "cloudwatch_log_group_not_publicly_accessible",
+          "codebuild_project_not_publicly_accessible",
+          "dynamodb_table_cross_account_access",
+          "ec2_ami_public",
+          "ecr_repositories_not_publicly_accessible",
+          "efs_access_point_enforce_root_directory",
+          "efs_access_point_enforce_user_identity",
+          "efs_mount_target_not_publicly_accessible",
+          "efs_not_publicly_accessible",
+          "eventbridge_bus_cross_account_access",
+          "eventbridge_bus_exposed",
+          "glacier_vaults_policy_public_access",
+          "glue_data_catalogs_not_publicly_accessible",
+          "kms_key_not_publicly_accessible",
+          "s3_access_point_public_access_block",
+          "s3_account_level_public_access_blocks",
+          "s3_bucket_acl_prohibited",
+          "s3_bucket_cross_account_access",
+          "s3_bucket_level_public_access_block",
+          "s3_bucket_policy_public_write_access",
+          "s3_bucket_public_access",
+          "s3_bucket_public_list_acl",
+          "s3_bucket_public_write_acl",
+          "s3_multi_region_access_point_public_access_block",
+          "secretsmanager_has_restrictive_resource_policy",
+          "secretsmanager_not_publicly_accessible",
+          "ses_identity_not_publicly_accessible",
+          "sns_topics_not_publicly_accessible",
+          "sqs_queues_not_publicly_accessible",
+          "ssm_documents_set_as_public"
+        ],
+        "azure": [
+          "cosmosdb_account_firewall_use_selected_networks",
+          "cosmosdb_account_use_aad_and_rbac",
+          "keyvault_rbac_enabled",
+          "sqlserver_unrestricted_inbound_access",
+          "storage_account_key_access_disabled",
+          "storage_account_public_network_access_disabled",
+          "storage_blob_public_access_level_is_disabled",
+          "storage_default_network_access_rule_is_denied"
+        ],
+        "gcp": [
+          "bigquery_dataset_public_access",
+          "cloudfunction_function_not_publicly_accessible",
+          "cloudsql_instance_public_access",
+          "cloudstorage_bucket_public_access",
+          "cloudstorage_bucket_uniform_bucket_level_access",
+          "compute_image_not_publicly_shared",
+          "kms_key_not_publicly_accessible",
+          "secretmanager_secret_not_publicly_accessible"
+        ],
+        "github": [
+          "organization_default_repository_permission_strict"
+        ],
+        "googleworkspace": [
+          "calendar_external_sharing_primary_calendar",
+          "calendar_external_sharing_secondary_calendar",
+          "chat_external_file_sharing_disabled",
+          "chat_external_messaging_restricted",
+          "chat_external_spaces_restricted",
+          "chat_internal_file_sharing_disabled",
+          "drive_access_checker_recipients_only",
+          "drive_internal_users_distribute_content",
+          "drive_publishing_files_disabled",
+          "drive_shared_drive_disable_download_print_copy",
+          "drive_shared_drive_managers_cannot_override",
+          "drive_shared_drive_members_only_access",
+          "drive_sharing_allowlisted_domains",
+          "gmail_auto_forwarding_disabled",
+          "gmail_mail_delegation_disabled",
+          "groups_external_access_restricted",
+          "groups_view_conversations_restricted"
+        ],
+        "kubernetes": [
+          "core_no_secrets_envs",
+          "rbac_minimize_secret_access"
+        ],
+        "m365": [
+          "admincenter_external_calendar_sharing_disabled",
+          "admincenter_groups_not_public_visibility",
+          "admincenter_organization_customer_lockbox_enabled",
+          "sharepoint_external_sharing_managed",
+          "sharepoint_external_sharing_restricted",
+          "sharepoint_guest_sharing_restricted",
+          "teams_external_domains_restricted",
+          "teams_external_file_sharing_restricted",
+          "teams_external_users_cannot_start_conversations",
+          "teams_unmanaged_communication_disabled"
+        ],
+        "mongodbatlas": [
+          "clusters_authentication_enabled"
+        ],
+        "openstack": [
+          "image_not_publicly_visible",
+          "image_not_shared_with_multiple_projects",
+          "objectstorage_container_acl_not_globally_shared",
+          "objectstorage_container_listing_disabled",
+          "objectstorage_container_public_read_acl_disabled",
+          "objectstorage_container_write_acl_restricted"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "objectstorage_bucket_not_publicly_accessible"
+        ],
+        "vercel": [
+          "project_deployment_protection_enabled",
+          "project_password_protection_enabled",
+          "project_production_deployment_protection_enabled",
+          "team_member_role_least_privilege"
+        ]
+      }
+    },
+    {
+      "id": "3.4",
+      "name": "Enforce Data Retention",
+      "description": "Retain data according to the enterprise's documented data management process. Data retention must include both minimum and maximum timelines.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ecr_repositories_lifecycle_policy_enabled",
+          "kinesis_stream_data_retention_period",
+          "s3_bucket_lifecycle_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_lifecycle_management_enabled",
+          "cloudstorage_bucket_sufficient_retention_period"
+        ],
+        "stackit": [
+          "objectstorage_bucket_object_lock_enabled",
+          "objectstorage_bucket_retention_policy"
+        ]
+      }
+    },
+    {
+      "id": "3.5",
+      "name": "Securely Dispose of Data",
+      "description": "Securely dispose of data as outlined in the enterprise's documented data management process. Ensure the disposal process and method are commensurate with the data sensitivity.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.6",
+      "name": "Encrypt Data on End-User Devices",
+      "description": "Encrypt data on end-user devices containing sensitive data. Example implementations can include: Windows BitLocker®, Apple FileVault®, Linux® dm-crypt.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.7",
+      "name": "Establish and Maintain a Data Classification Scheme",
+      "description": "Establish and maintain an overall data classification scheme for the enterprise. Enterprises may use labels, such as \"Sensitive,\" \"Confidential,\" and \"Public,\" and classify their data according to those labels. Review and update the classification scheme annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Identify",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.8",
+      "name": "Document Data Flows",
+      "description": "Document data flows. Data flow documentation includes service provider data flows and should be based on the enterprise's data management process. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Identify",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.9",
+      "name": "Encrypt Data on Removable Media",
+      "description": "Encrypt data on removable media.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.10",
+      "name": "Encrypt Sensitive Data in Transit",
+      "description": "Encrypt sensitive data in transit. Example implementations can include: Transport Layer Security (TLS) and Open Secure Shell (OpenSSH).",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled"
+        ],
+        "aws": [
+          "cloudfront_distributions_https_enabled",
+          "cloudfront_distributions_origin_traffic_encrypted",
+          "cloudfront_distributions_using_deprecated_ssl_protocols",
+          "dms_endpoint_redis_in_transit_encryption_enabled",
+          "dms_endpoint_ssl_enabled",
+          "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
+          "elasticache_redis_cluster_in_transit_encryption_enabled",
+          "elb_insecure_ssl_ciphers",
+          "elb_ssl_listeners",
+          "elb_ssl_listeners_use_acm_certificate",
+          "elbv2_insecure_ssl_ciphers",
+          "elbv2_nlb_tls_termination_enabled",
+          "elbv2_ssl_listeners",
+          "glue_database_connections_ssl_enabled",
+          "kafka_cluster_in_transit_encryption_enabled",
+          "kafka_connector_in_transit_encryption_enabled",
+          "opensearch_service_domains_https_communications_enforced",
+          "opensearch_service_domains_node_to_node_encryption_enabled",
+          "rds_instance_transport_encrypted",
+          "redshift_cluster_in_transit_encryption_enabled",
+          "s3_bucket_secure_transport_policy",
+          "sagemaker_training_jobs_intercontainer_encryption_enabled",
+          "sns_subscription_not_using_http_endpoints",
+          "transfer_server_in_transit_encryption_enabled"
+        ],
+        "azure": [
+          "app_ensure_http_is_redirected_to_https",
+          "app_minimum_tls_version_12",
+          "cosmosdb_account_minimum_tls_version",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "mysql_flexible_server_ssl_connection_enabled",
+          "postgresql_flexible_server_enforce_ssl_enabled",
+          "sqlserver_recommended_minimal_tls_version",
+          "storage_ensure_minimum_tls_version_12",
+          "storage_secure_transfer_required_is_enabled",
+          "storage_smb_channel_encryption_with_secure_algorithm"
+        ],
+        "cloudflare": [
+          "zone_automatic_https_rewrites_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_min_tls_version_secure",
+          "zone_ssl_strict",
+          "zone_tls_1_3_enabled",
+          "zone_universal_ssl_enabled"
+        ],
+        "gcp": [
+          "cloudsql_instance_ssl_connections"
+        ],
+        "kubernetes": [
+          "apiserver_etcd_cafile_set",
+          "apiserver_etcd_tls_config",
+          "apiserver_kubelet_cert_auth",
+          "apiserver_kubelet_tls_auth",
+          "apiserver_strong_ciphers_only",
+          "apiserver_tls_config",
+          "etcd_no_auto_tls",
+          "etcd_no_peer_auto_tls",
+          "etcd_peer_tls_config",
+          "etcd_tls_encryption",
+          "kubelet_strong_ciphers_only",
+          "kubelet_tls_cert_and_key"
+        ],
+        "mongodbatlas": [
+          "clusters_tls_enabled"
+        ],
+        "oraclecloud": [
+          "compute_instance_in_transit_encryption_enabled"
+        ],
+        "vercel": [
+          "domain_ssl_certificate_valid"
+        ]
+      }
+    },
+    {
+      "id": "3.11",
+      "name": "Encrypt Sensitive Data at Rest",
+      "description": "Encrypt sensitive data at rest on servers, applications, and databases. Storage-layer encryption, also known as server-side encryption, meets the minimum requirement of this Safeguard. Additional encryption methods may include application-layer encryption, also known as client-side encryption, where access to the data storage device(s) does not permit access to the plain-text data.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ecs_attached_disk_encrypted",
+          "ecs_unattached_disk_encrypted",
+          "rds_instance_tde_enabled",
+          "rds_instance_tde_key_custom"
+        ],
+        "aws": [
+          "apigateway_restapi_cache_encrypted",
+          "athena_workgroup_encryption",
+          "awslambda_function_env_vars_not_encrypted_with_cmk",
+          "backup_recovery_point_encrypted",
+          "backup_vaults_encrypted",
+          "bedrock_model_invocation_logs_encryption_enabled",
+          "bedrock_prompt_encrypted_with_cmk",
+          "cloudtrail_kms_encryption_enabled",
+          "cloudwatch_log_group_kms_encryption_enabled",
+          "codebuild_project_s3_logs_encrypted",
+          "codebuild_report_group_export_encrypted",
+          "documentdb_cluster_storage_encrypted",
+          "dynamodb_accelerator_cluster_encryption_enabled",
+          "dynamodb_tables_kms_cmk_encryption_enabled",
+          "ec2_ebs_default_encryption",
+          "ec2_ebs_snapshots_encrypted",
+          "ec2_ebs_volume_encryption",
+          "efs_encryption_at_rest_enabled",
+          "eks_cluster_kms_cmk_encryption_in_secrets_enabled",
+          "elasticache_redis_cluster_rest_encryption_enabled",
+          "firehose_stream_encrypted_at_rest",
+          "glue_data_catalogs_connection_passwords_encryption_enabled",
+          "glue_data_catalogs_metadata_encryption_enabled",
+          "glue_development_endpoints_s3_encryption_enabled",
+          "glue_etl_jobs_amazon_s3_encryption_enabled",
+          "glue_etl_jobs_cloudwatch_logs_encryption_enabled",
+          "glue_ml_transform_encrypted_at_rest",
+          "kafka_cluster_encryption_at_rest_uses_cmk",
+          "kinesis_stream_encrypted_at_rest",
+          "neptune_cluster_snapshot_encrypted",
+          "neptune_cluster_storage_encrypted",
+          "opensearch_service_domains_encryption_at_rest_enabled",
+          "rds_cluster_storage_encrypted",
+          "rds_instance_storage_encrypted",
+          "rds_snapshots_encrypted",
+          "redshift_cluster_encrypted_at_rest",
+          "s3_bucket_default_encryption",
+          "s3_bucket_kms_encryption",
+          "sagemaker_notebook_instance_encryption_enabled",
+          "sagemaker_training_jobs_volume_and_output_encryption_enabled",
+          "sns_topics_kms_encryption_at_rest_enabled",
+          "sqs_queues_server_side_encryption_enabled",
+          "stepfunctions_statemachine_encrypted_with_cmk",
+          "storagegateway_fileshare_encryption_enabled",
+          "workspaces_volume_encryption_enabled"
+        ],
+        "azure": [
+          "databricks_workspace_cmk_encryption_enabled",
+          "monitor_storage_account_with_activity_logs_cmk_encrypted",
+          "sqlserver_tde_encrypted_with_cmk",
+          "sqlserver_tde_encryption_enabled",
+          "storage_ensure_encryption_with_customer_managed_keys",
+          "storage_infrastructure_encryption_is_enabled",
+          "vm_ensure_attached_disks_encrypted_with_cmk",
+          "vm_ensure_unattached_disks_encrypted_with_cmk"
+        ],
+        "gcp": [
+          "bigquery_dataset_cmk_encryption",
+          "bigquery_table_cmk_encryption",
+          "cloudsql_instance_cmek_encryption_enabled",
+          "compute_instance_encryption_with_csek_enabled",
+          "dataproc_encrypted_with_cmks_disabled"
+        ],
+        "kubernetes": [
+          "apiserver_encryption_provider_config_set"
+        ],
+        "linode": [
+          "compute_instance_disk_encryption_enabled"
+        ],
+        "mongodbatlas": [
+          "clusters_encryption_at_rest_enabled"
+        ],
+        "openstack": [
+          "blockstorage_volume_encryption_enabled"
+        ],
+        "oraclecloud": [
+          "blockstorage_block_volume_encrypted_with_cmk",
+          "blockstorage_boot_volume_encrypted_with_cmk",
+          "filestorage_file_system_encrypted_with_cmk",
+          "objectstorage_bucket_encrypted_with_cmk"
+        ],
+        "vercel": [
+          "project_environment_no_secrets_in_plain_type"
+        ]
+      }
+    },
+    {
+      "id": "3.12",
+      "name": "Segment Data Processing and Storage Based on Sensitivity",
+      "description": "Segment data processing and storage based on the sensitivity of the data. Do not process sensitive data on enterprise assets intended for lower sensitivity data.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "3.13",
+      "name": "Deploy a Data Loss Prevention Solution",
+      "description": "Implement an automated tool, such as a host-based Data Loss Prevention (DLP) tool to identify all sensitive data stored, processed, or transmitted through enterprise assets, including those located onsite or at a remote service provider, and update the enterprise's data inventory.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "macie_automated_sensitive_data_discovery_enabled",
+          "macie_is_enabled"
+        ],
+        "googleworkspace": [
+          "security_dlp_drive_rules_configured"
+        ],
+        "openstack": [
+          "blockstorage_snapshot_metadata_sensitive_data",
+          "blockstorage_volume_metadata_sensitive_data",
+          "compute_instance_metadata_sensitive_data",
+          "objectstorage_container_metadata_sensitive_data"
+        ]
+      }
+    },
+    {
+      "id": "3.14",
+      "name": "Log Sensitive Data Access",
+      "description": "Log sensitive data access, including modification and disposal.",
+      "attributes": {
+        "Section": "3. Data Protection",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "oss_bucket_logging_enabled",
+          "rds_instance_sql_audit_enabled"
+        ],
+        "aws": [
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "opensearch_service_domains_audit_logging_enabled"
+        ],
+        "azure": [
+          "keyvault_logging_enabled",
+          "mysql_flexible_server_audit_log_enabled",
+          "sqlserver_auditing_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_audit_logs_enabled"
+        ],
+        "m365": [
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ],
+        "mongodbatlas": [
+          "projects_auditing_enabled"
+        ],
+        "oraclecloud": [
+          "objectstorage_bucket_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "4.1",
+      "name": "Establish and Maintain a Secure Configuration Process",
+      "description": "Establish and maintain a documented secure configuration process for enterprise assets (end-user devices, including portable and mobile, non-computing/IoT devices, and servers) and software (operating systems and applications). Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "policy_ensure_asc_enforcement_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_request_timeout_set",
+          "controllermanager_garbage_collection",
+          "kubelet_conf_file_ownership",
+          "kubelet_conf_file_permissions",
+          "kubelet_config_yaml_ownership",
+          "kubelet_config_yaml_permissions",
+          "kubelet_event_record_qps",
+          "kubelet_service_file_ownership_root",
+          "kubelet_service_file_permissions",
+          "kubelet_streaming_connection_timeout"
+        ],
+        "openstack": [
+          "compute_instance_config_drive_enabled",
+          "compute_instance_locked_status_enabled",
+          "compute_instance_trusted_image_certificates",
+          "image_secure_boot_enabled",
+          "image_signature_verification_enabled"
+        ]
+      }
+    },
+    {
+      "id": "4.2",
+      "name": "Establish and Maintain a Secure Configuration Process for Network Infrastructure",
+      "description": "Establish and maintain a documented secure configuration process for network devices. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "4.3",
+      "name": "Configure Automatic Session Locking on Enterprise Assets",
+      "description": "Configure automatic session locking on enterprise assets after a defined period of inactivity. For general purpose operating systems, the period must not exceed 15 minutes. For mobile end-user devices, the period must not exceed 2 minutes.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "appstream_fleet_maximum_session_duration",
+          "appstream_fleet_session_disconnect_timeout",
+          "appstream_fleet_session_idle_disconnect_timeout"
+        ],
+        "googleworkspace": [
+          "security_session_duration_limited"
+        ],
+        "m365": [
+          "entra_admin_users_sign_in_frequency_enabled",
+          "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+          "entra_intune_enrollment_sign_in_frequency_every_time"
+        ],
+        "okta": [
+          "application_admin_console_session_idle_timeout_15min",
+          "signon_global_session_cookies_not_persistent",
+          "signon_global_session_idle_timeout_15min",
+          "signon_global_session_lifetime_18h"
+        ]
+      }
+    },
+    {
+      "id": "4.4",
+      "name": "Implement and Manage a Firewall on Servers",
+      "description": "Implement and manage a firewall on servers, where supported. Example implementations include a virtual firewall, operating system firewall, or a third-party firewall agent.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ecs_securitygroup_restrict_rdp_internet",
+          "ecs_securitygroup_restrict_ssh_internet"
+        ],
+        "aws": [
+          "ec2_instance_port_cassandra_exposed_to_internet",
+          "ec2_instance_port_cifs_exposed_to_internet",
+          "ec2_instance_port_elasticsearch_kibana_exposed_to_internet",
+          "ec2_instance_port_ftp_exposed_to_internet",
+          "ec2_instance_port_kafka_exposed_to_internet",
+          "ec2_instance_port_kerberos_exposed_to_internet",
+          "ec2_instance_port_ldap_exposed_to_internet",
+          "ec2_instance_port_memcached_exposed_to_internet",
+          "ec2_instance_port_mongodb_exposed_to_internet",
+          "ec2_instance_port_mysql_exposed_to_internet",
+          "ec2_instance_port_oracle_exposed_to_internet",
+          "ec2_instance_port_postgresql_exposed_to_internet",
+          "ec2_instance_port_rdp_exposed_to_internet",
+          "ec2_instance_port_redis_exposed_to_internet",
+          "ec2_instance_port_sqlserver_exposed_to_internet",
+          "ec2_instance_port_ssh_exposed_to_internet",
+          "ec2_instance_port_telnet_exposed_to_internet",
+          "ec2_securitygroup_allow_ingress_from_internet_to_all_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port",
+          "ec2_securitygroup_allow_ingress_from_internet_to_any_port_from_ip",
+          "ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_3389",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_cassandra_7199_9160_8888",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_elasticsearch_kibana_9200_9300_5601",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_ftp_20_21",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_kafka_9092",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_memcached_11211",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mongodb_27017_27018",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_mysql_3306",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_oracle_1521_2483",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_postgres_5432",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_redis_6379",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_sql_server_1433_1434",
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_telnet_23",
+          "ec2_securitygroup_allow_wide_open_public_ipv4",
+          "ec2_securitygroup_default_restrict_traffic",
+          "ec2_securitygroup_with_many_ingress_egress_rules"
+        ],
+        "azure": [
+          "network_subnet_nsg_associated",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed"
+        ],
+        "kubernetes": [
+          "kubelet_manage_iptables"
+        ],
+        "linode": [
+          "networking_firewall_assigned_to_devices",
+          "networking_firewall_default_inbound_policy_drop",
+          "networking_firewall_default_outbound_policy_drop",
+          "networking_firewall_inbound_rules_configured",
+          "networking_firewall_outbound_rules_configured",
+          "networking_firewall_status_enabled"
+        ],
+        "mongodbatlas": [
+          "organizations_api_access_list_required",
+          "projects_network_access_list_exposed_to_internet"
+        ],
+        "nhn": [
+          "compute_instance_security_groups"
+        ],
+        "openstack": [
+          "compute_instance_security_groups_attached",
+          "networking_port_security_disabled",
+          "networking_security_group_allows_all_ingress_from_internet",
+          "networking_security_group_allows_rdp_from_internet",
+          "networking_security_group_allows_ssh_from_internet"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port"
+        ],
+        "stackit": [
+          "iaas_security_group_all_traffic_unrestricted",
+          "iaas_security_group_database_unrestricted",
+          "iaas_security_group_rdp_unrestricted",
+          "iaas_security_group_ssh_unrestricted"
+        ],
+        "vercel": [
+          "security_custom_rules_configured",
+          "security_ip_blocking_rules_configured",
+          "security_waf_enabled"
+        ]
+      }
+    },
+    {
+      "id": "4.5",
+      "name": "Implement and Manage a Firewall on End-User Devices",
+      "description": "Implement and manage a host-based firewall or port-filtering tool on end-user devices, with a default-deny rule that drops all traffic except those services and ports that are explicitly allowed.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "4.6",
+      "name": "Securely Manage Enterprise Assets and Software",
+      "description": "Securely manage enterprise assets and software. Example implementations include managing configuration through version-controlled Infrastructure-as-Code (IaC) and accessing administrative interfaces over secure network protocols, such as Secure Shell (SSH) and Hypertext Transfer Protocol Secure (HTTPS). Do not use insecure management protocols, such as Telnet (Teletype Network) and HTTP, unless operationally essential.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "oss_bucket_secure_transport_enabled",
+          "rds_instance_ssl_enabled"
+        ],
+        "aws": [
+          "autoscaling_group_launch_configuration_requires_imdsv2",
+          "ec2_instance_account_imdsv2_enabled",
+          "ec2_instance_imdsv2_enabled",
+          "ec2_instance_managed_by_ssm",
+          "ec2_launch_template_imdsv2_required"
+        ],
+        "azure": [
+          "app_client_certificates_on",
+          "app_ensure_http_is_redirected_to_https",
+          "storage_secure_transfer_required_is_enabled",
+          "vm_linux_enforce_ssh_authentication"
+        ],
+        "cloudflare": [
+          "zone_automatic_https_rewrites_enabled",
+          "zone_https_redirect_enabled",
+          "zone_min_tls_version_secure",
+          "zone_ssl_strict"
+        ],
+        "gcp": [
+          "compute_instance_block_project_wide_ssh_keys_disabled",
+          "compute_project_os_login_enabled"
+        ],
+        "kubernetes": [
+          "controllermanager_bind_address",
+          "scheduler_bind_address"
+        ],
+        "mongodbatlas": [
+          "clusters_tls_enabled"
+        ],
+        "openstack": [
+          "compute_instance_key_based_authentication"
+        ],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled"
+        ]
+      }
+    },
+    {
+      "id": "4.7",
+      "name": "Manage Default Accounts on Enterprise Assets and Software",
+      "description": "Manage default accounts on enterprise assets and software, such as root, administrator, and other pre-configured vendor accounts. Example implementations can include: disabling default accounts or making them unusable.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_no_root_access_key"
+        ],
+        "aws": [
+          "iam_avoid_root_usage",
+          "iam_no_root_access_key",
+          "iam_root_credentials_management_enabled",
+          "rds_cluster_default_admin",
+          "rds_instance_default_admin",
+          "redshift_cluster_non_default_username"
+        ],
+        "azure": [
+          "aks_cluster_local_accounts_disabled",
+          "containerregistry_admin_user_disabled",
+          "cosmosdb_account_use_aad_and_rbac",
+          "storage_account_key_access_disabled"
+        ],
+        "gcp": [
+          "compute_instance_default_service_account_in_use",
+          "compute_instance_default_service_account_in_use_with_full_api_access",
+          "gke_cluster_no_default_service_account"
+        ],
+        "kubernetes": [
+          "apiserver_anonymous_requests",
+          "kubelet_disable_anonymous_auth"
+        ],
+        "m365": [
+          "exchange_shared_mailbox_sign_in_disabled"
+        ],
+        "nhn": [
+          "compute_instance_login_user"
+        ],
+        "oraclecloud": [
+          "identity_tenancy_admin_users_no_api_keys"
+        ],
+        "scaleway": [
+          "iam_api_keys_no_root_owned"
+        ]
+      }
+    },
+    {
+      "id": "4.8",
+      "name": "Uninstall or Disable Unnecessary Services on Enterprise Assets and Software",
+      "description": "Uninstall or disable unnecessary services on enterprise assets and software, such as an unused file sharing service, web application module, or service function.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "cs_kubernetes_dashboard_disabled"
+        ],
+        "azure": [
+          "app_ftp_deployment_disabled",
+          "app_function_ftps_deployment_disabled"
+        ],
+        "gcp": [
+          "compute_instance_ip_forwarding_is_enabled",
+          "compute_instance_serial_ports_in_use"
+        ],
+        "googleworkspace": [
+          "chat_incoming_webhooks_disabled",
+          "drive_desktop_access_disabled",
+          "gmail_per_user_outbound_gateway_disabled",
+          "gmail_pop_imap_access_disabled",
+          "security_less_secure_apps_disabled",
+          "sites_service_disabled"
+        ],
+        "kubernetes": [
+          "apiserver_disable_profiling",
+          "controllermanager_disable_profiling",
+          "kubelet_disable_read_only_port",
+          "scheduler_profiling"
+        ],
+        "m365": [
+          "exchange_transport_config_smtp_auth_disabled",
+          "teams_email_sending_to_channel_disabled"
+        ],
+        "oraclecloud": [
+          "compute_instance_legacy_metadata_endpoint_disabled"
+        ],
+        "vercel": [
+          "project_auto_expose_system_env_disabled",
+          "project_directory_listing_disabled"
+        ]
+      }
+    },
+    {
+      "id": "4.9",
+      "name": "Configure Trusted DNS Servers on Enterprise Assets",
+      "description": "Configure trusted DNS servers on network infrastructure. Example implementations include configuring network devices to use enterprise-controlled DNS servers and/or reputable externally accessible DNS servers.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "cloudflare": [
+          "zone_dnssec_enabled"
+        ]
+      }
+    },
+    {
+      "id": "4.10",
+      "name": "Enforce Automatic Device Lockout on Portable End-User Devices",
+      "description": "Enforce automatic device lockout following a predetermined threshold of local failed authentication attempts on portable end-user devices, where supported. For laptops, do not allow more than 20 failed authentication attempts; for tablets and smartphones, no more than 10 failed authentication attempts. Example implementations include Microsoft® InTune Device Lock and Apple® Configuration Profile maxFailedAttempts.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "4.11",
+      "name": "Enforce Remote Wipe Capability on Portable End-User Devices",
+      "description": "Remotely wipe enterprise data from enterprise-owned portable end-user devices when deemed appropriate such as lost or stolen devices, or when an individual no longer supports the enterprise.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "4.12",
+      "name": "Separate Enterprise Workspaces on Mobile End-User Devices",
+      "description": "Ensure separate enterprise workspaces are used on mobile end-user devices, where supported. Example implementations include using an Apple® Configuration Profile or Android™ Work Profile to separate enterprise applications and data from personal applications and data.",
+      "attributes": {
+        "Section": "4. Secure Configuration of Enterprise Assets and Software",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "5.1",
+      "name": "Establish and Maintain an Inventory of Accounts",
+      "description": "Establish and maintain an inventory of all accounts managed in the enterprise. The inventory must at a minimum include user, administrator, and service accounts. The inventory, at a minimum, should contain the person's name, username, start/stop dates, and department. Validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Identify",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "5.2",
+      "name": "Use Unique Passwords",
+      "description": "Use unique passwords for all enterprise assets. Best practice implementation includes, at a minimum, an 8-character password for accounts using Multi-Factor Authentication (MFA) and a 14-character password for accounts not using MFA.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_password_policy_lowercase",
+          "ram_password_policy_minimum_length",
+          "ram_password_policy_number",
+          "ram_password_policy_password_reuse_prevention",
+          "ram_password_policy_symbol",
+          "ram_password_policy_uppercase"
+        ],
+        "aws": [
+          "cognito_user_pool_password_policy_lowercase",
+          "cognito_user_pool_password_policy_minimum_length_14",
+          "cognito_user_pool_password_policy_number",
+          "cognito_user_pool_password_policy_symbol",
+          "cognito_user_pool_password_policy_uppercase",
+          "iam_password_policy_lowercase",
+          "iam_password_policy_minimum_length_14",
+          "iam_password_policy_number",
+          "iam_password_policy_reuse_24",
+          "iam_password_policy_symbol",
+          "iam_password_policy_uppercase"
+        ],
+        "googleworkspace": [
+          "security_password_policy_strong"
+        ],
+        "okta": [
+          "authenticator_password_common_password_check",
+          "authenticator_password_complexity_lowercase",
+          "authenticator_password_complexity_number",
+          "authenticator_password_complexity_symbol",
+          "authenticator_password_complexity_uppercase",
+          "authenticator_password_history_5",
+          "authenticator_password_minimum_length_15"
+        ],
+        "oraclecloud": [
+          "identity_password_policy_minimum_length_14",
+          "identity_password_policy_prevents_reuse"
+        ]
+      }
+    },
+    {
+      "id": "5.3",
+      "name": "Disable Dormant Accounts",
+      "description": "Delete or disable any dormant accounts after a period of 45 days of inactivity, where supported.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_user_console_access_unused"
+        ],
+        "aws": [
+          "iam_user_accesskey_unused",
+          "iam_user_console_access_unused"
+        ],
+        "azure": [
+          "entra_user_with_recent_sign_in"
+        ],
+        "gcp": [
+          "iam_sa_user_managed_key_unused",
+          "iam_service_account_unused"
+        ],
+        "okta": [
+          "user_inactivity_automation_35d_enabled"
+        ],
+        "vercel": [
+          "authentication_no_stale_tokens"
+        ]
+      }
+    },
+    {
+      "id": "5.4",
+      "name": "Restrict Administrator Privileges to Dedicated Administrator Accounts",
+      "description": "Restrict administrator privileges to dedicated administrator accounts on enterprise assets. Conduct general computing activities, such as internet browsing, email, and productivity suite use, from the user's primary, non-privileged account.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_policy_no_administrative_privileges"
+        ],
+        "aws": [
+          "iam_aws_attached_policy_no_administrative_privileges",
+          "iam_customer_attached_policy_no_administrative_privileges",
+          "iam_group_administrator_access_policy",
+          "iam_inline_policy_no_administrative_privileges",
+          "iam_role_administratoraccess_policy",
+          "iam_user_administrator_access_policy"
+        ],
+        "azure": [
+          "app_function_identity_without_admin_privileges",
+          "entra_global_admin_in_less_than_five_users",
+          "iam_role_user_access_admin_restricted",
+          "iam_subscription_roles_owner_custom_not_created"
+        ],
+        "gcp": [
+          "iam_sa_no_administrative_privileges"
+        ],
+        "googleworkspace": [
+          "directory_super_admin_count",
+          "directory_super_admin_only_admin_roles"
+        ],
+        "kubernetes": [
+          "rbac_cluster_admin_usage"
+        ],
+        "m365": [
+          "admincenter_users_admins_reduced_license_footprint",
+          "admincenter_users_between_two_and_four_global_admins",
+          "entra_admin_portals_access_restriction",
+          "entra_admin_users_cloud_only"
+        ],
+        "okta": [
+          "apitoken_not_super_admin"
+        ],
+        "oraclecloud": [
+          "identity_iam_admins_cannot_update_tenancy_admins",
+          "identity_service_level_admins_exist",
+          "identity_tenancy_admin_permissions_limited",
+          "identity_tenancy_admin_users_no_api_keys"
+        ],
+        "scaleway": [
+          "iam_api_keys_no_root_owned"
+        ],
+        "vercel": [
+          "team_member_role_least_privilege"
+        ]
+      }
+    },
+    {
+      "id": "5.5",
+      "name": "Establish and Maintain an Inventory of Service Accounts",
+      "description": "Establish and maintain an inventory of service accounts. The inventory, at a minimum, must contain department owner, review date, and purpose. Perform service account reviews to validate that all active accounts are authorized, on a recurring schedule at a minimum quarterly, or more frequently.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Identify",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "5.6",
+      "name": "Centralize Account Management",
+      "description": "Centralize account management through a directory or identity service.",
+      "attributes": {
+        "Section": "5. Account Management",
+        "Function": "Govern",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "iam_check_saml_providers_sts"
+        ],
+        "azure": [
+          "cosmosdb_account_use_aad_and_rbac",
+          "postgresql_flexible_server_entra_id_authentication_enabled",
+          "sqlserver_azuread_administrator_enabled",
+          "storage_default_to_entra_authorization_enabled"
+        ],
+        "vercel": [
+          "team_directory_sync_enabled",
+          "team_saml_sso_enabled"
+        ]
+      }
+    },
+    {
+      "id": "6.1",
+      "name": "Establish an Access Granting Process",
+      "description": "Establish and follow a documented process, preferably automated, for granting access to enterprise assets upon new hire or role change of a user.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "vercel": [
+          "team_directory_sync_enabled"
+        ]
+      }
+    },
+    {
+      "id": "6.2",
+      "name": "Establish an Access Revoking Process",
+      "description": "Establish and follow a process, preferably automated, for revoking access to enterprise assets, through disabling accounts immediately upon termination, rights revocation, or role change of a user. Disabling accounts, instead of deleting accounts, may be necessary to preserve audit trails.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "vercel": [
+          "team_directory_sync_enabled"
+        ]
+      }
+    },
+    {
+      "id": "6.3",
+      "name": "Require MFA for Externally-Exposed Applications",
+      "description": "Require all externally-exposed enterprise or third-party applications to enforce MFA, where supported. Enforcing MFA through a directory service or SSO provider is a satisfactory implementation of this Safeguard.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
+        "aws": [
+          "cognito_user_pool_mfa_enabled",
+          "iam_user_hardware_mfa_enabled",
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_authentication_methods_policy_strong_auth_enforced",
+          "entra_non_privileged_user_has_mfa",
+          "entra_security_defaults_enabled"
+        ],
+        "github": [
+          "organization_members_mfa_required"
+        ],
+        "googleworkspace": [
+          "security_2sv_enforced",
+          "security_advanced_protection_configured"
+        ],
+        "linode": [
+          "administration_user_2fa_enabled"
+        ],
+        "m365": [
+          "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+          "entra_users_mfa_capable",
+          "entra_users_mfa_enabled"
+        ],
+        "mongodbatlas": [
+          "organizations_mfa_required"
+        ],
+        "okta": [
+          "application_dashboard_mfa_required",
+          "application_dashboard_phishing_resistant_authentication"
+        ],
+        "oraclecloud": [
+          "identity_user_mfa_enabled_console_access"
+        ]
+      }
+    },
+    {
+      "id": "6.4",
+      "name": "Require MFA for Remote Network Access",
+      "description": "Require MFA for remote network access.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "directoryservice_radius_server_security_protocol",
+          "directoryservice_supported_mfa_radius_enabled"
+        ],
+        "azure": [
+          "entra_user_with_vm_access_has_mfa",
+          "entra_security_defaults_enabled",
+          "entra_non_privileged_user_has_mfa"
+        ],
+        "gcp": [
+          "compute_project_os_login_2fa_enabled"
+        ],
+        "github": [
+          "organization_members_mfa_required"
+        ],
+        "linode": [
+          "administration_user_2fa_enabled"
+        ],
+        "m365": [
+          "entra_users_mfa_enabled",
+          "entra_legacy_authentication_blocked"
+        ],
+        "mongodbatlas": [
+          "organizations_mfa_required"
+        ]
+      }
+    },
+    {
+      "id": "6.5",
+      "name": "Require MFA for Administrative Access",
+      "description": "Require MFA for all administrative access accounts, where supported, on all enterprise assets, whether managed on-site or through a service provider.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ram_user_mfa_enabled_console_access"
+        ],
+        "aws": [
+          "iam_administrator_access_with_mfa",
+          "iam_root_hardware_mfa_enabled",
+          "iam_root_mfa_enabled"
+        ],
+        "azure": [
+          "entra_conditional_access_policy_require_mfa_for_admin_portals",
+          "entra_conditional_access_policy_require_mfa_for_management_api",
+          "entra_privileged_user_has_mfa",
+          "entra_user_with_vm_access_has_mfa"
+        ],
+        "github": [
+          "organization_members_mfa_required"
+        ],
+        "googleworkspace": [
+          "security_2sv_hardware_keys_admins"
+        ],
+        "linode": [
+          "administration_user_2fa_enabled"
+        ],
+        "m365": [
+          "entra_admin_users_mfa_enabled",
+          "entra_admin_users_phishing_resistant_mfa_enabled",
+          "entra_break_glass_account_fido2_security_key_registered"
+        ],
+        "mongodbatlas": [
+          "organizations_mfa_required"
+        ],
+        "okta": [
+          "application_admin_console_mfa_required",
+          "application_admin_console_phishing_resistant_authentication"
+        ],
+        "vercel": [
+          "team_saml_sso_enforced",
+          "team_saml_sso_enabled"
+        ]
+      }
+    },
+    {
+      "id": "6.6",
+      "name": "Establish and Maintain an Inventory of Authentication and Authorization Systems",
+      "description": "Establish and maintain an inventory of the enterprise's authentication and authorization systems, including those hosted on-site or at a remote service provider. Review and update the inventory, at a minimum, annually, or more frequently.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "6.7",
+      "name": "Centralize Access Control",
+      "description": "Centralize access control for all enterprise assets through a directory service or SSO provider, where supported.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "dms_endpoint_neptune_iam_authorization_enabled",
+          "iam_check_saml_providers_sts",
+          "neptune_cluster_iam_authentication_enabled",
+          "opensearch_service_domains_use_cognito_authentication_for_kibana",
+          "rds_cluster_iam_authentication_enabled",
+          "rds_instance_iam_authentication_enabled",
+          "sagemaker_domain_sso_configured"
+        ],
+        "azure": [
+          "aks_cluster_local_accounts_disabled",
+          "cosmosdb_account_use_aad_and_rbac",
+          "postgresql_flexible_server_entra_id_authentication_enabled",
+          "sqlserver_azuread_administrator_enabled"
+        ],
+        "m365": [
+          "entra_all_apps_conditional_access_coverage",
+          "entra_conditional_access_policy_all_apps_all_users",
+          "entra_password_hash_sync_enabled"
+        ],
+        "vercel": [
+          "team_directory_sync_enabled",
+          "team_saml_sso_enabled",
+          "team_saml_sso_enforced"
+        ]
+      }
+    },
+    {
+      "id": "6.8",
+      "name": "Define and Maintain Role-Based Access Control",
+      "description": "Define and maintain role-based access control, through determining and documenting the access rights necessary for each role within the enterprise to successfully carry out its assigned duties. Perform access control reviews of enterprise assets to validate that all privileges are authorized, on a recurring schedule at a minimum annually, or more frequently.",
+      "attributes": {
+        "Section": "6. Access Control Management",
+        "Function": "Govern",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "cs_kubernetes_rbac_enabled",
+          "ram_policy_attached_only_to_group_or_roles",
+          "ram_policy_no_administrative_privileges"
+        ],
+        "aws": [
+          "accessanalyzer_enabled",
+          "accessanalyzer_enabled_without_findings",
+          "bedrock_agent_role_least_privilege",
+          "bedrock_api_key_no_administrative_privileges",
+          "ec2_instance_profile_attached",
+          "iam_inline_policy_allows_privilege_escalation",
+          "iam_inline_policy_no_full_access_to_cloudtrail",
+          "iam_inline_policy_no_full_access_to_kms",
+          "iam_inline_policy_no_wildcard_marketplace_subscribe",
+          "iam_no_custom_policy_permissive_role_assumption",
+          "iam_policy_allows_privilege_escalation",
+          "iam_policy_no_full_access_to_cloudtrail",
+          "iam_policy_no_full_access_to_kms",
+          "iam_policy_no_wildcard_marketplace_subscribe",
+          "iam_role_cross_account_readonlyaccess_policy",
+          "iam_role_cross_service_confused_deputy_prevention",
+          "iam_user_with_temporary_credentials"
+        ],
+        "azure": [
+          "aks_cluster_rbac_enabled",
+          "cosmosdb_account_use_aad_and_rbac",
+          "entra_policy_default_users_cannot_create_security_groups",
+          "entra_policy_ensure_default_user_cannot_create_apps",
+          "iam_role_user_access_admin_restricted",
+          "iam_subscription_roles_owner_custom_not_created",
+          "keyvault_rbac_enabled"
+        ],
+        "gcp": [
+          "iam_account_access_approval_enabled",
+          "iam_no_service_roles_at_project_level",
+          "iam_role_kms_enforce_separation_of_duties",
+          "iam_role_sa_enforce_separation_of_duties",
+          "iam_sa_no_administrative_privileges"
+        ],
+        "github": [
+          "organization_default_repository_permission_strict",
+          "organization_repository_creation_limited",
+          "organization_repository_deletion_limited"
+        ],
+        "kubernetes": [
+          "apiserver_auth_mode_include_node",
+          "apiserver_auth_mode_include_rbac",
+          "apiserver_auth_mode_not_always_allow",
+          "controllermanager_service_account_credentials",
+          "kubelet_authorization_mode",
+          "rbac_minimize_csr_approval_access",
+          "rbac_minimize_node_proxy_subresource_access",
+          "rbac_minimize_pod_creation_access",
+          "rbac_minimize_pv_creation_access",
+          "rbac_minimize_service_account_token_creation",
+          "rbac_minimize_webhook_config_access",
+          "rbac_minimize_wildcard_use_roles"
+        ],
+        "m365": [
+          "entra_admin_portals_access_restriction",
+          "entra_app_registration_no_unused_privileged_permissions",
+          "entra_policy_guest_users_access_restrictions",
+          "entra_service_principal_privileged_role_no_owners"
+        ],
+        "oraclecloud": [
+          "identity_no_resources_in_root_compartment",
+          "identity_non_root_compartment_exists",
+          "identity_service_level_admins_exist",
+          "identity_storage_service_level_admins_scoped",
+          "identity_tenancy_admin_permissions_limited"
+        ],
+        "vercel": [
+          "team_member_role_least_privilege"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "7.1",
+      "name": "Establish and Maintain a Vulnerability Management Process",
+      "description": "Establish and maintain a documented vulnerability management process for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "7.2",
+      "name": "Establish and Maintain a Remediation Process",
+      "description": "Establish and maintain a risk-based remediation strategy documented in a remediation process, with monthly, or more frequent, reviews.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "7.3",
+      "name": "Perform Automated Operating System Patch Management",
+      "description": "Perform operating system updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ecs_instance_latest_os_patches_applied"
+        ],
+        "aws": [
+          "ssm_managed_compliant_patching"
+        ],
+        "azure": [
+          "aks_cluster_auto_upgrade_enabled",
+          "defender_ensure_system_updates_are_applied"
+        ]
+      }
+    },
+    {
+      "id": "7.4",
+      "name": "Perform Automated Application Patch Management",
+      "description": "Perform application updates on enterprise assets through automated patch management on a monthly, or more frequent, basis.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "dms_instance_minor_version_upgrade_enabled",
+          "elasticache_redis_cluster_auto_minor_version_upgrades",
+          "elasticbeanstalk_environment_managed_updates_enabled",
+          "memorydb_cluster_auto_minor_version_upgrades",
+          "mq_broker_auto_minor_version_upgrades",
+          "rds_cluster_minor_version_upgrade_enabled",
+          "rds_instance_minor_version_upgrade_enabled",
+          "redshift_cluster_automatic_upgrades"
+        ],
+        "azure": [
+          "app_ensure_java_version_is_latest",
+          "app_ensure_php_version_is_latest",
+          "app_ensure_python_version_is_latest",
+          "app_function_latest_runtime_version"
+        ]
+      }
+    },
+    {
+      "id": "7.5",
+      "name": "Perform Automated Vulnerability Scans of Internal Enterprise Assets",
+      "description": "Perform automated vulnerability scans of internal enterprise assets on a quarterly, or more frequent, basis. Conduct both authenticated and unauthenticated scans.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "securitycenter_vulnerability_scan_enabled"
+        ],
+        "aws": [
+          "ecr_registry_scan_images_on_push_enabled",
+          "ecr_repositories_scan_images_on_push_enabled",
+          "ecr_repositories_scan_vulnerabilities_in_latest_image",
+          "inspector2_is_enabled"
+        ],
+        "azure": [
+          "defender_auto_provisioning_vulnerabilty_assessments_machines_on",
+          "defender_container_images_scan_enabled",
+          "sqlserver_va_emails_notifications_admins_enabled",
+          "sqlserver_va_periodic_recurring_scans_enabled",
+          "sqlserver_va_scan_reports_configured",
+          "sqlserver_vulnerability_assessment_enabled"
+        ],
+        "gcp": [
+          "artifacts_container_analysis_enabled",
+          "gcr_container_scanning_enabled"
+        ],
+        "github": [
+          "repository_dependency_scanning_enabled"
+        ]
+      }
+    },
+    {
+      "id": "7.6",
+      "name": "Perform Automated Vulnerability Scans of Externally-Exposed Enterprise Assets",
+      "description": "Perform automated vulnerability scans of externally-exposed enterprise assets. Perform scans on a monthly, or more frequent, basis.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "inspector2_is_enabled"
+        ],
+        "azure": [
+          "network_public_ip_shodan"
+        ]
+      }
+    },
+    {
+      "id": "7.7",
+      "name": "Remediate Detected Vulnerabilities",
+      "description": "Remediate detected vulnerabilities in software through processes and tooling on a monthly, or more frequent, basis, based on the remediation process.",
+      "attributes": {
+        "Section": "7. Continuous Vulnerability Management",
+        "Function": "Respond",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "inspector2_active_findings_exist"
+        ],
+        "azure": [
+          "defender_container_images_resolved_vulnerabilities"
+        ]
+      }
+    },
+    {
+      "id": "8.1",
+      "name": "Establish and Maintain an Audit Log Management Process",
+      "description": "Establish and maintain a documented audit log management process that defines the enterprise's logging requirements. At a minimum, address the collection, review, and retention of audit logs for enterprise assets. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "8.2",
+      "name": "Collect Audit Logs",
+      "description": "Collect audit logs. Ensure that logging, per the enterprise's audit log management process, has been enabled across enterprise assets.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled",
+          "cs_kubernetes_log_service_enabled",
+          "oss_bucket_logging_enabled",
+          "rds_instance_sql_audit_enabled",
+          "vpc_flow_logs_enabled"
+        ],
+        "aws": [
+          "apigateway_restapi_logging_enabled",
+          "apigatewayv2_api_access_logging_enabled",
+          "appsync_field_level_logging_enabled",
+          "athena_workgroup_logging_enabled",
+          "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
+          "bedrock_model_invocation_logging_enabled",
+          "cloudfront_distributions_logging_enabled",
+          "cloudtrail_bedrock_logging_enabled",
+          "cloudtrail_cloudwatch_logging_enabled",
+          "cloudtrail_logs_s3_bucket_access_logging_enabled",
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events",
+          "codebuild_project_logging_enabled",
+          "config_recorder_all_regions_enabled",
+          "datasync_task_logging_enabled",
+          "directoryservice_directory_log_forwarding_enabled",
+          "dms_replication_task_source_logging_enabled",
+          "dms_replication_task_target_logging_enabled",
+          "documentdb_cluster_cloudwatch_log_export",
+          "ec2_client_vpn_endpoint_connection_logging_enabled",
+          "ecs_task_definitions_logging_enabled",
+          "eks_control_plane_logging_all_types_enabled",
+          "elasticbeanstalk_environment_cloudwatch_logging_enabled",
+          "elb_logging_enabled",
+          "elbv2_logging_enabled",
+          "mq_broker_logging_enabled",
+          "neptune_cluster_integration_cloudwatch_logs",
+          "networkfirewall_logging_enabled",
+          "opensearch_service_domains_cloudwatch_logging_enabled",
+          "rds_cluster_integration_cloudwatch_logs",
+          "rds_instance_integration_cloudwatch_logs",
+          "redshift_cluster_audit_logging",
+          "s3_bucket_server_access_logging_enabled",
+          "stepfunctions_statemachine_logging_enabled",
+          "vpc_flow_logs_enabled",
+          "waf_global_webacl_logging_enabled",
+          "wafv2_webacl_logging_enabled"
+        ],
+        "azure": [
+          "app_function_application_insights_enabled",
+          "app_http_logs_enabled",
+          "appinsights_ensure_is_configured",
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "keyvault_logging_enabled",
+          "monitor_diagnostic_settings_exists",
+          "mysql_flexible_server_audit_log_enabled",
+          "network_flow_log_captured_sent",
+          "postgresql_flexible_server_log_checkpoints_on",
+          "postgresql_flexible_server_log_connections_on",
+          "sqlserver_auditing_enabled"
+        ],
+        "gcp": [
+          "cloudstorage_audit_logs_enabled",
+          "cloudstorage_bucket_logging_enabled",
+          "compute_loadbalancer_logging_enabled",
+          "iam_audit_logs_enabled",
+          "logging_sink_created"
+        ],
+        "googleworkspace": [
+          "gmail_comprehensive_mail_storage_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_path_set"
+        ],
+        "m365": [
+          "exchange_mailbox_audit_bypass_disabled",
+          "exchange_organization_mailbox_auditing_enabled",
+          "exchange_user_mailbox_auditing_enabled",
+          "purview_audit_log_search_enabled"
+        ],
+        "mongodbatlas": [
+          "projects_auditing_enabled"
+        ],
+        "okta": [
+          "systemlog_streaming_enabled"
+        ],
+        "oraclecloud": [
+          "network_vcn_subnet_flow_logs_enabled",
+          "objectstorage_bucket_logging_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "8.3",
+      "name": "Ensure Adequate Audit Log Storage",
+      "description": "Ensure that logging destinations maintain adequate storage to comply with the enterprise's audit log management process.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "kubernetes": [
+          "apiserver_audit_log_maxbackup_set",
+          "apiserver_audit_log_maxsize_set"
+        ]
+      }
+    },
+    {
+      "id": "8.4",
+      "name": "Standardize Time Synchronization",
+      "description": "Standardize time synchronization. Configure at least two synchronized time sources across enterprise assets, where supported.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "8.5",
+      "name": "Collect Detailed Audit Logs",
+      "description": "Configure detailed audit logging for enterprise assets containing sensitive data. Include event source, date, username, timestamp, source addresses, destination addresses, and other useful elements that could assist in a forensic investigation.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "rds_instance_postgresql_log_connections_enabled",
+          "rds_instance_postgresql_log_disconnections_enabled",
+          "rds_instance_postgresql_log_duration_enabled"
+        ],
+        "aws": [
+          "cloudtrail_s3_dataevents_read_enabled",
+          "cloudtrail_s3_dataevents_write_enabled",
+          "opensearch_service_domains_audit_logging_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_setting_with_appropriate_categories",
+          "mysql_flexible_server_audit_log_connection_activated",
+          "postgresql_flexible_server_log_connections_on",
+          "postgresql_flexible_server_log_disconnections_on"
+        ],
+        "gcp": [
+          "cloudsql_instance_postgres_enable_pgaudit_flag",
+          "cloudsql_instance_postgres_log_connections_flag",
+          "cloudsql_instance_postgres_log_disconnections_flag",
+          "cloudsql_instance_postgres_log_error_verbosity_flag",
+          "cloudsql_instance_postgres_log_min_duration_statement_flag",
+          "cloudsql_instance_postgres_log_min_error_statement_flag",
+          "cloudsql_instance_postgres_log_min_messages_flag",
+          "cloudsql_instance_postgres_log_statement_flag"
+        ],
+        "m365": [
+          "exchange_user_mailbox_auditing_enabled"
+        ],
+        "mongodbatlas": [
+          "projects_auditing_enabled"
+        ]
+      }
+    },
+    {
+      "id": "8.6",
+      "name": "Collect DNS Query Audit Logs",
+      "description": "Collect DNS query audit logs on enterprise assets, where appropriate and supported.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "route53_public_hosted_zones_cloudwatch_logging_enabled"
+        ],
+        "gcp": [
+          "compute_network_dns_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "8.7",
+      "name": "Collect URL Request Audit Logs",
+      "description": "Collect URL request audit logs on enterprise assets, where appropriate and supported.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "app_http_logs_enabled"
+        ],
+        "gcp": [
+          "compute_loadbalancer_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "8.8",
+      "name": "Collect Command-Line Audit Logs",
+      "description": "Collect command-line audit logs. Example implementations include collecting audit logs from PowerShell®, BASH™, and remote administrative terminals.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "8.9",
+      "name": "Centralize Audit Logs",
+      "description": "Centralize, to the extent possible, audit log collection and retention across enterprise assets in accordance with the documented audit log management process. Example implementations primarily include leveraging a SIEM tool to centralize multiple log sources.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_cloudwatch_logging_enabled",
+          "config_delegated_admin_and_org_aggregator_all_regions"
+        ],
+        "azure": [
+          "defender_auto_provisioning_log_analytics_agent_vms_on",
+          "network_flow_log_captured_sent"
+        ],
+        "gcp": [
+          "logging_sink_created"
+        ],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
+        "okta": [
+          "systemlog_streaming_enabled"
+        ]
+      }
+    },
+    {
+      "id": "8.10",
+      "name": "Retain Audit Logs",
+      "description": "Retain audit logs across enterprise assets for a minimum of 90 days.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "rds_instance_sql_audit_retention",
+          "sls_logstore_retention_period"
+        ],
+        "aws": [
+          "cloudwatch_log_group_retention_policy_specific_days_enabled"
+        ],
+        "azure": [
+          "network_flow_log_more_than_90_days",
+          "postgresql_flexible_server_log_retention_days_greater_3",
+          "sqlserver_auditing_retention_90_days"
+        ],
+        "gcp": [
+          "cloudstorage_bucket_log_retention_policy_lock"
+        ],
+        "kubernetes": [
+          "apiserver_audit_log_maxage_set"
+        ],
+        "m365": [
+          "exchange_user_mailbox_auditing_enabled"
+        ],
+        "oraclecloud": [
+          "audit_log_retention_period_365_days"
+        ]
+      }
+    },
+    {
+      "id": "8.11",
+      "name": "Conduct Audit Log Reviews",
+      "description": "Conduct reviews of audit logs to detect anomalies or abnormal events that could indicate a potential threat. Conduct reviews on a weekly, or more frequent, basis.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled",
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled"
+        ],
+        "aws": [
+          "cloudtrail_insights_exist",
+          "cloudwatch_changes_to_network_acls_alarm_configured",
+          "cloudwatch_changes_to_network_gateways_alarm_configured",
+          "cloudwatch_changes_to_network_route_tables_alarm_configured",
+          "cloudwatch_changes_to_vpcs_alarm_configured",
+          "cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_and_alarm_for_cloudtrail_configuration_changes_enabled",
+          "cloudwatch_log_metric_filter_authentication_failures",
+          "cloudwatch_log_metric_filter_aws_organizations_changes",
+          "cloudwatch_log_metric_filter_disable_or_scheduled_deletion_of_kms_cmk",
+          "cloudwatch_log_metric_filter_for_s3_bucket_policy_changes",
+          "cloudwatch_log_metric_filter_policy_changes",
+          "cloudwatch_log_metric_filter_root_usage",
+          "cloudwatch_log_metric_filter_security_group_changes",
+          "cloudwatch_log_metric_filter_sign_in_without_mfa",
+          "cloudwatch_log_metric_filter_unauthorized_api_calls"
+        ],
+        "azure": [
+          "monitor_alert_create_policy_assignment",
+          "monitor_alert_create_update_nsg",
+          "monitor_alert_create_update_public_ip_address_rule",
+          "monitor_alert_create_update_security_solution",
+          "monitor_alert_create_update_sqlserver_fr",
+          "monitor_alert_delete_nsg",
+          "monitor_alert_delete_policy_assignment",
+          "monitor_alert_delete_public_ip_address_rule",
+          "monitor_alert_delete_security_solution",
+          "monitor_alert_delete_sqlserver_fr",
+          "monitor_alert_service_health_exists"
+        ],
+        "gcp": [
+          "logging_log_metric_filter_and_alert_for_audit_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_bucket_permission_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_compute_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_custom_role_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_project_ownership_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_sql_instance_configuration_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_firewall_rule_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_changes_enabled",
+          "logging_log_metric_filter_and_alert_for_vpc_network_route_changes_enabled"
+        ],
+        "googleworkspace": [
+          "rules_admin_privilege_granted_alert_configured",
+          "rules_gmail_employee_spoofing_alert_configured",
+          "rules_government_backed_attacks_alert_configured",
+          "rules_leaked_password_alert_configured",
+          "rules_password_changed_alert_configured",
+          "rules_suspicious_activity_suspension_alert_configured",
+          "rules_suspicious_login_alert_configured",
+          "rules_suspicious_programmatic_login_alert_configured"
+        ],
+        "oraclecloud": [
+          "events_rule_cloudguard_problems",
+          "events_rule_iam_group_changes",
+          "events_rule_iam_policy_changes",
+          "events_rule_identity_provider_changes",
+          "events_rule_idp_group_mapping_changes",
+          "events_rule_local_user_authentication",
+          "events_rule_network_gateway_changes",
+          "events_rule_network_security_group_changes",
+          "events_rule_route_table_changes",
+          "events_rule_security_list_changes",
+          "events_rule_user_changes",
+          "events_rule_vcn_changes"
+        ]
+      }
+    },
+    {
+      "id": "8.12",
+      "name": "Collect Service Provider Logs",
+      "description": "Collect service provider logs, where supported. Example implementations include collecting authentication and authorization events, data creation and disposal events, and user management events.",
+      "attributes": {
+        "Section": "8. Audit Log Management",
+        "Function": "Detect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "actiontrail_multi_region_enabled"
+        ],
+        "aws": [
+          "cloudtrail_multi_region_enabled",
+          "cloudtrail_multi_region_enabled_logging_management_events"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "iam_audit_logs_enabled"
+        ],
+        "m365": [
+          "purview_audit_log_search_enabled"
+        ],
+        "okta": [
+          "systemlog_streaming_enabled"
+        ]
+      }
+    },
+    {
+      "id": "9.1",
+      "name": "Ensure Use of Only Fully Supported Browsers and Email Clients",
+      "description": "Ensure only fully supported browsers and email clients are allowed to execute in the enterprise, only using the latest version of browsers and email clients provided through the vendor.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "9.2",
+      "name": "Use DNS Filtering Services",
+      "description": "Use DNS filtering services on all end-user devices, including remote and on-premises assets, to block access to known malicious domains.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "9.3",
+      "name": "Maintain and Enforce Network-Based URL Filters",
+      "description": "Enforce and update network-based URL filters to limit an enterprise asset from connecting to potentially malicious or unapproved websites. Example implementations include category-based filtering, reputation-based filtering, or through the use of block lists. Enforce filters for all enterprise assets.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "googleworkspace": [
+          "gmail_shortener_scanning_enabled",
+          "gmail_untrusted_link_warnings_enabled"
+        ],
+        "m365": [
+          "defender_safelinks_policy_enabled"
+        ]
+      }
+    },
+    {
+      "id": "9.4",
+      "name": "Restrict Unnecessary or Unauthorized Browser and Email Client Extensions",
+      "description": "Restrict, either through uninstalling or disabling, any unauthorized or unnecessary browser or email client plugins, extensions, and add-on applications.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "m365": [
+          "exchange_mailbox_policy_additional_storage_restricted",
+          "exchange_roles_assignment_policy_addins_disabled"
+        ]
+      }
+    },
+    {
+      "id": "9.5",
+      "name": "Implement DMARC",
+      "description": "To lower the chance of spoofed or modified emails from valid domains, implement DMARC policy and verification, starting with implementing the Sender Policy Framework (SPF) and the DomainKeys Identified Mail (DKIM) standards.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "ses_identity_dkim_enabled"
+        ],
+        "cloudflare": [
+          "zone_record_dkim_exists",
+          "zone_record_dmarc_exists",
+          "zone_record_spf_exists"
+        ],
+        "googleworkspace": [
+          "gmail_groups_spoofing_protection_enabled",
+          "gmail_inbound_domain_spoofing_protection_enabled",
+          "gmail_unauthenticated_email_protection_enabled"
+        ],
+        "m365": [
+          "defender_antiphishing_policy_configured",
+          "defender_domain_dkim_enabled"
+        ]
+      }
+    },
+    {
+      "id": "9.6",
+      "name": "Block Unnecessary File Types",
+      "description": "Block unnecessary file types attempting to enter the enterprise's email gateway.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "googleworkspace": [
+          "gmail_anomalous_attachment_protection_enabled",
+          "gmail_script_attachment_protection_enabled"
+        ],
+        "m365": [
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_malware_policy_comprehensive_attachments_filter_applied"
+        ]
+      }
+    },
+    {
+      "id": "9.7",
+      "name": "Deploy and Maintain Email Server Anti-Malware Protections",
+      "description": "Deploy and maintain email server anti-malware protections, such as attachment scanning and/or sandboxing.",
+      "attributes": {
+        "Section": "9. Email and Web Browser Protections",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "googleworkspace": [
+          "gmail_encrypted_attachment_protection_enabled",
+          "gmail_enhanced_pre_delivery_scanning_enabled",
+          "gmail_external_image_scanning_enabled"
+        ],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_malware_policy_notifications_internal_users_malware_enabled",
+          "defender_safe_attachments_policy_enabled"
+        ]
+      }
+    },
+    {
+      "id": "10.1",
+      "name": "Deploy and Maintain Anti-Malware Software",
+      "description": "Deploy and maintain anti-malware software on all enterprise assets.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "ecs_instance_endpoint_protection_installed",
+          "securitycenter_all_assets_agent_installed"
+        ],
+        "aws": [
+          "guardduty_ec2_malware_protection_enabled"
+        ],
+        "azure": [
+          "defender_assessments_vm_endpoint_protection_installed",
+          "defender_ensure_defender_for_server_is_on"
+        ],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_malware_policy_common_attachments_filter_enabled",
+          "defender_safe_attachments_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      }
+    },
+    {
+      "id": "10.2",
+      "name": "Configure Automatic Anti-Malware Signature Updates",
+      "description": "Configure automatic updates for anti-malware signature files on all enterprise assets.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "10.3",
+      "name": "Disable Autorun and Autoplay for Removable Media",
+      "description": "Disable autorun and autoplay auto-execute functionality for removable media.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "10.4",
+      "name": "Configure Automatic Anti-Malware Scanning of Removable Media",
+      "description": "Configure anti-malware software to automatically scan removable media.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "10.5",
+      "name": "Enable Anti-Exploitation Features",
+      "description": "Enable anti-exploitation features on enterprise assets and software, where possible, such as Microsoft® Data Execution Prevention (DEP), Windows® Defender Exploit Guard (WDEG), or Apple® System Integrity Protection (SIP) and Gatekeeper™.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "vm_trusted_launch_enabled"
+        ],
+        "openstack": [
+          "image_secure_boot_enabled"
+        ],
+        "oraclecloud": [
+          "compute_instance_secure_boot_enabled"
+        ]
+      }
+    },
+    {
+      "id": "10.6",
+      "name": "Centrally Manage Anti-Malware Software",
+      "description": "Centrally manage anti-malware software.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "securitycenter_advanced_or_enterprise_edition",
+          "securitycenter_all_assets_agent_installed"
+        ],
+        "aws": [
+          "guardduty_centrally_managed",
+          "guardduty_delegated_admin_enabled_all_regions"
+        ],
+        "azure": [
+          "aks_cluster_defender_enabled",
+          "defender_ensure_defender_for_containers_is_on",
+          "defender_ensure_defender_for_storage_is_on"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_delegated_admin_enabled_all_regions",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "10.7",
+      "name": "Use Behavior-Based Anti-Malware Software",
+      "description": "Use behavior-based anti-malware software.",
+      "attributes": {
+        "Section": "10. Malware Defenses",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_threat_detection_enumeration",
+          "cloudtrail_threat_detection_llm_jacking",
+          "cloudtrail_threat_detection_privilege_escalation",
+          "guardduty_eks_runtime_monitoring_enabled",
+          "guardduty_is_enabled",
+          "guardduty_lambda_protection_enabled",
+          "guardduty_rds_protection_enabled",
+          "guardduty_s3_protection_enabled"
+        ],
+        "azure": [
+          "defender_ensure_mcas_is_enabled",
+          "defender_ensure_wdatp_is_enabled"
+        ],
+        "m365": [
+          "defender_atp_safe_attachments_and_docs_configured",
+          "defender_safe_attachments_policy_enabled",
+          "defender_zap_for_teams_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "11.1",
+      "name": "Establish and Maintain a Data Recovery Process",
+      "description": "Establish and maintain a documented data recovery process that includes detailed backup procedures. In the process, address the scope of data recovery activities, recovery prioritization, and the security of backup data. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "11. Data Recovery",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "11.2",
+      "name": "Perform Automated Backups",
+      "description": "Perform automated backups of in-scope enterprise assets. Run backups weekly, or more frequently, based on the sensitivity of the data.",
+      "attributes": {
+        "Section": "11. Data Recovery",
+        "Function": "Recover",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "backup_plans_exist",
+          "backup_vaults_exist",
+          "dlm_ebs_snapshot_lifecycle_policy_exists",
+          "documentdb_cluster_backup_enabled",
+          "drs_job_exist",
+          "dynamodb_table_protected_by_backup_plan",
+          "dynamodb_tables_pitr_enabled",
+          "ec2_ebs_volume_protected_by_backup_plan",
+          "ec2_ebs_volume_snapshots_exists",
+          "efs_have_backup_enabled",
+          "elasticache_redis_cluster_backup_enabled",
+          "lightsail_instance_automated_snapshots",
+          "neptune_cluster_backup_enabled",
+          "rds_cluster_backtrack_enabled",
+          "rds_cluster_protected_by_backup_plan",
+          "rds_instance_backup_enabled",
+          "rds_instance_protected_by_backup_plan",
+          "redshift_cluster_automated_snapshot",
+          "s3_bucket_object_versioning"
+        ],
+        "azure": [
+          "cosmosdb_account_backup_policy_continuous",
+          "mysql_flexible_server_geo_redundant_backup_enabled",
+          "postgresql_flexible_server_geo_redundant_backup_enabled",
+          "recovery_vault_has_protected_items",
+          "vm_backup_enabled",
+          "vm_sufficient_daily_backup_retention_period"
+        ],
+        "gcp": [
+          "cloudsql_instance_automated_backups",
+          "cloudstorage_bucket_soft_delete_enabled",
+          "cloudstorage_bucket_versioning_enabled"
+        ],
+        "linode": [
+          "compute_instance_backups_enabled"
+        ],
+        "mongodbatlas": [
+          "clusters_backup_enabled"
+        ],
+        "openstack": [
+          "blockstorage_volume_backup_exists",
+          "objectstorage_container_versioning_enabled"
+        ],
+        "oraclecloud": [
+          "objectstorage_bucket_versioning_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "drs_job_exist",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "11.3",
+      "name": "Protect Recovery Data",
+      "description": "Protect recovery data with equivalent controls to the original data. Reference encryption or data separation, based on requirements.",
+      "attributes": {
+        "Section": "11. Data Recovery",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "backup_recovery_point_encrypted",
+          "backup_vaults_encrypted",
+          "documentdb_cluster_public_snapshot",
+          "ec2_ebs_public_snapshot",
+          "ec2_ebs_snapshot_account_block_public_access",
+          "ec2_ebs_snapshots_encrypted",
+          "neptune_cluster_public_snapshot",
+          "neptune_cluster_snapshot_encrypted",
+          "rds_snapshots_encrypted",
+          "rds_snapshots_public_access",
+          "s3_bucket_no_mfa_delete",
+          "s3_bucket_object_lock"
+        ],
+        "azure": [
+          "storage_ensure_file_shares_soft_delete_is_enabled",
+          "storage_ensure_soft_delete_is_enabled"
+        ],
+        "stackit": [
+          "objectstorage_bucket_object_lock_enabled"
+        ]
+      }
+    },
+    {
+      "id": "11.4",
+      "name": "Establish and Maintain an Isolated Instance of Recovery Data",
+      "description": "Establish and maintain an isolated instance of recovery data. Example implementations include, version controlling backup destinations through offline, cloud, or off-site systems or services.",
+      "attributes": {
+        "Section": "11. Data Recovery",
+        "Function": "Recover",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "s3_bucket_cross_region_replication"
+        ],
+        "azure": [
+          "mysql_flexible_server_geo_redundant_backup_enabled",
+          "postgresql_flexible_server_geo_redundant_backup_enabled",
+          "storage_geo_redundant_enabled"
+        ]
+      }
+    },
+    {
+      "id": "11.5",
+      "name": "Test Data Recovery",
+      "description": "Test backup recovery quarterly, or more frequently, for a sampling of in-scope enterprise assets.",
+      "attributes": {
+        "Section": "11. Data Recovery",
+        "Function": "Recover",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "12.1",
+      "name": "Ensure Network Infrastructure is Up-to-Date",
+      "description": "Ensure network infrastructure is kept up-to-date. Example implementations include running the latest stable release of software and/or using currently supported network as a service (Naas) offerings. Review software versions monthly, or more frequently, to verify software support.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "12.2",
+      "name": "Establish and Maintain a Secure Network Architecture",
+      "description": "Design and maintain a secure network architecture. A secure network architecture must address segmentation, least privilege, and availability, at a minimum. Example implementations may include documentation, policy, and design components.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "cs_kubernetes_private_cluster_enabled",
+          "ecs_instance_no_legacy_network"
+        ],
+        "aws": [
+          "appstream_fleet_default_internet_access_disabled",
+          "autoscaling_group_launch_configuration_no_public_ip",
+          "awslambda_function_inside_vpc",
+          "dms_instance_no_public_access",
+          "ec2_instance_public_ip",
+          "ec2_launch_template_no_public_ip",
+          "ec2_transitgateway_auto_accept_vpc_attachments",
+          "ecs_service_no_assign_public_ip",
+          "ecs_task_set_no_assign_public_ip",
+          "eks_cluster_not_publicly_accessible",
+          "eks_cluster_private_nodes_enabled",
+          "elasticache_cluster_uses_public_subnet",
+          "elb_internet_facing",
+          "elbv2_internet_facing",
+          "emr_cluster_account_public_block_enabled",
+          "emr_cluster_master_nodes_no_public_ip",
+          "emr_cluster_publicly_accesible",
+          "kafka_cluster_is_public",
+          "lightsail_database_public",
+          "lightsail_instance_public",
+          "mq_broker_not_publicly_accessible",
+          "neptune_cluster_uses_public_subnet",
+          "opensearch_service_domains_not_publicly_accessible",
+          "rds_instance_inside_vpc",
+          "rds_instance_no_public_access",
+          "redshift_cluster_public_access",
+          "sagemaker_models_vpc_settings_configured",
+          "sagemaker_notebook_instance_vpc_settings_configured",
+          "sagemaker_notebook_instance_without_direct_internet_access_configured",
+          "sagemaker_training_jobs_vpc_settings_configured",
+          "vpc_endpoint_connections_trust_boundaries",
+          "vpc_endpoint_services_allowed_principals_trust_boundaries",
+          "vpc_peering_routing_tables_with_least_privilege",
+          "vpc_subnet_no_public_ip_by_default",
+          "vpc_subnet_separate_private_public"
+        ],
+        "azure": [
+          "aisearch_service_not_publicly_accessible",
+          "aks_clusters_public_access_disabled",
+          "app_function_not_publicly_accessible",
+          "containerregistry_not_publicly_accessible",
+          "containerregistry_uses_private_link",
+          "cosmosdb_account_public_network_access_disabled",
+          "cosmosdb_account_use_private_endpoints",
+          "databricks_workspace_public_network_access_disabled",
+          "keyvault_access_only_through_private_endpoints",
+          "keyvault_private_endpoints",
+          "storage_account_public_network_access_disabled",
+          "storage_ensure_private_endpoints_in_storage_accounts"
+        ],
+        "gcp": [
+          "cloudfunction_function_inside_vpc",
+          "cloudsql_instance_private_ip_assignment",
+          "cloudsql_instance_public_ip",
+          "cloudstorage_uses_vpc_service_controls",
+          "compute_instance_public_ip",
+          "compute_instance_single_network_interface",
+          "compute_network_default_in_use",
+          "compute_network_not_legacy"
+        ],
+        "mongodbatlas": [
+          "projects_network_access_list_exposed_to_internet"
+        ],
+        "nhn": [
+          "compute_instance_public_ip",
+          "network_vpc_subnet_has_external_router"
+        ],
+        "openstack": [
+          "compute_instance_isolated_private_network"
+        ],
+        "oraclecloud": [
+          "analytics_instance_access_restricted",
+          "database_autonomous_database_access_restricted",
+          "integration_instance_access_restricted",
+          "objectstorage_bucket_not_publicly_accessible"
+        ]
+      }
+    },
+    {
+      "id": "12.3",
+      "name": "Securely Manage Network Infrastructure",
+      "description": "Securely manage network infrastructure. Example implementations include version-controlled Infrastructure-as-Code (IaC), and the use of secure network protocols, such as SSH and HTTPS.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "gcp": [
+          "dns_dnssec_disabled",
+          "dns_rsasha1_in_use_to_key_sign_in_dnssec",
+          "dns_rsasha1_in_use_to_zone_sign_in_dnssec"
+        ]
+      }
+    },
+    {
+      "id": "12.4",
+      "name": "Establish and Maintain Architecture Diagram(s)",
+      "description": "Establish and maintain architecture diagram(s) and/or other network system documentation. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "12.5",
+      "name": "Centralize Network Authentication, Authorization, and Auditing (AAA)",
+      "description": "Centralize network AAA.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "12.6",
+      "name": "Use of Secure Network Management and Communication Protocols",
+      "description": "Adopt secure network management protocols (e.g., 802.1X) and secure communication protocols (e.g., Wi-Fi Protected Access 2 (WPA2) Enterprise or more secure alternatives).",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "app_minimum_tls_version_12",
+          "cosmosdb_account_minimum_tls_version",
+          "mysql_flexible_server_minimum_tls_version_12",
+          "sqlserver_recommended_minimal_tls_version",
+          "storage_ensure_minimum_tls_version_12",
+          "storage_smb_protocol_version_is_latest"
+        ],
+        "cloudflare": [
+          "zone_automatic_https_rewrites_enabled",
+          "zone_hsts_enabled",
+          "zone_https_redirect_enabled",
+          "zone_min_tls_version_secure",
+          "zone_ssl_strict",
+          "zone_tls_1_3_enabled",
+          "zone_universal_ssl_enabled"
+        ],
+        "kubernetes": [
+          "apiserver_client_ca_file_set",
+          "controllermanager_root_ca_file_set",
+          "controllermanager_rotate_kubelet_server_cert",
+          "etcd_client_cert_auth",
+          "etcd_peer_client_cert_auth",
+          "etcd_unique_ca",
+          "kubelet_client_ca_file_set",
+          "kubelet_rotate_certificates"
+        ]
+      }
+    },
+    {
+      "id": "12.7",
+      "name": "Ensure Remote Devices Utilize a VPN and are Connecting to an Enterprise's AAA Infrastructure",
+      "description": "Require users to authenticate to enterprise-managed VPN and authentication services prior to accessing enterprise resources on end-user devices.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "ec2_client_vpn_endpoint_connection_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "12.8",
+      "name": "Establish and Maintain Dedicated Computing Resources for All Administrative Work",
+      "description": "Establish and maintain dedicated computing resources, either physically or logically separated, for all administrative tasks or tasks requiring administrative access. The computing resources should be segmented from the enterprise's primary network and not be allowed internet access.",
+      "attributes": {
+        "Section": "12. Network Infrastructure Management",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "network_bastion_host_exists",
+          "vm_jit_access_enabled"
+        ]
+      }
+    },
+    {
+      "id": "13.1",
+      "name": "Centralize Security Event Alerting",
+      "description": "Centralize security event alerting across enterprise assets for log correlation and analysis. Best practice implementation requires the use of a SIEM, which includes vendor-defined event correlation alerts. A log analytics platform configured with security-relevant correlation alerts also satisfies this Safeguard.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "securitycenter_notification_enabled_high_risk",
+          "sls_cloud_firewall_changes_alert_enabled",
+          "sls_customer_created_cmk_changes_alert_enabled",
+          "sls_management_console_authentication_failures_alert_enabled",
+          "sls_management_console_signin_without_mfa_alert_enabled",
+          "sls_oss_bucket_policy_changes_alert_enabled",
+          "sls_oss_permission_changes_alert_enabled",
+          "sls_ram_role_changes_alert_enabled",
+          "sls_rds_instance_configuration_changes_alert_enabled",
+          "sls_root_account_usage_alert_enabled",
+          "sls_security_group_changes_alert_enabled",
+          "sls_unauthorized_api_calls_alert_enabled",
+          "sls_vpc_changes_alert_enabled",
+          "sls_vpc_network_route_changes_alert_enabled"
+        ],
+        "aws": [
+          "cloudwatch_alarm_actions_alarm_state_configured",
+          "cloudwatch_alarm_actions_enabled",
+          "securityhub_delegated_admin_enabled_all_regions",
+          "securityhub_enabled"
+        ],
+        "azure": [
+          "defender_additional_email_configured_with_a_security_contact",
+          "defender_attack_path_notifications_properly_configured",
+          "defender_ensure_notify_alerts_severity_is_high",
+          "defender_ensure_notify_emails_to_owners",
+          "monitor_alert_create_update_security_solution"
+        ],
+        "googleworkspace": [
+          "rules_admin_privilege_granted_alert_configured",
+          "rules_gmail_employee_spoofing_alert_configured",
+          "rules_government_backed_attacks_alert_configured",
+          "rules_leaked_password_alert_configured",
+          "rules_password_changed_alert_configured",
+          "rules_suspicious_activity_suspension_alert_configured",
+          "rules_suspicious_login_alert_configured",
+          "rules_suspicious_programmatic_login_alert_configured"
+        ],
+        "oraclecloud": [
+          "events_notification_topic_and_subscription_exists",
+          "events_rule_cloudguard_problems",
+          "events_rule_iam_group_changes",
+          "events_rule_iam_policy_changes",
+          "events_rule_identity_provider_changes",
+          "events_rule_idp_group_mapping_changes",
+          "events_rule_local_user_authentication",
+          "events_rule_network_gateway_changes",
+          "events_rule_network_security_group_changes",
+          "events_rule_route_table_changes",
+          "events_rule_security_list_changes",
+          "events_rule_user_changes",
+          "events_rule_vcn_changes"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "securityhub_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "13.2",
+      "name": "Deploy a Host-Based Intrusion Detection Solution",
+      "description": "Deploy a host-based intrusion detection solution on enterprise assets, where appropriate and/or supported.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Detect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "securitycenter_all_assets_agent_installed",
+          "ecs_instance_endpoint_protection_installed"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_server_is_on",
+          "defender_ensure_wdatp_is_enabled"
+        ]
+      }
+    },
+    {
+      "id": "13.3",
+      "name": "Deploy a Network Intrusion Detection Solution",
+      "description": "Deploy a network intrusion detection solution on enterprise assets, where appropriate. Example implementations include the use of a Network Intrusion Detection System (NIDS) or equivalent cloud service provider (CSP) service.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "guardduty_eks_audit_log_enabled",
+          "guardduty_eks_runtime_monitoring_enabled",
+          "guardduty_is_enabled"
+        ],
+        "azure": [
+          "defender_ensure_defender_for_dns_is_on"
+        ],
+        "oraclecloud": [
+          "cloudguard_enabled"
+        ]
+      },
+      "config_requirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "Provider": "aws",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ]
+    },
+    {
+      "id": "13.4",
+      "name": "Perform Traffic Filtering Between Network Segments",
+      "description": "Perform traffic filtering between network segments, where appropriate.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "cs_kubernetes_network_policy_enabled"
+        ],
+        "aws": [
+          "ec2_networkacl_allow_ingress_any_port",
+          "ec2_networkacl_allow_ingress_tcp_port_22",
+          "ec2_networkacl_allow_ingress_tcp_port_3389",
+          "networkfirewall_in_all_vpc",
+          "vpc_peering_routing_tables_with_least_privilege"
+        ],
+        "azure": [
+          "network_http_internet_access_restricted",
+          "network_rdp_internet_access_restricted",
+          "network_ssh_internet_access_restricted",
+          "network_subnet_nsg_associated",
+          "network_udp_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_rdp_access_from_the_internet_allowed",
+          "compute_firewall_ssh_access_from_the_internet_allowed"
+        ],
+        "linode": [
+          "networking_firewall_default_inbound_policy_drop",
+          "networking_firewall_default_outbound_policy_drop",
+          "networking_firewall_inbound_rules_configured",
+          "networking_firewall_outbound_rules_configured"
+        ],
+        "mongodbatlas": [
+          "projects_network_access_list_exposed_to_internet"
+        ],
+        "openstack": [
+          "networking_security_group_allows_all_ingress_from_internet",
+          "networking_security_group_allows_rdp_from_internet",
+          "networking_security_group_allows_ssh_from_internet"
+        ],
+        "oraclecloud": [
+          "network_default_security_list_restricts_traffic",
+          "network_security_group_ingress_from_internet_to_rdp_port",
+          "network_security_group_ingress_from_internet_to_ssh_port",
+          "network_security_list_ingress_from_internet_to_rdp_port",
+          "network_security_list_ingress_from_internet_to_ssh_port"
+        ],
+        "stackit": [
+          "iaas_security_group_all_traffic_unrestricted",
+          "iaas_security_group_database_unrestricted",
+          "iaas_security_group_rdp_unrestricted",
+          "iaas_security_group_ssh_unrestricted"
+        ]
+      }
+    },
+    {
+      "id": "13.5",
+      "name": "Manage Access Control for Remote Assets",
+      "description": "Manage access control for assets remotely connecting to enterprise resources. Determine amount of access to enterprise resources based on: up-to-date anti-malware software installed, configuration compliance with the enterprise's secure configuration process, and ensuring the operating system and applications are up-to-date.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "m365": [
+          "entra_conditional_access_policy_compliant_device_hybrid_joined_device_mfa_required",
+          "entra_conditional_access_policy_mdm_compliant_device_required",
+          "entra_managed_device_required_for_authentication",
+          "intune_device_compliance_policy_unassigned_devices_not_compliant_by_default",
+          "sharepoint_onedrive_sync_restricted_unmanaged_devices"
+        ]
+      }
+    },
+    {
+      "id": "13.6",
+      "name": "Collect Network Traffic Flow Logs",
+      "description": "Collect network traffic flow logs and/or network traffic to review and alert upon from network devices.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "alibabacloud": [
+          "vpc_flow_logs_enabled"
+        ],
+        "aws": [
+          "vpc_flow_logs_enabled"
+        ],
+        "azure": [
+          "network_flow_log_captured_sent",
+          "network_flow_log_more_than_90_days",
+          "network_watcher_enabled"
+        ],
+        "gcp": [
+          "compute_subnet_flow_logs_enabled"
+        ],
+        "oraclecloud": [
+          "network_vcn_subnet_flow_logs_enabled"
+        ]
+      }
+    },
+    {
+      "id": "13.7",
+      "name": "Deploy a Host-Based Intrusion Prevention Solution",
+      "description": "Deploy a host-based intrusion prevention solution on enterprise assets, where appropriate and/or supported. Example implementations include use of an Endpoint Detection and Response (EDR) client or host-based IPS agent.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Devices",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "defender_ensure_wdatp_is_enabled",
+          "defender_ensure_defender_for_server_is_on"
+        ]
+      }
+    },
+    {
+      "id": "13.8",
+      "name": "Deploy a Network Intrusion Prevention Solution",
+      "description": "Deploy a network intrusion prevention solution, where appropriate. Example implementations include the use of a Network Intrusion Prevention System (NIPS) or equivalent CSP service.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "networkfirewall_in_all_vpc",
+          "networkfirewall_policy_default_action_fragmented_packets",
+          "networkfirewall_policy_default_action_full_packets",
+          "networkfirewall_policy_rule_group_associated",
+          "shield_advanced_protection_in_associated_elastic_ips",
+          "shield_advanced_protection_in_classic_load_balancers",
+          "shield_advanced_protection_in_cloudfront_distributions",
+          "shield_advanced_protection_in_global_accelerators",
+          "shield_advanced_protection_in_internet_facing_load_balancers",
+          "shield_advanced_protection_in_route53_hosted_zones"
+        ],
+        "azure": [
+          "network_vnet_ddos_protection_enabled"
+        ],
+        "cloudflare": [
+          "zone_bot_fight_mode_enabled",
+          "zone_firewall_blocking_rules_configured",
+          "zone_rate_limiting_enabled",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled"
+        ],
+        "vercel": [
+          "security_managed_rulesets_enabled",
+          "security_rate_limiting_configured",
+          "security_waf_enabled"
+        ]
+      }
+    },
+    {
+      "id": "13.9",
+      "name": "Deploy Port-Level Access Control",
+      "description": "Deploy port-level access control. Port-level access control utilizes 802.1x, or similar network access control protocols, such as certificates, and may incorporate user and/or device authentication.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "13.10",
+      "name": "Perform Application Layer Filtering",
+      "description": "Perform application layer filtering. Example implementations include a filtering proxy, application layer firewall, or gateway.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_waf_acl_attached",
+          "cloudfront_distributions_using_waf",
+          "cognito_user_pool_waf_acl_attached",
+          "elbv2_waf_acl_attached",
+          "waf_global_rule_with_conditions",
+          "waf_global_rulegroup_not_empty",
+          "waf_global_webacl_with_rules",
+          "waf_regional_rule_with_conditions",
+          "waf_regional_rulegroup_not_empty",
+          "waf_regional_webacl_with_rules",
+          "wafv2_webacl_with_rules"
+        ],
+        "cloudflare": [
+          "dns_record_proxied",
+          "zone_bot_fight_mode_enabled",
+          "zone_browser_integrity_check_enabled",
+          "zone_firewall_blocking_rules_configured",
+          "zone_rate_limiting_enabled",
+          "zone_waf_enabled",
+          "zone_waf_owasp_ruleset_enabled"
+        ],
+        "vercel": [
+          "security_custom_rules_configured",
+          "security_ip_blocking_rules_configured",
+          "security_managed_rulesets_enabled",
+          "security_rate_limiting_configured",
+          "security_waf_enabled"
+        ]
+      }
+    },
+    {
+      "id": "13.11",
+      "name": "Tune Security Event Alerting Thresholds",
+      "description": "Tune security event alerting thresholds monthly, or more frequently.",
+      "attributes": {
+        "Section": "13. Network Monitoring and Defense",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.1",
+      "name": "Establish and Maintain a Security Awareness Program",
+      "description": "Establish and maintain a security awareness program. The purpose of a security awareness program is to educate the enterprise's workforce on how to interact with enterprise assets and data in a secure manner. Conduct training at hire and, at a minimum, annually. Review and update content annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.2",
+      "name": "Train Workforce Members to Recognize Social Engineering Attacks",
+      "description": "Train workforce members to recognize social engineering attacks, such as phishing, business email compromise (BEC), pretexting, and tailgating.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.3",
+      "name": "Train Workforce Members on Authentication Best Practices",
+      "description": "Train workforce members on authentication best practices. Example topics include MFA, password composition, and credential management.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.4",
+      "name": "Train Workforce on Data Handling Best Practices",
+      "description": "Train workforce members on how to identify and properly store, transfer, archive, and destroy sensitive data. This also includes training workforce members on clear screen and desk best practices, such as locking their screen when they step away from their enterprise asset, erasing physical and virtual whiteboards at the end of meetings, and storing data and assets securely.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.5",
+      "name": "Train Workforce Members on Causes of Unintentional Data Exposure",
+      "description": "Train workforce members to be aware of causes for unintentional data exposure. Example topics include mis-delivery of sensitive data, losing a portable end-user device, or publishing data to unintended audiences.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.6",
+      "name": "Train Workforce Members on Recognizing and Reporting Security Incidents",
+      "description": "Train workforce members to be able to recognize a potential incident and be able to report such an incident.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.7",
+      "name": "Train Workforce on How to Identify and Report if Their Enterprise Assets are Missing Security Updates",
+      "description": "Train workforce to understand how to verify and report out-of-date software patches or any failures in automated processes and tools. Part of this training should include notifying IT personnel of any failures in automated processes and tools.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.8",
+      "name": "Train Workforce on the Dangers of Connecting to and Transmitting Enterprise Data Over Insecure Networks",
+      "description": "Train workforce members on the dangers of connecting to, and transmitting data over, insecure networks for enterprise activities. If the enterprise has remote workers, training must include guidance to ensure that all users securely configure their home network infrastructure.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "14.9",
+      "name": "Conduct Role-Specific Security Awareness and Skills Training",
+      "description": "Conduct role-specific security awareness and skills training. Example implementations include secure system administration courses for IT professionals, OWASP® Top 10 vulnerability awareness and prevention training for web application developers, and advanced social engineering awareness training for high-profile roles.",
+      "attributes": {
+        "Section": "14. Security Awareness and Skills Training",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.1",
+      "name": "Establish and Maintain an Inventory of Service Providers",
+      "description": "Establish and maintain an inventory of service providers. The inventory is to list all known service providers, include classification(s), and designate an enterprise contact for each service provider. Review and update the inventory annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Identify",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.2",
+      "name": "Establish and Maintain a Service Provider Management Policy",
+      "description": "Establish and maintain a service provider management policy. Ensure the policy addresses the classification, inventory, assessment, monitoring, and decommissioning of service providers. Review and update the policy annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.3",
+      "name": "Classify Service Providers",
+      "description": "Classify service providers. Classification consideration may include one or more characteristics, such as data sensitivity, data volume, availability requirements, applicable regulations, inherent risk, and mitigated risk. Update and review classifications annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Govern",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.4",
+      "name": "Ensure Service Provider Contracts Include Security Requirements",
+      "description": "Ensure service provider contracts include security requirements. Example requirements may include minimum security program requirements, security incident and/or data breach notification and response, data encryption requirements, and data disposal commitments. These security requirements must be consistent with the enterprise's service provider management policy. Review service provider contracts annually to ensure contracts are not missing security requirements.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.5",
+      "name": "Assess Service Providers",
+      "description": "Assess service providers consistent with the enterprise's service provider management policy. Assessment scope may vary based on classification(s), and may include review of standardized assessment reports, such as Service Organization Control 2 (SOC 2) and Payment Card Industry (PCI) Attestation of Compliance (AoC), customized questionnaires, or other appropriately rigorous processes. Reassess service providers annually, at a minimum, or with new and renewed contracts.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Govern",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.6",
+      "name": "Monitor Service Providers",
+      "description": "Monitor service providers consistent with the enterprise's service provider management policy. Monitoring may include periodic reassessment of service provider compliance, monitoring service provider release notes, and dark web monitoring.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Govern",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "15.7",
+      "name": "Securely Decommission Service Providers",
+      "description": "Securely decommission service providers. Example considerations include user and service account deactivation, termination of data flows, and secure disposal of enterprise data within service provider systems.",
+      "attributes": {
+        "Section": "15. Service Provider Management",
+        "Function": "Protect",
+        "AssetType": "Data",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "16.1",
+      "name": "Establish and Maintain a Secure Application Development Process",
+      "description": "Establish and maintain a secure application development process. In the process, address such items as: secure application design standards, secure coding practices, developer training, vulnerability management, security of third-party code, and application security testing procedures. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "github": [
+          "repository_default_branch_deletion_disabled",
+          "repository_default_branch_disallows_force_push",
+          "repository_default_branch_dismisses_stale_reviews",
+          "repository_default_branch_protection_applies_to_admins",
+          "repository_default_branch_protection_enabled",
+          "repository_default_branch_requires_codeowners_review",
+          "repository_default_branch_requires_conversation_resolution",
+          "repository_default_branch_requires_linear_history",
+          "repository_default_branch_requires_multiple_approvals",
+          "repository_default_branch_requires_signed_commits",
+          "repository_default_branch_status_checks_required",
+          "repository_has_codeowners_file"
+        ]
+      }
+    },
+    {
+      "id": "16.2",
+      "name": "Establish and Maintain a Process to Accept and Address Software Vulnerabilities",
+      "description": "Establish and maintain a process to accept and address reports of software vulnerabilities, including providing a means for external entities to report. The process is to include such items as: a vulnerability handling policy that identifies reporting process, responsible party for handling vulnerability reports, and a process for intake, assignment, remediation, and remediation testing. As part of the process, use a vulnerability tracking system that includes severity ratings and metrics for measuring timing for identification, analysis, and remediation of vulnerabilities. Review and update documentation annually, or when significant enterprise changes occur that could impact this Safeguard. Third-party application developers need to consider this an externally-facing policy that helps to set expectations for outside stakeholders.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "github": [
+          "repository_public_has_securitymd_file"
+        ]
+      }
+    },
+    {
+      "id": "16.3",
+      "name": "Perform Root Cause Analysis on Security Vulnerabilities",
+      "description": "Perform root cause analysis on security vulnerabilities. When reviewing vulnerabilities, root cause analysis is the task of evaluating underlying issues that create vulnerabilities in code, and allows development teams to move beyond just fixing individual vulnerabilities as they arise.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Detect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "16.4",
+      "name": "Establish and Manage an Inventory of Third-Party Software Components",
+      "description": "Establish and manage an updated inventory of third-party components used in development, often referred to as a \"bill of materials,\" as well as components slated for future use. This inventory is to include any risks that each third-party component could pose. Evaluate the list at least monthly to identify any changes or updates to these components, and validate that the component is still supported.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Identify",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "github": [
+          "repository_dependency_scanning_enabled"
+        ]
+      }
+    },
+    {
+      "id": "16.5",
+      "name": "Use Up-to-Date and Trusted Third-Party Software Components",
+      "description": "Use up-to-date and trusted third-party software components. When possible, choose established and proven frameworks and libraries that provide adequate security. Acquire these components from trusted sources or evaluate the software for vulnerabilities before use.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "codeartifact_packages_external_public_publishing_disabled"
+        ],
+        "github": [
+          "repository_dependency_scanning_enabled"
+        ]
+      }
+    },
+    {
+      "id": "16.6",
+      "name": "Establish and Maintain a Severity Rating System and Process for Application Vulnerabilities",
+      "description": "Establish and maintain a severity rating system and process for application vulnerabilities that facilitates prioritizing the order in which discovered vulnerabilities are fixed. This process includes setting a minimum level of security acceptability for releasing code or applications. Severity ratings bring a systematic way of triaging vulnerabilities that improves risk management and helps ensure the most severe bugs are fixed first. Review and update the system and process annually.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "16.7",
+      "name": "Use Standard Hardening Configuration Templates for Application Infrastructure",
+      "description": "Use standard, industry-recommended hardening configuration templates for application infrastructure components. This includes underlying servers, databases, and web servers, and applies to cloud containers, Platform as a Service (PaaS) components, and SaaS components. Do not allow in-house developed software to weaken configuration hardening.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "azure": [
+          "app_ensure_using_http20",
+          "app_ftp_deployment_disabled",
+          "app_minimum_tls_version_12"
+        ],
+        "gcp": [
+          "cloudsql_instance_mysql_local_infile_flag",
+          "cloudsql_instance_mysql_skip_show_database_flag",
+          "cloudsql_instance_sqlserver_contained_database_authentication_flag",
+          "cloudsql_instance_sqlserver_cross_db_ownership_chaining_flag",
+          "cloudsql_instance_sqlserver_external_scripts_enabled_flag",
+          "cloudsql_instance_sqlserver_remote_access_flag",
+          "compute_instance_shielded_vm_enabled",
+          "gke_cluster_no_default_service_account"
+        ],
+        "kubernetes": [
+          "apiserver_always_pull_images_plugin",
+          "apiserver_deny_service_external_ips",
+          "apiserver_event_rate_limit",
+          "apiserver_namespace_lifecycle_plugin",
+          "apiserver_no_always_admit_plugin",
+          "apiserver_node_restriction_plugin",
+          "apiserver_security_context_deny_plugin",
+          "core_image_tag_fixed",
+          "core_minimize_admission_hostport_containers",
+          "core_minimize_admission_windows_hostprocess_containers",
+          "core_minimize_allowPrivilegeEscalation_containers",
+          "core_minimize_containers_added_capabilities",
+          "core_minimize_containers_capabilities_assigned",
+          "core_minimize_hostIPC_containers",
+          "core_minimize_hostNetwork_containers",
+          "core_minimize_hostPID_containers",
+          "core_minimize_net_raw_capability_admission",
+          "core_minimize_privileged_containers",
+          "core_minimize_root_containers_admission",
+          "core_seccomp_profile_docker_default"
+        ],
+        "vercel": [
+          "project_auto_expose_system_env_disabled",
+          "project_directory_listing_disabled",
+          "project_git_fork_protection_enabled"
+        ]
+      }
+    },
+    {
+      "id": "16.8",
+      "name": "Separate Production and Non-Production Systems",
+      "description": "Maintain separate environments for production and non-production systems.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "vercel": [
+          "deployment_production_uses_stable_target",
+          "project_deployment_protection_enabled",
+          "project_environment_no_overly_broad_target",
+          "project_environment_production_vars_not_in_preview"
+        ]
+      }
+    },
+    {
+      "id": "16.9",
+      "name": "Train Developers in Application Security Concepts and Secure Coding",
+      "description": "Ensure that all software development personnel receive training in writing secure code for their specific development environment and responsibilities. Training can include general security principles and application security standard practices. Conduct training at least annually and design in a way to promote security within the development team, and build a culture of security among the developers.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "16.10",
+      "name": "Apply Secure Design Principles in Application Architectures",
+      "description": "Apply secure design principles in application architectures. Secure design principles include the concept of least privilege and enforcing mediation to validate every operation that the user makes, promoting the concept of \"never trust user input.\" Examples include ensuring that explicit error checking is performed and documented for all input, including for size, data type, and acceptable ranges or formats. Secure design also means minimizing the application infrastructure attack surface, such as turning off unprotected ports and services, removing unnecessary programs and files, and renaming or removing default accounts.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "apigateway_restapi_authorizers_enabled",
+          "apigateway_restapi_public_with_authorizer",
+          "apigatewayv2_api_authorizers_enabled",
+          "appsync_graphql_api_no_api_key_authentication",
+          "cognito_user_pool_client_prevent_user_existence_errors",
+          "ecs_task_definitions_containers_readonly_access",
+          "ecs_task_definitions_host_namespace_not_shared",
+          "ecs_task_definitions_host_networking_mode_users",
+          "ecs_task_definitions_no_privileged_containers",
+          "elb_desync_mitigation_mode",
+          "elbv2_alb_drop_invalid_header_fields_enabled",
+          "elbv2_desync_mitigation_mode",
+          "sagemaker_notebook_instance_root_access_disabled"
+        ]
+      }
+    },
+    {
+      "id": "16.11",
+      "name": "Leverage Vetted Modules or Services for Application Security Components",
+      "description": "Leverage vetted modules or services for application security components, such as identity management, encryption, auditing, and logging. Using platform features in critical security functions will reduce developers' workload and minimize the likelihood of design or implementation errors. Modern operating systems provide effective mechanisms for identification, authentication, and authorization and make those mechanisms available to applications. Use only standardized, currently accepted, and extensively reviewed encryption algorithms. Operating systems also provide mechanisms to create and maintain secure audit logs.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "secretsmanager_automatic_rotation_enabled",
+          "secretsmanager_secret_rotated_periodically"
+        ],
+        "azure": [
+          "app_ensure_auth_is_set_up",
+          "app_function_access_keys_configured",
+          "app_function_identity_is_configured",
+          "app_register_with_identity"
+        ],
+        "vercel": [
+          "team_directory_sync_enabled",
+          "team_saml_sso_enabled"
+        ]
+      }
+    },
+    {
+      "id": "16.12",
+      "name": "Implement Code-Level Security Checks",
+      "description": "Apply static and dynamic analysis tools within the application life cycle to verify that secure coding practices are being followed.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "awslambda_function_no_secrets_in_code",
+          "inspector2_is_enabled"
+        ],
+        "github": [
+          "githubactions_workflow_security_scan",
+          "repository_secret_scanning_enabled"
+        ]
+      }
+    },
+    {
+      "id": "16.13",
+      "name": "Conduct Application Penetration Testing",
+      "description": "Conduct application penetration testing. For critical applications, authenticated penetration testing is better suited to finding business logic vulnerabilities than code scanning and automated security testing. Penetration testing relies on the skill of the tester to manually manipulate an application as an authenticated and unauthenticated user.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Detect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "16.14",
+      "name": "Conduct Threat Modeling",
+      "description": "Conduct threat modeling. Threat modeling is the process of identifying and addressing application security design flaws within a design, before code is created. It is conducted through specially trained individuals who evaluate the application design and gauge security risks for each entry point and access level. The goal is to map out the application, architecture, and infrastructure in a structured way to understand its weaknesses.",
+      "attributes": {
+        "Section": "16. Application Software Security",
+        "Function": "Protect",
+        "AssetType": "Software",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.1",
+      "name": "Designate Personnel to Manage Incident Handling",
+      "description": "Designate one key person, and at least one backup, who will manage the enterprise's incident handling process. Management personnel are responsible for the coordination and documentation of incident response and recovery efforts and can consist of employees internal to the enterprise, service providers, or a hybrid approach. If using a service provider, designate at least one person internal to the enterprise to oversee any third-party work. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Respond",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.2",
+      "name": "Establish and Maintain Contact Information for Reporting Security Incidents",
+      "description": "Establish and maintain contact information for parties that need to be informed of security incidents. Contacts may include internal staff, service providers, law enforcement, cyber insurance providers, relevant government agencies, Information Sharing and Analysis Center (ISAC) partners, or other stakeholders. Verify contacts annually to ensure that information is up-to-date.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "account_maintain_current_contact_details",
+          "account_maintain_different_contact_details_to_security_billing_and_operations",
+          "account_security_contact_information_is_registered"
+        ],
+        "gcp": [
+          "iam_organization_essential_contacts_configured"
+        ],
+        "mongodbatlas": [
+          "organizations_security_contact_defined"
+        ]
+      }
+    },
+    {
+      "id": "17.3",
+      "name": "Establish and Maintain an Enterprise Process for Reporting Incidents",
+      "description": "Establish and maintain an documented enterprise process for the workforce to report security incidents. The process includes reporting timeframe, personnel to report to, mechanism for reporting, and the minimum information to be reported. Ensure the process is publicly available to all of the workforce. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG1",
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.4",
+      "name": "Establish and Maintain an Incident Response Process",
+      "description": "Establish and maintain a documented incident response process that addresses roles and responsibilities, compliance requirements, and a communication plan. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {
+        "aws": [
+          "ssmincidents_enabled_with_plans"
+        ]
+      }
+    },
+    {
+      "id": "17.5",
+      "name": "Assign Key Roles and Responsibilities",
+      "description": "Assign key roles and responsibilities for incident response, including staff from legal, IT, information security, facilities, public relations, human resources, incident responders, analysts, and relevant third parties. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Respond",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.6",
+      "name": "Define Mechanisms for Communicating During Incident Response",
+      "description": "Determine which primary and secondary mechanisms will be used to communicate and report during a security incident. Mechanisms can include phone calls, emails, secure chat, or notification letters. Keep in mind that certain mechanisms, such as emails, can be affected during a security incident. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Respond",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.7",
+      "name": "Conduct Routine Incident Response Exercises",
+      "description": "Plan and conduct routine incident response exercises and scenarios for key personnel involved in the incident response process to prepare for responding to real-world incidents. Exercises need to test communication channels, decision making, and workflows. Conduct testing on an annual basis, at a minimum.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Recover",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.8",
+      "name": "Conduct Post-Incident Reviews",
+      "description": "Conduct post-incident reviews. Post-incident reviews help prevent incident recurrence through identifying lessons learned and follow-up action.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Recover",
+        "AssetType": "Users",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "17.9",
+      "name": "Establish and Maintain Security Incident Thresholds",
+      "description": "Establish and maintain security incident thresholds, including, at a minimum, differentiating between an incident and an event. Examples can include: abnormal activity, security vulnerability, security weakness, data breach, privacy incident, etc. Review annually, or when significant enterprise changes occur that could impact this Safeguard.",
+      "attributes": {
+        "Section": "17. Incident Response Management",
+        "Function": "Recover",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "18.1",
+      "name": "Establish and Maintain a Penetration Testing Program",
+      "description": "Establish and maintain a penetration testing program appropriate to the size, complexity, industry, and maturity of the enterprise. Penetration testing program characteristics include scope, such as network, web application, Application Programming Interface (API), hosted services, and physical premise controls; frequency; limitations, such as acceptable hours, and excluded attack types; point of contact information; remediation, such as how findings will be routed internally; and retrospective requirements.",
+      "attributes": {
+        "Section": "18. Penetration Testing",
+        "Function": "Govern",
+        "AssetType": "Documentation",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "18.2",
+      "name": "Perform Periodic External Penetration Tests",
+      "description": "Perform periodic external penetration tests based on program requirements, no less than annually. External penetration testing must include enterprise and environmental reconnaissance to detect exploitable information. Penetration testing requires specialized skills and experience and must be conducted through a qualified party. The testing may be clear box or opaque box.",
+      "attributes": {
+        "Section": "18. Penetration Testing",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "18.3",
+      "name": "Remediate Penetration Test Findings",
+      "description": "Remediate penetration test findings based on the enterprise's documented vulnerability remediation process. This should include determining a timeline and level of effort based on the impact and prioritization of each identified finding.",
+      "attributes": {
+        "Section": "18. Penetration Testing",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG2",
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "18.4",
+      "name": "Validate Security Measures",
+      "description": "Validate security measures after each penetration test. If deemed necessary, modify rulesets and capabilities to detect the techniques used during testing.",
+      "attributes": {
+        "Section": "18. Penetration Testing",
+        "Function": "Protect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    },
+    {
+      "id": "18.5",
+      "name": "Perform Periodic Internal Penetration Tests",
+      "description": "Perform periodic internal penetration tests based on program requirements, no less than annually. The testing may be clear box or opaque box.",
+      "attributes": {
+        "Section": "18. Penetration Testing",
+        "Function": "Detect",
+        "AssetType": "Network",
+        "ImplementationGroups": [
+          "IG3"
+        ]
+      },
+      "checks": {}
+    }
+  ]
+}

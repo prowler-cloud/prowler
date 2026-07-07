@@ -5,6 +5,10 @@ from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -27,8 +31,14 @@ class Backup(AWSService):
         self.__threading_call__(self._list_backup_report_plans)
         self.protected_resources = []
         self.__threading_call__(self._list_backup_selections)
+        # Recovery points are listed first, then only the selected subset is
+        # tagged and exposed for checks.
         self.recovery_points = []
-        self.__threading_call__(self._list_recovery_points)
+        self.recovery_point_limit = get_resource_scan_limit(
+            self.audit_config, "max_backup_recovery_points"
+        )
+        self.__threading_call__(self._list_recovery_points, self.backup_vaults or [])
+        self._select_recovery_points_for_analysis()
         self.__threading_call__(self._list_tags, self.recovery_points)
 
     def _list_backup_vaults(self, regional_client):
@@ -183,39 +193,62 @@ class Backup(AWSService):
                 f"{self.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_recovery_points(self, regional_client):
+    def _list_recovery_points(self, backup_vault=None):
         logger.info("Backup - Listing Recovery Points...")
+        if backup_vault is None:
+            for vault in self.backup_vaults or []:
+                self._list_recovery_points(vault)
+            return
+
         try:
-            if self.backup_vaults:
-                for backup_vault in self.backup_vaults:
-                    paginator = regional_client.get_paginator(
-                        "list_recovery_points_by_backup_vault"
-                    )
-                    for page in paginator.paginate(BackupVaultName=backup_vault.name):
-                        for recovery_point in page.get("RecoveryPoints", []):
-                            arn = recovery_point.get("RecoveryPointArn")
-                            if arn:
-                                self.recovery_points.append(
-                                    RecoveryPoint(
-                                        arn=arn,
-                                        id=arn.split(":")[-1],
-                                        backup_vault_name=backup_vault.name,
-                                        encrypted=recovery_point.get(
-                                            "IsEncrypted", False
-                                        ),
-                                        backup_vault_region=backup_vault.region,
-                                        region=regional_client.region,
-                                        tags=[],
-                                    )
-                                )
+            regional_client = self.regional_clients[backup_vault.region]
+            paginator = regional_client.get_paginator(
+                "list_recovery_points_by_backup_vault"
+            )
+            for page in paginator.paginate(BackupVaultName=backup_vault.name):
+                for recovery_point in page.get("RecoveryPoints", []):
+                    arn = recovery_point.get("RecoveryPointArn")
+                    if arn:
+                        rp = RecoveryPoint(
+                            arn=arn,
+                            id=arn.split(":")[-1],
+                            backup_vault_name=backup_vault.name,
+                            encrypted=recovery_point.get("IsEncrypted", False),
+                            creation_date=recovery_point.get("CreationDate"),
+                            backup_vault_region=backup_vault.region,
+                            region=backup_vault.region,
+                            tags=[],
+                        )
+                        self.recovery_points.append(rp)
         except ClientError as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         except Exception as error:
             logger.error(
-                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{backup_vault.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _select_recovery_points_for_analysis(self):
+        self.recovery_points = list(
+            limit_resources(
+                sorted(
+                    self.recovery_points,
+                    key=lambda rp: (
+                        (
+                            -rp.creation_date.timestamp()
+                            if isinstance(rp.creation_date, datetime)
+                            else 0.0
+                        ),
+                        rp.region or "",
+                        rp.backup_vault_name or "",
+                        rp.arn or "",
+                        rp.id or "",
+                    ),
+                ),
+                self.recovery_point_limit,
+            )
+        )
 
 
 class BackupVault(BaseModel):
@@ -256,4 +289,5 @@ class RecoveryPoint(BaseModel):
     backup_vault_name: str
     encrypted: bool
     backup_vault_region: str
+    creation_date: Optional[datetime] = None
     tags: Optional[list] = None

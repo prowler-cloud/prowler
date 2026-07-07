@@ -23,12 +23,12 @@ export function expandFindingWithRelationships(
   const scan = scanDict[finding.relationships?.scan?.data?.id];
   const resource =
     resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-  const provider = providerDict[scan?.relationships?.provider?.data?.id];
+  const provider = providerDict[scan?.relationships?.provider?.data?.id ?? ""];
 
   return {
     ...finding,
     relationships: { ...finding.relationships, scan, resource, provider },
-  } as FindingProps;
+  } as unknown as FindingProps;
 }
 
 export function findingToFindingResourceRow(
@@ -59,5 +59,6 @@ export function findingToFindingResourceRow(
     mutedReason: finding.attributes.muted_reason,
     firstSeenAt: finding.attributes.first_seen_at,
     lastSeenAt: finding.attributes.updated_at,
+    triage: finding.triage,
   };
 }

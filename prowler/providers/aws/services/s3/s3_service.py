@@ -36,6 +36,10 @@ class S3(AWSService):
         self.__threading_call__(
             self._get_bucket_notification_configuration, self.buckets.values()
         )
+        # Object-level ACL sampling is expensive and opt-in, so only run it when
+        # the s3_bucket_object_public check is explicitly enabled in the config.
+        if self.audit_config.get("s3_bucket_object_public_enabled", False):
+            self.__threading_call__(self._get_public_objects, self.buckets.values())
 
     def _list_buckets(self, provider):
         logger.info("S3 - Listing buckets...")
@@ -487,6 +491,69 @@ class S3(AWSService):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_public_objects(self, bucket):
+        logger.info("S3 - Spot-checking bucket objects for public ACLs...")
+        max_objects = self.audit_config.get("s3_bucket_object_public_max_objects", 100)
+        sample_size = self.audit_config.get("s3_bucket_object_public_sample_size", 3)
+        # Guard against misconfigured non-positive values: a zero sample size would
+        # raise ZeroDivisionError and a negative one would silently sample nothing.
+        if not isinstance(max_objects, int) or max_objects <= 0:
+            max_objects = 100
+        if not isinstance(sample_size, int) or sample_size <= 0:
+            sample_size = 3
+        sampling = BucketObjectSampling(performed=True)
+        regional_client = None
+        try:
+            regional_client = self.regional_clients[bucket.region]
+            contents = regional_client.list_objects_v2(
+                Bucket=bucket.name, MaxKeys=max_objects
+            ).get("Contents", [])
+
+            if not contents:
+                sampling.is_empty = True
+                bucket.object_sampling = sampling
+                return
+
+            all_keys = [obj["Key"] for obj in contents]
+            # Deterministic, evenly-spaced sampling so findings are reproducible
+            # across scans instead of flipping between PASS/FAIL with a random sample.
+            if len(all_keys) <= sample_size:
+                sample_keys = all_keys
+            else:
+                step = len(all_keys) // sample_size
+                sample_keys = [all_keys[i * step] for i in range(sample_size)]
+
+            for key in sample_keys:
+                acl = regional_client.get_object_acl(Bucket=bucket.name, Key=key)
+                grantees = []
+                for grant in acl.get("Grants", []):
+                    grant_grantee = grant.get("Grantee", {})
+                    grantee = ACL_Grantee(type=grant_grantee.get("Type", ""))
+                    grantee.display_name = grant_grantee.get("DisplayName")
+                    grantee.ID = grant_grantee.get("ID")
+                    grantee.URI = grant_grantee.get("URI")
+                    grantee.permission = grant.get("Permission")
+                    grantees.append(grantee)
+                sampling.objects.append(ObjectACL(key=key, grantees=grantees))
+
+            bucket.object_sampling = sampling
+        except ClientError as error:
+            sampling.error_code = error.response["Error"]["Code"]
+            sampling.error_message = str(error)
+            bucket.object_sampling = sampling
+            region = regional_client.region if regional_client else bucket.region
+            logger.warning(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        except Exception as error:
+            sampling.error_code = error.__class__.__name__
+            sampling.error_message = str(error)
+            bucket.object_sampling = sampling
+            region = regional_client.region if regional_client else bucket.region
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _head_bucket(self, bucket_name):
         logger.info("S3 - Checking if bucket exists...")
         try:
@@ -654,6 +721,19 @@ class PublicAccessBlock(BaseModel):
     restrict_public_buckets: bool
 
 
+class ObjectACL(BaseModel):
+    key: str
+    grantees: List[ACL_Grantee] = Field(default_factory=list)
+
+
+class BucketObjectSampling(BaseModel):
+    performed: bool = False
+    is_empty: bool = False
+    objects: List[ObjectACL] = Field(default_factory=list)
+    error_code: Optional[str] = None
+    error_message: Optional[str] = None
+
+
 class AccessPoint(BaseModel):
     arn: str
     account_id: str
@@ -703,3 +783,4 @@ class Bucket(BaseModel):
     lifecycle: List[LifeCycleRule] = Field(default_factory=list)
     replication_rules: List[ReplicationRule] = Field(default_factory=list)
     notification_config: Dict = Field(default_factory=dict)
+    object_sampling: Optional[BucketObjectSampling] = None

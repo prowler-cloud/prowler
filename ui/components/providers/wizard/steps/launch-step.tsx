@@ -296,11 +296,11 @@ export function LaunchStep({
 
       <div className="flex items-center gap-3">
         <TreeStatusIcon status={TREE_ITEM_STATUS.SUCCESS} className="size-6" />
-        <h3 className="text-sm font-semibold">Account Connected!</h3>
+        <h3 className="text-sm font-semibold">Provider Connected!</h3>
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Your account is connected to Prowler and ready to Scan!
+        Your provider is connected to Prowler and ready to Scan!
       </p>
 
       {!providerId && (
@@ -352,8 +352,16 @@ export function LaunchStep({
 
       {(isLimitBlocked || isBlocked) && (
         <p className="text-text-error-primary text-sm">
-          You have reached your scan limit, so additional scans are not
-          available right now.
+          You have exceeded the usage limit of one provider. You can add more
+          providers and run unlimited scans by adding a subscription.{" "}
+          <Link
+            href="https://cloud.prowler.com/billing"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline"
+          >
+            Manage Billing
+          </Link>
         </p>
       )}
 

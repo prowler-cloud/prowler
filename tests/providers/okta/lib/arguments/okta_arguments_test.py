@@ -40,6 +40,8 @@ class TestOktaArguments:
             "--okta-org-domain",
             "--okta-client-id",
             "--okta-scopes",
+            "--okta-retries-max-attempts",
+            "--okta-requests-per-second",
         }
 
     def test_secret_flags_not_registered(self):

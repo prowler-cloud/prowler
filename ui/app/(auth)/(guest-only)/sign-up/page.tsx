@@ -16,6 +16,7 @@ const SignUp = async ({
     typeof resolvedSearchParams?.invitation_token === "string"
       ? resolvedSearchParams.invitation_token
       : null;
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   const GOOGLE_AUTH_URL = getAuthUrl("google");
   const GITHUB_AUTH_URL = getAuthUrl("github");
@@ -24,6 +25,7 @@ const SignUp = async ({
     <AuthForm
       type="sign-up"
       invitationToken={invitationToken}
+      isCloudEnv={isCloudEnv}
       googleAuthUrl={GOOGLE_AUTH_URL}
       githubAuthUrl={GITHUB_AUTH_URL}
       isGoogleOAuthEnabled={isGoogleOAuthEnabled}

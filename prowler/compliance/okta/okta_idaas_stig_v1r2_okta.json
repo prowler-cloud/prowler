@@ -25,6 +25,14 @@
           "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the edit icon next to the Priority 1 rule. 4. Verify the \"Maximum Okta global session idle time\" is set to 15 minutes. If \"Maximum Okta global session idle time\" is not set to 15 minutes, this is a finding.",
           "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the Rules table, make these updates: - Click \"Add rule\". - Set \"Maximum Okta global session idle time\" to 15 minutes."
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "signon_global_session_idle_timeout_15min",
+          "ConfigKey": "okta_max_session_idle_minutes",
+          "Operator": "lte",
+          "Value": 15
+        }
       ]
     },
     {
@@ -45,6 +53,14 @@
           ],
           "CheckText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", verify the \"Maximum app session idle time\" is set to 15 minutes. If the \"Maximum app session idle time\" is not set to 15 minutes, this is a finding.",
           "FixText": "From the Admin Console: 1. Select Applications >> Applications >> Okta Admin Console. 2. In the Sign On tab, under \"Okta Admin Console session\", set the \"Maximum app session idle time\" to 15 minutes."
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "application_admin_console_session_idle_timeout_15min",
+          "ConfigKey": "okta_admin_console_idle_timeout_max_minutes",
+          "Operator": "lte",
+          "Value": 15
         }
       ]
     },
@@ -68,6 +84,14 @@
           ],
           "CheckText": "If Okta Services rely on external directory services for user sourcing, this is not applicable, and the connected directory services must perform this function. Go to Workflows >> Automations and verify that an Automation has been created to disable accounts after 35 days of inactivity. If the Okta configuration does not automatically disable accounts after a 35-day period of account inactivity, this is a finding.",
           "FixText": "From the Admin Console: 1. Go to Workflow >> Automations and select \"Add Automation\". 2. Create a name for the Automation (e.g., \"User Inactivity\"). 3. Click \"Add Condition\" and select \"User Inactivity in Okta\". 4. In the duration field, enter 35 days and click \"Save\". 5 Click the edit button next to \"Select Schedule\". 6. Configure the \"Schedule\" field for \"Run Daily\" and set the \"Time\" field to an organizationally defined time to run this automation. Click \"Save\". 7. Click the edit button next to \"Select group membership\". 8. In the \"Applies to\" field, select the group \"Everyone\" by typing it into the field. Click \"Save\". 9. Click \"Add Action\" and select \"Change User lifecycle state in Okta\". 10. In the \"Change user state to\" field, select \"Suspended\" and click \"Save\". 11. Click the \"Inactive\" button near the top of the section screen and select \"Activate\"."
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "user_inactivity_automation_35d_enabled",
+          "ConfigKey": "okta_user_inactivity_max_days",
+          "Operator": "lte",
+          "Value": 35
         }
       ]
     },
@@ -394,6 +418,14 @@
           ],
           "CheckText": "From the Admin Console: 1. Select Security >> Global Session Policy. 2. In the Default Policy, verify a rule is configured at Priority 1 that is not named \"Default Rule\". 3. Click the \"Edit\" icon next to the Priority 1 rule. 4. Verify \"Maximum Okta global session lifetime\" is set to 18 hours. If the above is not set, this is a finding.",
           "FixText": "From the Admin Console: 1. Go to Security >> Global Session Policy. 2. Select the Default Policy. 3. In the Rules table, make these updates: - Click \"Add rule\". - Set \"Maximum Okta global session lifetime\" to 18 hours."
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "signon_global_session_lifetime_18h",
+          "ConfigKey": "okta_max_session_lifetime_minutes",
+          "Operator": "lte",
+          "Value": 1080
         }
       ]
     },

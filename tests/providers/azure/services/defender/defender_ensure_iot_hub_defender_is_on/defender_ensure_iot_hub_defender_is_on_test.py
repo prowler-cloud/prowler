@@ -15,6 +15,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_iot_hub_defender_is_on:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {}
 
@@ -38,6 +39,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
 
     def test_defender_no_iot_hub_solutions(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.iot_security_solutions = {AZURE_SUBSCRIPTION_ID: {}}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
 
@@ -69,6 +71,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
     def test_defender_iot_hub_solution_disabled(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
@@ -106,6 +109,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
     def test_defender_iot_hub_solution_enabled(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {
@@ -145,6 +149,7 @@ class Test_defender_ensure_iot_hub_defender_is_on:
         resource_id_enabled = str(uuid4())
         resource_id_disabled = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.iot_security_solutions = {
             AZURE_SUBSCRIPTION_ID: {

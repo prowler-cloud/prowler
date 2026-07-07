@@ -2,6 +2,13 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    accumulate_group_status,
+    accumulate_overview_status,
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 
 
@@ -164,9 +171,11 @@ def _render_grouped(
     check_map = _build_requirement_check_map(framework, provider)
     groups = {}
     group_seen = {}
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -174,32 +183,24 @@ def _render_grouped(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache, provider_type=provider
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 if group_key not in groups:
                     groups[group_key] = {"FAIL": 0, "PASS": 0, "Muted": 0}
-                    group_seen[group_key] = set()
+                    group_seen[group_key] = {}
 
-                # Overview totals: count each finding once per framework
-                if finding.muted:
-                    if index not in muted_count:
-                        muted_count.append(index)
-                elif finding.status == "FAIL":
-                    if index not in fail_count:
-                        fail_count.append(index)
-                elif finding.status == "PASS":
-                    if index not in pass_count:
-                        pass_count.append(index)
-
-                # Per-group counts: count each finding once per group it belongs
-                # to (a finding can map to several groups via several requirements).
-                if index not in group_seen[group_key]:
-                    group_seen[group_key].add(index)
-                    if finding.muted:
-                        groups[group_key]["Muted"] += 1
-                    elif finding.status == "FAIL":
-                        groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS":
-                        groups[group_key]["PASS"] += 1
+                status = "Muted" if finding.muted else effective_status
+                accumulate_overview_status(
+                    index, status, pass_count, fail_count, muted_count
+                )
+                accumulate_group_status(
+                    index, status, groups[group_key], group_seen[group_key]
+                )
 
     if not _print_overview(
         pass_count, fail_count, muted_count, compliance_framework_name, labels
@@ -272,9 +273,11 @@ def _render_split(
     groups = {}
     group_muted_seen = {}
     group_split_seen = {}
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -282,6 +285,12 @@ def _render_split(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache, provider_type=provider
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 if group_key not in groups:
                     groups[group_key] = {
@@ -289,33 +298,33 @@ def _render_split(
                     }
                     groups[group_key]["Muted"] = 0
                     group_muted_seen[group_key] = set()
-                    group_split_seen[group_key] = {sv: set() for sv in split_values}
+                    group_split_seen[group_key] = {sv: {} for sv in split_values}
 
                 split_val = req.attributes.get(split_field, "")
 
                 if finding.muted:
                     # Overview total: count each finding once per framework
-                    if index not in muted_count:
-                        muted_count.append(index)
+                    muted_count.add(index)
                     # Per-group Muted: count each finding once per group it
                     # belongs to (a finding can map to several groups).
                     if index not in group_muted_seen[group_key]:
                         group_muted_seen[group_key].add(index)
                         groups[group_key]["Muted"] += 1
                 else:
-                    if finding.status == "FAIL" and index not in fail_count:
-                        fail_count.append(index)
-                    elif finding.status == "PASS" and index not in pass_count:
-                        pass_count.append(index)
+                    if effective_status == "FAIL":
+                        fail_count.add(index)
+                        pass_count.discard(index)
+                    elif effective_status == "PASS" and index not in fail_count:
+                        pass_count.add(index)
 
                     for sv in split_values:
                         if sv in str(split_val):
-                            if index not in group_split_seen[group_key][sv]:
-                                group_split_seen[group_key][sv].add(index)
-                                if finding.status == "FAIL":
-                                    groups[group_key][sv]["FAIL"] += 1
-                                else:
-                                    groups[group_key][sv]["PASS"] += 1
+                            accumulate_group_status(
+                                index,
+                                effective_status,
+                                groups[group_key][sv],
+                                group_split_seen[group_key][sv],
+                            )
 
     if not _print_overview(
         pass_count, fail_count, muted_count, compliance_framework_name, labels
@@ -387,16 +396,18 @@ def _render_scored(
     weight_field = scoring.weight_field
     groups = {}
     group_seen = {}
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
 
     score_per_group = {}
     max_score_per_group = {}
     counted_per_group = {}
     generic_score = 0
     max_generic_score = 0
-    counted_generic = []
+    counted_generic = {}
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
 
     for index, finding in enumerate(findings):
         check_id = finding.check_metadata.CheckID
@@ -404,6 +415,12 @@ def _render_scored(
             continue
 
         for req in check_map[check_id]:
+            effective_status = get_effective_status(
+                finding.status,
+                resolve_requirement_config_status(
+                    req, audit_config, config_status_cache, provider_type=provider
+                ),
+            )
             for group_key in _get_group_key(req, group_by):
                 attrs = req.attributes
                 risk = attrs.get(risk_field, 0)
@@ -411,44 +428,47 @@ def _render_scored(
 
                 if group_key not in groups:
                     groups[group_key] = {"FAIL": 0, "PASS": 0, "Muted": 0}
-                    group_seen[group_key] = set()
+                    group_seen[group_key] = {}
                     score_per_group[group_key] = 0
                     max_score_per_group[group_key] = 0
-                    counted_per_group[group_key] = []
+                    counted_per_group[group_key] = {}
 
-                if index not in counted_per_group[group_key] and not finding.muted:
-                    if finding.status == "PASS":
-                        score_per_group[group_key] += risk * weight
-                    max_score_per_group[group_key] += risk * weight
-                    counted_per_group[group_key].append(index)
+                # Revoke an earlier PASS score if a later requirement FAILs.
+                if not finding.muted:
+                    contribution = risk * weight
+                    counted = counted_per_group[group_key]
+                    if index not in counted:
+                        max_score_per_group[group_key] += contribution
+                        if effective_status == "PASS":
+                            score_per_group[group_key] += contribution
+                            counted[index] = contribution
+                        else:
+                            counted[index] = 0
+                    elif effective_status == "FAIL" and counted[index]:
+                        score_per_group[group_key] -= counted[index]
+                        counted[index] = 0
 
-                # Overview totals: count each finding once per framework
-                if finding.muted:
-                    if index not in muted_count:
-                        muted_count.append(index)
-                elif finding.status == "FAIL":
-                    if index not in fail_count:
-                        fail_count.append(index)
-                elif finding.status == "PASS":
-                    if index not in pass_count:
-                        pass_count.append(index)
+                status = "Muted" if finding.muted else effective_status
+                accumulate_overview_status(
+                    index, status, pass_count, fail_count, muted_count
+                )
+                accumulate_group_status(
+                    index, status, groups[group_key], group_seen[group_key]
+                )
 
-                # Per-group counts: count each finding once per group it belongs
-                # to (a finding can map to several groups via several requirements).
-                if index not in group_seen[group_key]:
-                    group_seen[group_key].add(index)
-                    if finding.muted:
-                        groups[group_key]["Muted"] += 1
-                    elif finding.status == "FAIL":
-                        groups[group_key]["FAIL"] += 1
-                    elif finding.status == "PASS":
-                        groups[group_key]["PASS"] += 1
-
-                if index not in counted_generic and not finding.muted:
-                    if finding.status == "PASS":
-                        generic_score += risk * weight
-                    max_generic_score += risk * weight
-                    counted_generic.append(index)
+                # Generic score, with the same PASS-revocation on FAIL.
+                if not finding.muted:
+                    contribution = risk * weight
+                    if index not in counted_generic:
+                        max_generic_score += contribution
+                        if effective_status == "PASS":
+                            generic_score += contribution
+                            counted_generic[index] = contribution
+                        else:
+                            counted_generic[index] = 0
+                    elif effective_status == "FAIL" and counted_generic[index]:
+                        generic_score -= counted_generic[index]
+                        counted_generic[index] = 0
 
     if not _print_overview(
         pass_count, fail_count, muted_count, compliance_framework_name, labels
