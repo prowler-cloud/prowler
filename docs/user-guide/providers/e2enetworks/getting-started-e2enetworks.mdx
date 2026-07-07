@@ -35,7 +35,7 @@ prowler e2enetworks
 ### Run Specific Checks
 
 ```bash
-prowler e2enetworks --checks node_encryption_enabled storage_bucket_public_access_disabled
+prowler e2enetworks --checks node_encryption_enabled storage_block_volume_not_orphaned
 ```
 
 ### Run a Specific Service
@@ -63,4 +63,4 @@ Prowler for E2E Networks currently supports the following services:
 | `network` | Virtual Private Clouds, peering, and reserved public IP addresses |
 | `node` | Compute nodes and their encryption, protection, and network configuration |
 | `securitygroup` | Security groups and their inbound and default traffic rules |
-| `storage` | Object storage buckets and block volumes with their protection settings |
+| `storage` | Block volumes and file storage (EFS/EPFS) with their protection settings |

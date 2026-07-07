@@ -10,11 +10,9 @@ class Storage(E2eNetworksService):
     def __init__(self, provider):
         super().__init__("storage", provider)
         self.block_volumes: list[BlockVolume] = []
-        self.buckets: list[StorageBucket] = []
         self.efs_volumes: list[EfsVolume] = []
         self.epfs_volumes: list[EpfsVolume] = []
         self._fetch_block_volumes()
-        self._fetch_buckets()
         self._fetch_efs_volumes()
         self._fetch_epfs_volumes()
 
@@ -40,39 +38,6 @@ class Storage(E2eNetworksService):
             except Exception as error:
                 logger.error(
                     f"storage - Error fetching block volumes in {location} -- "
-                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-
-    def _fetch_buckets(self):
-        for location in self.provider.session.locations:
-            try:
-                buckets = self.client.paginate(
-                    "/storage/buckets/",
-                    location=location,
-                )
-                for item in buckets:
-                    self.buckets.append(
-                        StorageBucket(
-                            id=str(item.get("id", "")),
-                            name=item.get("name", ""),
-                            location=location,
-                            status=item.get("status", ""),
-                            versioning_status=item.get("versioning_status", "Off"),
-                            is_public_access_enabled=bool(
-                                item.get("is_public_access_enabled", False)
-                            ),
-                            is_encryption_enabled=bool(
-                                item.get("is_encryption_enabled", False)
-                            ),
-                            is_lock_enabled=bool(item.get("is_lock_enabled", False)),
-                            lifecycle_configuration_status=item.get(
-                                "lifecycle_configuration_status", ""
-                            ),
-                        )
-                    )
-            except Exception as error:
-                logger.error(
-                    f"storage - Error fetching buckets in {location} -- "
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
 
@@ -148,26 +113,6 @@ class BlockVolume(BaseModel):
     status: str = ""
     size_string: str = ""
     is_attached: bool = False
-
-    @property
-    def resource_id(self) -> str:
-        return self.id
-
-    @property
-    def resource_name(self) -> str:
-        return self.name
-
-
-class StorageBucket(BaseModel):
-    id: str
-    name: str
-    location: str
-    status: str = ""
-    versioning_status: str = "Off"
-    is_public_access_enabled: bool = False
-    is_encryption_enabled: bool = False
-    is_lock_enabled: bool = False
-    lifecycle_configuration_status: str = ""
 
     @property
     def resource_id(self) -> str:

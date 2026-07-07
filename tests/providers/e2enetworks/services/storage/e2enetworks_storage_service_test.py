@@ -16,7 +16,6 @@ class TestStorageService:
         service.provider = provider
         service.client = MagicMock()
         service.block_volumes = []
-        service.buckets = []
         service.efs_volumes = []
         service.epfs_volumes = []
 

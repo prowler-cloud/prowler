@@ -27,7 +27,6 @@ Representation of an E2E Networks project (tenant scope for all MyAccount resour
                                 :E2eSecurityGroup,
                                 :E2eLoadBalancer,
                                 :E2eBlockVolume,
-                                :E2eStorageBucket,
                                 :E2eEfs,
                                 :E2eEpfs,
                                 :E2eDatabaseCluster,
@@ -242,32 +241,6 @@ Representation of an E2E Networks block storage volume ([Block Storage API](http
 
     ```cypher
     (:E2eBlockVolume)-[:ATTACHED_TO]->(:E2eNode)
-    ```
-
-### E2eStorageBucket
-
-Representation of an E2E Networks object storage bucket ([Object Storage API](https://docs.e2enetworks.com/api/myaccount/storage/object-storage/)).
-
-| Field | Description |
-|-------|-------------|
-| firstseen | Timestamp of when a sync job discovered this node |
-| lastupdated | Timestamp of the last time the node was updated |
-| **id** | Bucket ID |
-| name | Bucket name |
-| location | Deployment region |
-| status | Bucket status |
-| versioning_status | Versioning state (`Off`, `Enabled`, `Suspended`) |
-| is_public_access_enabled | Whether public access is enabled |
-| is_encryption_enabled | Whether encryption is enabled |
-| is_lock_enabled | Whether object lock is enabled |
-| lifecycle_configuration_status | Lifecycle policy status |
-
-#### Relationships
-
-- Object storage buckets belong to a project.
-
-    ```cypher
-    (:E2eProject)-[:RESOURCE]->(:E2eStorageBucket)
     ```
 
 ### E2eEfs
