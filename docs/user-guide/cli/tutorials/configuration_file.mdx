@@ -33,7 +33,7 @@ The following list includes all the AWS checks with configurable variables that 
 | `autoscaling_find_secrets_ec2_launch_configuration`                    | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `awslambda_function_no_secrets_in_code`                                | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `awslambda_function_no_secrets_in_variables`                           | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
-| `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | Integer         | See `config.yaml`                                                                                                                    |
+| `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | List of Strings | See `config.yaml`                                                                                                                    |
 | `awslambda_function_vpc_is_in_multi_azs`                               | `lambda_min_azs`                                  | Integer         | `2`                                                                                                                                  |
 | `cloudformation_stack_outputs_find_secrets`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
 | `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_actions`            | List of Strings | See `config.yaml`                                                                                                                    |
@@ -203,7 +203,6 @@ The following list includes all the GCP checks with configurable variables that 
 
 | Check Name                              | Value                             | Type    | Default |
 |-----------------------------------------|-----------------------------------|---------|---------|
-| `compute_configuration_changes`         | `compute_audit_log_lookback_days` | Integer | —       |
 | `compute_instance_group_multiple_zones` | `mig_min_zones`                   | Integer | `2`     |
 
 ## Kubernetes
@@ -216,8 +215,8 @@ The following list includes all the Kubernetes checks with configurable variable
 | `audit_log_maxbackup`         | `audit_log_maxbackup`      | String | `10`                                                                                   |
 | `audit_log_maxsize`           | `audit_log_maxsize`        | String | `100`                                                                                  |
 | `audit_log_maxage`            | `audit_log_maxage`         | String | `30`                                                                                   |
-| `apiserver_strong_ciphers`    | `apiserver_strong_ciphers` | String | `["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]` |
-| `kubelet_strong_ciphers_only` | `kubelet_strong_ciphers`   | String | See `config.yaml`                                                                      |
+| `apiserver_strong_ciphers`    | `apiserver_strong_ciphers` | List of Strings | `["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]` |
+| `kubelet_strong_ciphers_only` | `kubelet_strong_ciphers`   | List of Strings | See `config.yaml`                                                                      |
 
 
 ## M365
