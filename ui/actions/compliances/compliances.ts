@@ -15,6 +15,12 @@ import { SentryErrorSource, SentryErrorType } from "@/sentry";
 async function getCrossProviderPdfErrorMessage(
   response: Response,
   fallbackMessage: string,
+  // A static route template / operation name (e.g.
+  // ``cross-provider-compliance-overviews/generate-pdf/{taskId}/download``).
+  // Passed explicitly instead of derived from ``response.url`` so no dynamic
+  // path segment (``taskId``) or query param (user-typed ``report_name``) is
+  // ever forwarded to Sentry.
+  operation: string,
 ): Promise<string> {
   const contentType = response.headers.get("content-type")?.toLowerCase() || "";
 
@@ -29,18 +35,6 @@ async function getCrossProviderPdfErrorMessage(
   // PDF generate/download/latest endpoints would otherwise go unmonitored,
   // unlike everything routed through ``handleApiResponse``.
   if (response.status >= 500 || errorData === null) {
-    // Strip the query string before reporting: the generate-PDF endpoint
-    // carries a user-typed ``report_name`` param, which must not leak into
-    // Sentry as freeform text. The path alone is enough to locate the route.
-    const sanitizedUrl = (() => {
-      try {
-        const parsed = new URL(response.url);
-        return `${parsed.origin}${parsed.pathname}`;
-      } catch {
-        return "";
-      }
-    })();
-
     Sentry.captureException(
       new Error(
         `Cross-provider PDF request failed (${response.status}): ${response.statusText}`,
@@ -60,7 +54,9 @@ async function getCrossProviderPdfErrorMessage(
           api_response: {
             status: response.status,
             statusText: response.statusText,
-            url: sanitizedUrl,
+            // Route template only — never the resolved URL, which would carry
+            // the task id / user-typed report name.
+            operation,
           },
         },
       },
@@ -356,6 +352,7 @@ export const generateCrossProviderCompliancePdf = async ({
         await getCrossProviderPdfErrorMessage(
           response,
           "Unable to start PDF generation. Contact support if the issue continues.",
+          "cross-provider-compliance-overviews/generate-pdf",
         ),
       );
     }
@@ -413,6 +410,7 @@ export const getCrossProviderCompliancePdf = async (
         await getCrossProviderPdfErrorMessage(
           response,
           "Unable to retrieve the compliance PDF report. Contact support if the issue continues.",
+          "cross-provider-compliance-overviews/generate-pdf/{taskId}/download",
         ),
       );
     }
@@ -508,6 +506,7 @@ export const getLatestCrossProviderCompliancePdf = async ({
         await getCrossProviderPdfErrorMessage(
           response,
           "Unable to check for an existing PDF report. Contact support if the issue continues.",
+          "cross-provider-compliance-overviews/generate-pdf/latest",
         ),
       );
     }
