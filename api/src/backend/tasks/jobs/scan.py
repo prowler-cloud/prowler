@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import random
 import re
 import time
 import uuid
@@ -304,6 +305,55 @@ def _store_resources(
         ]
         resource_instance.upsert_or_delete_tags(tags=tags)
     return resource_instance, (resource_instance.uid, resource_instance.region)
+
+
+def _bulk_update_resource_failed_findings_counts(
+    tenant_id: str,
+    scan_id: str,
+    resources_to_update: list[Resource],
+) -> None:
+    """Persist failed finding counters with stable row locking and retry."""
+    if not resources_to_update:
+        return
+
+    sorted_resources = sorted(
+        resources_to_update, key=lambda resource: str(resource.id)
+    )
+    for start in range(0, len(sorted_resources), SCAN_DB_BATCH_SIZE):
+        chunk = sorted_resources[start : start + SCAN_DB_BATCH_SIZE]
+        chunk_ids = [resource.id for resource in chunk]
+
+        for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
+            try:
+                with rls_transaction(tenant_id):
+                    list(
+                        Resource.objects.select_for_update()
+                        .filter(id__in=chunk_ids)
+                        .order_by("id")
+                        .values_list("id", flat=True)
+                    )
+                    Resource.objects.bulk_update(
+                        chunk,
+                        ["failed_findings_count"],
+                        batch_size=SCAN_DB_BATCH_SIZE,
+                    )
+                break
+            except OperationalError:
+                if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
+                    logger.warning(
+                        "Resource failed findings count update hit a database "
+                        "conflict on scan %s. Retrying chunk %s/%s "
+                        "(attempt %s/%s).",
+                        scan_id,
+                        start // SCAN_DB_BATCH_SIZE + 1,
+                        (len(sorted_resources) + SCAN_DB_BATCH_SIZE - 1)
+                        // SCAN_DB_BATCH_SIZE,
+                        attempt + 1,
+                        CELERY_DEADLOCK_ATTEMPTS,
+                    )
+                    time.sleep((0.1 * (2**attempt)) + random.uniform(0, 0.1))
+                    continue
+                raise
 
 
 def _copy_compliance_requirement_rows(
@@ -1182,16 +1232,11 @@ def perform_prowler_scan(
                     resources_to_update.append(resource_instance)
 
             if resources_to_update:
-                # Single rls_transaction wrapping the bulk_update (previously
-                # `update_objects_in_batches` opened one rls_transaction per
-                # chunk; for tenants with many resources this collapsed N
-                # BEGINs/COMMITs into 1).
-                with rls_transaction(tenant_id):
-                    Resource.objects.bulk_update(
-                        resources_to_update,
-                        ["failed_findings_count"],
-                        batch_size=SCAN_DB_BATCH_SIZE,
-                    )
+                _bulk_update_resource_failed_findings_counts(
+                    tenant_id=tenant_id,
+                    scan_id=scan_id,
+                    resources_to_update=resources_to_update,
+                )
 
     except ProviderDeletedException as e:
         logger.warning(str(e))
