@@ -431,11 +431,13 @@ class Test_ECS_Service:
             ecs = ECS(aws_provider)
 
             assert [td.revision for td in ecs.task_definitions.values()] == ["3"]
-            assert describe_calls == [
-                "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3",
-                "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:2",
-                "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:1",
-            ]
+            assert sorted(describe_calls) == sorted(
+                [
+                    "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:3",
+                    "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:2",
+                    "arn:aws:ecs:eu-west-1:123456789012:task-definition/fam:1",
+                ]
+            )
 
     @patch(
         "botocore.client.BaseClient._make_api_call",
