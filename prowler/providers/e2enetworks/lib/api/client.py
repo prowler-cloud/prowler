@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 import requests
@@ -7,6 +8,16 @@ import requests
 from prowler.lib.logger import logger
 from prowler.providers.e2enetworks.exceptions.exceptions import E2eNetworksAPIError
 from prowler.providers.e2enetworks.models import E2eNetworksSession
+
+
+def _redact_sensitive_values(message: str) -> str:
+    """Redact E2E Networks secrets from request error messages."""
+    redacted = re.sub(r"(?i)(apikey=)[^&\s]+", r"\1REDACTED", message)
+    return re.sub(
+        r"(?i)(Authorization:\s*Bearer\s+|Bearer\s+)[^\s,;]+",
+        r"\1REDACTED",
+        redacted,
+    )
 
 
 class E2eNetworksAPIClient:
@@ -47,12 +58,13 @@ class E2eNetworksAPIClient:
                 return {"data": payload}
             return payload
         except requests.exceptions.RequestException as error:
+            redacted_error = _redact_sensitive_values(str(error))
             logger.error(
-                f"E2E API GET {path} failed: {error.__class__.__name__}: {error}"
+                f"E2E API GET {path} failed: {error.__class__.__name__}: {redacted_error}"
             )
             raise E2eNetworksAPIError(
                 message=f"GET {path} failed for location {location}",
-                original_exception=error,
+                original_exception=Exception(redacted_error),
             ) from error
 
     def get_data(
