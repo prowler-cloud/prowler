@@ -10,7 +10,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ---
 
-## [5.32.1] (Prowler UNRELEASED)
+## [5.32.2] (Prowler UNRELEASED)
+
+### 🐞 Fixed
+
+- Azure `postgresql_flexible_server_log_retention_days_greater_3` check now queries the `logfiles.retention_days` configuration parameter instead of `log_retention_days` (which only exists on the retired Single Server), fixing false `FAIL` results on every Flexible Server regardless of the actual retention value [(#11761)](https://github.com/prowler-cloud/prowler/pull/11761)
+
+---
+
+## [5.32.1] (Prowler v5.32.1)
 
 ### 🐞 Fixed
 
