@@ -1029,7 +1029,7 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert "<script>alert(1)</script>" not in summary
-        assert "Delhi&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
+        assert "Delhi&#34;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
 
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""

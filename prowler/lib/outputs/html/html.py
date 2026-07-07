@@ -1,8 +1,8 @@
 import sys
-from html import escape
 from io import TextIOWrapper
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -1401,8 +1401,8 @@ class HTML(Output):
     def get_e2enetworks_assessment_summary(provider: Provider) -> str:
         """Get the HTML assessment summary for the E2E Networks provider."""
         try:
-            locations = escape(", ".join(provider.identity.locations), quote=True)
-            project_id = escape(str(provider.identity.project_id), quote=True)
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
             return f"""
                 <div class="col-md-2">
                     <div class="card">
