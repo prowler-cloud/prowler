@@ -178,7 +178,9 @@ def _load_findings_for_requirement_checks(
         tenant_id (str): The tenant ID for Row-Level Security context.
         scan_id (str): The ID of the scan to retrieve findings for.
         check_ids (list[str]): List of check IDs to load findings for.
-        prowler_provider: The initialized Prowler provider instance.
+        prowler_provider: Credential-free provider metadata stub (see
+            ``tasks.jobs.reports.build_provider_metadata``) consumed by
+            ``FindingOutput.transform_api_finding``.
         findings_cache (dict, optional): Cache of already loaded findings.
             If provided, checks are first looked up in cache before querying database.
         total_counts_out (dict, optional): If provided, populated with
