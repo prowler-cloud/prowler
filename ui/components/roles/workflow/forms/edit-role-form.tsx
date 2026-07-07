@@ -1,20 +1,14 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { DefaultValues } from "react-hook-form";
 
 import { updateRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/ui";
-import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
 import { getErrorMessage } from "@/lib";
-import {
-  getUnlimitedVisibilityField,
-  getVisiblePermissionFormFields,
-} from "@/lib/role-permissions";
-import { ApiError, editRoleFormSchema } from "@/types";
+import { RoleFormValues } from "@/types";
 
-import { RoleForm, RoleFormValues } from "./role-form";
+import { RoleForm, RoleFormSubmitContext, RoleGroupOption } from "./role-form";
 
 export const EditRoleForm = ({
   roleId,
@@ -32,38 +26,22 @@ export const EditRoleForm = ({
       };
     };
   };
-  groups: { id: string; name: string }[];
+  groups: RoleGroupOption[];
 }) => {
   const { toast } = useToast();
   const router = useRouter();
   const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
-  const visiblePermissionFormFields =
-    getVisiblePermissionFormFields(isCloudEnvironment);
-  const unlimitedVisibilityField = getUnlimitedVisibilityField();
 
-  const form = useForm<RoleFormValues>({
-    resolver: zodResolver(editRoleFormSchema),
-    defaultValues: {
-      ...roleData.data.attributes,
-      groups:
-        roleData.data.relationships?.provider_groups?.data.map((g) => g.id) ||
-        [],
-    },
-  });
-
-  const { setPermissionValue, setUnlimitedVisibility } =
-    useManageProvidersUnlimitedVisibility(form);
-  const unlimitedVisibility = form.watch("unlimited_visibility");
-
-  const isLoading = form.formState.isSubmitting;
-
-  const onSelectAllChange = (checked: boolean) => {
-    visiblePermissionFormFields.forEach(({ field }) => {
-      setPermissionValue(field, checked);
-    });
+  const defaultValues: DefaultValues<RoleFormValues> = {
+    ...roleData.data.attributes,
+    groups:
+      roleData.data.relationships?.provider_groups?.data.map((g) => g.id) || [],
   };
 
-  const onSubmitClient = async (values: RoleFormValues) => {
+  const onSubmit = async (
+    values: RoleFormValues,
+    { handleServerResponse }: RoleFormSubmitContext,
+  ) => {
     try {
       const updatedFields: Partial<RoleFormValues> = {};
 
@@ -105,33 +83,13 @@ export const EditRoleForm = ({
       });
 
       const data = await updateRole(formData, roleId);
+      if (!handleServerResponse(data)) return;
 
-      if (data?.errors && data.errors.length > 0) {
-        data.errors.forEach((error: ApiError) => {
-          const errorMessage = error.detail;
-          const pointer = error.source?.pointer;
-          switch (pointer) {
-            case "/data/attributes/name":
-              form.setError("name", {
-                type: "server",
-                message: errorMessage,
-              });
-              break;
-            default:
-              toast({
-                variant: "destructive",
-                title: "Error",
-                description: errorMessage,
-              });
-          }
-        });
-      } else {
-        toast({
-          title: "Role Updated",
-          description: "The role was updated successfully.",
-        });
-        router.push("/roles");
-      }
+      toast({
+        title: "Role Updated",
+        description: "The role was updated successfully.",
+      });
+      router.push("/roles");
     } catch (error) {
       toast({
         variant: "destructive",
@@ -143,18 +101,10 @@ export const EditRoleForm = ({
 
   return (
     <RoleForm
-      form={form}
       groups={groups}
-      visiblePermissionFormFields={visiblePermissionFormFields}
-      isLoading={isLoading}
-      unlimitedVisibility={!!unlimitedVisibility}
-      showUnlimitedVisibilityField={!!unlimitedVisibilityField}
+      defaultValues={defaultValues}
       submitText="Update Role"
-      onCancel={() => router.push("/roles")}
-      onSubmit={onSubmitClient}
-      onSelectAllChange={onSelectAllChange}
-      setPermissionValue={setPermissionValue}
-      setUnlimitedVisibility={setUnlimitedVisibility}
+      onSubmit={onSubmit}
     />
   );
 };

@@ -1,87 +1,145 @@
-import { Checkbox } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
-import { Tooltip } from "@heroui/tooltip";
-import { clsx } from "clsx";
-import { InfoIcon } from "lucide-react";
-import { Controller, UseFormReturn } from "react-hook-form";
-import { z } from "zod";
+"use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { InfoIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  Controller,
+  DefaultValues,
+  useForm,
+  UseFormReturn,
+} from "react-hook-form";
+
+import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
+import { Input } from "@/components/shadcn/input/input";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
-import { addRoleFormSchema } from "@/types";
+import { Separator } from "@/components/shadcn/separator/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import {
+  Form,
+  FormButtons,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { useFormServerErrors } from "@/hooks/use-form-server-errors";
+import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
+import {
+  getUnlimitedVisibilityField,
+  getVisiblePermissionFormFields,
+} from "@/lib/role-permissions";
+import { roleFormSchema, RoleFormValues } from "@/types";
 
 import { UnlimitedVisibilityField } from "./unlimited-visibility-section";
 
-export type RoleFormValues = z.input<typeof addRoleFormSchema>;
+export interface RoleGroupOption {
+  id: string;
+  name: string;
+}
+
+export interface RoleFormSubmitContext {
+  form: UseFormReturn<RoleFormValues>;
+  handleServerResponse: (data: unknown) => boolean;
+}
 
 interface RoleFormProps {
-  form: UseFormReturn<RoleFormValues>;
-  groups: { id: string; name: string }[];
-  visiblePermissionFormFields: {
-    field: string;
-    label: string;
-    description: string;
-  }[];
-  isLoading: boolean;
-  unlimitedVisibility: boolean;
-  showUnlimitedVisibilityField: boolean;
+  groups: RoleGroupOption[];
+  defaultValues: DefaultValues<RoleFormValues>;
   submitText: string;
-  onCancel: () => void;
-  onSubmit: (values: RoleFormValues) => void | Promise<void>;
-  onSelectAllChange: (checked: boolean) => void;
-  setPermissionValue: (field: string, checked: boolean) => void;
-  setUnlimitedVisibility: (checked: boolean) => void;
+  onSubmit: (
+    values: RoleFormValues,
+    ctx: RoleFormSubmitContext,
+  ) => void | Promise<void>;
+  onCancel?: () => void;
 }
 
 export const RoleForm = ({
-  form,
   groups,
-  visiblePermissionFormFields,
-  isLoading,
-  unlimitedVisibility,
-  showUnlimitedVisibilityField,
+  defaultValues,
   submitText,
-  onCancel,
   onSubmit,
-  onSelectAllChange,
-  setPermissionValue,
-  setUnlimitedVisibility,
+  onCancel,
 }: RoleFormProps) => {
+  const router = useRouter();
+
+  const form = useForm<RoleFormValues>({
+    resolver: zodResolver(roleFormSchema),
+    defaultValues,
+  });
+
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const visiblePermissionFormFields =
+    getVisiblePermissionFormFields(isCloudEnvironment);
+  const showUnlimitedVisibilityField = !!getUnlimitedVisibilityField();
+
+  const { setPermissionValue, setUnlimitedVisibility } =
+    useManageProvidersUnlimitedVisibility(form);
+  const { handleServerResponse } = useFormServerErrors(form, {
+    "/data/attributes/name": "name",
+  });
+
+  const unlimitedVisibility = !!form.watch("unlimited_visibility");
+  const isLoading = form.formState.isSubmitting;
+
+  const onSelectAllChange = (checked: boolean) => {
+    visiblePermissionFormFields.forEach(({ field }) => {
+      setPermissionValue(field, checked);
+    });
+  };
+
+  const handleCancel = onCancel ?? (() => router.push("/roles"));
+
   return (
     <Form {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit((values) =>
+          onSubmit(values, { form, handleServerResponse }),
+        )}
         className="flex flex-col gap-6"
       >
-        <CustomInput
+        <FormField
           control={form.control}
           name="name"
-          type="text"
-          label="Role Name"
-          labelPlacement="inside"
-          placeholder="Enter role name"
-          variant="bordered"
-          isRequired
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>
+                Role Name <span className="text-text-error-primary">*</span>
+              </FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="Enter role name"
+                  {...field}
+                  value={field.value ?? ""}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
 
         <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
           {/* Select All Checkbox */}
-          <Checkbox
-            isSelected={visiblePermissionFormFields.every((perm) =>
-              form.watch(perm.field as keyof RoleFormValues),
-            )}
-            onValueChange={onSelectAllChange}
-            classNames={{
-              label: "text-small",
-              wrapper: "checkbox-update",
-            }}
-            color="default"
-          >
-            Grant all admin permissions
-          </Checkbox>
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="select-all"
+              size="sm"
+              checked={visiblePermissionFormFields.every((perm) =>
+                form.watch(perm.field as keyof RoleFormValues),
+              )}
+              onCheckedChange={(checked) => onSelectAllChange(Boolean(checked))}
+            />
+            <label htmlFor="select-all" className="text-small">
+              Grant all admin permissions
+            </label>
+          </div>
 
           {/* Permissions Grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -89,29 +147,27 @@ export const RoleForm = ({
               ({ field, label, description }) => (
                 <div key={field} className="flex items-center gap-2">
                   <Checkbox
-                    {...form.register(field as keyof RoleFormValues)}
-                    isSelected={!!form.watch(field as keyof RoleFormValues)}
-                    onValueChange={(checked) =>
-                      setPermissionValue(field, checked)
+                    id={field}
+                    size="sm"
+                    checked={!!form.watch(field as keyof RoleFormValues)}
+                    onCheckedChange={(checked) =>
+                      setPermissionValue(field, Boolean(checked))
                     }
-                    classNames={{
-                      label: "text-small",
-                      wrapper: "checkbox-update",
-                    }}
-                    color="default"
-                  >
+                  />
+                  <label htmlFor={field} className="text-small">
                     {label}
-                  </Checkbox>
-                  <Tooltip content={description} placement="right">
-                    <div className="flex w-fit items-center justify-center">
-                      <InfoIcon
-                        className={clsx(
-                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
-                        )}
-                        aria-hidden="true"
-                        width={16}
-                      />
-                    </div>
+                  </label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="flex w-fit items-center justify-center">
+                        <InfoIcon
+                          className="text-muted-foreground cursor-pointer"
+                          aria-hidden="true"
+                          width={16}
+                        />
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent side="right">{description}</TooltipContent>
                   </Tooltip>
                 </div>
               ),
@@ -119,14 +175,14 @@ export const RoleForm = ({
           </div>
         </div>
 
-        <Divider className="my-4" />
+        <Separator className="my-4" />
 
         <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Visibility</span>
 
           {showUnlimitedVisibilityField && (
             <UnlimitedVisibilityField
-              isSelected={!!form.watch("unlimited_visibility")}
+              isSelected={unlimitedVisibility}
               onValueChange={setUnlimitedVisibility}
             />
           )}
@@ -172,7 +228,7 @@ export const RoleForm = ({
         <FormButtons
           submitText={submitText}
           isDisabled={isLoading}
-          onCancel={onCancel}
+          onCancel={handleCancel}
         />
       </form>
     </Form>
