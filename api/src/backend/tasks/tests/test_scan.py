@@ -21,7 +21,7 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
-from django.db import OperationalError
+from django.db import IntegrityError, OperationalError
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
@@ -895,6 +895,62 @@ class TestPerformScan:
         assert resource1.failed_findings_count == 2
         assert resource2.failed_findings_count == 3
         assert bulk_update_calls == [expected_order, expected_order]
+
+    def test_failed_findings_count_update_does_not_retry_integrity_error(
+        self, resources_fixture, monkeypatch
+    ):
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+
+        def failing_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            raise IntegrityError("constraint violation")
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", failing_bulk_update)
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        with pytest.raises(IntegrityError, match="constraint violation"):
+            _bulk_update_resource_failed_findings_counts(
+                tenant_id=str(resource.tenant_id),
+                scan_id="scan-id",
+                resources_to_update=[resource],
+            )
+
+        assert len(bulk_update_calls) == 1
+        assert sleep_calls == []
+
+    def test_failed_findings_count_update_adds_jitter_to_retry_backoff(
+        self, resources_fixture, monkeypatch
+    ):
+        from tasks.jobs import scan as scan_jobs
+
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+        original_bulk_update = Resource.objects.bulk_update
+
+        def flaky_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            if len(bulk_update_calls) == 1:
+                raise OperationalError("deadlock detected")
+            return original_bulk_update(objects, fields, batch_size=batch_size)
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", flaky_bulk_update)
+        monkeypatch.setattr(scan_jobs, "random", MagicMock())
+        scan_jobs.random.uniform.return_value = 0.037
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        _bulk_update_resource_failed_findings_counts(
+            tenant_id=str(resource.tenant_id),
+            scan_id="scan-id",
+            resources_to_update=[resource],
+        )
+
+        scan_jobs.random.uniform.assert_called_once_with(0, 0.1)
+        assert sleep_calls == [0.137]
 
     def test_perform_prowler_scan_with_active_mute_rules(
         self,

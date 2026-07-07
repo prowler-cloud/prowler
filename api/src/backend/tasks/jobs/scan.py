@@ -1,6 +1,7 @@
 import csv
 import io
 import json
+import random
 import re
 import time
 import uuid
@@ -337,7 +338,7 @@ def _bulk_update_resource_failed_findings_counts(
                         batch_size=SCAN_DB_BATCH_SIZE,
                     )
                 break
-            except (OperationalError, IntegrityError):
+            except OperationalError:
                 if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
                     logger.warning(
                         "Resource failed findings count update hit a database "
@@ -350,7 +351,7 @@ def _bulk_update_resource_failed_findings_counts(
                         attempt + 1,
                         CELERY_DEADLOCK_ATTEMPTS,
                     )
-                    time.sleep(0.1 * (2**attempt))
+                    time.sleep((0.1 * (2**attempt)) + random.uniform(0, 0.1))
                     continue
                 raise
 
