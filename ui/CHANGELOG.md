@@ -6,11 +6,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 ### 🚀 Added
 
-- Owners can delete their last organization from the profile page [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Owners can delete their last organization from the profile page [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
 
 ### 🔄 Changed
 
-- Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#XXXXX)](https://github.com/prowler-cloud/prowler/pull/XXXXX)
+- Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
 
 ---
 
