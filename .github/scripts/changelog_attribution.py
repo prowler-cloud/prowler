@@ -102,6 +102,7 @@ def main() -> int:
         return 1
 
     malformed = []
+    to_process = []
     for name in sorted(os.listdir(fragments_dir)):
         if name in IGNORED_FILES or name.startswith("+"):
             continue
@@ -109,9 +110,21 @@ def main() -> int:
         if not match:
             malformed.append(name)
             continue
-        slug, fragment_type = match.group("slug"), match.group("type")
-        if slug.isdigit():
+        if match.group("slug").isdigit():
             continue
+        to_process.append((name, match))
+
+    if malformed:
+        for name in malformed:
+            print(
+                f"::error::Malformed fragment filename in {fragments_dir}: {name} "
+                "(expected <slug>.<type>.md with type one of added|changed|"
+                "deprecated|removed|fixed|security)"
+            )
+        return 1
+
+    for name, match in to_process:
+        slug, fragment_type = match.group("slug"), match.group("type")
 
         path = os.path.join(fragments_dir, name)
         sha = find_adding_commit(path)
@@ -134,15 +147,6 @@ def main() -> int:
             )
         git("mv", path, destination)
         print(f"{path} -> {destination}")
-
-    if malformed:
-        for name in malformed:
-            print(
-                f"::error::Malformed fragment filename in {fragments_dir}: {name} "
-                "(expected <slug>.<type>.md with type one of added|changed|"
-                "deprecated|removed|fixed|security)"
-            )
-        return 1
     return 0
 
 

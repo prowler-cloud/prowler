@@ -138,6 +138,29 @@ class TestChangelogAttribution:
         assert fragment.exists()
         assert "Malformed fragment filename" in capsys.readouterr().out
 
+    def test_rejects_malformed_names_before_renaming_any_fragment(
+        self, tmp_path, monkeypatch, capsys
+    ):
+        component, fragments_dir = make_component(tmp_path)
+        valid_fragment = fragments_dir / "valid.fixed.md"
+        malformed_fragment = fragments_dir / "bad.bugfix.md"
+        valid_fragment.write_text("Valid fix.\n")
+        malformed_fragment.write_text("Invalid type.\n")
+
+        monkeypatch.setattr(
+            changelog_attribution, "find_adding_commit", lambda path: "abc123"
+        )
+        monkeypatch.setattr(
+            changelog_attribution, "pr_from_api", lambda repo, sha: 11572
+        )
+        monkeypatch.setattr(changelog_attribution, "git", fail_git)
+
+        assert run_main(monkeypatch, component) == 1
+        assert valid_fragment.read_text() == "Valid fix.\n"
+        assert malformed_fragment.read_text() == "Invalid type.\n"
+        assert not (fragments_dir / "11572.fixed.md").exists()
+        assert "Malformed fragment filename" in capsys.readouterr().out
+
     def test_skips_fragments_that_already_start_with_pr_number(
         self, tmp_path, monkeypatch
     ):

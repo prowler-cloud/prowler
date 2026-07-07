@@ -63,7 +63,7 @@ jobs:
       - name: Test changelog attribution
         if: steps.changed-files.outputs.any_changed == 'true'
         run: |
-          python3 -m pip install --user --disable-pip-version-check pytest==9.0.3
+          python3 -m pip install --user --disable-pip-version-check pytest==9.0.3 towncrier==25.8.0
           python3 -m pytest tests/github
 
   check-changelog:
@@ -113,7 +113,8 @@ jobs:
         id: check-folders
         run: |
           fragment_name_re='^[A-Za-z0-9][A-Za-z0-9._-]*\.(added|changed|deprecated|removed|fixed|security)(\.[0-9]+)?\.md$'
-          manual_pr_link_re='(\[\(#[0-9]+\)\]|\[#[0-9]+\]\(|\(#[0-9]+\)|github\.com/prowler-cloud/prowler/(pull|issues)/[0-9]+)'
+          manual_pr_link_re='(\[\(#[0-9]+\)\]|\[#[0-9]+\]\(|\(#[0-9]+\)|github\.com/[^[:space:]/]+/[^[:space:]/]+/(pull|issues)/[0-9]+)'
+          folder_alt=$(echo "$MONITORED_FOLDERS" | tr ' ' '|')
 
           missing_fragments=""
           invalid_fragments=""
@@ -122,12 +123,13 @@ jobs:
 
           all_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n')
           added=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" | tr ' ' '\n')
-          added_or_modified=$(printf '%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES}" | tr ' ' '\n')
+          added_or_renamed=$(printf '%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
+          added_modified_or_renamed=$(printf '%s\n%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
 
-          # Returns success if the folder has a valid fragment added or modified.
+          # Returns success if the folder has a valid fragment added, modified, or renamed.
           has_changelog_update() {
             local folder="$1"
-            if echo "$added_or_modified" | grep "^${folder}/changelog.d/" | sed "s|^${folder}/changelog.d/||" | grep -qE "$fragment_name_re"; then
+            if echo "$added_modified_or_renamed" | grep "^${folder}/changelog.d/" | sed "s|^${folder}/changelog.d/||" | grep -qE "$fragment_name_re"; then
               return 0
             fi
             return 1
@@ -168,7 +170,7 @@ jobs:
             fi
 
             # Validate the filename of every fragment added by this PR
-            added_fragments=$(echo "$added" | grep -E '^(api|ui|prowler|mcp_server)/changelog\.d/' || true)
+            added_fragments=$(echo "$added_or_renamed" | grep -E "^(${folder_alt})/changelog\.d/" || true)
             for fragment in $added_fragments; do
               name=$(basename "$fragment")
               if [ "$name" = ".gitkeep" ] || [ "$name" = "README.md" ]; then
@@ -182,7 +184,7 @@ jobs:
 
             # Lint fragment content: the PR link is attached automatically at
             # compile time, so a hand-written PR or issue link would be wrong
-            touched_fragments=$(echo "$added_or_modified" | grep -E '^(api|ui|prowler|mcp_server)/changelog\.d/' || true)
+            touched_fragments=$(echo "$added_modified_or_renamed" | grep -E "^(${folder_alt})/changelog\.d/" || true)
             for fragment in $touched_fragments; do
               name=$(basename "$fragment")
               if [ "$name" = ".gitkeep" ] || [ "$name" = "README.md" ] || [ ! -f "$fragment" ]; then
@@ -228,28 +230,38 @@ jobs:
             comment_body="✅ All required changelog fragments are present."
           fi
 
-          {
-            echo "missing_fragments<<EOF"
-            echo -e "${missing_fragments}"
-            echo "EOF"
-            echo "invalid_fragments<<EOF"
-            echo -e "${invalid_fragments}"
-            echo "EOF"
-            echo "linked_fragments<<EOF"
-            echo -e "${linked_fragments}"
-            echo "EOF"
-            echo "handwritten_changelogs<<EOF"
-            echo -e "${handwritten_changelogs}"
-            echo "EOF"
-            echo "comment_body<<EOF"
-            echo "${comment_body}"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          write_multiline_output() {
+            local name="$1"
+            local value="$2"
+            local delimiter
+
+            while true; do
+              delimiter="EOF_$(openssl rand -hex 16)"
+              if ! grep -qxF "$delimiter" <<< "$value"; then
+                break
+              fi
+            done
+
+            {
+              echo "${name}<<${delimiter}"
+              if [ -n "$value" ]; then
+                printf '%s\n' "$value"
+              fi
+              echo "${delimiter}"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          write_multiline_output "missing_fragments" "$missing_fragments"
+          write_multiline_output "invalid_fragments" "$invalid_fragments"
+          write_multiline_output "linked_fragments" "$linked_fragments"
+          write_multiline_output "handwritten_changelogs" "$handwritten_changelogs"
+          write_multiline_output "comment_body" "$comment_body"
         env:
           STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
           STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
           STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
           STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES: ${{ steps.changed-files.outputs.modified_files }}
+          STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES: ${{ steps.changed-files.outputs.renamed_files }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
       - name: Find existing changelog comment

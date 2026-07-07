@@ -19,7 +19,7 @@ Please add a detailed description of how to review this PR.
 <summary><b>Community Checklist</b></summary>
 
 - [ ] This feature/issue is listed in the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
-- [ ] Is it assigned to me, if not, request it via the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](goto.prowler.com/slack)
+- [ ] Is it assigned to me, if not, request it via the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](https://goto.prowler.com/slack)
 
 </details>
 
@@ -51,6 +51,10 @@ Please add a detailed description of how to review this PR.
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required (e.g., specs, uv, etc.).
 - [ ] Ensure a changelog fragment is added under [api/changelog.d/](https://github.com/prowler-cloud/prowler/tree/master/api/changelog.d), if applicable.
+
+#### MCP Server
+- [ ] All issue/task requirements work as expected on the MCP Server
+- [ ] Ensure a changelog fragment is added under [mcp_server/changelog.d/](https://github.com/prowler-cloud/prowler/tree/master/mcp_server/changelog.d), if applicable.
 
 ### License
 

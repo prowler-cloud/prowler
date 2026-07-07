@@ -18,7 +18,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 
 ## How changelog entries work: fragments
 
-A PR never edits `CHANGELOG.md` directly. Instead it adds one small **fragment file** per entry under the component's `changelog.d/` directory. Fragments are compiled into the component's `CHANGELOG.md` at release time (deleting the consumed fragments), so concurrent PRs never conflict on the changelog.
+A PR never edits unreleased `CHANGELOG.md` content directly; use fragments instead. Released-block typo/correction fixes are the only direct-edit exception and are described below. For regular entries, add one small **fragment file** per entry under the component's `changelog.d/` directory. Fragments are compiled into the component's `CHANGELOG.md` at release time (deleting the consumed fragments), so concurrent PRs never conflict on the changelog.
 
 | Component | Fragments directory | Compiled file |
 |-----------|---------------------|---------------|

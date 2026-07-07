@@ -53,10 +53,16 @@ jobs:
       contents: write
       pull-requests: write
     steps:
-      - name: Harden the runner (Audit all outbound calls)
+      - name: Harden the runner (Block outbound calls)
         uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
         with:
-          egress-policy: audit
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -315,6 +321,72 @@ jobs:
 
           git checkout -B master origin/master
 
+          version_key() {
+            local version="$1"
+            local major minor patch
+            IFS=. read -r major minor patch <<< "$version"
+            printf '%06d.%06d.%06d' "$((10#$major))" "$((10#$minor))" "$((10#$patch))"
+          }
+
+          release_from_heading() {
+            local heading="$1"
+            echo "$heading" | sed -E 's/^## \[[^]]+\] \(Prowler v?([0-9]+\.[0-9]+\.[0-9]+)\).*/\1/'
+          }
+
+          insert_changelog_block_ordered() {
+            local component="$1"
+            local block_file="$2"
+            local changelog="${component}/CHANGELOG.md"
+            local incoming_heading incoming_release incoming_key
+            local marker_line insertion_line duplicate_line
+            local line heading existing_release existing_key
+
+            marker_line=$(grep -n -m1 '^<!-- changelog: release notes start -->$' "$changelog" | cut -d: -f1)
+            incoming_heading=$(grep -m1 -E '^## \[[^]]+\] \(Prowler v?[0-9]+\.[0-9]+\.[0-9]+\)' "$block_file" || true)
+            if [ -z "$incoming_heading" ]; then
+              echo "::error::${block_file} does not contain a stamped Prowler release heading"
+              exit 1
+            fi
+
+            incoming_release=$(release_from_heading "$incoming_heading")
+            incoming_key=$(version_key "$incoming_release")
+            insertion_line=""
+            duplicate_line=""
+
+            while IFS=: read -r line heading; do
+              existing_release=$(release_from_heading "$heading")
+              existing_key=$(version_key "$existing_release")
+              if [[ "$incoming_key" == "$existing_key" ]]; then
+                duplicate_line="$line"
+                break
+              fi
+              if [[ "$incoming_key" > "$existing_key" ]]; then
+                insertion_line="$line"
+                break
+              fi
+            done < <(grep -n -E '^## \[[^]]+\] \(Prowler v?[0-9]+\.[0-9]+\.[0-9]+\)' "$changelog" || true)
+
+            if [ -n "$duplicate_line" ]; then
+              echo "::error::${changelog} already contains a block for Prowler v${incoming_release} at line ${duplicate_line}; refusing to insert a duplicate"
+              exit 1
+            fi
+            if [ -z "$insertion_line" ]; then
+              insertion_line=$(($(wc -l < "$changelog") + 1))
+            fi
+            if [ "$insertion_line" -le "$marker_line" ]; then
+              insertion_line=$((marker_line + 1))
+            fi
+
+            {
+              head -n "$((insertion_line - 1))" "$changelog"
+              cat "$block_file"
+              tail -n +"$insertion_line" "$changelog"
+            } > "${RUNNER_TEMP}/changelog.tmp"
+            mv "${RUNNER_TEMP}/changelog.tmp" "$changelog"
+
+            echo "::notice::Inserted ${component} changelog block for Prowler v${incoming_release} at line ${insertion_line}"
+          }
+
           sync_body="${RUNNER_TEMP}/forward-sync-pr-body.md"
           {
             echo "### Description"
@@ -349,13 +421,7 @@ jobs:
               fi
             done < "$consumed_file"
 
-            marker_line=$(grep -n -m1 '^<!-- changelog: release notes start -->$' "$component/CHANGELOG.md" | cut -d: -f1)
-            {
-              head -n "$marker_line" "$component/CHANGELOG.md"
-              cat "$block_file"
-              tail -n +"$((marker_line + 1))" "$component/CHANGELOG.md"
-            } > "${RUNNER_TEMP}/changelog.tmp"
-            mv "${RUNNER_TEMP}/changelog.tmp" "$component/CHANGELOG.md"
+            insert_changelog_block_ordered "$component" "$block_file"
 
             echo "| \`${component}\` | ${deleted} | ${skipped} |" >> "$sync_body"
           done
