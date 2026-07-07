@@ -20,6 +20,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
 
+### 🔐 Security
+
+- Kubernetes provider credential forms now reject kubeconfigs using `exec` authentication in Prowler Cloud before submission [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
 ---
 
 ## [1.32.0] (Prowler v5.32.0)
@@ -28,6 +32,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
 - CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+
+### 🔄 Changed
+
+- Improve scan configuration wording and add a documentation link to clarify baseline settings and how custom scan configurations override them [(#11859)](https://github.com/prowler-cloud/prowler/pull/11859)
 
 ---
 
