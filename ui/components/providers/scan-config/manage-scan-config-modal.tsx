@@ -14,6 +14,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { useToast } from "@/components/ui";
 import { CustomLink } from "@/components/ui/custom/custom-link";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
 // Sentinel for the "Default" option: detaches the provider so its scans fall
@@ -188,10 +189,7 @@ function ManageScanConfigForm({
           {
             " uses Prowler's scan configuration baseline. Read more about it in the "
           }
-          <CustomLink
-            size="xs"
-            href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
-          >
+          <CustomLink size="xs" href={DOCS_URLS.SCAN_CONFIGURATION}>
             documentation
           </CustomLink>
           .
