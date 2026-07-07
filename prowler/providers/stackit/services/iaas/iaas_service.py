@@ -125,6 +125,28 @@ class IaaSService:
         )
         return []
 
+    @staticmethod
+    def _get_item_field(item, *keys, default=None):
+        """Read a field from an SDK model (attribute) or a raw ``dict`` (key).
+
+        ``_extract_items`` already yields either SDK models or raw dicts, so the
+        correlation logic must read fields from both shapes. Multiple key aliases
+        are accepted so snake_case SDK attributes and camelCase API/dict keys are
+        both supported (e.g. ``network_interface`` / ``networkInterface``).
+        Returns the first non-None match, otherwise ``default``.
+        """
+        if isinstance(item, dict):
+            for key in keys:
+                value = item.get(key)
+                if value is not None:
+                    return value
+            return default
+        for key in keys:
+            value = getattr(item, key, None)
+            if value is not None:
+                return value
+        return default
+
     def _handle_api_call(self, api_function, *args, **kwargs):
         """
         Centralized API call handler with authentication error detection.
@@ -344,8 +366,8 @@ class IaaSService:
         # Build nic_id → server_id index for public IP cross-reference
         for nic in nics_list:
             try:
-                nic_id = str(getattr(nic, "id", None) or "")
-                device = getattr(nic, "device", None)
+                nic_id = str(self._get_item_field(nic, "id") or "")
+                device = self._get_item_field(nic, "device")
                 if nic_id and device:
                     self._nic_device_index[nic_id] = str(device)
             except Exception as e:
@@ -379,7 +401,9 @@ class IaaSService:
 
         for ip_data in ips_list:
             try:
-                network_interface = getattr(ip_data, "network_interface", None)
+                network_interface = self._get_item_field(
+                    ip_data, "network_interface", "networkInterface"
+                )
                 if network_interface is None:
                     continue
                 server_id = self._nic_device_index.get(str(network_interface))
@@ -411,8 +435,8 @@ class IaaSService:
 
         for server_data in servers_list:
             try:
-                server_id = str(getattr(server_data, "id", "") or "")
-                server_name = getattr(server_data, "name", server_id) or server_id
+                server_id = str(self._get_item_field(server_data, "id") or "")
+                server_name = self._get_item_field(server_data, "name") or server_id
                 server = Server(
                     id=server_id,
                     name=server_name,

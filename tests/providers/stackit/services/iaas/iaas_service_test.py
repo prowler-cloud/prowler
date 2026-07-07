@@ -588,6 +588,18 @@ class Test_IaaS_Service_NIC_Device_Index:
 
         assert service._nic_device_index == {}
 
+    def test_dict_shaped_nic_is_indexed(self):
+        """Raw dict NICs are indexed the same as SDK model NICs."""
+        service = self._service()
+        client = MagicMock()
+        client.list_project_nics.return_value = {
+            "items": [{"id": "nic-1", "device": "server-1", "security_groups": []}]
+        }
+
+        service._list_server_nics(client, "eu01")
+
+        assert service._nic_device_index == {"nic-1": "server-1"}
+
 
 class Test_IaaS_Service_PublicIps:
     """Tests for _list_public_ips."""
@@ -663,6 +675,17 @@ class Test_IaaS_Service_PublicIps:
         service._list_public_ips(client, "eu01")
 
         assert service._public_ip_server_ids == set()
+
+    def test_dict_shaped_public_ip_marks_server(self):
+        """Raw dict public IPs (camelCase networkInterface) mark the server."""
+        service = self._service()
+        service._nic_device_index = {"nic-1": "server-1"}
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [{"networkInterface": "nic-1"}]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert "server-1" in service._public_ip_server_ids
 
 
 class Test_IaaS_Service_Servers:
@@ -783,3 +806,54 @@ class Test_IaaS_Service_Servers:
         service._list_servers(client, "eu01")
 
         assert service.servers == []
+
+    def test_dict_shaped_server_is_created(self):
+        """Raw dict servers are created and flagged from _public_ip_server_ids."""
+        service = self._service()
+        service._public_ip_server_ids = {"server-1"}
+        client = MagicMock()
+        client.list_servers.return_value = {
+            "items": [{"id": "server-1", "name": "dict-server"}]
+        }
+
+        service._list_servers(client, "eu01")
+
+        assert len(service.servers) == 1
+        assert service.servers[0].name == "dict-server"
+        assert service.servers[0].has_public_ip is True
+
+    def test_dict_shaped_public_ip_detected_end_to_end(self):
+        """Dict-shaped NIC/IP/server still correlate to has_public_ip=True.
+
+        Regression for the getattr-only correlation path: a dict-shaped
+        response must not silently report a PASS for an exposed server.
+        """
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        client = MagicMock()
+        client.list_project_nics.return_value = {
+            "items": [{"id": "nic-1", "device": "server-1", "security_groups": []}]
+        }
+        client.list_security_groups.return_value = {"items": []}
+        client.list_public_ips.return_value = {"items": [{"networkInterface": "nic-1"}]}
+        client.list_servers.return_value = {
+            "items": [{"id": "server-1", "name": "dict-server"}]
+        }
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.scan_unused_services = False
+        service.regional_clients = {"eu01": client}
+        service.security_groups = []
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+        service.servers = []
+        service._nic_device_index = {}
+        service._public_ip_server_ids = set()
+
+        service._fetch_all_regions()
+
+        assert len(service.servers) == 1
+        assert service.servers[0].has_public_ip is True
