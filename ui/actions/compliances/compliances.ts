@@ -29,6 +29,18 @@ async function getCrossProviderPdfErrorMessage(
   // PDF generate/download/latest endpoints would otherwise go unmonitored,
   // unlike everything routed through ``handleApiResponse``.
   if (response.status >= 500 || errorData === null) {
+    // Strip the query string before reporting: the generate-PDF endpoint
+    // carries a user-typed ``report_name`` param, which must not leak into
+    // Sentry as freeform text. The path alone is enough to locate the route.
+    const sanitizedUrl = (() => {
+      try {
+        const parsed = new URL(response.url);
+        return `${parsed.origin}${parsed.pathname}`;
+      } catch {
+        return "";
+      }
+    })();
+
     Sentry.captureException(
       new Error(
         `Cross-provider PDF request failed (${response.status}): ${response.statusText}`,
@@ -48,7 +60,7 @@ async function getCrossProviderPdfErrorMessage(
           api_response: {
             status: response.status,
             statusText: response.statusText,
-            url: response.url,
+            url: sanitizedUrl,
           },
         },
       },
