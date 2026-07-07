@@ -12,7 +12,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🔐 Security
 
 - User profile updates now allow users to update their own account while requiring user-management permissions to update other users in the same tenant [(#11792)](https://github.com/prowler-cloud/prowler/pull/11792)
-- Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, preventing user-supplied commands from running on Cloud workers [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
 
 ---
 
@@ -32,6 +31,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
 - `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
+
+### 🔐 Security
+
+- Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, preventing user-supplied commands from running on Cloud workers [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
 
 ---
 
