@@ -2,6 +2,7 @@
 
 import { VolumeX } from "lucide-react";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 
 import { Button } from "@/components/shadcn";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
@@ -97,21 +98,29 @@ export function FloatingMuteButton({
         preparationError={mutePreparationError}
       />
 
-      <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
-        <Button
-          onClick={handleClick}
-          disabled={isResolving}
-          size="lg"
-          className="shadow-lg"
-        >
-          {isResolving ? (
-            <Spinner className="size-5" />
-          ) : (
-            <VolumeX className="size-5" />
-          )}
-          {label ?? `Mute (${selectedCount})`}
-        </Button>
-      </div>
+      {/* Portaled to body: <main> is a layout container (container queries),
+          which would otherwise capture this fixed button and scroll it away
+          with the content. */}
+      {typeof document !== "undefined"
+        ? createPortal(
+            <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
+              <Button
+                onClick={handleClick}
+                disabled={isResolving}
+                size="lg"
+                className="shadow-lg"
+              >
+                {isResolving ? (
+                  <Spinner className="size-5" />
+                ) : (
+                  <VolumeX className="size-5" />
+                )}
+                {label ?? `Mute (${selectedCount})`}
+              </Button>
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
