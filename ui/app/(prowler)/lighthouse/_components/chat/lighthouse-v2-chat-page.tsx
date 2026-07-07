@@ -29,6 +29,7 @@ import {
 } from "@/app/(prowler)/lighthouse/_lib/model-selection";
 import {
   LIGHTHOUSE_V2_NEW_CHAT_EVENT,
+  LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
   notifyLighthouseV2SessionsChanged,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import { parseStreamEvent } from "@/app/(prowler)/lighthouse/_lib/stream-event-parser";
@@ -93,6 +94,9 @@ export function LighthouseV2ChatPage({
   const [activeSessionId, setActiveSessionId] = useState<string | null>(
     initialSessionId ?? null,
   );
+  // Mirror for window listeners registered on mount, whose closures would
+  // otherwise keep the first render's activeSessionId.
+  const activeSessionIdRef = useRef<string | null>(initialSessionId ?? null);
   const [messages, setMessages] = useState(initialMessages);
   const [input, setInput] = useState("");
   const [feedback, setFeedback] = useState<string | null>(initialError ?? null);
@@ -146,6 +150,10 @@ export function LighthouseV2ChatPage({
 
   const refreshMessages = async (sessionId: string): Promise<boolean> => {
     const result = await getLighthouseV2Messages(sessionId);
+    // The fetch is async, so a reset (new chat, or archiving this session) can
+    // land while it is in flight. Drop the stale result instead of repopulating
+    // a chat that no longer points at this session.
+    if (sessionId !== activeSessionIdRef.current) return false;
     if ("data" in result) {
       setMessages(result.data);
       return true;
@@ -245,6 +253,7 @@ export function LighthouseV2ChatPage({
     // page.tsx and remount this component, tearing down the open EventSource.
     replaceLighthouseV2SessionUrl(result.data.id);
     setActiveSessionId(result.data.id);
+    activeSessionIdRef.current = result.data.id;
     notifyLighthouseV2SessionsChanged();
     return result.data.id;
   };
@@ -358,25 +367,48 @@ export function LighthouseV2ChatPage({
     }
   });
 
+  const resetToNewChat = () => {
+    closeStream();
+    setActiveSessionId(null);
+    activeSessionIdRef.current = null;
+    setMessages([]);
+    setInput("");
+    setFeedback(null);
+    setBlockedByConflict(false);
+    setIsSubmitting(false);
+    setLastSubmittedText(null);
+    setStreamState(createInitialLighthouseV2StreamState());
+    replaceLighthouseV2SessionUrl(null);
+  };
+
   // The sidebar "+" can't rely on routing to reset the latest conversation (its
   // URL was set via replaceState, invisible to Next's router), so reset in place.
   useMountEffect(() => {
-    const resetToNewChat = () => {
-      closeStream();
-      setActiveSessionId(null);
-      setMessages([]);
-      setInput("");
-      setFeedback(null);
-      setBlockedByConflict(false);
-      setIsSubmitting(false);
-      setLastSubmittedText(null);
-      setStreamState(createInitialLighthouseV2StreamState());
-      replaceLighthouseV2SessionUrl(null);
-    };
-
     window.addEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, resetToNewChat);
     return () =>
       window.removeEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, resetToNewChat);
+  });
+
+  // Archiving deletes the session; when it's the open one, fall back to a new
+  // chat instead of leaving a dead conversation and its URL on screen.
+  useMountEffect(() => {
+    const handleSessionArchived = (event: Event) => {
+      const archivedId = (event as CustomEvent<{ sessionId: string }>).detail
+        ?.sessionId;
+      if (archivedId && archivedId === activeSessionIdRef.current) {
+        resetToNewChat();
+      }
+    };
+
+    window.addEventListener(
+      LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
+      handleSessionArchived,
+    );
+    return () =>
+      window.removeEventListener(
+        LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
+        handleSessionArchived,
+      );
   });
 
   const hasLiveAssistantActivity =
