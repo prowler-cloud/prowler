@@ -2,11 +2,25 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.33.0] (Prowler UNRELEASED)
+## [1.33.0] (Prowler v5.33.0)
 
 ### 🚀 Added
 
+- Owners can delete their last organization from the profile page [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
 - Cross-provider compliance view for universal frameworks, with a per-provider breakdown, provider/account/group filters, and combined PDF report generation [(#11745)](https://github.com/prowler-cloud/prowler/pull/11745)
+
+
+### 🔄 Changed
+
+- Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+
+---
+
+## [1.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
 
 ---
 

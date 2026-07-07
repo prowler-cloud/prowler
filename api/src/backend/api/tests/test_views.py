@@ -59,7 +59,11 @@ from api.models import (
 from api.rls import Tenant
 from api.uuid_utils import datetime_to_uuid7
 from api.v1.serializers import TokenSerializer
-from api.v1.views import ComplianceOverviewViewSet, TenantFinishACSView
+from api.v1.views import (
+    ComplianceOverviewViewSet,
+    CustomSAMLLoginView,
+    TenantFinishACSView,
+)
 from botocore.exceptions import ClientError, NoCredentialsError
 from conftest import (
     API_JSON_CONTENT_TYPE,
@@ -8598,16 +8602,14 @@ class TestInvitationViewSet:
             expires_at=self.TOMORROW,
         )
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         assert not Membership.objects.filter(
             user__email__iexact=user.email, tenant=tenant
         ).exists()
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
         assert response.status_code == status.HTTP_201_CREATED
         invitation.refresh_from_db()
@@ -8616,13 +8618,46 @@ class TestInvitationViewSet:
         ).exists()
         assert invitation.state == Invitation.State.ACCEPTED.value
 
-    def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
-        data = {
-            "invitation_token": "invalid_token",
-        }
+    def test_invitations_accept_invitation_existing_membership(
+        self,
+        authenticated_client,
+        create_test_user,
+        tenants_fixture,
+    ):
+        *_, tenant = tenants_fixture
+        user = create_test_user
+
+        invitation = Invitation.objects.create(
+            tenant=tenant,
+            email=TEST_USER,
+            inviter=user,
+            expires_at=self.TOMORROW,
+        )
+        Membership.objects.create(user=user, tenant=tenant)
+
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"),
+            data=data,
+            format="vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        invitation.refresh_from_db()
+        assert invitation.state == Invitation.State.ACCEPTED.value
+        assert (
+            Membership.objects.filter(
+                user__email__iexact=user.email, tenant=tenant
+            ).count()
+            == 1
+        )
+
+    def test_invitations_accept_invitation_invalid_token(self, authenticated_client):
+        data = {"invitation_token": "invalid_token"}
+
+        response = authenticated_client.post(
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
@@ -8636,12 +8671,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_410_GONE
@@ -8677,12 +8710,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -8700,12 +8731,10 @@ class TestInvitationViewSet:
         invitation.email = TEST_USER
         invitation.save()
 
-        data = {
-            "invitation_token": invitation.token,
-        }
+        data = {"invitation_token": invitation.token}
 
         response = authenticated_client.post(
-            reverse("invitation-accept"), data=data, format="json"
+            reverse("invitation-accept"), data=data, format="vnd.api+json"
         )
 
         assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -13698,6 +13727,26 @@ class TestSAMLTokenValidation:
 
 
 @pytest.mark.django_db
+class TestCustomSAMLLoginView:
+    def test_dispatch_clears_stale_callback_url_when_request_has_none(self):
+        request = RequestFactory().get("/api/v1/saml/login/testtenant/")
+        request.session = {
+            "saml_callback_url": "/invitation/accept?invitation_token=old-token"
+        }
+
+        with patch(
+            "allauth.socialaccount.providers.saml.views.LoginView.dispatch",
+            return_value=JsonResponse({}),
+        ):
+            response = CustomSAMLLoginView.as_view()(
+                request, organization_slug="testtenant"
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert "saml_callback_url" not in request.session
+
+
+@pytest.mark.django_db
 class TestSAMLInitiateAPIView:
     def test_valid_email_domain_and_certificates(
         self, authenticated_client, saml_setup, monkeypatch
@@ -13708,7 +13757,7 @@ class TestSAMLInitiateAPIView:
         url = reverse("api_saml_initiate")
         payload = {"email_domain": saml_setup["email"]}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_302_FOUND
         assert (
@@ -13717,11 +13766,42 @@ class TestSAMLInitiateAPIView:
         )
         assert "SAMLRequest" not in response.url
 
+    def test_valid_email_domain_preserves_safe_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": callback_url,
+        }
+
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert query_params["callback_url"] == [callback_url]
+
+    def test_valid_email_domain_rejects_external_callback_url(
+        self, authenticated_client, saml_setup
+    ):
+        url = reverse("api_saml_initiate")
+        payload = {
+            "email_domain": saml_setup["email"],
+            "callback_url": "https://attacker.example/invitation",
+        }
+
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
+
+        assert response.status_code == status.HTTP_302_FOUND
+        query_params = parse_qs(urlparse(response.url).query)
+        assert "callback_url" not in query_params
+
     def test_invalid_email_domain(self, authenticated_client):
         url = reverse("api_saml_initiate")
         payload = {"email_domain": "user@unauthorized.com"}
 
-        response = authenticated_client.post(url, data=payload, format="json")
+        response = authenticated_client.post(url, data=payload, format="vnd.api+json")
 
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert response.json()["errors"]["detail"] == "Unauthorized domain."
@@ -13904,7 +13984,8 @@ class TestTenantFinishACSView:
             )
         )
         request.user = user
-        request.session = {}
+        callback_url = "/invitation/accept?invitation_token=test-token"
+        request.session = {"saml_callback_url": callback_url}
 
         with (
             patch(
@@ -13946,6 +14027,7 @@ class TestTenantFinishACSView:
         assert parsed_url.netloc == expected_callback_host
         query_params = parse_qs(parsed_url.query)
         assert "id" in query_params
+        assert query_params["callbackUrl"] == [callback_url]
 
         token_id = query_params["id"][0]
         token_obj = SAMLToken.objects.get(id=token_id)
