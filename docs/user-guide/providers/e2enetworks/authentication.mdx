@@ -6,7 +6,7 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 <VersionBadge version="5.33.0" />
 
-Prowler for E2E Networks authenticates against the E2E Networks MyAccount API using an **API key**, an **auth token**, and a numeric **project ID**. Prowler reads the API key and auth token **exclusively** from environment variables, so the secrets are never exposed in shell history or process listings.
+Prowler for E2E Networks authenticates against the E2E Networks MyAccount API using an **API key**, an **auth token**, and a numeric **project ID**. Set the API key and auth token as environment variables to avoid exposing secrets in shell history or process listings. Compatibility CLI flags are still accepted, but Prowler warns when secret values are passed directly on the command line.
 
 ## Required Credentials
 
