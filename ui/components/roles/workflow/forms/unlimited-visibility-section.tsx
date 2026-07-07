@@ -1,6 +1,7 @@
-import { Checkbox } from "@heroui/checkbox";
 import { InfoIcon } from "lucide-react";
 import { ReactNode } from "react";
+
+import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
 
 export const UnlimitedVisibilitySection = ({
   children,
@@ -28,28 +29,28 @@ export const UnlimitedVisibilitySection = ({
 
 export const UnlimitedVisibilityField = ({
   isSelected,
-  isDisabled,
   onValueChange,
 }: {
   isSelected: boolean;
-  isDisabled: boolean;
   onValueChange: (checked: boolean) => void;
 }) => {
   return (
     <UnlimitedVisibilitySection>
-      <Checkbox
-        name="unlimited_visibility"
-        isSelected={isSelected}
-        isDisabled={isDisabled}
-        onValueChange={onValueChange}
-        classNames={{
-          label: "text-small font-medium",
-          wrapper: "checkbox-update",
-        }}
-        color="default"
-      >
-        Enable Unlimited Visibility for this role
-      </Checkbox>
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="unlimited_visibility"
+          name="unlimited_visibility"
+          checked={isSelected}
+          onCheckedChange={(checked) => onValueChange(Boolean(checked))}
+          size="sm"
+        />
+        <label
+          htmlFor="unlimited_visibility"
+          className="text-small font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+        >
+          Enable Unlimited Visibility for this role
+        </label>
+      </div>
     </UnlimitedVisibilitySection>
   );
 };

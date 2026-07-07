@@ -1,20 +1,11 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
-import { Divider } from "@heroui/divider";
-import { Tooltip } from "@heroui/tooltip";
 import { zodResolver } from "@hookform/resolvers/zod";
-import clsx from "clsx";
-import { InfoIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
+import { useForm } from "react-hook-form";
 
 import { addRole } from "@/actions/roles/roles";
-import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
 import { getErrorMessage } from "@/lib";
 import {
@@ -23,9 +14,7 @@ import {
 } from "@/lib/role-permissions";
 import { addRoleFormSchema, ApiError } from "@/types";
 
-import { UnlimitedVisibilityField } from "./unlimited-visibility-section";
-
-type FormValues = z.input<typeof addRoleFormSchema>;
+import { RoleForm, RoleFormValues } from "./role-form";
 
 export const AddRoleForm = ({
   groups,
@@ -39,7 +28,7 @@ export const AddRoleForm = ({
     getVisiblePermissionFormFields(isCloudEnvironment);
   const unlimitedVisibilityField = getUnlimitedVisibilityField();
 
-  const form = useForm<FormValues>({
+  const form = useForm<RoleFormValues>({
     resolver: zodResolver(addRoleFormSchema),
     defaultValues: {
       name: "",
@@ -56,11 +45,8 @@ export const AddRoleForm = ({
     },
   });
 
-  const {
-    isUnlimitedVisibilityRequiredByManageProviders,
-    setPermissionValue,
-    setUnlimitedVisibility,
-  } = useManageProvidersUnlimitedVisibility(form);
+  const { setPermissionValue, setUnlimitedVisibility } =
+    useManageProvidersUnlimitedVisibility(form);
   const unlimitedVisibility = form.watch("unlimited_visibility");
 
   const isLoading = form.formState.isSubmitting;
@@ -71,7 +57,7 @@ export const AddRoleForm = ({
     });
   };
 
-  const onSubmitClient = async (values: FormValues) => {
+  const onSubmitClient = async (values: RoleFormValues) => {
     const formData = new FormData();
 
     formData.append("name", values.name);
@@ -136,133 +122,19 @@ export const AddRoleForm = ({
   };
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmitClient)}
-        className="flex flex-col gap-6"
-      >
-        <CustomInput
-          control={form.control}
-          name="name"
-          type="text"
-          label="Role Name"
-          labelPlacement="inside"
-          placeholder="Enter role name"
-          variant="bordered"
-          isRequired
-        />
-
-        <div className="flex flex-col gap-4">
-          <span className="text-lg font-semibold">Admin Permissions</span>
-
-          {/* Select All Checkbox */}
-          <Checkbox
-            isSelected={visiblePermissionFormFields.every((perm) =>
-              form.watch(perm.field as keyof FormValues),
-            )}
-            onValueChange={onSelectAllChange}
-            classNames={{
-              label: "text-small",
-              wrapper: "checkbox-update",
-            }}
-            color="default"
-          >
-            Grant all admin permissions
-          </Checkbox>
-
-          {/* Permissions Grid */}
-          <div className="grid grid-cols-2 gap-4">
-            {visiblePermissionFormFields.map(
-              ({ field, label, description }) => (
-                <div key={field} className="flex items-center gap-2">
-                  <Checkbox
-                    {...form.register(field as keyof FormValues)}
-                    isSelected={!!form.watch(field as keyof FormValues)}
-                    onValueChange={(checked) =>
-                      setPermissionValue(field, checked)
-                    }
-                    classNames={{
-                      label: "text-small",
-                      wrapper: "checkbox-update",
-                    }}
-                    color="default"
-                  >
-                    {label}
-                  </Checkbox>
-                  <Tooltip content={description} placement="right">
-                    <div className="flex w-fit items-center justify-center">
-                      <InfoIcon
-                        className={clsx(
-                          "text-default-400 group-data-[selected=true]:text-foreground cursor-pointer",
-                        )}
-                        aria-hidden={"true"}
-                        width={16}
-                      />
-                    </div>
-                  </Tooltip>
-                </div>
-              ),
-            )}
-          </div>
-        </div>
-
-        <Divider className="my-4" />
-
-        <div className="flex flex-col gap-4">
-          <span className="text-lg font-semibold">Visibility</span>
-
-          {unlimitedVisibilityField && (
-            <UnlimitedVisibilityField
-              isSelected={!!form.watch("unlimited_visibility")}
-              isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
-              onValueChange={setUnlimitedVisibility}
-            />
-          )}
-
-          {!unlimitedVisibility && (
-            <>
-              <p className="text-small text-default-700 font-medium">
-                Select the groups this role will have access to. If no groups
-                are selected and unlimited visibility is not enabled, the role
-                will not have access to any accounts.
-              </p>
-
-              <Controller
-                name="groups"
-                control={form.control}
-                render={({ field }) => (
-                  <div className="flex flex-col gap-2">
-                    <EnhancedMultiSelect
-                      options={groups.map((group) => ({
-                        label: group.name,
-                        value: group.id,
-                      }))}
-                      onValueChange={field.onChange}
-                      defaultValue={field.value || []}
-                      placeholder="Select groups"
-                      searchable={true}
-                      hideSelectAll={true}
-                      emptyIndicator="No results found"
-                      resetOnDefaultValueChange={true}
-                    />
-                  </div>
-                )}
-              />
-
-              {form.formState.errors.groups && (
-                <p className="mt-2 text-sm text-red-600">
-                  {form.formState.errors.groups.message}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-        <FormButtons
-          submitText="Add Role"
-          isDisabled={isLoading}
-          onCancel={() => router.push("/roles")}
-        />
-      </form>
-    </Form>
+    <RoleForm
+      form={form}
+      groups={groups}
+      visiblePermissionFormFields={visiblePermissionFormFields}
+      isLoading={isLoading}
+      unlimitedVisibility={!!unlimitedVisibility}
+      showUnlimitedVisibilityField={!!unlimitedVisibilityField}
+      submitText="Add Role"
+      onCancel={() => router.push("/roles")}
+      onSubmit={onSubmitClient}
+      onSelectAllChange={onSelectAllChange}
+      setPermissionValue={setPermissionValue}
+      setUnlimitedVisibility={setUnlimitedVisibility}
+    />
   );
 };

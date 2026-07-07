@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { AddRoleForm } from "./add-role-form";
 
@@ -75,6 +75,17 @@ vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
 vi.mock("@/components/ui", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
+
+beforeAll(() => {
+  class ResizeObserverMock {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+
+  globalThis.ResizeObserver = ResizeObserverMock;
+  window.ResizeObserver = ResizeObserverMock;
+});
 
 describe("AddRoleForm", () => {
   afterEach(() => {
@@ -190,7 +201,7 @@ describe("AddRoleForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("enables Unlimited Visibility when Manage Providers is selected", async () => {
+  it("does not force Unlimited Visibility when Manage Providers is selected", async () => {
     // Given
     const user = userEvent.setup();
     render(<AddRoleForm groups={[]} />);
@@ -205,7 +216,7 @@ describe("AddRoleForm", () => {
       screen.getByRole("checkbox", {
         name: "Enable Unlimited Visibility for this role",
       }),
-    ).toBeChecked();
+    ).not.toBeChecked();
     expect(
       screen.queryByText(
         /Manage Providers is selected, so Unlimited Visibility stays enabled in this form/i,
@@ -213,7 +224,7 @@ describe("AddRoleForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("enables Unlimited Visibility through Manage Providers when granting all admin permissions", async () => {
+  it("does not force Unlimited Visibility when granting all admin permissions", async () => {
     // Given
     const user = userEvent.setup();
     render(<AddRoleForm groups={[]} />);
@@ -231,31 +242,39 @@ describe("AddRoleForm", () => {
       screen.getByRole("checkbox", {
         name: "Enable Unlimited Visibility for this role",
       }),
-    ).toBeChecked();
+    ).not.toBeChecked();
   });
 
-  it("clears Unlimited Visibility when all admin permissions are toggled off after only auto-enabling it", async () => {
+  it("keeps Unlimited Visibility user-controlled when Manage Providers is selected", async () => {
     // Given
     const user = userEvent.setup();
     render(<AddRoleForm groups={[]} />);
 
     // When
     await user.click(
-      screen.getByRole("checkbox", { name: "Grant all admin permissions" }),
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
     );
     await user.click(
-      screen.getByRole("checkbox", { name: "Grant all admin permissions" }),
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
     );
 
     // Then
     expect(
       screen.getByRole("checkbox", { name: "Manage Providers" }),
-    ).not.toBeChecked();
+    ).toBeChecked();
     expect(
       screen.getByRole("checkbox", {
         name: "Enable Unlimited Visibility for this role",
       }),
     ).not.toBeChecked();
+    expect(screen.getByTestId("group-select")).toBeInTheDocument();
   });
 
   it("keeps explicitly enabled Unlimited Visibility when all admin permissions are toggled off", async () => {

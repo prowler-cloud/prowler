@@ -1,4 +1,3 @@
-import { useRef } from "react";
 import type {
   FieldValues,
   Path,
@@ -28,43 +27,15 @@ export const useManageProvidersUnlimitedVisibility = <
 >(
   form: Pick<UseFormReturn<T>, "setValue" | "watch">,
 ) => {
-  const autoEnabledUnlimitedVisibility = useRef(false);
-
-  const manageProviders = form.watch("manage_providers" as Path<T>);
-  const unlimitedVisibility = form.watch("unlimited_visibility" as Path<T>);
-
   const setUnlimitedVisibility = (checked: boolean) => {
-    if (manageProviders && !checked) {
-      autoEnabledUnlimitedVisibility.current = true;
-      setBooleanFormValue(form, "unlimited_visibility" as Path<T>, true);
-      return;
-    }
-
-    autoEnabledUnlimitedVisibility.current = false;
     setBooleanFormValue(form, "unlimited_visibility" as Path<T>, checked);
   };
 
   const setPermissionValue = (field: string, checked: boolean) => {
     setBooleanFormValue(form, field as Path<T>, checked);
-
-    if (field !== "manage_providers") {
-      return;
-    }
-
-    if (checked && unlimitedVisibility === false) {
-      autoEnabledUnlimitedVisibility.current = true;
-      setBooleanFormValue(form, "unlimited_visibility" as Path<T>, true);
-    }
-
-    if (!checked && autoEnabledUnlimitedVisibility.current) {
-      autoEnabledUnlimitedVisibility.current = false;
-      setBooleanFormValue(form, "unlimited_visibility" as Path<T>, false);
-    }
   };
 
   return {
-    isUnlimitedVisibilityRequiredByManageProviders:
-      !!manageProviders && !!unlimitedVisibility,
     setPermissionValue,
     setUnlimitedVisibility,
   };
