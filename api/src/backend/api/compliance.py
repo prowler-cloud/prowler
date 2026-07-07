@@ -112,14 +112,14 @@ def get_compliance_frameworks(provider_type: Provider.ProviderChoices) -> list[s
     """List compliance framework identifiers available for `provider_type`.
 
     Includes both per-provider frameworks and universal top-level frameworks
-    (e.g. ``dora``, ``csa_ccm_4.0``).
+    (e.g. ``dora_2022_2554``, ``csa_ccm_4.0``).
 
     Args:
         provider_type (Provider.ProviderChoices): The cloud provider type
             (e.g., "aws", "azure", "gcp", "m365").
 
     Returns:
-        list[str]: Framework identifiers (e.g., "cis_1.4_aws", "dora").
+        list[str]: Framework identifiers (e.g., "cis_1.4_aws", "dora_2022_2554").
     """
     global AVAILABLE_COMPLIANCE_FRAMEWORKS
     if provider_type not in AVAILABLE_COMPLIANCE_FRAMEWORKS:
@@ -352,7 +352,7 @@ def generate_compliance_overview_template(
                 total_requirements += 1
                 provider_check_list = list(requirement.checks.get(provider_type, []))
                 total_checks = len(provider_check_list)
-                checks_dict = {check: None for check in provider_check_list}
+                checks_dict = dict.fromkeys(provider_check_list)
 
                 req_status_val = "MANUAL" if total_checks == 0 else "PASS"
 

@@ -19,6 +19,52 @@ concurrency:
 permissions: {}
 
 jobs:
+  test-changelog-attribution:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Fetch PR base ref for tj-actions/changed-files
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: git fetch --depth=1 origin "${BASE_REF}"
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            .github/scripts/changelog_attribution.py
+            .github/workflows/pr-check-changelog.yml
+            .github/towncrier/template.md.jinja
+            */towncrier.toml
+            tests/github/**
+
+      - name: Test changelog attribution
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          python3 -m pip install --user --disable-pip-version-check pytest==9.0.3
+          python3 -m pytest tests/github
+
   check-changelog:
     if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest

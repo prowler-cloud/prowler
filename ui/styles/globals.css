@@ -1,4 +1,8 @@
 @import "tailwindcss";
+/* All @import rules must precede @config/@source — a late @import is invalid
+ * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
+@import "./tours.css";
+
 @config "../tailwind.config.js";
 @source "../node_modules/streamdown/dist/*.js";
 
@@ -307,6 +311,112 @@
   .lighthouse-markdown p + ul,
   .lighthouse-markdown p + ol {
     margin-top: 0.25rem;
+  }
+
+  .lighthouse-markdown table {
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .lighthouse-markdown [data-streamdown="mermaid-block"] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed {
+    padding: 1rem !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    > [role="presentation"] {
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+    border: 1px solid var(--border-neutral-tertiary);
+    border-radius: 0.75rem;
+    background: var(--bg-neutral-tertiary);
+    backdrop-filter: blur(46px);
+  }
+
+  /* !important beats the inline max-width px that mermaid sets on the svg.
+     Scoped to the inline chart (last child): streamdown renders its
+     fullscreen overlay inside the controls row and sizes it itself. */
+  .lighthouse-markdown [data-streamdown="mermaid-block"] > div:last-child svg {
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  /* Streamdown's fullscreen [&>div]:h-full can stretch the floating
+     pan/zoom controls; keep the pills content-sized and inside the chart. */
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    div:has(> div[role="application"])
+    > div:not([role="application"]) {
+    height: auto !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:last-child
+    > div:not([role="application"]) {
+    bottom: 0 !important;
+    flex-direction: row !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    [role="presentation"]
+    > div
+    > div:not([role="application"]) {
+    bottom: 3rem !important;
+  }
+
+  /* Lighthouse overview banner animated gradient layers */
+  .lighthouse-banner-gradient-neutral {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-neutral-tertiary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-hover {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-hover) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-press {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-press) 0,
+        transparent 50%
+      )
+      no-repeat;
   }
 }
 

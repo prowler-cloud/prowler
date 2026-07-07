@@ -138,6 +138,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Harden Runner
@@ -147,6 +148,8 @@ jobs:
           allowed-endpoints: >
             api.ecr-public.us-east-1.amazonaws.com:443
             public.ecr.aws:443
+            sts.amazonaws.com:443
+            sts.us-east-1.amazonaws.com:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
@@ -173,14 +176,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Public ECR
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
-          registry: public.ecr.aws
-          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.PUBLIC_ECR_IAM_ROLE_ARN }}
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        with:
+          registry-type: public
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -206,6 +211,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Harden Runner
@@ -221,6 +227,8 @@ jobs:
             github.com:443
             release-assets.githubusercontent.com:443
             api.ecr-public.us-east-1.amazonaws.com:443
+            sts.amazonaws.com:443
+            sts.us-east-1.amazonaws.com:443
 
 
       - name: Login to DockerHub
@@ -229,14 +237,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Public ECR
-        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
-          registry: public.ecr.aws
-          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.PUBLIC_ECR_IAM_ROLE_ARN }}
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        with:
+          registry-type: public
 
       - name: Create and push manifests for push event
         if: github.event_name == 'push'
@@ -299,7 +309,7 @@ jobs:
 
       - name: Install regctl
         if: always()
-        uses: regclient/actions/regctl-installer@da9319db8e44e8b062b3a147e1dfb2f574d41a03 # main
+        uses: regclient/actions/regctl-installer@9a2d4216180dbb3e2dccfa60d2dd4afd98e42ec5 # main
 
       - name: Cleanup intermediate architecture tags
         if: always()

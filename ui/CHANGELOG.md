@@ -4,12 +4,84 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.33.0] (Prowler v5.33.0)
+
+### 🚀 Added
+
+- Owners can delete their last organization from the profile page [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+
+### 🔄 Changed
+
+- Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+
+---
+
+## [1.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
+### 🔐 Security
+
+- Kubernetes provider credential forms now reject kubeconfigs using `exec` authentication in Prowler Cloud before submission [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
+---
+
+## [1.32.0] (Prowler v5.32.0)
+
+### 🚀 Added
+
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
+- CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+
+### 🔄 Changed
+
+- Improve scan configuration wording and add a documentation link to clarify baseline settings and how custom scan configurations override them [(#11859)](https://github.com/prowler-cloud/prowler/pull/11859)
+
+---
+
+## [1.31.1] (Prowler v5.31.1)
+
+### 🔄 Changed
+
+- Schedule Scans provider table and launch flows now use provider schedule fields, restore OSS daily scheduling, default to the next local scan hour, and clarify provider selection in launch scan [(#11684)](https://github.com/prowler-cloud/prowler/pull/11684)
+
+---
+
+## [1.31.0] (Prowler v5.31.0)
+
+### 🚀 Added
+
+- Controlled `402` and `403` Server Action error messages for alert seed and mutation flows [(#11629)](https://github.com/prowler-cloud/prowler/pull/11629)
+
+### 🐞 Fixed
+
+- Attack Paths now shows distinct messages while a scan is queued, running, or building its graph — plus a separate "couldn't load scans" error — instead of always showing "No scans available" [(#11512)](https://github.com/prowler-cloud/prowler/pull/11512)
+- Radio button no longer shifts vertically when selected [(#11608)](https://github.com/prowler-cloud/prowler/pull/11608)
+- Handle rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+
+### 🔐 Security
+
+- Bump vulnerable `Next.js`, React, AI SDK, `postcss`, `hono`, `qs`, `esbuild`, and Alpine OpenSSL packages (`libcrypto3` and `libssl3`) [(#11581)](https://github.com/prowler-cloud/prowler/pull/11581)
+- Bump transitive `dompurify` from 3.4.2 to 3.4.10, patching XSS sanitization bypass advisories [(#11636)](https://github.com/prowler-cloud/prowler/pull/11636)
+
+---
+
 ## [1.30.1] (Prowler v5.30.1)
 
 ### 🐞 Fixed
 
 - Threat Map no longer shows an empty map for accounts that only have Okta or Google Workspace scans [(#11542)](https://github.com/prowler-cloud/prowler/pull/11542)
 - Compliance attributes requests now pass the selected scan, so multi-provider universal frameworks (e.g. CSA CCM) load the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+
+### 🔄 Changed
+
+- Public SaaS config (Sentry, Google Tag Manager, API base/docs URL) now resolves at container runtime instead of build time; self-hosted deployments set the UI config through the new `UI_`-prefixed env vars (`UI_API_BASE_URL`, `UI_API_DOCS_URL`, `UI_GOOGLE_TAG_MANAGER_ID`, `UI_SENTRY_DSN`, `UI_SENTRY_ENVIRONMENT`), with the previous `NEXT_PUBLIC_*` names still honored as a deprecated fallback [(#11500)](https://github.com/prowler-cloud/prowler/pull/11500)
+
+### 🐞 Fixed
+
+- `ui/.env` template now lists only the canonical `UI_SENTRY_DSN` and `UI_SENTRY_ENVIRONMENT` names; the deprecated `NEXT_PUBLIC_SENTRY_DSN` and `NEXT_PUBLIC_SENTRY_ENVIRONMENT` entries have been removed [(#11500)](https://github.com/prowler-cloud/prowler/pull/11500)
 
 ---
 

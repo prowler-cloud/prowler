@@ -59,6 +59,7 @@ class OraclecloudProvider(Provider):
     """
 
     _type: str = "oraclecloud"
+    sdk_only: bool = False
     _identity: OCIIdentityInfo
     _session: OCISession
     _audit_config: dict

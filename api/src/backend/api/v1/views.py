@@ -7,109 +7,15 @@ import time
 import uuid
 from collections import defaultdict
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
 from allauth.socialaccount.providers.github.views import GitHubOAuth2Adapter
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.saml.views import FinishACSView, LoginView
-from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
-from celery.result import AsyncResult
-from config.custom_logging import BackendLogger
-from config.env import env
-from config.version import RELEASE_ID
-from config.settings.social_login import (
-    GITHUB_OAUTH_CALLBACK_URL,
-    GOOGLE_OAUTH_CALLBACK_URL,
-)
-from dj_rest_auth.registration.views import SocialLoginView
-from django.conf import settings as django_settings
-from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
-from django.contrib.postgres.search import SearchQuery
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import transaction
-from django.db.models import (
-    BooleanField,
-    Case,
-    CharField,
-    Count,
-    DecimalField,
-    Exists,
-    ExpressionWrapper,
-    F,
-    IntegerField,
-    Max,
-    Min,
-    OuterRef,
-    Prefetch,
-    Q,
-    QuerySet,
-    Subquery,
-    Sum,
-    Value,
-    When,
-    Window,
-)
-from django.db.models.fields.json import KeyTextTransform
-from django.db.models.functions import Cast, Coalesce, RowNumber
-from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
-from django.shortcuts import redirect
-from django.urls import reverse
-from django.utils.dateparse import parse_date
-from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_control
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_spectacular.settings import spectacular_settings
-from drf_spectacular.types import OpenApiTypes
-from drf_spectacular.utils import (
-    OpenApiParameter,
-    OpenApiResponse,
-    extend_schema,
-    extend_schema_view,
-)
-from drf_spectacular.views import SpectacularAPIView
-from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
-from rest_framework import permissions, status
-from rest_framework.decorators import action
-from rest_framework.exceptions import (
-    MethodNotAllowed,
-    NotFound,
-    PermissionDenied,
-    ValidationError,
-)
-from rest_framework.generics import GenericAPIView, get_object_or_404
-from rest_framework.permissions import SAFE_METHODS
-from rest_framework_json_api import filters as jsonapi_filters
-from rest_framework_json_api.views import RelationshipView, Response
-from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
-from tasks.beat import schedule_provider_scan
-from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
-from tasks.jobs.export import get_s3_client
-from tasks.tasks import (
-    backfill_compliance_summaries_task,
-    backfill_scan_resource_summaries_task,
-    check_integration_connection_task,
-    check_lighthouse_connection_task,
-    check_lighthouse_provider_connection_task,
-    check_provider_connection_task,
-    delete_provider_task,
-    delete_tenant_task,
-    jira_integration_task,
-    mute_historical_findings_task,
-    perform_scan_task,
-    reaggregate_all_finding_group_summaries_task,
-    refresh_lighthouse_provider_models_task,
-)
-
 from api.attack_paths import database as graph_database
 from api.attack_paths import get_queries_for_provider, get_query_by_id
 from api.attack_paths import views_helpers as attack_paths_views_helpers
@@ -144,6 +50,7 @@ from api.filters import (
     FindingGroupAggregatedComputedFilter,
     FindingGroupFilter,
     FindingGroupSummaryFilter,
+    FindingMetadataFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -222,13 +129,20 @@ from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
+    accept_invitation_for_user,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
     validate_invitation,
 )
 from api.uuid_utils import datetime_to_uuid7, uuid7_start
-from api.v1.mixins import DisablePaginationMixin, PaginateByPkMixin, TaskManagementMixin
+from api.v1.mixins import (
+    DisablePaginationMixin,
+    JsonApiFilterMixin,
+    PaginateByPkMixin,
+    ProviderFilterParamsMixin,
+    TaskManagementMixin,
+)
 from api.v1.serializers import (
     AttackPathsCartographySchemaSerializer,
     AttackPathsCustomQueryRunRequestSerializer,
@@ -322,12 +236,107 @@ from api.v1.serializers import (
     UserSerializer,
     UserUpdateSerializer,
 )
+from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
+from celery import chain
+from celery.result import AsyncResult
+from config.custom_logging import BackendLogger
+from config.env import env
+from config.settings.social_login import (
+    GITHUB_OAUTH_CALLBACK_URL,
+    GOOGLE_OAUTH_CALLBACK_URL,
+)
+from config.version import RELEASE_ID
+from dj_rest_auth.registration.views import SocialLoginView
+from django.conf import settings as django_settings
+from django.contrib.postgres.aggregates import ArrayAgg, BoolAnd, StringAgg
+from django.contrib.postgres.search import SearchQuery
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
+from django.db.models import (
+    BooleanField,
+    Case,
+    CharField,
+    Count,
+    DecimalField,
+    Exists,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    Max,
+    Min,
+    OuterRef,
+    Prefetch,
+    Q,
+    QuerySet,
+    Subquery,
+    Sum,
+    Value,
+    When,
+    Window,
+)
+from django.db.models.fields.json import KeyTextTransform
+from django.db.models.functions import Cast, Coalesce, RowNumber
+from django.http import HttpResponse, HttpResponseBase, HttpResponseRedirect, QueryDict
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.utils.dateparse import parse_date
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_control
+from django_celery_beat.models import PeriodicTask
+from drf_spectacular.settings import spectacular_settings
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    OpenApiResponse,
+    extend_schema,
+    extend_schema_view,
+)
+from drf_spectacular.views import SpectacularAPIView
+from drf_spectacular_jsonapi.schemas.openapi import JsonApiAutoSchema
 from prowler.providers.aws.exceptions.exceptions import (
     AWSAssumeRoleError,
     AWSCredentialsError,
 )
 from prowler.providers.aws.lib.cloudtrail_timeline.cloudtrail_timeline import (
     CloudTrailTimeline,
+)
+from rest_framework import permissions, status
+from rest_framework.decorators import action
+from rest_framework.exceptions import (
+    MethodNotAllowed,
+    NotFound,
+    PermissionDenied,
+    ValidationError,
+)
+from rest_framework.generics import GenericAPIView, get_object_or_404
+from rest_framework.permissions import SAFE_METHODS
+from rest_framework_json_api import filters as jsonapi_filters
+from rest_framework_json_api.views import RelationshipView, Response
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
+from tasks.beat import schedule_provider_scan
+from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
+from tasks.jobs.export import get_s3_client
+from tasks.tasks import (
+    QUEUED_SCAN_TASK_STATE,
+    backfill_compliance_summaries_task,
+    backfill_scan_resource_summaries_task,
+    check_integration_connection_task,
+    check_lighthouse_connection_task,
+    check_lighthouse_provider_connection_task,
+    check_provider_connection_task,
+    create_scan_task_record,
+    delete_provider_task,
+    delete_tenant_task,
+    enqueue_scan_execution_on_commit,
+    get_active_provider_scan,
+    jira_integration_task,
+    mute_historical_findings_task,
+    reaggregate_all_finding_group_summaries_task,
+    refresh_lighthouse_provider_models_task,
 )
 
 logger = logging.getLogger(BackendLogger.API)
@@ -536,6 +545,46 @@ class SchemaView(SpectacularAPIView):
         return super().get(request, *args, **kwargs)
 
 
+SAML_CALLBACK_SESSION_KEY = "saml_callback_url"
+
+
+def _safe_callback_path(value):
+    if not value or not isinstance(value, str):
+        return None
+    if not value.startswith("/") or value.startswith("//"):
+        return None
+    return value
+
+
+def _get_request_invitation_token(request):
+    for source_name in ("data", "POST"):
+        data = getattr(request, source_name, None) or {}
+        if not hasattr(data, "get"):
+            continue
+        invitation_token = data.get("invitation_token")
+        if invitation_token:
+            return invitation_token
+
+    wrapped_request = getattr(request, "_request", None)
+    if wrapped_request and wrapped_request is not request:
+        return _get_request_invitation_token(wrapped_request)
+
+    return None
+
+
+def _accept_social_invitation(request, user):
+    invitation_token = _get_request_invitation_token(request)
+    tenant_id = getattr(request, "prowler_invitation_tenant_id", None)
+    if invitation_token and not tenant_id:
+        invitation, _ = accept_invitation_for_user(
+            user=user,
+            invitation_token=invitation_token,
+            raise_not_found=True,
+        )
+        tenant_id = str(invitation.tenant_id)
+    return tenant_id
+
+
 @extend_schema(exclude=True)
 class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -546,7 +595,11 @@ class GoogleSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
             try:
                 serializer.is_valid(raise_exception=True)
             except TokenError as e:
@@ -571,7 +624,11 @@ class GithubSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
 
             try:
                 serializer.is_valid(raise_exception=True)
@@ -631,6 +688,10 @@ class CustomSAMLLoginView(LoginView):
 
         This approach maintains security while providing better UX.
         """
+        callback_url = _safe_callback_path(request.GET.get("callback_url"))
+        request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        if callback_url:
+            request.session[SAML_CALLBACK_SESSION_KEY] = callback_url
         if request.method == "GET":
             # Convert GET to POST while preserving parameters
             request.method = "POST"
@@ -675,6 +736,11 @@ class SAMLInitiateAPIView(GenericAPIView):
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
         login_url = urljoin(api_host, login_path)
+        callback_url = _safe_callback_path(
+            serializer.validated_data.get("callback_url")
+        )
+        if callback_url:
+            login_url = f"{login_url}?{urlencode({'callback_url': callback_url})}"
 
         return redirect(login_url)
 
@@ -761,7 +827,10 @@ class TenantFinishACSView(FinishACSView):
         try:
             check = SAMLDomainIndex.objects.get(email_domain=organization_slug)
             with rls_transaction(str(check.tenant_id)):
-                SAMLConfiguration.objects.get(tenant_id=str(check.tenant_id))
+                saml_config = SAMLConfiguration.objects.select_related("tenant").get(
+                    tenant_id=str(check.tenant_id)
+                )
+                tenant = saml_config.tenant
             social_app = SocialApp.objects.get(
                 provider="saml", client_id=organization_slug
             )
@@ -781,6 +850,15 @@ class TenantFinishACSView(FinishACSView):
             callback_url = env.str("AUTH_URL")
             return redirect(f"{callback_url}?sso_saml_failed=true")
 
+        requested_domain = organization_slug.lower()
+        configured_domain = saml_config.email_domain.lower()
+        email_domain = user.email.rsplit("@", 1)[-1].lower()
+        if configured_domain != requested_domain or email_domain != configured_domain:
+            logger.error("SAML email domain does not match requested organization")
+            self._rollback_saml_user(request)
+            callback_url = env.str("AUTH_URL")
+            return redirect(f"{callback_url}?sso_saml_failed=true")
+
         extra = social_account.extra_data
         user.first_name = (
             extra.get("firstName", [""])[0] if extra.get("firstName") else ""
@@ -794,67 +872,70 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        email_domain = user.email.split("@")[-1]
-        tenant = (
-            SAMLConfiguration.objects.using(MainRouter.admin_db)
-            .get(email_domain=email_domain)
-            .tenant
-        )
-
+        # Only remap roles when the IdP provides a userType attribute.
+        # Without it, the user's current roles are left untouched.
         role_name = (
-            extra.get("userType", ["no_permissions"])[0].strip()
-            if extra.get("userType")
-            else "no_permissions"
+            extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
-        role = (
-            Role.objects.using(MainRouter.admin_db)
-            .filter(name=role_name, tenant=tenant)
-            .first()
-        )
-
-        # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
-        remaining_manage_account_users = (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(role__manage_account=True, tenant_id=tenant.id)
-            .exclude(user_id=user_id)
-            .values("user")
-            .distinct()
-            .count()
-        )
-        user_has_manage_account = (
-            UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(role__manage_account=True, tenant_id=tenant.id, user_id=user_id)
-            .exists()
-        )
-        role_manage_account = role.manage_account if role else False
-        would_remove_last_manage_account = (
-            user_has_manage_account
-            and remaining_manage_account_users == 0
-            and not role_manage_account
-        )
-
-        if not would_remove_last_manage_account:
-            if role is None:
-                role = Role.objects.using(MainRouter.admin_db).create(
-                    name=role_name,
-                    tenant=tenant,
-                    manage_users=False,
-                    manage_account=False,
-                    manage_billing=False,
-                    manage_providers=False,
-                    manage_integrations=False,
-                    manage_scans=False,
-                    unlimited_visibility=False,
+        if role_name:
+            with transaction.atomic(using=MainRouter.admin_db):
+                role = (
+                    Role.objects.using(MainRouter.admin_db)
+                    .filter(name=role_name, tenant=tenant)
+                    .first()
                 )
-            UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
-                user=user,
-                tenant_id=tenant.id,
-            ).delete()
-            UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                user=user,
-                role=role,
-                tenant_id=tenant.id,
-            )
+
+                # Only skip mapping if it would remove the last MANAGE_ACCOUNT user
+                remaining_manage_account_users = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(role__manage_account=True, tenant_id=tenant.id)
+                    .exclude(user_id=user_id)
+                    .values("user")
+                    .distinct()
+                    .count()
+                )
+                user_has_manage_account = (
+                    UserRoleRelationship.objects.using(MainRouter.admin_db)
+                    .filter(
+                        role__manage_account=True,
+                        tenant_id=tenant.id,
+                        user_id=user_id,
+                    )
+                    .exists()
+                )
+                role_manage_account = role.manage_account if role else False
+                would_remove_last_manage_account = (
+                    user_has_manage_account
+                    and remaining_manage_account_users == 0
+                    and not role_manage_account
+                )
+
+                if not would_remove_last_manage_account:
+                    if role is None:
+                        # Roles auto-created from userType get read-only access:
+                        # visibility over all providers, no management permissions
+                        role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
+                            name=role_name,
+                            tenant=tenant,
+                            defaults={
+                                "manage_users": False,
+                                "manage_account": False,
+                                "manage_billing": False,
+                                "manage_providers": False,
+                                "manage_integrations": False,
+                                "manage_scans": False,
+                                "unlimited_visibility": True,
+                            },
+                        )
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).filter(
+                        user=user,
+                        tenant_id=tenant.id,
+                    ).delete()
+                    UserRoleRelationship.objects.using(MainRouter.admin_db).create(
+                        user=user,
+                        role=role,
+                        tenant_id=tenant.id,
+                    )
         membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
             user=user,
             tenant=tenant,
@@ -875,7 +956,13 @@ class TenantFinishACSView(FinishACSView):
             token=token_data, user=user
         )
         callback_url = env.str("SAML_SSO_CALLBACK_URL")
-        redirect_url = f"{callback_url}?id={saml_token.id}"
+        redirect_params = {"id": str(saml_token.id)}
+        saml_callback_url = _safe_callback_path(
+            request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        )
+        if saml_callback_url:
+            redirect_params["callbackUrl"] = saml_callback_url
+        redirect_url = f"{callback_url}?{urlencode(redirect_params)}"
         request.session.pop("saml_user_created", None)
 
         return redirect(redirect_url)
@@ -927,8 +1014,8 @@ class UserViewSet(BaseUserViewset):
         """
         Returns the required permissions based on the request method.
         """
-        if self.action == "me":
-            # No permissions required for me request
+        if self.action in ["me", "partial_update"]:
+            # No permissions required for me and partial_update requests
             self.required_permissions = []
         else:
             # Require permission for the rest of the requests
@@ -981,6 +1068,24 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id != self.request.user.id:
+            role = get_role(self.request.user, self.request.tenant_id)
+            if not getattr(role, Permissions.MANAGE_USERS.value, False):
+                raise ValidationError(
+                    "Only users with manage users permission can update other users."
+                )
+
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(user, "_prefetched_objects_cache", None):
+            user._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
@@ -1868,8 +1973,8 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         description=(
             "Download a specific compliance report as an OCSF JSON file. "
             "Only universal frameworks that declare an output configuration "
-            "produce this artifact (currently 'dora' and 'csa_ccm_4.0'); any "
-            "other framework returns 404."
+            "produce this artifact (currently 'dora_2022_2554', 'csa_ccm_4.0' "
+            "and 'cis_controls_8.1'); any other framework returns 404."
         ),
         parameters=[
             OpenApiParameter(
@@ -1877,7 +1982,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
                 type=str,
                 location=OpenApiParameter.PATH,
                 required=True,
-                description="The compliance report name, like 'dora'",
+                description="The compliance report name, like 'dora_2022_2554'",
             ),
         ],
         responses={
@@ -2614,12 +2719,23 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        provider = input_serializer.validated_data.get("provider")
+        active_scan = None
 
         # Broker publish is deferred to on_commit so the worker cannot read
         # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
         pre_task_id = str(uuid.uuid4())
 
         with transaction.atomic():
+            if provider:
+                provider = Provider.objects.select_for_update().get(
+                    id=provider.id,
+                    tenant_id=self.request.tenant_id,
+                )
+                active_scan = get_active_provider_scan(
+                    self.request.tenant_id, provider.id
+                )
+
             scan = input_serializer.save()
             scan.task_id = pre_task_id
             scan.save(update_fields=["task_id"])
@@ -2630,29 +2746,18 @@ class ScanViewSet(BaseRLSViewSet):
                 provider_id=str(scan.provider_id),
             )
 
-            task_result, _ = TaskResult.objects.get_or_create(
-                task_id=pre_task_id,
-                defaults={"status": states.PENDING, "task_name": "scan-perform"},
-            )
-            prowler_task, _ = Task.objects.update_or_create(
-                id=pre_task_id,
+            prowler_task = create_scan_task_record(
                 tenant_id=self.request.tenant_id,
-                defaults={"task_runner_task": task_result},
+                task_id=pre_task_id,
+                task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
             )
 
-            scan_kwargs = {
-                "tenant_id": self.request.tenant_id,
-                "scan_id": str(scan.id),
-                "provider_id": str(scan.provider_id),
-                # Disabled for now
-                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-            }
-
-            transaction.on_commit(
-                lambda: perform_scan_task.apply_async(
-                    kwargs=scan_kwargs, task_id=pre_task_id
+            if not active_scan:
+                enqueue_scan_execution_on_commit(
+                    tenant_id=self.request.tenant_id,
+                    scan=scan,
+                    task_id=pre_task_id,
                 )
-            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
@@ -2856,13 +2961,22 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        active_sink_backend = django_settings.ATTACK_PATHS_SINK_DATABASE
 
         latest_per_provider = queryset.annotate(
+            active_sink_rank=Case(
+                When(sink_backend=active_sink_backend, then=Value(0)),
+                default=Value(1),
+                output_field=IntegerField(),
+            ),
             latest_scan_rank=Window(
                 expression=RowNumber(),
                 partition_by=[F("provider_id")],
-                order_by=[F("inserted_at").desc()],
-            )
+                order_by=[
+                    F("active_sink_rank").asc(),
+                    F("inserted_at").desc(),
+                ],
+            ),
         ).filter(latest_scan_rank=1)
 
         page = self.paginate_queryset(latest_per_provider)
@@ -2889,7 +3003,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
     )
     def attack_paths_queries(self, request, pk=None):
         attack_paths_scan = self.get_object()
-        queries = get_queries_for_provider(attack_paths_scan.provider.provider)
+        # TODO: drop the is_migrated argument after Neptune cutover
+        queries = get_queries_for_provider(
+            attack_paths_scan.provider.provider,
+            is_migrated=attack_paths_scan.is_migrated,
+        )
 
         if not queries:
             return Response(
@@ -2922,7 +3040,11 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         serializer = AttackPathsQueryRunRequestSerializer(data=payload)
         serializer.is_valid(raise_exception=True)
 
-        query_definition = get_query_by_id(serializer.validated_data["id"])
+        # TODO: drop the is_migrated argument after Neptune cutover
+        query_definition = get_query_by_id(
+            serializer.validated_data["id"],
+            is_migrated=attack_paths_scan.is_migrated,
+        )
         if (
             query_definition is None
             or query_definition.provider != attack_paths_scan.provider.provider
@@ -2948,6 +3070,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             query_definition,
             parameters,
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3015,6 +3138,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
             database_name,
             serializer.validated_data["query"],
             provider_id,
+            scan=attack_paths_scan,
         )
         query_duration = time.monotonic() - start
 
@@ -3071,7 +3195,7 @@ class AttackPathsScanViewSet(BaseRLSViewSet):
         provider_id = str(attack_paths_scan.provider_id)
 
         schema = attack_paths_views_helpers.get_cartography_schema(
-            database_name, provider_id
+            database_name, provider_id, attack_paths_scan
         )
         if not schema:
             return Response(
@@ -3329,9 +3453,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3343,7 +3465,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3353,7 +3475,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -3397,7 +3519,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3467,7 +3589,7 @@ class ResourceViewSet(PaginateByPkMixin, BaseRLSViewSet):
             groups__isnull=False,
         ).values_list("groups", flat=True)
         groups = sorted(
-            set(g for groups_list in all_groups if groups_list for g in groups_list)
+            {g for groups_list in all_groups if groups_list for g in groups_list}
         )
 
         result = {
@@ -3796,6 +3918,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action in ["latest", "metadata_latest"]:
             return LatestFindingFilter
+        if self.action == "metadata":
+            return FindingMetadataFilter
         return FindingFilter
 
     def get_queryset(self):
@@ -3894,9 +4018,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
             date_filters = {}
             if exact:
                 date = parse_date(exact)
-                datetime_start = datetime.combine(
-                    date, datetime.min.time(), tzinfo=timezone.utc
-                )
+                datetime_start = datetime.combine(date, datetime.min.time(), tzinfo=UTC)
                 datetime_end = datetime_start + timedelta(days=1)
                 date_filters["scan_id__gte"] = uuid7_start(
                     datetime_to_uuid7(datetime_start)
@@ -3908,7 +4030,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                 if gte:
                     date_start = parse_date(gte)
                     datetime_start = datetime.combine(
-                        date_start, datetime.min.time(), tzinfo=timezone.utc
+                        date_start, datetime.min.time(), tzinfo=UTC
                     )
                     date_filters["scan_id__gte"] = uuid7_start(
                         datetime_to_uuid7(datetime_start)
@@ -3918,7 +4040,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
                     datetime_end = datetime.combine(
                         date_end + timedelta(days=1),
                         datetime.min.time(),
-                        tzinfo=timezone.utc,
+                        tzinfo=UTC,
                     )
                     date_filters["scan_id__lt"] = uuid7_start(
                         datetime_to_uuid7(datetime_end)
@@ -4333,25 +4455,12 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
         invitation_token = serializer.validated_data["invitation_token"]
         user_email = request.user.email
 
-        invitation = validate_invitation(
-            invitation_token, user_email, raise_not_found=True
-        )
-
-        # Proceed with accepting the invitation
         user = User.objects.using(MainRouter.admin_db).get(email=user_email)
-        membership = Membership.objects.using(MainRouter.admin_db).create(
+        invitation, membership = accept_invitation_for_user(
             user=user,
-            tenant=invitation.tenant,
+            invitation_token=invitation_token,
+            raise_not_found=True,
         )
-        user_role = []
-        for role in invitation.roles.all():
-            user_role.append(
-                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                    user=user, role=role, tenant=invitation.tenant
-                )
-            )
-        invitation.state = Invitation.State.ACCEPTED
-        invitation.save(using=MainRouter.admin_db)
 
         self.response_serializer_class = MembershipSerializer
         membership_serializer = self.get_serializer(membership)
@@ -4546,15 +4655,19 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @extend_schema_view(
     list=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance overviews for a scan",
-        description="Retrieve an overview of all the compliance in a given scan.",
+        summary="List compliance overviews",
+        description=(
+            "Retrieve compliance overview data for a scan. When provider filters "
+            "are provided, the endpoint uses the latest completed scan for each "
+            "matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4569,19 +4682,23 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     metadata=extend_schema(
         tags=["Compliance Overview"],
         summary="Retrieve metadata values from compliance overviews",
-        description="Fetch unique metadata values from a set of compliance overviews. This is useful for dynamic "
-        "filtering.",
+        description=(
+            "Fetch unique metadata values from compliance overviews. This is useful "
+            "for dynamic filtering. When provider filters are provided, metadata is "
+            "computed from the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
         ],
         responses={
@@ -4596,19 +4713,24 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
                 description="Compliance overviews generation task failed"
             ),
         },
+        filters=True,
     ),
     requirements=extend_schema(
         tags=["Compliance Overview"],
-        summary="List compliance requirements overview for a scan",
-        description="Retrieve a detailed overview of compliance requirements in a given scan, grouped by compliance "
-        "framework. This endpoint provides requirement-level details and aggregates status across regions.",
+        summary="List compliance requirements overview",
+        description=(
+            "Retrieve a detailed overview of compliance requirements, grouped by "
+            "compliance framework. This endpoint provides requirement-level details "
+            "and aggregates status across regions. When provider filters are provided, "
+            "the endpoint uses the latest completed scan for each matching provider."
+        ),
         parameters=[
             OpenApiParameter(
                 name="filter[scan_id]",
-                required=True,
+                required=False,
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
-                description="Related scan ID.",
+                description="Related scan ID. Required unless a provider filter is provided.",
             ),
             OpenApiParameter(
                 name="filter[compliance_id]",
@@ -4667,7 +4789,10 @@ class RoleProviderGroupRelationshipView(RelationshipView, BaseRLSViewSet):
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="requirements")
 @method_decorator(CACHE_DECORATOR, name="attributes")
-class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
+class ComplianceOverviewViewSet(
+    ProviderFilterParamsMixin, BaseRLSViewSet, TaskManagementMixin
+):
+    jsonapi_filter_replace_dots = True
     pagination_class = ComplianceOverviewPagination
     queryset = ComplianceRequirementOverview.objects.all()
     serializer_class = ComplianceOverviewSerializer
@@ -4681,28 +4806,22 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     required_permissions = []
 
     def get_queryset(self):
+        if getattr(self, "swagger_fake_view", False):
+            return ComplianceRequirementOverview.objects.none()
+
         role = get_role(self.request.user, self.request.tenant_id)
         unlimited_visibility = getattr(
             role, Permissions.UNLIMITED_VISIBILITY.value, False
         )
 
-        if unlimited_visibility:
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id
-                )
-            )
-        else:
-            providers = Provider.objects.filter(
-                provider_groups__in=role.provider_groups.all()
-            ).distinct()
-            base_queryset = self.filter_queryset(
-                ComplianceRequirementOverview.objects.filter(
-                    tenant_id=self.request.tenant_id, scan__provider__in=providers
-                )
-            )
+        base_queryset = ComplianceRequirementOverview.objects.filter(
+            tenant_id=self.request.tenant_id
+        )
 
-        return base_queryset
+        if unlimited_visibility:
+            return base_queryset
+
+        return base_queryset.filter(scan__provider__in=get_providers(role))
 
     def get_serializer_class(self):
         if hasattr(self, "response_serializer_class"):
@@ -4739,6 +4858,72 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
             summaries = summaries.filter(scan__provider__in=providers)
 
         return summaries
+
+    def _validate_scan_selection(self, scan_id, has_provider_filters):
+        if scan_id and has_provider_filters:
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Use either filter[scan_id] or provider filters.",
+                        "status": 400,
+                        "source": {"pointer": "filter[scan_id]"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if scan_id:
+            self._validate_uuid_filter_values("scan_id", [scan_id])
+            return
+
+        if has_provider_filters:
+            return
+
+        raise ValidationError(
+            [
+                {
+                    "detail": "This query parameter is required unless a provider filter is provided.",
+                    "status": 400,
+                    "source": {"pointer": "filter[scan_id]"},
+                    "code": "required",
+                }
+            ]
+        )
+
+    def _latest_scan_ids_for_provider_filters(self):
+        role = get_role(self.request.user, self.request.tenant_id)
+        scans = Scan.all_objects.filter(
+            tenant_id=self.request.tenant_id,
+            state=StateChoices.COMPLETED,
+        )
+
+        if not getattr(role, Permissions.UNLIMITED_VISIBILITY.value, False):
+            scans = scans.filter(provider__in=get_providers(role))
+
+        provider_filters = self._extract_provider_filters_from_params(
+            validate_uuids=True,
+            include_dot_aliases=True,
+        )
+        if provider_filters:
+            scans = scans.filter(**provider_filters)
+
+        return list(
+            scans.order_by("provider_id", "-inserted_at")
+            .distinct("provider_id")
+            .values_list("id", flat=True)
+        )
+
+    def _filtered_queryset_for_latest_provider_scans(self, latest_scan_ids=None):
+        if latest_scan_ids is None:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
+        # Provider filters stay on the filterset for OpenAPI docs, but runtime
+        # filtering happens on Scan first so compliance queries use scan IDs.
+        return self._apply_filterset(
+            queryset,
+            self.filterset_class,
+            exclude_keys=self.PROVIDER_FILTER_KEYS | {"scan_id"},
+        )
 
     def _get_compliance_template(self, *, provider=None, scan_id=None):
         """Return the compliance template for the given provider or scan."""
@@ -4855,6 +5040,36 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
+    def _task_response_for_latest_provider_scans(self, latest_scan_ids):
+        for scan_id in latest_scan_ids:
+            task_response = self._task_response_if_running(str(scan_id))
+            if task_response:
+                return task_response
+        return None
+
+    def _latest_provider_scan_ids_without_data(self, latest_scan_ids):
+        data_presence_queryset = self.get_queryset().filter(scan_id__in=latest_scan_ids)
+        scan_ids_with_data = {
+            str(scan_id)
+            for scan_id in data_presence_queryset.values_list(
+                "scan_id", flat=True
+            ).distinct()
+        }
+        return [
+            scan_id
+            for scan_id in latest_scan_ids
+            if str(scan_id) not in scan_ids_with_data
+        ]
+
+    def _task_response_for_latest_provider_scans_without_data(
+        self,
+        latest_scan_ids,
+    ):
+        scan_ids_to_check = self._latest_provider_scan_ids_without_data(
+            latest_scan_ids,
+        )
+        return self._task_response_for_latest_provider_scans(scan_ids_to_check)
+
     def _list_with_region_filter(self, scan_id, region_filter):
         """
         Fall back to detailed ComplianceRequirementOverview query when region filter is applied.
@@ -4895,8 +5110,25 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
 
         return Response(data)
 
+    def _list_with_latest_provider_filters(self):
+        latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+        queryset = self._filtered_queryset_for_latest_provider_scans(latest_scan_ids)
+        data = self._aggregate_compliance_overview(queryset)
+        task_response = self._task_response_for_latest_provider_scans_without_data(
+            latest_scan_ids,
+        )
+        if task_response:
+            return task_response
+
+        return Response(data)
+
     def list(self, request, *args, **kwargs):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        if has_provider_filters:
+            return self._list_with_latest_provider_filters()
 
         # Specific scan requested - use optimized summaries with region support
         region_filter = request.query_params.get(
@@ -4942,33 +5174,34 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="metadata")
     def metadata(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
+        self._validate_scan_selection(scan_id, has_provider_filters)
+
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
             )
+        else:
+            queryset = self._apply_filterset(self.get_queryset(), self.filterset_class)
+
         regions = list(
-            self.get_queryset()
-            .filter(scan_id=scan_id)
-            .values_list("region", flat=True)
-            .order_by("region")
-            .distinct()
+            queryset.values_list("region", flat=True).order_by("region").distinct()
         )
         result = {"regions": regions}
 
-        if regions:
-            serializer = self.get_serializer(data=result)
-            serializer.is_valid(raise_exception=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                latest_scan_ids,
+            )
+        elif not regions:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
 
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
+        if has_provider_filters and task_response:
             return task_response
 
         serializer = self.get_serializer(data=result)
@@ -4978,19 +5211,10 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     @action(detail=False, methods=["get"], url_name="requirements")
     def requirements(self, request):
         scan_id = request.query_params.get("filter[scan_id]")
+        has_provider_filters = self._has_provider_filters(include_dot_aliases=True)
         compliance_id = request.query_params.get("filter[compliance_id]")
 
-        if not scan_id:
-            raise ValidationError(
-                [
-                    {
-                        "detail": "This query parameter is required.",
-                        "status": 400,
-                        "source": {"pointer": "filter[scan_id]"},
-                        "code": "required",
-                    }
-                ]
-            )
+        self._validate_scan_selection(scan_id, has_provider_filters)
 
         if not compliance_id:
             raise ValidationError(
@@ -5003,7 +5227,16 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                     }
                 ]
             )
-        filtered_queryset = self.filter_queryset(self.get_queryset())
+        latest_scan_ids = None
+        if has_provider_filters:
+            latest_scan_ids = self._latest_scan_ids_for_provider_filters()
+            filtered_queryset = self._filtered_queryset_for_latest_provider_scans(
+                latest_scan_ids
+            )
+        else:
+            filtered_queryset = self._apply_filterset(
+                self.get_queryset(), self.filterset_class
+            )
 
         all_requirements = filtered_queryset.values(
             "requirement_id",
@@ -5062,12 +5295,21 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
                 requirements_summary, many=True
             )
 
+        task_response = None
+        if has_provider_filters:
+            task_response = self._task_response_for_latest_provider_scans_without_data(
+                latest_scan_ids,
+            )
+        elif not requirements_summary:
+            task_response = self._task_response_if_running(scan_id)
+            if task_response:
+                return task_response
+
+        if has_provider_filters and task_response:
+            return task_response
+
         if requirements_summary:
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-        task_response = self._task_response_if_running(scan_id)
-        if task_response:
-            return task_response
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -5307,7 +5549,7 @@ class ComplianceOverviewViewSet(BaseRLSViewSet, TaskManagementMixin):
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
-class OverviewViewSet(BaseRLSViewSet):
+class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
     queryset = ScanSummary.objects.all()
     http_method_names = ["get"]
     ordering = ["-inserted_at"]
@@ -5424,18 +5666,6 @@ class OverviewViewSet(BaseRLSViewSet):
             tenant_id=tenant_id, scan_id__in=latest_scan_ids
         )
 
-    def _normalize_jsonapi_params(self, query_params, exclude_keys=None):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        exclude_keys = exclude_keys or set()
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            if normalized_key not in exclude_keys:
-                normalized.setlist(normalized_key, values)
-        return normalized
-
     def _ensure_allowed_providers(self):
         """Populate allowed providers for RBAC-aware queries once per request."""
         if getattr(self, "_providers_initialized", False):
@@ -5455,15 +5685,6 @@ class OverviewViewSet(BaseRLSViewSet):
             return queryset.filter(**provider_filter)
         return queryset
 
-    def _apply_filterset(self, queryset, filterset_class, exclude_keys=None):
-        normalized_params = self._normalize_jsonapi_params(
-            self.request.query_params, exclude_keys=set(exclude_keys or [])
-        )
-        filterset = filterset_class(normalized_params, queryset=queryset)
-        if not filterset.is_valid():
-            raise ValidationError(filterset.errors)
-        return filterset.qs
-
     def _latest_scan_ids_for_allowed_providers(self, tenant_id, provider_filters=None):
         provider_filter = self._get_provider_filter()
         queryset = Scan.all_objects.filter(
@@ -5476,40 +5697,6 @@ class OverviewViewSet(BaseRLSViewSet):
             .distinct("provider_id")
             .values_list("id", flat=True)
         )
-
-    def _extract_provider_filters_from_params(self):
-        """Extract and validate provider filters from query params."""
-        params = self.request.query_params
-        filters = {}
-        valid_provider_types = {c[0] for c in Provider.ProviderChoices.choices}
-
-        provider_id = params.get("filter[provider_id]")
-        if provider_id:
-            filters["provider_id"] = provider_id
-
-        provider_id_in = params.get("filter[provider_id__in]")
-        if provider_id_in:
-            filters["provider_id__in"] = provider_id_in.split(",")
-
-        provider_type = params.get("filter[provider_type]")
-        if provider_type:
-            if provider_type not in valid_provider_types:
-                raise ValidationError(
-                    {"provider_type": f"Invalid choice: {provider_type}"}
-                )
-            filters["provider__provider"] = provider_type
-
-        provider_type_in = params.get("filter[provider_type__in]")
-        if provider_type_in:
-            types = provider_type_in.split(",")
-            invalid = [t for t in types if t not in valid_provider_types]
-            if invalid:
-                raise ValidationError(
-                    {"provider_type__in": f"Invalid choices: {', '.join(invalid)}"}
-                )
-            filters["provider__provider__in"] = types
-
-        return filters
 
     @action(detail=False, methods=["get"], url_name="providers")
     def providers(self, request):
@@ -5581,15 +5768,11 @@ class OverviewViewSet(BaseRLSViewSet):
         tenant_id = self.request.tenant_id
         providers_qs = Provider.objects.filter(tenant_id=tenant_id)
 
+        self._ensure_allowed_providers()
         if hasattr(self, "allowed_providers"):
-            allowed_ids = list(self.allowed_providers.values_list("id", flat=True))
-            if not allowed_ids:
-                overview = []
-                return Response(
-                    self.get_serializer(overview, many=True).data,
-                    status=status.HTTP_200_OK,
-                )
-            providers_qs = providers_qs.filter(id__in=allowed_ids)
+            providers_qs = providers_qs.filter(
+                id__in=self.allowed_providers.values("id")
+            )
 
         overview = (
             providers_qs.values("provider")
@@ -5805,28 +5988,40 @@ class OverviewViewSet(BaseRLSViewSet):
                 description="Retrieve a specific snapshot by ID. If not provided, returns latest snapshots.",
             ),
             OpenApiParameter(
-                name="provider_id",
+                name="filter[provider_id]",
                 type=OpenApiTypes.UUID,
                 location=OpenApiParameter.QUERY,
                 description="Filter by specific provider ID",
             ),
             OpenApiParameter(
-                name="provider_id__in",
+                name="filter[provider_id__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider IDs (comma-separated UUIDs)",
             ),
             OpenApiParameter(
-                name="provider_type",
+                name="filter[provider_type]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by provider type (aws, azure, gcp, etc.)",
             ),
             OpenApiParameter(
-                name="provider_type__in",
+                name="filter[provider_type__in]",
                 type=OpenApiTypes.STR,
                 location=OpenApiParameter.QUERY,
                 description="Filter by multiple provider types (comma-separated)",
+            ),
+            OpenApiParameter(
+                name="filter[provider_groups]",
+                type=OpenApiTypes.UUID,
+                location=OpenApiParameter.QUERY,
+                description="Filter by provider group ID",
+            ),
+            OpenApiParameter(
+                name="filter[provider_groups__in]",
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY,
+                description="Filter by multiple provider group IDs (comma-separated UUIDs)",
             ),
         ],
     )
@@ -6169,6 +6364,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset, CategoryOverviewFilter, exclude_keys=provider_filter_keys
@@ -6238,6 +6435,8 @@ class OverviewViewSet(BaseRLSViewSet):
             "provider_id__in",
             "provider_type",
             "provider_type__in",
+            "provider_groups",
+            "provider_groups__in",
         }
         filtered_queryset = self._apply_filterset(
             base_queryset,
@@ -7288,7 +7487,7 @@ SEVERITY_ORDER_REVERSE = {v: k for k, v in SEVERITY_ORDER.items()}
     ),
     retrieve=extend_schema(exclude=True),
 )
-class FindingGroupViewSet(BaseRLSViewSet):
+class FindingGroupViewSet(JsonApiFilterMixin, BaseRLSViewSet):
     """
     ViewSet for Finding Groups - aggregates findings by check_id.
 
@@ -7304,6 +7503,7 @@ class FindingGroupViewSet(BaseRLSViewSet):
     queryset = FindingGroupDailySummary.objects.all()
     serializer_class = FindingGroupSerializer
     filterset_class = FindingGroupFilter
+    jsonapi_filter_replace_dots = True
     filter_backends = [
         jsonapi_filters.QueryParameterValidationFilter,
         jsonapi_filters.OrderingFilter,
@@ -7353,18 +7553,6 @@ class FindingGroupViewSet(BaseRLSViewSet):
             queryset = queryset.filter(scan__provider_id__in=providers)
 
         return queryset
-
-    def _normalize_jsonapi_params(self, query_params):
-        """Convert JSON:API filter params (filter[X]) to flat params (X)."""
-        normalized = QueryDict(mutable=True)
-        for key, values in query_params.lists():
-            normalized_key = (
-                key[7:-1] if key.startswith("filter[") and key.endswith("]") else key
-            )
-            # Convert JSON:API dot notation to Django double underscore
-            normalized_key = normalized_key.replace(".", "__")
-            normalized.setlist(normalized_key, values)
-        return normalized
 
     @extend_schema(exclude=True)
     def retrieve(self, request, *args, **kwargs):
@@ -8484,9 +8672,10 @@ class FindingGroupViewSet(BaseRLSViewSet):
 
         This endpoint returns finding groups without requiring date filters,
         automatically using the latest available data per check_id.
-        All other filters (provider_id, provider_type, check_id) are still supported.
+        Provider, provider group, check, and computed filters are still supported.
         """,
         tags=["Finding Groups"],
+        filters=True,
     )
     @action(detail=False, methods=["get"], url_name="latest")
     def latest(self, request):

@@ -5,6 +5,10 @@ from unittest import mock
 from freezegun import freeze_time
 from mock import patch
 
+from prowler.lib.check.compliance_config_eval import CONFIG_NOT_VALID_PREFIX
+from prowler.lib.check.compliance_models import (
+    Compliance_Requirement_ConfigConstraint,
+)
 from prowler.lib.outputs.compliance.okta_idaas_stig.models import OktaIDaaSSTIGModel
 from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
     OktaIDaaSSTIG,
@@ -137,3 +141,52 @@ class TestOktaIDaaSSTIG:
         expected_csv = f"PROVIDER;DESCRIPTION;ORGANIZATIONDOMAIN;ASSESSMENTDATE;REQUIREMENTS_ID;REQUIREMENTS_NAME;REQUIREMENTS_DESCRIPTION;REQUIREMENTS_ATTRIBUTES_SECTION;REQUIREMENTS_ATTRIBUTES_SEVERITY;REQUIREMENTS_ATTRIBUTES_RULEID;REQUIREMENTS_ATTRIBUTES_STIGID;REQUIREMENTS_ATTRIBUTES_CCI;REQUIREMENTS_ATTRIBUTES_CHECKTEXT;REQUIREMENTS_ATTRIBUTES_FIXTEXT;STATUS;STATUSEXTENDED;RESOURCEID;RESOURCENAME;CHECKID;MUTED;FRAMEWORK;NAME\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;{OKTA_ORG_DOMAIN};{datetime.now()};OKTA-APP-000020;Okta must log out a session after a 15-minute period of inactivity.;A session timeout lock is a temporary action taken when a user stops work and moves away from the immediate vicinity of the information system.;CAT II (Medium);medium;SV-273186r1098825_rule;OKTA-APP-000020;['CCI-000057', 'CCI-001133'];Verify the Global Session Policy logs out a session after 15 minutes of inactivity.;From the Admin Console configure the Global Session Policy idle timeout to 15 minutes.;PASS;;okta-global-session-policy;Default Policy;signon_global_session_idle_timeout_15min;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\nokta;Defense Information Systems Agency (DISA) Security Technical Implementation Guide (STIG) for Okta Identity as a Service (IDaaS).;;{datetime.now()};OKTA-APP-000650;Okta must enforce a minimum 15-character password length.;The shorter the password, the lower the number of possible combinations that need to be tested before the password is compromised.;CAT II (Medium);medium;SV-273209r1098894_rule;OKTA-APP-000650;['CCI-000205'];Verify the password policy enforces a minimum length of 15 characters.;From the Admin Console set the minimum password length to 15 characters.;MANUAL;Manual check;manual_check;Manual check;manual;False;Okta-IDaaS-STIG;DISA Okta Identity as a Service (IDaaS) STIG V1R2\r\n"
 
         assert content == expected_csv
+
+    def test_config_status_override_forces_fail(self):
+        """A PASS finding whose requirement declares a ConfigRequirements
+        constraint the scan's config violates must be reported as FAIL in the
+        CSV, with the config-not-valid reason prepended to StatusExtended."""
+        # Inject a config constraint on the first requirement (idle timeout must
+        # be <= 15 minutes) without mutating the shared fixture.
+        compliance = OKTA_IDAAS_STIG_OKTA.copy(deep=True)
+        compliance.Requirements[0].ConfigRequirements = [
+            Compliance_Requirement_ConfigConstraint(
+                Check="signon_global_session_idle_timeout_15min",
+                ConfigKey="okta_max_session_idle_minutes",
+                Operator="lte",
+                Value=15,
+            )
+        ]
+        findings = [
+            generate_finding_output(
+                provider="okta",
+                account_uid=OKTA_ORG_DOMAIN,
+                account_name=OKTA_ORG_DOMAIN,
+                region="global",
+                service_name="signon",
+                status="PASS",
+                status_extended="Idle timeout is configured.",
+                check_id="signon_global_session_idle_timeout_15min",
+                resource_uid="okta-global-session-policy",
+                resource_name="Default Policy",
+                compliance={"Okta-IDaaS-STIG-1R2": ["OKTA-APP-000020"]},
+            )
+        ]
+
+        # The scan applied a 30-minute idle timeout, too loose for the 15-minute
+        # requirement, so the PASS must be overridden to FAIL.
+        with (
+            patch(
+                "prowler.lib.check.compliance_config_eval.get_scan_audit_config",
+                return_value={"okta_max_session_idle_minutes": 30},
+            ),
+            patch(
+                "prowler.lib.check.compliance_config_eval.get_scan_provider_type",
+                return_value="okta",
+            ),
+        ):
+            output = OktaIDaaSSTIG(findings, compliance)
+
+        output_data = output.data[0]
+        assert output_data.Status == "FAIL"
+        assert output_data.StatusExtended.startswith(CONFIG_NOT_VALID_PREFIX)

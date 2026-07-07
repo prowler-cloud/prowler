@@ -4,6 +4,7 @@ import { ASDEssentialEightCustomDetails } from "@/components/compliance/complian
 import { AWSWellArchitectedCustomDetails } from "@/components/compliance/compliance-custom-details/aws-well-architected-details";
 import { C5CustomDetails } from "@/components/compliance/compliance-custom-details/c5-details";
 import { CCCCustomDetails } from "@/components/compliance/compliance-custom-details/ccc-details";
+import { CISControlsCustomDetails } from "@/components/compliance/compliance-custom-details/cis-controls-details";
 import { CISCustomDetails } from "@/components/compliance/compliance-custom-details/cis-details";
 import { CSACustomDetails } from "@/components/compliance/compliance-custom-details/csa-details";
 import { DORACustomDetails } from "@/components/compliance/compliance-custom-details/dora-details";
@@ -44,6 +45,10 @@ import {
   mapComplianceData as mapCISComplianceData,
   toAccordionItems as toCISAccordionItems,
 } from "./cis";
+import {
+  mapComplianceData as mapCISControlsComplianceData,
+  toAccordionItems as toCISControlsAccordionItems,
+} from "./cis-controls";
 import { calculateCategoryHeatmapData, getTopFailedSections } from "./commons";
 import {
   mapComplianceData as mapCSAComplianceData,
@@ -156,6 +161,20 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
     getDetailsComponent: (requirement: Requirement) =>
       createElement(CISCustomDetails, { requirement }),
   },
+  // CIS Controls v8.1 — universal framework keyed by the `framework` field of
+  // `prowler/compliance/cis_controls_8.1.json` ("CIS-Controls"). Distinct from
+  // the per-provider CIS Benchmarks (keyed "CIS"). Groups by Section (the 18
+  // CIS Controls) and surfaces Security Function / Asset Type / Implementation
+  // Groups in the requirement detail drawer.
+  "CIS-Controls": {
+    mapComplianceData: mapCISControlsComplianceData,
+    toAccordionItems: toCISControlsAccordionItems,
+    getTopFailedSections,
+    calculateCategoryHeatmapData: (data: Framework[]) =>
+      calculateCategoryHeatmapData(data),
+    getDetailsComponent: (requirement: Requirement) =>
+      createElement(CISControlsCustomDetails, { requirement }),
+  },
   "AWS-Well-Architected-Framework-Security-Pillar": {
     mapComplianceData: mapAWSWellArchitectedComplianceData,
     toAccordionItems: toAWSWellArchitectedAccordionItems,
@@ -228,7 +247,7 @@ const getComplianceMappers = (): Record<string, ComplianceMapper> => ({
       createElement(OktaIDaaSStigCustomDetails, { requirement }),
   },
   // DORA (Regulation (EU) 2022/2554) — universal framework keyed by the
-  // `framework` field of `prowler/compliance/dora.json` ("DORA"). Groups by
+  // `framework` field of `prowler/compliance/dora_2022_2554.json` ("DORA"). Groups by
   // Pillar (5 enum values) and surfaces Pillar / Article / ArticleTitle in
   // the requirement detail drawer.
   DORA: {

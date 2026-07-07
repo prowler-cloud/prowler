@@ -1,9 +1,39 @@
+import yaml from "js-yaml";
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
+
+export const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
+  "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.";
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+export const kubeconfigContainsExecAuthentication = (
+  value: string,
+): boolean => {
+  try {
+    const parsed = yaml.load(value);
+
+    if (!isRecord(parsed) || !Array.isArray(parsed.users)) {
+      return false;
+    }
+
+    return parsed.users.some((userEntry) => {
+      if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
+        return false;
+      }
+
+      return "exec" in userEntry.user;
+    });
+  } catch {
+    return false;
+  }
+};
 
 export const addRoleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -207,7 +237,13 @@ export const addCredentialsFormSchema = (
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .min(1, "Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required")
+                    .refine(
+                      (value) => !kubeconfigContainsExecAuthentication(value),
+                      {
+                        error: KUBECONFIG_EXEC_AUTHENTICATION_ERROR,
+                      },
+                    ),
                 }
               : providerType === "m365"
                 ? {
@@ -720,5 +756,32 @@ export const mutedFindingsConfigFormSchema = z.object({
         });
       }
     }),
+  id: z.string().optional(),
+});
+
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
+export const scanConfigurationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { error: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
+  provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });

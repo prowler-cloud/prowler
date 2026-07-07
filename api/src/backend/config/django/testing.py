@@ -39,3 +39,7 @@ SIMPLE_JWT["ALGORITHM"] = "HS256"  # noqa: F405
 SIMPLE_JWT["SIGNING_KEY"] = env.str(  # noqa: F405
     "DJANGO_TOKEN_SIGNING_KEY", "insecure-testing-jwt-signing-key-do-not-use-in-prod"
 )
+
+# Tests don't need secure password hashing; PBKDF2 (~hundreds of ms per call)
+# dominates fixture setup time across every create_user()/check_password().
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

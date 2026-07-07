@@ -13,6 +13,14 @@
         "config_recorder_all_regions_enabled",
         "inspector2_is_enabled"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "1 Patch applications",
@@ -259,6 +267,14 @@
         "ec2_instance_managed_by_ssm",
         "config_recorder_all_regions_enabled",
         "inspector2_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -741,6 +757,14 @@
         "iam_role_cross_service_confused_deputy_prevention",
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

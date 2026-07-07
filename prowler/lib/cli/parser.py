@@ -15,6 +15,8 @@ from prowler.lib.check.models import Severity
 from prowler.lib.cli.redact import warn_sensitive_argument_values
 from prowler.lib.outputs.common import Status
 from prowler.providers.common.arguments import (
+    PROVIDER_ALIASES,
+    enforce_invoked_provider_loaded,
     init_providers_parser,
     validate_asff_usage,
     validate_provider_arguments,
@@ -49,6 +51,7 @@ class ProwlerArgumentParser:
             "okta",
             "scaleway",
             "stackit",
+            "linode",
         }
         all_providers = set(Provider.get_available_providers())
         new_providers = sorted(all_providers - known_providers)
@@ -71,10 +74,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -94,7 +97,8 @@ Available Cloud Providers:
     nhn                 NHN Provider (Unofficial)
     mongodbatlas        MongoDB Atlas Provider
     scaleway            Scaleway Provider
-    vercel              Vercel Provider{extra_providers_text}
+    vercel              Vercel Provider
+    linode              Linode Provider{extra_providers_text}
 
 
 Available components:
@@ -166,13 +170,13 @@ Detailed documentation at https://docs.prowler.com
             if sys.argv[1].startswith("-"):
                 sys.argv = self.__set_default_provider__(sys.argv)
 
-            # Provider aliases mapping
-            # Microsoft 365
-            elif sys.argv[1] == "microsoft365":
-                sys.argv[1] = "m365"
-            # Oracle Cloud Infrastructure
-            elif sys.argv[1] == "oci":
-                sys.argv[1] = "oraclecloud"
+            # Provider aliases mapping (single source: arguments.PROVIDER_ALIASES)
+            elif sys.argv[1] in PROVIDER_ALIASES:
+                sys.argv[1] = PROVIDER_ALIASES[sys.argv[1]]
+
+        # Selective fail-loud here (post argv-normalisation, pre parse_args)
+        # so the invoked-provider check stays correct under parse(args=...).
+        enforce_invoked_provider_loaded(self)
 
         # Warn about sensitive flags passed with explicit values
         # Snapshot argv before parse_args() which may exit on errors
@@ -468,6 +472,18 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             default=default_fixer_config_file_path,
             help="Set configuration fixer file path",
+        )
+        config_parser.add_argument(
+            "--scan-secrets-validate",
+            action="store_true",
+            default=False,
+            help=(
+                "Validate secrets discovered by the secrets checks by checking "
+                "whether they are live against the provider APIs. WARNING: this "
+                "makes outbound network calls using the discovered secret itself; "
+                "the credential is exercised against the provider and the call "
+                "appears in the audited account's logs. Disabled by default."
+            ),
         )
 
     def __init_custom_checks_metadata_parser__(self):

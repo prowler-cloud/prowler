@@ -1,5 +1,6 @@
+{% set category_order = ["added", "changed", "deprecated", "removed", "fixed", "security"] %}
 {% for section, _ in sections.items() %}
-{% for category, val in definitions.items() if category in sections[section] %}
+{% for category in category_order if category in sections[section] %}
 ### {{ definitions[category]['name'] }}
 
 {% for text, values in sections[section][category].items() %}

@@ -12,9 +12,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'ui/**'
-      - '.github/workflows/ui-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -133,5 +130,5 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'false'
+          fail-on-critical: 'true'
           severity: 'CRITICAL'

@@ -37,8 +37,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 1
-          # zizmor: ignore[artipacked]
-          persist-credentials: true # Required by tj-actions/changed-files to fetch PR branch
+          persist-credentials: false # No write token in the untrusted PR-head tree; public repo so base fetch/changed-files work unauthenticated
 
       - name: Fetch PR base ref for tj-actions/changed-files
         env:
@@ -50,6 +49,8 @@ jobs:
         uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: '**'
+          safe_output: false # Raw paths (list read via env var, injection-safe); default escaping backslash-quotes chars like () and breaks the -f test
+          separator: "\n" # Newline-delimited so the reader tolerates spaces and glob chars in paths
 
       - name: Check for conflict markers
         id: conflict-check
@@ -59,19 +60,18 @@ jobs:
           CONFLICT_FILES=""
           HAS_CONFLICTS=false
 
-          # Check each changed file for conflict markers
-          for file in ${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}; do
-            if [ -f "$file" ]; then
-              echo "Checking file: $file"
+          # Read newline-delimited paths so spaces/globs neither word-split nor glob-expand
+          while IFS= read -r file; do
+            [ -n "$file" ] || continue
+            [ -f "$file" ] || continue
+            echo "Checking file: $file"
 
-              # Look for conflict markers (more precise regex)
-              if grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null; then
-                echo "Conflict markers found in: $file"
-                CONFLICT_FILES="${CONFLICT_FILES}- \`${file}\`"$'\n'
-                HAS_CONFLICTS=true
-              fi
+            if grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null; then
+              echo "Conflict markers found in: $file"
+              CONFLICT_FILES="${CONFLICT_FILES}- \`${file}\`"$'\n'
+              HAS_CONFLICTS=true
             fi
-          done
+          done <<< "$STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES"
 
           if [ "$HAS_CONFLICTS" = true ]; then
             echo "has_conflicts=true" >> $GITHUB_OUTPUT
@@ -88,18 +88,49 @@ jobs:
         env:
           STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
 
+      - name: Check base-branch mergeability
+        id: merge-check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          MERGEABLE=null
+
+          # GitHub computes mergeability async, so .mergeable is null until ready; poll until resolved
+          for attempt in 1 2 3 4 5; do
+            MERGEABLE=$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq '.mergeable')
+            if [ "$MERGEABLE" != "null" ]; then
+              break
+            fi
+            echo "Attempt ${attempt}: mergeability not computed yet, retrying..."
+            sleep 3
+          done
+
+          # Keep 'unknown' distinct from 'clean' so we never assert a clean merge we could not confirm
+          case "$MERGEABLE" in
+            false) STATUS=conflict; echo "PR branch cannot be merged cleanly into its base branch" ;;
+            true)  STATUS=clean;    echo "PR branch merges cleanly into its base branch" ;;
+            *)     STATUS=unknown;  echo "::warning::Mergeability did not resolve after retries; leaving it undetermined" ;;
+          esac
+
+          echo "merge_status=${STATUS}" >> "$GITHUB_OUTPUT"
+
       - name: Manage conflict label
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           HAS_CONFLICTS: ${{ steps.conflict-check.outputs.has_conflicts }}
+          MERGE_STATUS: ${{ steps.merge-check.outputs.merge_status }}
         run: |
           LABEL_NAME="has-conflicts"
 
-          # Add or remove label based on conflict status
-          if [ "$HAS_CONFLICTS" = "true" ]; then
+          if [ "$HAS_CONFLICTS" = "true" ] || [ "$MERGE_STATUS" = "conflict" ]; then
             echo "Adding conflict label to PR #${PR_NUMBER}..."
             gh pr edit "$PR_NUMBER" --add-label "$LABEL_NAME" --repo ${{ github.repository }} || true
+          elif [ "$MERGE_STATUS" = "unknown" ]; then
+            # Don't drop the label on an undetermined merge state; a later run will settle it
+            echo "Mergeability undetermined; leaving label unchanged"
           else
             echo "Removing conflict label from PR #${PR_NUMBER}..."
             gh pr edit "$PR_NUMBER" --remove-label "$LABEL_NAME" --repo ${{ github.repository }} || true
@@ -121,20 +152,25 @@ jobs:
           edit-mode: replace
           body: |
             <!-- conflict-checker-comment -->
-            ${{ steps.conflict-check.outputs.has_conflicts == 'true' && '⚠️ **Conflict Markers Detected**' || '✅ **Conflict Markers Resolved**' }}
-
-            ${{ steps.conflict-check.outputs.has_conflicts == 'true' && format('This pull request contains unresolved conflict markers in the following files:
+            ${{ (steps.conflict-check.outputs.has_conflicts == 'true' || steps.merge-check.outputs.merge_status == 'conflict') && '⚠️ **Conflicts Detected**' || (steps.merge-check.outputs.merge_status == 'unknown' && 'ℹ️ **Conflict Check Incomplete**' || '✅ **No Conflicts**') }}
+            ${{ steps.conflict-check.outputs.has_conflicts == 'true' && format('
+            **Conflict markers** are present in the following files:
 
             {0}
-
-            Please resolve these conflicts by:
-            1. Locating the conflict markers: `<<<<<<<`, `=======`, and `>>>>>>>`
-            2. Manually editing the files to resolve the conflicts
-            3. Removing all conflict markers
-            4. Committing and pushing the changes', steps.conflict-check.outputs.conflict_files) || 'All conflict markers have been successfully resolved in this pull request.' }}
+            Resolve them by removing every `<<<<<<<`, `=======`, and `>>>>>>>` marker, then commit and push.', steps.conflict-check.outputs.conflict_files) || '' }}
+            ${{ steps.merge-check.outputs.merge_status == 'conflict' && '
+            **Merge conflict with the base branch.** This PR cannot be merged cleanly. Update your branch with the latest base (rebase or merge) and resolve the conflicts.' || '' }}
+            ${{ steps.merge-check.outputs.merge_status == 'unknown' && '
+            GitHub had not finished computing mergeability, so base-branch conflict status could not be verified on this run.' || '' }}
+            ${{ (steps.conflict-check.outputs.has_conflicts != 'true' && steps.merge-check.outputs.merge_status == 'clean') && '
+            No conflict markers, and the branch merges cleanly into its base.' || '' }}
 
       - name: Fail workflow if conflicts detected
-        if: steps.conflict-check.outputs.has_conflicts == 'true'
+        if: steps.conflict-check.outputs.has_conflicts == 'true' || steps.merge-check.outputs.merge_status == 'conflict'
+        env:
+          HAS_CONFLICTS: ${{ steps.conflict-check.outputs.has_conflicts }}
+          MERGE_STATUS: ${{ steps.merge-check.outputs.merge_status }}
         run: |
-          echo "::error::Workflow failed due to conflict markers detected in the PR"
+          [ "$HAS_CONFLICTS" = "true" ] && echo "::error::Conflict markers detected in changed files"
+          [ "$MERGE_STATUS" = "conflict" ] && echo "::error::PR branch has merge conflicts with the base branch"
           exit 1

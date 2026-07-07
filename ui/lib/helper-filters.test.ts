@@ -1,13 +1,22 @@
 import { describe, expect, it } from "vitest";
 
+import type { ProviderGroup } from "@/types/components";
 import type { ScanEntity } from "@/types/scans";
 
 import {
+  getProviderGroupDisplayValue,
   getScanEntityLabel,
   hasDateFilter,
   hasDateOrScanFilter,
   hasHistoricalFindingFilter,
 } from "./helper-filters";
+
+const makeProviderGroup = (id: string, name: string): ProviderGroup =>
+  ({
+    type: "provider-groups",
+    id,
+    attributes: { name, inserted_at: "", updated_at: "" },
+  }) as ProviderGroup;
 
 function makeScan(overrides: Partial<ScanEntity> = {}): ScanEntity {
   return {
@@ -24,6 +33,27 @@ function makeScan(overrides: Partial<ScanEntity> = {}): ScanEntity {
     ...overrides,
   };
 }
+
+describe("getProviderGroupDisplayValue", () => {
+  const groups = [
+    makeProviderGroup("g1", "Production"),
+    makeProviderGroup("g2", "Staging"),
+  ];
+
+  it("resolves the group name when the id matches", () => {
+    expect(getProviderGroupDisplayValue("g1", groups)).toBe("Production");
+  });
+
+  it("falls back to the raw id when the group is not found", () => {
+    expect(getProviderGroupDisplayValue("unknown", groups)).toBe("unknown");
+  });
+
+  it("falls back to the raw id when the group name is empty", () => {
+    expect(
+      getProviderGroupDisplayValue("g3", [makeProviderGroup("g3", "")]),
+    ).toBe("g3");
+  });
+});
 
 describe("hasDateOrScanFilter", () => {
   it("returns true for scan filters", () => {
