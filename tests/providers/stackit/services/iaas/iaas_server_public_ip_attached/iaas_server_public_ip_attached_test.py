@@ -56,7 +56,10 @@ class Test_iaas_server_public_ip_attached:
         result = self._run_check(iaas_client)
         assert len(result) == 1
         assert result[0].status == "PASS"
-        assert result[0].status_extended == f"Server {server_name} does not have a public IP address attached."
+        assert (
+            result[0].status_extended
+            == f"Server {server_name} does not have a public IP address attached."
+        )
         assert result[0].resource_id == server_id
         assert result[0].resource_name == server_name
         assert result[0].location == "eu01"

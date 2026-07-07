@@ -389,9 +389,7 @@ class IaaSService:
                 logger.debug(f"Error processing public IP: {e}")
                 continue
 
-        logger.info(
-            f"Successfully listed {len(ips_list)} public IPs in {region}"
-        )
+        logger.info(f"Successfully listed {len(ips_list)} public IPs in {region}")
 
     def _list_servers(self, client, region: str):
         """
@@ -427,9 +425,7 @@ class IaaSService:
                 logger.error(f"Error processing server: {e}")
                 continue
 
-        logger.info(
-            f"Successfully listed {len(servers_list)} servers in {region}"
-        )
+        logger.info(f"Successfully listed {len(servers_list)} servers in {region}")
 
     def _get_used_security_group_ids(self, nics_list) -> set[str]:
         """

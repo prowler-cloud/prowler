@@ -572,6 +572,22 @@ class Test_IaaS_Service_NIC_Device_Index:
 
         assert service._nic_device_index == {}
 
+    def test_nic_indexing_error_is_skipped(self):
+        """A NIC that raises while reading its id is skipped, not fatal."""
+
+        class MalformedNIC:
+            @property
+            def id(self):
+                raise ValueError("malformed nic")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": [MalformedNIC()]}
+
+        service._list_server_nics(client, "eu01")
+
+        assert service._nic_device_index == {}
+
 
 class Test_IaaS_Service_PublicIps:
     """Tests for _list_public_ips."""
@@ -619,6 +635,30 @@ class Test_IaaS_Service_PublicIps:
         ip.network_interface = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
         client = MagicMock()
         client.list_public_ips.return_value = {"items": [ip]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_list_public_ips_without_client_is_noop(self):
+        """A missing regional client is logged and skipped, not fatal."""
+        service = self._service()
+
+        service._list_public_ips(None, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_public_ip_processing_error_is_skipped(self):
+        """A public IP that raises while being read is skipped, not fatal."""
+
+        class MalformedIP:
+            @property
+            def network_interface(self):
+                raise ValueError("malformed public ip")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [MalformedIP()]}
 
         service._list_public_ips(client, "eu01")
 
@@ -719,3 +759,27 @@ class Test_IaaS_Service_Servers:
 
         assert len(service.servers) == 1
         assert service.servers[0].has_public_ip is True
+
+    def test_list_servers_without_client_is_noop(self):
+        """A missing regional client is logged and skipped, not fatal."""
+        service = self._service()
+
+        service._list_servers(None, "eu01")
+
+        assert service.servers == []
+
+    def test_server_processing_error_is_skipped(self):
+        """A server that raises while being read is skipped, not fatal."""
+
+        class MalformedServer:
+            @property
+            def id(self):
+                raise ValueError("malformed server")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_servers.return_value = {"items": [MalformedServer()]}
+
+        service._list_servers(client, "eu01")
+
+        assert service.servers == []
