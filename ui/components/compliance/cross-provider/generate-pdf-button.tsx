@@ -2,7 +2,7 @@
 
 import { DownloadIcon, FileDown, Loader2 } from "lucide-react";
 import type { ReactNode } from "react";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import {
@@ -40,16 +40,20 @@ interface GeneratePdfButtonProps {
   scanIds: string[];
   /**
    * The same ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
-   * ``filter[provider_groups__in]`` values currently applied via
-   * ``CrossProviderFilters`` (raw comma-separated strings straight from the
-   * URL search params). ``scanIds`` is already narrowed by these — passing
-   * them too is defense-in-depth for the edge case where ``scanIds`` ends up
-   * empty and generation would otherwise fall back to auto-selecting across
-   * every compatible provider instead of respecting an active filter.
+   * ``filter[provider_groups__in]`` / ``filter[region__in]`` values currently
+   * applied to the on-screen view (raw comma-separated strings straight from
+   * the URL search params). ``scanIds`` is already narrowed by the provider
+   * filters — passing them too is defense-in-depth for the edge case where
+   * ``scanIds`` ends up empty and generation would otherwise fall back to
+   * auto-selecting across every compatible provider instead of respecting an
+   * active filter. ``regions`` is NOT reflected in ``scanIds`` (a scan spans
+   * every region), so forwarding it is what actually scopes the PDF to the
+   * region-narrowed view the user sees.
    */
   providerTypes?: string;
   providerIds?: string;
   providerGroups?: string;
+  regions?: string;
   /**
    * A report already generated for these exact filters, resolved
    * server-side alongside the page's data fetch — ``null`` means none
@@ -119,6 +123,7 @@ export const GeneratePdfButton = ({
   providerTypes,
   providerIds,
   providerGroups,
+  regions,
   latestPdfReport,
   frameworkLabel,
   className,
@@ -161,6 +166,7 @@ export const GeneratePdfButton = ({
     providerTypes,
     providerIds,
     providerGroups,
+    regions,
   ].join("|");
 
   // The invalidation only applies to the signature it happened under; once
@@ -201,17 +207,14 @@ export const GeneratePdfButton = ({
     serverReport ?? { taskId: "" };
   const hasAvailableReport = Boolean(storeReport ?? serverReport);
 
-  // Read the live filter signature from a ref inside the async generate
-  // handler (refs are exempt from the hook dependency array and always hold
-  // the current-render value) so the store entry is tagged with the filters
-  // in effect at click time.
-  const currentSignatureRef = useRef(filterSignature);
-  currentSignatureRef.current = filterSignature;
-
   const handleGenerate = async (chosenName: string) => {
     if (isGenerating) return;
     setIsStarting(true);
-    const signature = currentSignatureRef.current;
+    // ``handleGenerate`` is redefined every render, so it already closes over
+    // this render's ``filterSignature`` — capture it up front (before any
+    // await) so the store entry is tagged with the filters in effect at click
+    // time. No ref needed.
+    const signature = filterSignature;
     // Snapshot the page URL (path + filters) now, so the watcher's "ready"
     // toast can link back here even if the user has navigated elsewhere by
     // the time generation finishes.
@@ -229,6 +232,7 @@ export const GeneratePdfButton = ({
       providerTypes,
       providerIds,
       providerGroups,
+      regions,
       // Empty → server falls back to a unique timestamped default.
       reportName: trimmedName.length > 0 ? trimmedName : undefined,
     });
@@ -280,7 +284,7 @@ export const GeneratePdfButton = ({
         // Generate button that never appears.
         removeGeneration(availableReport.taskId);
         setInvalidated({
-          signature: currentSignatureRef.current,
+          signature: filterSignature,
           taskId: availableReport.taskId,
         });
         toast({

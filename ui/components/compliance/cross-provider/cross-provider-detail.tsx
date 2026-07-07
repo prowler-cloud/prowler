@@ -16,11 +16,12 @@ interface CrossProviderDetailProps {
    *  every other provider-group filter in the app). */
   providerGroups: ProviderGroup[];
   /** Raw ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
-   *  ``filter[provider_groups__in]`` values from the URL — threaded down to
-   *  the "Generate PDF" button. */
+   *  ``filter[provider_groups__in]`` / ``filter[region__in]`` values from the
+   *  URL — threaded down to the "Generate PDF" button. */
   providerTypeFilter?: string;
   providerIdFilter?: string;
   providerGroupsFilter?: string;
+  regionFilter?: string;
   /** A previously-generated PDF matching these exact filters, resolved
    *  server-side alongside ``attributes`` — ``null`` means none exists yet
    *  (or it went stale) for the current filters, so the "Generate PDF"
@@ -44,6 +45,7 @@ export const CrossProviderDetail = ({
   providerTypeFilter,
   providerIdFilter,
   providerGroupsFilter,
+  regionFilter,
   latestPdfReport,
 }: CrossProviderDetailProps) => {
   return (
@@ -54,6 +56,7 @@ export const CrossProviderDetail = ({
       providerTypeFilter={providerTypeFilter}
       providerIdFilter={providerIdFilter}
       providerGroupsFilter={providerGroupsFilter}
+      regionFilter={regionFilter}
       latestPdfReport={latestPdfReport}
     />
   );

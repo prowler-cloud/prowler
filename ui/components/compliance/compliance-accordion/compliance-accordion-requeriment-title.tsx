@@ -43,7 +43,13 @@ export const ComplianceAccordionRequirementTitle = ({
             {type}
           </span>
         )}
-        <span className="text-text-neutral-primary truncate">{name}</span>
+        {/* ``truncate`` keeps the row single-line so the status/chips cluster
+            stays aligned, but the full name would otherwise be unreadable once
+            ellipsized (most CIS/ENS/ISO names are sentence-length). ``title``
+            surfaces it on hover/focus so nothing is lost. */}
+        <span className="text-text-neutral-primary truncate" title={name}>
+          {name}
+        </span>
         {invalidConfig && <InfoTooltip content={INVALID_CONFIG_NOTE} />}
       </div>
       {/* The accordion trigger this title lives in applies ``hover:underline``

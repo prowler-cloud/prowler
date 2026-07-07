@@ -146,6 +146,95 @@ describe("computeCrossProviderInsights", () => {
     expect(byName.Other.total).toBe(1);
   });
 
+  it("groups DORA-shaped requirements (Pillar, no Section) by Pillar — not Other", () => {
+    // DORA's universal JSON carries Pillar/Article/ArticleTitle only. The
+    // domain key must match the DORA mapper's ``categoryName`` (the Pillar)
+    // or the accordion's per-section stats lookup never hits.
+    const doraAttributes: CrossProviderComplianceOverviewAttributes = {
+      ...buildAttributes(),
+      compliance_id: "dora_2022_2554",
+      framework: "DORA",
+      name: "DORA",
+      requirements: [
+        {
+          id: "art5",
+          name: "Governance",
+          description: "",
+          attributes: {
+            Pillar: "ICT Risk Management",
+            Article: "Article 5",
+            ArticleTitle: "Governance and organisation",
+          },
+          status: "FAIL",
+          providers: { aws: "FAIL" },
+        },
+        {
+          id: "art9",
+          name: "Protection",
+          description: "",
+          attributes: {
+            Pillar: "ICT Risk Management",
+            Article: "Article 9",
+            ArticleTitle: "Protection and prevention",
+          },
+          status: "PASS",
+          providers: { aws: "PASS" },
+        },
+        {
+          id: "art17",
+          name: "Incidents",
+          description: "",
+          attributes: {
+            Pillar: "ICT Incident Management",
+            Article: "Article 17",
+            ArticleTitle: "ICT-related incident management process",
+          },
+          status: "MANUAL",
+          providers: {},
+        },
+      ],
+    };
+    const insights = computeCrossProviderInsights(doraAttributes);
+    const names = insights.domainStats.map((d) => d.name).sort();
+    expect(names).toEqual(["ICT Incident Management", "ICT Risk Management"]);
+    expect(names).not.toContain("Other");
+
+    const riskMgmt = insights.domainStats.find(
+      (d) => d.name === "ICT Risk Management",
+    );
+    expect(riskMgmt?.total).toBe(2);
+    expect(riskMgmt?.fail).toBe(1);
+    expect(riskMgmt?.pass).toBe(1);
+    expect(riskMgmt?.byProvider.aws).toBe("FAIL");
+  });
+
+  it("falls back to Other for non-string or empty Section/Pillar values", () => {
+    const weird: CrossProviderComplianceOverviewAttributes = {
+      ...buildAttributes(),
+      requirements: [
+        {
+          id: "w1",
+          name: "numeric section",
+          description: "",
+          attributes: { Section: 3 },
+          status: "PASS",
+          providers: { aws: "PASS" },
+        },
+        {
+          id: "w2",
+          name: "empty pillar",
+          description: "",
+          attributes: { Pillar: "" },
+          status: "FAIL",
+          providers: { aws: "FAIL" },
+        },
+      ],
+    };
+    const insights = computeCrossProviderInsights(weird);
+    expect(insights.domainStats.map((d) => d.name)).toEqual(["Other"]);
+    expect(insights.domainStats[0].total).toBe(2);
+  });
+
   it("rolls each domain's per-provider status with FAIL > PASS > MANUAL > NO_ROW", () => {
     const insights = computeCrossProviderInsights(buildAttributes());
     const audit = insights.domainStats.find((d) => d.name === "Audit");

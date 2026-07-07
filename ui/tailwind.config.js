@@ -98,14 +98,10 @@ module.exports = {
         collapse: "collapse 400ms linear 0s 1 normal forwards running",
       },
       keyframes: {
-        "accordion-down": {
-          from: { height: "0" },
-          to: { height: "var(--radix-accordion-content-height)" },
-        },
-        "accordion-up": {
-          from: { height: "var(--radix-accordion-content-height)" },
-          to: { height: "0" },
-        },
+        // ``accordion-down`` / ``accordion-up`` are defined once, in
+        // ``styles/globals.css`` (alongside the Tailwind 4 ``--animate-*``
+        // tokens that reference them). They used to be duplicated here but
+        // nothing referenced this copy, so it lived as a silent second source.
         "collapsible-down": {
           from: { height: "0" },
           to: { height: "var(--radix-collapsible-content-height)" },

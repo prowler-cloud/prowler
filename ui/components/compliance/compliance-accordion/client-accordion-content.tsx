@@ -15,7 +15,10 @@ import { ProviderBadgeIcon } from "@/components/icons/providers-badge/provider-b
 import { Alert, AlertDescription, Button } from "@/components/shadcn";
 import { Accordion } from "@/components/ui/accordion/Accordion";
 import { DataTable } from "@/components/ui/table";
-import { StatusFindingBadge } from "@/components/ui/table/status-finding-badge";
+import {
+  type FindingStatus,
+  StatusFindingBadge,
+} from "@/components/ui/table/status-finding-badge";
 import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
@@ -37,10 +40,12 @@ interface ClientAccordionContentProps {
   disableFindings?: boolean;
 }
 
-const toFindingStatus = (status: RequirementStatus) => {
-  // FindingStatus shares the same wire values for PASS/FAIL/MANUAL.
-  return status === "No findings" ? "MANUAL" : status;
-};
+// PASS/FAIL/MANUAL share the same wire values as FindingStatus. "No findings"
+// is NOT one of them — it means the provider's checks produced no findings at
+// all, which is neither a manual control nor a pass/fail verdict. The caller
+// renders it as a distinct neutral chip instead of coercing it into a
+// (misleading) "Manual" badge.
+const NO_FINDINGS_STATUS: RequirementStatus = "No findings";
 
 export const ClientAccordionContent = ({
   requirement,
@@ -88,6 +93,7 @@ export const ClientAccordionContent = ({
     isLoading,
     error,
     isPartial,
+    crossProviderScanMeta,
     patchTriageUpdate,
     reload,
   } = useRequirementFindings({
@@ -121,35 +127,51 @@ export const ClientAccordionContent = ({
     patchTriageUpdate(input);
   };
 
-  // Per-provider finding tallies for the cross-provider breakdown. Derived
-  // from the merged ``findings`` (mapping each row to its provider via
-  // ``scan_ids_by_provider``) so the counts always match the unified table.
+  // Per-provider finding tallies for the cross-provider breakdown.
+  //
+  // ``count`` is authoritative: it sums each of the provider's scans' real
+  // ``pagination.count`` (total findings for its checks), NOT the loaded page
+  // rows — a provider with 300 findings must read 300 here even while the
+  // table shows page 1.
+  //
+  // ``pass``/``fail`` can only be tallied from loaded rows, so they're honest
+  // only when every one of the provider's scans returned all its rows on this
+  // page (``pages <= 1``). When a provider is paginated, ``fullyLoaded`` is
+  // false and the caller renders "—" instead of a misleading partial split.
   const providerFindingStats = (() => {
     const count: Record<string, number> = {};
     const pass: Record<string, number> = {};
     const fail: Record<string, number> = {};
+    const fullyLoaded: Record<string, boolean> = {};
     if (!isCrossProvider || !scanIdsByProvider) {
-      return { count, pass, fail };
+      return { count, pass, fail, fullyLoaded };
     }
     const scanToProvider = new Map<string, string>();
     for (const [providerKey, scanIds] of Object.entries(scanIdsByProvider)) {
       count[providerKey] = 0;
       pass[providerKey] = 0;
       fail[providerKey] = 0;
+      fullyLoaded[providerKey] = true;
       if (Array.isArray(scanIds)) {
-        for (const sid of scanIds) scanToProvider.set(sid, providerKey);
+        for (const sid of scanIds) {
+          scanToProvider.set(sid, providerKey);
+          const meta = crossProviderScanMeta[sid];
+          // No meta yet (scan errored or still loading) or the scan spans
+          // multiple pages → this provider's pass/fail can't be trusted.
+          count[providerKey] += meta?.count ?? 0;
+          if (!meta || meta.pages > 1) fullyLoaded[providerKey] = false;
+        }
       }
     }
     for (const row of findings?.data ?? []) {
       const sid = row.relationships?.scan?.data?.id;
       const providerKey = sid ? scanToProvider.get(sid) : undefined;
       if (!providerKey) continue;
-      count[providerKey] += 1;
       const status = row.attributes?.status;
       if (status === "PASS") pass[providerKey] += 1;
       else if (status === "FAIL") fail[providerKey] += 1;
     }
-    return { count, pass, fail };
+    return { count, pass, fail, fullyLoaded };
   })();
 
   const renderDetails = () => {
@@ -200,6 +222,10 @@ export const ClientAccordionContent = ({
                 const findingsCount = providerFindingStats.count[providerKey];
                 const passCount = providerFindingStats.pass[providerKey] ?? 0;
                 const failCount = providerFindingStats.fail[providerKey] ?? 0;
+                // Pass/Fail is only honest when the provider's rows are fully
+                // loaded (single page per scan); otherwise it's a page sample.
+                const passFailKnown =
+                  providerFindingStats.fullyLoaded[providerKey] ?? false;
                 return (
                   <tr
                     key={providerKey}
@@ -222,15 +248,24 @@ export const ClientAccordionContent = ({
                       </div>
                     </td>
                     <td className="px-3 py-2.5 align-middle">
-                      <StatusFindingBadge
-                        status={toFindingStatus(providerStatus)}
-                      />
+                      {providerStatus === NO_FINDINGS_STATUS ? (
+                        <span
+                          className="border-text-neutral-tertiary text-text-neutral-tertiary inline-flex min-w-[38px] items-center justify-center rounded border-x border-y-0 px-0 py-0.5 text-center text-xs font-bold"
+                          title="This provider's checks produced no findings for this requirement."
+                        >
+                          No findings
+                        </span>
+                      ) : (
+                        <StatusFindingBadge
+                          status={providerStatus as FindingStatus}
+                        />
+                      )}
                     </td>
                     <td className="text-text-neutral-secondary px-3 py-2.5 text-right align-middle tabular-nums">
                       {findingsLoaded ? (findingsCount ?? 0) : "—"}
                     </td>
                     <td className="px-3 py-2.5 text-right align-middle">
-                      {findingsLoaded ? (
+                      {findingsLoaded && passFailKnown ? (
                         <span className="font-mono tabular-nums">
                           <span className="text-bg-pass">{passCount}</span>
                           <span className="text-text-neutral-secondary">
@@ -239,7 +274,16 @@ export const ClientAccordionContent = ({
                           <span className="text-bg-fail">{failCount}</span>
                         </span>
                       ) : (
-                        <span className="text-text-neutral-secondary">—</span>
+                        <span
+                          className="text-text-neutral-secondary"
+                          title={
+                            findingsLoaded
+                              ? "Findings are paginated for this provider — open its scan to see the full pass/fail split."
+                              : undefined
+                          }
+                        >
+                          —
+                        </span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 align-middle">

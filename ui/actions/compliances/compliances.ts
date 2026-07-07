@@ -297,6 +297,7 @@ export const generateCrossProviderCompliancePdf = async ({
   providerTypes,
   providerIds,
   providerGroups,
+  regions,
   onlyFailed,
   includeManual,
   reportName,
@@ -306,6 +307,7 @@ export const generateCrossProviderCompliancePdf = async ({
   providerTypes?: string | string[];
   providerIds?: string | string[];
   providerGroups?: string | string[];
+  regions?: string | string[];
   onlyFailed?: boolean;
   includeManual?: boolean;
   /** Optional user-chosen download filename. Sanitized server-side (a
@@ -333,6 +335,7 @@ export const generateCrossProviderCompliancePdf = async ({
   setParam("filter[provider_type__in]", providerTypes);
   setParam("filter[provider_id__in]", providerIds);
   setParam("filter[provider_groups__in]", providerGroups);
+  setParam("filter[region__in]", regions);
   setParam("report_name", reportName);
   if (onlyFailed !== undefined) {
     url.searchParams.set("only_failed", String(onlyFailed));
@@ -465,12 +468,14 @@ export const getLatestCrossProviderCompliancePdf = async ({
   providerTypes,
   providerIds,
   providerGroups,
+  regions,
 }: {
   complianceId: string;
   scanIds?: string[];
   providerTypes?: string | string[];
   providerIds?: string | string[];
   providerGroups?: string | string[];
+  regions?: string | string[];
 }): Promise<LatestCrossProviderPdfResult> => {
   const headers = await getAuthHeaders({ contentType: false });
 
@@ -493,6 +498,7 @@ export const getLatestCrossProviderCompliancePdf = async ({
   setParam("filter[provider_type__in]", providerTypes);
   setParam("filter[provider_id__in]", providerIds);
   setParam("filter[provider_groups__in]", providerGroups);
+  setParam("filter[region__in]", regions);
 
   try {
     const response = await fetch(url.toString(), { headers });

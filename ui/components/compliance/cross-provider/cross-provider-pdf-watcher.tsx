@@ -28,19 +28,18 @@ const RUNNING_STATES = new Set<TaskState>([
 // consecutive failures.
 const MAX_CONSECUTIVE_POLL_ERRORS = 3;
 
+// Hard ceiling on how long a single generation is polled. A task wedged in
+// ``executing`` server-side would otherwise be polled forever; after this many
+// ticks (~10 min at a 3s interval) we stop tracking it and tell the user.
+const MAX_POLL_TICKS = 200;
+
 /**
- * Single, app-wide poller for cross-provider PDF generations.
- *
- * Mounted once in the ``(prowler)`` layout so it survives navigation between
- * views. When the user clicks "Generate PDF" the button registers the task in
- * ``useCrossProviderPdfStore`` and unmounts freely; this watcher keeps polling
- * every tracked generation and fires the "ready"/"failed" toast when each one
- * settles — so the notification arrives even if the user has since switched to
- * the overview or another framework. The toast's action links back to the
- * exact page the report was generated from (where the button now offers
- * "Download PDF").
+ * Inner poller. Mounted by ``CrossProviderPdfWatcher`` ONLY while at least one
+ * generation is running, so the app-wide 3s tick exists exclusively during
+ * active generations — when everything has settled this component unmounts and
+ * the interval is torn down (rather than ticking forever over an empty set).
  */
-export const CrossProviderPdfWatcher = () => {
+const PdfGenerationPoller = () => {
   const generations = useCrossProviderPdfStore((state) => state.generations);
   const markCompleted = useCrossProviderPdfStore(
     (state) => state.markCompleted,
@@ -52,11 +51,12 @@ export const CrossProviderPdfWatcher = () => {
   const generationsRef = useRef(generations);
   generationsRef.current = generations;
 
-  // Per-task bookkeeping (in-flight tick + consecutive error count) that must
-  // NOT trigger React re-renders — a plain ref keyed by task id.
-  const pollStateRef = useRef<Map<string, { busy: boolean; errors: number }>>(
-    new Map(),
-  );
+  // Per-task bookkeeping (in-flight tick + consecutive error count + elapsed
+  // ticks) that must NOT trigger React re-renders — a plain ref keyed by task
+  // id.
+  const pollStateRef = useRef<
+    Map<string, { busy: boolean; errors: number; ticks: number }>
+  >(new Map());
 
   // A single mount-time poller (setup on mount, cleanup on unmount). It reads
   // the live generations snapshot from ``generationsRef`` and the store
@@ -80,9 +80,25 @@ export const CrossProviderPdfWatcher = () => {
       for (const generation of running) {
         let pollState = pollStateRef.current.get(generation.taskId);
         if (!pollState) {
-          pollState = { busy: false, errors: 0 };
+          pollState = { busy: false, errors: 0, ticks: 0 };
           pollStateRef.current.set(generation.taskId, pollState);
         }
+
+        // Count elapsed ticks even while a poll is in flight, then give up on a
+        // generation that has run past the ceiling — a wedged task must not be
+        // polled indefinitely.
+        pollState.ticks += 1;
+        if (pollState.ticks > MAX_POLL_TICKS) {
+          markFailed(generation.taskId);
+          toast({
+            variant: "destructive",
+            title: "PDF generation timed out",
+            description:
+              "The report is taking longer than expected. Please try generating it again.",
+          });
+          continue;
+        }
+
         // Skip a task whose previous poll (a whole-task fetch) is still in
         // flight — otherwise a slow tick could double-fire the ready toast.
         if (pollState.busy) continue;
@@ -152,4 +168,32 @@ export const CrossProviderPdfWatcher = () => {
   });
 
   return null;
+};
+
+/**
+ * Single, app-wide poller for cross-provider PDF generations.
+ *
+ * Mounted once in the ``(prowler)`` layout so it survives navigation between
+ * views. When the user clicks "Generate PDF" the button registers the task in
+ * ``useCrossProviderPdfStore`` and unmounts freely; this watcher keeps polling
+ * every tracked generation and fires the "ready"/"failed" toast when each one
+ * settles — so the notification arrives even if the user has since switched to
+ * the overview or another framework. The toast's action links back to the
+ * exact page the report was generated from (where the button now offers
+ * "Download PDF").
+ *
+ * The actual interval lives in ``PdfGenerationPoller``, mounted here only while
+ * a generation is running: instead of a bare ``useEffect`` guard inside the
+ * poller, conditional mounting means the app carries no ticking timer at all
+ * once every generation has settled.
+ */
+export const CrossProviderPdfWatcher = () => {
+  const hasRunningGeneration = useCrossProviderPdfStore((state) =>
+    Object.values(state.generations).some(
+      (generation) => generation.status === "running",
+    ),
+  );
+
+  if (!hasRunningGeneration) return null;
+  return <PdfGenerationPoller />;
 };

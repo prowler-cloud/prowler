@@ -94,32 +94,18 @@ export default async function ComplianceDetail({
     }
 
     const crossProviderTitle = compliancetitle.split("-").join(" ");
-    const [
-      crossProviderResponse,
-      providersData,
-      providerGroupsData,
-      latestPdfReport,
-    ] = await Promise.all([
-      getCrossProviderComplianceOverview({
-        complianceId,
-        providerTypes: providerTypeFilter,
-        providerIds: providerIdFilter,
-        providerGroups: providerGroupsFilter,
-        regions: regionFilter,
-      }),
-      getAllProviders(),
-      getAllProviderGroups(),
-      // Independent of the overview fetch above — the backend resolves the
-      // same "latest scan per filtered provider" rule from these same raw
-      // filters, so this can run in parallel instead of waterfalling behind
-      // the overview response just to read its resolved scan_ids.
-      getLatestCrossProviderCompliancePdf({
-        complianceId,
-        providerTypes: providerTypeFilter,
-        providerIds: providerIdFilter,
-        providerGroups: providerGroupsFilter,
-      }),
-    ]);
+    const [crossProviderResponse, providersData, providerGroupsData] =
+      await Promise.all([
+        getCrossProviderComplianceOverview({
+          complianceId,
+          providerTypes: providerTypeFilter,
+          providerIds: providerIdFilter,
+          providerGroups: providerGroupsFilter,
+          regions: regionFilter,
+        }),
+        getAllProviders(),
+        getAllProviderGroups(),
+      ]);
 
     if (!crossProviderResponse || "redirectTo" in crossProviderResponse) {
       // A 402 (payment required) resolves to ``{ redirectTo: "/billing" }`` —
@@ -181,6 +167,24 @@ export default async function ComplianceDetail({
     const compatibleProviders = (providersData?.data || []).filter((provider) =>
       compatibleProviderTypes.has(provider.attributes.provider),
     );
+
+    // Resolve the "latest PDF" check AFTER the overview, scoped to the EXACT
+    // scans the overview resolved (``attributes.scan_ids``) rather than
+    // re-deriving "latest scan per provider" from the raw filters a second
+    // time. Running them independently could offer a "Download" whose scan set
+    // differs from the displayed overview if a scan completed between the two
+    // calls. The overview aggregation dominates the wall-clock, so serializing
+    // this quick existence check behind it is a negligible cost for a
+    // guaranteed-consistent download button.
+    const latestPdfReport = await getLatestCrossProviderCompliancePdf({
+      complianceId,
+      scanIds: crossProviderData.attributes.scan_ids,
+      providerTypes: providerTypeFilter,
+      providerIds: providerIdFilter,
+      providerGroups: providerGroupsFilter,
+      regions: regionFilter,
+    });
+
     return (
       <ContentLayout title={headerTitle}>
         <CrossProviderDetail
@@ -190,6 +194,7 @@ export default async function ComplianceDetail({
           providerTypeFilter={providerTypeFilter}
           providerIdFilter={providerIdFilter}
           providerGroupsFilter={providerGroupsFilter}
+          regionFilter={regionFilter}
           latestPdfReport={
             "available" in latestPdfReport && latestPdfReport.available
               ? latestPdfReport

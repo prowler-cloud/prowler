@@ -348,6 +348,100 @@ describe("useRequirementFindings", () => {
     expect(result.current.findings?.meta?.pagination?.count).toBe(3);
   });
 
+  it("takes the worst-case page count across scans so pagination reaches every tail", async () => {
+    findingsActionsMock.getFindings.mockReset();
+    findingsActionsMock.getFindings
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "finding-a",
+            attributes: { status: "FAIL", severity: "high" },
+            relationships: { scan: { data: { id: "scan-a" } } },
+          },
+        ],
+        included: [{ type: "scans", id: "scan-a" }],
+        // AWS spans many pages…
+        meta: { pagination: { count: 30, pages: 3 } },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "finding-b",
+            attributes: { status: "PASS", severity: "low" },
+            relationships: { scan: { data: { id: "scan-b" } } },
+          },
+        ],
+        included: [{ type: "scans", id: "scan-b" }],
+        // …Azure fits in one.
+        meta: { pagination: { count: 5, pages: 1 } },
+      });
+
+    const { result } = renderHook(() =>
+      useRequirementFindings(
+        defaultOptions({
+          isCrossProvider: true,
+          scanIdsByProvider: { aws: ["scan-a"], azure: ["scan-b"] },
+          checkIdsByProvider: { aws: ["check_a"], azure: ["check_b"] },
+          scopeSignature: "scope-pages",
+        }),
+      ),
+    );
+    await flushAsync();
+
+    // The merged envelope must expose 3 pages (not the hardcoded 1) so the
+    // table's Next button stays enabled and AWS's later pages are reachable.
+    expect(result.current.findings?.meta?.pagination?.pages).toBe(3);
+    expect(result.current.findings?.meta?.pagination?.count).toBe(35);
+  });
+
+  it("globally re-sorts the merged rows by the active sort (FAIL/critical first)", async () => {
+    findingsActionsMock.getFindings.mockReset();
+    // Scan A returns a PASS/low row; scan B a FAIL/critical row. Concatenation
+    // alone would list A before B and contradict the FAIL-first sort.
+    findingsActionsMock.getFindings
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "finding-pass",
+            attributes: { status: "PASS", severity: "low" },
+            relationships: { scan: { data: { id: "scan-a" } } },
+          },
+        ],
+        included: [{ type: "scans", id: "scan-a" }],
+        meta: { pagination: { count: 1, pages: 1 } },
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            id: "finding-fail",
+            attributes: { status: "FAIL", severity: "critical" },
+            relationships: { scan: { data: { id: "scan-b" } } },
+          },
+        ],
+        included: [{ type: "scans", id: "scan-b" }],
+        meta: { pagination: { count: 1, pages: 1 } },
+      });
+
+    const { result } = renderHook(() =>
+      useRequirementFindings(
+        defaultOptions({
+          // Family A default: status,severity,-inserted_at → FAIL/critical first.
+          sort: "status,severity,-inserted_at",
+          isCrossProvider: true,
+          scanIdsByProvider: { aws: ["scan-a"], azure: ["scan-b"] },
+          checkIdsByProvider: { aws: ["check_a"], azure: ["check_b"] },
+          scopeSignature: "scope-sort",
+        }),
+      ),
+    );
+    await flushAsync();
+
+    expect(result.current.findings?.data?.map((f) => f.id)).toEqual([
+      "finding-fail",
+      "finding-pass",
+    ]);
+  });
+
   it("should not fetch in cross-provider mode when no scans contribute", async () => {
     // Given / When
     renderHook(() =>

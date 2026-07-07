@@ -131,6 +131,33 @@ describe("CrossProviderPdfWatcher", () => {
     ).toBe("failed");
   });
 
+  it("gives up on a generation wedged in a running state past the ceiling", async () => {
+    // The task never leaves ``executing`` — the watcher must eventually stop
+    // polling it instead of ticking forever.
+    getTaskMock.mockResolvedValue({
+      data: { attributes: { state: "executing" } },
+    });
+    render(<CrossProviderPdfWatcher />);
+
+    useCrossProviderPdfStore.getState().trackGeneration({
+      taskId: "task-wedged",
+      signature: "sig",
+      reportUrl: "/x",
+    });
+
+    // 200 ticks is the ceiling; advance just past it.
+    await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 201);
+
+    expect(
+      useCrossProviderPdfStore.getState().generations["task-wedged"].status,
+    ).toBe("failed");
+    const timeoutToast = toastMock.mock.calls
+      .map((call) => call[0])
+      .find((payload) => payload.title === "PDF generation timed out");
+    expect(timeoutToast).toBeTruthy();
+    expect(timeoutToast.variant).toBe("destructive");
+  });
+
   it("surfaces a terminal failure state with the task's error message", async () => {
     getTaskMock.mockResolvedValue({
       data: {

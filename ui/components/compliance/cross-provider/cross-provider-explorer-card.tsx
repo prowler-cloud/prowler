@@ -1,7 +1,7 @@
 "use client";
 
 import { Maximize2, Minimize2, X } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
@@ -20,7 +20,6 @@ import { FindingStatus } from "@/components/ui/table/status-finding-badge";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { crossProviderToMapperInput } from "@/lib/compliance/cross-provider-adapter";
 import type { CrossProviderInsights } from "@/lib/compliance/cross-provider-insights";
-import { cn } from "@/lib/utils";
 import type {
   CrossProviderComplianceOverviewAttributes,
   CrossProviderRequirement,
@@ -39,13 +38,14 @@ interface CrossProviderExplorerCardProps {
    *  click expands and scrolls to the target row. */
   forcedExpandedSectionKey?: string | null;
   /** Raw ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
-   *  ``filter[provider_groups__in]`` values currently applied via
-   *  ``CrossProviderFilters`` — threaded through to ``GeneratePdfButton``
-   *  so the generated PDF respects the same narrowing as the on-screen
-   *  view. */
+   *  ``filter[provider_groups__in]`` / ``filter[region__in]`` values currently
+   *  applied via ``CrossProviderFilters`` — threaded through to
+   *  ``GeneratePdfButton`` so the generated PDF respects the same narrowing as
+   *  the on-screen view. */
   providerTypeFilter?: string;
   providerIdFilter?: string;
   providerGroupsFilter?: string;
+  regionFilter?: string;
   /** A previously-generated PDF matching the current filters, resolved
    *  server-side — ``null`` means "Generate PDF" should show, not
    *  "Download PDF". */
@@ -85,6 +85,7 @@ export const CrossProviderExplorerCard = ({
   providerTypeFilter,
   providerIdFilter,
   providerGroupsFilter,
+  regionFilter,
   latestPdfReport,
 }: CrossProviderExplorerCardProps) => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -98,8 +99,10 @@ export const CrossProviderExplorerCard = ({
   // Filtered attributes drive both the match counter and the accordion
   // content. The unfiltered ``insights`` continue to feed the heatmap
   // matrix per section so global counts stay stable while the user
-  // narrows their search.
-  const filteredAttributes = (() => {
+  // narrows their search. Memoised so opening/closing a section (a state
+  // change unrelated to the filter inputs) doesn't re-scan every
+  // requirement.
+  const filteredAttributes = useMemo(() => {
     const lowerTerm = searchTerm.trim().toLowerCase();
     if (lowerTerm === "" && statusFilters.length === 0) {
       return attributes;
@@ -113,7 +116,7 @@ export const CrossProviderExplorerCard = ({
       return haystack.includes(lowerTerm);
     });
     return { ...attributes, requirements: filteredRequirements };
-  })();
+  }, [attributes, searchTerm, statusFilters]);
 
   const matchCount = filteredAttributes.requirements.length;
   const totalCount = attributes.requirements.length;
@@ -122,8 +125,11 @@ export const CrossProviderExplorerCard = ({
   // Frameworks / categories / requirements derived from the mapper. We
   // run this against the *filtered* attribute set so the list shrinks
   // as the user types — sections with no surviving requirements
-  // disappear entirely instead of expanding to an empty body.
-  const { sections, allSectionKeys, statsByName } = (() => {
+  // disappear entirely instead of expanding to an empty body. Memoised
+  // because ``mapComplianceData`` re-iterates every requirement; without
+  // it, every accordion open/close (a frequent interaction) would
+  // re-derive the whole tree.
+  const { sections, allSectionKeys, statsByName } = useMemo(() => {
     const mapper = getComplianceMapper(filteredAttributes.framework);
     const { attributesData, requirementsData } =
       crossProviderToMapperInput(filteredAttributes);
@@ -150,7 +156,7 @@ export const CrossProviderExplorerCard = ({
       allSectionKeys: allSections.map((s) => s.key),
       statsByName: stats,
     };
-  })();
+  }, [filteredAttributes, insights.domainStats]);
 
   const expandedKeys = (() => {
     if (allSectionsOpen) return allSectionKeys;
@@ -224,6 +230,7 @@ export const CrossProviderExplorerCard = ({
               providerTypes={providerTypeFilter}
               providerIds={providerIdFilter}
               providerGroups={providerGroupsFilter}
+              regions={regionFilter}
               latestPdfReport={latestPdfReport}
               frameworkLabel={
                 attributes.name ||
@@ -292,13 +299,7 @@ export const CrossProviderExplorerCard = ({
                   value={section.key}
                   className="px-3"
                 >
-                  <AccordionTrigger
-                    className={cn(
-                      "py-3",
-                      forcedExpandedSectionKey === section.key &&
-                        "data-[flash=1]:bg-bg-fail/10",
-                    )}
-                  >
+                  <AccordionTrigger className="py-3">
                     {stats ? (
                       <CrossProviderDomainTitle
                         name={section.categoryName}
@@ -344,9 +345,14 @@ const SectionRequirements = ({
   if (requirements.length === 0) return null;
   return (
     <Accordion type="multiple" className="flex flex-col">
-      {requirements.map((requirement, idx) => {
+      {requirements.map((requirement) => {
         const xprov = requirement as CrossProviderRequirement;
-        const itemKey = `${sectionKey}-req-${idx}`;
+        // Key off the requirement's stable name (it embeds the unique
+        // framework requirement id, e.g. "AAC-01 - …") rather than the array
+        // index: with an index key, filtering the list would hand an
+        // already-open row's expansion state to whatever requirement slid into
+        // that position.
+        const itemKey = `${sectionKey}-req-${requirement.name}`;
         return (
           <AccordionItem
             key={itemKey}

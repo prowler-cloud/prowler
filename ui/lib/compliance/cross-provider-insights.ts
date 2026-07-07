@@ -120,9 +120,11 @@ export const computeCrossProviderInsights = (
   const providerFail = new Map<string, number>();
   const providerTotal = new Map<string, number>();
 
-  // Domain accumulators are keyed by section name. We only know the
-  // section once we read ``req.attributes.Section`` — fall back to a
-  // generic bucket so requirements without the field still surface
+  // Domain accumulators are keyed by domain name. The key must match the
+  // ``categoryName`` each framework's mapper derives (the accordion looks up
+  // these stats by that name): CSA-CCM and CIS-Controls group by
+  // ``attributes.Section``, DORA by ``attributes.Pillar``. Fall back to a
+  // generic bucket so requirements without either field still surface
   // somewhere instead of silently dropping out.
   const domainAcc = new Map<
     string,
@@ -136,8 +138,12 @@ export const computeCrossProviderInsights = (
   >();
 
   for (const req of requirements) {
+    const attrs = req.attributes as
+      | { Section?: unknown; Pillar?: unknown }
+      | undefined;
+    const rawDomain = attrs?.Section ?? attrs?.Pillar;
     const section =
-      (req.attributes as { Section?: string } | undefined)?.Section || "Other";
+      typeof rawDomain === "string" && rawDomain !== "" ? rawDomain : "Other";
     let domain = domainAcc.get(section);
     if (!domain) {
       domain = {

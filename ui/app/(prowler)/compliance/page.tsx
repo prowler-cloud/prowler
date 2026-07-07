@@ -53,6 +53,13 @@ export default async function Compliance({
   const activeTab = crossProviderEnabled
     ? getCompliancePageTab(resolvedSearchParams.tab)
     : COMPLIANCE_PAGE_TAB.PER_SCAN;
+  // The tab is server-controlled and switching tabs is a real navigation
+  // (``CompliancePageTabs`` pushes ``?tab=`` and waits for the re-render), so
+  // pre-building the inactive tab buys no instant-switch — it just doubles the
+  // work. Build only the active tab's payload; the other is fetched on demand
+  // when the user navigates to it.
+  const isPerScanTab = activeTab === COMPLIANCE_PAGE_TAB.PER_SCAN;
+  const isCrossProviderTab = activeTab === COMPLIANCE_PAGE_TAB.CROSS_PROVIDER;
 
   const scansData = await getScans({
     filters: {
@@ -135,18 +142,22 @@ export default async function Compliance({
       }
     : undefined;
 
-  const metadataInfoData = selectedScanId
-    ? await getComplianceOverviewMetadataInfo({
-        filters: {
-          "filter[scan_id]": selectedScanId,
-        },
-      })
-    : { data: { attributes: { regions: [] } } };
+  // ``metadataInfo`` (region filter options) and ``threatScore`` feed only the
+  // Per Scan tab UI — skip both fetches entirely when the Cross-Provider tab is
+  // active so it doesn't pay for per-scan data it never renders.
+  const metadataInfoData =
+    isPerScanTab && selectedScanId
+      ? await getComplianceOverviewMetadataInfo({
+          filters: {
+            "filter[scan_id]": selectedScanId,
+          },
+        })
+      : { data: { attributes: { regions: [] } } };
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
   let threatScoreData = null;
-  if (selectedScanId && typeof selectedScanId === "string") {
+  if (isPerScanTab && selectedScanId && typeof selectedScanId === "string") {
     const threatScoreResponse = await getThreatScore({
       filters: { "filter[scan_id]": selectedScanId },
     });
@@ -160,7 +171,7 @@ export default async function Compliance({
     }
   }
 
-  const perScanContent = selectedScanId ? (
+  const perScanContent = !isPerScanTab ? null : selectedScanId ? (
     <>
       <div className="mb-6">
         <ComplianceFilters
@@ -203,20 +214,23 @@ export default async function Compliance({
     <NoScansAvailable />
   );
 
-  // Only build (and thus fetch) the cross-provider grid in Cloud. In OSS the
-  // tab is disabled, so there is no content to render and no endpoint to hit.
-  const crossProviderContent = crossProviderEnabled ? (
-    <Suspense
-      key={`cross-provider-${searchParamsKey}`}
-      fallback={
-        <ComplianceOverviewPanel>
-          <ComplianceSkeletonGrid />
-        </ComplianceOverviewPanel>
-      }
-    >
-      <SSRCrossProviderGrid searchParams={resolvedSearchParams} />
-    </Suspense>
-  ) : null;
+  // Only build (and thus fetch) the cross-provider grid in Cloud AND only when
+  // its tab is active. In OSS the tab is disabled; on the Per Scan tab it isn't
+  // rendered, so there is no content to build and no aggregation endpoint to
+  // hit until the user actually navigates to Cross-Provider.
+  const crossProviderContent =
+    crossProviderEnabled && isCrossProviderTab ? (
+      <Suspense
+        key={`cross-provider-${searchParamsKey}`}
+        fallback={
+          <ComplianceOverviewPanel>
+            <ComplianceSkeletonGrid />
+          </ComplianceOverviewPanel>
+        }
+      >
+        <SSRCrossProviderGrid searchParams={resolvedSearchParams} />
+      </Suspense>
+    ) : null;
 
   return (
     <ContentLayout

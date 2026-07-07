@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import type { LatestCrossProviderPdfReport } from "@/actions/compliances";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { computeCrossProviderInsights } from "@/lib/compliance/cross-provider-insights";
 import type { CrossProviderComplianceOverviewAttributes } from "@/types/compliance";
 import type { ProviderGroup } from "@/types/components";
@@ -17,12 +18,13 @@ interface CrossProviderDetailClientProps {
   providers: ProviderProps[];
   providerGroups: ProviderGroup[];
   /** Raw ``filter[provider_type__in]`` / ``filter[provider_id__in]`` /
-   *  ``filter[provider_groups__in]`` values from the URL — threaded down to
-   *  the "Generate PDF" button so it respects the same narrowing as this
-   *  already-filtered ``attributes`` payload. */
+   *  ``filter[provider_groups__in]`` / ``filter[region__in]`` values from the
+   *  URL — threaded down to the "Generate PDF" button so it respects the same
+   *  narrowing as this already-filtered ``attributes`` payload. */
   providerTypeFilter?: string;
   providerIdFilter?: string;
   providerGroupsFilter?: string;
+  regionFilter?: string;
   latestPdfReport: LatestCrossProviderPdfReport | null;
 }
 
@@ -52,9 +54,16 @@ export const CrossProviderDetailClient = ({
   providerTypeFilter,
   providerIdFilter,
   providerGroupsFilter,
+  regionFilter,
   latestPdfReport,
 }: CrossProviderDetailClientProps) => {
-  const insights = computeCrossProviderInsights(attributes);
+  // Derived once per payload — ``computeCrossProviderInsights`` iterates every
+  // requirement, so recomputing it on each anchor-scroll state change would be
+  // wasteful.
+  const insights = useMemo(
+    () => computeCrossProviderInsights(attributes),
+    [attributes],
+  );
 
   const accordionContainerRef = useRef<HTMLDivElement>(null);
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,12 +72,11 @@ export const CrossProviderDetailClient = ({
   >(null);
 
   // Clear any pending flash timer on unmount so its callback never runs
-  // against a detached anchor node.
-  useEffect(() => {
-    return () => {
-      if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
-    };
-  }, []);
+  // against a detached anchor node. ``useMountEffect`` is the project-approved
+  // wrapper for a mount/unmount lifecycle (never a bare ``useEffect``).
+  useMountEffect(() => () => {
+    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current);
+  });
 
   const handleDomainSelect = (domainName: string) => {
     // Setting the forced key expands the target section. Selecting a domain
@@ -119,6 +127,7 @@ export const CrossProviderDetailClient = ({
           providerTypeFilter={providerTypeFilter}
           providerIdFilter={providerIdFilter}
           providerGroupsFilter={providerGroupsFilter}
+          regionFilter={regionFilter}
           latestPdfReport={latestPdfReport}
         />
       </div>
