@@ -1044,10 +1044,10 @@ class TestStaleCleanupProtectionHelpers:
 class TestGenerateThreatscoreReportFunction:
     """Test suite for generate_threatscore_report function."""
 
-    @patch("tasks.jobs.reports.base.initialize_prowler_provider")
+    @patch("tasks.jobs.reports.base.build_provider_metadata")
     def test_generate_threatscore_report_exception_handling(
         self,
-        mock_initialize_provider,
+        mock_build_provider_metadata,
         tenants_fixture,
         scans_fixture,
         providers_fixture,
@@ -1057,7 +1057,7 @@ class TestGenerateThreatscoreReportFunction:
         scan = scans_fixture[0]
         provider = providers_fixture[0]
 
-        mock_initialize_provider.side_effect = Exception("Test exception")
+        mock_build_provider_metadata.side_effect = Exception("Test exception")
 
         with pytest.raises(Exception) as exc_info:
             generate_threatscore_report(
@@ -1167,7 +1167,6 @@ class TestGenerateComplianceReportsOptimized:
         assert result["cis"] == {"upload": False, "path": ""}
         mock_cis.assert_not_called()
 
-    @patch("api.utils.initialize_prowler_provider")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
@@ -1194,7 +1193,6 @@ class TestGenerateComplianceReportsOptimized:
         mock_cis,
         mock_upload_to_s3,
         mock_rmtree,
-        mock_init_provider,
     ):
         """After each framework finishes, exclusive entries are evicted.
 
@@ -1223,7 +1221,6 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
         mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
-        mock_init_provider.return_value = Mock(name="prowler_provider")
 
         # Seed the cache as if both frameworks had already loaded their
         # findings. We mutate it indirectly: each generator wrapper is a
@@ -1266,7 +1263,7 @@ class TestGenerateComplianceReportsOptimized:
             "shared must remain in cache because ENS still needs it"
         )
 
-    @patch("tasks.jobs.report.initialize_prowler_provider")
+    @patch("tasks.jobs.report.build_provider_metadata")
     @patch("tasks.jobs.report.rmtree")
     @patch("tasks.jobs.report._upload_to_s3")
     @patch("tasks.jobs.report.generate_cis_report")
@@ -1279,7 +1276,7 @@ class TestGenerateComplianceReportsOptimized:
     @patch("tasks.jobs.report.Compliance.get_bulk")
     @patch("tasks.jobs.report.Provider.objects.get")
     @patch("tasks.jobs.report.ScanSummary.objects.filter")
-    def test_prowler_provider_initialized_once(
+    def test_provider_metadata_built_once(
         self,
         mock_scan_summary_filter,
         mock_provider_get,
@@ -1293,11 +1290,11 @@ class TestGenerateComplianceReportsOptimized:
         mock_cis,
         mock_upload_to_s3,
         mock_rmtree,
-        mock_init_provider,
+        mock_build_metadata,
     ):
-        """``initialize_prowler_provider`` must be called exactly once for
-        the whole batch (PROWLER-1733). Previously each generator re-init'd
-        the SDK provider in ``_load_compliance_data`` → 5 inits per scan.
+        """``build_provider_metadata`` must be called exactly once for the
+        whole batch and its result shared across all 5 reports
+        (PROWLER-1733 / PROWLER-2145).
         """
         mock_scan_summary_filter.return_value.exists.return_value = True
         mock_provider_get.return_value = Mock(uid="provider-uid", provider="aws")
@@ -1306,7 +1303,7 @@ class TestGenerateComplianceReportsOptimized:
         mock_aggregate_stats.return_value = {}
         mock_generate_output_dir.return_value = "/tmp/tenant/scan/x/prowler-out"
         mock_upload_to_s3.return_value = "s3://bucket/tenant/scan/x/report.pdf"
-        mock_init_provider.return_value = Mock(name="prowler_provider")
+        mock_build_metadata.return_value = Mock(name="prowler_provider")
 
         generate_compliance_reports(
             tenant_id=str(uuid.uuid4()),
@@ -1325,14 +1322,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_nis2.assert_called_once()
         mock_csa.assert_called_once()
         mock_cis.assert_called_once()
-        # …but the SDK provider was initialized only once.
-        assert mock_init_provider.call_count == 1, (
-            f"expected 1 init, got {mock_init_provider.call_count} "
+        # …but the provider metadata stub was built only once.
+        assert mock_build_metadata.call_count == 1, (
+            f"expected 1 build, got {mock_build_metadata.call_count} "
             f"(prowler_provider must be shared across reports)"
         )
 
         # The shared instance must reach every wrapper as kwargs.
-        shared = mock_init_provider.return_value
+        shared = mock_build_metadata.return_value
         for mock_wrapper in (
             mock_threatscore,
             mock_ens,

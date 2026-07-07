@@ -258,6 +258,7 @@ export function LighthouseV2ConfigurationForm({
               >
                 <CredentialFields
                   errors={form.formState.errors}
+                  hasStoredCredentials={hasConfiguration}
                   provider={providerType}
                   register={form.register}
                 />
