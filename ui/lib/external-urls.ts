@@ -11,6 +11,8 @@ export const DOCS_URLS = {
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
+  SCAN_CONFIGURATION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
 } as const;

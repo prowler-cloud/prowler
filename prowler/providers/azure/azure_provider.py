@@ -350,7 +350,7 @@ class AzureProvider(Provider):
 
     @property
     def resource_groups(self) -> dict[str, list[str]]:
-        """Mapping of subscription name to the list of resource groups to scan within it."""
+        """Mapping of subscription ID to the list of resource groups to scan within it."""
         return self._resource_groups
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
@@ -1120,6 +1120,19 @@ class AzureProvider(Provider):
         return set(chain.from_iterable(locations.values()))
 
     def validate_resource_groups(self, resource_groups: list) -> dict[str, list[str]]:
+        """Validate requested resource groups across Azure subscriptions.
+
+        Args:
+            resource_groups: Resource group names requested for scanning.
+
+        Returns:
+            A mapping of subscription IDs to the matching resource group names.
+
+        The matching is case-insensitive and resolved independently for each
+        subscription. If a subscription's resource groups cannot be queried, a
+        warning is logged and that subscription keeps an empty resource group
+        list so the remaining subscriptions can still be validated.
+        """
         resource_groups = [r.strip() for r in resource_groups if r and r.strip()]
         if not resource_groups:
             return {}
@@ -1140,10 +1153,11 @@ class AzureProvider(Provider):
                 existing_rgs = {
                     rg.name.lower(): rg.name for rg in rg_client.resource_groups.list()
                 }
-            except Exception as e:
+            except Exception as error:
                 logger.warning(
                     f"Could not list resource groups for subscription '{display_name}' "
-                    f"({subscription_id}): {e}. Skipping resource group filtering for this subscription."
+                    f"({subscription_id}): {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}. "
+                    "Skipping resource group filtering for this subscription."
                 )
                 continue
 

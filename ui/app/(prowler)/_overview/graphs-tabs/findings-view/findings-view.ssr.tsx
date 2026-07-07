@@ -1,7 +1,6 @@
 "use server";
 
 import { getLatestFindings } from "@/actions/findings/findings";
-import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";
@@ -62,7 +61,6 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
 
   return (
     <div className="flex w-full flex-col">
-      <LighthouseBanner />
       <DataTable
         key={`dashboard-findings-${Date.now()}`}
         columns={ColumnLatestFindings}

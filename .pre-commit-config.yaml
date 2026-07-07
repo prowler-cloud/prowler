@@ -72,13 +72,13 @@ repos:
         exclude: contrib
         priority: 30
 
-  ## PYTHON — SDK (prowler/, tests/, dashboard/, util/, scripts/)
+  ## PYTHON — SDK (prowler/, tests/, dashboard/, util/, scripts/, docs/scripts/)
   - repo: https://github.com/myint/autoflake
     rev: v2.3.3
     hooks:
       - id: autoflake
         name: "SDK - autoflake"
-        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts,docs/scripts}/**/*.py"] }
         args: ["--in-place", "--remove-all-unused-imports", "--remove-unused-variable"]
         priority: 20
 
@@ -87,7 +87,7 @@ repos:
     hooks:
       - id: isort
         name: "SDK - isort"
-        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts,docs/scripts}/**/*.py"] }
         args: ["--profile", "black"]
         stages: ["pre-commit"]
         priority: 20
@@ -97,7 +97,7 @@ repos:
     hooks:
       - id: black
         name: "SDK - black"
-        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts,docs/scripts}/**/*.py"] }
         priority: 20
 
   - repo: https://github.com/pycqa/flake8
@@ -105,7 +105,7 @@ repos:
     hooks:
       - id: flake8
         name: "SDK - flake8"
-        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts,docs/scripts}/**/*.py"] }
         args: ["--ignore=E266,W503,E203,E501,W605"]
         priority: 30
 
@@ -140,6 +140,14 @@ repos:
         entry: uv run --project ./mcp_server ruff format
         language: system
         files: { glob: ["mcp_server/**/*.py"] }
+        priority: 20
+
+      - id: generate-provider-cards
+        name: "Docs - regenerate provider cards snippet"
+        entry: python docs/scripts/generate_provider_cards.py
+        language: system
+        files: { glob: ["docs/user-guide/providers/**/getting-started-*.mdx", "docs/scripts/generate_provider_cards.py", "docs/snippets/provider-cards.mdx", "api/src/backend/api/models.py"] }
+        pass_filenames: false
         priority: 20
 
   ## PYTHON — uv (API + SDK)
@@ -183,7 +191,7 @@ repos:
         entry: pylint --disable=W,C,R,E -j 0 -rn -sn
         language: system
         types: [python]
-        files: { glob: ["{prowler,tests,dashboard,util,scripts}/**/*.py"] }
+        files: { glob: ["{prowler,tests,dashboard,util,scripts,docs/scripts}/**/*.py"] }
         priority: 30
 
       - id: trufflehog

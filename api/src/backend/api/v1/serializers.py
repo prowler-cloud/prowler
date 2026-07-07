@@ -2,6 +2,7 @@ import base64
 import json
 from datetime import UTC, datetime, timedelta
 
+import yaml
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -1530,6 +1531,32 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
+KUBERNETES_KUBECONFIG_EXEC_ERROR = (
+    "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud "
+    "for security reasons."
+)
+KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
+
+
+def kubeconfig_contains_exec_auth(kubeconfig: dict) -> bool:
+    users = kubeconfig.get("users", [])
+    if not isinstance(users, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+    for user_entry in users:
+        if not isinstance(user_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        user = user_entry.get("user", {})
+        if not isinstance(user, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if "exec" in user:
+            return True
+
+    return False
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
@@ -1710,6 +1737,22 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    def validate_kubeconfig_content(self, kubeconfig_content):
+        try:
+            kubeconfig = yaml.safe_load(kubeconfig_content)
+        except yaml.YAMLError as exc:
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_INVALID_ERROR
+            ) from exc
+
+        if not isinstance(kubeconfig, dict):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if kubeconfig_contains_exec_auth(kubeconfig):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_EXEC_ERROR)
+
+        return kubeconfig_content
 
     class Meta:
         resource_name = "provider-secrets"

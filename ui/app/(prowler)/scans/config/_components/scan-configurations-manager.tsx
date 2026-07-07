@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Info, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -13,7 +13,9 @@ import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { Button, Card } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { useToast } from "@/components/ui";
+import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DataTable } from "@/components/ui/table";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { ProviderProps } from "@/types/providers";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
@@ -148,6 +150,19 @@ export function ScanConfigurationsManager({
 
   return (
     <>
+      <div className="text-text-neutral-secondary mb-6 flex max-w-3xl items-start gap-2 text-sm">
+        <Info className="mt-0.5 size-4 shrink-0" />
+        <p>
+          By default, every provider uses Prowler&apos;s built-in configuration
+          baseline. Create a Scan Configuration to override specific values and
+          attach it to the providers that should use it. Learn more{" "}
+          <CustomLink size="sm" href={DOCS_URLS.SCAN_CONFIGURATION}>
+            here
+          </CustomLink>
+          .
+        </p>
+      </div>
+
       <div className="mb-6">
         <BatchFiltersLayout
           testIdPrefix="scan-configuration"
