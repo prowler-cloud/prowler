@@ -152,14 +152,6 @@ export const AddRoleForm = ({
           isRequired
         />
 
-        {unlimitedVisibilityField && (
-          <UnlimitedVisibilityField
-            isSelected={!!form.watch("unlimited_visibility")}
-            isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
-            onValueChange={setUnlimitedVisibility}
-          />
-        )}
-
         <div className="flex flex-col gap-4">
           <span className="text-lg font-semibold">Admin Permissions</span>
 
@@ -213,48 +205,58 @@ export const AddRoleForm = ({
             )}
           </div>
         </div>
+
         <Divider className="my-4" />
 
-        {!unlimitedVisibility && (
-          <div className="flex flex-col gap-4">
-            <span className="text-lg font-semibold">
-              Groups and Account Visibility
-            </span>
+        <div className="flex flex-col gap-4">
+          <span className="text-lg font-semibold">Visibility</span>
 
-            <p className="text-small text-default-700 font-medium">
-              Select the groups this role will have access to. If no groups are
-              selected and unlimited visibility is not enabled, the role will
-              not have access to any accounts.
-            </p>
-
-            <Controller
-              name="groups"
-              control={form.control}
-              render={({ field }) => (
-                <div className="flex flex-col gap-2">
-                  <EnhancedMultiSelect
-                    options={groups.map((group) => ({
-                      label: group.name,
-                      value: group.id,
-                    }))}
-                    onValueChange={field.onChange}
-                    defaultValue={field.value || []}
-                    placeholder="Select groups"
-                    searchable={true}
-                    hideSelectAll={true}
-                    emptyIndicator="No results found"
-                    resetOnDefaultValueChange={true}
-                  />
-                </div>
-              )}
+          {unlimitedVisibilityField && (
+            <UnlimitedVisibilityField
+              isSelected={!!form.watch("unlimited_visibility")}
+              isDisabled={isUnlimitedVisibilityRequiredByManageProviders}
+              onValueChange={setUnlimitedVisibility}
             />
-            {form.formState.errors.groups && (
-              <p className="mt-2 text-sm text-red-600">
-                {form.formState.errors.groups.message}
+          )}
+
+          {!unlimitedVisibility && (
+            <>
+              <p className="text-small text-default-700 font-medium">
+                Select the groups this role will have access to. If no groups
+                are selected and unlimited visibility is not enabled, the role
+                will not have access to any accounts.
               </p>
-            )}
-          </div>
-        )}
+
+              <Controller
+                name="groups"
+                control={form.control}
+                render={({ field }) => (
+                  <div className="flex flex-col gap-2">
+                    <EnhancedMultiSelect
+                      options={groups.map((group) => ({
+                        label: group.name,
+                        value: group.id,
+                      }))}
+                      onValueChange={field.onChange}
+                      defaultValue={field.value || []}
+                      placeholder="Select groups"
+                      searchable={true}
+                      hideSelectAll={true}
+                      emptyIndicator="No results found"
+                      resetOnDefaultValueChange={true}
+                    />
+                  </div>
+                )}
+              />
+
+              {form.formState.errors.groups && (
+                <p className="mt-2 text-sm text-red-600">
+                  {form.formState.errors.groups.message}
+                </p>
+              )}
+            </>
+          )}
+        </div>
         <FormButtons
           submitText="Add Role"
           isDisabled={isLoading}

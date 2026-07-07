@@ -118,34 +118,76 @@ describe("AddRoleForm", () => {
     expect(routerMocks.push).toHaveBeenCalledWith("/roles");
   });
 
-  it("explains Unlimited Visibility independently from admin permissions", () => {
+  it("shows a subtle inline Unlimited Visibility description", () => {
     // Given / When
     render(<AddRoleForm groups={[]} />);
 
     // Then
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "Unlimited Visibility" }),
-    ).toBeInTheDocument();
+      screen.getByText(/tenant-wide visibility setting/i),
+    ).toHaveTextContent(
+      /grants visibility into every provider, account, resource, finding, scan, and compliance result.*required to use the Jira integration/i,
+    );
     expect(
-      screen.getByText(
-        /grants visibility into every provider, account, resource, finding, scan, and compliance result/i,
-      ),
-    ).toBeInTheDocument();
+      screen.getByText(/required to use the Jira integration/i),
+    ).toHaveProperty("tagName", "STRONG");
     expect(
-      screen.getByText(
+      screen.queryByRole("heading", { name: "Unlimited Visibility" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(
         /does not grant admin actions such as managing users, providers, scans, integrations, billing, or alerts/i,
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.queryByText(
         /enable it only for roles that need tenant-wide security visibility/i,
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.queryByText(
         /manage providers enables unlimited visibility in this form because provider administration needs tenant-wide provider-group context/i,
       ),
+    ).not.toBeInTheDocument();
+
+    const visibilityHeading = screen.getByText("Visibility");
+    const unlimitedVisibilityCheckbox = screen.getByRole("checkbox", {
+      name: "Enable Unlimited Visibility for this role",
+    });
+
+    expect(
+      visibilityHeading.compareDocumentPosition(unlimitedVisibilityCheckbox) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("keeps the Visibility section and hides only groups when Unlimited Visibility is enabled", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<AddRoleForm groups={[{ id: "group-1", name: "Production" }]} />);
+
+    // When
+    await user.click(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    );
+
+    // Then
+    expect(screen.getByText("Visibility")).toBeInTheDocument();
+    expect(
+      screen.getByRole("checkbox", {
+        name: "Enable Unlimited Visibility for this role",
+      }),
+    ).toBeChecked();
+    expect(
+      screen.getByText(/tenant-wide visibility setting/i),
     ).toBeInTheDocument();
+    expect(screen.queryByTestId("group-select")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText(/select the groups this role will have access to/i),
+    ).not.toBeInTheDocument();
   });
 
   it("enables Unlimited Visibility when Manage Providers is selected", async () => {
@@ -165,10 +207,10 @@ describe("AddRoleForm", () => {
       }),
     ).toBeChecked();
     expect(
-      screen.getByText(
+      screen.queryByText(
         /Manage Providers is selected, so Unlimited Visibility stays enabled in this form/i,
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
   });
 
   it("enables Unlimited Visibility through Manage Providers when granting all admin permissions", async () => {
@@ -245,7 +287,7 @@ describe("AddRoleForm", () => {
     ).toBeChecked();
   });
 
-  it("does not describe clearing Manage Providers as removing explicitly enabled Unlimited Visibility", async () => {
+  it("does not show extra Manage Providers guidance for explicitly enabled Unlimited Visibility", async () => {
     // Given
     const user = userEvent.setup();
     render(<AddRoleForm groups={[]} />);
@@ -262,10 +304,10 @@ describe("AddRoleForm", () => {
 
     // Then
     expect(
-      screen.getByText(
+      screen.queryByText(
         /Manage Providers is selected, so Unlimited Visibility stays enabled in this form/i,
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(/remove this automatic visibility grant/i),
     ).not.toBeInTheDocument();
