@@ -3,7 +3,21 @@ from prowler.providers.stackit.services.iaas.iaas_client import iaas_client
 
 
 class iaas_server_public_ip_attached(Check):
+    """
+    Check if IaaS servers have public IP addresses directly attached.
+
+    This check verifies that servers do not have a public IP address
+    directly attached to their network interfaces, which would expose
+    them to inbound traffic from the internet.
+    """
+
     def execute(self):
+        """
+        Execute the check for all servers in the StackIT project.
+
+        Returns:
+            list: A list of CheckReportStackIT findings
+        """
         findings = []
 
         for server in iaas_client.servers:
