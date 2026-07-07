@@ -48,6 +48,13 @@ def mock_generate_regional_clients(provider, service):
     return {AWS_REGION_US_EAST_1: regional_client}
 
 
+def mock_generate_regional_clients_without_ec2(provider, service):
+    if service == "ec2":
+        return None
+
+    return mock_generate_regional_clients(provider, service)
+
+
 @patch(
     "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
     new=mock_generate_regional_clients,
@@ -99,6 +106,19 @@ class Test_DLM_Service:
         aws_provider = set_mocked_aws_provider()
         dlm = DLM(aws_provider)
         assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: True}
+
+
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients_without_ec2,
+)
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+class Test_DLM_Service_Without_EC2_Regional_Clients:
+    def test_service_handles_missing_ec2_regional_clients(self):
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
+
+        assert dlm.regions_with_snapshots == {}
 
 
 class FakeEC2RegionalClient:

@@ -6,8 +6,16 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🐞 Fixed
 
-- `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
+- Azure `postgresql_flexible_server_log_retention_days_greater_3` check now queries the `logfiles.retention_days` configuration parameter instead of `log_retention_days` (which only exists on the retired Single Server), fixing false `FAIL` results on every Flexible Server regardless of the actual retention value [(#11761)](https://github.com/prowler-cloud/prowler/pull/11761)
 - `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11850)](https://github.com/prowler-cloud/prowler/pull/11850)
+
+---
+
+## [5.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
 
 ---
 

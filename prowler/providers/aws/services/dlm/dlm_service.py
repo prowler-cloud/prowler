@@ -11,9 +11,10 @@ class DLM(AWSService):
         self.lifecycle_policies = {}
         self.regions_with_snapshots = {}
         self.__threading_call__(self._get_lifecycle_policies)
+        ec2_regional_clients = provider.generate_regional_clients("ec2") or {}
         self.__threading_call__(
             self._get_regions_with_snapshots,
-            iterator=provider.generate_regional_clients("ec2").values(),
+            iterator=ec2_regional_clients.values(),
         )
 
     def _get_lifecycle_policy_arn_template(self, region):

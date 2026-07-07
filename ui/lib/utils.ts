@@ -28,3 +28,39 @@ export function getOptionalText(value: unknown): string | undefined {
     ? value
     : undefined;
 }
+
+interface IncludedApiItemRelationshipRef {
+  id: string;
+}
+
+interface IncludedApiItemRelationship {
+  data?: IncludedApiItemRelationshipRef;
+}
+
+interface IncludedApiItem {
+  id: string;
+  type: string;
+  attributes?: Record<string, unknown>;
+  relationships?: Record<string, IncludedApiItemRelationship>;
+}
+
+// Indexes a JSON:API `included` array by id for the requested resource type.
+export function createDict<T extends IncludedApiItem = IncludedApiItem>(
+  type: string,
+  data: { included?: unknown[] } | null | undefined,
+): Record<string, T> {
+  const includedField = data?.included?.filter(
+    (item): item is T =>
+      typeof item === "object" &&
+      item !== null &&
+      (item as IncludedApiItem).type === type,
+  );
+
+  if (!includedField || includedField.length === 0) {
+    return {};
+  }
+
+  return Object.fromEntries(
+    includedField.map((item): [string, T] => [item.id, item]),
+  );
+}
