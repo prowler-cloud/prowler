@@ -2,8 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { logOut } from "@/actions/auth";
-import { deleteTenant } from "@/actions/users/tenants";
+import { deleteTenantThenSignOut } from "@/actions/users/tenants";
 
 import { DeleteTenantForm } from "./delete-tenant-form";
 
@@ -18,12 +17,9 @@ vi.mock("@/auth.config", () => ({
 
 vi.mock("@/actions/users/tenants", () => ({
   deleteTenant: vi.fn(),
+  deleteTenantThenSignOut: vi.fn(),
   switchTenant: vi.fn(),
   switchThenDeleteTenant: vi.fn(),
-}));
-
-vi.mock("@/actions/auth", () => ({
-  logOut: vi.fn(),
 }));
 
 const mockToast = vi.fn();
@@ -111,9 +107,14 @@ describe("DeleteTenantForm", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("last-tenant submit enables with name only, then deletes and signs out", async () => {
+  it("last-tenant submit enables with name only and calls the delete-and-sign-out action", async () => {
     const user = userEvent.setup();
-    vi.mocked(deleteTenant).mockResolvedValue({ success: true });
+    // The action redirects server-side on success, so the promise never
+    // resolves with a value in the real flow; a NEXT_REDIRECT rejection is
+    // the closest observable behavior.
+    vi.mocked(deleteTenantThenSignOut).mockRejectedValue({
+      digest: "NEXT_REDIRECT;replace;/sign-in;303;",
+    });
 
     render(
       <DeleteTenantForm
@@ -136,14 +137,19 @@ describe("DeleteTenantForm", () => {
     await user.click(submitBtn);
 
     await waitFor(() => {
-      expect(deleteTenant).toHaveBeenCalled();
-      expect(logOut).toHaveBeenCalled();
+      expect(deleteTenantThenSignOut).toHaveBeenCalled();
     });
+    // A redirect is not a failure: no error toast
+    expect(mockToast).not.toHaveBeenCalledWith(
+      expect.objectContaining({ variant: "destructive" }),
+    );
   });
 
-  it("last-tenant submit does not sign out when delete fails", async () => {
+  it("last-tenant submit shows error and re-enables when delete fails", async () => {
     const user = userEvent.setup();
-    vi.mocked(deleteTenant).mockResolvedValue({ error: "Delete failed" });
+    vi.mocked(deleteTenantThenSignOut).mockResolvedValue({
+      error: "Delete failed",
+    });
 
     render(
       <DeleteTenantForm
@@ -161,11 +167,43 @@ describe("DeleteTenantForm", () => {
     await user.click(screen.getByRole("button", { name: /delete/i }));
 
     await waitFor(() => {
-      expect(deleteTenant).toHaveBeenCalled();
+      expect(mockToast).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: "destructive",
+          description: "Delete failed",
+        }),
+      );
+    });
+    // Submitting state is reset so the user is not stuck on a disabled button
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled();
+  });
+
+  it("last-tenant submit recovers when the action call itself fails", async () => {
+    const user = userEvent.setup();
+    vi.mocked(deleteTenantThenSignOut).mockRejectedValue(
+      new Error("network error"),
+    );
+
+    render(
+      <DeleteTenantForm
+        {...baseProps}
+        isActiveTenant={true}
+        isLastTenant={true}
+        availableTenants={[]}
+      />,
+    );
+
+    await user.type(
+      screen.getByPlaceholderText("My Organization"),
+      "My Organization",
+    );
+    await user.click(screen.getByRole("button", { name: /delete/i }));
+
+    await waitFor(() => {
       expect(mockToast).toHaveBeenCalledWith(
         expect.objectContaining({ variant: "destructive" }),
       );
     });
-    expect(logOut).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: /delete/i })).toBeEnabled();
   });
 });

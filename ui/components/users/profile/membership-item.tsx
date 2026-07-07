@@ -65,7 +65,7 @@ export const MembershipItem = ({
         title="Delete organization"
         description={
           isLastTenant
-            ? "This will permanently delete the organization and all its data. Since it is your only organization, your user account will also be removed and your session will be closed. This action cannot be undone."
+            ? "This will permanently delete the organization and all its data. This action cannot be undone."
             : "This will permanently delete the organization and all its data. Users with no other organizations will lose access. This action cannot be undone."
         }
       >

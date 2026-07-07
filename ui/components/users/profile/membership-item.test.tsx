@@ -15,11 +15,8 @@ vi.mock("@/actions/users/tenants", () => ({
   switchTenant: vi.fn(),
   updateTenantName: vi.fn(),
   deleteTenant: vi.fn(),
+  deleteTenantThenSignOut: vi.fn(),
   switchThenDeleteTenant: vi.fn(),
-}));
-
-vi.mock("@/actions/auth", () => ({
-  logOut: vi.fn(),
 }));
 
 vi.mock("@/components/ui", () => ({

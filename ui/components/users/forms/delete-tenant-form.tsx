@@ -10,8 +10,11 @@ import {
   useState,
 } from "react";
 
-import { logOut } from "@/actions/auth";
-import { deleteTenant, switchThenDeleteTenant } from "@/actions/users/tenants";
+import {
+  deleteTenant,
+  deleteTenantThenSignOut,
+  switchThenDeleteTenant,
+} from "@/actions/users/tenants";
 import { Input } from "@/components/shadcn/input/input";
 import {
   Select,
@@ -77,27 +80,39 @@ export const DeleteTenantForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deleteState]);
 
-  // Handle last-tenant delete: the tenant is deleted with the current token
-  // (still valid at request time) and the session is closed right after,
-  // since the API also removes users whose only tenant was the deleted one.
+  // Handle last-tenant delete: a single server action deletes the tenant and
+  // closes the session, since the API also removes users whose only tenant
+  // was the deleted one. On success it redirects to /sign-in server-side.
   const handleLastTenantDelete = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const formData = new FormData(e.currentTarget);
-    const result = await deleteTenant(null, formData);
 
-    if ("success" in result) {
-      toast({
-        title: "Organization deleted",
-        description: "Your account has been removed. Closing the session.",
-      });
-      await logOut();
-    } else {
+    try {
+      const result = await deleteTenantThenSignOut(null, formData);
+      if (result && "error" in result) {
+        toast({
+          variant: "destructive",
+          title: "Oops! Something went wrong",
+          description: result.error,
+        });
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      // The action redirects by throwing NEXT_REDIRECT — never a failure.
+      if (
+        error &&
+        typeof error === "object" &&
+        "digest" in error &&
+        String(error.digest).startsWith("NEXT_REDIRECT")
+      ) {
+        return;
+      }
       toast({
         variant: "destructive",
         title: "Oops! Something went wrong",
-        description: result.error,
+        description: "The organization could not be deleted. Please try again.",
       });
       setIsSubmitting(false);
     }
