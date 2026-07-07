@@ -46,35 +46,59 @@ interface ChatEmptyStateProps {
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
   footer?: ReactNode;
+  // Side-panel variant: smaller logo and static (non-animated) copy — the
+  // decrypt animation reflows multi-line text in narrow widths.
+  compact?: boolean;
 }
 
 export function ChatEmptyState({
   onInputChange,
   footer,
+  compact = false,
   ...composerPanelProps
 }: ChatEmptyStateProps) {
   return (
     <div className="flex min-h-0 flex-1 items-center justify-center px-4 py-10 md:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col items-center gap-5">
-        <LighthouseIconWithAura className="size-20" />
+        <LighthouseIconWithAura className={compact ? "size-12" : "size-20"} />
         <div className="space-y-2 text-center">
-          <h1 className="text-text-neutral-primary text-3xl font-semibold">
-            <DecryptedText
-              text="Find and remediate which actually matters."
-              animateOn="view"
-              sequential
-              speed={40}
-              encryptedClassName="text-text-neutral-tertiary"
-            />
+          <h1
+            className={
+              compact
+                ? "text-text-neutral-primary text-lg font-semibold"
+                : "text-text-neutral-primary text-3xl font-semibold"
+            }
+          >
+            {compact ? (
+              "Find and remediate which actually matters."
+            ) : (
+              <DecryptedText
+                text="Find and remediate which actually matters."
+                animateOn="view"
+                sequential
+                speed={40}
+                encryptedClassName="text-text-neutral-tertiary"
+              />
+            )}
           </h1>
-          <p className="text-text-neutral-secondary text-base italic">
-            <DecryptedText
-              text="What do you want to know today?"
-              animateOn="view"
-              sequential
-              speed={40}
-              encryptedClassName="text-text-neutral-tertiary"
-            />
+          <p
+            className={
+              compact
+                ? "text-text-neutral-secondary text-sm italic"
+                : "text-text-neutral-secondary text-base italic"
+            }
+          >
+            {compact ? (
+              "What do you want to know today?"
+            ) : (
+              <DecryptedText
+                text="What do you want to know today?"
+                animateOn="view"
+                sequential
+                speed={40}
+                encryptedClassName="text-text-neutral-tertiary"
+              />
+            )}
           </p>
         </div>
         <div className="w-full max-w-4xl">

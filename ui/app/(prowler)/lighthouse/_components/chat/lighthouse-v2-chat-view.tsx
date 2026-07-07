@@ -195,7 +195,11 @@ export function LighthouseV2ChatView({
       </div>
     </div>
   ) : (
-    <ChatEmptyState {...composerPanelProps} footer={emptyStateFooter} />
+    <ChatEmptyState
+      {...composerPanelProps}
+      footer={emptyStateFooter}
+      compact={surface === LIGHTHOUSE_CHAT_SURFACE.PANEL}
+    />
   );
 
   if (surface === LIGHTHOUSE_CHAT_SURFACE.PAGE) {

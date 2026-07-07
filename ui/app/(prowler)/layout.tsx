@@ -83,8 +83,12 @@ export default async function RootLayout({
       </head>
       <body
         suppressHydrationWarning
+        // @container: fallback query container for everything outside <main>
+        // (sidebar, portaled modals/drawers, the side panel). The body spans
+        // the viewport, so their container-query breakpoints keep classic
+        // viewport semantics; content inside <main> queries <main> instead.
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-background @container min-h-screen font-sans antialiased",
           fontSans.variable,
         )}
       >
@@ -106,8 +110,9 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
-          {/* Cloud-only: OSS ships no side-panel markup at all. */}
-          {isCloud() && <GlobalSidePanel />}
+          {/* Always mounted: it hosts the detail (finding/resource) views in
+              every deployment; the AI tab inside is cloud-gated on its own. */}
+          <GlobalSidePanel />
           <Toaster />
         </Providers>
       </body>

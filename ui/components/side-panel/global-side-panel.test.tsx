@@ -8,7 +8,13 @@ import { GlobalSidePanel } from "./global-side-panel";
 
 const { isCloudMock } = vi.hoisted(() => ({ isCloudMock: vi.fn(() => true) }));
 
+const navigationMocks = vi.hoisted(() => ({ pathname: "/findings" }));
+
 vi.mock("@/lib/shared/env", () => ({ isCloud: isCloudMock }));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => navigationMocks.pathname,
+}));
 
 // The AI tab's real content pulls in the whole chat (server actions,
 // streamdown); the shell test only cares that the registry's content mounts.
@@ -24,11 +30,14 @@ vi.mock(
 describe("GlobalSidePanel", () => {
   beforeEach(() => {
     isCloudMock.mockReturnValue(true);
+    navigationMocks.pathname = "/findings";
     localStorage.clear();
     useSidePanelStore.setState({
       isOpen: false,
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
       hasBeenOpened: false,
+      contextTab: null,
+      contextOutlet: null,
     });
   });
 
@@ -113,7 +122,7 @@ describe("GlobalSidePanel", () => {
     expect(useSidePanelStore.getState().isOpen).toBe(false);
   });
 
-  it("renders nothing when no tab is available (OSS)", () => {
+  it("renders nothing in OSS while no detail view is registered", () => {
     // Given
     isCloudMock.mockReturnValue(false);
 
@@ -121,6 +130,70 @@ describe("GlobalSidePanel", () => {
     const { container } = render(<GlobalSidePanel />);
 
     // Then
+    expect(container).toBeEmptyDOMElement();
+  });
+
+  it("hosts a registered detail view in OSS, without the AI tab", () => {
+    // Given
+    isCloudMock.mockReturnValue(false);
+    render(<GlobalSidePanel />);
+
+    // When: a detail view registers its context tab
+    act(() =>
+      useSidePanelStore.getState().registerContextTab({
+        label: "Details",
+        onRequestClose: vi.fn(),
+      }),
+    );
+
+    // Then: the panel appears with only the Details surface (no tab strip)
+    expect(screen.getByTestId("global-side-panel")).toHaveClass(
+      "translate-x-0",
+    );
+    expect(screen.getByText("Details")).toBeInTheDocument();
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(screen.getByTestId("side-panel-context-outlet")).toBeInTheDocument();
+  });
+
+  it("shows Details and Lighthouse AI as switchable tabs in cloud", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<GlobalSidePanel />);
+    act(() =>
+      useSidePanelStore.getState().registerContextTab({
+        label: "Details",
+        onRequestClose: vi.fn(),
+      }),
+    );
+
+    // Then: the context tab opens selected, beside the AI tab
+    const detailsTab = screen.getByRole("tab", { name: "Details" });
+    expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(screen.getByTestId("side-panel-context-outlet")).toBeVisible();
+
+    // When: switching to the AI tab
+    await user.click(screen.getByRole("tab", { name: "Lighthouse AI" }));
+
+    // Then: the chat mounts and the detail outlet stays mounted, hidden
+    expect(await screen.findByTestId("panel-chat-content")).toBeInTheDocument();
+    expect(screen.getByTestId("side-panel-context-outlet")).not.toBeVisible();
+
+    // When: switching back
+    await user.click(screen.getByRole("tab", { name: "Details" }));
+
+    // Then
+    expect(screen.getByTestId("side-panel-context-outlet")).toBeVisible();
+  });
+
+  it("does not exist on the full-page chat route (one place or the other)", () => {
+    // Given: the user is on the agentic chat page with the panel open
+    navigationMocks.pathname = "/lighthouse";
+    useSidePanelStore.setState({ isOpen: true, hasBeenOpened: true });
+
+    // When
+    const { container } = render(<GlobalSidePanel />);
+
+    // Then: no panel DOM at all — the chat lives in the page there
     expect(container).toBeEmptyDOMElement();
   });
 });

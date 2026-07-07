@@ -1,37 +1,68 @@
 "use client";
 
 import { X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
-import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import {
+  SidePanel,
+  SidePanelBody,
+  SidePanelHeader,
+  SidePanelResizeHandle,
+} from "@/components/shadcn/side-panel/side-panel";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
+import { SIDE_PANEL_PUSH_MEDIA_QUERY } from "@/lib/ui-layout";
 import { cn } from "@/lib/utils";
-import { useSidePanelStore } from "@/store/side-panel";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 import { getVisibleSidePanelTabs } from "./side-panel-tabs";
 
-// Non-modal overlay panel (PostHog-style): no backdrop, the page stays
-// interactive while it is open. z-40 is deliberately below vaul's z-50 so the
-// Findings/Resources detail drawers stack over it.
+const isLighthouseRoute = (pathname: string | null) =>
+  Boolean(pathname?.startsWith(LIGHTHOUSE_ROUTE.CHAT));
+
+// Non-modal push panel (PostHog-style): no backdrop, MainLayout shifts the
+// page by the panel width so everything stays reachable. It hosts the fixed
+// registry tabs (Lighthouse AI, cloud-only) plus one dynamic "context" tab
+// that detail views (finding/resource) register and portal their content into
+// — one single panel for every right-hand surface. On the full-page chat
+// route the panel does not exist at all: the chat lives in one place or the
+// other, never both.
 export function GlobalSidePanel() {
+  const pathname = usePathname();
   const isOpen = useSidePanelStore((state) => state.isOpen);
   const selectedTab = useSidePanelStore((state) => state.selectedTab);
   const hasBeenOpened = useSidePanelStore((state) => state.hasBeenOpened);
+  const contextTab = useSidePanelStore((state) => state.contextTab);
+  const width = useSidePanelStore((state) => state.width);
+  const isResizing = useSidePanelStore((state) => state.isResizing);
   const openPanel = useSidePanelStore((state) => state.openPanel);
   const closePanel = useSidePanelStore((state) => state.closePanel);
+  // Below `sm` the panel overlays full-width; the resizable px width and the
+  // push margin only make sense from `sm` up.
+  const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
 
   useMountEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       // Radix overlays (modals, popovers) preventDefault their own Escape.
       if (event.defaultPrevented) return;
+      // The full-page chat owns its route: no panel there (read the live URL,
+      // the mount closure would keep a stale pathname).
+      if (isLighthouseRoute(window.location.pathname)) return;
+      const store = useSidePanelStore.getState();
       if ((event.metaKey || event.ctrlKey) && event.key === ".") {
+        // Nothing to show in OSS without a detail view registered.
+        if (getVisibleSidePanelTabs().length === 0 && !store.contextTab) {
+          return;
+        }
         event.preventDefault();
-        useSidePanelStore.getState().togglePanel();
+        store.togglePanel();
         return;
       }
-      if (event.key === "Escape" && useSidePanelStore.getState().isOpen) {
-        useSidePanelStore.getState().closePanel();
+      if (event.key === "Escape" && store.isOpen) {
+        store.closePanel();
       }
     };
 
@@ -39,39 +70,67 @@ export function GlobalSidePanel() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   });
 
-  const visibleTabs = getVisibleSidePanelTabs();
-  if (visibleTabs.length === 0) return null;
+  const registryTabs = getVisibleSidePanelTabs();
+  if (isLighthouseRoute(pathname)) return null;
+  if (registryTabs.length === 0 && !contextTab) return null;
 
-  // The persisted tab can point at a tab that is not available in this
-  // deployment; fall back to the first visible one.
-  const activeTab =
-    visibleTabs.find((tab) => tab.id === selectedTab) ?? visibleTabs[0];
-  const ActiveIcon = activeTab.Icon;
-  const ActiveContent = activeTab.Content;
+  // The persisted tab can point at a tab that is not available here; fall
+  // back to the context tab first (it was registered on purpose), then to the
+  // first registry tab.
+  const activeRegistryTab =
+    registryTabs.find((tab) => tab.id === selectedTab) ?? registryTabs[0];
+  const isContextSelected =
+    Boolean(contextTab) &&
+    (selectedTab === SIDE_PANEL_TAB.CONTEXT || !activeRegistryTab);
+  const tabCount = registryTabs.length + (contextTab ? 1 : 0);
+
+  const handleResize = (clientX: number) => {
+    // Right-anchored panel: dragging the left edge sets width to the distance
+    // between the pointer and the right viewport edge.
+    useSidePanelStore.getState().setWidth(window.innerWidth - clientX);
+  };
 
   return (
-    <aside
-      role="complementary"
+    <SidePanel
+      open={isOpen}
       aria-label="Side panel"
       data-testid="global-side-panel"
-      inert={!isOpen}
-      className={cn(
-        "border-border-neutral-secondary bg-bg-neutral-secondary fixed inset-y-0 right-0 z-40 flex w-full flex-col border-l shadow-xl transition-transform duration-200 sm:w-[420px] xl:w-[480px]",
-        isOpen ? "translate-x-0" : "translate-x-full",
-      )}
+      className={cn("w-full", isResizing && "transition-none")}
+      style={{ width: isPushViewport ? width : undefined }}
     >
-      <div className="border-border-neutral-secondary flex items-center gap-1 border-b px-3 py-2">
-        {visibleTabs.length > 1 ? (
+      {isPushViewport ? (
+        <SidePanelResizeHandle
+          onResize={handleResize}
+          onResizeStart={() => useSidePanelStore.getState().setIsResizing(true)}
+          onResizeEnd={() => useSidePanelStore.getState().setIsResizing(false)}
+        />
+      ) : null}
+      <SidePanelHeader>
+        {tabCount > 1 ? (
           <div role="tablist" className="flex items-center gap-1">
-            {visibleTabs.map((tab) => {
+            {contextTab ? (
+              <Button
+                type="button"
+                role="tab"
+                aria-selected={isContextSelected}
+                variant={isContextSelected ? "outline" : "ghost"}
+                size="sm"
+                onClick={() => openPanel(SIDE_PANEL_TAB.CONTEXT)}
+              >
+                {contextTab.label}
+              </Button>
+            ) : null}
+            {registryTabs.map((tab) => {
               const TabIcon = tab.Icon;
+              const isSelected =
+                !isContextSelected && tab.id === activeRegistryTab?.id;
               return (
                 <Button
                   key={tab.id}
                   type="button"
                   role="tab"
-                  aria-selected={tab.id === activeTab.id}
-                  variant={tab.id === activeTab.id ? "outline" : "ghost"}
+                  aria-selected={isSelected}
+                  variant={isSelected ? "outline" : "ghost"}
                   size="sm"
                   onClick={() => openPanel(tab.id)}
                 >
@@ -82,10 +141,10 @@ export function GlobalSidePanel() {
             })}
           </div>
         ) : (
-          <div className="text-text-neutral-primary flex items-center gap-2 text-sm font-medium">
-            <ActiveIcon className="size-4" />
-            {activeTab.label}
-          </div>
+          <SinglePanelLabel
+            contextLabel={contextTab?.label}
+            registryTab={activeRegistryTab}
+          />
         )}
         <Button
           type="button"
@@ -97,27 +156,59 @@ export function GlobalSidePanel() {
         >
           <X />
         </Button>
-      </div>
-      {/* Content stays mounted after the first open so scroll position and
-          composer drafts survive closes. [contain:layout] traps streamdown's
-          fixed fullscreen overlay inside the panel (same trap as the page). */}
-      <div className="relative min-h-0 flex-1 [contain:layout]">
-        {hasBeenOpened ? (
-          <Suspense fallback={<SidePanelLoadingFallback />}>
-            <ActiveContent />
+      </SidePanelHeader>
+      {/* Portal target for the registered detail view. Always rendered while
+          the panel exists so the owner can portal in as soon as it registers;
+          the native hidden attribute keeps it out of the way otherwise. */}
+      <SidePanelBody
+        ref={(element) =>
+          useSidePanelStore.getState().setContextOutlet(element)
+        }
+        hidden={!isContextSelected}
+        data-testid="side-panel-context-outlet"
+        className="overflow-hidden p-6 pt-4"
+      />
+      {/* Registry (AI) content stays mounted after the first open so scroll
+          position and composer drafts survive closes. [contain:layout] traps
+          streamdown's fixed fullscreen overlay inside the panel. */}
+      <SidePanelBody
+        hidden={isContextSelected || !activeRegistryTab}
+        className="[contain:layout]"
+      >
+        {hasBeenOpened && activeRegistryTab ? (
+          // The fallback is the tab's own 1:1 skeleton, so the moment the
+          // lazy bundle downloads nothing visually jumps.
+          <Suspense fallback={<activeRegistryTab.Fallback />}>
+            <activeRegistryTab.Content />
           </Suspense>
         ) : null}
-      </div>
-    </aside>
+      </SidePanelBody>
+    </SidePanel>
   );
 }
 
-function SidePanelLoadingFallback() {
+interface SinglePanelLabelProps {
+  contextLabel?: string;
+  registryTab?: ReturnType<typeof getVisibleSidePanelTabs>[number];
+}
+
+function SinglePanelLabel({
+  contextLabel,
+  registryTab,
+}: SinglePanelLabelProps) {
+  if (contextLabel) {
+    return (
+      <div className="text-text-neutral-primary flex items-center gap-2 text-sm font-medium">
+        {contextLabel}
+      </div>
+    );
+  }
+  if (!registryTab) return null;
+  const Icon = registryTab.Icon;
   return (
-    <div className="flex h-full flex-col gap-4 p-4">
-      <Skeleton className="h-8 w-1/2" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-8 w-2/3" />
+    <div className="text-text-neutral-primary flex items-center gap-2 text-sm font-medium">
+      <Icon className="size-4" />
+      {registryTab.label}
     </div>
   );
 }

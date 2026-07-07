@@ -1,6 +1,5 @@
 "use client";
 
-import { History, Maximize2, Plus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -23,17 +22,6 @@ import {
 import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseIconWithAura } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/shadcn/popover";
-import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
@@ -45,6 +33,7 @@ import {
   LIGHTHOUSE_CHAT_SURFACE,
   LighthouseV2ChatView,
 } from "../chat/lighthouse-v2-chat-view";
+import { LighthousePanelChatSkeleton } from "./lighthouse-panel-chat-skeleton";
 
 const PANEL_CHAT_STATUS = {
   LOADING: "loading",
@@ -108,7 +97,7 @@ export function LighthousePanelChat() {
   });
 
   if (state.status === PANEL_CHAT_STATUS.LOADING) {
-    return <PanelChatSkeleton />;
+    return <LighthousePanelChatSkeleton />;
   }
   if (state.status === PANEL_CHAT_STATUS.ERROR) {
     return (
@@ -176,7 +165,6 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
   return (
     <LighthouseChatStoreProvider store={store}>
       <div className="flex h-full min-h-0 flex-col">
-        <PanelChatToolbar sessions={sessions} />
         <div className="min-h-0 flex-1">
           <LighthouseV2ChatView
             surface={LIGHTHOUSE_CHAT_SURFACE.PANEL}
@@ -194,76 +182,6 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
         </div>
       </div>
     </LighthouseChatStoreProvider>
-  );
-}
-
-function PanelChatToolbar({ sessions }: { sessions: LighthouseV2Session[] }) {
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const isOnNewChat = useLighthouseChatStore(
-    (state) => state.activeSessionId === null && state.messages.length === 0,
-  );
-  const resetToNewChat = useLighthouseChatStore(
-    (state) => state.resetToNewChat,
-  );
-
-  return (
-    <div className="border-border-neutral-secondary flex items-center justify-end gap-1 border-b px-2 py-1.5">
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon-sm"
-            aria-label="New chat"
-            disabled={isOnNewChat}
-            onClick={resetToNewChat}
-          >
-            <Plus />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>New chat</TooltipContent>
-      </Tooltip>
-      <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
-        <Tooltip delayDuration={100}>
-          <TooltipTrigger asChild>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon-sm"
-                aria-label="Chat history"
-              >
-                <History />
-              </Button>
-            </PopoverTrigger>
-          </TooltipTrigger>
-          <TooltipContent>Chat history</TooltipContent>
-        </Tooltip>
-        <PopoverContent align="end" className="w-80 p-3">
-          <div className="flex max-h-80 flex-col">
-            <PanelChatSessions
-              sessions={sessions}
-              onAfterSelect={() => setHistoryOpen(false)}
-            />
-          </div>
-        </PopoverContent>
-      </Popover>
-      <Tooltip delayDuration={100}>
-        <TooltipTrigger asChild>
-          <Button
-            asChild
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Open Lighthouse AI full page"
-          >
-            <Link href={LIGHTHOUSE_ROUTE.CHAT}>
-              <Maximize2 />
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>Open full page</TooltipContent>
-      </Tooltip>
-    </div>
   );
 }
 
@@ -319,22 +237,6 @@ function PanelChatSessions({
       }}
       onArchiveSession={(sessionId) => void handleArchiveSession(sessionId)}
     />
-  );
-}
-
-function PanelChatSkeleton() {
-  return (
-    <div
-      aria-label="Loading Lighthouse AI"
-      className="flex h-full flex-col gap-4 p-4"
-    >
-      <Skeleton className="h-8 w-1/2" />
-      <Skeleton className="h-24 w-full" />
-      <Skeleton className="h-8 w-2/3" />
-      <div className="mt-auto">
-        <Skeleton className="h-20 w-full" />
-      </div>
-    </div>
   );
 }
 

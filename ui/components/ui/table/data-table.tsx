@@ -266,6 +266,7 @@ export function DataTable<TData, TValue>({
     >
       {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
+      {/* Table Toolbar */}
       {showToolbar && (
         <div
           data-testid="data-table-toolbar"
@@ -285,7 +286,7 @@ export function DataTable<TData, TValue>({
           </div>
           <div
             data-testid="data-table-toolbar-right"
-            className="flex w-full flex-col items-start gap-2 md:ml-auto md:w-auto md:flex-row md:items-center md:gap-4"
+            className="flex w-full flex-wrap items-center gap-x-4 gap-y-2 md:ml-auto md:w-auto"
           >
             {toolbarRightContent}
             {metadata && (
