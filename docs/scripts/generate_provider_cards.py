@@ -12,6 +12,7 @@ whenever a provider page or the API enum changes.
 
 from __future__ import annotations
 
+import ast
 import re
 import sys
 from pathlib import Path
@@ -41,15 +42,11 @@ ICON_OVERRIDES = {
     "iac": "code",
     "image": "docker",
     "kubernetes": "dharmachakra",
-    "linode": "linode",
-    "llm": "brain",
     "microsoft365": "briefcase",
     "mongodbatlas": "leaf",
     "oci": "database",
     "okta": "key",
     "openstack": "cubes",
-    "scaleway": "microchip",
-    "stackit": "layer-group",
     "vercel": "triangle",
 }
 DEFAULT_ICON = "cloud"
@@ -58,21 +55,33 @@ TITLE_RE = re.compile(r"^\s*title\s*:\s*['\"](?P<title>.+?)['\"]\s*$", re.MULTIL
 NAME_CLEANUP_RE = re.compile(
     r"^Getting Started [Ww]ith (?:the )?(?P<name>.+?)(?: on Prowler)?(?: Provider)?$"
 )
-PROVIDER_CHOICES_BLOCK_RE = re.compile(
-    r"class\s+ProviderChoices\b.*?(?=\n\s*(?:class\s|@staticmethod\b|def\s))",
-    re.DOTALL,
-)
-PROVIDER_ENUM_ENTRY_RE = re.compile(r'^\s*[A-Z][A-Z0-9_]*\s*=\s*"([a-z0-9]+)"', re.MULTILINE)
 
 
 def app_supported_provider_keys() -> set[str]:
-    text = API_MODELS_PATH.read_text(encoding="utf-8")
-    block = PROVIDER_CHOICES_BLOCK_RE.search(text)
-    if not block:
-        raise RuntimeError(
-            f"Could not locate ProviderChoices class in {API_MODELS_PATH.relative_to(REPO_ROOT)}"
-        )
-    return set(PROVIDER_ENUM_ENTRY_RE.findall(block.group(0)))
+    """Return the set of provider keys declared in the API's ProviderChoices enum.
+
+    Uses ast rather than regex so formatting changes, decorators, comments, or
+    multi-line values in the enum body don't silently drop or invent providers.
+    """
+    tree = ast.parse(API_MODELS_PATH.read_text(encoding="utf-8"))
+    for node in ast.walk(tree):
+        if not (isinstance(node, ast.ClassDef) and node.name == "ProviderChoices"):
+            continue
+        keys: set[str] = set()
+        for item in node.body:
+            if not isinstance(item, ast.Assign):
+                continue
+            value = item.value
+            # Django TextChoices members look like: NAME = "key", _("Label")
+            # which parses as an ast.Tuple whose first element is the key.
+            if isinstance(value, ast.Tuple) and value.elts:
+                first = value.elts[0]
+                if isinstance(first, ast.Constant) and isinstance(first.value, str):
+                    keys.add(first.value)
+        return keys
+    raise RuntimeError(
+        f"Could not locate ProviderChoices class in {API_MODELS_PATH.relative_to(REPO_ROOT)}"
+    )
 
 
 def extract_title(mdx_path: Path) -> str:
@@ -97,7 +106,7 @@ def collect_providers() -> list[dict]:
         api_key = DOCS_DIR_TO_API_KEY.get(provider_dir.name, provider_dir.name)
         if api_key not in supported:
             continue
-        pages = list(provider_dir.glob("getting-started-*.mdx"))
+        pages = sorted(provider_dir.glob("getting-started-*.mdx"))
         if not pages:
             continue
         page = pages[0]
@@ -136,7 +145,9 @@ def main() -> int:
     if new_content == current:
         return 0
     SNIPPET_PATH.write_text(new_content, encoding="utf-8")
-    print(f"Regenerated {SNIPPET_PATH.relative_to(REPO_ROOT)} ({len(providers)} providers)")
+    print(
+        f"Regenerated {SNIPPET_PATH.relative_to(REPO_ROOT)} ({len(providers)} providers)"
+    )
     return 1  # signal pre-commit that the file changed
 
 
