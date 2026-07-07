@@ -2960,7 +2960,24 @@ class TestProviderSecretViewSet:
                 Provider.ProviderChoices.KUBERNETES.value,
                 ProviderSecret.TypeChoices.STATIC,
                 {
-                    "kubeconfig_content": "kubeconfig-content",
+                    "kubeconfig_content": """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      token: test-token
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+""",
                 },
             ),
             # M365 client secret credentials

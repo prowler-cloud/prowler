@@ -20,6 +20,10 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 - Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
 
+### 🔐 Security
+
+- Kubernetes provider credential forms now reject kubeconfigs using `exec` authentication in Prowler Cloud before submission [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
 ---
 
 ## [1.32.0] (Prowler v5.32.0)
