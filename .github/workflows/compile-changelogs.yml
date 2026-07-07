@@ -123,6 +123,10 @@ jobs:
             grep -m1 -E '^## \[v?[0-9]+\.[0-9]+\.[0-9]+\]' "$1/CHANGELOG.md" | sed -E 's/^## \[v?([0-9]+\.[0-9]+\.[0-9]+)\].*/\1/'
           }
 
+          has_removed_fragments() {
+            echo "$1" | grep -qE '\.removed(\.[0-9]+)?\.md$'
+          }
+
           # Resolve every component's effective version before compiling
           # anything, so a wrong input cannot leave the tree half-compiled.
           # Empty input = auto-derive (latest released version + semver bump
@@ -149,11 +153,25 @@ jobs:
               continue
             fi
 
+            removed_fragments=false
+            if has_removed_fragments "$fragments"; then
+              removed_fragments=true
+            fi
+            current=""
+            if [ "$removed_fragments" = "true" ]; then
+              current=$(latest_released_version "$component")
+              if [ -z "$current" ]; then
+                echo "::error::${component}: could not read the latest released version from ${component}/CHANGELOG.md; provide its version input explicitly after restoring the released heading"
+                errors=1
+                continue
+              fi
+            fi
+
             if [ -n "$input" ]; then
               effective="$input"
               mode="explicit"
             else
-              if echo "$fragments" | grep -qE '\.removed(\.[0-9]+)?\.md$'; then
+              if [ "$removed_fragments" = "true" ]; then
                 echo "::error::${component}: pending 'removed' fragments imply a major bump (breaking change); provide its version input explicitly"
                 errors=1
                 continue
@@ -172,6 +190,16 @@ jobs:
               fi
               mode="auto"
               echo "::notice::${component}: version auto-derived ${current} -> ${effective} from the pending fragment types"
+            fi
+
+            if [ "$removed_fragments" = "true" ]; then
+              IFS=. read -r current_major _ <<< "$current"
+              IFS=. read -r effective_major effective_minor effective_patch <<< "$effective"
+              if [ "$effective_major" -le "$current_major" ] || [ "$effective_minor" -ne 0 ] || [ "$effective_patch" -ne 0 ]; then
+                echo "::error::${component}: removed fragments require a major component release (${current} -> X.0.0 with X > ${current_major}); got ${effective}"
+                errors=1
+                continue
+              fi
             fi
 
             # Without the marker the build would insert the new block above the

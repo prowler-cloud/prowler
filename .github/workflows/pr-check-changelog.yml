@@ -55,6 +55,7 @@ jobs:
           files: |
             .github/scripts/changelog_attribution.py
             .github/workflows/pr-check-changelog.yml
+            .github/workflows/compile-changelogs.yml
             .github/towncrier/template.md.jinja
             */towncrier.toml
             tests/github/**
@@ -112,24 +113,21 @@ jobs:
         id: check-folders
         run: |
           fragment_name_re='^[A-Za-z0-9][A-Za-z0-9._-]*\.(added|changed|deprecated|removed|fixed|security)(\.[0-9]+)?\.md$'
+          manual_pr_link_re='(\[\(#[0-9]+\)\]|\[#[0-9]+\]\(|\(#[0-9]+\)|github\.com/prowler-cloud/prowler/(pull|issues)/[0-9]+)'
 
           missing_fragments=""
           invalid_fragments=""
           linked_fragments=""
+          handwritten_changelogs=""
 
           all_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n')
           added=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" | tr ' ' '\n')
           added_or_modified=$(printf '%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES}" | tr ' ' '\n')
 
-          # Returns success if the folder has a valid fragment added/modified, or
-          # (transition mode, to be removed after the migration grace period) a
-          # direct CHANGELOG.md edit.
+          # Returns success if the folder has a valid fragment added or modified.
           has_changelog_update() {
             local folder="$1"
             if echo "$added_or_modified" | grep "^${folder}/changelog.d/" | sed "s|^${folder}/changelog.d/||" | grep -qE "$fragment_name_re"; then
-              return 0
-            fi
-            if echo "$all_changed" | grep -q "^${folder}/CHANGELOG.md$"; then
               return 0
             fi
             return 1
@@ -138,7 +136,12 @@ jobs:
           if [[ "${STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED}" == "true" ]]; then
             # Check monitored folders
             for folder in $MONITORED_FOLDERS; do
-              changed_in_folder=$(echo "$all_changed" | grep "^${folder}/" || true)
+              if echo "$all_changed" | grep -q "^${folder}/CHANGELOG.md$"; then
+                echo "Direct CHANGELOG.md edits are not allowed for ${folder}/"
+                handwritten_changelogs="${handwritten_changelogs}- \`${folder}/CHANGELOG.md\`"$'\n'
+              fi
+
+              changed_in_folder=$(echo "$all_changed" | grep "^${folder}/" | grep -v "^${folder}/CHANGELOG.md$" || true)
 
               if [ -n "$changed_in_folder" ]; then
                 echo "Detected changes in ${folder}/"
@@ -178,15 +181,15 @@ jobs:
             done
 
             # Lint fragment content: the PR link is attached automatically at
-            # compile time, so a hand-written one would end up duplicated
+            # compile time, so a hand-written PR or issue link would be wrong
             touched_fragments=$(echo "$added_or_modified" | grep -E '^(api|ui|prowler|mcp_server)/changelog\.d/' || true)
             for fragment in $touched_fragments; do
               name=$(basename "$fragment")
               if [ "$name" = ".gitkeep" ] || [ "$name" = "README.md" ] || [ ! -f "$fragment" ]; then
                 continue
               fi
-              if grep -qE '\[\(#[0-9]+\)\]' "$fragment"; then
-                echo "Fragment contains a hand-written PR link: $fragment"
+              if grep -qE "$manual_pr_link_re" "$fragment"; then
+                echo "Fragment contains a hand-written PR or issue link: $fragment"
                 linked_fragments="${linked_fragments}- \`${fragment}\`"$'\n'
               fi
             done
@@ -206,7 +209,7 @@ jobs:
 
           If this PR does not need a changelog entry, add the \`no-changelog\` label instead."
 
-          if [ -n "$missing_fragments" ] || [ -n "$invalid_fragments" ] || [ -n "$linked_fragments" ]; then
+          if [ -n "$missing_fragments" ] || [ -n "$invalid_fragments" ] || [ -n "$linked_fragments" ] || [ -n "$handwritten_changelogs" ]; then
             comment_body=""
             if [ -n "$missing_fragments" ]; then
               comment_body="⚠️ **Changes detected in the following folders without a changelog fragment:**"$'\n\n'"${missing_fragments}"$'\n'
@@ -215,7 +218,10 @@ jobs:
               comment_body="${comment_body}⚠️ **Changelog fragment filenames that do not follow the naming convention:**"$'\n\n'"${invalid_fragments}"$'\n'
             fi
             if [ -n "$linked_fragments" ]; then
-              comment_body="${comment_body}⚠️ **Changelog fragments containing a hand-written PR link (remove it; the link is attached automatically at release time):**"$'\n\n'"${linked_fragments}"$'\n'
+              comment_body="${comment_body}⚠️ **Changelog fragments containing a hand-written PR or issue link (remove it; the PR link is attached automatically at release time):**"$'\n\n'"${linked_fragments}"$'\n'
+            fi
+            if [ -n "$handwritten_changelogs" ]; then
+              comment_body="${comment_body}⚠️ **Direct \`CHANGELOG.md\` edits are not allowed in regular PRs:**"$'\n\n'"${handwritten_changelogs}"$'\n'
             fi
             comment_body="${comment_body}${fragment_help}"
           else
@@ -231,6 +237,9 @@ jobs:
             echo "EOF"
             echo "linked_fragments<<EOF"
             echo -e "${linked_fragments}"
+            echo "EOF"
+            echo "handwritten_changelogs<<EOF"
+            echo -e "${handwritten_changelogs}"
             echo "EOF"
             echo "comment_body<<EOF"
             echo "${comment_body}"
@@ -264,7 +273,7 @@ jobs:
             ${{ steps.check-folders.outputs.comment_body }}
 
       - name: Fail if changelog fragment is missing or invalid
-        if: steps.check-folders.outputs.missing_fragments != '' || steps.check-folders.outputs.invalid_fragments != '' || steps.check-folders.outputs.linked_fragments != ''
+        if: steps.check-folders.outputs.missing_fragments != '' || steps.check-folders.outputs.invalid_fragments != '' || steps.check-folders.outputs.linked_fragments != '' || steps.check-folders.outputs.handwritten_changelogs != ''
         run: |
-          echo "::error::Missing or invalid changelog fragments"
+          echo "::error::Missing, invalid, or disallowed changelog updates"
           exit 1
