@@ -1,7 +1,7 @@
 import os
 
 import requests
-from colorama import Style
+from colorama import Fore, Style
 
 from prowler.config.config import (
     default_config_file_path,
@@ -170,16 +170,15 @@ class E2enetworksProvider(Provider):
             ) from error
 
     def print_credentials(self) -> None:
-        """Print masked E2E Networks credentials and scan scope to stdout."""
-        masked_key = (
-            f"{self._api_key[:4]}...{self._api_key[-4:]}"
-            if self._api_key and len(self._api_key) > 8
-            else "****"
-        )
+        """Print the E2E Networks scan scope to stdout.
+
+        The API key and auth token are never printed, matching the behavior of
+        the other Prowler providers, which only report identity and scope.
+        """
         report_lines = [
+            f"  Authentication: {Fore.YELLOW}API Key{Style.RESET_ALL}",
             f"  Project ID: {self._project_id}",
             f"  Locations: {', '.join(self._locations)}",
-            f"  API Key: {masked_key}",
         ]
         report_title = (
             f"{Style.BRIGHT}Using the E2E Networks credentials below:{Style.RESET_ALL}"
