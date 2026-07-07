@@ -2,15 +2,19 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+## [1.35.0] (Prowler UNRELEASED)
+
+### 🔄 Changed
+
+- Compliance overview ingest now runs in a single transaction per scan with a configurable `COPY` batch size (`DJANGO_COMPLIANCE_COPY_BATCH_SIZE`, default 2000), reducing write pressure on the database [(#11875)](https://github.com/prowler-cloud/prowler/pull/11875)
+
+---
+
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added
 
 - Compliance PDF reports no longer require provider credentials: findings are enriched from the provider metadata stored in the database, so reports generate even after the provider secret is deleted or its credentials become invalid [(#11845)](https://github.com/prowler-cloud/prowler/pull/11845)
-
-### 🔄 Changed
-
-- Compliance overview ingest now runs in a single transaction per scan with a configurable `COPY` batch size (`DJANGO_COMPLIANCE_COPY_BATCH_SIZE`, default 2000), reducing write pressure on the database [(#11873)](https://github.com/prowler-cloud/prowler/pull/11873)
 
 ### 🐞 Fixed
 
