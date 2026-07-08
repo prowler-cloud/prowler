@@ -16,11 +16,17 @@ import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 export function SidePanelTrigger() {
   const pathname = usePathname();
   const openPanel = useSidePanelStore((state) => state.openPanel);
+  // Hidden while the AI chat is already showing; kept while the panel shows a
+  // detail (context) tab, where the trigger is the way back to the chat.
+  const isAiChatPanelOpen = useSidePanelStore(
+    (state) => state.isOpen && state.selectedTab === SIDE_PANEL_TAB.AI_CHAT,
+  );
 
   // Lighthouse AI (and the panel itself) is cloud-only. On the full-page chat
   // route the panel is not available: the chat lives in one place at a time.
   if (!isCloud()) return null;
   if (isLighthouseChatRoute(pathname)) return null;
+  if (isAiChatPanelOpen) return null;
 
   return (
     <Tooltip delayDuration={100}>

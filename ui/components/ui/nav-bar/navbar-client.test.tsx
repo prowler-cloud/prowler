@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getFlowById } from "@/lib/onboarding";
 import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import { usePageReadyStore } from "@/store/page-ready";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 import { NavbarClient } from "./navbar-client";
 
@@ -76,6 +77,10 @@ describe("NavbarClient", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
     // Default: the current route's content has loaded, so the icon is enabled.
     usePageReadyStore.setState({ readyPath: "/findings" });
+    useSidePanelStore.setState({
+      isOpen: false,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
   });
 
   it("renders an accessible contextual onboarding button in the breadcrumb", async () => {
@@ -247,6 +252,37 @@ describe("NavbarClient", () => {
     expect(
       screen.getByRole("button", { name: "Ask Lighthouse AI" }),
     ).toBeInTheDocument();
+  });
+
+  it("hides the Lighthouse AI trigger while the AI chat panel is already open", () => {
+    // Given
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(
+      screen.queryByTestId("side-panel-ai-trigger"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("keeps the Lighthouse AI trigger while the panel shows a detail tab", () => {
+    // Given: the panel is open but on the context (detail) tab, so the trigger
+    // is still the way to switch to the AI chat.
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.CONTEXT,
+    });
+
+    // When
+    render(<NavbarClient title="Findings" />);
+
+    // Then
+    expect(screen.getByTestId("side-panel-ai-trigger")).toBeInTheDocument();
   });
 
   it("hides the Lighthouse AI side-panel trigger in self-hosted (OSS) deployments", () => {
