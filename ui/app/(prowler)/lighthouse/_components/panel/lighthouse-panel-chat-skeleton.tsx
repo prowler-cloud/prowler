@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { cn } from "@/lib/utils";
 
 // 1:1 skeleton of the panel chat empty state (logo, headline, composer,
 // suggestion chips, recent chats). Kept in its own file with light imports:
@@ -56,10 +57,14 @@ export function LighthousePanelChatSkeleton() {
   );
 }
 
-function SessionRowSkeleton({ titleWidth }: { titleWidth: string }) {
+interface SessionRowSkeletonProps {
+  titleWidth: string;
+}
+
+function SessionRowSkeleton({ titleWidth }: SessionRowSkeletonProps) {
   return (
     <div className="flex items-center justify-between gap-2 px-2 py-2">
-      <Skeleton className={`h-4 ${titleWidth} rounded`} />
+      <Skeleton className={cn("h-4 rounded", titleWidth)} />
       <Skeleton className="h-3 w-8 shrink-0 rounded" />
     </div>
   );

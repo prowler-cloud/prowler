@@ -8,6 +8,7 @@ import {
   ConversationScrollButton,
 } from "@/app/(prowler)/lighthouse/_components/ai-elements/conversation";
 import { selectLighthouseChatCanSend } from "@/app/(prowler)/lighthouse/_lib/chat-store";
+import { LIGHTHOUSE_V2_STREAM_STATUS } from "@/app/(prowler)/lighthouse/_lib/event-reducer";
 import {
   buildLighthouseV2ModelSelectionValue,
   type LighthouseV2ModelSelection,
@@ -51,6 +52,7 @@ export function LighthouseV2ChatView({
   surface,
   emptyStateFooter,
 }: LighthouseV2ChatViewProps) {
+  // Whole-store subscription is intentional: the view renders most of the state and selectLighthouseChatCanSend takes full state.
   const state = useLighthouseChatStore((current) => current);
   const {
     config,
@@ -127,7 +129,8 @@ export function LighthouseV2ChatView({
   const composerPanelProps = {
     feedback,
     canRetry:
-      streamState.status === "disconnected" && lastSubmittedText !== null,
+      streamState.status === LIGHTHOUSE_V2_STREAM_STATUS.DISCONNECTED &&
+      lastSubmittedText !== null,
     onRetry: () =>
       lastSubmittedText ? void submitMessage(lastSubmittedText) : undefined,
     onDismissFeedback: dismissFeedback,
@@ -234,15 +237,17 @@ function SessionLoadingState() {
   );
 }
 
+interface CurrentModelDisplayProps {
+  provider: LighthouseV2ProviderType;
+  providerName: string;
+  modelName: string;
+}
+
 function CurrentModelDisplay({
   provider,
   providerName,
   modelName,
-}: {
-  provider: LighthouseV2ProviderType;
-  providerName: string;
-  modelName: string;
-}) {
+}: CurrentModelDisplayProps) {
   return (
     <div
       aria-label={`Current model: ${providerName} ${modelName}`}

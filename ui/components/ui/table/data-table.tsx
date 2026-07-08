@@ -266,7 +266,6 @@ export function DataTable<TData, TValue>({
     >
       {header && <div className="w-full">{header}</div>}
       {/* Table Toolbar */}
-      {/* Table Toolbar */}
       {showToolbar && (
         <div
           data-testid="data-table-toolbar"

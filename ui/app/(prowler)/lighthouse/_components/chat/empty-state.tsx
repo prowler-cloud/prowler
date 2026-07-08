@@ -5,6 +5,7 @@ import { type ReactNode, type SubmitEvent } from "react";
 
 import { LighthouseIconWithAura } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
+import { cn } from "@/lib/utils";
 
 import { ChatComposerPanel } from "./composer";
 import { DecryptedText } from "./decrypted-text";
@@ -63,11 +64,10 @@ export function ChatEmptyState({
         <LighthouseIconWithAura className={compact ? "size-12" : "size-20"} />
         <div className="space-y-2 text-center">
           <h1
-            className={
-              compact
-                ? "text-text-neutral-primary text-lg font-semibold"
-                : "text-text-neutral-primary text-3xl font-semibold"
-            }
+            className={cn(
+              "text-text-neutral-primary font-semibold",
+              compact ? "text-lg" : "text-3xl",
+            )}
           >
             {compact ? (
               "Find and remediate which actually matters."
@@ -82,11 +82,10 @@ export function ChatEmptyState({
             )}
           </h1>
           <p
-            className={
-              compact
-                ? "text-text-neutral-secondary text-sm italic"
-                : "text-text-neutral-secondary text-base italic"
-            }
+            className={cn(
+              "text-text-neutral-secondary italic",
+              compact ? "text-sm" : "text-base",
+            )}
           >
             {compact ? (
               "What do you want to know today?"
