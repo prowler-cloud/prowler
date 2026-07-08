@@ -629,6 +629,28 @@ describe("LighthouseV2ChatPage", () => {
     expect(screen.getByText("Existing answer")).toBeInTheDocument();
   });
 
+  it("lets the user draft the next message while a response is streaming, without sending it", async () => {
+    // Given: a message is in flight (spinner replaces the send button)
+    const user = userEvent.setup();
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalledTimes(1));
+    expect(
+      screen.getByRole("status", { name: "Generating response" }),
+    ).toBeInTheDocument();
+
+    // When: the user types a follow-up and presses Enter mid-stream
+    const input = screen.getByRole("textbox", { name: "Message" });
+    await user.type(input, ["Next question", "{Enter}"].join(""));
+
+    // Then: the draft is kept in the input and no second message is sent
+    expect(input).toHaveValue("Next question");
+    expect(sendMessageMock).toHaveBeenCalledTimes(1);
+  });
+
   it("surfaces a connection error when the stream closes without retrying", async () => {
     // Given
     const user = userEvent.setup();
