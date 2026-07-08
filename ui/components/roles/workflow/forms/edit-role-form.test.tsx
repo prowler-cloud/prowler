@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { AddRoleForm } from "./add-role-form";
+import { EditRoleForm } from "./edit-role-form";
 
 const routerMocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -13,7 +13,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/actions/roles/roles", () => ({
-  addRole: vi.fn(),
+  updateRole: vi.fn(),
 }));
 
 vi.mock("@/lib", () => ({
@@ -87,51 +87,46 @@ beforeAll(() => {
   window.ResizeObserver = ResizeObserverMock;
 });
 
-describe("AddRoleForm", () => {
+const roleData = ({
+  manageProviders = false,
+  unlimitedVisibility = false,
+}: {
+  manageProviders?: boolean;
+  unlimitedVisibility?: boolean;
+} = {}) => ({
+  data: {
+    attributes: {
+      name: "Existing role",
+      manage_users: false,
+      manage_account: false,
+      manage_providers: manageProviders,
+      manage_integrations: false,
+      manage_scans: false,
+      unlimited_visibility: unlimitedVisibility,
+      groups: [],
+    },
+    relationships: {
+      provider_groups: {
+        data: [],
+      },
+    },
+  },
+});
+
+const renderEditRoleForm = (options?: Parameters<typeof roleData>[0]) =>
+  render(
+    <EditRoleForm roleId="role-1" roleData={roleData(options)} groups={[]} />,
+  );
+
+describe("EditRoleForm", () => {
   afterEach(() => {
     routerMocks.push.mockClear();
     vi.unstubAllEnvs();
   });
 
-  it("shows Manage Alerts in Prowler Cloud", () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
-
-    // When
-    render(<AddRoleForm groups={[]} />);
-
-    // Then
-    expect(screen.getByText("Manage Alerts")).toBeInTheDocument();
-    expect(screen.getByText("Manage Billing")).toBeInTheDocument();
-  });
-
-  it("hides Manage Alerts outside Prowler Cloud", () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
-
-    // When
-    render(<AddRoleForm groups={[]} />);
-
-    // Then
-    expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
-    expect(screen.queryByText("Manage Billing")).not.toBeInTheDocument();
-  });
-
-  it("navigates back to roles when cancel is clicked", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
-
-    // When
-    await user.click(screen.getByRole("button", { name: /cancel/i }));
-
-    // Then
-    expect(routerMocks.push).toHaveBeenCalledWith("/roles");
-  });
-
-  it("shows a subtle inline Unlimited Visibility description", () => {
+  it("shows the subtle Unlimited Visibility description inside Visibility", () => {
     // Given / When
-    render(<AddRoleForm groups={[]} />);
+    renderEditRoleForm();
 
     // Then
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -143,19 +138,6 @@ describe("AddRoleForm", () => {
     expect(
       screen.getByText(/required to use the Jira integration/i),
     ).toHaveProperty("tagName", "STRONG");
-    expect(
-      screen.queryByRole("heading", { name: "Unlimited Visibility" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        /does not grant admin actions such as managing users, providers, scans, integrations, billing, or alerts/i,
-      ),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByText(
-        /enable it only for roles that need tenant-wide security visibility/i,
-      ),
-    ).not.toBeInTheDocument();
     expect(
       screen.queryByText(
         /manage providers enables unlimited visibility in this form because provider administration needs tenant-wide provider-group context/i,
@@ -176,7 +158,13 @@ describe("AddRoleForm", () => {
   it("keeps the Visibility section and hides only groups when Unlimited Visibility is enabled", async () => {
     // Given
     const user = userEvent.setup();
-    render(<AddRoleForm groups={[{ id: "group-1", name: "Production" }]} />);
+    render(
+      <EditRoleForm
+        roleId="role-1"
+        roleData={roleData()}
+        groups={[{ id: "group-1", name: "Production" }]}
+      />,
+    );
 
     // When
     await user.click(
@@ -204,7 +192,7 @@ describe("AddRoleForm", () => {
   it("does not force Unlimited Visibility when Manage Providers is selected", async () => {
     // Given
     const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
+    renderEditRoleForm();
 
     // When
     await user.click(
@@ -227,7 +215,7 @@ describe("AddRoleForm", () => {
   it("does not force Unlimited Visibility when granting all admin permissions", async () => {
     // Given
     const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
+    renderEditRoleForm();
 
     // When
     await user.click(
@@ -248,7 +236,7 @@ describe("AddRoleForm", () => {
   it("keeps Unlimited Visibility user-controlled when Manage Providers is selected", async () => {
     // Given
     const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
+    renderEditRoleForm();
 
     // When
     await user.click(
@@ -280,7 +268,7 @@ describe("AddRoleForm", () => {
   it("keeps explicitly enabled Unlimited Visibility when all admin permissions are toggled off", async () => {
     // Given
     const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
+    renderEditRoleForm();
 
     // When
     await user.click(
@@ -306,20 +294,9 @@ describe("AddRoleForm", () => {
     ).toBeChecked();
   });
 
-  it("does not show extra Manage Providers guidance for explicitly enabled Unlimited Visibility", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(<AddRoleForm groups={[]} />);
-
-    // When
-    await user.click(
-      screen.getByRole("checkbox", {
-        name: "Enable Unlimited Visibility for this role",
-      }),
-    );
-    await user.click(
-      screen.getByRole("checkbox", { name: "Manage Providers" }),
-    );
+  it("does not show extra Manage Providers guidance", () => {
+    // Given / When
+    renderEditRoleForm({ manageProviders: true, unlimitedVisibility: true });
 
     // Then
     expect(
@@ -330,5 +307,20 @@ describe("AddRoleForm", () => {
     expect(
       screen.queryByText(/remove this automatic visibility grant/i),
     ).not.toBeInTheDocument();
+  });
+
+  it("keeps existing inconsistent Manage Providers and Unlimited Visibility values on initial render", () => {
+    // Given / When
+    renderEditRoleForm({ manageProviders: true, unlimitedVisibility: false });
+
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Manage Providers" }),
+    ).toBeChecked();
+    const unlimitedVisibilityCheckbox = screen.getByRole("checkbox", {
+      name: "Enable Unlimited Visibility for this role",
+    });
+    expect(unlimitedVisibilityCheckbox).not.toBeChecked();
+    expect(unlimitedVisibilityCheckbox).toBeEnabled();
   });
 });
