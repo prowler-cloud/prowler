@@ -113,6 +113,7 @@ jobs:
             .github/workflows/sdk-container-checks.yml
           files_ignore: |
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             **/AGENTS.md
 
       - name: Set up Docker Buildx

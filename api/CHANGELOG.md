@@ -2,13 +2,7 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.35.0] (Prowler UNRELEASED)
-
-### 🔄 Changed
-
-- Compliance overview ingest now runs in a single transaction per scan with a configurable `COPY` batch size (`DJANGO_COMPLIANCE_COPY_BATCH_SIZE`, default 2000), reducing write pressure on the database [(#11875)](https://github.com/prowler-cloud/prowler/pull/11875)
-
----
+<!-- changelog: release notes start -->
 
 ## [1.34.0] (Prowler v5.33.0)
 
