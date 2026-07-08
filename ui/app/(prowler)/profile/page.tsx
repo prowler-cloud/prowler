@@ -4,6 +4,7 @@ import { getSamlConfig } from "@/actions/integrations/saml";
 import { getUserInfo } from "@/actions/users/users";
 import { auth } from "@/auth.config";
 import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
+import { Card } from "@/components/shadcn";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
@@ -96,25 +97,25 @@ const SSRDataUser = async ({
   const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <Card
+      variant="base"
+      padding="none"
+      role="region"
+      aria-label="User profile settings"
+      className="w-full gap-4 p-4 md:p-5"
+    >
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
-      <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
-          {hasManageIntegrations && (
-            <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
-          )}
-        </div>
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <MembershipsCard
-            memberships={membershipsIncluded}
-            tenantsMap={tenantsMap}
-            hasManageAccount={hasManageAccount}
-            sessionTenantId={session?.tenantId}
-          />
-          {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
-        </div>
-      </div>
-    </div>
+      <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
+      {hasManageIntegrations && (
+        <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
+      )}
+      <MembershipsCard
+        memberships={membershipsIncluded}
+        tenantsMap={tenantsMap}
+        hasManageAccount={hasManageAccount}
+        sessionTenantId={session?.tenantId}
+      />
+      {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
+    </Card>
   );
 };

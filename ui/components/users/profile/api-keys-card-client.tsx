@@ -70,7 +70,7 @@ export const ApiKeysCardClient = ({
 
   return (
     <>
-      <Card variant="base" padding="none" className="p-4">
+      <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
         <CardHeader>
           <div className="flex flex-col gap-2">
             <CardTitle>API Keys</CardTitle>

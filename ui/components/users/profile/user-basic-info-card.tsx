@@ -25,7 +25,7 @@ export const UserBasicInfoCard = ({
   const { name, email, company_name, date_joined } = user.attributes;
 
   return (
-    <Card variant="base" padding="none" className="p-4">
+    <Card variant="inner" padding="none" className="p-4 md:p-5">
       <CardContent>
         <div className="flex items-center gap-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border-3 border-black p-1 dark:border-white">

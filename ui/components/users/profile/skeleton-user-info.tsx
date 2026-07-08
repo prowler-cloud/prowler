@@ -7,29 +7,28 @@ import {
   Skeleton,
 } from "@/components/shadcn";
 
-// Mirrors the real profile layout (UserBasicInfoCard full-width + a two-column
-// grid with RolesCard and Organizations) so the page does not shift when the
-// data resolves. Conditional cards (SAML / API keys) depend on permissions not
+// Mirrors the real profile layout: one large card with sections stacked
+// vertically. Conditional cards (SAML / API keys) depend on permissions not
 // known while loading, so we mirror only the always-present structure.
 export const SkeletonUserInfo = () => {
   return (
-    <div className="flex w-full flex-col gap-6">
+    <Card
+      variant="base"
+      padding="none"
+      role="region"
+      aria-label="User profile settings loading"
+      className="w-full gap-4 p-4 md:p-5"
+    >
       <UserBasicInfoSkeleton />
-      <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <RolesCardSkeleton />
-        </div>
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <OrganizationsCardSkeleton />
-        </div>
-      </div>
-    </div>
+      <RolesCardSkeleton />
+      <OrganizationsCardSkeleton />
+    </Card>
   );
 };
 
 const UserBasicInfoSkeleton = () => {
   return (
-    <Card variant="base" padding="none" className="p-4">
+    <Card variant="inner" padding="none" className="p-4 md:p-5">
       <CardContent>
         {/* Avatar + name / email */}
         <div className="flex items-center gap-4">
@@ -55,13 +54,14 @@ const UserBasicInfoSkeleton = () => {
 
 const RolesCardSkeleton = () => {
   return (
-    <Card variant="base" padding="none" className="p-4">
-      <CardContent>
-        {/* Header: "Active roles" + subtitle */}
-        <div className="mb-6 flex flex-col gap-1.5">
+    <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
+      <CardHeader>
+        <div className="flex flex-col gap-1.5">
           <Skeleton className="h-6 w-28 rounded" />
           <Skeleton className="h-3 w-48 rounded" />
         </div>
+      </CardHeader>
+      <CardContent>
         <div className="flex flex-col gap-2">
           <RoleItemSkeleton />
           <RoleItemSkeleton />
@@ -71,17 +71,13 @@ const RolesCardSkeleton = () => {
   );
 };
 
-// Mirrors <RoleItem>: inner card with a role badge + state on the left, a
-// details toggle on the right, and a grid of permission rows below.
+// Mirrors <RoleItem>: inner card with role badges and permission rows below.
 const RoleItemSkeleton = () => {
   return (
     <Card variant="inner">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-5 w-20 rounded-full" />
-          <Skeleton className="h-3 w-16 rounded" />
-        </div>
-        <Skeleton className="h-5 w-20 rounded" />
+      <div className="flex items-center gap-2">
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-16 rounded-full" />
       </div>
       <div className="border-border-neutral-primary mt-4 grid grid-cols-1 gap-3 border-t pt-4 md:grid-cols-2">
         {[0, 1, 2, 3].map((i) => (
@@ -97,7 +93,7 @@ const RoleItemSkeleton = () => {
 
 const OrganizationsCardSkeleton = () => {
   return (
-    <Card variant="base" padding="none" className="p-4">
+    <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
       <CardHeader>
         <div className="flex flex-col gap-1.5">
           <Skeleton className="h-5 w-32 rounded" />
@@ -108,30 +104,28 @@ const OrganizationsCardSkeleton = () => {
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col gap-2">
-          <MembershipItemSkeleton />
-          <MembershipItemSkeleton />
+        <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 rounded-[14px] border p-4 shadow-sm">
+          <div className="bg-bg-neutral-tertiary border-border-neutral-primary grid h-11 grid-cols-[88px_96px_minmax(0,1fr)_120px_48px] items-center gap-4 rounded-full border px-4">
+            <Skeleton className="h-3 w-10 rounded" />
+            <Skeleton className="h-3 w-12 rounded" />
+            <Skeleton className="h-3 w-12 rounded" />
+            <Skeleton className="h-3 w-16 rounded" />
+            <span className="sr-only">Actions</span>
+          </div>
+          {[0, 1].map((i) => (
+            <div
+              key={i}
+              className="grid h-12 grid-cols-[88px_96px_minmax(0,1fr)_120px_48px] items-center gap-4 px-4"
+            >
+              <Skeleton className="h-5 w-14 rounded-full" />
+              <Skeleton className="h-5 w-16 rounded-full" />
+              <Skeleton className="h-4 w-40 rounded" />
+              <Skeleton className="h-4 w-24 rounded" />
+              <Skeleton className="ml-auto size-7 rounded-full" />
+            </div>
+          ))}
         </div>
       </CardContent>
-    </Card>
-  );
-};
-
-// Mirrors <MembershipItem>: role badge (left), Name / Joined fields, and the
-// "Active" badge (right).
-const MembershipItemSkeleton = () => {
-  return (
-    <Card variant="inner" className="p-2">
-      <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-        <Skeleton className="h-5 w-16 rounded-full" />
-        <div className="flex flex-row flex-wrap gap-1 gap-x-4">
-          <FieldSkeleton inline labelWidth="w-10" valueWidth="w-24" />
-          <FieldSkeleton inline labelWidth="w-14" valueWidth="w-20" />
-        </div>
-        <div className="ml-auto">
-          <Skeleton className="h-5 w-14 rounded-full" />
-        </div>
-      </div>
     </Card>
   );
 };
