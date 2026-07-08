@@ -2,13 +2,7 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.33.1] (Prowler UNRELEASED)
-
-### 🔄 Changed
-
-- RBAC role forms now explain Unlimited Visibility in a dedicated section and preserve explicit visibility choices when admin permissions are toggled [(#11851)](https://github.com/prowler-cloud/prowler/pull/11851)
-
----
+<!-- changelog: release notes start -->
 
 ## [1.33.0] (Prowler v5.33.0)
 
@@ -19,6 +13,7 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🔄 Changed
 
 - Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+- Sentry, Google Tag Manager, and PostHog now load their `UI_*` config only when the matching enable flag (`UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE`) is `"true"` (default off); the deprecated legacy names (`NEXT_PUBLIC_*`, `POSTHOG_KEY`/`POSTHOG_HOST`) still activate without the flag [(#11682)](https://github.com/prowler-cloud/prowler/pull/11682)
 
 ---
 

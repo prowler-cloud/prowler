@@ -70,7 +70,7 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "getting-started/products/prowler-lighthouse-ai"
+              "getting-started/products/prowler-cloud-lighthouse"
             ]
           },
           {
@@ -154,8 +154,15 @@
                 ]
               },
               {
-                "group": "Lighthouse AI",
+                "group": "Lighthouse AI (Prowler Cloud)",
                 "pages": [
+                  "user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"
+                ]
+              },
+              {
+                "group": "Lighthouse AI (Open Source)",
+                "pages": [
+                  "getting-started/products/prowler-lighthouse-ai",
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
