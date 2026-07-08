@@ -420,10 +420,13 @@ class UserUpdateSerializer(BaseWriteSerializer):
         password = validated_data.pop("password", None)
         if password:
             validate_password(password, user=instance)
-            instance.set_password(password)
             with transaction.atomic(using=MainRouter.admin_db):
+                instance.set_password(password)
+                for attr, value in validated_data.items():
+                    setattr(instance, attr, value)
                 blacklist_user_refresh_tokens(instance.id)
-                return super().update(instance, validated_data)
+                instance.save(using=MainRouter.admin_db)
+                return instance
         return super().update(instance, validated_data)
 
 
