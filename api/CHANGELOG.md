@@ -182,6 +182,10 @@ All notable changes to the **Prowler API** are documented in this file.
 
 ## [1.28.0] (Prowler v5.27.0)
 
+### 🐞 Fixed
+
+- `Finding.uid` column type changed from `varchar(300)` to `text`, removing the 300-character cap that caused scan ingestion failures for resources with long ARNs or composite identifiers [(#7535)](https://github.com/prowler-cloud/prowler/issues/7535)
+
 ### 🚀 Added
 
 - GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
