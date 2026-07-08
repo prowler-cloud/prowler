@@ -108,6 +108,7 @@ jobs:
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/changelog.d/**
             api/AGENTS.md
 
       - name: Set up Docker Buildx

@@ -2,13 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.33.1] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11850)](https://github.com/prowler-cloud/prowler/pull/11850)
-
----
+<!-- changelog: release notes start -->
 
 ## [5.33.0] (Prowler v5.33.0)
 
