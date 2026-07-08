@@ -12,6 +12,8 @@ import {
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
 import { Field, FieldLabel } from "@/components/shadcn";
+import { ToastAction, useToast } from "@/components/shadcn";
+import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,
   RadioGroupItem,
@@ -23,8 +25,6 @@ import {
   CloudFeatureBadgeLink,
 } from "@/components/shared/cloud-feature-badge";
 import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
-import { ToastAction, useToast } from "@/components/ui";
-import { EntityInfo } from "@/components/ui/entities";
 import {
   type ActionErrorResult,
   getActionErrorMessage,

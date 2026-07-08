@@ -6,7 +6,7 @@ import {
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
@@ -433,7 +433,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all the providers and its related resources",
+      "Grants tenant-wide visibility across all providers, accounts, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",

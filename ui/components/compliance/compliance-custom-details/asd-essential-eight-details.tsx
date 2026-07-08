@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   isASDAssessmentStatus,
   isASDCloudApplicability,

@@ -2,6 +2,7 @@ import logging
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from allauth.socialaccount.models import SocialLogin
@@ -50,12 +51,14 @@ from api.v1.serializers import TokenSerializer
 from django.conf import settings
 from django.db import connection as django_connection
 from django.db import connections as django_connections
+from django.test import Client
 from django.urls import reverse
 from django_celery_results.models import TaskResult
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from rest_framework import status
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import AccessToken
 from tasks.jobs.backfill import (
     aggregate_scan_category_summaries,
     aggregate_scan_resource_group_summaries,
@@ -358,22 +361,42 @@ def create_test_user_rbac_manage_account(django_db_setup, django_db_blocker):
     return user
 
 
+def first_membership_tenant(user):
+    return user.memberships.order_by("date_joined").first().tenant
+
+
+def access_token_for_tenant(user, tenant):
+    access_token = AccessToken.for_user(user)
+    access_token["tenant_id"] = str(tenant.id)
+    access_token.payload["nbf"] = access_token["iat"]
+    return str(access_token)
+
+
+def authenticate_client_for_tenant(client, user, tenant):
+    client.user = user
+    client.defaults["HTTP_AUTHORIZATION"] = (
+        f"Bearer {access_token_for_tenant(user, tenant)}"
+    )
+    return client
+
+
+@pytest.fixture
+def authenticated_client_for_tenant_factory():
+    def create_authenticated_client(user, tenant):
+        return authenticate_client_for_tenant(Client(), user, tenant)
+
+    return create_authenticated_client
+
+
 @pytest.fixture
 def authenticated_client_rbac_manage_account(
-    create_test_user_rbac_manage_account, tenants_fixture, client
+    create_test_user_rbac_manage_account, client
 ):
-    client.user = create_test_user_rbac_manage_account
-    serializer = TokenSerializer(
-        data={
-            "type": "tokens",
-            "email": "rbac_manage_account@rbac.com",
-            "password": TEST_PASSWORD,
-        }
+    return authenticate_client_for_tenant(
+        client,
+        create_test_user_rbac_manage_account,
+        first_membership_tenant(create_test_user_rbac_manage_account),
     )
-    serializer.is_valid()
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
 
 
 @pytest.fixture(scope="function")
@@ -410,86 +433,43 @@ def create_test_user_rbac_manage_users_only(django_db_setup, django_db_blocker):
 def authenticated_client_rbac_manage_users_only(
     create_test_user_rbac_manage_users_only, client
 ):
-    client.user = create_test_user_rbac_manage_users_only
-    serializer = TokenSerializer(
-        data={
-            "type": "tokens",
-            "email": "rbac_manage_users_only@rbac.com",
-            "password": TEST_PASSWORD,
-        }
+    return authenticate_client_for_tenant(
+        client,
+        create_test_user_rbac_manage_users_only,
+        first_membership_tenant(create_test_user_rbac_manage_users_only),
     )
-    serializer.is_valid()
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
 
 
 @pytest.fixture
 def authenticated_client_rbac(create_test_user_rbac, tenants_fixture, client):
-    client.user = create_test_user_rbac
-    tenant_id = tenants_fixture[0].id
-    serializer = TokenSerializer(
-        data={
-            "type": "tokens",
-            "email": "rbac@rbac.com",
-            "password": TEST_PASSWORD,
-            "tenant_id": tenant_id,
-        }
+    return authenticate_client_for_tenant(
+        client, create_test_user_rbac, tenants_fixture[0]
     )
-    serializer.is_valid(raise_exception=True)
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
 
 
 @pytest.fixture
 def authenticated_client_rbac_noroles(
     create_test_user_rbac_no_roles, tenants_fixture, client
 ):
-    client.user = create_test_user_rbac_no_roles
-    serializer = TokenSerializer(
-        data={
-            "type": "tokens",
-            "email": "rbac_noroles@rbac.com",
-            "password": TEST_PASSWORD,
-        }
+    return authenticate_client_for_tenant(
+        client, create_test_user_rbac_no_roles, tenants_fixture[0]
     )
-    serializer.is_valid()
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
 
 
 @pytest.fixture
 def authenticated_client_no_permissions_rbac(
     create_test_user_rbac_limited, tenants_fixture, client
 ):
-    client.user = create_test_user_rbac_limited
-    serializer = TokenSerializer(
-        data={
-            "type": "tokens",
-            "email": "rbac_limited@rbac.com",
-            "password": TEST_PASSWORD,
-        }
+    return authenticate_client_for_tenant(
+        client, create_test_user_rbac_limited, tenants_fixture[0]
     )
-    serializer.is_valid()
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
 
 
 @pytest.fixture
 def authenticated_client(
     create_test_user, tenants_fixture, set_user_admin_roles_fixture, client
 ):
-    client.user = create_test_user
-    serializer = TokenSerializer(
-        data={"type": "tokens", "email": TEST_USER, "password": TEST_PASSWORD}
-    )
-    serializer.is_valid()
-    access_token = serializer.validated_data["access"]
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    return client
+    return authenticate_client_for_tenant(client, create_test_user, tenants_fixture[0])
 
 
 @pytest.fixture
@@ -590,109 +570,191 @@ def users_fixture(django_user_model):
 
 
 @pytest.fixture
-def providers_fixture(tenants_fixture):
-    tenant, *_ = tenants_fixture
-    provider1 = Provider.objects.create(
-        provider="aws",
-        uid="123456789012",
-        alias="aws_testing_1",
-        tenant_id=tenant.id,
-    )
-    provider2 = Provider.objects.create(
-        provider="aws",
-        uid="123456789013",
-        alias="aws_testing_2",
-        tenant_id=tenant.id,
-    )
-    provider3 = Provider.objects.create(
-        provider="gcp",
-        uid="a12322-test321",
-        alias="gcp_testing",
-        tenant_id=tenant.id,
-    )
-    provider4 = Provider.objects.create(
-        provider="kubernetes",
-        uid="kubernetes-test-12345",
-        alias="k8s_testing",
-        tenant_id=tenant.id,
-    )
-    provider5 = Provider.objects.create(
-        provider="azure",
-        uid="37b065f8-26b0-4218-a665-0b23d07b27d9",
-        alias="azure_testing",
-        tenant_id=tenant.id,
-        scanner_args={"key1": "value1", "key2": {"key21": "value21"}},
-    )
-    provider6 = Provider.objects.create(
-        provider="m365",
-        uid="m365.test.com",
-        alias="m365_testing",
-        tenant_id=tenant.id,
-    )
-    provider7 = Provider.objects.create(
-        provider="oraclecloud",
-        uid="ocid1.tenancy.oc1..aaaaaaaa3dwoazoox4q7wrvriywpokp5grlhgnkwtyt6dmwyou7no6mdmzda",
-        alias="oci_testing",
-        tenant_id=tenant.id,
-    )
-    provider8 = Provider.objects.create(
-        provider="mongodbatlas",
-        uid="64b1d3c0e4b03b1234567890",
-        alias="mongodbatlas_testing",
-        tenant_id=tenant.id,
-    )
-    provider9 = Provider.objects.create(
-        provider="alibabacloud",
-        uid="1234567890123456",
-        alias="alibabacloud_testing",
-        tenant_id=tenant.id,
-    )
-    provider10 = Provider.objects.create(
-        provider="cloudflare",
-        uid="a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4",
-        alias="cloudflare_testing",
-        tenant_id=tenant.id,
-    )
-    provider11 = Provider.objects.create(
-        provider="openstack",
-        uid="a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-        alias="openstack_testing",
-        tenant_id=tenant.id,
-    )
-    provider12 = Provider.objects.create(
-        provider="googleworkspace",
-        uid="C12345678",
-        alias="googleworkspace_testing",
-        tenant_id=tenant.id,
-    )
-    provider13 = Provider.objects.create(
-        provider="vercel",
-        uid="team_abcdef1234567890ab",
-        alias="vercel_testing",
-        tenant_id=tenant.id,
-    )
-    provider14 = Provider.objects.create(
-        provider="okta",
-        uid="acme.okta.com",
-        alias="okta_testing",
-        tenant_id=tenant.id,
+def provider_factory(tenants_fixture):
+    tenant = tenants_fixture[0]
+    counters = {}
+
+    def next_counter(provider):
+        counters[provider] = counters.get(provider, 0) + 1
+        return counters[provider]
+
+    def defaults_for(provider, sequence):
+        return {
+            Provider.ProviderChoices.AWS.value: {
+                "uid": f"{123456789011 + sequence:012d}",
+                "alias": f"aws_testing_{sequence}",
+            },
+            Provider.ProviderChoices.AZURE.value: {
+                "uid": str(uuid4()),
+                "alias": f"azure_testing_{sequence}",
+                "scanner_args": {"key1": "value1", "key2": {"key21": "value21"}},
+            },
+            Provider.ProviderChoices.GCP.value: {
+                "uid": f"a12322-test{sequence:05d}",
+                "alias": f"gcp_testing_{sequence}",
+            },
+            Provider.ProviderChoices.KUBERNETES.value: {
+                "uid": f"kubernetes-test-{sequence}",
+                "alias": f"k8s_testing_{sequence}",
+            },
+            Provider.ProviderChoices.M365.value: {
+                "uid": f"m365-{sequence}.test.com",
+                "alias": f"m365_testing_{sequence}",
+            },
+            Provider.ProviderChoices.GITHUB.value: {
+                "uid": f"github-test-{sequence}",
+                "alias": f"github_testing_{sequence}",
+            },
+            Provider.ProviderChoices.MONGODBATLAS.value: {
+                "uid": f"64b1d3c0e4b03b{sequence:010x}",
+                "alias": f"mongodbatlas_testing_{sequence}",
+            },
+            Provider.ProviderChoices.IAC.value: {
+                "uid": f"https://github.com/prowler-cloud/test-{sequence}.git",
+                "alias": f"iac_testing_{sequence}",
+            },
+            Provider.ProviderChoices.ORACLECLOUD.value: {
+                "uid": f"ocid1.tenancy.oc1..aaaaaaaa{sequence:024d}",
+                "alias": f"oci_testing_{sequence}",
+            },
+            Provider.ProviderChoices.ALIBABACLOUD.value: {
+                "uid": f"{1234567890123455 + sequence:016d}",
+                "alias": f"alibabacloud_testing_{sequence}",
+            },
+            Provider.ProviderChoices.CLOUDFLARE.value: {
+                "uid": f"{0x1000000000000000000000000000000 + sequence:032x}",
+                "alias": f"cloudflare_testing_{sequence}",
+            },
+            Provider.ProviderChoices.OPENSTACK.value: {
+                "uid": f"openstack-project-{sequence}",
+                "alias": f"openstack_testing_{sequence}",
+            },
+            Provider.ProviderChoices.IMAGE.value: {
+                "uid": f"registry.example.com/prowler/test:{sequence}",
+                "alias": f"image_testing_{sequence}",
+            },
+            Provider.ProviderChoices.GOOGLEWORKSPACE.value: {
+                "uid": f"C{12345677 + sequence}",
+                "alias": f"googleworkspace_testing_{sequence}",
+            },
+            Provider.ProviderChoices.VERCEL.value: {
+                "uid": f"team_{sequence:016x}",
+                "alias": f"vercel_testing_{sequence}",
+            },
+            Provider.ProviderChoices.OKTA.value: {
+                "uid": f"acme-{sequence}.okta.com",
+                "alias": f"okta_testing_{sequence}",
+            },
+        }[provider]
+
+    def create_provider(provider=Provider.ProviderChoices.AWS.value, **overrides):
+        provider_value = getattr(provider, "value", provider)
+        selected_tenant = overrides.pop("tenant", tenant)
+        sequence = next_counter(provider_value)
+        attributes = {
+            "provider": provider_value,
+            "tenant_id": selected_tenant.id,
+            **defaults_for(provider_value, sequence),
+        }
+        attributes.update(overrides)
+        return Provider.objects.create(**attributes)
+
+    return create_provider
+
+
+@pytest.fixture
+def aws_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.AWS.value)
+
+
+@pytest.fixture
+def aws_provider_pair(aws_provider, provider_factory):
+    return (
+        aws_provider,
+        provider_factory(Provider.ProviderChoices.AWS.value),
     )
 
-    return (
-        provider1,
-        provider2,
-        provider3,
-        provider4,
-        provider5,
-        provider6,
-        provider7,
-        provider8,
-        provider9,
-        provider10,
-        provider11,
-        provider12,
-        provider13,
-        provider14,
+
+@pytest.fixture
+def azure_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.AZURE.value)
+
+
+@pytest.fixture
+def gcp_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.GCP.value)
+
+
+@pytest.fixture
+def kubernetes_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.KUBERNETES.value)
+
+
+@pytest.fixture
+def m365_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.M365.value)
+
+
+@pytest.fixture
+def github_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.GITHUB.value)
+
+
+@pytest.fixture
+def mongodbatlas_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.MONGODBATLAS.value)
+
+
+@pytest.fixture
+def iac_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.IAC.value)
+
+
+@pytest.fixture
+def oraclecloud_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.ORACLECLOUD.value)
+
+
+@pytest.fixture
+def alibabacloud_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.ALIBABACLOUD.value)
+
+
+@pytest.fixture
+def cloudflare_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.CLOUDFLARE.value)
+
+
+@pytest.fixture
+def openstack_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.OPENSTACK.value)
+
+
+@pytest.fixture
+def image_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.IMAGE.value)
+
+
+@pytest.fixture
+def googleworkspace_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.GOOGLEWORKSPACE.value)
+
+
+@pytest.fixture
+def vercel_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.VERCEL.value)
+
+
+@pytest.fixture
+def okta_provider(provider_factory):
+    return provider_factory(Provider.ProviderChoices.OKTA.value)
+
+
+@pytest.fixture
+def all_provider_types_fixture(provider_factory):
+    return tuple(
+        provider_factory(provider_choice.value)
+        for provider_choice in Provider.ProviderChoices
     )
 
 
@@ -797,7 +859,7 @@ def roles_fixture(tenants_fixture):
 
 
 @pytest.fixture
-def provider_secret_fixture(providers_fixture):
+def provider_secret_fixture(all_provider_types_fixture):
     return tuple(
         ProviderSecret.objects.create(
             tenant_id=provider.tenant_id,
@@ -806,14 +868,14 @@ def provider_secret_fixture(providers_fixture):
             secret={"key": "value"},
             name=provider.alias,
         )
-        for provider in providers_fixture
+        for provider in all_provider_types_fixture
     )
 
 
 @pytest.fixture
-def scans_fixture(tenants_fixture, providers_fixture):
+def scans_fixture(tenants_fixture, aws_provider_pair):
     tenant, *_ = tenants_fixture
-    provider, provider2, *_ = providers_fixture
+    provider, provider2 = aws_provider_pair
 
     now = datetime.now(UTC)
 
@@ -876,8 +938,8 @@ def tasks_fixture(tenants_fixture):
 
 
 @pytest.fixture
-def resources_fixture(providers_fixture):
-    provider, *_ = providers_fixture
+def resources_fixture(aws_provider_pair):
+    provider, provider2 = aws_provider_pair
 
     tags = [
         ResourceTag.objects.create(
@@ -918,8 +980,8 @@ def resources_fixture(providers_fixture):
     resource2.upsert_or_delete_tags(tags)
 
     resource3 = Resource.objects.create(
-        tenant_id=providers_fixture[1].tenant_id,
-        provider=providers_fixture[1],
+        tenant_id=provider2.tenant_id,
+        provider=provider2,
         uid="arn:aws:ec2:us-east-1:123456789012:bucket/i-1234567890abcdef2",
         name="My Bucket 3",
         region="us-east-1",
@@ -1267,9 +1329,9 @@ def get_api_tokens(
 
 
 @pytest.fixture
-def scan_summaries_fixture(tenants_fixture, providers_fixture):
+def scan_summaries_fixture(tenants_fixture, aws_provider):
     tenant = tenants_fixture[0]
-    provider = providers_fixture[0]
+    provider = aws_provider
     scan = Scan.objects.create(
         name="overview scan",
         provider=provider,
@@ -1346,8 +1408,8 @@ def scan_summaries_fixture(tenants_fixture, providers_fixture):
 
 
 @pytest.fixture
-def integrations_fixture(providers_fixture):
-    provider1, provider2, *_ = providers_fixture
+def integrations_fixture(aws_provider_pair):
+    provider1, provider2 = aws_provider_pair
     tenant_id = provider1.tenant_id
     integration1 = Integration.objects.create(
         tenant_id=tenant_id,
@@ -1408,9 +1470,9 @@ def lighthouse_config_fixture(authenticated_client, tenants_fixture):
 
 
 @pytest.fixture(scope="function")
-def latest_scan_finding(authenticated_client, providers_fixture, resources_fixture):
-    provider = providers_fixture[0]
-    tenant_id = str(providers_fixture[0].tenant_id)
+def latest_scan_finding(authenticated_client, aws_provider, resources_fixture):
+    provider = aws_provider
+    tenant_id = str(aws_provider.tenant_id)
     resource = resources_fixture[0]
     scan = Scan.objects.create(
         name="latest completed scan",
@@ -1521,10 +1583,10 @@ def findings_with_multiple_categories(scans_fixture, resources_fixture):
 
 @pytest.fixture(scope="function")
 def latest_scan_finding_with_categories(
-    authenticated_client, providers_fixture, resources_fixture
+    authenticated_client, aws_provider, resources_fixture
 ):
-    provider = providers_fixture[0]
-    tenant_id = str(providers_fixture[0].tenant_id)
+    provider = aws_provider
+    tenant_id = str(aws_provider.tenant_id)
     resource = resources_fixture[0]
     scan = Scan.objects.create(
         name="latest completed scan with categories",
@@ -1558,9 +1620,9 @@ def latest_scan_finding_with_categories(
 
 
 @pytest.fixture(scope="function")
-def latest_scan_resource(authenticated_client, providers_fixture):
-    provider = providers_fixture[0]
-    tenant_id = str(providers_fixture[0].tenant_id)
+def latest_scan_resource(authenticated_client, aws_provider):
+    provider = aws_provider
+    tenant_id = str(aws_provider.tenant_id)
     scan = Scan.objects.create(
         name="latest completed scan for resource",
         provider=provider,
@@ -2025,11 +2087,11 @@ def get_authorization_header(access_token: str) -> dict:
 
 @pytest.fixture
 def provider_compliance_scores_fixture(
-    tenants_fixture, providers_fixture, scans_fixture
+    tenants_fixture, aws_provider_pair, scans_fixture
 ):
     """Create ProviderComplianceScore entries for compliance watchlist tests."""
     tenant = tenants_fixture[0]
-    provider1, provider2, *_ = providers_fixture
+    provider1, provider2 = aws_provider_pair
     scan1, _, scan3 = scans_fixture
 
     scan1.completed_at = datetime.now(UTC) - timedelta(hours=1)
@@ -2126,9 +2188,7 @@ def tenant_compliance_summary_fixture(tenants_fixture):
 
 
 @pytest.fixture
-def finding_groups_fixture(
-    tenants_fixture, providers_fixture, scans_fixture, resources_fixture
-):
+def finding_groups_fixture(tenants_fixture, scans_fixture, resources_fixture):
     """
     Create a comprehensive set of findings for testing Finding Groups aggregation.
 
@@ -2147,7 +2207,6 @@ def finding_groups_fixture(
     - Finding counts (pass, fail, muted, new, changed)
     """
     tenant = tenants_fixture[0]
-    provider1, provider2, *_ = providers_fixture
     scan1, scan2, *_ = scans_fixture
     resource1, resource2, *_ = resources_fixture
 
@@ -2398,7 +2457,7 @@ def finding_groups_fixture(
 
 @pytest.fixture
 def finding_groups_title_variants_fixture(
-    tenants_fixture, providers_fixture, scans_fixture, resources_fixture
+    tenants_fixture, scans_fixture, resources_fixture
 ):
     """
     Two providers report the same check_id with different checktitle values.
@@ -2409,7 +2468,6 @@ def finding_groups_title_variants_fixture(
     of which title variant matches the search term.
     """
     tenant = tenants_fixture[0]
-    provider1, provider2, *_ = providers_fixture
     scan1, scan2, *_ = scans_fixture
     resource1, resource2, *_ = resources_fixture
 

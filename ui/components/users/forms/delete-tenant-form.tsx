@@ -15,6 +15,8 @@ import {
   deleteTenantThenSignOut,
   switchThenDeleteTenant,
 } from "@/actions/users/tenants";
+import { useToast } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
 import {
   Select,
@@ -23,8 +25,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { useToast } from "@/components/ui";
-import { FormButtons } from "@/components/ui/form";
 import { reloadPage } from "@/lib/navigation";
 import { TenantOption } from "@/types/users";
 

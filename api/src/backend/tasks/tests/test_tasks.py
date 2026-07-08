@@ -1964,11 +1964,11 @@ class TestCleanupOrphanScheduledScans:
         )
 
     def test_cleanup_deletes_orphan_when_both_available_and_scheduled_exist(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that AVAILABLE scan is deleted when SCHEDULED also exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create orphan AVAILABLE scan
@@ -2004,11 +2004,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_does_not_delete_when_only_available_exists(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that AVAILABLE scan is NOT deleted when no SCHEDULED exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create only AVAILABLE scan (normal first scan scenario)
@@ -2033,11 +2033,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=available_scan.id).exists()
 
     def test_cleanup_does_not_delete_when_only_scheduled_exists(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that nothing is deleted when only SCHEDULED exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create only SCHEDULED scan (normal subsequent scan scenario)
@@ -2062,11 +2062,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_returns_zero_when_no_scans_exist(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that cleanup returns 0 when no scans exist."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Execute cleanup with no scans
@@ -2079,11 +2079,11 @@ class TestCleanupOrphanScheduledScans:
         assert deleted_count == 0
 
     def test_cleanup_deletes_multiple_orphan_available_scans(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that multiple AVAILABLE orphan scans are all deleted."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create multiple orphan AVAILABLE scans
@@ -2128,12 +2128,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_does_not_affect_different_provider(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider_pair
     ):
         """Test that cleanup only affects scans for the specified provider."""
         tenant = tenants_fixture[0]
-        provider1 = providers_fixture[0]
-        provider2 = providers_fixture[1]
+        provider1, provider2 = aws_provider_pair
         periodic_task1 = self._create_periodic_task(provider1.id, tenant.id)
         periodic_task2 = self._create_periodic_task(provider2.id, tenant.id)
 
@@ -2178,12 +2177,10 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan_p1.id).exists()
         assert Scan.objects.filter(id=available_scan_p2.id).exists()
 
-    def test_cleanup_does_not_affect_manual_scans(
-        self, tenants_fixture, providers_fixture
-    ):
+    def test_cleanup_does_not_affect_manual_scans(self, tenants_fixture, aws_provider):
         """Test that cleanup only affects SCHEDULED trigger scans, not MANUAL."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create orphan AVAILABLE scheduled scan
@@ -2229,11 +2226,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=manual_scan.id).exists()
 
     def test_cleanup_does_not_affect_different_scheduler_task(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that cleanup only affects scans with the specified scheduler_task_id."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task1 = self._create_periodic_task(provider.id, tenant.id)
 
         # Create another periodic task
@@ -2288,11 +2285,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=available_scan_other_task.id).exists()
 
     def test_cleanup_keeps_db_queued_scheduled_scans(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """DB-queued scheduled scans have a task and must not be deleted as orphans."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_result = TaskResult.objects.create(
             task_id=str(uuid.uuid4()),
@@ -2381,11 +2378,11 @@ class TestPerformScheduledScanTask:
         return task_result
 
     def test_queues_scheduled_scan_when_scheduled_scan_is_executing(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Queue a scheduled run when another scheduled scan is executing."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2431,11 +2428,11 @@ class TestPerformScheduledScanTask:
         )
 
     def test_queues_scheduled_scan_when_manual_scan_is_pending(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Queue one scheduled run when a manual scan is already dispatched."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2488,11 +2485,11 @@ class TestPerformScheduledScanTask:
         assert scheduled_scan.scheduled_at > datetime.now(UTC)
 
     def test_coalesces_scheduled_scan_when_one_is_already_queued(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Reuse the existing queued scheduled scan instead of adding another."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2557,11 +2554,11 @@ class TestPerformScheduledScanTask:
         )
 
     def test_creates_next_scheduled_scan_after_completion(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Create a next scheduled scan after a successful run completes."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2616,11 +2613,11 @@ class TestPerformScheduledScanTask:
         )
 
     def test_next_scheduled_scan_failure_does_not_mask_completed_scan(
-        self, tenants_fixture, providers_fixture, caplog
+        self, tenants_fixture, aws_provider, caplog
     ):
         """Keep scheduled scan success when next-run creation fails."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2651,11 +2648,11 @@ class TestPerformScheduledScanTask:
         assert "Failed to ensure next scheduled scan" in caplog.text
 
     def test_dedupes_multiple_scheduled_scans_before_run(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Ensure duplicated scheduled scans are removed before executing."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2767,12 +2764,12 @@ class TestPerformScanTask:
     def test_dispatches_next_queued_scan_after_completion(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         django_capture_on_commit_callbacks,
     ):
         """Dispatch the next queued scan for the provider after completion."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         current_scan = Scan.objects.create(
             tenant_id=tenant.id,
             provider=provider,
@@ -2830,11 +2827,11 @@ class TestPerformScanTask:
         )
 
     def test_dispatch_failure_does_not_mask_completed_scan(
-        self, tenants_fixture, providers_fixture, caplog
+        self, tenants_fixture, aws_provider, caplog
     ):
         """Keep scan success when queued dispatch fails after completion."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         current_scan = Scan.objects.create(
             tenant_id=tenant.id,
             provider=provider,

@@ -5,7 +5,7 @@ import { getAllProviders } from "@/actions/providers";
 import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
