@@ -9478,9 +9478,15 @@ class TestUserRoleRelationshipViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
+        tenant = roles_fixture[2].tenant
+        relationships = UserRoleRelationship.objects.filter(
+            user=create_test_user.id, tenant=tenant
+        )
         assert relationships.count() == 1
         assert {rel.role.id for rel in relationships} == {roles_fixture[2].id}
+        assert (
+            UserRoleRelationship.objects.filter(user=create_test_user.id).count() == 2
+        )
 
         data = {
             "data": [
@@ -9494,12 +9500,66 @@ class TestUserRoleRelationshipViewSet:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
-        relationships = UserRoleRelationship.objects.filter(user=create_test_user.id)
+        relationships = UserRoleRelationship.objects.filter(
+            user=create_test_user.id, tenant=tenant
+        )
         assert relationships.count() == 2
         assert {rel.role.id for rel in relationships} == {
             roles_fixture[1].id,
             roles_fixture[2].id,
         }
+        assert (
+            UserRoleRelationship.objects.filter(user=create_test_user.id).count() == 3
+        )
+
+    def test_partial_update_relationship_preserves_foreign_tenant_roles(
+        self, authenticated_client, roles_fixture, tenants_fixture
+    ):
+        tenant_a, tenant_b, _ = tenants_fixture
+        tenant_a_role = roles_fixture[1]
+        replacement_role = roles_fixture[2]
+        foreign_role = Role.objects.create(
+            name=f"foreign-role-{uuid4()}",
+            tenant=tenant_b,
+            manage_users=False,
+            manage_account=False,
+            manage_billing=False,
+            manage_providers=False,
+            manage_integrations=False,
+            manage_scans=False,
+            unlimited_visibility=False,
+        )
+        shared_user = User.objects.create_user(
+            name="shared_user",
+            email=f"shared-user-{uuid4()}@prowler.com",
+            password="TmpPass123@",
+        )
+        Membership.objects.create(user=shared_user, tenant=tenant_a)
+        Membership.objects.create(user=shared_user, tenant=tenant_b)
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=tenant_a_role, tenant=tenant_a
+        )
+        UserRoleRelationship.objects.create(
+            user=shared_user, role=foreign_role, tenant=tenant_b
+        )
+
+        data = {"data": [{"type": "roles", "id": str(replacement_role.id)}]}
+        response = authenticated_client.patch(
+            reverse("user-roles-relationship", kwargs={"pk": shared_user.id}),
+            data=data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        tenant_a_relationships = UserRoleRelationship.objects.filter(
+            user=shared_user, tenant=tenant_a
+        )
+        assert tenant_a_relationships.count() == 1
+        assert {rel.role_id for rel in tenant_a_relationships} == {replacement_role.id}
+        assert UserRoleRelationship.objects.filter(
+            user=shared_user, tenant=tenant_b, role=foreign_role
+        ).exists()
+        assert UserRoleRelationship.objects.filter(user=shared_user).count() == 2
 
     def test_destroy_relationship_other_user(
         self, authenticated_client, roles_fixture, create_test_user, tenants_fixture
