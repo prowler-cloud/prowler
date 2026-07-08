@@ -442,3 +442,123 @@ class TestComplianceOutput:
         )
 
         assert compliance_output.file_extension == ".csv"
+
+
+class TestComplianceCheckHelperModule:
+    """Tests for the new ``compliance_check`` leaf module that hosts
+    ``get_check_compliance``.
+
+    This module exists to break the cyclic import chain
+    ``finding -> compliance.compliance -> universal.* -> finding`` that
+    CodeQL flagged. It must be:
+      - importable directly without pulling in the universal pipeline
+      - re-exported by ``compliance.compliance`` for backward compatibility
+      - the SAME function object, regardless of import path
+    """
+
+    def test_module_is_importable_directly(self):
+        """The helper module must be importable on its own — it is the
+        leaf used by ``finding.py`` to break the cyclic import chain."""
+        from prowler.lib.outputs.compliance import compliance_check
+
+        assert hasattr(compliance_check, "get_check_compliance")
+        assert callable(compliance_check.get_check_compliance)
+
+    def test_helper_module_only_depends_on_check_models_and_logger(self):
+        """The helper must not pull in universal pipeline modules; that
+        was the whole point of extracting it. Inspecting the module's
+        own imports keeps it honest without polluting ``sys.modules``."""
+        import inspect
+
+        from prowler.lib.outputs.compliance import compliance_check
+
+        source = inspect.getsource(compliance_check)
+        # Only these two prowler imports are allowed in the leaf module
+        assert "from prowler.lib.check.models import Check_Report" in source
+        assert "from prowler.lib.logger import logger" in source
+        # And NOT these (would re-introduce the cycle):
+        assert "from prowler.lib.outputs.compliance.universal" not in source
+        assert "from prowler.lib.outputs.finding" not in source
+        assert "from prowler.lib.outputs.ocsf" not in source
+
+    def test_re_export_from_compliance_compliance(self):
+        """``compliance.compliance.get_check_compliance`` must point to
+        the same function as ``compliance.compliance_check.get_check_compliance``."""
+        from prowler.lib.outputs.compliance.compliance import (
+            get_check_compliance as via_compliance,
+        )
+        from prowler.lib.outputs.compliance.compliance_check import (
+            get_check_compliance as via_helper,
+        )
+
+        assert via_compliance is via_helper
+
+    def test_re_export_from_finding_module(self):
+        """``finding.get_check_compliance`` must point to the same
+        function. Test mocks rely on this attribute existing on the
+        ``prowler.lib.outputs.finding`` module."""
+        from prowler.lib.outputs.compliance.compliance_check import (
+            get_check_compliance as via_helper,
+        )
+        from prowler.lib.outputs.finding import get_check_compliance as via_finding
+
+        assert via_finding is via_helper
+
+    def test_returns_empty_dict_on_unknown_check(self):
+        """Sanity test of the function logic via the helper module."""
+        from prowler.lib.outputs.compliance.compliance_check import (
+            get_check_compliance,
+        )
+
+        finding = mock.MagicMock()
+        finding.check_metadata.CheckID = "unknown_check_id"
+        result = get_check_compliance(finding, "aws", {})
+        assert result == {}
+
+    def test_filters_by_provider(self):
+        """The function returns frameworks only for the matching provider."""
+        from prowler.lib.outputs.compliance.compliance_check import (
+            get_check_compliance,
+        )
+
+        compliance_aws = mock.MagicMock(
+            Framework="CIS",
+            Version="1.4",
+            Provider="AWS",
+            Requirements=[mock.MagicMock(Id="2.1.3")],
+        )
+        compliance_azure = mock.MagicMock(
+            Framework="CIS",
+            Version="2.0",
+            Provider="Azure",
+            Requirements=[mock.MagicMock(Id="9.1")],
+        )
+        finding = mock.MagicMock()
+        finding.check_metadata.CheckID = "shared_check"
+        bulk = {
+            "shared_check": mock.MagicMock(
+                Compliance=[compliance_aws, compliance_azure]
+            )
+        }
+
+        # Only AWS frameworks come back
+        result = get_check_compliance(finding, "aws", bulk)
+        assert "CIS-1.4" in result
+        assert "CIS-2.0" not in result
+
+    def test_returns_empty_dict_on_exception(self):
+        """If iteration raises, the function logs the error and returns
+        an empty dict (defensive behaviour)."""
+        from prowler.lib.outputs.compliance.compliance_check import (
+            get_check_compliance,
+        )
+
+        # bulk_checks_metadata that raises when accessed → defensive path
+        class Boom:
+            def __contains__(self, _key):
+                raise RuntimeError("boom")
+
+        finding = mock.MagicMock()
+        finding.check_metadata.CheckID = "any"
+        result = get_check_compliance(finding, "aws", Boom())
+        assert result == {}

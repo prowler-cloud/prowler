@@ -1,7 +1,7 @@
 {
   "Provider": "azure",
   "CheckID": "keyvault_logging_enabled",
-  "CheckTitle": "Key Vault has a diagnostic setting capturing audit logs",
+  "CheckTitle": "Key Vault has at least one diagnostic setting with audit logging enabled",
   "CheckType": [],
   "ServiceName": "keyvault",
   "SubServiceName": "",
@@ -9,7 +9,7 @@
   "Severity": "high",
   "ResourceType": "microsoft.keyvault/vaults",
   "ResourceGroup": "security",
-  "Description": "**Azure Key Vault** diagnostic settings capture **audit logs** (`AuditEvent`) when category groups `audit` and `allLogs` are enabled and routed to a supported destination. Logged events include management and data-plane operations on vaults, keys, secrets, and certificates.",
+  "Description": "**Azure Key Vault** diagnostic settings capture **audit logs** (`AuditEvent`) when the `AuditEvent` category is enabled, or when category groups `audit` and `allLogs` are enabled, and routed to a supported destination. Logged events include management and data-plane operations on vaults, keys, secrets, and certificates.",
   "Risk": "Without **Key Vault audit logging**, access and changes to keys, secrets, and certificates are untracked.\n\nAttackers can misuse keys to decrypt data, alter or delete crypto material, and evade detection-eroding **confidentiality** and **integrity** and delaying **incident response**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -20,13 +20,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az monitor diagnostic-settings create --name <example_resource_name> --resource <example_resource_id> --workspace <example_resource_id> --logs '[{\"categoryGroup\":\"audit\",\"enabled\":true},{\"categoryGroup\":\"allLogs\",\"enabled\":true}]'",
-      "NativeIaC": "```bicep\n// Enable Key Vault diagnostic settings with audit + allLogs\nparam keyVaultName string\nparam workspaceId string\n\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' existing = {\n  name: keyVaultName\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: kv\n  properties: {\n    workspaceId: workspaceId\n    logs: [\n      {\n        categoryGroup: 'audit'   // critical: enables audit logs\n        enabled: true            // required to pass the check\n      }\n      {\n        categoryGroup: 'allLogs' // critical: enables allLogs group\n        enabled: true            // required to pass the check\n      }\n    ]\n  }\n}\n```",
-      "Other": "1. In Azure Portal, go to your Key Vault > Monitoring > Diagnostic settings\n2. Click Add diagnostic setting\n3. Under Category groups, select audit and allLogs\n4. Choose a destination (e.g., Send to Log Analytics workspace) and select the workspace\n5. Click Save",
-      "Terraform": "```hcl\n# Enable diagnostic settings on Key Vault with audit + allLogs\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"<example_resource_id>\"           # Key Vault resource ID\n  log_analytics_workspace_id = \"<example_resource_id>\"           # Destination workspace ID\n\n  enabled_log {                                                  # critical: audit category group\n    category_group = \"audit\"                                    # enables audit logs\n  }\n  enabled_log {                                                  # critical: allLogs category group\n    category_group = \"allLogs\"                                  # enables all logs\n  }\n}\n```"
+      "CLI": "az monitor diagnostic-settings create --name <example_resource_name> --resource <example_resource_id> --workspace <example_resource_id> --logs '[{\"category\":\"AuditEvent\",\"enabled\":true}]'",
+      "NativeIaC": "```bicep\n// Enable Key Vault AuditEvent diagnostic logs\nparam keyVaultName string\nparam workspaceId string\n\nresource kv 'Microsoft.KeyVault/vaults@2023-07-01' existing = {\n  name: keyVaultName\n}\n\nresource diag 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {\n  name: '<example_resource_name>'\n  scope: kv\n  properties: {\n    workspaceId: workspaceId\n    logs: [\n      {\n        category: 'AuditEvent'\n        enabled: true\n      }\n    ]\n  }\n}\n```",
+      "Other": "1. In Azure Portal, go to your Key Vault > Monitoring > Diagnostic settings\n2. Click Add diagnostic setting\n3. Enable AuditEvent audit logs, or select the audit and allLogs category groups\n4. Choose a destination (e.g., Send to Log Analytics workspace) and select the workspace\n5. Click Save",
+      "Terraform": "```hcl\n# Enable AuditEvent diagnostic logs on Key Vault\nresource \"azurerm_monitor_diagnostic_setting\" \"<example_resource_name>\" {\n  name                       = \"<example_resource_name>\"\n  target_resource_id         = \"<example_resource_id>\"\n  log_analytics_workspace_id = \"<example_resource_id>\"\n\n  enabled_log {\n    category = \"AuditEvent\"\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Enable **diagnostic settings** to collect `AuditEvent` logs-covering category groups `audit` and `allLogs`-and send them to a central sink. Apply **least privilege** to log access, enforce secure **retention/immutability**, monitor with alerts for anomalous operations, and use **separation of duties** to prevent logging bypass.",
+      "Text": "Enable **diagnostic settings** to collect `AuditEvent` logs and send them to a central sink. Apply **least privilege** to log access, enforce secure **retention/immutability**, monitor with alerts for anomalous operations, and use **separation of duties** to prevent logging bypass.",
       "Url": "https://hub.prowler.com/check/keyvault_logging_enabled"
     }
   },

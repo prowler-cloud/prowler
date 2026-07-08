@@ -259,8 +259,8 @@ If using Prowler's CloudFormation template, execute the following command to upd
     - `EnableS3Integration`: Select "true"
     - `S3IntegrationBucketName`: Your bucket name
     - `S3IntegrationBucketAccountId`: Bucket owner's AWS account ID
-5. In the "Configure stack options" screen, again, leave everything as it is and click on "Next"
-6. Finally, under "Review Prowler", at the bottom click on "Submit"
+5. In the "Configure stack options" screen, again, leave everything as it is and click "Next"
+6. Finally, under "Review Prowler", at the bottom click "Submit"
 
 #### Terraform
 
@@ -314,13 +314,13 @@ Once the required permissions are set up, proceed to configure the S3 integratio
 
 1. Navigate to "Integrations"
     ![Navigate to integrations](/images/prowler-app/s3/s3-integration-ui-1.png)
-2. Locate the Amazon S3 Integration card and click on the "Configure" button
+2. Locate the Amazon S3 Integration card and click the "Configure" button
     ![Access S3 integration](/images/prowler-app/s3/s3-integration-ui-2.png)
 3. Click the "Add Integration" button
     ![Add integration button](/images/prowler-app/s3/s3-integration-ui-3.png)
 4. Complete the configuration form with the following details:
 
-    - **Cloud Providers:** Select the providers whose scan results should be exported to this S3 bucket
+    - **Providers:** Select the providers whose scan results should be exported to this S3 bucket
     - **Bucket Name:** Enter the name of the target S3 bucket (e.g., `my-security-findings-bucket`)
     - **Output Directory:** Specify the directory path within the bucket (e.g., `/prowler-findings/`, defaults to `output`)
 

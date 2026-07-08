@@ -175,16 +175,23 @@ class AdminCenter(M365Service):
         try:
             groups_list = await self.client.groups.get()
             groups.update({})
-            for group in groups_list.value:
-                groups.update(
-                    {
-                        group.id: Group(
-                            id=group.id,
-                            name=getattr(group, "display_name", ""),
-                            visibility=getattr(group, "visibility", ""),
-                        )
-                    }
-                )
+            while groups_list:
+                for group in getattr(groups_list, "value", []) or []:
+                    groups.update(
+                        {
+                            group.id: Group(
+                                id=group.id,
+                                name=getattr(group, "display_name", ""),
+                                visibility=getattr(group, "visibility", ""),
+                                group_types=getattr(group, "group_types", []) or [],
+                            )
+                        }
+                    )
+
+                next_link = getattr(groups_list, "odata_next_link", None)
+                if not next_link:
+                    break
+                groups_list = await self.client.groups.with_url(next_link).get()
 
         except Exception as error:
             logger.error(
@@ -237,6 +244,7 @@ class Group(BaseModel):
     id: str
     name: str
     visibility: Optional[str]
+    group_types: List[str] = []
 
 
 class PasswordPolicy(BaseModel):

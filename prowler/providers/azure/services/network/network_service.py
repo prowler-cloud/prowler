@@ -17,14 +17,20 @@ class Network(AzureService):
         self.bastion_hosts = self._get_bastion_hosts()
         self.network_watchers = self._get_network_watchers()
         self.public_ip_addresses = self._get_public_ip_addresses()
+        self.virtual_networks = self._get_virtual_networks()
 
     def _get_security_groups(self):
         logger.info("Network - Getting Network Security Groups...")
         security_groups = {}
         for subscription, client in self.clients.items():
             try:
+                security_groups_list = self.list_with_rg_scope(
+                    subscription,
+                    client.network_security_groups.list_all,
+                    client.network_security_groups.list,
+                )
+
                 security_groups.update({subscription: []})
-                security_groups_list = client.network_security_groups.list_all()
                 for security_group in security_groups_list:
                     security_groups[subscription].append(
                         SecurityGroup(
@@ -54,7 +60,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return security_groups
 
@@ -63,8 +69,8 @@ class Network(AzureService):
         network_watchers = {}
         for subscription, client in self.clients.items():
             try:
-                network_watchers.update({subscription: []})
                 network_watchers_list = client.network_watchers.list_all()
+                network_watchers.update({subscription: []})
                 for network_watcher in network_watchers_list:
                     flow_logs = self._get_flow_logs(
                         subscription, network_watcher.name, network_watcher.id
@@ -79,6 +85,9 @@ class Network(AzureService):
                                     id=flow_log.id,
                                     name=flow_log.name,
                                     enabled=flow_log.enabled,
+                                    target_resource_id=getattr(
+                                        flow_log, "target_resource_id", None
+                                    ),
                                     retention_policy=RetentionPolicy(
                                         enabled=(
                                             flow_log.retention_policy.enabled
@@ -91,6 +100,34 @@ class Network(AzureService):
                                             else 0
                                         ),
                                     ),
+                                    traffic_analytics_enabled=bool(
+                                        getattr(
+                                            getattr(
+                                                getattr(
+                                                    flow_log,
+                                                    "flow_analytics_configuration",
+                                                    None,
+                                                ),
+                                                "network_watcher_flow_analytics_configuration",
+                                                None,
+                                            ),
+                                            "enabled",
+                                            False,
+                                        )
+                                    ),
+                                    workspace_resource_id=getattr(
+                                        getattr(
+                                            getattr(
+                                                flow_log,
+                                                "flow_analytics_configuration",
+                                                None,
+                                            ),
+                                            "network_watcher_flow_analytics_configuration",
+                                            None,
+                                        ),
+                                        "workspace_resource_id",
+                                        None,
+                                    ),
                                 )
                                 for flow_log in flow_logs
                             ],
@@ -99,7 +136,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return network_watchers
 
@@ -118,12 +155,12 @@ class Network(AzureService):
             return flow_logs
         except ResourceNotFoundError as error:
             logger.warning(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return []
 
@@ -132,8 +169,13 @@ class Network(AzureService):
         bastion_hosts = {}
         for subscription, client in self.clients.items():
             try:
+                bastion_hosts_list = self.list_with_rg_scope(
+                    subscription,
+                    client.bastion_hosts.list,
+                    client.bastion_hosts.list_by_resource_group,
+                )
+
                 bastion_hosts.update({subscription: []})
-                bastion_hosts_list = client.bastion_hosts.list()
                 for bastion_host in bastion_hosts_list:
                     bastion_hosts[subscription].append(
                         BastionHost(
@@ -145,7 +187,7 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return bastion_hosts
 
@@ -154,8 +196,13 @@ class Network(AzureService):
         public_ip_addresses = {}
         for subscription, client in self.clients.items():
             try:
+                public_ip_addresses_list = self.list_with_rg_scope(
+                    subscription,
+                    client.public_ip_addresses.list_all,
+                    client.public_ip_addresses.list,
+                )
+
                 public_ip_addresses.update({subscription: []})
-                public_ip_addresses_list = client.public_ip_addresses.list_all()
                 for public_ip_address in public_ip_addresses_list:
                     public_ip_addresses[subscription].append(
                         PublicIp(
@@ -168,9 +215,48 @@ class Network(AzureService):
 
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return public_ip_addresses
+
+    def _get_virtual_networks(self):
+        logger.info("Network - Getting Virtual Networks...")
+        virtual_networks = {}
+        for subscription_id, client in self.clients.items():
+            try:
+                virtual_networks[subscription_id] = []
+                virtual_networks_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.virtual_networks.list_all,
+                    client.virtual_networks.list,
+                )
+                for virtual_network in virtual_networks_list:
+                    subnets = []
+                    for subnet in getattr(virtual_network, "subnets", []) or []:
+                        nsg = getattr(subnet, "network_security_group", None)
+                        subnets.append(
+                            VNetSubnet(
+                                id=subnet.id,
+                                name=subnet.name,
+                                nsg_id=getattr(nsg, "id", None) if nsg else None,
+                            )
+                        )
+                    virtual_networks[subscription_id].append(
+                        VirtualNetwork(
+                            id=virtual_network.id,
+                            name=virtual_network.name,
+                            location=virtual_network.location,
+                            enable_ddos_protection=getattr(
+                                virtual_network, "enable_ddos_protection", False
+                            ),
+                            subnets=subnets,
+                        )
+                    )
+            except Exception as error:
+                logger.error(
+                    f"Subscription ID: {subscription_id} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+        return virtual_networks
 
 
 @dataclass
@@ -192,6 +278,9 @@ class FlowLog:
     name: str
     enabled: bool
     retention_policy: RetentionPolicy
+    target_resource_id: Optional[str] = None
+    traffic_analytics_enabled: bool = False
+    workspace_resource_id: Optional[str] = None
 
 
 @dataclass
@@ -227,3 +316,23 @@ class PublicIp:
     name: str
     location: str
     ip_address: str
+
+
+@dataclass
+class VNetSubnet:
+    id: str
+    name: str
+    nsg_id: Optional[str] = None
+
+
+@dataclass
+class VirtualNetwork:
+    id: str
+    name: str
+    location: str
+    enable_ddos_protection: bool = False
+    subnets: List[VNetSubnet] = None
+
+    def __post_init__(self):
+        if self.subnets is None:
+            self.subnets = []

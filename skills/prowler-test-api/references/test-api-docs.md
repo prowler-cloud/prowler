@@ -14,7 +14,7 @@
 
 ## Fixture Dependency Graph
 
-```
+```text
 create_test_user (session)
     │
     └─► tenants_fixture (function)
@@ -24,7 +24,7 @@ create_test_user (session)
             │       └─► authenticated_client
             │               └─► (most API tests use this)
             │
-            ├─► providers_fixture
+            ├─► aws_provider
             │       └─► scans_fixture
             │               └─► findings_fixture
             │
@@ -102,11 +102,19 @@ Authentication tests:
 ```python
 @pytest.mark.django_db
 class TestProviderViewSet:
-    def test_list(self, authenticated_client, providers_fixture):
-        # authenticated_client has JWT for tenant[0]
-        # providers_fixture has 9 providers in tenant[0]
+    def test_list(self, authenticated_client, aws_provider):
+        # authenticated_client is a Django test client with JWT for tenant[0]
+        # aws_provider creates one validated AWS provider in tenant[0]
         ...
 ```
+
+Use serializer-generated JWTs or API-key clients for authentication behavior
+tests only: token obtain/refresh, invalid or expired tokens, token-scoped tenant
+switching, API keys, and unauthenticated 401 responses. Regular view tests
+should use `authenticated_client` so they still exercise `request.user`,
+`request.auth["tenant_id"]`, RLS, and RBAC without paying token serializer cost.
+Use `authenticated_client_for_tenant_factory` when a test needs the same cheap
+JWT path for a different user or tenant.
 
 ### RBAC Tests
 
@@ -171,28 +179,28 @@ from conftest import (
 
 ```bash
 # Full test suite
-cd api && poetry run pytest
+cd api && uv run pytest
 
 # Fast fail on first error
-cd api && poetry run pytest -x
+cd api && uv run pytest -x
 
 # Short traceback
-cd api && poetry run pytest --tb=short
+cd api && uv run pytest --tb=short
 
 # Specific file
-cd api && poetry run pytest api/src/backend/api/tests/test_views.py
+cd api && uv run pytest api/src/backend/api/tests/test_views.py
 
 # Pattern match
-cd api && poetry run pytest -k "Provider"
+cd api && uv run pytest -k "Provider"
 
 # Verbose with print output
-cd api && poetry run pytest -v -s
+cd api && uv run pytest -v -s
 
 # With coverage
-cd api && poetry run pytest --cov=api --cov-report=html
+cd api && uv run pytest --cov=api --cov-report=html
 
 # Parallel execution
-cd api && poetry run pytest -n auto
+cd api && uv run pytest -n auto
 ```
 
 ---

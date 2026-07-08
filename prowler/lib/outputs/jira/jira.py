@@ -44,9 +44,11 @@ class JiraConnection(Connection):
     Represents a Jira connection object.
     Attributes:
         projects (dict): Dictionary of projects in Jira.
+        issue_types (dict): Dictionary of issue types per project key.
     """
 
     projects: dict = None
+    issue_types: dict = None
 
 
 class MarkdownToADFConverter:
@@ -227,7 +229,9 @@ class MarkdownToADFConverter:
         return node
 
     def _paragraph_with_text(self, text: str) -> Dict:
-        return {"type": "paragraph", "content": [self._create_text_node(text, None)]}
+        # ADF forbids empty text nodes; emit an empty paragraph instead.
+        content = [self._create_text_node(text, None)] if text else []
+        return {"type": "paragraph", "content": content}
 
     @staticmethod
     def _pop_mark(marks_stack: List[Dict], mark_type: str) -> None:
@@ -337,6 +341,7 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
+    REQUEST_TIMEOUT = 90
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -574,7 +579,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(self.TOKEN_URL, json=body, headers=headers)
+            response = requests.post(
+                self.TOKEN_URL,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -626,12 +636,17 @@ class Jira:
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
                 response = response.json()
                 return response.get("cloudId")
             else:
                 headers = self.get_headers(access_token)
-                response = requests.get(self.API_TOKEN_URL, headers=headers)
+                response = requests.get(
+                    self.API_TOKEN_URL,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
 
             if response.status_code == 200:
                 resources = response.json()
@@ -713,7 +728,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(url, json=body, headers=headers)
+            response = requests.post(
+                url,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -781,7 +801,20 @@ class Jira:
             )
             projects = jira.get_projects()
 
-            return JiraConnection(is_connected=True, projects=projects)
+            issue_types = {}
+            for project_key in projects:
+                try:
+                    issue_types[project_key] = jira.get_available_issue_types(
+                        project_key
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Failed to get issue types for project {project_key}: {e}"
+                    )
+
+            return JiraConnection(
+                is_connected=True, projects=projects, issue_types=issue_types
+            )
         except JiraNoProjectsError as no_projects_error:
             logger.error(
                 f"{no_projects_error.__class__.__name__}[{no_projects_error.__traceback__.tb_lineno}]: {no_projects_error}"
@@ -857,6 +890,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -924,6 +958,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -969,6 +1004,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
             if response.status_code == 200:
                 projects_data = {}
@@ -984,6 +1020,7 @@ class Jira:
                         project_response = requests.get(
                             f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
                             headers=headers,
+                            timeout=self.REQUEST_TIMEOUT,
                         )
                         if project_response.status_code == 200:
                             project_metadata = project_response.json()
@@ -1102,6 +1139,18 @@ class Jira:
         finding_url: str = "",
         tenant_info: str = "",
     ) -> dict:
+
+        # ADF forbids empty text nodes, so Jira rejects them with 400 INVALID_INPUT.
+        def _safe(value: str) -> str:
+            return value if (value and value.strip()) else "-"
+
+        check_id = _safe(check_id)
+        check_title = _safe(check_title)
+        status_extended = _safe(status_extended)
+        provider = _safe(provider)
+        region = _safe(region)
+        resource_uid = _safe(resource_uid)
+        resource_name = _safe(resource_name)
 
         table_rows = [
             {
@@ -1894,6 +1943,7 @@ class Jira:
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                     json=payload,
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
 
                 if response.status_code != 201:
@@ -2098,6 +2148,7 @@ class Jira:
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                 json=payload,
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code != 201:

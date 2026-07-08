@@ -64,7 +64,7 @@ class Test_guardduty_delegated_admin_enabled_all_regions:
     @mock_aws
     def test_no_detectors(self):
         """Test when no GuardDuty detectors exist."""
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -102,7 +102,7 @@ class Test_guardduty_delegated_admin_enabled_all_regions:
         guardduty_client_boto = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         detector_id = guardduty_client_boto.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -148,7 +148,7 @@ class Test_guardduty_delegated_admin_enabled_all_regions:
         guardduty_client_boto = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         detector_id = guardduty_client_boto.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 
@@ -194,7 +194,7 @@ class Test_guardduty_delegated_admin_enabled_all_regions:
         guardduty_client_boto = client("guardduty", region_name=AWS_REGION_EU_WEST_1)
         detector_id = guardduty_client_boto.create_detector(Enable=True)["DetectorId"]
 
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
 
         from prowler.providers.aws.services.guardduty.guardduty_service import GuardDuty
 

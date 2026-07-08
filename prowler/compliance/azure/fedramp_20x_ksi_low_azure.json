@@ -328,6 +328,7 @@
       "Checks": [
         "entra_non_privileged_user_has_mfa",
         "entra_privileged_user_has_mfa",
+        "entra_user_with_recent_sign_in",
         "entra_user_with_vm_access_has_mfa",
         "iam_custom_role_has_permissions_to_administer_resource_locks",
         "iam_role_user_access_admin_restricted",

@@ -5,8 +5,8 @@ import { useEffect } from "react";
 import { Control, UseFormSetValue } from "react-hook-form";
 
 import { Button } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
 import { Separator } from "@/components/shadcn/separator/separator";
-import { Form } from "@/components/ui/form";
 import { useCredentialsForm } from "@/hooks/use-credentials-form";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -30,8 +30,10 @@ import {
   M365ClientSecretCredentials,
   MongoDBAtlasCredentials,
   OCICredentials,
+  OktaCredentials,
   OpenStackCredentials,
   ProviderType,
+  VercelCredentials,
 } from "@/types";
 
 import { ProviderTitleDocs } from "../provider-title-docs";
@@ -58,8 +60,10 @@ import { IacCredentialsForm } from "./via-credentials/iac-credentials-form";
 import { ImageCredentialsForm } from "./via-credentials/image-credentials-form";
 import { KubernetesCredentialsForm } from "./via-credentials/k8s-credentials-form";
 import { MongoDBAtlasCredentialsForm } from "./via-credentials/mongodbatlas-credentials-form";
+import { OktaCredentialsForm } from "./via-credentials/okta-credentials-form";
 import { OpenStackCredentialsForm } from "./via-credentials/openstack-credentials-form";
 import { OracleCloudCredentialsForm } from "./via-credentials/oraclecloud-credentials-form";
+import { VercelCredentialsForm } from "./via-credentials/vercel-credentials-form";
 
 type BaseCredentialsFormProps = {
   providerType: ProviderType;
@@ -270,6 +274,16 @@ export const BaseCredentialsForm = ({
             control={
               form.control as unknown as Control<GoogleWorkspaceCredentials>
             }
+          />
+        )}
+        {providerType === "vercel" && (
+          <VercelCredentialsForm
+            control={form.control as unknown as Control<VercelCredentials>}
+          />
+        )}
+        {providerType === "okta" && (
+          <OktaCredentialsForm
+            control={form.control as unknown as Control<OktaCredentials>}
           />
         )}
 

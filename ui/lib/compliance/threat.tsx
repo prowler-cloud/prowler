@@ -1,8 +1,8 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   Framework,
@@ -20,6 +20,9 @@ import {
   findOrCreateFramework,
   updateCounters,
 } from "./commons";
+import { compareSectionsByCanonicalOrder } from "./threatscore-pillars";
+
+export { getTopFailedSections } from "./threat-helpers";
 
 export const mapComplianceData = (
   attributesData: AttributesData,
@@ -75,6 +78,7 @@ export const mapComplianceData = (
       description: description,
       status: finalStatus,
       check_ids: checks,
+      invalid_config: requirementData.attributes.invalid_config || false,
       pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
       fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
       manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
@@ -90,6 +94,14 @@ export const mapComplianceData = (
 
     control.requirements.push(requirement);
   }
+
+  // Sort categories within each framework by canonical pillar order so
+  // the accordion, charts and breakdown all agree on the same ordering.
+  frameworks.forEach((framework) => {
+    framework.categories.sort((a, b) =>
+      compareSectionsByCanonicalOrder(a.name, b.name),
+    );
+  });
 
   // Calculate counters and percentualScore (Threat-specific logic)
   frameworks.forEach((framework) => {
@@ -149,9 +161,7 @@ export const mapComplianceData = (
           ? (numerator / denominator) * 100
           : 0;
 
-      // Add percentualScore to category (we can extend the type or use a custom property)
-      (category as any).percentualScore =
-        Math.round(percentualScore * 100) / 100; // Round to 2 decimal places
+      category.percentualScore = Math.round(percentualScore * 100) / 100;
 
       framework.pass += category.pass;
       framework.fail += category.fail;
@@ -168,7 +178,7 @@ export const toAccordionItems = (
 ): AccordionItemProps[] => {
   return data.flatMap((framework) =>
     framework.categories.map((category) => {
-      const percentualScore = (category as any).percentualScore || 0;
+      const percentualScore = category.percentualScore ?? 0;
 
       return {
         key: `${framework.name}-${category.name}`,
@@ -204,6 +214,7 @@ export const toAccordionItems = (
                     type=""
                     name={`${requirement.name} - ${requirement.title || requirement.description}`}
                     status={requirement.status as FindingStatus}
+                    invalidConfig={requirement.invalid_config}
                   />
                 ),
                 content: (

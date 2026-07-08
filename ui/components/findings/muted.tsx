@@ -1,4 +1,8 @@
-import { Tooltip } from "@heroui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 
 import { MutedIcon } from "../icons";
 
@@ -14,10 +18,16 @@ export const Muted = ({
   if (isMuted === false) return null;
 
   return (
-    <Tooltip content={mutedReason} className="text-xs">
-      <div className="border-system-severity-critical/40 w-fit rounded-full border p-1">
-        <MutedIcon className="text-system-severity-critical h-4 w-4" />
-      </div>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="flex items-center gap-1">
+          <MutedIcon className="text-text-neutral-primary size-2" />
+          <span className="text-text-neutral-primary text-sm">Muted</span>
+        </div>
+      </TooltipTrigger>
+      <TooltipContent>
+        <span className="text-xs">{mutedReason}</span>
+      </TooltipContent>
     </Tooltip>
   );
 };

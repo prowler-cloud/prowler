@@ -1,6 +1,7 @@
+import asyncio
 import base64
 import os
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import AsyncMock, MagicMock, mock_open, patch
 from uuid import uuid4
 
 import pytest
@@ -1535,19 +1536,17 @@ class TestM365Provider:
                 TENANT_ID, CLIENT_ID, None, b"fake_certificate_data", certificate_path
             )
 
-    @patch("prowler.providers.m365.m365_provider.asyncio.get_event_loop")
+    @patch("prowler.providers.m365.m365_provider.asyncio.run")
     @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_content_success(
-        self, mock_cert_cred, mock_graph, mock_loop
+        self, mock_cert_cred, mock_graph, mock_asyncio_run
     ):
         """Test verify_client method with valid certificate content"""
         certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
 
-        # Mock the async call
-        mock_loop_instance = MagicMock()
-        mock_loop.return_value = mock_loop_instance
-        mock_loop_instance.run_until_complete.return_value = [{"id": "domain.com"}]
+        # Mock the async call result
+        mock_asyncio_run.return_value = [{"id": "domain.com"}]
 
         # Mock credential and graph client
         mock_credential = MagicMock()
@@ -1563,19 +1562,17 @@ class TestM365Provider:
         mock_cert_cred.assert_called_once()
         mock_graph.assert_called_once_with(credentials=mock_credential)
 
-    @patch("prowler.providers.m365.m365_provider.asyncio.get_event_loop")
+    @patch("prowler.providers.m365.m365_provider.asyncio.run")
     @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_content_failure(
-        self, mock_cert_cred, mock_graph, mock_loop
+        self, mock_cert_cred, mock_graph, mock_asyncio_run
     ):
         """Test verify_client method with certificate content that fails validation"""
         certificate_content = base64.b64encode(b"fake_certificate").decode("utf-8")
 
         # Mock the async call to return empty result (invalid certificate)
-        mock_loop_instance = MagicMock()
-        mock_loop.return_value = mock_loop_instance
-        mock_loop_instance.run_until_complete.return_value = None
+        mock_asyncio_run.return_value = None
 
         # Mock credential and graph client
         mock_credential = MagicMock()
@@ -1591,19 +1588,17 @@ class TestM365Provider:
         assert "certificate content is not valid" in str(exception.value)
 
     @patch("builtins.open", mock_open(read_data=b"fake_certificate_data"))
-    @patch("prowler.providers.m365.m365_provider.asyncio.get_event_loop")
+    @patch("prowler.providers.m365.m365_provider.asyncio.run")
     @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_path_success(
-        self, mock_cert_cred, mock_graph, mock_loop
+        self, mock_cert_cred, mock_graph, mock_asyncio_run
     ):
         """Test verify_client method with valid certificate path"""
         certificate_path = "/path/to/cert.pem"
 
-        # Mock the async call
-        mock_loop_instance = MagicMock()
-        mock_loop.return_value = mock_loop_instance
-        mock_loop_instance.run_until_complete.return_value = [{"id": "domain.com"}]
+        # Mock the async call result
+        mock_asyncio_run.return_value = [{"id": "domain.com"}]
 
         # Mock credential and graph client
         mock_credential = MagicMock()
@@ -1618,19 +1613,17 @@ class TestM365Provider:
         mock_graph.assert_called_once_with(credentials=mock_credential)
 
     @patch("builtins.open", mock_open(read_data=b"fake_certificate_data"))
-    @patch("prowler.providers.m365.m365_provider.asyncio.get_event_loop")
+    @patch("prowler.providers.m365.m365_provider.asyncio.run")
     @patch("prowler.providers.m365.m365_provider.GraphServiceClient")
     @patch("prowler.providers.m365.m365_provider.CertificateCredential")
     def test_verify_client_certificate_path_failure(
-        self, mock_cert_cred, mock_graph, mock_loop
+        self, mock_cert_cred, mock_graph, mock_asyncio_run
     ):
         """Test verify_client method with certificate path that fails validation"""
         certificate_path = "/path/to/cert.pem"
 
         # Mock the async call to return empty result (invalid certificate)
-        mock_loop_instance = MagicMock()
-        mock_loop.return_value = mock_loop_instance
-        mock_loop_instance.run_until_complete.return_value = None
+        mock_asyncio_run.return_value = None
 
         # Mock credential and graph client
         mock_credential = MagicMock()
@@ -1804,3 +1797,94 @@ class TestM365Provider:
             assert "Missing environment variable M365_CERTIFICATE_CONTENT" in str(
                 exception.value
             )
+
+
+class TestM365ProviderEventLoop:
+    """Regression for Celery workers on Python 3.12 where
+    asyncio.get_event_loop() raised
+    `RuntimeError: There is no current event loop in thread 'MainThread'.`
+    M365Provider.setup_identity and M365Provider.validate_static_credentials
+    must work without a pre-existing loop in the current thread."""
+
+    def _without_event_loop(self, callable_):
+        # Simulate the Celery worker state: no event loop registered for the
+        # current thread.
+        asyncio.set_event_loop(None)
+        try:
+            return callable_()
+        finally:
+            # Re-arm a loop so sibling tests that rely on the default don't
+            # bleed into each other.
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+    def test_setup_identity_succeeds_without_active_event_loop(self):
+        domain = MagicMock()
+        domain.id = "tenant.onmicrosoft.com"
+        domain.is_default = True
+
+        org = MagicMock()
+        org.id = TENANT_ID
+
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(return_value=MagicMock(value=[domain]))
+        graph_client.organization.get = AsyncMock(return_value=MagicMock(value=[org]))
+
+        session = MagicMock()
+        # `setup_identity` reads `session.credentials[0]._credential.client_id`
+        # when sp_env_auth is True to populate identity.identity_id.
+        session.credentials = [MagicMock()]
+        session.credentials[0]._credential.client_id = CLIENT_ID
+
+        def call():
+            with patch(
+                "prowler.providers.m365.m365_provider.GraphServiceClient",
+                return_value=graph_client,
+            ):
+                return M365Provider.setup_identity(
+                    sp_env_auth=True,
+                    browser_auth=False,
+                    az_cli_auth=False,
+                    certificate_auth=False,
+                    session=session,
+                )
+
+        identity = self._without_event_loop(call)
+
+        assert isinstance(identity, M365IdentityInfo)
+        assert identity.tenant_id == TENANT_ID
+        graph_client.domains.get.assert_awaited_once()
+        graph_client.organization.get.assert_awaited_once()
+
+    def test_verify_client_certificate_content_without_active_event_loop(self):
+        # `verify_client` is the function the Sentry trace exercises through
+        # certificate-based credential validation; it must run an asyncio
+        # coroutine to call `client.domains.get()` and previously relied on
+        # `asyncio.get_event_loop()`.
+        graph_client = MagicMock()
+        graph_client.domains.get = AsyncMock(
+            return_value=MagicMock(value=[MagicMock()])
+        )
+
+        def call():
+            with (
+                patch("prowler.providers.m365.m365_provider.CertificateCredential"),
+                patch(
+                    "prowler.providers.m365.m365_provider.GraphServiceClient",
+                    return_value=graph_client,
+                ),
+                patch(
+                    "prowler.providers.m365.m365_provider.base64.b64decode",
+                    return_value=b"cert-bytes",
+                ),
+            ):
+                M365Provider.verify_client(
+                    tenant_id=TENANT_ID,
+                    client_id=CLIENT_ID,
+                    client_secret=None,
+                    certificate_content="dGVzdA==",
+                    certificate_path=None,
+                )
+
+        # Must not raise "There is no current event loop in thread 'MainThread'.".
+        self._without_event_loop(call)
+        graph_client.domains.get.assert_awaited_once()

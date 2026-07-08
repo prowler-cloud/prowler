@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 const SkeletonTableRow = () => {
   return (
     <tr className="border-border-neutral-secondary border-b">
-      {/* Account: provider logo + alias + UID */}
+      {/* Provider: logo + alias + UID */}
       <td className="w-[420px] px-3 py-4">
         <div className="flex items-center gap-3">
           <Skeleton className="size-9 rounded-lg" />
@@ -13,7 +13,7 @@ const SkeletonTableRow = () => {
           </div>
         </div>
       </td>
-      {/* Account Groups: badge chips */}
+      {/* Provider Groups: badge chips */}
       <td className="px-3 py-4">
         <div className="flex items-center gap-1.5">
           <Skeleton className="h-6 w-14 rounded-md" />
@@ -57,7 +57,7 @@ export const SkeletonTableProviders = () => {
   const rows = 10;
 
   return (
-    <div className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4">
+    <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm">
       {/* Toolbar: Search + Total entries */}
       <div className="flex items-center justify-between">
         <Skeleton className="size-10 rounded-md" />
@@ -68,11 +68,11 @@ export const SkeletonTableProviders = () => {
       <table className="w-full">
         <thead>
           <tr className="border-border-neutral-secondary border-b">
-            {/* Account */}
+            {/* Provider */}
             <th className="w-[420px] px-3 py-3 text-left">
               <Skeleton className="h-4 w-16 rounded" />
             </th>
-            {/* Account Groups */}
+            {/* Provider Groups */}
             <th className="px-3 py-3 text-left">
               <Skeleton className="h-4 w-24 rounded" />
             </th>

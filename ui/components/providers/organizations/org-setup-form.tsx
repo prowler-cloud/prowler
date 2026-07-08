@@ -1,10 +1,9 @@
 "use client";
 
-import { useClipboard } from "@heroui/use-clipboard";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -19,12 +18,12 @@ import {
   OrgWizardIntent,
 } from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
+import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button/button";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { TreeSpinner } from "@/components/shadcn/tree-view/tree-spinner";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/shadcn/form";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
   getAWSCredentialsTemplateLinks,
   PROWLER_CF_TEMPLATE_URL,
@@ -90,12 +89,29 @@ export function OrgSetupForm({
   const stackSetExternalId = session?.tenantId ?? "";
   const { organizationId } = useOrgSetupStore();
   const { toast } = useToast();
-  const { copied: isExternalIdCopied, copy: copyExternalId } = useClipboard({
-    timeout: 1500,
-  });
-  const { copied: isTemplateUrlCopied, copy: copyTemplateUrl } = useClipboard({
-    timeout: 1500,
-  });
+  const COPY_RESET_TIMEOUT = 1500;
+  const [isExternalIdCopied, setIsExternalIdCopied] = useState(false);
+  const [isTemplateUrlCopied, setIsTemplateUrlCopied] = useState(false);
+  const externalIdCopyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const templateUrlCopyTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+
+  // Copies text and flips the copied flag back after the timeout, without effects
+  const copyWithFeedback = (
+    text: string,
+    setCopied: (copied: boolean) => void,
+    timerRef: { current: ReturnType<typeof setTimeout> | undefined },
+  ) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => setCopied(false), COPY_RESET_TIMEOUT);
+    });
+  };
+
+  const copyExternalId = (text: string) =>
+    copyWithFeedback(text, setIsExternalIdCopied, externalIdCopyTimer);
+  const copyTemplateUrl = (text: string) =>
+    copyWithFeedback(text, setIsTemplateUrlCopied, templateUrlCopyTimer);
   const [setupPhase, setSetupPhase] = useState<OrgSetupPhase>(initialPhase);
   const [isSaving, setIsSaving] = useState(false);
   const formId = "org-wizard-setup-form";
@@ -284,7 +300,7 @@ export function OrgSetupForm({
         {setupPhase === ORG_SETUP_PHASE.ACCESS && isSubmitting && (
           <div className="flex min-h-[220px] items-center justify-center">
             <div className="flex items-center gap-3 py-2">
-              <TreeSpinner className="size-6" />
+              <Spinner className="size-6" />
               <p className="text-sm font-medium">Gathering AWS Accounts...</p>
             </div>
           </div>

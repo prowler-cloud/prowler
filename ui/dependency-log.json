@@ -2,18 +2,50 @@
   {
     "section": "dependencies",
     "name": "@ai-sdk/react",
-    "from": "2.0.106",
-    "to": "2.0.111",
+    "from": "3.0.207",
+    "to": "3.0.205",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-06-17T16:00:06.271Z"
   },
   {
     "section": "dependencies",
     "name": "@aws-sdk/client-bedrock-runtime",
-    "from": "3.948.0",
-    "to": "3.988.0",
+    "from": "3.988.0",
+    "to": "3.1045.0",
     "strategy": "installed",
-    "generatedAt": "2026-02-12T11:04:39.164Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@codemirror/language",
+    "from": "6.12.2",
+    "to": "6.12.2",
+    "strategy": "installed",
+    "generatedAt": "2026-03-26T08:39:34.728Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@codemirror/state",
+    "from": "6.6.0",
+    "to": "6.6.0",
+    "strategy": "installed",
+    "generatedAt": "2026-03-26T08:39:34.728Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@codemirror/view",
+    "from": "6.40.0",
+    "to": "6.40.0",
+    "strategy": "installed",
+    "generatedAt": "2026-03-26T08:39:34.728Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@dagrejs/dagre",
+    "from": "3.0.0",
+    "to": "3.0.0",
+    "strategy": "installed",
+    "generatedAt": "2026-04-16T12:15:51.357Z"
   },
   {
     "section": "dependencies",
@@ -25,14 +57,6 @@
   },
   {
     "section": "dependencies",
-    "name": "@heroui/react",
-    "from": "2.8.4",
-    "to": "2.8.4",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@hookform/resolvers",
     "from": "5.2.2",
     "to": "5.2.2",
@@ -41,27 +65,19 @@
   },
   {
     "section": "dependencies",
-    "name": "@internationalized/date",
-    "from": "3.10.0",
-    "to": "3.10.0",
-    "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@langchain/aws",
-    "from": "0.1.15",
-    "to": "1.1.0",
+    "from": "1.1.0",
+    "to": "1.3.7",
     "strategy": "installed",
-    "generatedAt": "2025-12-12T10:01:54.132Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
   },
   {
     "section": "dependencies",
     "name": "@langchain/core",
-    "from": "1.1.8",
-    "to": "1.1.15",
+    "from": "1.1.46",
+    "to": "1.1.45",
     "strategy": "installed",
-    "generatedAt": "2026-01-15T08:46:46.283Z"
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   },
   {
     "section": "dependencies",
@@ -74,18 +90,26 @@
   {
     "section": "dependencies",
     "name": "@langchain/openai",
-    "from": "0.6.16",
-    "to": "1.1.3",
+    "from": "1.1.3",
+    "to": "1.4.5",
     "strategy": "installed",
-    "generatedAt": "2025-12-12T10:01:54.132Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "@lezer/highlight",
+    "from": "1.2.3",
+    "to": "1.2.3",
+    "strategy": "installed",
+    "generatedAt": "2026-03-26T08:39:34.728Z"
   },
   {
     "section": "dependencies",
     "name": "@next/third-parties",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "dependencies",
@@ -161,6 +185,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-progress",
+    "from": "1.1.7",
+    "to": "1.1.7",
+    "strategy": "installed",
+    "generatedAt": "2026-04-22T06:37:12.894Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-radio-group",
     "from": "1.3.8",
     "to": "1.3.8",
@@ -201,6 +233,14 @@
   },
   {
     "section": "dependencies",
+    "name": "@radix-ui/react-switch",
+    "from": "1.3.0",
+    "to": "1.3.0",
+    "strategy": "installed",
+    "generatedAt": "2026-06-17T16:00:06.271Z"
+  },
+  {
+    "section": "dependencies",
     "name": "@radix-ui/react-tabs",
     "from": "1.1.13",
     "to": "1.1.13",
@@ -233,14 +273,6 @@
   },
   {
     "section": "dependencies",
-    "name": "@react-aria/i18n",
-    "from": "3.12.13",
-    "to": "3.12.13",
-    "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@react-aria/ssr",
     "from": "3.9.4",
     "to": "3.9.4",
@@ -260,14 +292,6 @@
     "name": "@react-stately/utils",
     "from": "3.10.8",
     "to": "3.10.8",
-    "strategy": "installed",
-    "generatedAt": "2025-12-10T11:34:11.122Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "@react-types/datepicker",
-    "from": "3.13.2",
-    "to": "3.13.2",
     "strategy": "installed",
     "generatedAt": "2025-12-10T11:34:11.122Z"
   },
@@ -313,14 +337,6 @@
   },
   {
     "section": "dependencies",
-    "name": "@types/dagre",
-    "from": "0.7.53",
-    "to": "0.7.53",
-    "strategy": "installed",
-    "generatedAt": "2025-11-27T11:47:22.908Z"
-  },
-  {
-    "section": "dependencies",
     "name": "@types/js-yaml",
     "from": "4.0.9",
     "to": "4.0.9",
@@ -329,19 +345,35 @@
   },
   {
     "section": "dependencies",
-    "name": "ai",
-    "from": "5.0.59",
-    "to": "5.0.109",
+    "name": "@uiw/react-codemirror",
+    "from": "4.25.8",
+    "to": "4.25.8",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T08:24:46.195Z"
+    "generatedAt": "2026-03-26T08:39:34.728Z"
   },
   {
     "section": "dependencies",
-    "name": "alert",
-    "from": "6.0.2",
-    "to": "6.0.2",
+    "name": "@xyflow/react",
+    "from": "12.10.2",
+    "to": "12.10.2",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-04-16T12:15:51.357Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "ai",
+    "from": "6.0.205",
+    "to": "6.0.203",
+    "strategy": "installed",
+    "generatedAt": "2026-06-17T16:00:06.271Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "ajv",
+    "from": "8.17.1",
+    "to": "8.18.0",
+    "strategy": "installed",
+    "generatedAt": "2026-06-25T07:13:59.855Z"
   },
   {
     "section": "dependencies",
@@ -377,19 +409,19 @@
   },
   {
     "section": "dependencies",
-    "name": "dagre",
-    "from": "0.8.5",
-    "to": "0.8.5",
+    "name": "date-fns",
+    "from": null,
+    "to": "4.1.0",
     "strategy": "installed",
-    "generatedAt": "2025-11-27T11:47:22.908Z"
+    "generatedAt": "2026-06-17T18:31:57.448Z"
   },
   {
     "section": "dependencies",
-    "name": "date-fns",
-    "from": "4.1.0",
-    "to": "4.1.0",
+    "name": "driver.js",
+    "from": "1.4.0",
+    "to": "1.4.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-05-26T13:05:09.776Z"
   },
   {
     "section": "dependencies",
@@ -406,22 +438,6 @@
     "to": "2.0.0",
     "strategy": "installed",
     "generatedAt": "2025-12-16T08:33:37.278Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "intl-messageformat",
-    "from": "10.7.16",
-    "to": "10.7.16",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "jose",
-    "from": "5.10.0",
-    "to": "5.10.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
@@ -442,18 +458,18 @@
   {
     "section": "dependencies",
     "name": "langchain",
-    "from": "1.1.5",
-    "to": "1.2.10",
+    "from": "1.2.10",
+    "to": "1.4.0",
     "strategy": "installed",
-    "generatedAt": "2026-01-15T08:46:46.283Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
   },
   {
     "section": "dependencies",
     "name": "lucide-react",
-    "from": "0.543.0",
+    "from": null,
     "to": "0.543.0",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-06-17T18:31:46.507Z"
   },
   {
     "section": "dependencies",
@@ -462,6 +478,14 @@
     "to": "15.0.12",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "modern-screenshot",
+    "from": "4.7.0",
+    "to": "4.7.0",
+    "strategy": "installed",
+    "generatedAt": "2026-04-21T12:43:22.528Z"
   },
   {
     "section": "dependencies",
@@ -474,10 +498,10 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "dependencies",
@@ -497,19 +521,11 @@
   },
   {
     "section": "dependencies",
-    "name": "radix-ui",
-    "from": "1.4.2",
-    "to": "1.4.2",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
     "name": "react",
-    "from": "19.2.3",
-    "to": "19.2.4",
+    "from": "19.2.6",
+    "to": "19.2.7",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "dependencies",
@@ -522,10 +538,10 @@
   {
     "section": "dependencies",
     "name": "react-dom",
-    "from": "19.2.3",
-    "to": "19.2.4",
+    "from": "19.2.6",
+    "to": "19.2.7",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "dependencies",
@@ -577,14 +593,6 @@
   },
   {
     "section": "dependencies",
-    "name": "shiki",
-    "from": "3.20.0",
-    "to": "3.20.0",
-    "strategy": "installed",
-    "generatedAt": "2025-12-16T08:33:37.278Z"
-  },
-  {
-    "section": "dependencies",
     "name": "streamdown",
     "from": "1.3.0",
     "to": "1.6.10",
@@ -617,27 +625,11 @@
   },
   {
     "section": "dependencies",
-    "name": "tw-animate-css",
-    "from": "1.4.0",
-    "to": "1.4.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "dependencies",
     "name": "use-stick-to-bottom",
     "from": "1.1.1",
     "to": "1.1.1",
     "strategy": "installed",
     "generatedAt": "2025-12-15T08:24:46.195Z"
-  },
-  {
-    "section": "dependencies",
-    "name": "uuid",
-    "from": "11.1.0",
-    "to": "11.1.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
   },
   {
     "section": "dependencies",
@@ -659,9 +651,9 @@
     "section": "dependencies",
     "name": "zod",
     "from": "4.1.11",
-    "to": "4.1.11",
+    "to": "4.4.3",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
   },
   {
     "section": "dependencies",
@@ -670,14 +662,6 @@
     "to": "5.0.8",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "@eslint/eslintrc",
-    "from": "3.3.3",
-    "to": "3.3.3",
-    "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
   },
   {
     "section": "devDependencies",
@@ -690,10 +674,10 @@
   {
     "section": "devDependencies",
     "name": "@next/eslint-plugin-next",
-    "from": "16.1.3",
-    "to": "16.1.6",
+    "from": "16.2.6",
+    "to": "16.2.9",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
+    "generatedAt": "2026-06-15T07:49:41.143Z"
   },
   {
     "section": "devDependencies",
@@ -754,10 +738,10 @@
   {
     "section": "devDependencies",
     "name": "@types/react",
-    "from": "19.1.13",
-    "to": "19.2.8",
+    "from": "19.2.8",
+    "to": "19.2.17",
     "strategy": "installed",
-    "generatedAt": "2026-01-19T13:54:24.770Z"
+    "generatedAt": "2026-06-15T07:53:01.462Z"
   },
   {
     "section": "devDependencies",
@@ -785,14 +769,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "@types/uuid",
-    "from": "10.0.0",
-    "to": "10.0.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "@typescript-eslint/eslint-plugin",
     "from": "7.18.0",
     "to": "8.53.0",
@@ -817,19 +793,27 @@
   },
   {
     "section": "devDependencies",
-    "name": "@vitest/coverage-v8",
+    "name": "@vitest/browser",
     "from": "4.0.18",
-    "to": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T16:42:27.795Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
-    "name": "autoprefixer",
-    "from": "10.4.19",
-    "to": "10.4.19",
+    "name": "@vitest/browser-playwright",
+    "from": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@vitest/coverage-v8",
+    "from": "4.0.18",
+    "to": "4.1.8",
+    "strategy": "installed",
+    "generatedAt": "2026-06-02T11:34:46.264Z"
   },
   {
     "section": "devDependencies",
@@ -838,6 +822,14 @@
     "to": "1.0.0",
     "strategy": "installed",
     "generatedAt": "2026-01-19T13:54:24.770Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "dotenv",
+    "from": null,
+    "to": "16.6.1",
+    "strategy": "installed",
+    "generatedAt": "2026-05-14T10:09:04.901Z"
   },
   {
     "section": "devDependencies",
@@ -857,14 +849,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-config-next",
-    "from": "16.1.3",
-    "to": "16.1.6",
-    "strategy": "installed",
-    "generatedAt": "2026-01-29T11:15:29.416Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "eslint-config-prettier",
     "from": "10.1.5",
     "to": "10.1.5",
@@ -873,25 +857,9 @@
   },
   {
     "section": "devDependencies",
-    "name": "eslint-plugin-import",
-    "from": "2.32.0",
-    "to": "2.32.0",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "eslint-plugin-jsx-a11y",
     "from": "6.10.2",
     "to": "6.10.2",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "eslint-plugin-node",
-    "from": "11.1.0",
-    "to": "11.1.0",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
   },
@@ -953,14 +921,6 @@
   },
   {
     "section": "devDependencies",
-    "name": "husky",
-    "from": "9.1.7",
-    "to": "9.1.7",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
     "name": "jsdom",
     "from": "27.4.0",
     "to": "27.4.0",
@@ -969,19 +929,27 @@
   },
   {
     "section": "devDependencies",
-    "name": "lint-staged",
-    "from": "15.5.2",
-    "to": "15.5.2",
+    "name": "knip",
+    "from": "6.3.1",
+    "to": "6.3.1",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-04-10T11:55:26.693Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "msw",
+    "from": "2.13.4",
+    "to": "2.13.4",
+    "strategy": "installed",
+    "generatedAt": "2026-04-30T13:13:39.682Z"
   },
   {
     "section": "devDependencies",
     "name": "postcss",
     "from": "8.4.38",
-    "to": "8.4.38",
+    "to": "8.5.14",
     "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
+    "generatedAt": "2026-05-14T10:09:04.901Z"
   },
   {
     "section": "devDependencies",
@@ -993,25 +961,17 @@
   },
   {
     "section": "devDependencies",
+    "name": "prettier-plugin-packagejson",
+    "from": "2.5.22",
+    "to": "2.5.22",
+    "strategy": "installed",
+    "generatedAt": "2026-05-13T14:59:45.730Z"
+  },
+  {
+    "section": "devDependencies",
     "name": "prettier-plugin-tailwindcss",
     "from": "0.6.14",
     "to": "0.6.14",
-    "strategy": "installed",
-    "generatedAt": "2025-10-22T12:36:37.962Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "shadcn",
-    "from": "3.4.1",
-    "to": "3.8.4",
-    "strategy": "installed",
-    "generatedAt": "2026-02-12T11:04:39.164Z"
-  },
-  {
-    "section": "devDependencies",
-    "name": "tailwind-variants",
-    "from": "0.1.20",
-    "to": "0.1.20",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
   },
@@ -1035,8 +995,16 @@
     "section": "devDependencies",
     "name": "vitest",
     "from": "4.0.18",
-    "to": "4.0.18",
+    "to": "4.1.8",
     "strategy": "installed",
-    "generatedAt": "2026-01-29T16:42:27.795Z"
+    "generatedAt": "2026-06-02T11:34:46.264Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "vitest-browser-react",
+    "from": "2.2.0",
+    "to": "2.0.4",
+    "strategy": "installed",
+    "generatedAt": "2026-05-14T10:22:47.378Z"
   }
 ]

@@ -20,10 +20,9 @@ class Filestorage(OCIService):
 
     def __get_client__(self, region):
         """Get the Filestorage client for a region."""
-        client_region = self.regional_clients.get(region)
-        if client_region:
-            return self._create_oci_client(oci.file_storage.FileStorageClient)
-        return None
+        return self._create_oci_client(
+            oci.file_storage.FileStorageClient, config_overrides={"region": region}
+        )
 
     def __list_file_systems__(self, regional_client):
         """List all file_systems."""
@@ -40,7 +39,8 @@ class Filestorage(OCIService):
                 try:
                     # Get availability domains for this compartment
                     identity_client = self._create_oci_client(
-                        oci.identity.IdentityClient
+                        oci.identity.IdentityClient,
+                        config_overrides={"region": regional_client.region},
                     )
                     availability_domains = identity_client.list_availability_domains(
                         compartment_id=compartment.id

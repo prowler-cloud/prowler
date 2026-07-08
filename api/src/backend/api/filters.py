@@ -1,20 +1,6 @@
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 
-from dateutil.parser import parse
-from django.conf import settings
-from django.db.models import F, Q
-from django_filters.rest_framework import (
-    BaseInFilter,
-    BooleanFilter,
-    CharFilter,
-    ChoiceFilter,
-    DateFilter,
-    FilterSet,
-    UUIDFilter,
-)
-from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
-from rest_framework_json_api.serializers import ValidationError
-
+from api.constants import SEVERITY_ORDER
 from api.db_utils import (
     FindingDeltaEnumField,
     InvitationStateEnumField,
@@ -43,6 +29,7 @@ from api.models import (
     ProviderGroup,
     ProviderSecret,
     Resource,
+    ResourceFindingMapping,
     ResourceTag,
     Role,
     Scan,
@@ -66,6 +53,21 @@ from api.uuid_utils import (
     uuid7_start,
 )
 from api.v1.serializers import TaskBase
+from dateutil.parser import parse
+from django.conf import settings
+from django.db.models import F, Q
+from django_filters.rest_framework import (
+    BaseInFilter,
+    BooleanFilter,
+    CharFilter,
+    ChoiceFilter,
+    DateFilter,
+    FilterSet,
+    UUIDFilter,
+)
+from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
+from rest_framework_json_api.serializers import ValidationError
+from uuid6 import UUID
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):
@@ -100,7 +102,7 @@ class BaseProviderFilter(FilterSet):
     """
     Abstract base filter for models with direct FK to Provider.
 
-    Provides standard provider_id and provider_type filters.
+    Provides standard provider_id, provider_type, and provider_groups filters.
     Subclasses must define Meta.model.
     """
 
@@ -114,6 +116,16 @@ class BaseProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         abstract = True
@@ -124,7 +136,7 @@ class BaseScanProviderFilter(FilterSet):
     """
     Abstract base filter for models with FK to Scan (and Scan has FK to Provider).
 
-    Provides standard provider_id and provider_type filters via scan relationship.
+    Provides standard provider_id, provider_type, and provider_groups filters via scan relationship.
     Subclasses must define Meta.model.
     """
 
@@ -137,6 +149,16 @@ class BaseScanProviderFilter(FilterSet):
         field_name="scan__provider__provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
 
     class Meta:
@@ -157,6 +179,16 @@ class CommonFindingFilters(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         choices=Provider.ProviderChoices.choices, field_name="scan__provider__provider"
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     provider_uid = CharFilter(field_name="scan__provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="scan__provider__uid", lookup_expr="in")
@@ -196,17 +228,13 @@ class CommonFindingFilters(FilterSet):
         field_name="resource_services", lookup_expr="icontains"
     )
 
-    resource_uid = CharFilter(field_name="resources__uid")
-    resource_uid__in = CharInFilter(field_name="resources__uid", lookup_expr="in")
-    resource_uid__icontains = CharFilter(
-        field_name="resources__uid", lookup_expr="icontains"
-    )
+    resource_uid = CharFilter(method="filter_resource_uid")
+    resource_uid__in = CharInFilter(method="filter_resource_uid_in")
+    resource_uid__icontains = CharFilter(method="filter_resource_uid_icontains")
 
-    resource_name = CharFilter(field_name="resources__name")
-    resource_name__in = CharInFilter(field_name="resources__name", lookup_expr="in")
-    resource_name__icontains = CharFilter(
-        field_name="resources__name", lookup_expr="icontains"
-    )
+    resource_name = CharFilter(method="filter_resource_name")
+    resource_name__in = CharInFilter(method="filter_resource_name_in")
+    resource_name__icontains = CharFilter(method="filter_resource_name_icontains")
 
     resource_type = CharFilter(method="filter_resource_type")
     resource_type__in = CharInFilter(field_name="resource_types", lookup_expr="overlap")
@@ -264,6 +292,52 @@ class CommonFindingFilters(FilterSet):
             )
         return queryset.filter(overall_query).distinct()
 
+    def filter_check_title_icontains(self, queryset, name, value):
+        # Resolve from the summary table (has check_title column + trigram
+        # GIN index) instead of scanning JSON in the findings table.
+        matching_check_ids = (
+            FindingGroupDailySummary.objects.filter(
+                check_title__icontains=value,
+            )
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+    # --- Resource subquery filters ---
+    # Resolve resource → RFM → finding_ids first, then filter findings
+    # by id__in.  This avoids a 3-way JOIN driven from the (huge)
+    # findings side and lets PostgreSQL start from the resources
+    # unique-constraint index instead.
+
+    @staticmethod
+    def _finding_ids_for_resources(**lookup):
+        return ResourceFindingMapping.objects.filter(
+            resource__in=Resource.objects.filter(**lookup).values("id")
+        ).values("finding_id")
+
+    def filter_resource_uid(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid=value))
+
+    def filter_resource_uid_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(uid__in=value))
+
+    def filter_resource_uid_icontains(self, queryset, name, value):
+        return queryset.filter(
+            id__in=self._finding_ids_for_resources(uid__icontains=value)
+        )
+
+    def filter_resource_name(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name=value))
+
+    def filter_resource_name_in(self, queryset, name, value):
+        return queryset.filter(id__in=self._finding_ids_for_resources(name__in=value))
+
+    def filter_resource_name_icontains(self, queryset, name, value):
+        return queryset.filter(
+            id__in=self._finding_ids_for_resources(name__icontains=value)
+        )
+
 
 class TenantFilter(FilterSet):
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
@@ -286,6 +360,7 @@ class MembershipFilter(FilterSet):
         model = Membership
         fields = {
             "tenant": ["exact"],
+            "user": ["exact"],
             "role": ["exact"],
             "date_joined": ["date", "gte", "lte"],
         }
@@ -325,6 +400,12 @@ class ProviderFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider_groups__id", lookup_expr="exact", distinct=True
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider_groups__id", lookup_expr="in", distinct=True
+    )
 
     class Meta:
         model = Provider
@@ -349,6 +430,16 @@ class ProviderRelationshipFilterSet(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         choices=Provider.ProviderChoices.choices, field_name="provider__provider"
+    )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     provider_uid = CharFilter(field_name="provider__uid", lookup_expr="exact")
     provider_uid__in = CharInFilter(field_name="provider__uid", lookup_expr="in")
@@ -390,6 +481,7 @@ class ScanFilter(ProviderRelationshipFilterSet):
     class Meta:
         model = Scan
         fields = {
+            "id": ["exact", "in"],
             "provider": ["exact", "in"],
             "name": ["exact", "icontains"],
             "started_at": ["gte", "lte"],
@@ -506,12 +598,12 @@ class ResourceFilter(ProviderRelationshipFilterSet):
         gte_date = (
             parse(self.data.get("updated_at__gte")).date()
             if self.data.get("updated_at__gte")
-            else datetime.now(timezone.utc).date()
+            else datetime.now(UTC).date()
         )
         lte_date = (
             parse(self.data.get("updated_at__lte")).date()
             if self.data.get("updated_at__lte")
-            else datetime.now(timezone.utc).date()
+            else datetime.now(UTC).date()
         )
 
         if abs(lte_date - gte_date) > timedelta(
@@ -581,35 +673,32 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
         return queryset.filter(tags__text_search=value)
 
 
-class FindingFilter(CommonFindingFilters):
+FINDING_BASE_FILTER_FIELDS = {
+    "id": ["exact", "in"],
+    "uid": ["exact", "in"],
+    "scan": ["exact", "in"],
+    "delta": ["exact", "in"],
+    "status": ["exact", "in"],
+    "severity": ["exact", "in"],
+    "impact": ["exact", "in"],
+    "check_id": ["exact", "in", "icontains"],
+}
+
+
+class BaseFindingFilter(CommonFindingFilters):
+    DATE_FILTER_FIELDS = ()
+    DATE_FILTER_NAMES = ()
+    DATE_RANGE_HELP_TEXT = (
+        f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days."
+    )
+    DATE_FILTER_REQUIRED_DETAIL = "At least one date filter is required."
+
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
-    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(
-        method="filter_inserted_at_gte",
-        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-    )
-    inserted_at__lte = DateFilter(
-        method="filter_inserted_at_lte",
-        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-    )
-
     class Meta:
         model = Finding
-        fields = {
-            "id": ["exact", "in"],
-            "uid": ["exact", "in"],
-            "scan": ["exact", "in"],
-            "delta": ["exact", "in"],
-            "status": ["exact", "in"],
-            "severity": ["exact", "in"],
-            "impact": ["exact", "in"],
-            "check_id": ["exact", "in", "icontains"],
-            "inserted_at": ["date", "gte", "lte"],
-            "updated_at": ["gte", "lte"],
-        }
+        fields = FINDING_BASE_FILTER_FIELDS
         filter_overrides = {
             FindingDeltaEnumField: {
                 "filter_class": CharFilter,
@@ -632,17 +721,13 @@ class FindingFilter(CommonFindingFilters):
         return queryset.filter(resource_services__contains=[value])
 
     def filter_queryset(self, queryset):
-        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
-            self.data.get("inserted_at")
-            or self.data.get("inserted_at__date")
-            or self.data.get("inserted_at__gte")
-            or self.data.get("inserted_at__lte")
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not any(
+            self.data.get(filter_name) for filter_name in self.DATE_FILTER_NAMES
         ):
             raise ValidationError(
                 [
                     {
-                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
-                        "or filter[inserted_at.lte].",
+                        "detail": self.DATE_FILTER_REQUIRED_DETAIL,
                         "status": 400,
                         "source": {"pointer": "/data/attributes/inserted_at"},
                         "code": "required",
@@ -651,30 +736,41 @@ class FindingFilter(CommonFindingFilters):
             )
 
         cleaned = self.form.cleaned_data
-        exact_date = cleaned.get("inserted_at") or cleaned.get("inserted_at__date")
-        gte_date = cleaned.get("inserted_at__gte") or exact_date
-        lte_date = cleaned.get("inserted_at__lte") or exact_date
-
-        if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
-        if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
-
-        if abs(lte_date - gte_date) > timedelta(
-            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
-        ):
-            raise ValidationError(
-                [
-                    {
-                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-                        "status": 400,
-                        "source": {"pointer": "/data/attributes/inserted_at"},
-                        "code": "invalid",
-                    }
-                ]
-            )
+        for field_name in self.DATE_FILTER_FIELDS:
+            self.validate_datetime_filter_range(cleaned, field_name)
 
         return super().filter_queryset(queryset)
+
+    def validate_datetime_filter_range(self, cleaned, field_name):
+        exact_value = cleaned.get(field_name) or cleaned.get(f"{field_name}__date")
+        gte_value = cleaned.get(f"{field_name}__gte") or exact_value
+        lte_value = cleaned.get(f"{field_name}__lte") or exact_value
+
+        if not (exact_value or gte_value or lte_value):
+            return
+
+        default_value = datetime.now(UTC).date()
+        gte_value = gte_value or default_value
+        lte_value = lte_value or default_value
+
+        gte_datetime = self.filter_value_to_datetime(gte_value, field_name)
+        lte_datetime = self.filter_value_to_datetime(lte_value, field_name)
+
+        if abs(lte_datetime - gte_datetime) <= timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            return
+
+        raise ValidationError(
+            [
+                {
+                    "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                    "status": 400,
+                    "source": {"pointer": f"/data/attributes/{field_name}"},
+                    "code": "invalid",
+                }
+            ]
+        )
 
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
@@ -733,27 +829,169 @@ class FindingFilter(CommonFindingFilters):
         datetime_value = self.maybe_date_to_datetime(value)
         start = uuid7_start(datetime_to_uuid7(datetime_value))
         end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
-
         return queryset.filter(id__gte=start, id__lt=end)
 
     def filter_inserted_at_gte(self, queryset, name, value):
         datetime_value = self.maybe_date_to_datetime(value)
         start = uuid7_start(datetime_to_uuid7(datetime_value))
-
         return queryset.filter(id__gte=start)
 
     def filter_inserted_at_lte(self, queryset, name, value):
         datetime_value = self.maybe_date_to_datetime(value)
         end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
-
         return queryset.filter(id__lt=end)
 
     @staticmethod
     def maybe_date_to_datetime(value):
-        dt = value
+        if isinstance(value, datetime):
+            return value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
-        return dt
+            return datetime.combine(value, datetime.min.time(), tzinfo=UTC)
+        if isinstance(value, str):
+            return parse(value)
+        return value
+
+    @classmethod
+    def filter_value_to_datetime(cls, value, field_name):
+        try:
+            datetime_value = cls.maybe_date_to_datetime(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Enter a valid date or datetime.",
+                        "status": 400,
+                        "source": {"pointer": f"/data/attributes/{field_name}"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if datetime_value.tzinfo is None:
+            return datetime_value.replace(tzinfo=UTC)
+        return datetime_value.astimezone(UTC)
+
+
+class FindingFilter(BaseFindingFilter):
+    DATE_FILTER_FIELDS = ("inserted_at", "updated_at")
+    DATE_FILTER_NAMES = (
+        "inserted_at",
+        "inserted_at__date",
+        "inserted_at__gte",
+        "inserted_at__lte",
+        "updated_at",
+        "updated_at__date",
+        "updated_at__gte",
+        "updated_at__lte",
+    )
+    DATE_FILTER_REQUIRED_DETAIL = (
+        "At least one date filter is required: filter[inserted_at], filter[updated_at], "
+        "filter[inserted_at.gte], filter[updated_at.gte], filter[inserted_at.lte], "
+        "or filter[updated_at.lte]."
+    )
+
+    inserted_at = CharFilter(method="filter_inserted_at")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = CharFilter(
+        method="filter_inserted_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    inserted_at__lte = CharFilter(
+        method="filter_inserted_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    updated_at = CharFilter(method="filter_updated_at")
+    updated_at__date = DateFilter(method="filter_updated_at", lookup_expr="date")
+    updated_at__gte = CharFilter(
+        method="filter_updated_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    updated_at__lte = CharFilter(
+        method="filter_updated_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+
+    class Meta(BaseFindingFilter.Meta):
+        fields = FINDING_BASE_FILTER_FIELDS | {
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["date", "gte", "lte"],
+        }
+
+    def filter_inserted_at(self, queryset, name, value):
+        start, end = self.filter_value_to_datetime_bounds(value, "inserted_at")
+
+        if name.endswith("__gte"):
+            return queryset.filter(id__gte=self.datetime_to_uuid7_boundary(start))
+        if name.endswith("__lte"):
+            return queryset.filter(id__lt=self.datetime_to_uuid7_boundary(end))
+
+        return queryset.filter(
+            id__gte=self.datetime_to_uuid7_boundary(start),
+            id__lt=self.datetime_to_uuid7_boundary(end),
+        )
+
+    def filter_updated_at(self, queryset, name, value):
+        start, end = self.filter_value_to_datetime_bounds(value, "updated_at")
+
+        if name.endswith("__gte"):
+            return queryset.filter(updated_at__gte=start)
+        if name.endswith("__lte"):
+            return queryset.filter(updated_at__lt=end)
+
+        return queryset.filter(updated_at__gte=start, updated_at__lt=end)
+
+    @classmethod
+    def filter_value_to_datetime_bounds(cls, value, field_name):
+        start = cls.filter_value_to_datetime(value, field_name)
+        if cls.is_date_filter_value(value):
+            return start, start + timedelta(days=1)
+        return start, start + timedelta(milliseconds=1)
+
+    @staticmethod
+    def datetime_to_uuid7_boundary(datetime_value):
+        timestamp_ms = int(datetime_value.timestamp() * 1000) & 0xFFFFFFFFFFFF
+        uuid_int = timestamp_ms << 80
+        uuid_int |= 0x7 << 76
+        uuid_int |= 0x2 << 62
+        return UUID(int=uuid_int)
+
+    @staticmethod
+    def is_date_filter_value(value):
+        if isinstance(value, datetime):
+            return False
+        if isinstance(value, date):
+            return True
+        return isinstance(value, str) and len(value.strip()) == 10
+
+
+class FindingMetadataFilter(BaseFindingFilter):
+    DATE_FILTER_FIELDS = ("inserted_at",)
+    DATE_FILTER_NAMES = (
+        "inserted_at",
+        "inserted_at__date",
+        "inserted_at__gte",
+        "inserted_at__lte",
+    )
+    DATE_FILTER_REQUIRED_DETAIL = (
+        "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+        "or filter[inserted_at.lte]."
+    )
+
+    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+
+    class Meta(BaseFindingFilter.Meta):
+        fields = FINDING_BASE_FILTER_FIELDS | {
+            "inserted_at": ["date", "gte", "lte"],
+        }
 
 
 class LatestFindingFilter(CommonFindingFilters):
@@ -803,11 +1041,15 @@ class FindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
     def filter_queryset(self, queryset):
@@ -837,9 +1079,9 @@ class FindingGroupFilter(CommonFindingFilters):
         lte_date = cleaned.get("inserted_at__lte") or exact_date
 
         if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
+            gte_date = datetime.now(UTC).date()
         if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
+            lte_date = datetime.now(UTC).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -881,7 +1123,7 @@ class FindingGroupFilter(CommonFindingFilters):
         """Convert date to datetime if needed."""
         dt = value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
         return dt
 
 
@@ -895,15 +1137,31 @@ class LatestFindingGroupFilter(CommonFindingFilters):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
+    check_title__icontains = CharFilter(method="filter_check_title_icontains")
+    scan = UUIDFilter(field_name="scan_id", lookup_expr="exact")
+    scan__in = UUIDInFilter(field_name="scan_id", lookup_expr="in")
 
     class Meta:
         model = Finding
         fields = {
             "check_id": ["exact", "in", "icontains"],
+            "scan": ["exact", "in"],
         }
 
 
-class FindingGroupSummaryFilter(FilterSet):
+class _CheckTitleToCheckIdMixin:
+    """Resolve check_title search to check_ids so all provider rows are kept."""
+
+    def filter_check_title_to_check_ids(self, queryset, name, value):
+        matching_check_ids = (
+            queryset.filter(check_title__icontains=value)
+            .values_list("check_id", flat=True)
+            .distinct()
+        )
+        return queryset.filter(check_id__in=matching_check_ids)
+
+
+class FindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary queries.
 
@@ -926,9 +1184,7 @@ class FindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_title", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -937,6 +1193,16 @@ class FindingGroupSummaryFilter(FilterSet):
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         model = FindingGroupDailySummary
@@ -971,9 +1237,9 @@ class FindingGroupSummaryFilter(FilterSet):
         lte_date = cleaned.get("inserted_at__lte") or exact_date
 
         if gte_date is None:
-            gte_date = datetime.now(timezone.utc).date()
+            gte_date = datetime.now(UTC).date()
         if lte_date is None:
-            lte_date = datetime.now(timezone.utc).date()
+            lte_date = datetime.now(UTC).date()
 
         if abs(lte_date - gte_date) > timedelta(
             days=settings.FINDINGS_MAX_DAYS_IN_RANGE
@@ -1012,11 +1278,11 @@ class FindingGroupSummaryFilter(FilterSet):
     def _maybe_date_to_datetime(value):
         dt = value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=timezone.utc)
+            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
         return dt
 
 
-class LatestFindingGroupSummaryFilter(FilterSet):
+class LatestFindingGroupSummaryFilter(_CheckTitleToCheckIdMixin, FilterSet):
     """
     Filter for FindingGroupDailySummary /latest endpoint.
 
@@ -1028,9 +1294,7 @@ class LatestFindingGroupSummaryFilter(FilterSet):
     check_id = CharFilter(field_name="check_id", lookup_expr="exact")
     check_id__in = CharInFilter(field_name="check_id", lookup_expr="in")
     check_id__icontains = CharFilter(field_name="check_id", lookup_expr="icontains")
-    check_title__icontains = CharFilter(
-        field_name="check_title", lookup_expr="icontains"
-    )
+    check_title__icontains = CharFilter(method="filter_check_title_to_check_ids")
 
     # Provider filters
     provider_id = UUIDFilter(field_name="provider_id", lookup_expr="exact")
@@ -1039,6 +1303,16 @@ class LatestFindingGroupSummaryFilter(FilterSet):
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
     )
     provider_type__in = CharInFilter(field_name="provider__provider", lookup_expr="in")
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
 
     class Meta:
         model = FindingGroupDailySummary
@@ -1046,6 +1320,99 @@ class LatestFindingGroupSummaryFilter(FilterSet):
             "check_id": ["exact", "in", "icontains"],
             "provider_id": ["exact", "in"],
         }
+
+
+class FindingGroupAggregatedComputedFilter(FilterSet):
+    """Filter aggregated finding-group rows by computed status/severity/muted."""
+
+    STATUS_CHOICES = (
+        ("FAIL", "Fail"),
+        ("PASS", "Pass"),
+        ("MANUAL", "Manual"),
+    )
+
+    status = ChoiceFilter(method="filter_status", choices=STATUS_CHOICES)
+    status__in = CharInFilter(method="filter_status_in", lookup_expr="in")
+    severity = ChoiceFilter(method="filter_severity", choices=SeverityChoices)
+    severity__in = CharInFilter(method="filter_severity_in", lookup_expr="in")
+    muted = BooleanFilter(field_name="muted")
+    include_muted = BooleanFilter(method="filter_include_muted")
+
+    def filter_status(self, queryset, name, value):
+        return queryset.filter(aggregated_status=value)
+
+    def filter_status_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        allowed = {choice[0] for choice in self.STATUS_CHOICES}
+        invalid = [
+            status_value for status_value in values if status_value not in allowed
+        ]
+        if invalid:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid status filter: {invalid[0]}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if not values:
+            return queryset
+
+        return queryset.filter(aggregated_status__in=values)
+
+    def filter_severity(self, queryset, name, value):
+        severity_order = SEVERITY_ORDER.get(value)
+        if severity_order is None:
+            raise ValidationError(
+                [
+                    {
+                        "detail": f"invalid severity filter: {value}",
+                        "status": "400",
+                        "source": {"pointer": "/data"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+        return queryset.filter(severity_order=severity_order)
+
+    def filter_severity_in(self, queryset, name, value):
+        values = value
+        if isinstance(value, str):
+            values = [part.strip() for part in value.split(",") if part.strip()]
+
+        orders = []
+        for severity_value in values:
+            severity_order = SEVERITY_ORDER.get(severity_value)
+            if severity_order is None:
+                raise ValidationError(
+                    [
+                        {
+                            "detail": f"invalid severity filter: {severity_value}",
+                            "status": "400",
+                            "source": {"pointer": "/data"},
+                            "code": "invalid",
+                        }
+                    ]
+                )
+            orders.append(severity_order)
+
+        if not orders:
+            return queryset
+
+        return queryset.filter(severity_order__in=orders)
+
+    def filter_include_muted(self, queryset, name, value):
+        if value is True:
+            return queryset
+        # include_muted=false: exclude fully-muted groups
+        return queryset.exclude(muted=True)
 
 
 class ProviderSecretFilter(FilterSet):
@@ -1125,12 +1492,19 @@ class RoleFilter(FilterSet):
         }
 
 
-class ComplianceOverviewFilter(FilterSet):
+class ComplianceOverviewFilter(BaseScanProviderFilter):
+    """
+    Keep provider filters in the schema while runtime filtering resolves scans first.
+
+    Compliance overview provider filters are applied to the latest completed scans
+    in the viewset, then this filterset handles the remaining compliance fields.
+    """
+
     inserted_at = DateFilter(field_name="inserted_at", lookup_expr="date")
-    scan_id = UUIDFilter(field_name="scan_id", required=True)
+    scan_id = UUIDFilter(field_name="scan_id")
     region = CharFilter(field_name="region")
 
-    class Meta:
+    class Meta(BaseScanProviderFilter.Meta):
         model = ComplianceRequirementOverview
         fields = {
             "inserted_at": ["date", "gte", "lte"],
@@ -1150,6 +1524,16 @@ class ScanSummaryFilter(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         field_name="scan__provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     region = CharFilter(field_name="region")
 
@@ -1173,6 +1557,16 @@ class DailySeveritySummaryFilter(FilterSet):
     )
     provider_type__in = ChoiceInFilter(
         field_name="provider__provider", choices=Provider.ProviderChoices.choices
+    )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     date_from = DateFilter(method="filter_noop")
     date_to = DateFilter(method="filter_noop")
@@ -1430,6 +1824,16 @@ class ThreatScoreSnapshotFilter(FilterSet):
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
     )
+    provider_groups = UUIDFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
+    )
     compliance_id = CharFilter(field_name="compliance_id", lookup_expr="exact")
     compliance_id__in = CharInFilter(field_name="compliance_id", lookup_expr="in")
 
@@ -1472,6 +1876,16 @@ class ResourceGroupOverviewFilter(FilterSet):
         field_name="scan__provider__provider",
         choices=Provider.ProviderChoices.choices,
         lookup_expr="in",
+    )
+    provider_groups = UUIDFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="exact",
+        distinct=True,
+    )
+    provider_groups__in = UUIDInFilter(
+        field_name="scan__provider__provider_groups__id",
+        lookup_expr="in",
+        distinct=True,
     )
     resource_group = CharFilter(field_name="resource_group", lookup_expr="exact")
     resource_group__in = CharInFilter(field_name="resource_group", lookup_expr="in")

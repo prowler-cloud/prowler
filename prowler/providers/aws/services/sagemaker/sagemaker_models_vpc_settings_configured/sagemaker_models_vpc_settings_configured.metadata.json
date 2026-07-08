@@ -31,8 +31,9 @@
     }
   },
   "Categories": [
-    "trust-boundaries", 
-    "gen-ai"
+    "trust-boundaries",
+    "gen-ai",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

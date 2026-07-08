@@ -61,6 +61,7 @@ Prowler natively supports the following reporting output formats:
 - JSON-OCSF
 - JSON-ASFF (AWS only)
 - HTML
+- SARIF (IaC only)
 
 Hereunder is the structure for each of the supported report formats by Prowler:
 
@@ -368,6 +369,29 @@ Each finding is a `json` object within a list.
 The following image is an example of the HTML output:
 
 <img src="/images/cli/reporting/html-output.png" />
+
+### SARIF (IaC Only)
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.25.0" />
+
+The SARIF (Static Analysis Results Interchange Format) output generates a [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html) document compatible with GitHub Code Scanning and other SARIF-compatible tools. This format is exclusively available for the IaC provider, as it is designed for static analysis results that reference specific files and line numbers.
+
+```console
+prowler iac --scan-repository-url https://github.com/user/repo -M sarif
+```
+
+<Note>
+The SARIF output format is only available when using the `iac` provider. Attempting to use it with other providers results in an error.
+</Note>
+
+The SARIF output includes:
+
+* **Rules:** Each unique check ID produces a rule entry with severity, description, remediation, and a markdown help panel.
+* **Results:** Only failed (non-muted) findings are included, with file paths and line numbers for precise annotation.
+* **Severity mapping:** Prowler severities map to SARIF levels (`critical`/`high` → `error`, `medium` → `warning`, `low`/`informational` → `note`).
+
 ## V4 Deprecations
 
 Some deprecations have been made to unify formats and improve outputs.

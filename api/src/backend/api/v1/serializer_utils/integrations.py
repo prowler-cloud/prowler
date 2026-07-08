@@ -1,10 +1,9 @@
 import os
 import re
 
+from api.v1.serializer_utils.base import BaseValidateSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
-
-from api.v1.serializer_utils.base import BaseValidateSerializer
 
 
 class S3ConfigSerializer(BaseValidateSerializer):
@@ -69,8 +68,10 @@ class SecurityHubConfigSerializer(BaseValidateSerializer):
 
 class JiraConfigSerializer(BaseValidateSerializer):
     domain = serializers.CharField(read_only=True)
-    issue_types = serializers.ListField(
-        read_only=True, child=serializers.CharField(), default=["Task"]
+    issue_types = serializers.DictField(
+        read_only=True,
+        child=serializers.ListField(child=serializers.CharField()),
+        default={},
     )
     projects = serializers.DictField(read_only=True)
 

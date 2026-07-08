@@ -7,10 +7,24 @@ import { cn } from "@/lib/utils";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 
+export function InfoTooltip({ content }: { content: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex cursor-pointer items-center">
+          <InfoIcon className="text-bg-data-info size-3" />
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{content}</TooltipContent>
+    </Tooltip>
+  );
+}
+
 export const INFO_FIELD_VARIANTS = {
   default: "default",
   simple: "simple",
   transparent: "transparent",
+  compact: "compact",
 } as const;
 
 type InfoFieldVariant =
@@ -37,16 +51,7 @@ export function InfoField({
     <span className="flex items-center gap-1">
       {label}
       {inline && ":"}
-      {tooltipContent && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex cursor-pointer items-center">
-              <InfoIcon className="text-bg-data-info size-3" />
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>{tooltipContent}</TooltipContent>
-        </Tooltip>
-      )}
+      {tooltipContent && <InfoTooltip content={tooltipContent} />}
     </span>
   );
 
@@ -61,17 +66,21 @@ export function InfoField({
     );
   }
 
+  const isCompact = variant === "compact";
+
+  const labelClassName = isCompact
+    ? "text-text-neutral-secondary text-[10px] whitespace-nowrap"
+    : "text-text-neutral-tertiary text-xs font-bold";
+
   return (
     <div className={cn("flex flex-col gap-1", className)}>
-      <span className="text-text-neutral-tertiary text-xs font-bold">
-        {labelContent}
-      </span>
+      <span className={labelClassName}>{labelContent}</span>
 
       {variant === "simple" ? (
         <div className="text-text-neutral-primary text-sm break-all">
           {children}
         </div>
-      ) : variant === "transparent" ? (
+      ) : variant === "transparent" || variant === "compact" ? (
         <div className="text-text-neutral-primary text-sm">{children}</div>
       ) : (
         <div className="border-border-neutral-tertiary bg-bg-neutral-tertiary text-text-neutral-primary rounded-lg border px-3 py-2 text-sm">

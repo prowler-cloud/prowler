@@ -1,3 +1,4 @@
+import { formatDuration } from "@/lib/date-utils";
 import { MetaDataProps } from "@/types";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
 
@@ -43,34 +44,19 @@ export function adaptAttackPathScansResponse(
     },
   }));
 
-  // Transform links to MetaDataProps format if pagination exists
-  const metadata: MetaDataProps | undefined = response.links
+  const metadata: MetaDataProps | undefined = response.meta?.pagination
     ? {
         pagination: {
-          // Links-based pagination doesn't have traditional page numbers
-          // but we preserve the structure for consistency
-          page: 1,
-          pages: 1,
-          count: enrichedData.length,
-          itemsPerPage: [10, 25, 50, 100],
+          page: response.meta.pagination.page,
+          pages: response.meta.pagination.pages,
+          count: response.meta.pagination.count,
+          itemsPerPage: [5, 10, 25, 50, 100],
         },
-        version: "1.0",
+        version: response.meta.version ?? "1.0",
       }
     : undefined;
 
   return { data: enrichedData, metadata };
-}
-
-/**
- * Format duration in seconds to human-readable format
- *
- * @param seconds - Duration in seconds
- * @returns Formatted duration string (e.g., "2m 30s")
- */
-function formatDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}m ${remainingSeconds}s`;
 }
 
 /**

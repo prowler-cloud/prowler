@@ -1,13 +1,15 @@
 ---
 name: prowler-attack-paths-query
 description: >
-  Creates Prowler Attack Paths openCypher queries for graph analysis (compatible with Neo4j and Neptune).
-  Trigger: When creating or updating Attack Paths queries that detect privilege escalation paths,
-  network exposure, or security misconfigurations in cloud environments.
+  Creates Prowler Attack Paths openCypher queries using the Cartography schema as the source of truth
+  for node labels, properties, and relationships. Covers Prowler-specific additions (Internet node,
+  ProwlerFinding, internal isolation labels), $provider_uid scoping, and list-property item nodes
+  with typed `HAS_*` edges that run efficiently on both Neo4j and Amazon Neptune sinks.
+  Trigger: When creating or updating Attack Paths queries.
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.1"
+  version: "3.0"
   scope: [root, api]
   auto_invoke:
     - "Creating Attack Paths queries"
@@ -18,78 +20,62 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, Task
 
 ## Overview
 
-Attack Paths queries are openCypher queries that analyze cloud infrastructure graphs (ingested via Cartography) to detect security risks like privilege escalation paths, network exposure, and misconfigurations.
-
-Queries are written in **openCypher Version 9** to ensure compatibility with both Neo4j and Amazon Neptune.
+Attack Paths queries are read-only openCypher queries over a Cartography-ingested cloud graph that detect privilege escalation chains, network exposure, and other graph-shaped security risks. Queries are written in openCypher Version 9 so they run on both Neo4j and Amazon Neptune sinks.
 
 ---
 
-## Input Sources
+## Two query audiences
 
-Queries can be created from:
+|                    | Predefined queries                                          | Custom queries                                                        |
+| ------------------ | ----------------------------------------------------------- | --------------------------------------------------------------------- |
+| Where they live    | `api/src/backend/api/attack_paths/queries/{provider}.py`    | User-supplied via the custom query API endpoint                       |
+| Provider isolation | `AWSAccount {id: $provider_uid}` anchor + path connectivity | Automatic `_Provider_{uuid}` label injection by `cypher_sanitizer.py` |
+| What to write      | Chain every MATCH from the `aws` variable                   | Plain Cypher, no isolation boilerplate                                |
+| Internal labels    | Never use                                                   | Never use (system-injected)                                           |
 
-1. **pathfinding.cloud ID** (e.g., `ECS-001`, `GLUE-001`)
-   - The JSON index contains: `id`, `name`, `description`, `services`, `permissions`, `exploitationSteps`, `prerequisites`, etc.
-   - Reference: https://github.com/DataDog/pathfinding.cloud
+**Predefined queries**: every node must be reachable from the `AWSAccount` root via graph traversal. That is the isolation boundary.
 
-   **Fetching a single path by ID** - The aggregated `paths.json` is too large for WebFetch
-   (content gets truncated). Use Bash with `curl` and a JSON parser instead:
+**Custom queries**: write natural Cypher. The runner injects a `_Provider_{uuid}` label into every node pattern, and a post-query filter handles edge cases.
 
-   Prefer `jq` (concise), fall back to `python3` (guaranteed in this Python project):
+---
+
+## Input sources
+
+Two sources for new queries:
+
+1. **pathfinding.cloud ID** (e.g. `ECS-001`, `GLUE-001`), the Datadog research catalogue. The aggregated `paths.json` is too large for WebFetch:
 
    ```bash
-   # With jq
+   # Fetch a single path by ID
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
      | jq '.[] | select(.id == "ecs-002")'
 
-   # With python3 (fallback)
-   curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
-     | python3 -c "import json,sys; print(json.dumps(next((p for p in json.load(sys.stdin) if p['id']=='ecs-002'), None), indent=2))"
-   ```
-
-2. **Listing Available Attack Paths**
-   - Use Bash to list available paths from the JSON index:
-
-   ```bash
-   # List all path IDs and names (jq)
+   # List all path IDs and names
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
      | jq -r '.[] | "\(.id): \(.name)"'
 
-   # List all path IDs and names (python3 fallback)
-   curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
-     | python3 -c "import json,sys; [print(f\"{p['id']}: {p['name']}\") for p in json.load(sys.stdin)]"
-
-   # List paths filtered by service prefix
+   # Filter by service prefix
    curl -s https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json \
      | jq -r '.[] | select(.id | startswith("ecs")) | "\(.id): \(.name)"'
    ```
 
-3. **Natural Language Description**
-   - User describes the Attack Paths in plain language
-   - Agent maps to appropriate openCypher patterns
+   If `jq` is unavailable, use `python3 -c "import json,sys; ..."`.
+
+2. **Natural language description** from the requester.
 
 ---
 
-## Query Structure
+## Query structure
 
-### File Location
+### Provider scoping parameter
 
-```
-api/src/backend/api/attack_paths/queries/{provider}.py
-```
+| Parameter       | Property | Used on      | Purpose                                |
+| --------------- | -------- | ------------ | -------------------------------------- |
+| `$provider_uid` | `id`     | `AWSAccount` | Scopes the query to a specific account |
 
-Example: `api/src/backend/api/attack_paths/queries/aws.py`
+The runner binds `$provider_uid` automatically. Every other node is isolated by path connectivity from the `AWSAccount` anchor.
 
-### Query parameters for provider scoping
-
-Two parameters exist. Both are injected automatically by the query runner.
-
-| Parameter       | Property it matches | Used on        | Purpose                              |
-| --------------- | ------------------- | -------------- | ------------------------------------ |
-| `$provider_uid` | `id`                | `AWSAccount`   | Scopes to a specific AWS account     |
-| `$provider_id`  | `_provider_id`      | Any other node | Scopes nodes to the provider context |
-
-### Privilege Escalation Query Pattern
+### Imports
 
 ```python
 from api.attack_paths.queries.types import (
@@ -97,292 +83,254 @@ from api.attack_paths.queries.types import (
     AttackPathsQueryDefinition,
     AttackPathsQueryParameterDefinition,
 )
+from tasks.jobs.attack_paths.config import PROWLER_FINDING_LABEL
+```
 
-# {REFERENCE_ID} (e.g., EC2-001, GLUE-001)
+Always use `PROWLER_FINDING_LABEL` via f-string interpolation, never hardcode `"ProwlerFinding"`.
+
+### Definition fields
+
+- **id**: kebab-case `{provider}-{description}`, e.g. `aws-ec2-privesc-passrole-iam`.
+- **name**: short, human-friendly label. Sourced queries append the reference ID: `"EC2 Instance Launch with Privileged Role (EC2-001)"`.
+- **short_description**: one sentence, no technical permissions.
+- **description**: full technical explanation, plain text.
+- **provider**: `aws`, `azure`, `gcp`, `kubernetes`, or `github`.
+- **cypher**: f-string Cypher body. Literal `{` / `}` are escaped as `{{` / `}}`.
+- **parameters**: `parameters=[]` if none.
+- **attribution**: optional `AttackPathsQueryAttribution(text, link)` for sourced queries. `link` uses the lowercase ID.
+
+Append the constant to the `{PROVIDER}_QUERIES` list at the bottom of the provider file.
+
+---
+
+## Predefined query template
+
+The canonical shape combines a principal walk, an optional target walk, deduplicated nodes, and a typed finding overlay:
+
+```python
 AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
     id="aws-{kebab-case-name}",
-    name="{Human-friendly label} ({REFERENCE_ID})",
-    short_description="{Brief explanation of the attack, no technical permissions.}",
-    description="{Detailed description of the attack vector and impact.}",
+    name="{Label} ({REFERENCE_ID})",
+    short_description="{One sentence.}",
+    description="{Full technical explanation.}",
     attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - {REFERENCE_ID} - {permission1} + {permission2}",
+        text="pathfinding.cloud - {REFERENCE_ID} - {permission}",
         link="https://pathfinding.cloud/paths/{reference_id_lowercase}",
     ),
     provider="aws",
     cypher=f"""
-        // Find principals with {permission1}
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = '{permission1_lowercase}'
-                OR toLower(action) = '{service}:*'
-                OR action = '*'
-            )
+        // Find principals with {permission}
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['{permission_lowercase}', '{service}:*']
+           OR act.value = '*'
+        WITH DISTINCT aws, principal, stmt, path_principal
 
-        // Find {permission2}
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND any(action IN stmt2.action WHERE
-                toLower(action) = '{permission2_lowercase}'
-                OR toLower(action) = '{service2}:*'
-                OR action = '*'
-            )
+        // Target resources attached to the same principal (sub-patterns below)
+        MATCH path_target = (aws)--(target_policy:AWSPolicy)--(principal)
+        WHERE target_policy.arn CONTAINS $provider_uid
+        MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+        WHERE res.value = '*'
+           OR target_policy.arn CONTAINS res.value
 
-        // Find target resources (MUST chain from `aws` for provider isolation)
-        MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: '{service}.amazonaws.com'}})
-        WHERE any(resource IN stmt.resource WHERE
-            resource = '*'
-            OR target_role.arn CONTAINS resource
-            OR resource CONTAINS target_role.name
-        )
+        WITH DISTINCT path_principal, path_target
+        WITH collect(path_principal) + collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
 
-        UNWIND nodes(path_principal) + nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {{status: 'FAIL', provider_uid: $provider_uid}})
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-        RETURN path_principal, path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
 ```
 
-### Network Exposure Query Pattern
+Key points:
+
+- The principal walk types the `POLICY` and `STATEMENT` hops. Both are low-fan-out (each principal has a handful of policies; each policy a handful of statements), so the typed edge lets the planner cost a cheap inline filter.
+- The `(aws)--` hub hops stay anonymous. `AWSAccount` is a high-degree node that fans out to every principal, role, policy, and resource in the account; typing those edges forces the planner to enumerate from the hub and collapses performance on multi-tenant Neptune.
+- Other relationship types appear only where the file's existing queries already use one (`TRUSTS_AWS_PRINCIPAL`, `STS_ASSUMEROLE_ALLOW`, `MEMBER_AWS_GROUP`, `HAS_EXECUTION_ROLE`).
+- The finding probe is typed `:HAS_FINDING` and left undirected. The type lets Neptune apply an inline edge filter; the lack of direction matches the convention of the rest of the file.
+- Collapse duplicate rows after each permission gate with `WITH DISTINCT`, carrying only the variables needed by later clauses.
+- Each `HAS_*` traversal is its own `MATCH` clause with a `WHERE` on the child item node. `WITH DISTINCT path_principal, path_target` precedes `collect(path...)` to dedupe the row multiplication produced by the joins.
+- The `RETURN` shape `paths, dpf, dpfr` is the contract the serializer and visualiser depend on. Do not change it.
+
+---
+
+## Privilege escalation sub-patterns
+
+Four `path_target` shapes cover the common attack types. Each shares the canonical template's `path_principal`, deduplication tail, and `RETURN`; only the `path_target` MATCH and its resource predicate differ.
+
+| Sub-pattern         | Target                   | `path_target` shape                                                                                     | Example |
+| ------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------- | ------- |
+| Self-escalation     | Principal's own policies | `(aws)--(target_policy:AWSPolicy)--(principal)`                                                         | IAM-001 |
+| Lateral to user     | Other IAM users          | `(aws)--(target_user:AWSUser)`                                                                          | IAM-002 |
+| Assume-role lateral | Assumable roles          | `(aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)`                                      | IAM-014 |
+| PassRole + service  | Service-trusting roles   | `(aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: '{service}.amazonaws.com'})` | EC2-001 |
+
+**Multi-permission queries** (e.g. PassRole plus a service-create action) add permission gates before `path_target`. Reuse the per-query counter for new variables (`act2`, `policy2`, `stmt2`) and collapse rows after each gate:
+
+```cypher
+MATCH (principal)-[:POLICY]->(policy2:AWSPolicy)-[:STATEMENT]->(stmt2:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt2)-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+WHERE toLower(act2.value) IN ['service:*', 'service:createsomething']
+   OR act2.value = '*'
+WITH DISTINCT aws, principal, stmt, stmt2, path_principal
+```
+
+If a permission is an existence-only gate whose statement resource is not checked later, keep the policy and statement anonymous and carry only the variables still needed:
+
+```cypher
+MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {effect: 'Allow'})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+WHERE toLower(act3.value) IN ['service:*', 'service:othersomething']
+   OR act3.value = '*'
+WITH DISTINCT aws, principal, stmt, path_principal
+```
+
+When all matching principals can target the same independent resource set, collect principal paths before expanding targets instead of creating one row per principal-target pair:
+
+```cypher
+WITH aws, collect(DISTINCT path_principal) AS principal_paths
+MATCH path_target = (aws)--(target)
+WITH principal_paths + collect(DISTINCT path_target) AS paths
+```
+
+Statements that constrain a target are still checked via `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
+
+---
+
+## Network exposure pattern
+
+The Internet node is reached via `CAN_ACCESS` through an already-scoped resource, never as a standalone lookup:
 
 ```python
-AWS_{QUERY_NAME} = AttackPathsQueryDefinition(
-    id="aws-{kebab-case-name}",
-    name="{Human-friendly label}",
-    short_description="{Brief explanation.}",
-    description="{Detailed description.}",
-    provider="aws",
-    cypher=f"""
-        // Match the Internet sentinel node
-        OPTIONAL MATCH (internet:Internet {{_provider_id: $provider_id}})
+cypher=f"""
+    // Resource scoped through the account anchor
+    MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(resource:EC2Instance)
+    WHERE resource.exposed_internet = true
 
-        // Match exposed resources (MUST chain from `aws`)
-        MATCH path = (aws:AWSAccount {{id: $provider_uid}})--(resource:EC2Instance)
-        WHERE resource.exposed_internet = true
+    // Internet node reached via path connectivity through the resource
+    OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)
 
-        // Link Internet to resource
-        OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(resource)
+    WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
+    UNWIND paths AS p
+    UNWIND nodes(p) AS n
 
-        UNWIND nodes(path) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {{status: 'FAIL', provider_uid: $provider_uid}})
+    WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
+    UNWIND unique_nodes AS n
+    OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-        RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
-            internet, can_access
-    """,
-    parameters=[],
-)
+    RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+        internet, can_access
+"""
 ```
 
-### Register in Query List
-
-Add to the `{PROVIDER}_QUERIES` list at the bottom of the file:
-
-```python
-AWS_QUERIES: list[AttackPathsQueryDefinition] = [
-    # ... existing queries ...
-    AWS_{NEW_QUERY_NAME},  # Add here
-]
-```
+The `CAN_ACCESS` edge stays typed and directed (`-[:CAN_ACCESS]->`); that is its canonical sync-time orientation.
 
 ---
 
-## Step-by-Step Creation Process
+## List-typed properties as child nodes
 
-### 1. Read the Queries Module
+Some Cartography node properties carry a list of values: `AWSPolicyStatement.action`, `AWSPolicyStatement.resource`, `KMSKey.encryption_algorithms`, `CloudFrontDistribution.aliases`, and many others. The graph models each such property as a set of child item nodes connected to the parent by a typed edge. Queries reach the values by traversing the edge; the parent does not carry the list as a single field.
 
-**FIRST**, read all files in the queries module to understand the structure:
+### Naming convention
 
-```
-api/src/backend/api/attack_paths/queries/
-├── __init__.py      # Module exports
-├── types.py         # AttackPathsQueryDefinition, AttackPathsQueryParameterDefinition
-├── registry.py      # Query registry logic
-└── {provider}.py    # Provider-specific queries (e.g., aws.py)
-```
+For a list-typed parent property the sink stores:
 
-Read these files to learn:
+- **Child label**: `<ParentLabel><PropertyPascal>Item`. Example: `AWSPolicyStatement.resource` → `AWSPolicyStatementResourceItem`.
+- **Edge type**: `HAS_<PROPERTY_UPPER>`. Example: `resource` → `HAS_RESOURCE`.
+- **Child property**: `value` (a single scalar string) for scalar-list properties. For list-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) the child carries the dict keys as named fields per the catalog's `field_map`.
 
-- Type definitions and available fields
-- How queries are registered
-- Current query patterns, style, and naming conventions
+### Variable naming for child-item matches
 
-### 2. Determine Schema Source
+`aws.py` uses a per-query counter for each `HAS_*` traversal so chained matches stay unambiguous:
 
-Check the Cartography dependency in `api/pyproject.toml`:
+| Edge              | First  | Second  | Third   |
+| ----------------- | ------ | ------- | ------- |
+| `HAS_ACTION`      | `act`  | `act2`  | `act3`  |
+| `HAS_RESOURCE`    | `res`  | `res2`  | `res3`  |
+| `HAS_NOTACTION`   | `nact` | `nact2` | `nact3` |
+| `HAS_NOTRESOURCE` | `nres` | `nres2` | `nres3` |
 
-```bash
-grep cartography api/pyproject.toml
-```
+The counter resets at the top of every query.
 
-Parse the dependency to determine the schema source:
+### Example - action match
 
-**If git-based dependency** (e.g., `cartography @ git+https://github.com/prowler-cloud/cartography@0.126.1`):
+Find statements that grant `iam:PassRole`, `iam:*`, or `*`. Traverse the `HAS_ACTION` edge in its own `MATCH` clause and apply the predicate in the attached `WHERE`:
 
-- Extract the repository (e.g., `prowler-cloud/cartography`)
-- Extract the version/tag (e.g., `0.126.1`)
-- Fetch schema from that repository at that tag
-
-**If PyPI dependency** (e.g., `cartography = "^0.126.0"` or `cartography>=0.126.0`):
-
-- Extract the version (e.g., `0.126.0`)
-- Use the official `cartography-cncf` repository
-
-**Schema URL patterns** (ALWAYS use the specific version tag, not master/main):
-
-```
-# Official Cartography (cartography-cncf)
-https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/{version}/docs/root/modules/{provider}/schema.md
-
-# Prowler fork (prowler-cloud)
-https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/{version}/docs/root/modules/{provider}/schema.md
+```cypher
+MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
+MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+WHERE toLower(act.value) IN ['iam:passrole', 'iam:*']
+   OR act.value = '*'
 ```
 
-**Examples**:
+The literal-action list is case-folded with `toLower(act.value)` because IAM authors mix case (`iam:PassRole`, `iam:passrole`); the `*` wildcard never lower-cases.
 
-```bash
-# For prowler-cloud/cartography@0.126.1 (git), fetch AWS schema:
-https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/0.126.1/docs/root/modules/aws/schema.md
+### Example - resource ARN match
 
-# For cartography = "^0.126.0" (PyPI), fetch AWS schema:
-https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/0.126.0/docs/root/modules/aws/schema.md
+Find statements whose resource can target a specific role:
+
+```cypher
+MATCH path_target = (aws)--(target_role:AWSRole)
+MATCH (stmt)-[:HAS_RESOURCE]->(res:AWSPolicyStatementResourceItem)
+WHERE res.value = '*'
+   OR res.value CONTAINS target_role.name
+   OR target_role.arn CONTAINS res.value
 ```
 
-**IMPORTANT**: Always match the schema version to the dependency version in `pyproject.toml`. Using master/main may reference node labels or properties that don't exist in the deployed version.
+Three predicates cover the cases: full wildcard (`*`), pattern containing the role name (`arn:aws:iam::*:role/admin*`), and pattern that is a prefix or component of the actual ARN.
 
-**Additional Prowler Labels**: The Attack Paths sync task adds labels that queries can reference:
+### Catalog of list properties
 
-- `ProwlerFinding` - Prowler finding nodes with `status`, `provider_uid` properties
-- `Internet` - Internet sentinel node with `_provider_id` property (used in network exposure queries)
-
-Other internal labels (`_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*`) exist for isolation but should never be used in queries.
-
-These are defined in `api/src/backend/tasks/jobs/attack_paths/config.py`.
-
-### 3. Consult the Schema for Available Data
-
-Use the Cartography schema to discover:
-
-- What node labels exist for the target resources
-- What properties are available on those nodes
-- What relationships connect the nodes
-
-This informs query design by showing what data is actually available to query.
-
-### 4. Create Query Definition
-
-Use the appropriate pattern (privilege escalation or network exposure) with:
-
-- **id**: Auto-generated as `{provider}-{kebab-case-description}`
-- **name**: Short, human-friendly label. No raw IAM permissions. For sourced queries (e.g., pathfinding.cloud), append the reference ID in parentheses: `"EC2 Instance Launch with Privileged Role (EC2-001)"`. If the name already has parentheses, prepend the ID inside them: `"ECS Service Creation with Privileged Role (ECS-003 - Existing Cluster)"`.
-- **short_description**: Brief explanation of the attack, no technical permissions. E.g., "Launch EC2 instances with privileged IAM roles to gain their permissions via IMDS."
-- **description**: Full technical explanation of the attack vector and impact. Plain text only, no HTML or technical permissions here.
-- **provider**: Provider identifier (aws, azure, gcp, kubernetes, github)
-- **cypher**: The openCypher query with proper escaping
-- **parameters**: Optional list of user-provided parameters (use `parameters=[]` if none needed)
-- **attribution**: Optional `AttackPathsQueryAttribution(text, link)` for sourced queries. The `text` includes the source, reference ID, and technical permissions (e.g., `"pathfinding.cloud - EC2-001 - iam:PassRole + ec2:RunInstances"`). The `link` is the URL with a lowercase ID (e.g., `"https://pathfinding.cloud/paths/ec2-001"`). Omit (defaults to `None`) for non-sourced queries.
-
-### 5. Add Query to Provider List
-
-Add the constant to the `{PROVIDER}_QUERIES` list.
+The provider catalog lives in `api/src/backend/tasks/jobs/attack_paths/provider_config.py` (`AWS_NORMALIZED_LISTS`). Beyond policy statements it includes KMS algorithms, ECS container-definition lists (`entry_point`, `command`, `links`, `dns_servers`, ...), CloudFront aliases, Inspector finding URL and vulnerability lists, RDS event-subscription categories, and others. To query a list property that is not in the catalog, add an entry there first so the sync layer materialises it.
 
 ---
 
-## Query Naming Conventions
+## Common openCypher patterns
 
-### Query ID
-
-```
-{provider}-{category}-{description}
-```
-
-Examples:
-
-- `aws-ec2-privesc-passrole-iam`
-- `aws-iam-privesc-attach-role-policy-assume-role`
-- `aws-ec2-instances-internet-exposed`
-
-### Query Constant Name
-
-```
-{PROVIDER}_{CATEGORY}_{DESCRIPTION}
-```
-
-Examples:
-
-- `AWS_EC2_PRIVESC_PASSROLE_IAM`
-- `AWS_IAM_PRIVESC_ATTACH_ROLE_POLICY_ASSUME_ROLE`
-- `AWS_EC2_INSTANCES_INTERNET_EXPOSED`
-
----
-
-## Query Categories
-
-| Category             | Description                    | Example                   |
-| -------------------- | ------------------------------ | ------------------------- |
-| Basic Resource       | List resources with properties | RDS instances, S3 buckets |
-| Network Exposure     | Internet-exposed resources     | EC2 with public IPs       |
-| Privilege Escalation | IAM privilege escalation paths | PassRole + RunInstances   |
-| Data Access          | Access to sensitive data       | EC2 with S3 access        |
-
----
-
-## Common openCypher Patterns
-
-### Match Account and Principal
+### Match account and principal
 
 ```cypher
-MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
+MATCH path_principal = (aws:AWSAccount {id: $provider_uid})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
 ```
 
-### Check IAM Action Permissions
+The `(aws)--(principal)` hop stays anonymous; the `POLICY` and `STATEMENT` hops are typed.
+
+### Roles trusting a service
 
 ```cypher
-WHERE stmt.effect = 'Allow'
-    AND any(action IN stmt.action WHERE
-        toLower(action) = 'iam:passrole'
-        OR toLower(action) = 'iam:*'
-        OR action = '*'
-    )
+MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]-(:AWSPrincipal {arn: 'ec2.amazonaws.com'})
 ```
 
-### Find Roles Trusting a Service
+### Roles a principal can assume
 
 ```cypher
-MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {arn: 'ec2.amazonaws.com'})
+MATCH path_target = (aws)--(target_role:AWSRole)-[:STS_ASSUMEROLE_ALLOW]-(principal)
 ```
 
-### Check Resource Scope
+### JSON-encoded properties
+
+Object-typed Cartography properties (most notably `condition` on `AWSPolicyStatement` and `S3PolicyStatement`) are stored as JSON-encoded strings, e.g. `'{"StringEquals":{"aws:SourceAccount":"123456789012"}}'`. There is no JSON parser at query time, so use `CONTAINS` for substring checks:
 
 ```cypher
-WHERE any(resource IN stmt.resource WHERE
-    resource = '*'
-    OR target_role.arn CONTAINS resource
-    OR resource CONTAINS target_role.name
-)
+WHERE stmt.condition CONTAINS '"aws:SourceAccount"'
 ```
 
-### Match Internet Sentinel Node
+For structured inspection, fetch the rows and parse in Python. Cypher cannot navigate JSON object keys.
 
-Used in network exposure queries. The Internet node is a real graph node, scoped by `_provider_id`:
+### Internet node via path connectivity
 
 ```cypher
-OPTIONAL MATCH (internet:Internet {_provider_id: $provider_id})
+OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)
 ```
 
-### Link Internet to Exposed Resource
+`resource` must already be bound by the account-anchored pattern above.
 
-The `CAN_ACCESS` relationship is a real graph relationship linking the Internet node to exposed resources:
-
-```cypher
-OPTIONAL MATCH (internet)-[can_access:CAN_ACCESS]->(resource)
-```
-
-### Multi-label OR (match multiple resource types)
-
-When a query needs to match different resource types in the same position, use label checks in WHERE:
+### Multi-label OR (multiple resource types)
 
 ```cypher
 MATCH path = (aws:AWSAccount {id: $provider_uid})-[r]-(x)-[q]-(y)
@@ -392,173 +340,150 @@ WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
    OR (x:ElasticIPAddress AND x.public_ip = $ip)
 ```
 
-### Include Prowler Findings
+### Include Prowler findings
+
+Deduplicate nodes before the typed finding probe to avoid one `OPTIONAL MATCH` per path-occurrence of the same node:
 
 ```cypher
-UNWIND nodes(path_principal) + nodes(path_target) as n
-OPTIONAL MATCH (n)-[pfr]-(pf:ProwlerFinding {status: 'FAIL', provider_uid: $provider_uid})
+WITH collect(path_principal) + collect(path_target) AS paths
+UNWIND paths AS p
+UNWIND nodes(p) AS n
 
-RETURN path_principal, path_target,
-    collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+WITH paths, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
+OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
 ```
 
-For network exposure queries, also return the internet node and relationship:
+For network-exposure queries, aggregate the Internet node and its edge alongside paths:
 
 ```cypher
-RETURN path, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
+UNWIND paths AS p
+UNWIND nodes(p) AS n
+
+WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
+OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
     internet, can_access
 ```
 
 ---
 
-## Common Node Labels by Provider
+## Prowler-specific labels and relationships
 
-### AWS
+Added by the sync task, not part of the Cartography schema. For everything else, consult the pinned Cartography schema (see "Creation steps").
 
-| Label                 | Description                             |
-| --------------------- | --------------------------------------- |
-| `AWSAccount`          | AWS account root                        |
-| `AWSPrincipal`        | IAM principal (user, role, service)     |
-| `AWSRole`             | IAM role                                |
-| `AWSUser`             | IAM user                                |
-| `AWSPolicy`           | IAM policy                              |
-| `AWSPolicyStatement`  | Policy statement                        |
-| `AWSTag`              | Resource tag (key/value)                |
-| `EC2Instance`         | EC2 instance                            |
-| `EC2SecurityGroup`    | Security group                          |
-| `EC2PrivateIp`        | EC2 private IP (has `public_ip`)        |
-| `IpPermissionInbound` | Inbound security group rule             |
-| `IpRange`             | IP range (e.g., `0.0.0.0/0`)            |
-| `NetworkInterface`    | ENI (has `public_ip`)                   |
-| `ElasticIPAddress`    | Elastic IP (has `public_ip`)            |
-| `S3Bucket`            | S3 bucket                               |
-| `RDSInstance`         | RDS database instance                   |
-| `LoadBalancer`        | Classic ELB                             |
-| `LoadBalancerV2`      | ALB/NLB                                 |
-| `ELBListener`         | Classic ELB listener                    |
-| `ELBV2Listener`       | ALB/NLB listener                        |
-| `LaunchTemplate`      | EC2 launch template                     |
-| `Internet`            | Internet sentinel node (`_provider_id`) |
-
-### Common Relationships
-
-| Relationship           | Description                        |
-| ---------------------- | ---------------------------------- |
-| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship            |
-| `STS_ASSUMEROLE_ALLOW` | Can assume role                    |
-| `CAN_ACCESS`           | Internet-to-resource exposure link |
-| `POLICY`               | Has policy attached                |
-| `STATEMENT`            | Policy has statement               |
+| Label / Relationship   | Description                                                 |
+| ---------------------- | ----------------------------------------------------------- |
+| `ProwlerFinding`       | Finding node (`status`, `severity`, `check_id`)             |
+| `Internet`             | Internet sentinel node                                      |
+| `CAN_ACCESS`           | `(Internet)-[:CAN_ACCESS]->(resource)` exposure edge        |
+| `HAS_FINDING`          | `(resource)-[:HAS_FINDING]->(:ProwlerFinding)` finding link |
+| `TRUSTS_AWS_PRINCIPAL` | Role trust relationship                                     |
+| `STS_ASSUMEROLE_ALLOW` | Can assume role                                             |
 
 ---
 
 ## Parameters
 
-For queries requiring user input, define parameters:
+For queries that take user input:
 
 ```python
 parameters=[
     AttackPathsQueryParameterDefinition(
         name="ip",
         label="IP address",
+        # data_type defaults to "string", cast defaults to str.
+        # For non-string params, set both: data_type="integer", cast=int
         description="Public IP address, e.g. 192.0.2.0.",
         placeholder="192.0.2.0",
-    ),
-    AttackPathsQueryParameterDefinition(
-        name="tag_key",
-        label="Tag key",
-        description="Tag key to filter resources.",
-        placeholder="Environment",
     ),
 ],
 ```
 
 ---
 
-## Best Practices
+## openCypher compatibility
 
-1. **Always scope by provider**: Use `{id: $provider_uid}` on `AWSAccount` nodes. Use `{_provider_id: $provider_id}` on any other node that needs provider scoping (e.g., `Internet`).
+Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 
-2. **Use consistent naming**: Follow existing patterns in the file
+| Feature                                 | Use instead                                                                                                                                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| APOC procedures (`apoc.*`)              | Real nodes and relationships in the graph                                                                                                   |
+| Neptune extensions                      | Standard openCypher                                                                                                                         |
+| `reduce()`                              | `UNWIND` + `collect()`                                                                                                                      |
+| `FOREACH`                               | `WITH` + `UNWIND` + `SET`                                                                                                                   |
+| Regex `=~`                              | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS`                                                                                    |
+| `CALL () { UNION }`                     | Multi-label `OR` in `WHERE` (see pattern above)                                                                                             |
+| `any(x IN list ...)`                    | `size([x IN list WHERE pred]) > 0`                                                                                                          |
+| `all(x IN list ...)`                    | `size([x IN list WHERE pred]) = size(list)`                                                                                                 |
+| `none(x IN list ...)`                   | `size([x IN list WHERE pred]) = 0`                                                                                                          |
+| `EXISTS { MATCH (pattern) WHERE pred }` | Standalone `MATCH (pattern)` + `WHERE pred`; precede the downstream `collect(path...)` with `WITH DISTINCT <path-vars>` to dedupe the joins |
 
-3. **Include Prowler findings**: Always add the OPTIONAL MATCH for ProwlerFinding nodes
-
-4. **Return distinct findings**: Use `collect(DISTINCT pf)` to avoid duplicates
-
-5. **Comment the query purpose**: Add inline comments explaining each MATCH clause
-
-6. **Validate schema first**: Ensure all node labels and properties exist in Cartography schema
-
-7. **Chain all MATCHes from the root account node**: Every `MATCH` clause must connect to the `aws` variable (or another variable already bound to the account's subgraph). The tenant database contains data from multiple providers — an unanchored `MATCH` would return nodes from all providers, breaking provider isolation.
-
-   ```cypher
-   // WRONG: matches ALL AWSRoles across all providers in the tenant DB
-   MATCH (role:AWSRole) WHERE role.name = 'admin'
-
-   // CORRECT: scoped to the specific account's subgraph
-   MATCH (aws)--(role:AWSRole) WHERE role.name = 'admin'
-   ```
-
-   The `Internet` node is an exception: it uses `OPTIONAL MATCH` with `_provider_id` for scoping instead of chaining from `aws`.
+For list-typed properties in the catalog (action, resource, and so on), traverse the `HAS_*` edges to the child item nodes via the multi-`MATCH` shape shown in "List-typed properties as child nodes". The parent node does not carry the list as a single field, so `split(...)` and comma-string predicates do not apply.
 
 ---
 
-## openCypher Compatibility
+## Best practices
 
-Queries must be written in **openCypher Version 9** to ensure compatibility with both Neo4j and Amazon Neptune.
+1. **Chain every MATCH from the account anchor.** An unanchored `MATCH (role:AWSRole)` returns roles from every provider in the graph; `MATCH (aws)--(role:AWSRole)` is scoped. A second-permission MATCH like `MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)` is safe because `principal` is already bound to the account's subgraph.
+2. **Type the finding probe.** Always `OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})`. The type lets Neptune apply an inline edge filter; an untyped probe scans every incident edge of high-degree nodes.
+3. **Comment each MATCH.** One inline `// ...` line per clause explaining its role.
+4. **Never use internal labels.** `_ProviderResource`, `_AWSResource`, `_Tenant_*`, `_Provider_*` are system isolation labels and must not appear in query text (predefined or custom).
+5. **Reach the Internet node through path connectivity** via `(internet:Internet)-[:CAN_ACCESS]->(resource)`, never as a standalone match.
+6. **Preserve the `RETURN` contract.** `paths, dpf, dpfr` for the standard shape; add `internet, can_access` for network-exposure queries. The serializer and visualiser depend on these names.
 
-> **Why Version 9?** Amazon Neptune implements openCypher Version 9. By targeting this specification, queries work on both Neo4j and Neptune without modification.
+---
 
-### Avoid These (Not in openCypher spec)
+## Naming conventions
 
-| Feature                    | Reason                                          | Use instead                                            |
-| -------------------------- | ----------------------------------------------- | ------------------------------------------------------ |
-| APOC procedures (`apoc.*`) | Neo4j-specific plugin, not available in Neptune | Real nodes and relationships in the graph              |
-| Neptune extensions         | Not available in Neo4j                          | Standard openCypher                                    |
-| `reduce()` function        | Not in openCypher spec                          | `UNWIND` + `collect()`                                 |
-| `FOREACH` clause           | Not in openCypher spec                          | `WITH` + `UNWIND` + `SET`                              |
-| Regex operator (`=~`)      | Not supported in Neptune                        | `toLower()` + exact match, or `CONTAINS`/`STARTS WITH` |
-| `CALL () { UNION }`        | Complex, hard to maintain                       | Multi-label OR in WHERE (see patterns section)         |
+- **ID**: kebab-case `{provider}-{category}-{description}`, e.g. `aws-ec2-privesc-passrole-iam`.
+- **Constant**: SHOUTING*SNAKE_CASE `{PROVIDER}*{CATEGORY}\_{DESCRIPTION}`, e.g. `AWS_EC2_PRIVESC_PASSROLE_IAM`.
+
+---
+
+## Creation steps
+
+1. **Read the queries module first** to match the existing style:
+
+   ```text
+   api/src/backend/api/attack_paths/queries/
+   ├── __init__.py
+   ├── types.py         # dataclass definitions
+   ├── registry.py
+   └── {provider}.py
+   ```
+
+2. **Fetch the Cartography schema for the pinned version.** Do not guess labels, properties, or relationships. Read the dependency pin:
+
+   ```bash
+   grep cartography api/pyproject.toml
+   ```
+
+   Then fetch the schema for that exact tag:
+
+   ```text
+   # Git pin (prowler-cloud/cartography@<TAG>):
+   https://raw.githubusercontent.com/prowler-cloud/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
+
+   # PyPI pin (cartography==<TAG>):
+   https://raw.githubusercontent.com/cartography-cncf/cartography/refs/tags/<TAG>/docs/root/modules/{provider}/schema.md
+   ```
+
+3. **Build the query** using the canonical predefined template plus the appropriate sub-pattern (privilege escalation or network exposure). For list-typed properties (action/resource/etc.), traverse the exploded child nodes via `[:HAS_ACTION]->(:AWSPolicyStatementActionItem)` etc. (see "List-typed properties as child nodes" and the `AWS_NORMALIZED_LISTS` catalog).
+
+4. **Register** the constant in the `{PROVIDER}_QUERIES` list at the bottom of the provider file.
 
 ---
 
 ## Reference
 
-### pathfinding.cloud (Attack Path Definitions)
-
-- **Repository**: https://github.com/DataDog/pathfinding.cloud
-- **All paths JSON**: `https://raw.githubusercontent.com/DataDog/pathfinding.cloud/main/docs/paths.json`
-- Always use Bash with `curl | jq` to fetch paths (WebFetch truncates the large JSON)
-
-### Cartography Schema
-
-- **URL pattern**: `https://raw.githubusercontent.com/{org}/cartography/refs/tags/{version}/docs/root/modules/{provider}/schema.md`
-- Always use the version from `api/pyproject.toml`, not master/main
-
-### openCypher Specification
-
-- **Neptune openCypher compliance** (what Neptune supports): https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html
-- **openCypher project** (spec, grammar, TCK): https://github.com/opencypher/openCypher
-
----
-
-## Learning from the Queries Module
-
-**IMPORTANT**: Before creating a new query, ALWAYS read the entire queries module:
-
-```
-api/src/backend/api/attack_paths/queries/
-├── __init__.py      # Module exports
-├── types.py         # Type definitions
-├── registry.py      # Registry logic
-└── {provider}.py    # Provider queries (aws.py, etc.)
-```
-
-Use the existing queries to learn:
-
-- Query structure and formatting
-- Variable naming conventions
-- How to include Prowler findings
-- Comment style
-
-**DO NOT** use generic templates. Match the exact style of existing queries in the file.
+- **pathfinding.cloud**: https://github.com/DataDog/pathfinding.cloud (use `curl | jq`; the aggregated `paths.json` is too large for WebFetch).
+- **Cartography schema** (per pinned tag): `https://raw.githubusercontent.com/{org}/cartography/refs/tags/{tag}/docs/root/modules/{provider}/schema.md`.
+- **Neptune openCypher compliance**: https://docs.aws.amazon.com/neptune/latest/userguide/feature-opencypher-compliance.html.
+- **openCypher spec**: https://github.com/opencypher/openCypher.
+- **Sync converter** (`tasks/jobs/attack_paths/sync.py`): list-typed node properties listed in `tasks/jobs/attack_paths/provider_config.py::AWS_NORMALIZED_LISTS` are materialised as child item nodes + `HAS_*` edges. Properties that are not in the catalog are serialised to a comma-delimited string and emit a one-time warning. Dict-typed properties become JSON strings. Same shape on both sinks.

@@ -67,9 +67,21 @@ export interface PaginationLinks {
   prev: string | null;
 }
 
+export interface AttackPathScansResponsePagination {
+  page: number;
+  pages: number;
+  count: number;
+}
+
+export interface AttackPathScansResponseMeta {
+  pagination: AttackPathScansResponsePagination;
+  version?: string;
+}
+
 export interface AttackPathScansResponse {
   data: AttackPathScan[];
   links: PaginationLinks;
+  meta?: AttackPathScansResponseMeta;
 }
 
 // Data type constants
@@ -81,6 +93,19 @@ export const DATA_TYPES = {
 
 type DataType = (typeof DATA_TYPES)[keyof typeof DATA_TYPES];
 
+export const QUERY_PARAMETER_INPUT_TYPES = {
+  TEXT: "text",
+  TEXTAREA: "textarea",
+  CODE_EDITOR: "code-editor",
+} as const;
+
+export type QueryParameterInputType =
+  (typeof QUERY_PARAMETER_INPUT_TYPES)[keyof typeof QUERY_PARAMETER_INPUT_TYPES];
+
+export const ATTACK_PATH_QUERY_IDS = {
+  CUSTOM: "__custom-open-cypher__",
+} as const;
+
 // Query Types
 export interface AttackPathQueryParameter {
   name: string;
@@ -89,9 +114,17 @@ export interface AttackPathQueryParameter {
   description: string;
   placeholder?: string;
   required?: boolean;
+  input_type?: QueryParameterInputType;
+  editor_language?: "openCypher";
+  requirement_badge?: string;
 }
 
 export interface AttackPathQueryAttribution {
+  text: string;
+  link: string;
+}
+
+export interface AttackPathQueryDocumentationLink {
   text: string;
   link: string;
 }
@@ -103,6 +136,7 @@ export interface AttackPathQueryAttributes {
   provider: string;
   parameters: AttackPathQueryParameter[];
   attribution: AttackPathQueryAttribution | null;
+  documentation_link?: AttackPathQueryDocumentationLink | null;
 }
 
 export interface AttackPathQuery {
@@ -113,6 +147,24 @@ export interface AttackPathQuery {
 
 export interface AttackPathQueriesResponse {
   data: AttackPathQuery[];
+}
+
+export interface AttackPathCartographySchemaAttributes {
+  id: string;
+  provider: string;
+  cartography_version: string;
+  schema_url: string;
+  raw_schema_url: string;
+}
+
+export interface AttackPathCartographySchema {
+  type: "attack-paths-cartography-schemas";
+  id: string;
+  attributes: AttackPathCartographySchemaAttributes;
+}
+
+export interface AttackPathCartographySchemaResponse {
+  data: AttackPathCartographySchema;
 }
 
 // Graph Data Types
@@ -140,8 +192,8 @@ export interface GraphNode {
 
 export interface GraphEdge {
   id: string;
-  source: string | object;
-  target: string | object;
+  source: string;
+  target: string;
   type: string;
   properties?: GraphNodeProperties;
 }
@@ -180,40 +232,6 @@ export interface AttackPathQueryError {
   status: number;
 }
 
-// Finding severity and status constants
-export const FINDING_SEVERITIES = {
-  CRITICAL: "critical",
-  HIGH: "high",
-  MEDIUM: "medium",
-  LOW: "low",
-  INFO: "info",
-} as const;
-
-type FindingSeverity =
-  (typeof FINDING_SEVERITIES)[keyof typeof FINDING_SEVERITIES];
-
-export const FINDING_STATUSES = {
-  PASS: "PASS",
-  FAIL: "FAIL",
-  MANUAL: "MANUAL",
-} as const;
-
-type FindingStatus = (typeof FINDING_STATUSES)[keyof typeof FINDING_STATUSES];
-
-export interface RelatedFinding {
-  id: string;
-  title: string;
-  severity: FindingSeverity;
-  status: FindingStatus;
-}
-
-// Node Detail Types
-export interface NodeDetailData extends GraphNode {
-  relatedFindings?: RelatedFinding[];
-  incomingEdges?: GraphEdge[];
-  outgoingEdges?: GraphEdge[];
-}
-
 // Wizard State Types
 export interface WizardState {
   currentStep: 1 | 2;
@@ -228,9 +246,6 @@ export interface GraphState {
   selectedNodeId: string | null;
   loading: boolean;
   error: string | null;
-  zoomLevel: number;
-  panX: number;
-  panY: number;
 }
 
 // Provider Integration
@@ -255,4 +270,17 @@ export interface ExecuteQueryRequestData {
 
 export interface ExecuteQueryRequest {
   data: ExecuteQueryRequestData;
+}
+
+export interface ExecuteCustomQueryRequestAttributes {
+  query: string;
+}
+
+export interface ExecuteCustomQueryRequestData {
+  type: "attack-paths-custom-query-run-requests";
+  attributes: ExecuteCustomQueryRequestAttributes;
+}
+
+export interface ExecuteCustomQueryRequest {
+  data: ExecuteCustomQueryRequestData;
 }

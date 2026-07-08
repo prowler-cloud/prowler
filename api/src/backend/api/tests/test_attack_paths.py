@@ -1,17 +1,15 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
-import pytest
 
 import neo4j
 import neo4j.exceptions
-
-from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
-
+import pytest
 from api.attack_paths import database as graph_database
 from api.attack_paths import views_helpers
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from tasks.jobs.attack_paths.config import (
     PROVIDER_ELEMENT_ID_PROPERTY,
-    PROVIDER_ID_PROPERTY,
+    get_provider_label,
 )
 
 
@@ -53,7 +51,7 @@ def test_prepare_parameters_includes_provider_and_casts(
     )
 
     assert result["provider_uid"] == "123456789012"
-    assert result["provider_id"] == "test-provider-id"
+    assert "provider_id" not in result
     assert result["limit"] == 5
 
 
@@ -94,7 +92,9 @@ def test_prepare_parameters_validates_cast(
 
 
 def test_execute_query_serializes_graph(
-    attack_paths_query_definition_factory, attack_paths_graph_stub_classes
+    attack_paths_query_definition_factory,
+    attack_paths_graph_stub_classes,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -107,12 +107,12 @@ def test_execute_query_serializes_graph(
     parameters = {"provider_uid": "123"}
 
     provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
     node = attack_paths_graph_stub_classes.Node(
         element_id="node-1",
-        labels=["AWSAccount"],
+        labels=["AWSAccount", plabel],
         properties={
             "name": "account",
-            PROVIDER_ID_PROPERTY: provider_id,
             "complex": {
                 "items": [
                     attack_paths_graph_stub_classes.NativeValue("value"),
@@ -121,15 +121,13 @@ def test_execute_query_serializes_graph(
             },
         },
     )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
-    )
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
         element_id="rel-1",
         rel_type="OWNS",
         start_node=node,
         end_node=node_2,
-        properties={"weight": 1, PROVIDER_ID_PROPERTY: provider_id},
+        properties={"weight": 1},
     )
     graph = SimpleNamespace(nodes=[node, node_2], relationships=[relationship])
 
@@ -139,18 +137,17 @@ def test_execute_query_serializes_graph(
 
     database_name = "db-tenant-test-tenant-id"
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        return_value=graph_result,
-    ) as mock_execute_read_query:
-        result = views_helpers.execute_query(
-            database_name, definition, parameters, provider_id=provider_id
-        )
+    sink_backend_stub.execute_read_query.return_value = graph_result
+    result = views_helpers.execute_query(
+        database_name,
+        definition,
+        parameters,
+        provider_id=provider_id,
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+    )
 
-    mock_execute_read_query.assert_called_once_with(
-        database=database_name,
-        cypher=definition.cypher,
-        parameters=parameters,
+    sink_backend_stub.execute_read_query.assert_called_once_with(
+        database_name, definition.cypher, parameters
     )
     assert result["nodes"][0]["id"] == "node-1"
     assert result["nodes"][0]["properties"]["complex"]["items"][0] == "value"
@@ -159,6 +156,7 @@ def test_execute_query_serializes_graph(
 
 def test_execute_query_wraps_graph_errors(
     attack_paths_query_definition_factory,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -171,16 +169,17 @@ def test_execute_query_wraps_graph_errors(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    with (
-        patch(
-            "api.attack_paths.views_helpers.graph_database.execute_read_query",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
-        ),
-        patch("api.attack_paths.views_helpers.logger") as mock_logger,
-    ):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.GraphDatabaseQueryException("boom")
+    )
+    with patch("api.attack_paths.views_helpers.logger") as mock_logger:
         with pytest.raises(APIException):
             views_helpers.execute_query(
-                database_name, definition, parameters, provider_id="test-provider-123"
+                database_name,
+                definition,
+                parameters,
+                provider_id="test-provider-123",
+                scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
             )
 
     mock_logger.error.assert_called_once()
@@ -188,6 +187,7 @@ def test_execute_query_wraps_graph_errors(
 
 def test_execute_query_raises_permission_denied_on_read_only(
     attack_paths_query_definition_factory,
+    sink_backend_stub,
 ):
     definition = attack_paths_query_definition_factory(
         id="aws-rds",
@@ -200,42 +200,43 @@ def test_execute_query_raises_permission_denied_on_read_only(
     database_name = "db-tenant-test-tenant-id"
     parameters = {"provider_uid": "123"}
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        side_effect=graph_database.WriteQueryNotAllowedException(
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.WriteQueryNotAllowedException(
             message="Read query not allowed",
             code="Neo.ClientError.Statement.AccessMode",
-        ),
-    ):
-        with pytest.raises(PermissionDenied):
-            views_helpers.execute_query(
-                database_name, definition, parameters, provider_id="test-provider-123"
-            )
-
-
-def test_serialize_graph_filters_by_provider_id(attack_paths_graph_stub_classes):
-    provider_id = "provider-keep"
-
-    node_keep = attack_paths_graph_stub_classes.Node(
-        "n1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
+        )
     )
+    with pytest.raises(PermissionDenied):
+        views_helpers.execute_query(
+            database_name,
+            definition,
+            parameters,
+            provider_id="test-provider-123",
+            scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+        )
+
+
+def test_serialize_graph_filters_by_provider_label(attack_paths_graph_stub_classes):
+    provider_id = "provider-keep"
+    plabel = get_provider_label(provider_id)
+    other_label = get_provider_label("provider-other")
+
+    node_keep = attack_paths_graph_stub_classes.Node("n1", ["AWSAccount", plabel], {})
     node_drop = attack_paths_graph_stub_classes.Node(
-        "n2", ["AWSAccount"], {PROVIDER_ID_PROPERTY: "provider-other"}
+        "n2", ["AWSAccount", other_label], {}
     )
 
     rel_keep = attack_paths_graph_stub_classes.Relationship(
-        "r1", "OWNS", node_keep, node_keep, {PROVIDER_ID_PROPERTY: provider_id}
+        "r1", "OWNS", node_keep, node_keep, {}
     )
-    rel_drop_by_provider = attack_paths_graph_stub_classes.Relationship(
-        "r2", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: "provider-other"}
-    )
+    # Relationship connecting a kept node to a dropped node — filtered by endpoint check
     rel_drop_orphaned = attack_paths_graph_stub_classes.Relationship(
-        "r3", "OWNS", node_keep, node_drop, {PROVIDER_ID_PROPERTY: provider_id}
+        "r2", "OWNS", node_keep, node_drop, {}
     )
 
     graph = SimpleNamespace(
         nodes=[node_keep, node_drop],
-        relationships=[rel_keep, rel_drop_by_provider, rel_drop_orphaned],
+        relationships=[rel_keep, rel_drop_orphaned],
     )
 
     result = views_helpers._serialize_graph(graph, provider_id)
@@ -354,7 +355,6 @@ def test_serialize_properties_filters_internal_fields():
         "_module_name": "cartography:aws",
         "_module_version": "0.98.0",
         # Provider isolation
-        PROVIDER_ID_PROPERTY: "42",
         PROVIDER_ELEMENT_ID_PROPERTY: "42:abc123",
     }
 
@@ -447,134 +447,90 @@ def test_normalize_custom_query_payload_passthrough_for_flat_dict():
 
 def test_execute_custom_query_serializes_graph(
     attack_paths_graph_stub_classes,
+    sink_backend_stub,
 ):
     provider_id = "test-provider-123"
-    node_1 = attack_paths_graph_stub_classes.Node(
-        "node-1", ["AWSAccount"], {PROVIDER_ID_PROPERTY: provider_id}
-    )
-    node_2 = attack_paths_graph_stub_classes.Node(
-        "node-2", ["RDSInstance"], {PROVIDER_ID_PROPERTY: provider_id}
-    )
+    plabel = get_provider_label(provider_id)
+    node_1 = attack_paths_graph_stub_classes.Node("node-1", ["AWSAccount", plabel], {})
+    node_2 = attack_paths_graph_stub_classes.Node("node-2", ["RDSInstance", plabel], {})
     relationship = attack_paths_graph_stub_classes.Relationship(
-        "rel-1", "OWNS", node_1, node_2, {PROVIDER_ID_PROPERTY: provider_id}
+        "rel-1", "OWNS", node_1, node_2, {}
     )
 
     graph_result = MagicMock()
     graph_result.nodes = [node_1, node_2]
     graph_result.relationships = [relationship]
 
-    with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        return_value=graph_result,
-    ) as mock_execute:
-        result = views_helpers.execute_custom_query(
-            "db-tenant-test", "MATCH (n) RETURN n", provider_id
-        )
-
-    mock_execute.assert_called_once_with(
-        database="db-tenant-test",
-        cypher="MATCH (n) RETURN n",
+    sink_backend_stub.execute_read_query.return_value = graph_result
+    result = views_helpers.execute_custom_query(
+        "db-tenant-test",
+        "MATCH (n) RETURN n",
+        provider_id,
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
     )
+
+    sink_backend_stub.execute_read_query.assert_called_once()
+    call_args = sink_backend_stub.execute_read_query.call_args[0]
+    assert call_args[0] == "db-tenant-test"
+    # The cypher is rewritten with the provider label injection
+    assert plabel in call_args[1]
     assert len(result["nodes"]) == 2
     assert result["relationships"][0]["label"] == "OWNS"
     assert result["truncated"] is False
     assert result["total_nodes"] == 2
 
 
-def test_execute_custom_query_raises_permission_denied_on_write():
+def test_execute_custom_query_adds_timeout_for_neptune_scan(sink_backend_stub):
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
     with patch(
-        "api.attack_paths.views_helpers.graph_database.execute_read_query",
-        side_effect=graph_database.WriteQueryNotAllowedException(
+        "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+        return_value=sink_backend_stub,
+    ):
+        views_helpers.execute_custom_query(
+            "db-tenant-test",
+            "MATCH (n) RETURN n",
+            "provider-1",
+            scan=MagicMock(is_migrated=True, sink_backend="neptune"),
+        )
+
+    cypher = sink_backend_stub.execute_read_query.call_args[0][1]
+    assert cypher.startswith("USING QUERY:TIMEOUTMILLISECONDS")
+
+
+def test_execute_custom_query_raises_permission_denied_on_write(sink_backend_stub):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.WriteQueryNotAllowedException(
             message="Read query not allowed",
             code="Neo.ClientError.Statement.AccessMode",
-        ),
-    ):
-        with pytest.raises(PermissionDenied):
-            views_helpers.execute_custom_query(
-                "db-tenant-test", "CREATE (n) RETURN n", "provider-1"
-            )
+        )
+    )
+    with pytest.raises(PermissionDenied):
+        views_helpers.execute_custom_query(
+            "db-tenant-test",
+            "CREATE (n) RETURN n",
+            "provider-1",
+            scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+        )
 
 
-def test_execute_custom_query_wraps_graph_errors():
-    with (
-        patch(
-            "api.attack_paths.views_helpers.graph_database.execute_read_query",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
-        ),
-        patch("api.attack_paths.views_helpers.logger") as mock_logger,
-    ):
+def test_execute_custom_query_wraps_graph_errors(sink_backend_stub):
+    sink_backend_stub.execute_read_query.side_effect = (
+        graph_database.GraphDatabaseQueryException("boom")
+    )
+    with patch("api.attack_paths.views_helpers.logger") as mock_logger:
         with pytest.raises(APIException):
             views_helpers.execute_custom_query(
-                "db-tenant-test", "MATCH (n) RETURN n", "provider-1"
+                "db-tenant-test",
+                "MATCH (n) RETURN n",
+                "provider-1",
+                scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
             )
 
     mock_logger.error.assert_called_once()
-
-
-# -- validate_custom_query ------------------------------------------------
-
-
-@pytest.mark.parametrize(
-    "cypher",
-    [
-        "LOAD CSV FROM 'http://169.254.169.254/' AS x RETURN x",
-        "load csv from 'http://evil.com' as row return row",
-        "CALL apoc.load.json('http://evil.com/') YIELD value RETURN value",
-        "CALL apoc.load.csvParams('http://evil.com/', {}, null) YIELD list RETURN list",
-        "CALL apoc.import.csv([{fileName: 'f'}], [], {}) YIELD node RETURN node",
-        "CALL apoc.export.csv.all('file.csv', {})",
-        "CALL apoc.cypher.run('CREATE (n)', {}) YIELD value RETURN value",
-        "CALL apoc.systemdb.graph() YIELD nodes RETURN nodes",
-        "CALL apoc.config.list() YIELD key, value RETURN key, value",
-        "CALL apoc.periodic.iterate('MATCH (n) RETURN n', 'DELETE n', {batchSize: 100})",
-        "CALL apoc.do.when(true, 'CREATE (n) RETURN n', '', {}) YIELD value RETURN value",
-        "CALL apoc.trigger.add('t', 'RETURN 1', {phase: 'before'})",
-        "CALL apoc.custom.asProcedure('myProc', 'RETURN 1')",
-    ],
-    ids=[
-        "LOAD_CSV",
-        "LOAD_CSV_lowercase",
-        "apoc.load.json",
-        "apoc.load.csvParams",
-        "apoc.import.csv",
-        "apoc.export.csv",
-        "apoc.cypher.run",
-        "apoc.systemdb.graph",
-        "apoc.config.list",
-        "apoc.periodic.iterate",
-        "apoc.do.when",
-        "apoc.trigger.add",
-        "apoc.custom.asProcedure",
-    ],
-)
-def test_validate_custom_query_rejects_blocked_patterns(cypher):
-    with pytest.raises(ValidationError) as exc:
-        views_helpers.validate_custom_query(cypher)
-
-    assert "blocked operation" in str(exc.value.detail)
-
-
-@pytest.mark.parametrize(
-    "cypher",
-    [
-        "MATCH (n:AWSAccount) RETURN n LIMIT 10",
-        "MATCH (a)-[r]->(b) RETURN a, r, b",
-        "MATCH (n) WHERE n.name CONTAINS 'load' RETURN n",
-        "CALL apoc.create.vNode(['Label'], {}) YIELD node RETURN node",
-        "MATCH (n) WHERE n.name = 'apoc.load.json' RETURN n",
-        'MATCH (n) WHERE n.description = "LOAD CSV is cool" RETURN n',
-    ],
-    ids=[
-        "simple_match",
-        "traversal",
-        "contains_load_substring",
-        "apoc_virtual_node",
-        "apoc_load_inside_single_quotes",
-        "load_csv_inside_double_quotes",
-    ],
-)
-def test_validate_custom_query_allows_clean_queries(cypher):
-    views_helpers.validate_custom_query(cypher)
 
 
 # -- _truncate_graph ----------------------------------------------------------
@@ -636,13 +592,33 @@ def test_truncate_graph_empty_graph():
 
 @pytest.fixture
 def mock_neo4j_session():
-    """Mock the Neo4j driver so execute_read_query uses a fake session."""
+    """Install a Neo4jSink with a mocked Bolt driver into the sink factory.
+
+    The yielded mock is the `neo4j.Session` that the Neo4jSink will obtain via
+    `driver.session(...)`. Tests configure `mock_neo4j_session.execute_read`
+    return values / side effects to exercise the read-mode error translation
+    path on the real `Neo4jSink.execute_read_query` and `get_session` code.
+    """
+    from api.attack_paths.sink import factory
+    from api.attack_paths.sink.neo4j import Neo4jSink
+
     mock_session = MagicMock(spec=neo4j.Session)
     mock_driver = MagicMock(spec=neo4j.Driver)
     mock_driver.session.return_value = mock_session
 
-    with patch("api.attack_paths.database.get_driver", return_value=mock_driver):
+    sink = Neo4jSink()
+    sink._driver = mock_driver
+
+    previous_backend = factory._backend
+    previous_secondary = dict(factory._secondary_backends)
+    factory._backend = sink
+    factory._secondary_backends.clear()
+    try:
         yield mock_session
+    finally:
+        factory._backend = previous_backend
+        factory._secondary_backends.clear()
+        factory._secondary_backends.update(previous_secondary)
 
 
 def test_execute_read_query_succeeds_with_select(mock_neo4j_session):
@@ -738,16 +714,20 @@ def test_execute_read_query_rejects_apoc_real_create(mock_neo4j_session, cypher)
 
 @pytest.fixture
 def mock_schema_session():
-    """Mock get_session for cartography schema tests."""
+    """Mock the routed sink backend session for cartography schema tests."""
     mock_result = MagicMock()
     mock_session = MagicMock()
     mock_session.run.return_value = mock_result
+    mock_backend = MagicMock()
 
     with patch(
-        "api.attack_paths.views_helpers.graph_database.get_session"
-    ) as mock_get_session:
-        mock_get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
-        mock_get_session.return_value.__exit__ = MagicMock(return_value=False)
+        "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+        return_value=mock_backend,
+    ):
+        mock_backend.get_session.return_value.__enter__ = MagicMock(
+            return_value=mock_session
+        )
+        mock_backend.get_session.return_value.__exit__ = MagicMock(return_value=False)
         yield mock_session, mock_result
 
 
@@ -758,7 +738,9 @@ def test_get_cartography_schema_returns_urls(mock_schema_session):
         "module_version": "0.129.0",
     }
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     mock_session.run.assert_called_once()
     assert result["id"] == "aws-0.129.0"
@@ -774,7 +756,9 @@ def test_get_cartography_schema_returns_none_when_no_data(mock_schema_session):
     _, mock_result = mock_schema_session
     mock_result.single.return_value = None
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     assert result is None
 
@@ -796,21 +780,29 @@ def test_get_cartography_schema_extracts_provider(
         "module_version": "1.0.0",
     }
 
-    result = views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+    result = views_helpers.get_cartography_schema(
+        "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+    )
 
     assert result["id"] == f"{expected_provider}-1.0.0"
     assert result["provider"] == expected_provider
 
 
 def test_get_cartography_schema_wraps_database_error():
+    mock_backend = MagicMock()
+    mock_backend.get_session.side_effect = graph_database.GraphDatabaseQueryException(
+        "boom"
+    )
     with (
         patch(
-            "api.attack_paths.views_helpers.graph_database.get_session",
-            side_effect=graph_database.GraphDatabaseQueryException("boom"),
+            "api.attack_paths.views_helpers.sink_module.get_backend_for_scan",
+            return_value=mock_backend,
         ),
         patch("api.attack_paths.views_helpers.logger") as mock_logger,
     ):
         with pytest.raises(APIException):
-            views_helpers.get_cartography_schema("db-tenant-test", "provider-123")
+            views_helpers.get_cartography_schema(
+                "db-tenant-test", "provider-123", MagicMock(sink_backend="neo4j")
+            )
 
     mock_logger.error.assert_called_once()

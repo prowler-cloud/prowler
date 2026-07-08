@@ -2,14 +2,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 
 import { getRoles } from "@/actions/roles/roles";
-import { getUsers } from "@/actions/users/users";
-import { FilterControls } from "@/components/filters";
-import { AddIcon } from "@/components/icons";
+import { getCurrentUserTenantRole, getUsers } from "@/actions/users/users";
+import { auth } from "@/auth.config";
 import { Button } from "@/components/shadcn";
-import { ContentLayout } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DataTable } from "@/components/shadcn/table";
 import { ColumnsUser, SkeletonTableUser } from "@/components/users/table";
 import { Role, SearchParamsProps, UserProps } from "@/types";
+import { TENANT_MEMBERSHIP_ROLE } from "@/types/users";
 
 export default async function Users({
   searchParams,
@@ -21,15 +21,10 @@ export default async function Users({
 
   return (
     <ContentLayout title="Users" icon="lucide:user">
-      <FilterControls search />
-
       <div className="flex flex-col gap-6">
         <div className="flex flex-row items-end justify-end">
           <Button asChild>
-            <Link href="/invitations/new">
-              Invite User
-              <AddIcon size={20} />
-            </Link>
+            <Link href="/invitations/new">Invite User</Link>
           </Button>
         </div>
 
@@ -58,19 +53,24 @@ const SSRDataTable = async ({
   // Extract query from filters
   const query = (filters["filter[search]"] as string) || "";
 
-  const usersData = await getUsers({ query, page, sort, filters, pageSize });
-  const rolesData = await getRoles({});
+  const [usersData, rolesData, currentTenantRole, session] = await Promise.all([
+    getUsers({ query, page, sort, filters, pageSize }),
+    getRoles({}),
+    getCurrentUserTenantRole(),
+    auth(),
+  ]);
+
+  const currentUserId = session?.userId;
+  const currentTenantId = session?.tenantId;
+  const isCurrentUserOwner = currentTenantRole === TENANT_MEMBERSHIP_ROLE.Owner;
 
   // Create a dictionary for roles by user ID
-  const roleDict = (usersData?.included || []).reduce(
-    (acc: Record<string, any>, item: Role) => {
-      if (item.type === "roles") {
-        acc[item.id] = item.attributes;
-      }
-      return acc;
-    },
-    {} as Record<string, Role>,
-  );
+  const roleDict: Record<string, Role["attributes"]> = {};
+  for (const item of (usersData?.included || []) as Role[]) {
+    if (item.type === "roles") {
+      roleDict[item.id] = item.attributes;
+    }
+  }
 
   // Generate the array of roles with all the roles available
   const roles = Array.from(
@@ -88,6 +88,11 @@ const SSRDataTable = async ({
     const roleId = user?.relationships?.roles?.data?.[0]?.id;
     const role = roleDict?.[roleId] || null;
 
+    // Gate the "Expel" action server-side: only tenant owners may expel,
+    // and never against themselves (self-leave lives elsewhere).
+    const canBeExpelled =
+      isCurrentUserOwner && !!currentTenantId && user.id !== currentUserId;
+
     return {
       ...user,
       attributes: {
@@ -95,6 +100,11 @@ const SSRDataTable = async ({
         role,
       },
       roles,
+      canBeExpelled,
+      currentTenantId: canBeExpelled ? currentTenantId : undefined,
+      // Users may only delete their own account; gate the delete action so the
+      // UI matches the backend rule and never offers an action that would fail.
+      isCurrentUser: user.id === currentUserId,
     };
   });
 
@@ -104,6 +114,7 @@ const SSRDataTable = async ({
       columns={ColumnsUser}
       data={expandedUsers || []}
       metadata={usersData?.meta}
+      showSearch
     />
   );
 };

@@ -2,12 +2,16 @@
 
 from unittest.mock import MagicMock
 
-from prowler.providers.googleworkspace.models import GoogleWorkspaceIdentityInfo
+from prowler.providers.googleworkspace.models import (
+    GoogleWorkspaceIdentityInfo,
+    GoogleWorkspaceResource,
+)
 
 # Google Workspace test constants
 DOMAIN = "test-company.com"
 CUSTOMER_ID = "C1234567"
 DELEGATED_USER = "prowler-reader@test-company.com"
+ROOT_ORG_UNIT_ID = "03ph8a2z1234"
 
 # Service Account credentials (mock)
 SERVICE_ACCOUNT_CREDENTIALS = {
@@ -43,15 +47,60 @@ USER_3 = {
 }
 
 
+# Role data for Directory API role tests
+SUPER_ADMIN_ROLE_ID = "13801188331880449"
+SEED_ADMIN_ROLE_ID = "13801188331880451"
+GROUPS_ADMIN_ROLE_ID = "13801188331880450"
+
+ROLE_SUPER_ADMIN = {
+    "roleId": SUPER_ADMIN_ROLE_ID,
+    "roleName": "Super Admin",
+    "roleDescription": "Super Admin",
+    "isSystemRole": True,
+    "isSuperAdminRole": True,
+}
+
+# Google automatically assigns _SEED_ADMIN_ROLE to the first account that
+# created the domain. It is a super-admin-capable system role with a
+# different name, so it must also be excluded when counting "extra" roles.
+ROLE_SEED_ADMIN = {
+    "roleId": SEED_ADMIN_ROLE_ID,
+    "roleName": "_SEED_ADMIN_ROLE",
+    "roleDescription": "Super Admin",
+    "isSystemRole": True,
+    "isSuperAdminRole": True,
+}
+
+ROLE_GROUPS_ADMIN = {
+    "roleId": GROUPS_ADMIN_ROLE_ID,
+    "roleName": "_GROUPS_ADMIN_ROLE",
+    "roleDescription": "Groups Administrator",
+    "isSystemRole": True,
+    "isSuperAdminRole": False,
+}
+
+
 def set_mocked_googleworkspace_provider(
     identity: GoogleWorkspaceIdentityInfo = GoogleWorkspaceIdentityInfo(
         domain=DOMAIN,
         customer_id=CUSTOMER_ID,
         delegated_user=DELEGATED_USER,
+        root_org_unit_id=ROOT_ORG_UNIT_ID,
         profile="default",
     ),
 ):
     provider = MagicMock()
     provider.type = "googleworkspace"
     provider.identity = identity
+    provider.domain_resource = build_googleworkspace_domain_resource()
     return provider
+
+
+def build_googleworkspace_domain_resource() -> GoogleWorkspaceResource:
+    """Build the domain-level Google Workspace resource for tests."""
+
+    return GoogleWorkspaceResource(
+        id=CUSTOMER_ID,
+        name=DOMAIN,
+        customer_id=CUSTOMER_ID,
+    )

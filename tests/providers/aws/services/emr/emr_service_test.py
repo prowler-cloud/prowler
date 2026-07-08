@@ -53,19 +53,19 @@ class Test_EMR_Service:
     # Test EMR Client
     @mock_aws
     def test_get_client(self):
-        emr = EMR(set_mocked_aws_provider())
+        emr = EMR(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert emr.regional_clients[AWS_REGION_EU_WEST_1].__class__.__name__ == "EMR"
 
     # Test EMR Session
     @mock_aws
     def test__get_session__(self):
-        emr = EMR(set_mocked_aws_provider())
+        emr = EMR(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert emr.session.__class__.__name__ == "Session"
 
     # Test EMR Service
     @mock_aws
     def test__get_service__(self):
-        emr = EMR(set_mocked_aws_provider())
+        emr = EMR(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert emr.service == "emr"
 
     # Test _list_clusters and _describe_cluster
@@ -93,7 +93,7 @@ class Test_EMR_Service:
         )
         cluster_id = emr_client.run_job_flow(**run_job_flow_args)["JobFlowId"]
         # EMR Class
-        emr = EMR(set_mocked_aws_provider())
+        emr = EMR(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
 
         assert len(emr.clusters) == 1
         assert emr.clusters[cluster_id].id == cluster_id
@@ -115,7 +115,7 @@ class Test_EMR_Service:
 
     @mock_aws
     def test_get_block_public_access_configuration(self):
-        emr = EMR(set_mocked_aws_provider())
+        emr = EMR(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
 
         assert len(emr.block_public_access_configuration) == 1
         assert emr.block_public_access_configuration[

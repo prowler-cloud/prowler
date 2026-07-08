@@ -13,12 +13,12 @@ import { z } from "zod";
 import { createSamlConfig, updateSamlConfig } from "@/actions/integrations";
 import { AddIcon } from "@/components/icons";
 import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomServerInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { FormButtons } from "@/components/ui/form";
-import { apiBaseUrl } from "@/lib";
+import { useToast } from "@/components/shadcn";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { CustomServerInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { FormButtons } from "@/components/shadcn/form";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 
 const validateXMLContent = (
   xmlContent: string,
@@ -253,9 +253,12 @@ export const SamlConfigForm = ({
     reader.readAsText(file);
   };
 
-  const acsUrl = emailDomain
-    ? `${apiBaseUrl}/accounts/saml/${emailDomain}/acs/`
-    : `${apiBaseUrl}/accounts/saml/your-domain.com/acs/`;
+  const { apiBaseUrl } = useRuntimeConfig();
+  const trimmedEmailDomain = emailDomain.trim();
+  const acsUrl =
+    trimmedEmailDomain && apiBaseUrl
+      ? `${apiBaseUrl}/accounts/saml/${trimmedEmailDomain}/acs/`
+      : "";
 
   return (
     <form
@@ -308,11 +311,17 @@ export const SamlConfigForm = ({
               <span className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 ACS URL:
               </span>
-              <CodeSnippet
-                value={acsUrl}
-                ariaLabel="Copy ACS URL"
-                className="h-10 w-full"
-              />
+              {acsUrl ? (
+                <CodeSnippet
+                  value={acsUrl}
+                  ariaLabel="Copy ACS URL"
+                  className="h-10 w-full"
+                />
+              ) : (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  Enter your email domain above to generate the ACS URL.
+                </p>
+              )}
             </div>
 
             <div>

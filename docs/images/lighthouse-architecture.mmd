@@ -1,0 +1,37 @@
+flowchart TB
+    browser([Browser])
+
+    subgraph NEXTJS["Next.js Server"]
+        route["API Route<br/>(auth + context assembly)"]
+        agent["LangChain Agent"]
+
+        subgraph TOOLS["Agent Tools"]
+            metatools["Meta-tools<br/>describe_tool / execute_tool / load_skill"]
+        end
+
+        mcpclient["MCP Client<br/>(HTTP transport)"]
+    end
+
+    llm["LLM Provider<br/>(OpenAI / Bedrock / OpenAI-compatible)"]
+
+    subgraph MCP["Prowler MCP Server"]
+        app_tools["prowler_app_* tools<br/>(auth required)"]
+        hub_tools["prowler_hub_* tools<br/>(no auth)"]
+        docs_tools["prowler_docs_* tools<br/>(no auth)"]
+    end
+
+    api["Prowler API"]
+    hub["hub.prowler.com"]
+    docs["docs.prowler.com<br/>(Mintlify)"]
+
+    browser <-->|SSE stream| route
+    route --> agent
+    agent <-->|LLM API| llm
+    agent --> metatools
+    metatools --> mcpclient
+    mcpclient -->|MCP HTTP · Bearer token<br/>for prowler_app_* only| app_tools
+    mcpclient -->|MCP HTTP| hub_tools
+    mcpclient -->|MCP HTTP| docs_tools
+    app_tools -->|REST| api
+    hub_tools -->|REST| hub
+    docs_tools -->|REST| docs

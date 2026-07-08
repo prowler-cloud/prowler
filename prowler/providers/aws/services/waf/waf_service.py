@@ -9,15 +9,13 @@ from prowler.providers.aws.lib.service.service import AWSService
 
 class WAF(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
-        super().__init__("waf", provider)
+        # AWS WAF is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL and any resources used in the web ACL, such as rule groups, IP sets, and regex pattern sets.
+        region = "us-east-1" if provider.identity.partition == "aws" else None
+        super().__init__("waf", provider, region=region)
         self.rules = {}
         self.rule_groups = {}
         self.web_acls = {}
         if self.audited_partition == "aws":
-            # AWS WAF is available globally for CloudFront distributions, but you must use the Region US East (N. Virginia) to create your web ACL and any resources used in the web ACL, such as rule groups, IP sets, and regex pattern sets.
-            self.region = "us-east-1"
-            self.client = self.session.client(self.service, self.region)
             self._list_rules()
             self.__threading_call__(self._get_rule, self.rules.values())
             self._list_rule_groups()
@@ -170,6 +168,7 @@ class WAFRegional(AWSService):
         )
         self.__threading_call__(self._list_web_acls)
         self.__threading_call__(self._get_web_acl, self.web_acls.values())
+        self.__threading_call__(self._get_logging_configuration, self.web_acls.values())
         self.__threading_call__(self._list_resources_for_web_acl)
 
     def _list_rules(self, regional_client):
@@ -273,6 +272,34 @@ class WAFRegional(AWSService):
                 else:
                     rule_arn = f"arn:{self.audited_partition}:waf-regional:{acl.region}:{self.audited_account}:rule/{rule_id}"
                     acl.rules.append(self.rules[rule_arn])
+
+        except Exception as error:
+            logger.error(
+                f"{acl.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _get_logging_configuration(self, acl):
+        """Fetch and store the logging configuration for a Regional Web ACL.
+
+        Calls the WAF Regional GetLoggingConfiguration API for the given ACL and
+        sets acl.logging_enabled to True if at least one log destination is configured,
+        False otherwise.
+
+        Args:
+            acl (WebAcl): The Regional Web ACL instance to update.
+        """
+        logger.info(
+            f"WAFRegional - Getting Regional Web ACL {acl.name} logging configuration..."
+        )
+        try:
+            get_logging_configuration = self.regional_clients[
+                acl.region
+            ].get_logging_configuration(ResourceArn=acl.arn)
+            acl.logging_enabled = bool(
+                get_logging_configuration.get("LoggingConfiguration", {}).get(
+                    "LogDestinationConfigs", []
+                )
+            )
 
         except Exception as error:
             logger.error(

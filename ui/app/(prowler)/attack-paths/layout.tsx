@@ -1,4 +1,4 @@
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 
 export default function AttackPathsLayout({
   children,
@@ -6,7 +6,11 @@ export default function AttackPathsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ContentLayout title="Attack Paths" icon="lucide:git-branch">
+    <ContentLayout
+      title="Attack Paths"
+      icon="lucide:git-branch"
+      onboardingAction={{ flowId: "attack-paths" }}
+    >
       {children}
     </ContentLayout>
   );

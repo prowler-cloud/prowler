@@ -16,6 +16,7 @@ from azure.identity import (
     DefaultAzureCredential,
     InteractiveBrowserCredential,
 )
+from azure.mgmt.resource import ResourceManagementClient
 from azure.mgmt.subscription import SubscriptionClient
 from colorama import Fore, Style
 from msgraph import GraphServiceClient
@@ -97,12 +98,14 @@ class AzureProvider(Provider):
     """
 
     _type: str = "azure"
+    sdk_only: bool = False
     _session: DefaultAzureCredential
     _identity: AzureIdentityInfo
     _audit_config: dict
     _region_config: AzureRegionConfig
     _locations: dict
     _mutelist: AzureMutelist
+    _resource_groups: dict[str, list[str]]
     # TODO: this is not optional, enforce for all providers
     audit_metadata: Audit_Metadata
 
@@ -122,6 +125,7 @@ class AzureProvider(Provider):
         mutelist_content: dict = None,
         client_id: str = None,
         client_secret: str = None,
+        resource_groups: list = [],
     ):
         """
         Initializes the Azure provider.
@@ -141,6 +145,7 @@ class AzureProvider(Provider):
             mutelist_content (dict): The mutelist content.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            resource_groups (list): List of resource group names.
 
         Returns:
             None
@@ -205,7 +210,7 @@ class AzureProvider(Provider):
                 ...     managed_identity_auth=False,
                 ...     region="AzureUSGovernment",
                 ... )
-            - Subscriptions: rowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
+            - Subscriptions: Prowler is multisubscription, which means that is going to scan all the subscriptions is able to list. If you only assign permissions to one subscription, it is going to scan a single one.
               Prowler also allows you to specify the subscriptions you want to scan by passing a list of subscription IDs.
                 >>> AzureProvider(
                 ...     az_cli_auth=False,
@@ -213,6 +218,11 @@ class AzureProvider(Provider):
                 ...     browser_auth=False,
                 ...     managed_identity_auth=False,
                 ...     subscription_ids=["XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"],
+                ... )
+            - Resource Groups: Prowler allows you to narrow the scan to specific resource groups.
+                >>> AzureProvider(
+                ...     az_cli_auth=True,
+                ...     resource_groups=["rg-production", "rg-staging"],
                 ... )
 
         """
@@ -241,7 +251,10 @@ class AzureProvider(Provider):
         azure_credentials = None
         if tenant_id and client_id and client_secret:
             azure_credentials = self.validate_static_credentials(
-                tenant_id=tenant_id, client_id=client_id, client_secret=client_secret
+                tenant_id=tenant_id,
+                client_id=client_id,
+                client_secret=client_secret,
+                region_config=self._region_config,
             )
 
         # Set up the Azure session
@@ -267,6 +280,8 @@ class AzureProvider(Provider):
 
         # TODO: should we keep this here or within the identity?
         self._locations = self.get_locations()
+
+        self._resource_groups = self.validate_resource_groups(resource_groups)
 
         # Audit Config
         if config_content:
@@ -332,6 +347,11 @@ class AzureProvider(Provider):
     def mutelist(self) -> AzureMutelist:
         """Mutelist object associated with this Azure provider."""
         return self._mutelist
+
+    @property
+    def resource_groups(self) -> dict[str, list[str]]:
+        """Mapping of subscription ID to the list of resource groups to scan within it."""
+        return self._resource_groups
 
     # TODO: this should be moved to the argparse, if not we need to enforce it from the Provider
     # previously was using the AzureException
@@ -410,6 +430,9 @@ class AzureProvider(Provider):
                 authority=config["authority"],
                 base_url=config["base_url"],
                 credential_scopes=config["credential_scopes"],
+                graph_host=config["graph_host"],
+                graph_scope=config["graph_scope"],
+                logs_endpoint=config["logs_endpoint"],
             )
         except ArgumentTypeError as validation_error:
             logger.error(
@@ -432,7 +455,7 @@ class AzureProvider(Provider):
         """Azure credentials information.
 
         This method prints the Azure Tenant Domain, Azure Tenant ID, Azure Region,
-        Azure Subscriptions, Azure Identity Type, and Azure Identity ID.
+        Azure Subscriptions, Azure Resource Groups, Azure Identity Type, and Azure Identity ID.
 
         Args:
             None
@@ -441,13 +464,14 @@ class AzureProvider(Provider):
             None
         """
         printed_subscriptions = []
-        for key, value in self._identity.subscriptions.items():
-            intermediate = key + ": " + value
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            intermediate = display_name + ": " + subscription_id
             printed_subscriptions.append(intermediate)
         report_lines = [
             f"Azure Tenant Domain: {Fore.YELLOW}{self._identity.tenant_domain}{Style.RESET_ALL} Azure Tenant ID: {Fore.YELLOW}{self._identity.tenant_ids[0]}{Style.RESET_ALL}",
             f"Azure Region: {Fore.YELLOW}{self.region_config.name}{Style.RESET_ALL}",
             f"Azure Subscriptions: {Fore.YELLOW}{printed_subscriptions}{Style.RESET_ALL}",
+            f"Azure Resource Groups: {Fore.YELLOW}{sorted({rg for rgs in self._resource_groups.values() for rg in rgs}) if any(self._resource_groups.values()) else ('NONE (no matching resource groups found)' if self._resource_groups else 'ALL')}{Style.RESET_ALL}",
             f"Azure Identity Type: {Fore.YELLOW}{self._identity.identity_type}{Style.RESET_ALL} Azure Identity ID: {Fore.YELLOW}{self._identity.identity_id}{Style.RESET_ALL}",
         ]
         report_title = (
@@ -507,6 +531,7 @@ class AzureProvider(Provider):
                             tenant_id=azure_credentials["tenant_id"],
                             client_id=azure_credentials["client_id"],
                             client_secret=azure_credentials["client_secret"],
+                            authority=region_config.authority,
                         )
                         return credentials
                     except ClientAuthenticationError as error:
@@ -579,7 +604,10 @@ class AzureProvider(Provider):
                 )
         else:
             try:
-                credentials = InteractiveBrowserCredential(tenant_id=tenant_id)
+                credentials = InteractiveBrowserCredential(
+                    tenant_id=tenant_id,
+                    authority=region_config.authority,
+                )
             except Exception as error:
                 logger.critical(
                     "Failed to retrieve azure credentials using browser authentication"
@@ -662,6 +690,7 @@ class AzureProvider(Provider):
                     tenant_id=tenant_id,
                     client_id=client_id,
                     client_secret=client_secret,
+                    region_config=region_config,
                 )
 
             # Set up the Azure session
@@ -675,7 +704,11 @@ class AzureProvider(Provider):
                 region_config,
             )
             # Create a SubscriptionClient
-            subscription_client = SubscriptionClient(credentials)
+            subscription_client = SubscriptionClient(
+                credentials,
+                base_url=region_config.base_url,
+                credential_scopes=region_config.credential_scopes,
+            )
 
             # Get info from the subscriptions
             available_subscriptions = []
@@ -949,7 +982,7 @@ class AzureProvider(Provider):
                             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
                         )
 
-            asyncio.get_event_loop().run_until_complete(get_azure_identity())
+            asyncio.run(get_azure_identity())
 
         # Managed identities only can be assigned resource, resource group and subscription scope permissions
         elif managed_identity_auth:
@@ -969,19 +1002,30 @@ class AzureProvider(Provider):
             )
             if not subscription_ids:
                 logger.info("Scanning all the Azure subscriptions...")
-                for subscription in subscriptions_client.subscriptions.list():
-                    # TODO: get tags or labels
-                    # TODO: fill with AzureSubscription
-                    identity.subscriptions.update(
-                        {subscription.display_name: subscription.subscription_id}
-                    )
+                # TODO: get tags or labels
+                # TODO: fill with AzureSubscription
+                subscription_pairs = [
+                    (subscription.display_name, subscription.subscription_id)
+                    for subscription in subscriptions_client.subscriptions.list()
+                ]
             else:
                 logger.info("Scanning the subscriptions passed as argument ...")
-                for id in subscription_ids:
-                    subscription = subscriptions_client.subscriptions.get(
-                        subscription_id=id
+                subscription_pairs = [
+                    (
+                        subscriptions_client.subscriptions.get(
+                            subscription_id=id
+                        ).display_name,
+                        id,
                     )
-                    identity.subscriptions.update({subscription.display_name: id})
+                    for id in subscription_ids
+                ]
+
+            # Key the subscriptions dict by subscription ID (which is
+            # guaranteed unique) and store the display name as the value.
+            # This avoids collisions when multiple subscriptions share
+            # the same display name.
+            for display_name, subscription_id in subscription_pairs:
+                identity.subscriptions[subscription_id] = display_name
 
             # If there are no subscriptions listed -> checks are not going to be run against any resource
             if not identity.subscriptions:
@@ -1017,28 +1061,32 @@ class AzureProvider(Provider):
 
         Returns:
             A dictionary containing the locations available for each subscription. The dictionary
-            has subscription display names as keys and lists of location names as values.
+            has subscription IDs as keys and lists of location names as values.
 
         Examples:
             >>> provider = AzureProvider(...)
             >>> provider.get_locations()
             {
-                'Subscription 1': ['eastus', 'eastus2', 'westus', 'westus2'],
-                'Subscription 2': ['eastus', 'eastus2', 'westus', 'westus2']
+                'sub-id-1': ['eastus', 'eastus2', 'westus', 'westus2'],
+                'sub-id-2': ['eastus', 'eastus2', 'westus', 'westus2']
             }
         """
         credentials = self.session
-        subscription_client = SubscriptionClient(credentials)
+        subscription_client = SubscriptionClient(
+            credentials,
+            base_url=self.region_config.base_url,
+            credential_scopes=self.region_config.credential_scopes,
+        )
         locations = {}
 
-        for display_name, subscription_id in self._identity.subscriptions.items():
-            locations[display_name] = []
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            locations[subscription_id] = []
 
             # List locations for each subscription
             for location in subscription_client.subscriptions.list_locations(
                 subscription_id
             ):
-                locations[display_name].append(location.name)
+                locations[subscription_id].append(location.name)
 
         return locations
 
@@ -1071,9 +1119,74 @@ class AzureProvider(Provider):
 
         return set(chain.from_iterable(locations.values()))
 
+    def validate_resource_groups(self, resource_groups: list) -> dict[str, list[str]]:
+        """Validate requested resource groups across Azure subscriptions.
+
+        Args:
+            resource_groups: Resource group names requested for scanning.
+
+        Returns:
+            A mapping of subscription IDs to the matching resource group names.
+
+        The matching is case-insensitive and resolved independently for each
+        subscription. If a subscription's resource groups cannot be queried, a
+        warning is logged and that subscription keeps an empty resource group
+        list so the remaining subscriptions can still be validated.
+        """
+        resource_groups = [r.strip() for r in resource_groups if r and r.strip()]
+        if not resource_groups:
+            return {}
+
+        rg_map = {
+            subscription_id: [] for subscription_id in self._identity.subscriptions
+        }
+        credentials = self.session
+
+        for subscription_id, display_name in self._identity.subscriptions.items():
+            try:
+                rg_client = ResourceManagementClient(
+                    credentials,
+                    subscription_id,
+                    base_url=self._region_config.base_url,
+                    credential_scopes=self._region_config.credential_scopes,
+                )
+                existing_rgs = {
+                    rg.name.lower(): rg.name for rg in rg_client.resource_groups.list()
+                }
+            except Exception as error:
+                logger.warning(
+                    f"Could not list resource groups for subscription '{display_name}' "
+                    f"({subscription_id}): {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}. "
+                    "Skipping resource group filtering for this subscription."
+                )
+                continue
+
+            for rg in resource_groups:
+                real_name = existing_rgs.get(rg.lower())
+                if real_name:
+                    rg_map[subscription_id].append(real_name)
+
+        for rg in resource_groups:
+            if not any(rg.lower() == r.lower() for rgs in rg_map.values() for r in rgs):
+                logger.warning(
+                    f"Resource group '{rg}' was not found in any subscription. "
+                    "Please check the resource group name and try again."
+                )
+
+        if not any(rgs for rgs in rg_map.values()):
+            logger.warning(
+                f"None of the provided resource groups {resource_groups} were found "
+                "in any subscription. Please check the resource group names and try again."
+            )
+
+        return rg_map
+
     @staticmethod
     def validate_static_credentials(
-        tenant_id: str = None, client_id: str = None, client_secret: str = None
+        tenant_id: str = None,
+        client_id: str = None,
+        client_secret: str = None,
+        region_config: AzureRegionConfig = None,
     ) -> dict:
         """
         Validates the static credentials for the Azure provider.
@@ -1082,6 +1195,9 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            region_config (AzureRegionConfig): The region configuration used to
+                build the per-cloud login endpoint and Graph scope. Defaults to
+                the public-cloud configuration when not provided.
 
         Raises:
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
@@ -1118,8 +1234,13 @@ class AzureProvider(Provider):
                 message="The provided Azure Client Secret is not valid.",
             )
 
+        if region_config is None:
+            region_config = AzureProvider.setup_region_config("AzureCloud")
+
         try:
-            AzureProvider.verify_client(tenant_id, client_id, client_secret)
+            AzureProvider.verify_client(
+                tenant_id, client_id, client_secret, region_config
+            )
             return {
                 "tenant_id": tenant_id,
                 "client_id": client_id,
@@ -1151,7 +1272,9 @@ class AzureProvider(Provider):
             )
 
     @staticmethod
-    def verify_client(tenant_id, client_id, client_secret) -> None:
+    def verify_client(
+        tenant_id, client_id, client_secret, region_config: AzureRegionConfig = None
+    ) -> None:
         """
         Verifies the Azure client credentials using the specified tenant ID, client ID, and client secret.
 
@@ -1159,6 +1282,9 @@ class AzureProvider(Provider):
             tenant_id (str): The Azure Active Directory tenant ID.
             client_id (str): The Azure client ID.
             client_secret (str): The Azure client secret.
+            region_config (AzureRegionConfig): The region configuration used to
+                build the per-cloud login endpoint and Graph scope. Defaults to
+                the public-cloud configuration when not provided.
 
         Raises:
             AzureNotValidTenantIdError: If the provided Azure Tenant ID is not valid.
@@ -1168,7 +1294,13 @@ class AzureProvider(Provider):
         Returns:
             None
         """
-        url = f"https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
+        if region_config is None:
+            region_config = AzureProvider.setup_region_config("AzureCloud")
+        # `authority` is None for the public cloud and a bare host (e.g.
+        # `login.chinacloudapi.cn`) for sovereign clouds, mirroring the
+        # `AzureAuthorityHosts` constants used by azure-identity.
+        login_endpoint = region_config.authority or "login.microsoftonline.com"
+        url = f"https://{login_endpoint}/{tenant_id}/oauth2/v2.0/token"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
             "Accept": "application/json",
@@ -1177,7 +1309,7 @@ class AzureProvider(Provider):
             "grant_type": "client_credentials",
             "client_id": client_id,
             "client_secret": client_secret,
-            "scope": "https://graph.microsoft.com/.default",
+            "scope": region_config.graph_scope,
         }
         response = requests.post(url, headers=headers, data=data).json()
         if "access_token" not in response.keys() and "error_codes" in response.keys():

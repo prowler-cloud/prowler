@@ -1,22 +1,31 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Subquery
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Integration, Invitation, Processor, Provider, Resource
+from api.models import (
+    Integration,
+    Invitation,
+    Membership,
+    Processor,
+    Provider,
+    Resource,
+    Role,
+    UserRoleRelationship,
+)
 from api.v1.serializers import FindingMetadataSerializer
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
+from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from rest_framework.exceptions import NotFound, ValidationError
 
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
@@ -37,8 +46,10 @@ if TYPE_CHECKING:
     from prowler.providers.mongodbatlas.mongodbatlas_provider import (
         MongodbatlasProvider,
     )
+    from prowler.providers.okta.okta_provider import OktaProvider
     from prowler.providers.openstack.openstack_provider import OpenstackProvider
     from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+    from prowler.providers.vercel.vercel_provider import VercelProvider
 
 
 class CustomOAuth2Client(OAuth2Client):
@@ -92,8 +103,10 @@ def return_prowler_provider(
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
+    | OktaProvider
     | OpenstackProvider
     | OraclecloudProvider
+    | VercelProvider
 ):
     """Return the Prowler provider class based on the given provider type.
 
@@ -175,6 +188,14 @@ def return_prowler_provider(
             from prowler.providers.image.image_provider import ImageProvider
 
             prowler_provider = ImageProvider
+        case Provider.ProviderChoices.VERCEL.value:
+            from prowler.providers.vercel.vercel_provider import VercelProvider
+
+            prowler_provider = VercelProvider
+        case Provider.ProviderChoices.OKTA.value:
+            from prowler.providers.okta.okta_provider import OktaProvider
+
+            prowler_provider = OktaProvider
         case _:
             raise ValueError(f"Provider type {provider.provider} not supported")
     return prowler_provider
@@ -231,10 +252,26 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        if isinstance(prowler_provider_kwargs.get("region"), str):
+            prowler_provider_kwargs = {
+                **prowler_provider_kwargs,
+                "region": {prowler_provider_kwargs["region"]},
+            }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
         # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
         # in the provider itself, so it's not needed here.
         pass
+    elif provider.provider == Provider.ProviderChoices.VERCEL.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "team_id": provider.uid,
+        }
+    elif provider.provider == Provider.ProviderChoices.OKTA.value:
+        prowler_provider_kwargs = {
+            **prowler_provider_kwargs,
+            "okta_org_domain": provider.uid,
+        }
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         # Detect whether uid is a registry URL (e.g. "docker.io/andoniaf") or
         # a concrete image reference (e.g. "docker.io/andoniaf/myimage:latest").
@@ -279,8 +316,10 @@ def initialize_prowler_provider(
     | KubernetesProvider
     | M365Provider
     | MongodbatlasProvider
+    | OktaProvider
     | OpenstackProvider
     | OraclecloudProvider
+    | VercelProvider
 ):
     """Initialize a Prowler provider instance based on the given provider type.
 
@@ -332,6 +371,21 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
             "raise_on_exception": False,
         }
         return prowler_provider.test_connection(**openstack_kwargs)
+    elif provider.provider == Provider.ProviderChoices.VERCEL.value:
+        vercel_kwargs = {
+            **prowler_provider_kwargs,
+            "team_id": provider.uid,
+            "raise_on_exception": False,
+        }
+        return prowler_provider.test_connection(**vercel_kwargs)
+    elif provider.provider == Provider.ProviderChoices.OKTA.value:
+        okta_kwargs = {
+            **prowler_provider_kwargs,
+            "okta_org_domain": provider.uid,
+            "provider_id": provider.uid,
+            "raise_on_exception": False,
+        }
+        return prowler_provider.test_connection(**okta_kwargs)
     elif provider.provider == Provider.ProviderChoices.IMAGE.value:
         image_kwargs = {
             "image": provider.uid,
@@ -397,8 +451,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         # Only save regions if connection is successful
         if connection.is_connected:
-            regions_status = {r: True for r in connection.enabled_regions}
-            regions_status.update({r: False for r in connection.disabled_regions})
+            regions_status = dict.fromkeys(connection.enabled_regions, True)
+            regions_status.update(dict.fromkeys(connection.disabled_regions, False))
 
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
@@ -415,8 +469,12 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
             raise_on_exception=False,
         )
         project_keys = jira_connection.projects if jira_connection.is_connected else {}
+        issue_types = (
+            jira_connection.issue_types if jira_connection.is_connected else {}
+        )
         with rls_transaction(str(integration.tenant_id)):
             integration.configuration["projects"] = project_keys
+            integration.configuration["issue_types"] = issue_types
             integration.save()
         return jira_connection
     elif integration.integration_type == Integration.IntegrationChoices.SLACK:
@@ -476,7 +534,7 @@ def validate_invitation(
             raise ValidationError({"invitation_token": "Invalid invitation code."})
 
     # Check if the invitation has expired
-    if invitation.expires_at < datetime.now(timezone.utc):
+    if invitation.expires_at < datetime.now(UTC):
         invitation.state = Invitation.State.EXPIRED
         invitation.save(using=MainRouter.admin_db)
         raise InvitationTokenExpiredException()
@@ -488,6 +546,35 @@ def validate_invitation(
         )
 
     return invitation
+
+
+def accept_invitation_for_user(
+    *, user, invitation_token: str, raise_not_found: bool = False
+):
+    with transaction.atomic(using=MainRouter.admin_db):
+        invitation = validate_invitation(
+            invitation_token, user.email, raise_not_found=raise_not_found
+        )
+        with rls_transaction(str(invitation.tenant_id), using=MainRouter.admin_db):
+            membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
+                user=user,
+                tenant=invitation.tenant,
+                defaults={"role": Membership.RoleChoices.MEMBER},
+            )
+            invitation_roles = Role.objects.using(MainRouter.admin_db).filter(
+                invitations=invitation
+            )
+            for role in invitation_roles:
+                UserRoleRelationship.objects.using(MainRouter.admin_db).get_or_create(
+                    user=user,
+                    role=role,
+                    defaults={"tenant": invitation.tenant},
+                )
+
+            invitation.state = Invitation.State.ACCEPTED
+            invitation.save(using=MainRouter.admin_db)
+
+    return invitation, membership
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata
@@ -547,6 +634,6 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
             with rls_transaction(str(integration.tenant_id)):
                 integration.configuration["projects"] = {}
                 integration.connected = False
-                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.connection_last_checked_at = datetime.now(tz=UTC)
                 integration.save()
             raise jira_auth_error

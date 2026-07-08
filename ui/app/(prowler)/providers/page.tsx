@@ -1,18 +1,19 @@
 import { Suspense } from "react";
 
-import {
-  AddProviderButton,
-  MutedFindingsConfigButton,
-  ProvidersAccountsTable,
-  ProvidersFilters,
-} from "@/components/providers";
+import { listScanConfigurations } from "@/actions/scan-configurations";
+import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
+import { CliImportBanner } from "@/components/scans";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  type ScanConfigurationListState,
+} from "@/types/scan-configurations";
 
-import { AccountGroupsContent } from "./account-groups-content";
+import { ProviderGroupsContent } from "./provider-groups-content";
 import { ProviderPageTabs } from "./provider-page-tabs";
 import { getProviderTab } from "./provider-page-tabs.shared";
 import { loadProvidersAccountsViewData } from "./providers-page.utils";
@@ -24,30 +25,42 @@ export default async function Providers({
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTab = getProviderTab(resolvedSearchParams.tab);
+  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
-  // Exclude `tab` from the Suspense key so switching tabs doesn't re-suspend
-  const { tab: _, ...paramsWithoutTab } = resolvedSearchParams || {};
-  const searchParamsKey = JSON.stringify(paramsWithoutTab);
+  // Exclude `tab` and `onboarding` from the key: tab switches must not re-suspend,
+  // and `onboarding` is ephemeral (stripped via history.replaceState) — keeping it
+  // would remount ProvidersAccountsView and reset the wizard mid-flow.
+  const {
+    tab: _tab,
+    onboarding: _onboarding,
+    ...stableParams
+  } = resolvedSearchParams || {};
+  const searchParamsKey = JSON.stringify(stableParams);
 
   return (
-    <ContentLayout title="Cloud Providers" icon="lucide:cloud-cog">
+    <ContentLayout
+      title="Providers"
+      icon="lucide:cloud-cog"
+      onboardingAction={{ flowId: "add-provider" }}
+    >
+      {isCloudEnvironment && <CliImportBanner className="mb-6" />}
       <FilterTransitionWrapper>
         <ProviderPageTabs
           activeTab={activeTab}
-          accountsContent={
+          providersContent={
             <Suspense
-              key={`accounts-${searchParamsKey}`}
+              key={`providers-${searchParamsKey}`}
               fallback={<ProvidersTableFallback />}
             >
-              <ProvidersAccountsContent searchParams={resolvedSearchParams} />
+              <ProvidersTabContent searchParams={resolvedSearchParams} />
             </Suspense>
           }
-          accountGroupsContent={
+          providerGroupsContent={
             <Suspense
               key={`groups-${searchParamsKey}`}
-              fallback={<AccountGroupsFallback />}
+              fallback={<ProviderGroupsFallback />}
             >
-              <AccountGroupsContent searchParams={resolvedSearchParams} />
+              <ProviderGroupsContent searchParams={resolvedSearchParams} />
             </Suspense>
           }
         />
@@ -56,28 +69,14 @@ export default async function Providers({
   );
 }
 
-const ProvidersActions = () => {
-  return (
-    <div className="flex flex-wrap gap-4 md:justify-end">
-      <MutedFindingsConfigButton />
-      <AddProviderButton />
-    </div>
-  );
-};
-
 const ProvidersTableFallback = () => {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-4">
-        {/* ProviderTypeSelector */}
         <Skeleton className="h-[52px] min-w-[200px] flex-1 rounded-lg md:max-w-[280px]" />
-        {/* Organizations filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Account Groups filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Status filter */}
         <Skeleton className="h-[52px] max-w-[240px] min-w-[180px] flex-1 rounded-lg" />
-        {/* Action buttons */}
         <div className="ml-auto flex flex-wrap gap-4">
           <Skeleton className="h-9 w-[160px] rounded-md" />
           <Skeleton className="h-9 w-[120px] rounded-md" />
@@ -88,7 +87,7 @@ const ProvidersTableFallback = () => {
   );
 };
 
-const AccountGroupsFallback = () => {
+const ProviderGroupsFallback = () => {
   return (
     <div className="grid min-h-[50vh] grid-cols-1 items-start gap-8 md:grid-cols-12">
       <div className="col-span-1 md:col-span-4">
@@ -109,28 +108,45 @@ const AccountGroupsFallback = () => {
   );
 };
 
-const ProvidersAccountsContent = async ({
+const loadScanConfigs = async (
+  isCloud: boolean,
+): Promise<ScanConfigurationListState> => {
+  if (!isCloud) {
+    return { status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE, data: [] };
+  }
+
+  try {
+    return {
+      status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      data: await listScanConfigurations(),
+    };
+  } catch (error) {
+    console.error("Error loading provider scan configurations:", error);
+    return { status: SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE, data: [] };
+  }
+};
+
+const ProvidersTabContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const providersView = await loadProvidersAccountsViewData({
-    searchParams,
-    isCloud: process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-  });
+  const isCloud = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const [providersView, scanConfigsState] = await Promise.all([
+    loadProvidersAccountsViewData({ searchParams, isCloud }),
+    loadScanConfigs(isCloud),
+  ]);
 
   return (
-    <div className="flex flex-col gap-6">
-      <ProvidersFilters
-        filters={providersView.filters}
-        providers={providersView.providers}
-        actions={<ProvidersActions />}
-      />
-      <ProvidersAccountsTable
-        isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
-        metadata={providersView.metadata}
-        rows={providersView.rows}
-      />
-    </div>
+    <ProvidersAccountsView
+      isCloud={isCloud}
+      filters={providersView.filters}
+      providers={providersView.providers}
+      providerGroups={providersView.providerGroups}
+      metadata={providersView.metadata}
+      rows={providersView.rows}
+      scanConfigs={scanConfigsState.data}
+      scanConfigStatus={scanConfigsState.status}
+    />
   );
 };

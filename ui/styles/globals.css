@@ -1,8 +1,19 @@
 @import "tailwindcss";
-@config "../tailwind.config.js";
+/* All @import rules must precede @plugin/@source — a late @import is invalid
+ * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
+@import "./tours.css";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Fonts are provided by next/font as CSS variables on <html>; `inline` avoids
+ * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
@@ -28,7 +39,7 @@
   --bg-input-primary: var(--color-white);
   --border-input-primary: var(--color-slate-400);
   --border-input-primary-press: var(--color-slate-700);
-  --border-input-primary-pressed: #A7F3D0;
+  --border-input-primary-pressed: #a7f3d0;
   --border-input-primary-fill: var(--color-slate-500);
 
   /* Text Colors */
@@ -81,9 +92,15 @@
   /* Progress Bar */
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+
+  /* Lighthouse AI */
+  --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
 }
 
-/* ===== DARK THEME ===== */
+/* ===== DARK THEME =====
+ * Editorial contrast tweaks: pure-black canvas, pure-white primary text,
+ * and one tier brighter primary border for clearer element separation.
+ */
 .dark {
   /* Button Colors */
   --bg-button-primary: var(--color-emerald-300);
@@ -100,30 +117,30 @@
   --bg-neutral-map: var(--color-gray-800);
 
   /* Input Colors */
-  --bg-input-primary: var(--color-neutral-900);
-  --border-input-primary: var(--color-neutral-800);
-  --border-input-primary-press: var(--color-neutral-800);
-  --border-input-primary-pressed: #A7F3D0;
-  --border-input-primary-fill: var(--color-neutral-300);
+  --bg-input-primary: #111111;
+  --border-input-primary: var(--color-zinc-700);
+  --border-input-primary-press: var(--color-zinc-500);
+  --border-input-primary-pressed: #a7f3d0;
+  --border-input-primary-fill: var(--color-zinc-200);
 
   /* Text Colors */
-  --text-neutral-primary: var(--color-zinc-100);
-  --text-neutral-secondary: var(--color-zinc-300);
+  --text-neutral-primary: #ffffff;
+  --text-neutral-secondary: var(--color-zinc-200);
   --text-neutral-tertiary: var(--color-zinc-400);
-  --text-error-primary: var(--color-red-500);
-  --text-warning-primary: var(--color-orange-500);
+  --text-error-primary: var(--color-red-400);
+  --text-warning-primary: var(--color-orange-400);
   --text-success-primary: var(--color-green-500);
 
   /* Border Colors */
   --border-error-primary: var(--color-red-400);
-  --border-neutral-primary: var(--color-zinc-800);
-  --border-neutral-secondary: var(--color-zinc-900);
-  --border-neutral-tertiary: var(--color-zinc-900);
+  --border-neutral-primary: var(--color-zinc-700);
+  --border-neutral-secondary: var(--color-zinc-800);
+  --border-neutral-tertiary: var(--color-zinc-700);
   --border-tag-primary: var(--color-slate-700);
-  --border-data-emphasis: rgba(255, 255, 255, 0.1);
+  --border-data-emphasis: rgba(255, 255, 255, 0.14);
 
   /* Background Colors */
-  --bg-neutral-primary: var(--color-zinc-950);
+  --bg-neutral-primary: #000000;
   --bg-neutral-secondary: var(--color-stone-950);
   --bg-neutral-tertiary: #121110;
   --bg-tag-primary: var(--color-slate-950);
@@ -228,6 +245,57 @@
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+
+  /* Breakpoints */
+  --breakpoint-3xl: 1920px;
+
+  /* Animations */
+  --animate-fade-in: fade-in 200ms ease-out forwards;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Used from plain CSS (`.animate-download-icon`), so it must always be
+ * emitted — keep it outside @theme. */
+@keyframes dropArrow {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ===== CONTAINER UTILITY ===== */
@@ -302,6 +370,112 @@
   .lighthouse-markdown p + ol {
     margin-top: 0.25rem;
   }
+
+  .lighthouse-markdown table {
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .lighthouse-markdown [data-streamdown="mermaid-block"] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed {
+    padding: 1rem !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    > [role="presentation"] {
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+    border: 1px solid var(--border-neutral-tertiary);
+    border-radius: 0.75rem;
+    background: var(--bg-neutral-tertiary);
+    backdrop-filter: blur(46px);
+  }
+
+  /* !important beats the inline max-width px that mermaid sets on the svg.
+     Scoped to the inline chart (last child): streamdown renders its
+     fullscreen overlay inside the controls row and sizes it itself. */
+  .lighthouse-markdown [data-streamdown="mermaid-block"] > div:last-child svg {
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  /* Streamdown's fullscreen [&>div]:h-full can stretch the floating
+     pan/zoom controls; keep the pills content-sized and inside the chart. */
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    div:has(> div[role="application"])
+    > div:not([role="application"]) {
+    height: auto !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:last-child
+    > div:not([role="application"]) {
+    bottom: 0 !important;
+    flex-direction: row !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    [role="presentation"]
+    > div
+    > div:not([role="application"]) {
+    bottom: 3rem !important;
+  }
+
+  /* Lighthouse overview banner animated gradient layers */
+  .lighthouse-banner-gradient-neutral {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-neutral-tertiary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-hover {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-hover) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-press {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-press) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
 }
 
 /* ===== UTILITY LAYER ===== */
@@ -329,55 +503,66 @@
     display: none; /* Chrome, Safari, Opera */
   }
 
-  /* Minimal scrollbar styles */
-  .minimal-scrollbar {
+  /* Minimal scrollbar styles
+   *
+   * The descendant selectors target `.cm-scroller` so that CodeMirror
+   * editors which receive `.minimal-scrollbar` on their `.cm-editor`
+   * wrapper also style their inner scroller (the element that actually
+   * overflows when the editor fills a bounded container).
+   */
+  .minimal-scrollbar,
+  .minimal-scrollbar .cm-scroller {
     scrollbar-width: thin; /* Firefox */
     scrollbar-color: rgb(203 213 225 / 0.5) transparent; /* thumb and track for Firefox */
   }
 
-  .minimal-scrollbar:hover {
+  .minimal-scrollbar:hover,
+  .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(148 163 184 / 0.7) transparent; /* darker thumb on hover */
   }
 
   /* Webkit browsers (Chrome, Safari, Edge) */
-  .minimal-scrollbar::-webkit-scrollbar {
+  .minimal-scrollbar::-webkit-scrollbar,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar {
     width: 6px;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-track {
+  .minimal-scrollbar::-webkit-scrollbar-track,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-track {
     background: transparent;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(203 213 225 / 0.5);
     border-radius: 3px;
     transition: background-color 0.2s ease;
   }
 
-  .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(148 163 184 / 0.7);
   }
 
   /* Dark mode */
-  .dark .minimal-scrollbar {
+  .dark .minimal-scrollbar,
+  .dark .minimal-scrollbar .cm-scroller {
     scrollbar-color: rgb(71 85 105 / 0.5) transparent;
   }
 
-  .dark .minimal-scrollbar:hover {
+  .dark .minimal-scrollbar:hover,
+  .dark .minimal-scrollbar .cm-scroller:hover {
     scrollbar-color: rgb(100 116 139 / 0.7) transparent;
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb {
     background-color: rgb(71 85 105 / 0.5);
   }
 
-  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover {
+  .dark .minimal-scrollbar::-webkit-scrollbar-thumb:hover,
+  .dark .minimal-scrollbar .cm-scroller::-webkit-scrollbar-thumb:hover {
     background-color: rgb(100 116 139 / 0.7);
-  }
-
-  .checkbox-update {
-    margin-right: 0.5rem;
-    background-color: var(--background);
   }
 
   /* Download icon animation */
@@ -393,8 +578,29 @@
 @layer base {
   /* Global base styles */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-neutral-primary text-text-neutral-primary;
   }
+}
+
+/* Neutralize the browser's native autofill highlight (Chromium/WebKit paint a
+   forced blue/yellow background on :autofill). box-shadow inset masks it; the
+   long transition stops the native color from flashing before the mask lands.
+   Kept UNLAYERED + !important: the mask is a box-shadow and collides with
+   shadcn's focus:ring (also a box-shadow, in @layer utilities) — a layered
+   rule can't win that, so this sits outside the cascade layers. */
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-neutral-secondary) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  caret-color: var(--text-neutral-secondary);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Override vaul's injected user-select: none to allow text selection in drawers */

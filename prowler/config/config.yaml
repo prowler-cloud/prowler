@@ -3,6 +3,38 @@ aws:
   # AWS Global Configuration
   # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
+
+  # AWS Resource Scan Limit Configuration
+  # Limits the number of resources scanned per service for services that can
+  # accumulate huge numbers of resources (EBS snapshots, backup recovery
+  # points, CloudWatch log groups, Lambda functions, ECS task definitions,
+  # CodeArtifact packages). Limits apply to resources analyzed, not findings:
+  # a selected resource can produce zero, one, or many findings. Where the AWS
+  # API supports server-side ordering the latest resources are scanned first;
+  # otherwise it is best-effort API order.
+  # Disabled by default: scan every resource unless a positive limit is configured.
+  # Set to 0 (or a negative value) to disable the limit (scan every resource).
+  # aws.max_scanned_resources_per_service --> global default for all services below
+  max_scanned_resources_per_service: 0
+  # Per-service overrides. Leave as null to fall back to the global default.
+  # aws.max_ebs_snapshots --> ec2_ebs_* checks (EBS snapshots)
+  max_ebs_snapshots: null
+  # aws.max_backup_recovery_points --> backup_recovery_point_* checks
+  max_backup_recovery_points: null
+  # aws.max_cloudwatch_log_groups --> cloudwatch_log_group_* checks
+  max_cloudwatch_log_groups: null
+  # aws.max_lambda_functions --> awslambda_function_* checks
+  max_lambda_functions: null
+  # aws.max_ecs_task_definitions --> ecs_task_definitions_* checks
+  max_ecs_task_definitions: null
+  # aws.max_codeartifact_packages --> codeartifact_packages_* checks
+  max_codeartifact_packages: null
+  # aws.disallowed_regions --> List of AWS regions to exclude from the scan.
+  # Also settable via the PROWLER_AWS_DISALLOWED_REGIONS environment variable or
+  # the --excluded-region CLI flag. Precedence: CLI > env var > config file.
+  disallowed_regions:
+    - me-south-1
+    - me-central-1
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
   #  Accounts:
@@ -20,6 +52,8 @@ aws:
   max_unused_access_keys_days: 45
   # aws.iam_user_console_access_unused --> CIS recommends 45 days
   max_console_access_days: 45
+  # aws.iam_user_access_not_stale_to_sagemaker --> default 90 days
+  max_unused_sagemaker_access_days: 90
 
   # AWS EC2 Configuration
   # aws.ec2_elastic_ip_shodan
@@ -135,6 +169,7 @@ aws:
   # ]
   organizations_enabled_regions: []
   organizations_trusted_delegated_administrators: []
+  organizations_trusted_ids: []
 
   # AWS ECR
   # aws.ecr_repositories_scan_vulnerabilities_in_latest_image
@@ -371,6 +406,39 @@ aws:
   # Minimum number of Availability Zones that an ELBv2 must be in
   elbv2_min_azs: 2
 
+  # AWS Post-Quantum TLS Configuration
+  # aws.acmpca_certificate_authority_pqc_key_algorithm
+  # Allowed post-quantum key algorithms for AWS Private CA certificate authorities
+  acmpca_pqc_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
+  # aws.cloudfront_distributions_pqc_tls_enabled
+  # Allowed CloudFront MinimumProtocolVersion values that enable post-quantum hybrid key exchange
+  cloudfront_pqc_min_protocol_versions:
+    - "TLSv1.3_2025"
+  # aws.apigateway_domain_name_pqc_tls_enabled
+  # Allowed post-quantum TLS security policies for API Gateway custom domain names
+  apigateway_pqc_tls_allowed_policies:
+    - "SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09"
+    - "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09"
+    - "SecurityPolicy_TLS13_1_2_PQ_2025_09"
+
+  # aws.rolesanywhere_trust_anchor_pqc_pki
+  # Allowed post-quantum key algorithms for AWS Private CAs backing IAM Roles Anywhere trust anchors
+  rolesanywhere_pqc_pca_key_algorithms:
+    - "ML_DSA_44"
+    - "ML_DSA_65"
+    - "ML_DSA_87"
+
+  # AWS Post-Quantum SSH Key Exchange Configuration
+  # aws.transfer_server_pqc_ssh_kex_enabled
+  # Allowed AWS Transfer Family security policies with post-quantum SSH key exchange
+  transfer_pqc_ssh_allowed_policies:
+    - "TransferSecurityPolicy-2025-03"
+    - "TransferSecurityPolicy-FIPS-2025-03"
+    - "TransferSecurityPolicy-AS2Restricted-2025-07"
+
   # AWS Elasticache Configuration
   # aws.elasticache_redis_cluster_backup_enabled
   # Minimum number of days that a Redis cluster must have backups retention period
@@ -380,6 +448,27 @@ aws:
   # AWS Secrets Configuration
   # Patterns to ignore in the secrets checks
   secrets_ignore_patterns: []
+
+  # aws.awslambda_function_no_secrets_in_code
+  # Glob patterns of file names inside the Lambda deployment package to skip
+  # when scanning for secrets. Useful to suppress known false positives such
+  # as .NET dependency manifests.
+  # Example:
+  #   secrets_ignore_files:
+  #     - "*.deps.json"
+  # WARNING: use at your own risk. Any file whose name matches one of these
+  # patterns is fully excluded from secret scanning, so a real secret placed
+  # in such a file will NOT be detected. Keep patterns as narrow and specific
+  # as possible; this is not recommended unless you have confirmed the matched
+  # files only ever contain false positives.
+  secrets_ignore_files: []
+
+  # Validate discovered secrets by checking whether they are live against the
+  # provider APIs. WARNING: this makes outbound network calls that authenticate
+  # with the discovered secret itself; the credential is exercised against the
+  # provider and the call will appear in the audited account's logs (and may
+  # trigger its monitoring). Disabled by default (scans stay fully offline).
+  secrets_validate: False
 
   # AWS Secrets Manager Configuration
   # aws.secretsmanager_secret_unused
@@ -394,36 +483,17 @@ aws:
   # Minimum retention period in hours for Kinesis streams
   min_kinesis_stream_retention_hours: 168 # 7 days
 
-  # Detect Secrets plugin configuration
-  detect_secrets_plugins: [
-    {"name": "ArtifactoryDetector"},
-    {"name": "AWSKeyDetector"},
-    {"name": "AzureStorageKeyDetector"},
-    {"name": "BasicAuthDetector"},
-    {"name": "CloudantDetector"},
-    {"name": "DiscordBotTokenDetector"},
-    {"name": "GitHubTokenDetector"},
-    {"name": "GitLabTokenDetector"},
-    {"name": "Base64HighEntropyString", "limit": 6.0},
-    {"name": "HexHighEntropyString", "limit": 3.0},
-    {"name": "IbmCloudIamDetector"},
-    {"name": "IbmCosHmacDetector"},
-    # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
-    {"name": "JwtTokenDetector"},
-    {"name": "KeywordDetector"},
-    {"name": "MailchimpDetector"},
-    {"name": "NpmDetector"},
-    {"name": "OpenAIDetector"},
-    {"name": "PrivateKeyDetector"},
-    {"name": "PypiTokenDetector"},
-    {"name": "SendGridDetector"},
-    {"name": "SlackDetector"},
-    {"name": "SoftlayerDetector"},
-    {"name": "SquareOAuthDetector"},
-    {"name": "StripeDetector"},
-    # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
-    {"name": "TwilioKeyDetector"},
-  ]
+  # AWS S3 Configuration
+  # aws.s3_bucket_object_public
+  # This check performs a spot-check by sampling object ACLs within a bucket, so
+  # it is disabled by default. For complete coverage, rely on s3_bucket_acl_prohibited
+  # which enforces BucketOwnerEnforced Object Ownership (AWS's recommended approach).
+  # Set s3_bucket_object_public_enabled to True to opt in.
+  s3_bucket_object_public_enabled: False
+  # Maximum number of objects to list per bucket (upper bound for the sampling pool)
+  s3_bucket_object_public_max_objects: 100
+  # Number of objects to randomly sample from the listed pool and inspect ACLs for
+  s3_bucket_object_public_sample_size: 3
 
   # AWS CodeBuild Configuration
   # aws.codebuild_project_uses_allowed_github_organizations
@@ -456,6 +526,18 @@ azure:
     [
       "1.2",
       "1.3",
+    ]
+
+  # Azure Storage
+  # azure.storage_smb_channel_encryption_with_secure_algorithm
+  # List of SMB channel encryption algorithms allowed on file shares. A storage
+  # account passes only if every enabled algorithm is in this list. Defaults to
+  # the value required by CIS (AES-256-GCM only, excluding weaker AES-128 ciphers).
+  recommended_smb_channel_encryption_algorithms:
+    [
+      "AES-256-GCM",
+      # "AES-128-CCM",
+      # "AES-128-GCM",
     ]
 
   # Azure Virtual Machines
@@ -528,6 +610,9 @@ gcp:
   # GCP Storage Sufficient Retention Period
   # gcp.cloudstorage_bucket_sufficient_retention_period
   storage_min_retention_days: 90
+  # GCP Secret Manager Rotation Period
+  # gcp.secretmanager_secret_rotation_enabled
+  secretmanager_max_rotation_days: 90
 
 # Kubernetes Configuration
 kubernetes:
@@ -609,3 +694,115 @@ cloudflare:
   # Maximum number of retries for API requests (default is 2)
   # Set to 0 to disable retries
   max_retries: 3
+
+# Vercel Configuration
+vercel:
+  # vercel.deployment_production_uses_stable_target
+  # Branches considered stable for production deployments
+  stable_branches:
+    - "main"
+    - "master"
+  # vercel.authentication_token_not_expired & vercel.domain_ssl_certificate_valid
+  # Number of days before expiration to flag a token/certificate as about to expire
+  days_to_expire_threshold: 7
+  # vercel.authentication_no_stale_tokens
+  # Number of days of inactivity before a token is considered stale
+  stale_token_threshold_days: 90
+  # vercel.team_no_stale_invitations
+  # Number of days before a pending invitation is considered stale
+  stale_invitation_threshold_days: 30
+  # vercel.team_member_role_least_privilege
+  # Maximum percentage of team members that can have the OWNER role
+  max_owner_percentage: 20
+  # Maximum number of owners allowed (overrides percentage for large teams)
+  max_owners: 3
+  # vercel.project_environment_no_secrets_in_plain_type
+  # Suffixes that identify secret-like environment variable names
+  secret_suffixes:
+    - "_KEY"
+    - "_SECRET"
+    - "_TOKEN"
+    - "_PASSWORD"
+    - "_API_KEY"
+    - "_PRIVATE_KEY"
+
+okta:
+  # Okta Sign-On Policies
+  # okta.signon_global_session_idle_timeout_15min
+  # Maximum acceptable Global Session idle timeout, in minutes. Defaults to
+  # 15 per DISA STIG V-273186 (OKTA-APP-000020); raise it only with an
+  # explicit risk acceptance.
+  okta_max_session_idle_minutes: 15
+  # okta.signon_global_session_lifetime_18h
+  # Maximum acceptable Global Session lifetime, in minutes. Defaults to
+  # 18h (1080); raise it only with an explicit risk acceptance.
+  okta_max_session_lifetime_minutes: 1080
+  # Okta Applications
+  # okta.application_admin_console_session_idle_timeout_15min
+  # Maximum acceptable Okta Admin Console app idle timeout, in minutes.
+  # Defaults to 15 per DISA STIG V-273187 (OKTA-APP-000025); raise it only
+  # with an explicit risk acceptance.
+  okta_admin_console_idle_timeout_max_minutes: 15
+  # Okta API rate limiting
+  # Max retries on HTTP 429. The Okta SDK sleeps until the X-Rate-Limit-Reset
+  # window before each retry, so raising this lets scans ride out more rate-limit
+  # windows on busy orgs instead of failing with partial data. SDK default is 2.
+  okta_max_retries: 5
+  # Per-request timeout in seconds. In the Okta SDK this value plays a DUAL role:
+  # it is both the per-HTTP-call socket timeout AND the total wall-clock budget
+  # across the whole retry+backoff loop. It defaults to 300 (not 0) because it is
+  # the only effective hang guard, and 300s is the smallest value that still lets
+  # all okta_max_retries rate-limit waits (~60s Okta reset windows) complete
+  # without being cut short. Keep it roughly >= okta_max_retries * 60 if you
+  # raise okta_max_retries.
+  okta_request_timeout: 300
+  # Maximum aggregate Okta API requests per second. Prowler paces all requests
+  # through a shared limiter so scans stay under Okta's rate limits proactively,
+  # rather than relying on the 429 retry above as a safety net. Okta enforces
+  # limits per endpoint, so this is a deliberately simple global cap; lower it if
+  # scans still hit limits, raise it to scan faster. Set to 0 to disable. Valid
+  # range: 0 or 0.1..100 — non-zero rates below 0.1 are rejected because they
+  # would make a scan impractically slow.
+  okta_requests_per_second: 4
+  # Okta Users
+  # okta.user_inactivity_automation_35d_enabled
+  # Maximum number of days a user can stay inactive before the
+  # inactivity-automation check flags the org. Defaults to 35.
+  okta_user_inactivity_max_days: 35
+  # Okta Identity Providers
+  # okta.idp_smart_card_dod_approved_ca
+  # Extra regex patterns matched against a Smart Card IdP certificate issuer
+  # DN to recognise a DOD-approved CA, on top of the built-in `OU=DoD` /
+  # `OU=ECA` patterns.
+  okta_dod_approved_ca_issuer_patterns: []
+
+alibabacloud:
+  # alibabacloud.cs_kubernetes_cluster_check_recent / cs_kubernetes_cluster_check_weekly
+  # Maximum number of days an ACK cluster can go without a security check
+  # before being flagged. Defaults to 7.
+  max_cluster_check_days: 7
+  # alibabacloud.ram_user_console_access_unused
+  # Days a RAM user's console access can stay unused before being flagged.
+  # Defaults to 90.
+  max_console_access_days: 90
+  # alibabacloud.sls_logstore_retention_period
+  # Minimum required SLS log store retention, in days. Defaults to 365.
+  min_log_retention_days: 365
+  # alibabacloud.rds_instance_sql_audit_retention
+  # Minimum required RDS SQL audit log retention, in days. Defaults to 180.
+  min_rds_audit_retention_days: 180
+
+openstack:
+  # openstack.image_not_shared_with_multiple_projects
+  # Maximum number of accepted project members a shared image may have before
+  # being flagged. Defaults to 5.
+  image_sharing_threshold: 5
+  # openstack.<compute|blockstorage|objectstorage>_*_metadata_sensitive_data
+  # Regex patterns whose matches are excluded from secret scanning of
+  # resource metadata.
+  secrets_ignore_patterns: []
+
+# E2E Networks Configuration
+e2enetworks:
+  # load_balancer_bitninja_enabled
+  require_bitninja_on_load_balancers: false

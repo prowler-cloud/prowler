@@ -1,26 +1,36 @@
 import logging
-import re
-
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 import neo4j
-from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
-
-from api.attack_paths import database as graph_database, AttackPathsQueryDefinition
+from api.attack_paths import AttackPathsQueryDefinition
+from api.attack_paths import database as graph_database
+from api.attack_paths import sink as sink_module
+from api.attack_paths.cypher_sanitizer import (
+    inject_provider_label,
+    validate_custom_query,
+)
 from api.attack_paths.queries.schema import (
-    CARTOGRAPHY_SCHEMA_METADATA,
     GITHUB_SCHEMA_URL,
     RAW_SCHEMA_URL,
+    get_cartography_schema_query,
 )
+from api.models import AttackPathsScan
 from config.custom_logging import BackendLogger
+from config.env import env
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
 from tasks.jobs.attack_paths.config import (
     INTERNAL_LABELS,
     INTERNAL_PROPERTIES,
-    PROVIDER_ID_PROPERTY,
+    get_provider_label,
     is_dynamic_isolation_label,
 )
 
 logger = logging.getLogger(BackendLogger.API)
+
+
+def _custom_query_timeout_ms() -> int:
+    return env.int("ATTACK_PATHS_READ_QUERY_TIMEOUT_SECONDS", default=30) * 1000
 
 
 # Predefined query helpers
@@ -72,7 +82,6 @@ def prepare_parameters(
 
     clean_parameters = {
         "provider_uid": str(provider_uid),
-        "provider_id": str(provider_id),
     }
 
     for definition_parameter in definition.parameters:
@@ -100,13 +109,13 @@ def execute_query(
     definition: AttackPathsQueryDefinition,
     parameters: dict[str, Any],
     provider_id: str,
+    scan: AttackPathsScan,
 ) -> dict[str, Any]:
     try:
-        graph = graph_database.execute_read_query(
-            database=database_name,
-            cypher=definition.cypher,
-            parameters=parameters,
-        )
+        # TODO: drop after Neptune cutover
+        # Route reads by the scan row's recorded sink, not by current settings.
+        backend = sink_module.get_backend_for_scan(scan)
+        graph = backend.execute_read_query(database_name, definition.cypher, parameters)
         return _serialize_graph(graph, provider_id)
 
     except graph_database.WriteQueryNotAllowedException:
@@ -122,38 +131,6 @@ def execute_query(
 
 
 # Custom query helpers
-
-# Patterns that indicate SSRF or dangerous procedure calls
-# Defense-in-depth layer - the primary control is `neo4j.READ_ACCESS`
-_BLOCKED_PATTERNS = [
-    re.compile(r"\bLOAD\s+CSV\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.load\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.import\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.export\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.cypher\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.systemdb\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.config\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.periodic\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.do\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.trigger\b", re.IGNORECASE),
-    re.compile(r"\bapoc\.custom\b", re.IGNORECASE),
-]
-
-# Strip string literals so patterns inside quotes don't cause false positives
-# Handles escaped quotes (\' and \") inside strings
-_STRING_LITERALS = re.compile(r"'(?:[^'\\]|\\.)*'|\"(?:[^\"\\]|\\.)*\"")
-
-
-def validate_custom_query(cypher: str) -> None:
-    """Reject queries containing known SSRF or dangerous procedure patterns.
-
-    Raises ValidationError if a blocked pattern is found.
-    String literals are stripped before matching to avoid false positives.
-    """
-    stripped = _STRING_LITERALS.sub("", cypher)
-    for pattern in _BLOCKED_PATTERNS:
-        if pattern.search(stripped):
-            raise ValidationError({"query": "Query contains a blocked operation"})
 
 
 def normalize_custom_query_payload(raw_data):
@@ -172,14 +149,31 @@ def execute_custom_query(
     database_name: str,
     cypher: str,
     provider_id: str,
+    scan: AttackPathsScan,
 ) -> dict[str, Any]:
+    # Defense-in-depth for custom queries:
+    # 1. `neo4j.READ_ACCESS` — prevents mutations at the driver level
+    # 2. `inject_provider_label()` — regex-based label injection scopes node patterns
+    # 3. `_serialize_graph()` — post-query filter drops nodes without the provider label
+    # 4. `USING QUERY:TIMEOUTMILLISECONDS` on Neptune — server-side runaway cutoff
+    #
+    # Layer 2 is best-effort (regex can't fully parse Cypher);
+    # layer 3 is the safety net that guarantees provider isolation.
     validate_custom_query(cypher)
+    cypher = inject_provider_label(cypher, provider_id)
+
+    # TODO: drop after Neptune cutover
+    backend = sink_module.get_backend_for_scan(scan)
+
+    # Neptune enforces a cluster-level query timeout; prepending the hint
+    # makes the limit explicit and matches the client-side read timeout.
+    # Applies only when the scan's graph lives in Neptune.
+    if getattr(scan, "sink_backend", None) == "neptune":
+        timeout_ms = _custom_query_timeout_ms()
+        cypher = f"USING QUERY:TIMEOUTMILLISECONDS {timeout_ms}\n{cypher}"
 
     try:
-        graph = graph_database.execute_read_query(
-            database=database_name,
-            cypher=cypher,
-        )
+        graph = backend.execute_read_query(database_name, cypher, None)
         serialized = _serialize_graph(graph, provider_id)
         return _truncate_graph(serialized)
 
@@ -202,16 +196,14 @@ def execute_custom_query(
 
 
 def get_cartography_schema(
-    database_name: str, provider_id: str
+    database_name: str, provider_id: str, scan: AttackPathsScan
 ) -> dict[str, str] | None:
     try:
-        with graph_database.get_session(
+        backend = sink_module.get_backend_for_scan(scan)
+        with backend.get_session(
             database_name, default_access_mode=neo4j.READ_ACCESS
         ) as session:
-            result = session.run(
-                CARTOGRAPHY_SCHEMA_METADATA,
-                {"provider_id": provider_id},
-            )
+            result = session.run(get_cartography_schema_query(provider_id))
             record = result.single()
     except graph_database.GraphDatabaseQueryException as exc:
         logger.error(f"Cartography schema query failed: {exc}")
@@ -255,10 +247,12 @@ def _truncate_graph(graph: dict[str, Any]) -> dict[str, Any]:
 
 
 def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
+    provider_label = get_provider_label(provider_id)
+
     nodes = []
     kept_node_ids = set()
     for node in graph.nodes:
-        if node._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
+        if provider_label not in node.labels:
             continue
 
         kept_node_ids.add(node.element_id)
@@ -273,14 +267,11 @@ def _serialize_graph(graph, provider_id: str) -> dict[str, Any]:
     filtered_count = len(graph.nodes) - len(nodes)
     if filtered_count > 0:
         logger.debug(
-            f"Filtered {filtered_count} nodes without matching provider_id={provider_id}"
+            f"Filtered {filtered_count} nodes without provider label {provider_label}"
         )
 
     relationships = []
     for relationship in graph.relationships:
-        if relationship._properties.get(PROVIDER_ID_PROPERTY) != provider_id:
-            continue
-
         if (
             relationship.start_node.element_id not in kept_node_ids
             or relationship.end_node.element_id not in kept_node_ids

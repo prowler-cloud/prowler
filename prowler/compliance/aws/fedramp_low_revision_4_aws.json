@@ -37,12 +37,29 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_hardware_mfa_enabled",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -112,6 +129,20 @@
         "ec2_networkacl_allow_ingress_any_port",
         "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22",
         "ec2_networkacl_allow_ingress_any_port"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -170,6 +201,14 @@
       ],
       "Checks": [
         "cloudwatch_log_group_retention_policy_specific_days_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "cloudwatch_log_group_retention_policy_specific_days_enabled",
+          "ConfigKey": "log_group_retention_days",
+          "Operator": "gte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -195,6 +234,20 @@
         "rds_instance_enhanced_monitoring_enabled",
         "redshift_cluster_audit_logging",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -248,6 +301,14 @@
         "guardduty_is_enabled",
         "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -333,6 +394,20 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -370,6 +445,14 @@
         "rds_instance_multi_az",
         "redshift_cluster_automated_snapshot",
         "s3_bucket_object_versioning"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

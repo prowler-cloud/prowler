@@ -93,18 +93,18 @@ def mock_generate_regional_clients(provider, service):
 class Test_EFS:
     # Test EFS Session
     def test__get_session__(self):
-        access_analyzer = EFS(set_mocked_aws_provider())
+        access_analyzer = EFS(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert access_analyzer.session.__class__.__name__ == "Session"
 
     # Test EFS Service
     def test__get_service__(self):
-        access_analyzer = EFS(set_mocked_aws_provider())
+        access_analyzer = EFS(set_mocked_aws_provider([AWS_REGION_EU_WEST_1]))
         assert access_analyzer.service == "efs"
 
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test EFS describe file systems
     def test_describe_file_systems(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         efs = EFS(aws_provider)
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         assert len(efs.filesystems) == 1
@@ -119,7 +119,7 @@ class Test_EFS:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test EFS describe file systems policies
     def test_describe_file_system_policies(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         efs = EFS(aws_provider)
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
         assert len(efs.filesystems) == 1
@@ -131,7 +131,7 @@ class Test_EFS:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test EFS describe mount targets
     def test_describe_mount_targets(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         efs = EFS(aws_provider)
         assert len(efs.filesystems) == 1
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"
@@ -144,7 +144,7 @@ class Test_EFS:
     @patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     # Test EFS describe access points
     def test_describe_access_points(self):
-        aws_provider = set_mocked_aws_provider()
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         efs = EFS(aws_provider)
         assert len(efs.filesystems) == 1
         efs_arn = f"arn:aws:elasticfilesystem:{AWS_REGION_EU_WEST_1}:{AWS_ACCOUNT_NUMBER}:file-system/{FILE_SYSTEM_ID}"

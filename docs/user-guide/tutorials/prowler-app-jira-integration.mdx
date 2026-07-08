@@ -79,6 +79,18 @@ Each Jira integration provides management actions through dedicated buttons:
 | **Enable/Disable** | Toggle integration status | • Enable or disable integration<br/>| Status change takes effect immediately |
 | **Delete** | Remove integration permanently | • Permanently delete integration<br/>• Remove all configuration data | ⚠️ **Cannot be undone** - confirm before deleting |
 
+## Known Limitations
+
+### Issue Types with Required Custom Fields
+
+Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not currently populate when creating work items. If a selected issue type enforces required fields beyond the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.
+
+To avoid this, select an issue type that does not require additional custom fields — **Task**, **Bug**, or **Story** typically work without restrictions. If unsure which issue types are available for a project, Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.
+
+<Note>
+Support for custom field mapping is planned for a future release.
+</Note>
+
 ## Troubleshooting
 
 ### Connection test fails

@@ -9,12 +9,13 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** uses **branch protection** to require **conversation resolution** on pull requests (`Require conversation resolution before merging`).",
+  "Description": "**GitHub repository default branch** uses **branch protection** to require **conversation resolution** on pull requests (`Require conversation resolution before merging`). This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Unresolved threads let code with known concerns reach default, weakening **integrity** and **confidentiality**. Insecure changes or secrets may ship, enabling injection, auth bypass, or data exposure. **Availability** can suffer from regressions; review accountability is reduced.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

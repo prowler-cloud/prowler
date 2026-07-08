@@ -102,6 +102,38 @@ function isUser(value: unknown): value is User {
 }
 ```
 
+## Coupled Optional Props (REQUIRED)
+
+Do not model semantically coupled props as independent optionals — this allows invalid half-states that compile but break at runtime. Use discriminated unions with `never` to make invalid combinations impossible.
+
+```typescript
+// ❌ BEFORE: Independent optionals — half-states allowed
+interface PaginationProps {
+  onPageChange?: (page: number) => void;
+  pageSize?: number;
+  currentPage?: number;
+}
+
+// ✅ AFTER: Discriminated union — shape is all-or-nothing
+type ControlledPagination = {
+  controlled: true;
+  currentPage: number;
+  pageSize: number;
+  onPageChange: (page: number) => void;
+};
+
+type UncontrolledPagination = {
+  controlled: false;
+  currentPage?: never;
+  pageSize?: never;
+  onPageChange?: never;
+};
+
+type PaginationProps = ControlledPagination | UncontrolledPagination;
+```
+
+**Key rule:** If two or more props are only meaningful together, they belong to the same discriminated union branch. Mixing them as independent optionals shifts correctness responsibility from the type system to runtime guards.
+
 ## Import Types
 
 ```typescript

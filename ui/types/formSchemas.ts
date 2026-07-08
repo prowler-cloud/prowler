@@ -1,3 +1,4 @@
+import yaml from "js-yaml";
 import { z } from "zod";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
@@ -5,7 +6,37 @@ import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
-export const addRoleFormSchema = z.object({
+export const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
+  "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.";
+
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+export const kubeconfigContainsExecAuthentication = (
+  value: string,
+): boolean => {
+  try {
+    const parsed = yaml.load(value);
+
+    if (!isRecord(parsed) || !Array.isArray(parsed.users)) {
+      return false;
+    }
+
+    return parsed.users.some((userEntry) => {
+      if (!isRecord(userEntry) || !isRecord(userEntry.user)) {
+        return false;
+      }
+
+      return "exec" in userEntry.user;
+    });
+  } catch {
+    return false;
+  }
+};
+
+// Create and edit share the same shape, so a single schema backs both flows.
+export const roleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
   manage_account: z.boolean().default(false),
@@ -13,38 +44,12 @@ export const addRoleFormSchema = z.object({
   manage_providers: z.boolean().default(false),
   manage_integrations: z.boolean().default(false),
   manage_scans: z.boolean().default(false),
+  manage_alerts: z.boolean().default(false),
   unlimited_visibility: z.boolean().default(false),
   groups: z.array(z.string()).optional(),
 });
 
-export const editRoleFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  manage_users: z.boolean().default(false),
-  manage_account: z.boolean().default(false),
-  manage_billing: z.boolean().default(false),
-  manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
-  manage_scans: z.boolean().default(false),
-  unlimited_visibility: z.boolean().default(false),
-  groups: z.array(z.string()).optional(),
-});
-
-export const editScanFormSchema = (currentName: string) =>
-  z.object({
-    scanName: z
-      .string()
-      .refine((val) => val === "" || val.length >= 3, {
-        message: "Must be empty or have at least 3 characters.",
-      })
-      .refine((val) => val === "" || val.length <= 32, {
-        message: "Must not exceed 32 characters.",
-      })
-      .refine((val) => val !== currentName, {
-        message: "The new name must be different from the current one.",
-      })
-      .optional(),
-    scanId: z.string(),
-  });
+export type RoleFormValues = z.input<typeof roleFormSchema>;
 
 export const onDemandScanFormSchema = () =>
   z.object({
@@ -156,6 +161,23 @@ export const addProviderFormSchema = z
             "Customer ID must start with 'C' followed by alphanumeric characters (e.g., C01234abc)",
           ),
       }),
+      z.object({
+        providerType: z.literal("vercel"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z.string().trim().min(1, "Team ID is required"),
+      }),
+      z.object({
+        providerType: z.literal("okta"),
+        [ProviderCredentialFields.PROVIDER_ALIAS]: z.string(),
+        providerUid: z
+          .string()
+          .trim()
+          .toLowerCase()
+          .regex(
+            /^[a-z0-9][a-z0-9-]*\.(okta\.com|oktapreview\.com|okta-emea\.com|okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com)$/,
+            "Org Domain must be an Okta-managed domain (e.g. acme.okta.com), without scheme or path",
+          ),
+      }),
     ]),
   );
 
@@ -205,7 +227,13 @@ export const addCredentialsFormSchema = (
               ? {
                   [ProviderCredentialFields.KUBECONFIG_CONTENT]: z
                     .string()
-                    .min(1, "Kubeconfig Content is required"),
+                    .min(1, "Kubeconfig Content is required")
+                    .refine(
+                      (value) => !kubeconfigContainsExecAuthentication(value),
+                      {
+                        error: KUBECONFIG_EXEC_AUTHENTICATION_ERROR,
+                      },
+                    ),
                 }
               : providerType === "m365"
                 ? {
@@ -376,7 +404,31 @@ export const addCredentialsFormSchema = (
                                           .string()
                                           .min(1, "Cloud name is required"),
                                     }
-                                  : {}),
+                                  : providerType === "vercel"
+                                    ? {
+                                        [ProviderCredentialFields.VERCEL_API_TOKEN]:
+                                          z
+                                            .string()
+                                            .trim()
+                                            .min(1, "API Token is required"),
+                                      }
+                                    : providerType === "okta"
+                                      ? {
+                                          [ProviderCredentialFields.OKTA_CLIENT_ID]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(1, "Client ID is required"),
+                                          [ProviderCredentialFields.OKTA_PRIVATE_KEY]:
+                                            z
+                                              .string()
+                                              .trim()
+                                              .min(
+                                                1,
+                                                "Private Key is required",
+                                              ),
+                                        }
+                                      : {}),
     })
     .superRefine((data: Record<string, string | undefined>, ctx) => {
       if (providerType === "m365") {
@@ -694,5 +746,32 @@ export const mutedFindingsConfigFormSchema = z.object({
         });
       }
     }),
+  id: z.string().optional(),
+});
+
+// Mirrors the Mutelist contract: the client only validates YAML *syntax* (that
+// it parses to a mapping). The actual configuration validation (ranges, enums)
+// is performed by the API on create/update and surfaced inline — see
+// `validate_configuration` in the backend serializer.
+export const scanConfigurationFormSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(3, { message: "Name must be at least 3 characters" })
+    .max(100, { message: "Name must be at most 100 characters" }),
+  configuration: z
+    .string()
+    .trim()
+    .min(1, { error: "Configuration is required" })
+    .superRefine((val, ctx) => {
+      const yamlValidation = validateYaml(val);
+      if (!yamlValidation.isValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Invalid YAML format: ${yamlValidation.error}`,
+        });
+      }
+    }),
+  provider_ids: z.array(z.uuid()).optional().default([]),
   id: z.string().optional(),
 });

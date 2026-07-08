@@ -9,8 +9,8 @@ import * as z from "zod";
 import { deleteProviderGroup } from "@/actions/manage-groups/manage-groups";
 import { DeleteIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
 
 const formSchema = z.object({
   groupId: z.string(),
@@ -48,7 +48,7 @@ export const DeleteGroupForm = ({
         title: "Success!",
         description: "The provider group was removed successfully.",
       });
-      router.push("/providers?tab=account-groups");
+      router.push("/providers?tab=provider-groups");
     }
     setIsOpen(false); // Close the modal on success
   }

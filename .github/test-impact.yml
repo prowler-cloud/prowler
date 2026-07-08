@@ -177,6 +177,14 @@ modules:
       - tests/providers/llm/**
     e2e: []
 
+  - name: sdk-vercel
+    match:
+      - prowler/providers/vercel/**
+      - prowler/compliance/vercel/**
+    tests:
+      - tests/providers/vercel/**
+    e2e: []
+
   # ============================================
   # SDK - Lib modules
   # ============================================

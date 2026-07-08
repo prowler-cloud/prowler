@@ -1,8 +1,9 @@
 "use client";
 
-import Link from "next/link";
-
 import { Badge } from "@/components/shadcn/badge/badge";
+import { Button } from "@/components/shadcn/button/button";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { StatusFindingBadge } from "@/components/shadcn/table";
 
 interface Finding {
   id: string;
@@ -13,12 +14,18 @@ interface Finding {
 
 interface NodeRemediationProps {
   findings: Finding[];
+  onViewFinding?: (findingId: string) => void;
+  viewFindingLoading?: boolean;
 }
 
 /**
  * Node remediation section showing related Prowler findings
  */
-export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
+export const NodeRemediation = ({
+  findings,
+  onViewFinding,
+  viewFindingLoading = false,
+}: NodeRemediationProps) => {
   const getSeverityVariant = (severity: string) => {
     switch (severity) {
       case "critical":
@@ -34,12 +41,6 @@ export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
     }
   };
 
-  const getStatusVariant = (status: string) => {
-    if (status === "PASS") return "default";
-    if (status === "FAIL") return "destructive";
-    return "secondary";
-  };
-
   return (
     <div className="flex flex-col gap-3">
       {findings.map((finding) => (
@@ -49,7 +50,7 @@ export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1">
-              <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
+              <h5 className="dark:text-text-neutral-primary/90 text-sm font-medium">
                 {finding.title}
               </h5>
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -60,21 +61,24 @@ export const NodeRemediation = ({ findings }: NodeRemediationProps) => {
               <Badge variant={getSeverityVariant(finding.severity)}>
                 {finding.severity}
               </Badge>
-              <Badge variant={getStatusVariant(finding.status)}>
-                {finding.status}
-              </Badge>
+              <StatusFindingBadge status={finding.status} />
             </div>
           </div>
           <div className="mt-2">
-            <Link
-              href={`/findings?id=${finding.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
+            <Button
+              variant="link"
+              size="sm"
+              onClick={() => onViewFinding?.(finding.id)}
+              disabled={viewFindingLoading}
               aria-label={`View full finding for ${finding.title}`}
-              className="text-text-info dark:text-text-info text-sm transition-all hover:opacity-80 dark:hover:opacity-80"
+              className="text-text-info dark:text-text-info h-auto p-0 text-sm transition-all hover:opacity-80 dark:hover:opacity-80"
             >
-              View Full Finding →
-            </Link>
+              {viewFindingLoading ? (
+                <Spinner className="size-4" />
+              ) : (
+                "View Full Finding →"
+              )}
+            </Button>
           </div>
         </div>
       ))}

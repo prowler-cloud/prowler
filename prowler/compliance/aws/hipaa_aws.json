@@ -19,6 +19,20 @@
       "Checks": [
         "config_recorder_all_regions_enabled",
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -87,6 +101,7 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -101,6 +116,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -160,6 +189,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -265,6 +308,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "iam_aws_attached_policy_no_administrative_privileges",
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges"
@@ -325,6 +370,20 @@
         "guardduty_is_enabled",
         "cloudwatch_log_metric_filter_authentication_failures",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -370,6 +429,20 @@
         "cloudwatch_log_metric_filter_authentication_failures",
         "cloudwatch_log_metric_filter_root_usage",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -399,6 +472,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -511,6 +598,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -630,6 +731,7 @@
       ],
       "Checks": [
         "apigateway_restapi_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
@@ -645,6 +747,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -752,6 +868,20 @@
         "s3_bucket_secure_transport_policy",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

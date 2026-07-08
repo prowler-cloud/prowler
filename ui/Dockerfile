@@ -1,9 +1,10 @@
-FROM node:24.13.0-alpine AS base
+# Keep in sync with ui/.nvmrc.
+FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b181aa49e22c14383e AS base
 
 LABEL maintainer="https://github.com/prowler-cloud"
 
-# Enable corepack for pnpm
-RUN corepack enable && corepack prepare pnpm@10 --activate
+# Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
+RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -13,9 +14,10 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY scripts ./scripts
-RUN pnpm install --frozen-lockfile
+ENV NODE_OPTIONS=--max-old-space-size=4096
+RUN corepack install && pnpm install --frozen-lockfile
 
 
 # Rebuild the source code only when needed
@@ -23,6 +25,10 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Install pinned pnpm so build uses the exact version from package.json.
+# Alternative: move COPY package.json + corepack install to base stage to avoid
+# re-downloading, at the cost of invalidating all stages on any package.json change.
+RUN corepack install
 
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
@@ -30,12 +36,8 @@ COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
-ARG NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID
-ENV NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID=${NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID}
-ARG NEXT_PUBLIC_API_BASE_URL
-ENV NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
-ARG NEXT_PUBLIC_API_DOCS_URL
-ENV NEXT_PUBLIC_API_DOCS_URL=${NEXT_PUBLIC_API_DOCS_URL}
+
+# GTM / API base+docs URLs are runtime container env (prod stage), not build ARGs.
 
 RUN pnpm run build
 
@@ -72,6 +74,18 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Runtime configuration is read by `node server.js` at container start and is
+# NOT baked into the image. Supply it via your orchestrator (docker-compose,
+# Helm/K8s):
+#   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
+#   - optional: UI_API_DOCS_URL
+#   - gated integrations (load only when *_ENABLE="true"; the value is then
+#     required or boot fails). Legacy names (NEXT_PUBLIC_*, POSTHOG_KEY/HOST)
+#     still activate without the flag:
+#       UI_SENTRY_ENABLE + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
+#       UI_GOOGLE_TAG_MANAGER_ENABLE + UI_GOOGLE_TAG_MANAGER_ID
+#       UI_POSTHOG_ENABLE + UI_POSTHOG_KEY + UI_POSTHOG_HOST (no consumer yet)
+#   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 CMD ["node", "server.js"]

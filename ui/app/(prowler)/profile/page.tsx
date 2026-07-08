@@ -1,9 +1,11 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import { getSamlConfig } from "@/actions/integrations/saml";
 import { getUserInfo } from "@/actions/users/users";
+import { auth } from "@/auth.config";
 import { SamlIntegrationCard } from "@/components/integrations/saml/saml-integration-card";
-import { ContentLayout } from "@/components/ui";
+import { Card } from "@/components/shadcn";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { ApiKeysCard, UserBasicInfoCard } from "@/components/users/profile";
 import { MembershipsCard } from "@/components/users/profile/memberships-card";
 import { RolesCard } from "@/components/users/profile/roles-card";
@@ -37,6 +39,7 @@ const SSRDataUser = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
+  const session = await auth();
   const userProfile = (await getUserInfo()) as UserProfileResponse | undefined;
   if (!userProfile?.data) {
     return null;
@@ -75,11 +78,7 @@ const SSRDataUser = async ({
     {},
   );
 
-  const firstUserMembership = membershipsIncluded.find(
-    (m) => m.relationships?.user?.data?.id === userData.id,
-  );
-
-  const userTenantId = firstUserMembership?.relationships?.tenant?.data?.id;
+  const userTenantId = session?.tenantId;
 
   const userRoleIds =
     userData.relationships?.roles?.data?.map((r) => r.id) || [];
@@ -95,33 +94,28 @@ const SSRDataUser = async ({
       userRoleIds.includes(role.id),
   );
 
-  const isOwner = membershipsIncluded.some(
-    (m) =>
-      m.attributes.role === "owner" &&
-      m.relationships?.user?.data?.id === userData.id,
-  );
-
   const samlConfig = hasManageIntegrations ? await getSamlConfig() : undefined;
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <Card
+      variant="base"
+      padding="none"
+      role="region"
+      aria-label="User profile settings"
+      className="w-full gap-4 p-4 md:p-5"
+    >
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
-      <div className="flex flex-col gap-6 xl:flex-row">
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
-          {hasManageIntegrations && (
-            <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
-          )}
-        </div>
-        <div className="flex w-full flex-col gap-6 xl:max-w-[50%]">
-          <MembershipsCard
-            memberships={membershipsIncluded}
-            tenantsMap={tenantsMap}
-            isOwner={isOwner && hasManageAccount}
-          />
-          {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
-        </div>
-      </div>
-    </div>
+      <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
+      {hasManageIntegrations && (
+        <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
+      )}
+      <MembershipsCard
+        memberships={membershipsIncluded}
+        tenantsMap={tenantsMap}
+        hasManageAccount={hasManageAccount}
+        sessionTenantId={session?.tenantId}
+      />
+      {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
+    </Card>
   );
 };

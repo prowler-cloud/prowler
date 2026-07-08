@@ -43,13 +43,19 @@ export function getScoreColor(score: number): ScoreColorVariant {
 }
 
 export function getScoreTextClass(score: number): string {
-  if (score >= SCORE_THRESHOLDS.SUCCESS) return "text-success";
-  if (score >= SCORE_THRESHOLDS.WARNING) return "text-warning";
-  return "text-danger";
+  if (score >= SCORE_THRESHOLDS.SUCCESS) return "text-text-success-primary";
+  if (score >= SCORE_THRESHOLDS.WARNING) return "text-text-warning-primary";
+  return "text-text-error-primary";
 }
 
 export function getScoreLabel(score: number): string {
   if (score >= SCORE_THRESHOLDS.SUCCESS) return "Secure";
   if (score >= SCORE_THRESHOLDS.WARNING) return "Moderate Risk";
   return "Critical Risk";
+}
+
+export function getScoreIndicatorClass(variant: ScoreColorVariant): string {
+  if (variant === "danger") return "bg-bg-fail";
+  if (variant === "warning") return "bg-bg-warning";
+  return "bg-bg-pass";
 }

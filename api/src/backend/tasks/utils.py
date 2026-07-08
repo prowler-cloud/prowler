@@ -1,11 +1,10 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 
+from api.models import Scan, StateChoices
 from django_celery_beat.models import PeriodicTask
 from django_celery_results.models import TaskResult
-
-from api.models import Scan, StateChoices
 
 SCHEDULED_SCAN_NAME = "Daily scheduled scan"
 
@@ -45,9 +44,9 @@ def get_next_execution_datetime(task_id: int, provider_id: str) -> datetime:
     interval = periodic_task_instance.interval
 
     current_scheduled_time = datetime.combine(
-        datetime.now(timezone.utc).date(),
+        datetime.now(UTC).date(),
         task_instance.date_created.time(),
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
 
     return current_scheduled_time + timedelta(**{interval.period: interval.every})
@@ -104,6 +103,7 @@ def _get_or_create_scheduled_scan(
             trigger=Scan.TriggerChoices.SCHEDULED,
             state__in=(StateChoices.SCHEDULED, StateChoices.AVAILABLE),
             scheduler_task_id=scheduler_task_id,
+            task__isnull=True,
         ).order_by("scheduled_at", "inserted_at")
     )
 

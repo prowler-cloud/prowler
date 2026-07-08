@@ -1,8 +1,9 @@
-import { Bell, TriangleAlert } from "lucide-react";
+import { Bell, ShieldCheck, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 
 import { ResourceInventoryItem } from "@/actions/overview";
 import { CardVariant, ResourceStatsCard, StatItem } from "@/components/shadcn";
+import { cn } from "@/lib/utils";
 
 interface ResourcesInventoryCardItemProps {
   item: ResourceInventoryItem;
@@ -15,6 +16,7 @@ export function ResourcesInventoryCardItem({
 }: ResourcesInventoryCardItemProps) {
   const hasFailedFindings = item.failedFindings > 0;
   const hasResources = item.totalResources > 0;
+  const accent = hasFailedFindings ? CardVariant.fail : CardVariant.pass;
 
   // Build URL with current filters + resource group specific filters
   const buildResourcesUrl = () => {
@@ -49,52 +51,49 @@ export function ResourcesInventoryCardItem({
     });
   }
 
-  // Empty state when no resources
+  const header = {
+    icon: item.icon,
+    title: item.label,
+    resourceCount: `${item.totalResources.toLocaleString()} Resources`,
+  };
+
   if (!hasResources) {
-    const cardContent = (
+    return (
       <ResourceStatsCard
-        header={{
-          icon: item.icon,
-          title: item.label,
-          resourceCount: item.totalResources,
-        }}
-        emptyState={{
-          message: "No Findings to display",
-        }}
+        header={header}
+        emptyState={{ message: "No Findings to display" }}
         className="flex-1"
       />
     );
-
-    return cardContent;
   }
 
-  // Card with findings data
   const cardContent = (
     <ResourceStatsCard
-      header={{
-        icon: item.icon,
-        title: item.label,
-        resourceCount: item.totalResources,
-      }}
+      header={header}
       badge={{
-        icon: TriangleAlert,
+        icon: hasFailedFindings ? TriangleAlert : ShieldCheck,
         count: item.failedFindings,
-        variant: CardVariant.fail,
+        variant: hasFailedFindings ? CardVariant.fail : CardVariant.pass,
       }}
       label="Fail Findings"
       stats={stats}
-      variant={hasFailedFindings ? CardVariant.fail : CardVariant.default}
-      className={
+      accent={accent}
+      className={cn(
+        "flex-1 cursor-pointer shadow-sm transition-[transform,border-color,box-shadow] duration-200",
+        "hover:-translate-y-0.5 hover:shadow-md",
         hasFailedFindings
-          ? "hover:border-bg-fail/60 flex-1 cursor-pointer transition-all"
-          : "flex-1"
-      }
+          ? "hover:border-border-error-primary"
+          : "hover:border-border-neutral-primary",
+      )}
     />
   );
 
   if (resourcesUrl) {
     return (
-      <Link href={resourcesUrl} className="flex flex-1">
+      <Link
+        href={resourcesUrl}
+        className="focus-visible:ring-border-neutral-primary/40 flex flex-1 rounded-xl focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+      >
         {cardContent}
       </Link>
     );

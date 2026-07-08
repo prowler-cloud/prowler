@@ -1,15 +1,16 @@
 ---
 name: prowler-ui
 description: >
-  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-15, tailwind-4.
-  Trigger: When working inside ui/ on Prowler-specific conventions (shadcn vs HeroUI legacy, folder placement, actions/adapters, shared types/hooks/lib).
+  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-16, tailwind-4.
+  Trigger: When working inside ui/ on Prowler-specific conventions (shadcn, folder placement, actions/adapters, shared types/hooks/lib).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "1.1"
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
+    - "Reviewing Prowler UI components"
     - "Working on Prowler UI structure (actions/adapters/types/hooks)"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
@@ -18,7 +19,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 - `typescript` - Const types, flat interfaces
 - `react-19` - No useMemo/useCallback, compiler
-- `nextjs-15` - App Router, Server Actions
+- `nextjs-16` - App Router, Server Actions
 - `tailwind-4` - cn() utility, styling rules
 - `zod-4` - Schema validation
 - `zustand-5` - State management
@@ -27,34 +28,44 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Tech Stack (Versions)
 
-```
-Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
+```text
+Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
 NextAuth 5.0.0-beta.30 | Recharts 2.15.4
-HeroUI 2.8.4 (LEGACY - do not add new components)
 ```
 
 ## CRITICAL: Component Library Rule
 
 - **ALWAYS**: Use `shadcn/ui` + Tailwind (`components/shadcn/`)
-- **NEVER**: Add new HeroUI components (`components/ui/` is legacy only)
+- **NEVER**: Add components to `components/ui/` (temporary re-export shims for the prowler-cloud overlay only)
+
+## Design System Discipline (REQUIRED)
+
+Applies to ALL UI work. The design system is the single source of truth — reuse it exactly, extend it deliberately.
+
+- **Reuse first, never reinvent.** Before building anything, search `components/shadcn/` and existing usages in the codebase for an equivalent. Do NOT create a custom component, modal wrapper, or primitive when one already exists.
+- **Use exactly the defined variants/styles — no more, no less.** At the call site, drive appearance through the component's `variant`/`size`/`tone` props. Never add ad-hoc visual `className` (color, opacity, hover/focus/disabled, spacing-for-looks) to shared controls (`Button`, `SelectTrigger`, `SelectItem`, `Modal`, badges…), and never skip the correct semantic variant.
+- **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`.
+- **Colors**: reuse existing semantic tokens from `ui/styles/globals.css`. No raw Tailwind color utilities (e.g. `bg-blue-950/40`), no hex. If no token fits, STOP and ask the design owner — do not invent or near-duplicate tokens.
+- **Need a genuinely new variant/token?** That is a design-system change: add it to the shared component API (with design sign-off), then consume it. It is never a call-site decision.
+
+When reviewing UI PRs, flag: custom modals/primitives that duplicate shadcn, call-site visual `className` on shared controls, raw color utilities, and new variants/tokens introduced without going through the shared component API.
 
 ## DECISION TREES
 
 ### Component Placement
 
-```
-New feature UI? → shadcn/ui + Tailwind
-Existing HeroUI feature? → Keep HeroUI (don't mix)
-Used 1 feature? → features/{feature}/components/
-Used 2+ features? → components/shared/
-Needs state/hooks? → "use client"
-Server component? → No directive needed
+```text
+New UI primitive?   → components/shadcn/ (shadcn/ui + Tailwind)
+Used by 1 domain?   → components/{domain}/
+Used by 2+ domains? → components/shared/
+Needs state/hooks?  → "use client"
+Server component?    → No directive needed
 ```
 
 ### Code Location
 
-```
+```text
 Server action      → actions/{feature}/{feature}.ts
 Data transform     → actions/{feature}/{feature}.adapter.ts
 Types (shared 2+)  → types/{domain}.ts
@@ -63,13 +74,19 @@ Utils (shared 2+)  → lib/
 Utils (local 1)    → {feature}/utils/
 Hooks (shared 2+)  → hooks/
 Hooks (local 1)    → {feature}/hooks.ts
-shadcn components  → components/shadcn/
-HeroUI components  → components/ui/ (LEGACY)
+UI primitive       → components/shadcn/
+Domain component   → components/{domain}/
 ```
+
+> **Deprecated:** `components/ui/` is a temporary re-export shim that maps
+> legacy import paths to `components/shadcn/` for the prowler-cloud overlay.
+> HeroUI is fully removed. Never add or import components here — use
+> `@/components/shadcn` (primitives) or `@/components/{domain}` instead.
+> Delete the shim once the cloud repo migrates to `@/components/shadcn`.
 
 ### Styling Decision
 
-```
+```text
 Tailwind class exists? → className
 Dynamic value?         → style prop
 Conditional styles?    → cn()
@@ -85,7 +102,7 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ## Project Structure
 
-```
+```text
 ui/
 ├── app/
 │   ├── (auth)/              # Auth pages (login, signup)
@@ -97,8 +114,9 @@ ui/
 │       ├── services/
 │       └── integrations/
 ├── components/
-│   ├── shadcn/              # shadcn/ui (USE THIS)
-│   ├── ui/                  # HeroUI (LEGACY)
+│   ├── shadcn/              # shadcn/ui primitives (USE THIS)
+│   ├── shared/             # Cross-domain composed components (2+ domains)
+│   ├── ui/                  # DEPRECATED shim → re-exports shadcn (do not use)
 │   ├── {domain}/            # Domain-specific (compliance, findings, providers, etc.)
 │   ├── filters/             # Filter components
 │   ├── graphs/              # Chart components
@@ -186,6 +204,109 @@ cd ui && pnpm run build
 cd ui && pnpm start
 ```
 
+## Batch vs Instant Component API (REQUIRED)
+
+When a component supports both **batch** (deferred, submit-based) and **instant** (immediate callback) behavior, model the coupling with a discriminated union — never as independent optionals. Coupled props must be all-or-nothing.
+
+```typescript
+// ❌ NEVER: Independent optionals — allows invalid half-states
+interface FilterProps {
+  onBatchApply?: (values: string[]) => void;
+  onInstantChange?: (value: string) => void;
+  isBatchMode?: boolean;
+}
+
+// ✅ ALWAYS: Discriminated union — one valid shape per mode
+type BatchProps = {
+  mode: "batch";
+  onApply: (values: string[]) => void;
+  onCancel: () => void;
+};
+
+type InstantProps = {
+  mode: "instant";
+  onChange: (value: string) => void;
+  // onApply/onCancel are forbidden here via structural exclusion
+  onApply?: never;
+  onCancel?: never;
+};
+
+type FilterProps = BatchProps | InstantProps;
+```
+
+This makes invalid prop combinations a compile error, not a runtime surprise.
+
+## Reuse Shared Display Utilities First (REQUIRED)
+
+Before adding **local** display maps (labels, provider names, status strings, category formatters), search `ui/types/*` and `ui/lib/*` for existing helpers.
+
+```typescript
+// ✅ CHECK THESE FIRST before creating a new map:
+// ui/lib/utils.ts            → general formatters
+// ui/types/providers.ts      → provider display names, icons
+// ui/types/findings.ts       → severity/status display maps
+// ui/types/compliance.ts     → category/group formatters
+
+// ❌ NEVER add a local map that already exists:
+const SEVERITY_LABELS: Record<string, string> = {
+  critical: "Critical",
+  high: "High",
+  // ...duplicating an existing shared map
+};
+
+// ✅ Import and reuse instead:
+import { severityLabel } from "@/types/findings";
+```
+
+If a helper doesn't exist and will be used in 2+ places, add it to `ui/lib/` or `ui/types/` and reuse it. Keep local only if used in exactly one place.
+
+## Derived State Rule (REQUIRED)
+
+Avoid `useState` + `useEffect` patterns that mirror props or searchParams — they create sync bugs and unnecessary re-renders. Derive values directly from the source of truth.
+
+```typescript
+// ❌ NEVER: Mirror props into state via effect
+const [localFilter, setLocalFilter] = useState(filter);
+useEffect(() => { setLocalFilter(filter); }, [filter]);
+
+// ✅ ALWAYS: Derive directly
+const localFilter = filter; // or compute inline
+```
+
+If local state is genuinely needed (e.g., optimistic UI, pending edits before submit), add a short comment:
+
+```typescript
+// Local state needed: user edits are buffered until "Apply" is clicked
+const [pending, setPending] = useState(initialValues);
+```
+
+## Strict Key Typing for Label Maps (REQUIRED)
+
+Avoid `Record<string, string>` when the key set is known. Use an explicit union type or a const-key object so typos are caught at compile time.
+
+```typescript
+// ❌ Loose — typos compile silently
+const STATUS_LABELS: Record<string, string> = {
+  actve: "Active",   // typo, no error
+};
+
+// ✅ Tight — union key
+type Status = "active" | "inactive" | "pending";
+const STATUS_LABELS: Record<Status, string> = {
+  active: "Active",
+  inactive: "Inactive",
+  pending: "Pending",
+  // actve: "Active"  ← compile error
+};
+
+// ✅ Also fine — const satisfies
+const STATUS_LABELS = {
+  active: "Active",
+  inactive: "Inactive",
+  pending: "Pending",
+} as const satisfies Record<Status, string>;
+```
+
 ## QA Checklist Before Commit
 
 - [ ] `pnpm run typecheck` passes
@@ -199,15 +320,14 @@ cd ui && pnpm start
 - [ ] Accessibility: keyboard navigation, ARIA labels
 - [ ] Mobile responsive (if applicable)
 
-## Migrations Reference
+## Pre-Re-Review Checklist (Review Thread Hygiene)
 
-| From | To | Key Changes |
-|------|-----|-------------|
-| React 18 | 19.1 | Async components, React Compiler (no useMemo/useCallback) |
-| Next.js 14 | 15.5 | Improved App Router, better streaming |
-| NextUI | HeroUI 2.8.4 | Package rename only, same API |
-| Zod 3 | 4 | `z.email()` not `z.string().email()`, `error` not `message` |
-| AI SDK 4 | 5 | `@ai-sdk/react`, `sendMessage` not `handleSubmit`, `parts` not `content` |
+Before requesting re-review from a reviewer:
+
+- [ ] Every unresolved inline thread has been either fixed or explicitly answered with a rationale
+- [ ] If you agreed with a comment: the change is committed and the commit hash is mentioned in the reply
+- [ ] If you disagreed: the reply explains why with clear reasoning — do not leave threads silently open
+- [ ] Re-request review only after all threads are in a clean state
 
 ## Resources
 

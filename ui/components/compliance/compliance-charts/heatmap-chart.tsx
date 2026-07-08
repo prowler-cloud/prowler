@@ -1,9 +1,9 @@
 "use client";
 
-import { cn } from "@heroui/theme";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 
+import { cn } from "@/lib/utils";
 import { CategoryData } from "@/types/compliance";
 
 interface HeatmapChartProps {

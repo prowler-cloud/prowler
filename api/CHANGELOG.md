@@ -2,11 +2,390 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
-## [1.23.0] (Prowler UNRELEASED)
+<!-- changelog: release notes start -->
+
+## [1.34.0] (Prowler v5.33.0)
+
+### 🚀 Added
+
+- Compliance PDF reports no longer require provider credentials: findings are enriched from the provider metadata stored in the database, so reports generate even after the provider secret is deleted or its credentials become invalid [(#11845)](https://github.com/prowler-cloud/prowler/pull/11845)
+
+### 🐞 Fixed
+
+- Provider scans now queue behind active provider scans instead of dispatching concurrently, and resource failed-finding counters retry database conflicts with stable row locking [(#11848)](https://github.com/prowler-cloud/prowler/pull/11848)
+
+---
+
+## [1.33.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Attack Paths: Scan rows now have database defaults for `is_migrated` and `sink_backend` so `scan-perform-scheduled` inserts survive deploy skew [(#11826)](https://github.com/prowler-cloud/prowler/pull/11826)
+- Invited users now keep their invitation context when completing authentication with Google, GitHub, or SAML, so the invitation is accepted during login [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
+### 🔐 Security
+
+- User profile updates now allow users to update their own account while requiring user-management permissions to update other users in the same tenant [(#11792)](https://github.com/prowler-cloud/prowler/pull/11792)
+- Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, preventing user-supplied commands from running on Cloud workers [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
+---
+
+## [1.33.0] (Prowler v5.32.0)
+
+### 🚀 Added
+
+- Timestamp precision support for `/api/v1/findings` `inserted_at` and `updated_at` filters [(#11754)](https://github.com/prowler-cloud/prowler/pull/11754)
+
+### 🔄 Changed
+
+- Attack Paths: AWS Neptune is now supported as a persistent sink database, selectable via `ATTACK_PATHS_SINK_DATABASE=neptune` (default `neo4j`), Cartography's (bumped to 0.138.1) per-scan ingest database stays on Neo4j [(#11524)](https://github.com/prowler-cloud/prowler/pull/11524)
+- Attack Paths: Scan task now checks the ingest Neo4j database and configured graph sink before starting graph ingestion [(#11743)](https://github.com/prowler-cloud/prowler/pull/11743)
+- Disable PowerShell telemetry in the API container image [(#11746)](https://github.com/prowler-cloud/prowler/pull/11746)
+
+### 🐞 Fixed
+
+- Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
+- `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
+
+---
+
+## [1.32.1] (Prowler v5.31.1)
+
+### 🐞 Fixed
+
+- API key auth no longer mutates `TenantAPIKey.objects` during admin DB lookups [(#11686)](https://github.com/prowler-cloud/prowler/pull/11686)
+
+---
+
+## [1.32.0] (Prowler v5.31.0)
+
+### 🚀 Added
+
+- Provider group filters for API endpoints that support cloud provider filtering, including exact and `__in` variants [(#11573)](https://github.com/prowler-cloud/prowler/pull/11573)
+- Provider filters for `GET /api/v1/compliance-overviews`, `/metadata`, and `/requirements`, using latest completed scans per matching provider [(#11587)](https://github.com/prowler-cloud/prowler/pull/11587)
+- Server-Sent Events (SSE) infrastructure for the API: a base viewset, a tenant-aware channel manager, and channel-name helpers backed by `django-eventstream` over Valkey Pub/Sub and served through the Gunicorn ASGI worker, so feature endpoints can stream events to clients over a single long-lived connection [(#11556)](https://github.com/prowler-cloud/prowler/pull/11556)
+- `DJANGO_CELERY_WORKER_CONCURRENCY` to configure Celery workers concurrency. Unset for default behaviour [(#11075)](https://github.com/prowler-cloud/prowler/pull/11075)
+
+### 🔄 Changed
+
+- Gunicorn worker timeout raised from the 30s default to 120s, so long-running requests are no longer killed prematurely [(#11631)](https://github.com/prowler-cloud/prowler/pull/11631)
+- Sentry now drops ASGI's `RequestAborted` errors from health-check probe disconnects on `/health/live` [(#11632)](https://github.com/prowler-cloud/prowler/pull/11632)
+- Gunicorn keep-alive timeout now exceeds the load balancer idle timeout, stopping 502s from reused connections [(#11647)](https://github.com/prowler-cloud/prowler/pull/11647)
+- API runs under the Uvicorn worker so keep-alive outlives the load balancer idle timeout, fixing Gunicorn's intermittent 502s [(#11663)](https://github.com/prowler-cloud/prowler/pull/11663)
+- SAML logins no longer wipe a user's roles when the IdP does not send the `userType` attribute; existing roles are kept, and when `userType` names a role that does not exist it is now created with read-only access (visibility over all providers, no management permissions) instead of no permissions at all [(#11520)](https://github.com/prowler-cloud/prowler/pull/11520)
+
+### 🐞 Fixed
+
+- Database connections no longer leak under the ASGI worker, which previously exhausted the read replica's connection slots and caused 500s on read endpoints [(#11640)](https://github.com/prowler-cloud/prowler/pull/11640)
+
+### 🔐 Security
+
+- `aiohttp` to 3.14.0 and `idna` to 3.15, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image to `python:3.12.13-slim-bookworm` and `trivy` to 0.71.0, patching OS and Go module CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- `trivy` binary bumped to 0.71.0 patching embedded `golang.org/x/crypto`, `golang.org/x/net`, and Go `stdlib` CVEs [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [1.31.3] (Prowler v5.30.3)
+
+### 🔐 Security
+
+- SAML logins now link to an existing account only when the asserted email domain matches the ACS endpoint and the user is already a member of that domain's tenant, fixing a cross-tenant account takeover [(GHSA-h8m9-jgf8-vwvp)](https://github.com/prowler-cloud/prowler/security/advisories/GHSA-h8m9-jgf8-vwvp)
+
+---
+
+## [1.31.2] (Prowler v5.30.2)
+
+### 🔄 Changed
+
+- `scan-compliance-overviews` task now streams the findings aggregation and the requirement-row writes so it runs faster and its peak memory no longer grows with the number of regions and frameworks [(#11591)](https://github.com/prowler-cloud/prowler/pull/11591)
+
+---
+
+## [1.31.1] (Prowler v5.30.1)
+
+### 🐞 Fixed
+
+- `compliance-overviews/attributes` now resolves the provider from the scan, so multi-provider universal frameworks (e.g. CSA CCM) return the check IDs of the scan's provider and Azure/GCP requirement details show their findings instead of appearing empty [(#11546)](https://github.com/prowler-cloud/prowler/pull/11546)
+- Attack Paths: `drop_subgraph` now deletes relationships first and then nodes in batches, using less memory on Neo4j when clearing a dense provider graph [(#11557)](https://github.com/prowler-cloud/prowler/pull/11557)
+- OCI scans now use API key credentials with the configured region instead of falling back to `/home/prowler/.oci/config` [(#11558)](https://github.com/prowler-cloud/prowler/pull/11558)
+
+---
+
+## [1.31.0] (Prowler v5.30.0)
+
+### 🚀 Added
+
+- Opt-in automatic recovery of allowlisted idempotent background tasks whose worker died during a deploy or crash: when enabled via `DJANGO_TASK_RECOVERY_ENABLED` (off by default), stuck summary and deletion tasks are detected and re-run instead of staying pending forever (scan and Jira tasks are excluded), with a `reconcile_orphan_tasks` management command for on-demand recovery [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- DORA compliance framework support [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Label Postgres connections with `application_name="<component>:<alias>"` (component injected per process via `DJANGO_APP_COMPONENT`) so connections are attributable by component in `pg_stat_activity` [(#11494)](https://github.com/prowler-cloud/prowler/pull/11494)
+- DISA Okta IDaaS STIG V1R2 compliance framework export support for the Okta provider [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+
+### 🔄 Changed
+
+- Allowlisted idempotent background tasks are no longer lost when a worker is stopped or crashes mid-task; tasks with external side effects are marked terminal instead of blindly re-running [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+
+### 🐞 Fixed
+
+- Workers now shut down gracefully on deploy or restart, finishing or re-queueing in-flight tasks instead of being force-killed and leaving them stuck [(#11416)](https://github.com/prowler-cloud/prowler/pull/11416)
+- Resource `name` is now stored and refreshed on every scan, so resources no longer keep an empty name [(#11476)](https://github.com/prowler-cloud/prowler/pull/11476)
+- Compliance catalog now warms in background during startup. `compliance-overviews/attributes` returns `503` while warming, so the first request after a deploy no longer trips the API timeout [(#11530)](https://github.com/prowler-cloud/prowler/pull/11530)
+
+### 🔐 Security
+
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+
+---
+
+## [1.30.3] (Prowler v5.29.3)
+
+### 🐞 Fixed
+
+- API startup no longer crashes when Neo4j is unreachable, as the Neo4j driver now connects lazily on first use rather than during app initialization [(#11491)](https://github.com/prowler-cloud/prowler/pull/11491)
+
+---
+
+## [1.30.1] (Prowler v5.29.1)
+
+### 🐞 Fixed
+
+- `GET /api/v1/findings` N+1 query loading `resources__tags` when listing findings [(#11420)](https://github.com/prowler-cloud/prowler/pull/11420)
+- Clean up the scan tmp output directory when `scan-report` fails so partial files do not accumulate and fill the worker disk (`No space left on device`) [(#11421)](https://github.com/prowler-cloud/prowler/pull/11421)
+
+---
+
+## [1.30.0] (Prowler v5.29.0)
+
+### 🔄 Changed
+
+- Scan finding ingestion: bulk-resolve `Resource`/`ResourceTag` rows, replace per-mapping `SELECT FOR UPDATE` with deferred `ResourceTagMapping.bulk_create(ignore_conflicts=True)`, wrap each micro-batch in a single `rls_transaction`, and raise `SCAN_DB_BATCH_SIZE` to 1000 [(#11249)](https://github.com/prowler-cloud/prowler/pull/11249)
+- Faster `GET /api/v1/finding-groups/latest` aggregation on tenants where one recent scan holds most findings [(#11380)](https://github.com/prowler-cloud/prowler/pull/11380)
+
+---
+
+## [1.29.1] (Prowler v5.28.1)
+
+### 🐞 Fixed
+
+- `finding-groups` slow response with finding-level filters such as `region`; check title and description are now read from the daily summaries, which drops sorting by `check_title` [(#11326)](https://github.com/prowler-cloud/prowler/pull/11326)
+
+---
+
+## [1.29.0] (Prowler v5.28.0)
+
+### 🚀 Added
+
+- `okta` provider support [(#11184)](https://github.com/prowler-cloud/prowler/pull/11184)
+- `resource.metadata` attribute included in `/api/v1/findings?include=resources` [(#11187)](https://github.com/prowler-cloud/prowler/pull/11187)
+
+---
+
+## [1.28.0] (Prowler v5.27.0)
+
+### 🚀 Added
+
+- GIN index on `findings(categories, resource_services, resource_regions, resource_types)` to speed up `/api/v1/finding-groups` array filters [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- `GET /health/live` and `GET /health/ready` Kubernetes-style probe endpoints following the IETF Health Check Response Format (`application/health+json`). Readiness verifies PostgreSQL, Valkey and Neo4j connectivity and returns 503 with per-dependency detail when any is unreachable [(#11200)](https://github.com/prowler-cloud/prowler/pull/11200)
+
+### 🔄 Changed
+
+- Replace `poetry` with `uv` as package manager [(#10775)](https://github.com/prowler-cloud/prowler/pull/10775)
+- Remove orphaned `gin_resources_search_idx` declaration from `Resource.Meta.indexes` (DB index dropped in `0072_drop_unused_indexes`) [(#11001)](https://github.com/prowler-cloud/prowler/pull/11001)
+- PDF compliance reports cap detail tables at 100 failed findings per check (configurable via `DJANGO_PDF_MAX_FINDINGS_PER_CHECK`) to bound worker memory on large scans [(#11160)](https://github.com/prowler-cloud/prowler/pull/11160)
+
+### 🐞 Fixed
+
+- `perform_scan_task` and `perform_scheduled_scan_task` now short-circuit with a warning and `return None` when the target provider no longer exists, instead of letting `handle_provider_deletion` raise `ProviderDeletedException`. `perform_scheduled_scan_task` also removes any orphan `PeriodicTask` it finds so beat stops re-firing scans for deleted providers. Prevents queued messages for deleted providers from being recorded as `FAILURE` [(#11185)](https://github.com/prowler-cloud/prowler/pull/11185)
+- Attack Paths: `BEDROCK-001` and `BEDROCK-002` now target roles trusting `bedrock-agentcore.amazonaws.com` instead of `bedrock.amazonaws.com`, eliminating false positives against regular Bedrock service roles (Agents, Knowledge Bases, model invocation) [(#11141)](https://github.com/prowler-cloud/prowler/pull/11141)
+
+---
+
+## [1.27.1] (Prowler v5.26.1)
+
+### 🐞 Fixed
+
+- `POST /api/v1/scans` was intermittently failing with `Scan matching query does not exist` in the `scan-perform` worker; the Celery task is now published via `transaction.on_commit` so the worker cannot read the Scan before the dispatch-wide transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
+
+---
+
+## [1.27.0] (Prowler v5.26.0)
+
+### 🚀 Added
+
+- `scan-reset-ephemeral-resources` post-scan task zeroes `failed_findings_count` for resources missing from the latest full-scope scan, keeping ephemeral resources from polluting the Resources page sort [(#10929)](https://github.com/prowler-cloud/prowler/pull/10929)
+
+### 🔄 Changed
+
+- ASD Essential Eight (AWS) compliance framework support [(#10982)](https://github.com/prowler-cloud/prowler/pull/10982)
+
+### 🔐 Security
+
+- `trivy` binary from 0.69.2 to 0.70.0 and `cryptography` from 46.0.6 to 46.0.7 (transitive via prowler SDK) in the API image for CVE-2026-33186 and CVE-2026-39892 [(#10978)](https://github.com/prowler-cloud/prowler/pull/10978)
+
+---
+
+## [1.26.1] (Prowler v5.25.1)
+
+### 🐞 Fixed
+
+- Attack Paths: AWS scans no longer fail when enabled regions cannot be retrieved, and scans stuck in `scheduled` state are now cleaned up after the stale threshold [(#10917)](https://github.com/prowler-cloud/prowler/pull/10917)
+- Scan report and compliance downloads now redirect to a presigned S3 URL instead of streaming through the API worker, preventing gunicorn timeouts on large files [(#10927)](https://github.com/prowler-cloud/prowler/pull/10927)
+
+---
+
+## [1.26.0] (Prowler v5.25.0)
+
+### 🚀 Added
+
+- CIS Benchmark PDF report generation for scans, exposing the latest CIS version per provider via `GET /scans/{id}/cis/{name}/` [(#10650)](https://github.com/prowler-cloud/prowler/pull/10650)
+- `/overviews/resource-groups` (resource inventory), `/overviews/categories` and `/overviews/attack-surfaces` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task now also dispatches `aggregate_scan_resource_group_summaries_task`, `aggregate_scan_category_summaries_task` and `aggregate_attack_surface_task` per latest scan of every `(provider, day)` pair, rebuilding `ScanGroupSummary`, `ScanCategorySummary` and `AttackSurfaceOverview` alongside the tables already covered in #10827 [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- Install zizmor v1.24.1 in API Docker image for GitHub Actions workflow scanning [(#10607)](https://github.com/prowler-cloud/prowler/pull/10607)
+
+### 🔄 Changed
+
+- Allows tenant owners to expel users from their organizations [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+- `aggregate_findings`, `aggregate_attack_surface`, `aggregate_scan_resource_group_summaries` and `aggregate_scan_category_summaries` now upsert via `bulk_create(update_conflicts=True, ...)` instead of the prior `ignore_conflicts=True` / plain INSERT / `already backfilled` short-circuit. Re-runs triggered by the post-mute reaggregation pipeline no longer trip the `unique_*_per_scan` constraints nor silently drop updates, and are race-safe under concurrent writers (e.g. scan completion overlapping with a fresh mute rule) [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+- Rename the scan-category and scan-resource-group summary aggregators from `backfill_*` to `aggregate_*` [(#10843)](https://github.com/prowler-cloud/prowler/pull/10843)
+
+### 🐞 Fixed
+
+- `generate_outputs_task` crashing with `KeyError` for compliance frameworks listed by `get_compliance_frameworks` but not loadable by `Compliance.get_bulk` [(#10903)](https://github.com/prowler-cloud/prowler/pull/10903)
+
+---
+
+## [1.25.4] (Prowler v5.24.4)
+
+### 🚀 Added
+
+- `DJANGO_SENTRY_TRACES_SAMPLE_RATE` env var (default `0.02`) enables Sentry performance tracing for the API [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🔄 Changed
+
+- Attack Paths: Neo4j driver `connection_acquisition_timeout` is now configurable via `NEO4J_CONN_ACQUISITION_TIMEOUT` (default lowered from 120 s to 15 s) [(#10873)](https://github.com/prowler-cloud/prowler/pull/10873)
+
+### 🐞 Fixed
+
+- `/tmp/prowler_api_output` saturation in compliance report workers: the final `rmtree` in `generate_compliance_reports` now only waits on frameworks actually generated for the provider (so unsupported frameworks no longer leave a placeholder `results` entry that blocks cleanup), output directories are created lazily per enabled framework, and both `generate_compliance_reports` and `generate_outputs_task` run an opportunistic stale cleanup at task start with a 48h age threshold, a per-host `fcntl` throttle, a 50-deletions-per-run cap, and guards that protect EXECUTING scans and scans whose `output_location` still points to a local path (metadata lookups routed through the admin DB so RLS does not hide those rows) [(#10874)](https://github.com/prowler-cloud/prowler/pull/10874)
+
+---
+
+## [1.25.3] (Prowler v5.24.3)
+
+### 🚀 Added
+
+- `/overviews/findings`, `/overviews/findings-severity` and `/overviews/services` now reflect newly-muted findings without waiting for the next scan. The post-mute `reaggregate-all-finding-group-summaries` task was extended to re-run the same per-scan pipeline that scan completion runs (`ScanSummary`, `DailySeveritySummary`, `FindingGroupDailySummary`) on the latest scan of every `(provider, day)` pair, keeping the pre-aggregated tables in sync with `Finding.muted` updates [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+
+### 🐞 Fixed
+
+- Finding groups aggregated `status` now treats muted findings as resolved: a group is `FAIL` only while at least one non-muted FAIL remains, otherwise it is `PASS` (including fully-muted groups). The `filter[status]` filter and the `sort=status` ordering share the same semantics, keeping `status` consistent with `fail_count` and the orthogonal `muted` flag [(#10825)](https://github.com/prowler-cloud/prowler/pull/10825)
+- `aggregate_findings` is now idempotent: it deletes the scan's existing `ScanSummary` rows before `bulk_create`, so re-runs (such as the post-mute reaggregation pipeline) no longer violate the `unique_scan_summary` constraint and no longer abort the downstream `DailySeveritySummary` / `FindingGroupDailySummary` recomputation for the affected scan [(#10827)](https://github.com/prowler-cloud/prowler/pull/10827)
+- Attack Paths: Findings on AWS were silently dropped during the Neo4j merge for resources whose Cartography node is keyed by a short identifier (e.g. EC2 instances) rather than the full ARN [(#10839)](https://github.com/prowler-cloud/prowler/pull/10839)
+
+---
+
+## [1.25.2] (Prowler v5.24.2)
+
+### 🔄 Changed
+
+- Finding groups `/resources` endpoints now materialize the filtered finding IDs into a Python list before filtering `ResourceFindingMapping`, so PostgreSQL switches from a Merge Semi Join that read hundreds of thousands of RFM index entries to a Nested Loop Index Scan over `finding_id`. The `has_mappings.exists()` pre-check is removed, and a request-scoped cache deduplicates the finding-id round-trip across the helpers that build different RFM querysets [(#10816)](https://github.com/prowler-cloud/prowler/pull/10816)
+
+### 🐞 Fixed
+
+- `/finding-groups/latest/<check_id>/resources` now selects the latest completed scan per provider by `-completed_at` (then `-inserted_at`) instead of `-inserted_at`, matching the `/finding-groups/latest` summary path and the daily-summary upsert so overlapping scans no longer produce diverging `delta`/`new_count` between the two endpoints [(#10802)](https://github.com/prowler-cloud/prowler/pull/10802)
+
+
+## [1.25.1] (Prowler v5.24.1)
+
+### 🔄 Changed
+
+- Attack Paths: Restore `SYNC_BATCH_SIZE` and `FINDINGS_BATCH_SIZE` defaults to 1000, upgrade Cartography to 0.135.0, enable Celery queue priority for cleanup task, rewrite Finding insertion, remove AWS graph cleanup and add timing logs [(#10729)](https://github.com/prowler-cloud/prowler/pull/10729)
+
+### 🐞 Fixed
+
+- Finding group resources endpoints now include findings without associated resources (orphaned IaC findings) as simulated resource rows, and return one row per finding when multiple findings share a resource [(#10708)](https://github.com/prowler-cloud/prowler/pull/10708)
+- Attack Paths: Missing `tenant_id` filter while getting related findings after scan completes [(#10722)](https://github.com/prowler-cloud/prowler/pull/10722)
+- Finding group counters `pass_count`, `fail_count` and `manual_count` now exclude muted findings [(#10753)](https://github.com/prowler-cloud/prowler/pull/10753)
+- Silent data loss in `ResourceFindingMapping` bulk insert that left findings orphaned when `INSERT ... ON CONFLICT DO NOTHING` dropped rows without raising; added explicit `unique_fields` [(#10724)](https://github.com/prowler-cloud/prowler/pull/10724)
+- `DELETE /tenants/{tenant_pk}/memberships/{id}` now deletes the expelled user's account when the removed membership was their last one, and blacklists every outstanding refresh token for that user so their existing sessions can no longer mint new access tokens [(#10787)](https://github.com/prowler-cloud/prowler/pull/10787)
+
+---
+
+## [1.25.0] (Prowler v5.24.0)
+
+### 🔄 Changed
+
+- Bump Poetry to `2.3.4` in Dockerfile and pre-commit hooks. Regenerate `api/poetry.lock` [(#10681)](https://github.com/prowler-cloud/prowler/pull/10681)
+- Attack Paths: Remove dead `cleanup_findings` no-op and its supporting `prowler_finding_lastupdated` index [(#10684)](https://github.com/prowler-cloud/prowler/pull/10684)
+
+### 🐞 Fixed
+
+- Worker-beat race condition on cold start: replaced `sleep 15` with API service healthcheck dependency (Docker Compose) and init containers (Helm), aligned Gunicorn default port to `8080` [(#10603)](https://github.com/prowler-cloud/prowler/pull/10603)
+- API container startup crash on Linux due to root-owned bind-mount preventing JWT key generation [(#10646)](https://github.com/prowler-cloud/prowler/pull/10646)
+
+### 🔐 Security
+
+- `pytest` from 8.2.2 to 9.0.3 to fix CVE-2025-71176 [(#10678)](https://github.com/prowler-cloud/prowler/pull/10678)
+
+---
+
+## [1.24.0] (Prowler v5.23.0)
+
+### 🚀 Added
+
+- RBAC role lookup filtered by `tenant_id` to prevent cross-tenant privilege leak [(#10491)](https://github.com/prowler-cloud/prowler/pull/10491)
+- `VALKEY_SCHEME`, `VALKEY_USERNAME`, and `VALKEY_PASSWORD` environment variables to configure Celery broker TLS/auth connection details for Valkey/ElastiCache [(#10420)](https://github.com/prowler-cloud/prowler/pull/10420)
+- `Vercel` provider support [(#10190)](https://github.com/prowler-cloud/prowler/pull/10190)
+- Finding groups list and latest endpoints support `sort=delta`, ordering by `new_count` then `changed_count` so groups with the most new findings rank highest [(#10606)](https://github.com/prowler-cloud/prowler/pull/10606)
+- Finding group resources endpoints (`/finding-groups/{check_id}/resources` and `/finding-groups/latest/{check_id}/resources`) now expose `finding_id` per row, pointing to the most recent matching Finding for each resource. UUIDv7 ordering guarantees `Max(finding__id)` resolves to the latest snapshot [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
+- Handle CIS and CISA SCuBA compliance framework from google workspace [(#10629)](https://github.com/prowler-cloud/prowler/pull/10629)
+- Sort support for all finding group counter fields: `pass_muted_count`, `fail_muted_count`, `manual_muted_count`, and all `new_*`/`changed_*` status-mute breakdown counters [(#10655)](https://github.com/prowler-cloud/prowler/pull/10655)
+
+### 🔄 Changed
+
+- Finding groups list/latest/resources now expose `status` ∈ `{FAIL, PASS, MANUAL}` and `muted: bool` as orthogonal fields. The aggregated `status` reflects the underlying check outcome regardless of mute state, and `muted=true` signals that every finding in the group/resource is muted. New `manual_count` is exposed alongside `pass_count`/`fail_count`, plus `pass_muted_count`/`fail_muted_count`/`manual_muted_count` siblings so clients can isolate the muted half of each status. The `new_*`/`changed_*` deltas are now broken down by status and mute state via 12 new counters (`new_fail_count`, `new_fail_muted_count`, `new_pass_count`, `new_pass_muted_count`, `new_manual_count`, `new_manual_muted_count` and the matching `changed_*` set). New `filter[muted]=true|false` and `sort=status` (FAIL > PASS > MANUAL) / `sort=muted` are supported. `filter[status]=MUTED` is no longer accepted [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
+- Attack Paths: Periodic cleanup of stale scans with dead-worker detection via Celery inspect, marking orphaned `EXECUTING` scans as `FAILED` and recovering `graph_data_ready` [(#10387)](https://github.com/prowler-cloud/prowler/pull/10387)
+- Attack Paths: Replace `_provider_id` property with `_Provider_{uuid}` label for provider isolation, add regex-based label injection for custom queries [(#10402)](https://github.com/prowler-cloud/prowler/pull/10402)
+
+### 🐞 Fixed
+
+- `reaggregate_all_finding_group_summaries_task` now refreshes finding group daily summaries for every `(provider, day)` combination instead of only the latest scan per provider, matching the unbounded scope of `mute_historical_findings_task`. Mute rule operations no longer leave older daily summaries drifting from the underlying muted findings [(#10630)](https://github.com/prowler-cloud/prowler/pull/10630)
+- Finding groups list/latest now apply computed status/severity filters and finding-level prefilters (delta, region, service, category, resource group, scan, resource type), plus `check_title` support for sort/filter consistency [(#10428)](https://github.com/prowler-cloud/prowler/pull/10428)
+- Populate compliance data inside `check_metadata` for findings, which was always returned as `null` [(#10449)](https://github.com/prowler-cloud/prowler/pull/10449)
+- 403 error for admin users listing tenants due to roles query not using the admin database connection [(#10460)](https://github.com/prowler-cloud/prowler/pull/10460)
+- Filter transient Neo4j defunct connection logs in Sentry `before_send` to suppress false-positive alerts handled by `RetryableSession` retries [(#10452)](https://github.com/prowler-cloud/prowler/pull/10452)
+- `MANAGE_ACCOUNT` permission no longer required for listing and creating tenants [(#10468)](https://github.com/prowler-cloud/prowler/pull/10468)
+- Finding groups muted filter, counters, metadata extraction and mute reaggregation [(#10477)](https://github.com/prowler-cloud/prowler/pull/10477)
+- Finding groups `check_title__icontains` resolution, `name__icontains` resource filter and `resource_group` field in `/resources` response [(#10486)](https://github.com/prowler-cloud/prowler/pull/10486)
+- Membership `post_delete` signal using raw FK ids to avoid `DoesNotExist` during cascade deletions [(#10497)](https://github.com/prowler-cloud/prowler/pull/10497)
+- Finding group resources endpoints returning false 404 when filters match no results, and `sort` parameter being ignored [(#10510)](https://github.com/prowler-cloud/prowler/pull/10510)
+- Jira integration failing with `JiraInvalidIssueTypeError` on non-English Jira instances due to hardcoded `"Task"` issue type; now dynamically fetches available issue types per project [(#10534)](https://github.com/prowler-cloud/prowler/pull/10534)
+- Finding group `first_seen_at` now reflects when a new finding appeared in the scan instead of the oldest carry-forward date across all unchanged findings [(#10595)](https://github.com/prowler-cloud/prowler/pull/10595)
+- Attack Paths: Remove `clear_cache` call from read-only query endpoints; cache clearing belongs to the scan/ingestion flow, not API queries [(#10586)](https://github.com/prowler-cloud/prowler/pull/10586)
+
+### 🔐 Security
+
+- Pin all unpinned dependencies to exact versions to prevent supply chain attacks and ensure reproducible builds [(#10469)](https://github.com/prowler-cloud/prowler/pull/10469)
+- `authlib` bumped from 1.6.6 to 1.6.9 to fix CVE-2026-28802 (JWT `alg: none` validation bypass) [(#10579)](https://github.com/prowler-cloud/prowler/pull/10579)
+- `aiohttp` bumped from 3.13.3 to 3.13.5 to fix CVE-2026-34520 (the C parser accepted null bytes and control characters in response headers) [(#10538)](https://github.com/prowler-cloud/prowler/pull/10538)
+
+---
+
+## [1.23.0] (Prowler v5.22.0)
+
+### 🚀 Added
+
+- Finding groups support `check_title` substring filtering [(#10377)](https://github.com/prowler-cloud/prowler/pull/10377)
+
+### 🐞 Fixed
+
+- Finding groups latest endpoint now aggregates the latest snapshot per provider before check-level totals, keeping impacted resources aligned across providers [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+- Mute rule creation now triggers finding-group summary re-aggregation after historical muting, keeping stats in sync after mute operations [(#10419)](https://github.com/prowler-cloud/prowler/pull/10419)
+- Attack Paths: Deduplicate nodes before ProwlerFinding lookup in Attack Paths Cypher queries, reducing execution time [(#10424)](https://github.com/prowler-cloud/prowler/pull/10424)
 
 ### 🔐 Security
 
 - Replace stdlib XML parser with `defusedxml` in SAML metadata parsing to prevent XML bomb (billion laughs) DoS attacks [(#10165)](https://github.com/prowler-cloud/prowler/pull/10165)
+- Bump `flask` to 3.1.3 (CVE-2026-27205) and `werkzeug` to 3.1.6 (CVE-2026-27199) [(#10430)](https://github.com/prowler-cloud/prowler/pull/10430)
 
 ---
 
@@ -23,7 +402,6 @@ All notable changes to the **Prowler API** are documented in this file.
 ### 🚀 Added
 
 - `CORS_ALLOWED_ORIGINS` configurable via environment variable [(#10355)](https://github.com/prowler-cloud/prowler/pull/10355)
-- Finding groups support `check_title` substring filtering [(#10377)](https://github.com/prowler-cloud/prowler/pull/10377)
 - Attack Paths: Tenant and provider related labels to the nodes so they can be easily filtered on custom queries [(#10308)](https://github.com/prowler-cloud/prowler/pull/10308)
 
 ### 🔄 Changed

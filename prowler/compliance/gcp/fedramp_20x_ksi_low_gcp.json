@@ -248,7 +248,8 @@
         "compute_public_address_shodan",
         "cloudsql_instance_automated_backups",
         "iam_sa_user_managed_key_rotate_90_days",
-        "iam_service_account_unused"
+        "iam_service_account_unused",
+        "gemini_api_disabled"
       ]
     },
     {

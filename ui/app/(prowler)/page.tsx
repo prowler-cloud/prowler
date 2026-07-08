@@ -1,11 +1,16 @@
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
-import { ContentLayout } from "@/components/ui";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
+import { getAllProviders } from "@/actions/providers";
+import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
+import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import { AccountsSelector } from "./_overview/_components/accounts-selector";
-import { ProviderTypeSelector } from "./_overview/_components/provider-type-selector";
+import { LighthouseOverviewBanner } from "./_overview/_components/lighthouse-overview-banner";
+import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
@@ -39,14 +44,25 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const providersData = await getProviders({ page: 1, pageSize: 200 });
+  const [providersData, providerGroupsData, lighthouseBannerHref] =
+    await Promise.all([
+      getAllProviders(),
+      getAllProviderGroups(),
+      getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
+    ]);
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-        <ProviderTypeSelector providers={providersData?.data ?? []} />
-        <AccountsSelector providers={providersData?.data ?? []} />
+        <ProviderAccountSelectors providers={providersData?.data ?? []} />
+        <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
+
+      {lighthouseBannerHref ? (
+        <div className="mb-6">
+          <LighthouseOverviewBanner href={lighthouseBannerHref} />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>

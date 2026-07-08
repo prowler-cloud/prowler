@@ -44,8 +44,9 @@ def init_parser(self):
     oci_regions_subparser = oci_parser.add_argument_group("OCI Regions")
     oci_regions_subparser.add_argument(
         "--region",
-        "-r",
-        nargs="?",
+        "--filter-region",
+        "-f",
+        nargs="+",
         help="OCI region to run Prowler against. If not specified, all subscribed regions will be audited",
         choices=list(OCI_REGIONS.keys()),
     )

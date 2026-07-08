@@ -208,6 +208,8 @@ Resources:
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
                   - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "rolesanywhere:ListTagsForResource"
+                  - "rolesanywhere:ListTrustAnchors"
                   - "s3:GetAccountPublicAccessBlock"
                   - "shield:DescribeProtection"
                   - "shield:GetSubscriptionState"
@@ -233,6 +235,8 @@ Resources:
                 Resource:
                   - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
                   - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames"
+                  - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames/*"
         - !If
           - OrganizationsEnabled
           - PolicyName: ProwlerOrganizations
@@ -495,6 +499,8 @@ Resources:
                         Resource:
                           - !Sub "arn:${AWS::Partition}:apigateway:*::/restapis/*"
                           - !Sub "arn:${AWS::Partition}:apigateway:*::/apis/*"
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames"
+                          - !Sub "arn:${AWS::Partition}:apigateway:*::/domainnames/*"
                 - !If
                   - OrganizationsEnabled
                   - PolicyName: ProwlerOrganizations

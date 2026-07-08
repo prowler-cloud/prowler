@@ -220,7 +220,7 @@ def _send_prowler_results(prowler_results, _prowler_version, options):
         try:
             _debug("RESULT MSG --- {0}".format(_check_result), 2)
             _check_result = json.loads(TEMPLATE_CHECK.format(_check_result))
-        except:
+        except Exception:
             _debug(
                 "INVALID JSON --- {0}".format(TEMPLATE_CHECK.format(_check_result)), 1
             )

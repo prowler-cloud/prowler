@@ -34,7 +34,8 @@
     }
   },
   "Categories": [
-    "software-supply-chain"
+    "software-supply-chain",
+    "internet-exposed"
   ],
   "DependsOn": [],
   "RelatedTo": [],

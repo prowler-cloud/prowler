@@ -2,9 +2,18 @@
 
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { getLatestFindings } from "@/actions/findings";
+import { listOrganizationsSafe } from "@/actions/organizations/organizations";
+import {
+  apiBaseUrl,
+  FINDINGS_FILTERED_SORT,
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getAuthHeaders,
+  sanitizeErrorMessage,
+} from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { OrganizationResource } from "@/types/organizations";
 
 export const getResources = async ({
   page = 1,
@@ -190,22 +199,27 @@ export const getResourceEvents = async (
 
     if (!response.ok) {
       const rawText = await response.text().catch(() => "");
+      const contentType =
+        response.headers.get("content-type")?.toLowerCase() || "";
       const defaultError = "An error occurred while fetching events.";
+      const fallbackError = contentType.includes("text/html")
+        ? GENERIC_SERVER_ERROR_MESSAGE
+        : response.statusText || defaultError;
       try {
         const errorData = rawText ? JSON.parse(rawText) : null;
+        const errorMessage =
+          errorData?.errors?.[0]?.detail ||
+          errorData?.error ||
+          errorData?.message ||
+          rawText ||
+          fallbackError;
         return {
-          error:
-            errorData?.errors?.[0]?.detail ||
-            errorData?.error ||
-            errorData?.message ||
-            rawText ||
-            response.statusText ||
-            defaultError,
+          error: sanitizeErrorMessage(String(errorMessage), fallbackError),
           status: response.status,
         };
       } catch {
         return {
-          error: rawText || response.statusText || defaultError,
+          error: sanitizeErrorMessage(rawText || fallbackError, fallbackError),
           status: response.status,
         };
       }
@@ -254,4 +268,58 @@ export const getResourceById = async (
     console.error("Error fetching resource by ID:", error);
     return undefined;
   }
+};
+
+export const getResourceDrawerData = async ({
+  resourceId,
+  resourceUid,
+  providerId,
+  providerType,
+  page = 1,
+  pageSize = 10,
+  query = "",
+}: {
+  resourceId: string;
+  resourceUid: string;
+  providerId: string;
+  providerType: string;
+  page?: number;
+  pageSize?: number;
+  query?: string;
+}) => {
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+
+  const [resourceData, findingsResponse, organizationsResponse] =
+    await Promise.all([
+      getResourceById(resourceId, { fields: ["tags"] }),
+      getLatestFindings({
+        page,
+        pageSize,
+        query,
+        sort: FINDINGS_FILTERED_SORT,
+        filters: {
+          "filter[resource_uid]": resourceUid,
+          "filter[status]": "FAIL",
+        },
+      }),
+      isCloudEnv && providerType === "aws"
+        ? listOrganizationsSafe()
+        : Promise.resolve({ data: [] }),
+    ]);
+
+  const providerOrg =
+    providerType === "aws"
+      ? (organizationsResponse.data.find((organization: OrganizationResource) =>
+          organization.relationships?.providers?.data?.some(
+            (provider: { id: string }) => provider.id === providerId,
+          ),
+        ) ?? null)
+      : null;
+
+  return {
+    findings: findingsResponse?.data ?? [],
+    findingsMeta: findingsResponse?.meta ?? null,
+    providerOrg,
+    resourceTags: resourceData?.data?.attributes.tags ?? {},
+  };
 };

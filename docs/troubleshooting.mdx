@@ -2,6 +2,8 @@
 title: 'Troubleshooting'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 ## Running `prowler` I get `[File: utils.py:15] [Module: utils] CRITICAL: path/redacted: OSError[13]`
 
 That is an error related to file descriptors or opened files allowed by your operating system.
@@ -81,6 +83,39 @@ docker compose down
 docker compose up -d
 ```
 
+### Worker Uses Too Much Memory on Hosts with Many CPUs
+
+<VersionBadge version="5.31.0" />
+
+When Prowler App runs self-hosted on a machine or Kubernetes node with many CPUs,
+the Celery worker may create one prefork process per detected CPU if concurrency
+is not configured explicitly. Each process loads the SDK runtime and cloud
+provider clients, so idle memory can be high and worker containers can be
+terminated by their memory limit.
+
+Set `DJANGO_CELERY_WORKER_CONCURRENCY` in the worker runtime environment to cap
+the number of prefork processes:
+
+```yaml
+services:
+  worker:
+    environment:
+      DJANGO_CELERY_WORKER_CONCURRENCY: "4"
+```
+
+For Kubernetes deployments, set the same variable on the worker Deployment:
+
+```yaml
+env:
+  - name: DJANGO_CELERY_WORKER_CONCURRENCY
+    value: "4"
+```
+
+Lower values reduce idle memory and the number of tasks a worker can run in
+parallel. Increase the value only when the worker has enough memory for the
+expected scan workload. Leaving the variable unset preserves Celery's default
+CPU-based concurrency.
+
 ### API Container Fails to Start with JWT Key Permission Error
 
 See [GitHub Issue #8897](https://github.com/prowler-cloud/prowler/issues/8897) for more details.
@@ -159,6 +194,40 @@ When these environment variables are set, the API will use them directly instead
 A fix addressing this permission issue is being evaluated in [PR #9953](https://github.com/prowler-cloud/prowler/pull/9953).
 </Note>
 
+### Scan Stuck in Executing State After Worker Crash
+
+When running Prowler App via Docker Compose, a scan may remain indefinitely in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Since it is not currently possible to cancel a scan in `executing` state through the UI, the workaround is to manually update the scan record in the database.
+
+**Root Cause:**
+
+The Celery worker process terminates unexpectedly (OOM, node failure, etc.) before transitioning the scan state to `completed` or `failed`. The scan record remains in `executing` with no active process to advance it.
+
+**Solution:**
+
+Connect to the database using the `prowler_admin` user. Due to Row-Level Security (RLS), the default database user cannot see scan records — you must use `prowler_admin`:
+
+```bash
+psql -U prowler_admin -d prowler_db
+```
+
+Identify the stuck scan by filtering for scans in `executing` state:
+
+```sql
+SELECT id, name, state, started_at FROM scans WHERE state = 'executing';
+```
+
+Update the scan state to `failed` using the scan ID:
+
+```sql
+UPDATE scans SET state = 'failed' WHERE id = '<scan-id>';
+```
+
+After this change, the scan will appear as failed in the UI and you can launch a new scan.
+
+<Note>
+A feature to cancel executing scans directly from the UI is being tracked in [GitHub Issue #6893](https://github.com/prowler-cloud/prowler/issues/6893).
+</Note>
+
 ### SAML/OAuth ACS URL Incorrect When Running Behind a Proxy or Load Balancer
 
 See [GitHub Issue #9724](https://github.com/prowler-cloud/prowler/issues/9724) for more details.
@@ -167,35 +236,29 @@ When running Prowler behind a reverse proxy (nginx, Traefik, etc.) or load balan
 
 **Root Cause:**
 
-Next.js environment variables prefixed with `NEXT_PUBLIC_` are **bundled at build time**, not runtime. The pre-built Docker images from Docker Hub (`prowlercloud/prowler-ui:stable`) are built with default internal URLs. Simply setting `NEXT_PUBLIC_API_BASE_URL` in your `.env` file or environment variables and restarting the container will **NOT** work because these values are already compiled into the JavaScript bundle.
+The API base and docs URLs are resolved from the container environment **at runtime**. A single pre-built Docker image (`prowlercloud/prowler-ui:stable`) therefore serves any environment: point the URLs at your external domain and restart the container — no rebuild is required.
 
 **Solution:**
 
-You must **rebuild** the UI Docker image with your external URL:
-
-```bash
-# Clone the repository (if you haven't already)
-git clone https://github.com/prowler-cloud/prowler.git
-cd prowler/ui
-
-# Build with your external URL as a build argument
-docker build \
-  --build-arg NEXT_PUBLIC_API_BASE_URL=https://prowler.example.com/api/v1 \
-  --build-arg NEXT_PUBLIC_API_DOCS_URL=https://prowler.example.com/api/v1/docs \
-  -t prowler-ui-custom:latest \
-  --target prod \
-  .
-```
-
-Then update your `docker-compose.yml` to use your custom image instead of the pre-built one:
+Set the runtime environment variables to your external URL and restart the UI container:
 
 ```yaml
 services:
   ui:
-    image: prowler-ui-custom:latest  # Use your custom-built image
+    image: prowlercloud/prowler-ui:stable
+    environment:
+      UI_API_BASE_URL: https://prowler.example.com/api/v1
+      UI_API_DOCS_URL: https://prowler.example.com/api/v1/docs
     # ... rest of configuration
 ```
 
+The same values can be supplied through your `.env` file:
+
+```bash
+UI_API_BASE_URL=https://prowler.example.com/api/v1
+UI_API_DOCS_URL=https://prowler.example.com/api/v1/docs
+```
+
 <Note>
-The `NEXT_PUBLIC_` prefix is a Next.js convention that exposes environment variables to the browser. Since the browser bundle is compiled during `docker build`, these variables must be provided as build arguments, not runtime environment variables.
+Earlier releases inlined these values into the JavaScript bundle at build time (via the `NEXT_PUBLIC_` prefix) and required a rebuild with `--build-arg`. That is no longer necessary: `UI_API_BASE_URL` and `UI_API_DOCS_URL` are read at container start, so updating them and restarting is sufficient.
 </Note>

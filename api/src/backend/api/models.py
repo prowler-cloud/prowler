@@ -1,37 +1,11 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
-from allauth.socialaccount.models import SocialApp
-from config.custom_logging import BackendLogger
-from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
-from cryptography.fernet import Fernet, InvalidToken
 import defusedxml
-from defusedxml import ElementTree as ET
-from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex, OpClass
-from django.contrib.postgres.search import SearchVector, SearchVectorField
-from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
-from django.db import models
-from django.db.models import Q
-from django.db.models.functions import Upper
-from django.utils import timezone as django_timezone
-from django.utils.translation import gettext_lazy as _
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_simple_apikey.crypto import get_crypto
-from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
-from psqlextra.manager import PostgresManager
-from psqlextra.models import PostgresPartitionedModel
-from psqlextra.types import PostgresPartitioningMethod
-from uuid6 import uuid7
-
+from allauth.socialaccount.models import SocialApp
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -58,7 +32,32 @@ from api.rls import (
     RowLevelSecurityProtectedModel,
     Tenant,
 )
+from config.custom_logging import BackendLogger
+from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
+from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
+from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex, OpClass
+from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
+from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Upper
+from django.utils import timezone as django_timezone
+from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from prowler.lib.check.models import Severity
+from psqlextra.manager import PostgresManager
+from psqlextra.models import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -295,6 +294,8 @@ class Provider(RowLevelSecurityProtectedModel):
         OPENSTACK = "openstack", _("OpenStack")
         IMAGE = "image", _("Image")
         GOOGLEWORKSPACE = "googleworkspace", _("Google Workspace")
+        VERCEL = "vercel", _("Vercel")
+        OKTA = "okta", _("Okta")
 
     @staticmethod
     def validate_aws_uid(value):
@@ -350,6 +351,26 @@ class Provider(RowLevelSecurityProtectedModel):
             raise ModelValidationError(
                 detail="Google Workspace Customer ID must start with 'C' followed by one or more alphanumeric characters (e.g., C01234abc, C12345678).",
                 code="googleworkspace-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
+    def validate_okta_uid(value):
+        if not re.match(
+            r"^[a-z0-9][a-z0-9-]*\.("
+            r"okta\.com|oktapreview\.com|okta-emea\.com|"
+            r"okta-gov\.com|okta\.mil|okta-miltest\.com|trex-govcloud\.com"
+            r")$",
+            value,
+        ):
+            raise ModelValidationError(
+                detail=(
+                    "Okta provider ID must be a valid Okta-managed org domain "
+                    "(e.g., acme.okta.com, also .oktapreview.com / .okta-emea.com "
+                    "/ .okta-gov.com / .okta.mil / .okta-miltest.com / "
+                    ".trex-govcloud.com), without scheme or path."
+                ),
+                code="okta-uid",
                 pointer="/data/attributes/uid",
             )
 
@@ -439,6 +460,15 @@ class Provider(RowLevelSecurityProtectedModel):
             )
 
     @staticmethod
+    def validate_vercel_uid(value):
+        if not re.match(r"^team_[a-zA-Z0-9]{16,32}$", value):
+            raise ModelValidationError(
+                detail="Vercel provider ID must be a valid Vercel Team ID (e.g., team_xxxxxxxxxxxxxxxxxxxxxxxx).",
+                code="vercel-uid",
+                pointer="/data/attributes/uid",
+            )
+
+    @staticmethod
     def validate_image_uid(value):
         if not re.match(r"^[a-zA-Z0-9][a-zA-Z0-9._/:@-]{2,249}$", value):
             raise ModelValidationError(
@@ -470,6 +500,12 @@ class Provider(RowLevelSecurityProtectedModel):
 
     def clean(self):
         super().clean()
+        if self.provider == self.ProviderChoices.OKTA and self.uid:
+            # Mirror the SDK, which lowercases the org domain before connecting.
+            # Without this the API would reject Acme.okta.com even though the
+            # SDK would accept it, and stored uids could disagree with the
+            # authenticated org domain.
+            self.uid = self.uid.strip().lower()
         getattr(self, f"validate_{self.provider}_uid")(self.uid)
 
     def save(self, *args, **kwargs):
@@ -585,9 +621,39 @@ class Scan(RowLevelSecurityProtectedModel):
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
+    _SCOPING_SCANNER_ARG_KEYS_CACHE: tuple[str, ...] | None = None
+
+    @classmethod
+    def get_scoping_scanner_arg_keys(cls) -> tuple[str, ...]:
+        """Return the scanner_args keys that mark a scan as scoped.
+
+        Derived from ``prowler.lib.scan.scan.Scan.__init__`` so the API stays
+        in sync with whatever the SDK actually accepts as filters. Cached at
+        class level — the signature is stable for the process lifetime.
+        """
+        if cls._SCOPING_SCANNER_ARG_KEYS_CACHE is None:
+            import inspect
+
+            from prowler.lib.scan.scan import Scan as ProwlerScan
+
+            params = inspect.signature(ProwlerScan.__init__).parameters
+            cls._SCOPING_SCANNER_ARG_KEYS_CACHE = tuple(
+                name for name in params if name not in ("self", "provider")
+            )
+        return cls._SCOPING_SCANNER_ARG_KEYS_CACHE
+
     class TriggerChoices(models.TextChoices):
         SCHEDULED = "scheduled", _("Scheduled")
         MANUAL = "manual", _("Manual")
+
+    # Trigger values for scans that ran the SDK end-to-end. Imported scans (or
+    # any future trigger) are intentionally NOT in this set — they may carry
+    # only a partial slice of resources, so post-scan logic that depends on a
+    # full-scope sweep (e.g. resetting ephemeral resource findings) must skip
+    # them by default.
+    LIVE_SCAN_TRIGGERS = frozenset(
+        (TriggerChoices.SCHEDULED.value, TriggerChoices.MANUAL.value)
+    )
 
     id = models.UUIDField(primary_key=True, default=uuid7, editable=False)
     name = models.CharField(
@@ -671,8 +737,30 @@ class Scan(RowLevelSecurityProtectedModel):
     class JSONAPIMeta:
         resource_name = "scans"
 
+    def is_full_scope(self) -> bool:
+        """Return True if this scan ran with no scoping filters at all.
+
+        Used to gate post-scan operations (such as resetting the
+        failed_findings_count of resources missing from the scan) that are only
+        safe when the scan covered every check, service, and category. Imported
+        scans are NOT full-scope by definition — they may carry only a partial
+        slice of resources, so they're rejected via ``trigger`` even before the
+        scanner_args check.
+        """
+        if self.trigger not in self.LIVE_SCAN_TRIGGERS:
+            return False
+        scanner_args = self.scanner_args or {}
+        for key in self.get_scoping_scanner_arg_keys():
+            if scanner_args.get(key):
+                return False
+        return True
+
 
 class AttackPathsScan(RowLevelSecurityProtectedModel):
+    class SinkBackendChoices(models.TextChoices):
+        NEO4J = "neo4j", "Neo4j"
+        NEPTUNE = "neptune", "Neptune"
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
@@ -720,6 +808,19 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    # True when the scan was synced with the current schema (list-typed
+    # properties materialised as child item nodes). False for pre-cutover scans
+    # still using the previous graph shape. Query catalog selection uses this
+    # flag; physical read routing uses sink_backend below.
+    # TODO: drop after Neptune cutover
+    is_migrated = models.BooleanField(default=False, db_default=False)
+    sink_backend = models.CharField(
+        choices=SinkBackendChoices.choices,
+        db_default=SinkBackendChoices.NEO4J,
+        default=SinkBackendChoices.NEO4J,
+        max_length=16,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "attack_paths_scans"
@@ -888,7 +989,6 @@ class Resource(RowLevelSecurityProtectedModel):
                 OpClass(Upper("name"), name="gin_trgm_ops"),
                 name="res_name_trgm_idx",
             ),
-            GinIndex(fields=["text_search"], name="gin_resources_search_idx"),
             models.Index(fields=["tenant_id", "id"], name="resources_tenant_id_idx"),
             models.Index(
                 fields=["tenant_id", "provider_id"],
@@ -1093,6 +1193,15 @@ class Finding(PostgresPartitionedModel, RowLevelSecurityProtectedModel):
             models.Index(
                 fields=["tenant_id", "scan_id", "check_id"],
                 name="find_tenant_scan_check_idx",
+            ),
+            GinIndex(
+                fields=[
+                    "categories",
+                    "resource_services",
+                    "resource_regions",
+                    "resource_types",
+                ],
+                name="gin_find_arrays_idx",
             ),
         ]
 
@@ -1334,8 +1443,8 @@ class Role(RowLevelSecurityProtectedModel):
 
     @classmethod
     def filter_by_permission_state(cls, queryset, value):
-        q_all_true = Q(**{field: True for field in cls.PERMISSION_FIELDS})
-        q_all_false = Q(**{field: False for field in cls.PERMISSION_FIELDS})
+        q_all_true = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, True))
+        q_all_false = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, False))
 
         if value == PermissionChoices.UNLIMITED:
             return queryset.filter(q_all_true)
@@ -1738,14 +1847,44 @@ class FindingGroupDailySummary(RowLevelSecurityProtectedModel):
     # Severity stored as integer for MAX aggregation (5=critical, 4=high, etc.)
     severity_order = models.SmallIntegerField(default=1)
 
-    # Finding counts
+    # Finding counts (inclusive of muted findings; use the `muted` flag to
+    # tell whether the group has any actionable findings).
     pass_count = models.IntegerField(default=0)
     fail_count = models.IntegerField(default=0)
+    manual_count = models.IntegerField(default=0)
     muted_count = models.IntegerField(default=0)
 
-    # Delta counts
+    # Status counts restricted to muted findings, so clients can isolate the
+    # muted half of each status (e.g. `pass_count - pass_muted_count` gives the
+    # actionable PASS findings).
+    pass_muted_count = models.IntegerField(default=0)
+    fail_muted_count = models.IntegerField(default=0)
+    manual_muted_count = models.IntegerField(default=0)
+
+    # Whether every finding for this (provider, check, day) is muted.
+    muted = models.BooleanField(default=False)
+
+    # Delta counts (non-muted, kept for convenience and as a "total" view).
     new_count = models.IntegerField(default=0)
     changed_count = models.IntegerField(default=0)
+
+    # Delta breakdown by (status, muted) so clients can answer questions like
+    # "how many new failing findings appeared in this scan?" without scanning
+    # the underlying findings table. Mirrors the existing pass/fail/manual
+    # naming, with `_muted_count` siblings tracking the muted half of each
+    # bucket explicitly.
+    new_fail_count = models.IntegerField(default=0)
+    new_fail_muted_count = models.IntegerField(default=0)
+    new_pass_count = models.IntegerField(default=0)
+    new_pass_muted_count = models.IntegerField(default=0)
+    new_manual_count = models.IntegerField(default=0)
+    new_manual_muted_count = models.IntegerField(default=0)
+    changed_fail_count = models.IntegerField(default=0)
+    changed_fail_muted_count = models.IntegerField(default=0)
+    changed_pass_count = models.IntegerField(default=0)
+    changed_pass_muted_count = models.IntegerField(default=0)
+    changed_manual_count = models.IntegerField(default=0)
+    changed_manual_muted_count = models.IntegerField(default=0)
 
     # Resource counts
     resources_fail = models.IntegerField(default=0)
@@ -1888,11 +2027,11 @@ class SAMLToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
-            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+            self.expires_at = datetime.now(UTC) + timedelta(seconds=15)
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) >= self.expires_at
+        return datetime.now(UTC) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

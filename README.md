@@ -1,9 +1,9 @@
 <p align="center">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
-  <img align="center" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-black.png#gh-light-mode-only" width="50%" height="50%">
+  <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler</b> is the Open Cloud Security platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+  <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
@@ -22,8 +22,8 @@
   <a href="https://pypistats.org/packages/prowler"><img alt="PyPI Downloads" src="https://img.shields.io/pypi/dw/prowler.svg?label=downloads"></a>
   <a href="https://hub.docker.com/r/toniblyx/prowler"><img alt="Docker Pulls" src="https://img.shields.io/docker/pulls/toniblyx/prowler"></a>
   <a href="https://gallery.ecr.aws/prowler-cloud/prowler"><img width="120" height=19" alt="AWS ECR Gallery" src="https://user-images.githubusercontent.com/3985464/151531396-b6535a68-c907-44eb-95a1-a09508178616.png"></a>
-  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
-  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
+  <a href="https://codecov.io/gh/prowler-cloud/prowler"><img alt="Codecov coverage" src="https://codecov.io/gh/prowler-cloud/prowler/graph/badge.svg?token=OflBGsdpDl"/></a>
+  <a href="https://insights.linuxfoundation.org/project/prowler-cloud-prowler"><img alt="Linux Foundation insights health score" src="https://insights.linuxfoundation.org/api/badge/health-score?project=prowler-cloud-prowler"/></a>
 </p>
 <p align="center">
     <a href="https://github.com/prowler-cloud/prowler/releases"><img alt="Version" src="https://img.shields.io/github/v/release/prowler-cloud/prowler"></a>
@@ -36,12 +36,12 @@
 </p>
 <hr>
 <p align="center">
-  <img align="center" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
+  <img align="center" alt="Prowler Cloud demo" src="/docs/img/prowler-cloud.gif" width="100%" height="100%">
 </p>
 
 # Description
 
-**Prowler** is the world’s most widely used _open-source cloud security platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
+**Prowler** is the world’s most widely used _Open-Source Cloud Security Platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY Cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
@@ -83,16 +83,35 @@ prowler dashboard
 
 ## Attack Paths
 
-Attack Paths automatically extends every completed AWS scan with a Neo4j graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan and therefore requires:
+Attack Paths automatically extends every completed AWS scan with a graph that combines Cartography's cloud inventory with Prowler findings. The feature runs in the API worker after each scan.
 
-- An accessible Neo4j instance (the Docker Compose files already ships a `neo4j` service).
-- The following environment variables so Django and Celery can connect:
+Two graph backends are supported as the long-lived sink:
 
-  | Variable | Description | Default |
-  | --- | --- | --- |
-  | `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
-  | `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
-  | `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+- **Neo4j** (default; the Docker Compose files already ship a `neo4j` service).
+- **Amazon Neptune** (cloud-managed; opt-in).
+
+Select the sink with `ATTACK_PATHS_SINK_DATABASE` (`neo4j` or `neptune`; default `neo4j`).
+
+> Note: Cartography ingestion always uses a temporary Neo4j database, regardless of the configured sink. The `NEO4J_*` variables below must remain set even when `ATTACK_PATHS_SINK_DATABASE=neptune`.
+
+### Neo4j sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEO4J_HOST` | Hostname used by the API containers. | `neo4j` |
+| `NEO4J_PORT` | Bolt port exposed by Neo4j. | `7687` |
+| `NEO4J_USER` / `NEO4J_PASSWORD` | Credentials with rights to create per-tenant databases. | `neo4j` / `neo4j_password` |
+
+### Neptune sink
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `NEPTUNE_WRITER_ENDPOINT` | Bolt host for the Neptune writer instance. Required when sink is `neptune`. | _empty_ |
+| `NEPTUNE_READER_ENDPOINT` | Optional reader endpoint for read-only queries. Falls back to the writer when unset. | _empty_ |
+| `NEPTUNE_PORT` | Bolt port exposed by Neptune. | `8182` |
+| `AWS_REGION` | Region the Neptune cluster lives in. Required when sink is `neptune`. | _empty_ |
+
+Neptune authenticates with SigV4 using the standard boto3 credential chain. The worker's IAM role (or `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY`) supplies the credentials. There is no Neptune password variable.
 
 Every AWS provider scan will enqueue an Attack Paths ingestion job automatically. Other cloud providers will be added in future iterations.
 
@@ -104,22 +123,28 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
-| AWS | 572 | 83 | 41 | 17 | Official | UI, API, CLI |
-| Azure | 165 | 20 | 18 | 13 | Official | UI, API, CLI |
-| GCP | 100 | 13 | 15 | 11 | Official | UI, API, CLI |
-| Kubernetes | 83 | 7 | 7 | 9 | Official | UI, API, CLI |
-| GitHub | 21 | 2 | 1 | 2 | Official | UI, API, CLI |
-| M365 | 89 | 9 | 4 | 5 | Official | UI, API, CLI |
-| OCI | 48 | 13 | 3 | 10 | Official | UI, API, CLI |
-| Alibaba Cloud | 61 | 9 | 3 | 9 | Official | UI, API, CLI |
-| Cloudflare | 29 | 2 | 0 | 5 | Official | UI, API, CLI |
+| AWS | 615 | 86 | 47 | 19 | Official | UI, API, CLI |
+| Azure | 190 | 22 | 21 | 16 | Official | UI, API, CLI |
+| GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
+| Kubernetes | 90 | 7 | 8 | 11 | Official | UI, API, CLI |
+| GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
+| M365 | 109 | 10 | 6 | 10 | Official | UI, API, CLI |
+| OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
+| Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
+| Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
 | IaC | [See `trivy` docs.](https://trivy.dev/latest/docs/coverage/iac/) | N/A | N/A | N/A | Official | UI, API, CLI |
-| MongoDB Atlas | 10 | 3 | 0 | 8 | Official | UI, API, CLI |
+| MongoDB Atlas | 10 | 3 | 1 | 8 | Official | UI, API, CLI |
 | LLM | [See `promptfoo` docs.](https://www.promptfoo.dev/docs/red-team/plugins/) | N/A | N/A | N/A | Official | CLI |
 | Image | N/A | N/A | N/A | N/A | Official | CLI, API |
-| Google Workspace | 1 | 1 | 0 | 1 | Official | CLI |
-| OpenStack | 27 | 4 | 0 | 8 | Official | UI, API, CLI |
-| NHN | 6 | 2 | 1 | 0 | Unofficial | CLI |
+| Google Workspace | 65 | 11 | 3 | 6 | Official | UI, API, CLI |
+| OpenStack | 34 | 5 | 1 | 9 | Official | UI, API, CLI |
+| Vercel | 26 | 6 | 1 | 8 | Official | UI, API, CLI |
+| Okta | 29 | 8 | 2 | 2 | Official | UI, API, CLI |
+| Linode [Contact us](https://prowler.com/contact) | 10 | 3 | 1 | 4 | Unofficial | CLI |
+| E2E Networks [Contact us](https://prowler.com/contact) | 27 | 6 | 0 | 2 | Unofficial | CLI |
+| Scaleway [Contact us](https://prowler.com/contact) | 1 | 1 | 1 | 1 | Unofficial | CLI |
+| StackIT [Contact us](https://prowler.com/contact) | 7 | 2 | 1 | 3 | Unofficial | CLI |
+| NHN | 6 | 2 | 2 | 0 | Unofficial | CLI |
 
 > [!Note]
 > The numbers in the table are updated periodically.
@@ -143,17 +168,29 @@ Prowler App offers flexible installation methods tailored to various environment
 
 ### Docker Compose
 
-**Requirements**
+#### Requirements
 
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands**
+#### Commands
+
+_macOS/Linux:_
 
 ``` console
 VERSION=$(curl -s https://api.github.com/repos/prowler-cloud/prowler/releases/latest | jq -r .tag_name)
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/docker-compose.yml"
 # Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
 curl -sLO "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/${VERSION}/.env"
+docker compose up -d
+```
+
+_Windows PowerShell:_
+
+``` powershell
+$VERSION = (Invoke-RestMethod -Uri "https://api.github.com/repos/prowler-cloud/prowler/releases/latest").tag_name
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/docker-compose.yml" -OutFile "docker-compose.yml"
+# Environment variables can be customized in the .env file. Using default values in production environments is not recommended.
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/prowler-cloud/prowler/refs/tags/$VERSION/.env" -OutFile ".env"
 docker compose up -d
 ```
 
@@ -172,20 +209,20 @@ You can find more information in the [Troubleshooting](./docs/troubleshooting.md
 
 ### From GitHub
 
-**Requirements**
+#### Requirements
 
-* `git` installed.
-* `poetry` v2 installed: [poetry installation](https://python-poetry.org/docs/#installation).
-* `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
-* `Docker Compose` installed: https://docs.docker.com/compose/install/.
+- `git` installed.
+- `uv` installed: [uv installation](https://docs.astral.sh/uv/getting-started/installation/).
+- `pnpm` installed: [pnpm installation](https://pnpm.io/installation).
+- `Docker Compose` installed: https://docs.docker.com/compose/install/.
 
-**Commands to run the API**
+#### Commands to run the API
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 docker compose up postgres valkey -d
@@ -193,41 +230,36 @@ cd src/backend
 python manage.py migrate --database admin
 gunicorn -c config/guniconf.py config.wsgi:application
 ```
-> [!IMPORTANT]
-> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
->
-> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
-> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
 
 > After completing the setup, access the API documentation at http://localhost:8080/api/v1/docs.
 
-**Commands to run the API Worker**
+#### Commands to run the API Worker
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 cd src/backend
 python -m celery -A config.celery worker -l info -E
 ```
 
-**Commands to run the API Scheduler**
+#### Commands to run the API Scheduler
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler/api
-poetry install
-eval $(poetry env activate)
+uv sync
+source .venv/bin/activate
 set -a
 source .env
 cd src/backend
 python -m celery -A config.celery beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 ```
 
-**Commands to run the UI**
+#### Commands to run the UI
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
@@ -239,9 +271,17 @@ pnpm start
 
 > Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
 
+#### Pre-commit Hooks Setup
+
+Some pre-commit hooks require tools installed on your system:
+
+1. **Install [TruffleHog](https://github.com/trufflesecurity/trufflehog#install)** (secret scanning) — see the [official installation options](https://github.com/trufflesecurity/trufflehog#install).
+
+2. **Install [Hadolint](https://github.com/hadolint/hadolint#install)** (Dockerfile linting) — see the [official installation options](https://github.com/hadolint/hadolint#install).
+
 ## Prowler CLI
 ### Pip package
-Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >3.9.1, <3.13:
+Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler-cloud/). Consequently, it can be installed using pip with Python >=3.10, <3.13:
 
 ```console
 pip install prowler
@@ -251,14 +291,14 @@ prowler -v
 
 ### Containers
 
-**Available Versions of Prowler CLI**
+#### Available Versions of Prowler CLI
 
 The following versions of Prowler CLI are available, depending on your requirements:
 
 - `latest`: Synchronizes with the `master` branch. Note that this version is not stable.
 - `v4-latest`: Synchronizes with the `v4` branch. Note that this version is not stable.
 - `v3-latest`: Synchronizes with the `v3` branch. Note that this version is not stable.
-- `<x.y.z>` (release): Stable releases corresponding to specific versions. You can find the complete list of releases [here](https://github.com/prowler-cloud/prowler/releases).
+- `<x.y.z>` (release): Stable releases corresponding to specific versions. See the [complete list of Prowler releases](https://github.com/prowler-cloud/prowler/releases).
 - `stable`: Always points to the latest release.
 - `v4-stable`: Always points to the latest release for v4.
 - `v3-stable`: Always points to the latest release for v3.
@@ -273,23 +313,47 @@ The container images are available here:
 
 ### From GitHub
 
-Python >3.9.1, <3.13 is required with pip and Poetry:
+Python >=3.10, <3.13 is required with [uv](https://docs.astral.sh/uv/):
 
 ``` console
 git clone https://github.com/prowler-cloud/prowler
 cd prowler
-eval $(poetry env activate)
-poetry install
+uv sync
+source .venv/bin/activate
 python prowler-cli.py -v
 ```
 > [!IMPORTANT]
 > To clone Prowler on Windows, configure Git to support long file paths by running the following command: `git config core.longpaths true`.
 
-> [!IMPORTANT]
-> As of Poetry v2.0.0, the `poetry shell` command has been deprecated. Use `poetry env activate` instead for environment activation.
->
-> If your Poetry version is below v2.0.0, continue using `poetry shell` to activate your environment.
-> For further guidance, refer to the Poetry Environment Activation Guide https://python-poetry.org/docs/managing-environments/#activating-the-environment.
+# 🛡️ GitHub Action
+
+The official **Prowler GitHub Action** runs Prowler scans in your GitHub workflows using the official [`prowlercloud/prowler`](https://hub.docker.com/r/prowlercloud/prowler) Docker image. Scans run on any [supported provider](https://docs.prowler.com/user-guide/providers/), with optional [`--push-to-cloud`](https://docs.prowler.com/user-guide/tutorials/prowler-import-findings) to send findings to Prowler Cloud and optional SARIF upload so findings show up in the repo's **Security → Code scanning** tab and as inline PR annotations.
+
+```yaml
+name: Prowler IaC Scan
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  prowler:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prowler-cloud/prowler@5.25
+        with:
+          provider: iac
+          output-formats: sarif json-ocsf
+          upload-sarif: true
+          flags: --severity critical high
+```
+
+Full configuration, per-provider authentication, and SARIF examples: [Prowler GitHub Action tutorial](docs/user-guide/tutorials/prowler-app-github-action.mdx). Marketplace listing: [Prowler Security Scan](https://github.com/marketplace/actions/prowler-security-scan).
 
 # ✏️ High level architecture
 
@@ -301,11 +365,14 @@ python prowler-cli.py -v
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 - **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
-![Prowler App Architecture](docs/products/img/prowler-app-architecture.png)
+![Prowler App Architecture](docs/images/products/prowler-app-architecture.png)
+
+<!-- Diagram source: docs/images/products/prowler-app-architecture.mmd — edit there, re-render at https://mermaid.live, and replace the PNG. -->
+
 
 ## Prowler CLI
 
-**Running Prowler**
+### Running Prowler
 
 Prowler can be executed across various environments, offering flexibility to meet your needs. It can be run from:
 

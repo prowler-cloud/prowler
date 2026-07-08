@@ -1,26 +1,34 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import {
-  Building2,
-  FolderTree,
-  ShieldAlert,
-  ShieldCheck,
-  ShieldOff,
-} from "lucide-react";
+import { Building2, FolderTree } from "lucide-react";
 
+import type {
+  OrgWizardInitialData,
+  ProviderWizardInitialData,
+} from "@/components/providers/wizard/types";
+import { Badge } from "@/components/shadcn";
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime, EntityInfo } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { DataTableExpandAllToggle } from "@/components/ui/table/data-table-expand-all-toggle";
-import { DataTableExpandableCell } from "@/components/ui/table/data-table-expandable-cell";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
+import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
   ProvidersProviderRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
+import type {
+  ScanScheduleCapability,
+  ScanScheduleProvider,
+} from "@/types/schedules";
 
 import { LinkToScans } from "../link-to-scans";
 import { DataTableRowActions } from "./data-table-row-actions";
@@ -43,27 +51,24 @@ const OrganizationIcon = ({ groupKind }: { groupKind: string }) => {
 const ProviderStatusCell = ({ connected }: { connected: boolean | null }) => {
   if (connected === true) {
     return (
-      <div className="text-system-success flex items-center gap-2 text-sm whitespace-nowrap">
-        <ShieldCheck className="size-4 shrink-0" />
-        <span>Connected</span>
-      </div>
+      <Badge variant="success" className="text-sm">
+        Connected
+      </Badge>
     );
   }
 
   if (connected === false) {
     return (
-      <div className="text-text-error-primary flex items-center gap-2 text-sm whitespace-nowrap">
-        <ShieldAlert className="size-4 shrink-0" />
-        <span>Connection failed</span>
-      </div>
+      <Badge variant="error" className="text-sm">
+        Connection failed
+      </Badge>
     );
   }
 
   return (
-    <div className="text-text-neutral-secondary flex items-center gap-2 text-sm whitespace-nowrap">
-      <ShieldOff className="size-4 shrink-0" />
-      <span>Not connected</span>
-    </div>
+    <Badge variant="tag" className="text-text-neutral-secondary text-sm">
+      Not connected
+    </Badge>
   );
 };
 
@@ -107,7 +112,15 @@ function countSelectedLeaves(rows: Row<ProvidersTableRow>[]): number {
 export function getColumnProviders(
   rowSelection: RowSelectionState,
   testableProviderIds: string[],
+  selectedScheduleProviderIds: string[],
+  selectedScheduleProviders: ScanScheduleProvider[],
   onClearSelection: () => void,
+  onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void,
+  onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void,
+  scanScheduleCapability?: ScanScheduleCapability,
+  scanConfigs: ScanConfigurationData[] = [],
+  scanConfigStatus: ScanConfigurationListStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  scanConfigIdByProviderId: ReadonlyMap<string, string> = new Map(),
 ): ColumnDef<ProvidersTableRow>[] {
   return [
     {
@@ -134,7 +147,7 @@ export function getColumnProviders(
           <div className="ml-2">
             <DataTableColumnHeader
               column={column}
-              title="Account"
+              title="Provider"
               param="alias"
             />
           </div>
@@ -194,7 +207,7 @@ export function getColumnProviders(
       accessorKey: "groupNames",
       size: 160,
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account Groups" />
+        <DataTableColumnHeader column={column} title="Provider Groups" />
       ),
       cell: ({ row }) => {
         if (isProvidersOrganizationRow(row.original)) {
@@ -222,22 +235,25 @@ export function getColumnProviders(
           return <span className="text-text-neutral-tertiary text-sm">-</span>;
         }
 
-        const lastCheckedAt = (row.original as ProvidersProviderRow).attributes
-          .connection.last_checked_at;
+        const provider = row.original as ProvidersProviderRow;
+        const lastScanAt =
+          provider.lastScanAt !== undefined
+            ? provider.lastScanAt
+            : provider.attributes.connection.last_checked_at;
 
-        if (!lastCheckedAt) {
+        if (!lastScanAt) {
           return (
             <span className="text-text-neutral-tertiary text-sm">Never</span>
           );
         }
 
-        return <DateWithTime dateTime={lastCheckedAt} showTime />;
+        return <DateWithTime dateTime={lastScanAt} showTime />;
       },
       enableSorting: false,
     },
     {
       id: "scanSchedule",
-      size: 140,
+      size: 180,
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Scan Schedule" />
       ),
@@ -245,17 +261,12 @@ export function getColumnProviders(
         if (isProvidersOrganizationRow(row.original)) {
           return (
             <span className="text-text-neutral-tertiary text-sm">
-              {row.original.providerCount} Accounts
+              {row.original.providerCount} Providers
             </span>
           );
         }
 
-        return (
-          <LinkToScans
-            hasSchedule={row.original.hasSchedule}
-            providerUid={row.original.attributes.uid}
-          />
-        );
+        return <LinkToScans schedule={row.original.scheduleSummary} />;
       },
       enableSorting: false,
     },
@@ -312,6 +323,9 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         const hasSelection = Object.values(rowSelection).some(Boolean);
+        const currentScanConfigId = isProvidersOrganizationRow(row.original)
+          ? null
+          : (scanConfigIdByProviderId.get(row.original.id) ?? null);
 
         return (
           <DataTableRowActions
@@ -319,7 +333,15 @@ export function getColumnProviders(
             hasSelection={hasSelection}
             isRowSelected={row.getIsSelected()}
             testableProviderIds={testableProviderIds}
+            selectedScheduleProviderIds={selectedScheduleProviderIds}
+            selectedScheduleProviders={selectedScheduleProviders}
             onClearSelection={onClearSelection}
+            onOpenProviderWizard={onOpenProviderWizard}
+            onOpenOrganizationWizard={onOpenOrganizationWizard}
+            scanConfigs={scanConfigs}
+            scanConfigStatus={scanConfigStatus}
+            currentScanConfigId={currentScanConfigId}
+            capability={scanScheduleCapability}
           />
         );
       },

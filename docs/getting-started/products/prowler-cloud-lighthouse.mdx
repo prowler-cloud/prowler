@@ -1,0 +1,86 @@
+---
+title: 'Overview'
+---
+
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+Prowler Cloud runs an enhanced version of Lighthouse AI in Open Source repository, the Agentic Cloud Defender that helps teams understand, prioritize, and remediate security findings across cloud environments.
+
+<SubscriptionBanner />
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/chat-animation.gif" alt="Lighthouse AI on Prowler Cloud" />
+
+## What's New
+
+The Agentic Cloud Defender does more than answer questions, it helps teams **find and remediate what actually matters**, cutting through the noise to focus on the risk that counts. Prowler Cloud sharpens Lighthouse AI with the following improvements over the open-source version:
+
+<CardGroup cols={2}>
+  <Card title="Persistent Chat Sessions" icon="clock-rotate-left">
+    Conversations are saved and can be revisited or resumed at any time.
+  </Card>
+  <Card title="GPT-5.5 by Default" icon="microchip">
+    An upgraded default model delivers stronger reasoning and tool calling.
+  </Card>
+  <Card title="Normal and Agentic Views" icon="table-columns">
+    Switch between the standard interface and a chat-first agentic view.
+  </Card>
+  <Card title="Provider Connection Checks" icon="plug-circle-check">
+    Credentials are validated automatically when a provider is configured.
+  </Card>
+</CardGroup>
+
+## Chat View
+
+Lighthouse AI is no longer a separate section in the left navigation. Prowler Cloud now offers two application views: a normal view for browsing dashboards, findings, and configuration, and an agentic chat view, powered by Lighthouse AI, for conversational, multi-step security analysis. Conversations are saved automatically, so earlier sessions can be reopened and resumed at any time.
+
+Promoting the chat to a top-level view gives Lighthouse AI the room it needs for a fully agentic workflow and makes the Agentic Cloud Defender a primary way to work in Prowler Cloud.
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/main-chat-page.png" alt="Lighthouse AI chat view in Prowler Cloud" />
+
+### Tool Usage
+
+Lighthouse AI on Prowler Cloud renders the agent's work as it happens, so responses are easier to follow and to trust. Tool calls and reasoning steps appear in the order they occur within the conversation.
+
+- **Ordered steps:** Tool calls and reasoning are shown in sequence, reflecting how the agent reached its answer.
+- **Tool visibility:** The data tools invoked to retrieve findings and other Prowler information are displayed as the agent uses them.
+- **Thought process:** The agent's reasoning is presented alongside its actions, and can be expanded to review the full chain of steps.
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/tool-usage.png" alt="Ordered tool usage and reasoning in the Lighthouse AI chat" />
+
+## Configuration
+
+Configure Lighthouse AI on Prowler Cloud from **Configuration** → **Lighthouse AI**:
+
+1. Click the desired provider (OpenAI, Amazon Bedrock, or OpenAI Compatible).
+2. Enter the required credentials.
+3. Click **Save**. The connection is validated automatically before the provider becomes available.
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/config-page.png" alt="Lighthouse AI configuration page in Prowler Cloud" />
+
+### Business Context
+
+At the top of the configuration page, the optional **Business Context** field lets teams add environment priorities, compliance requirements, and ownership details, so responses align with organizational needs.
+
+Lighthouse AI on Prowler Cloud supports OpenAI, Amazon Bedrock, and OpenAI-compatible providers, with GPT-5.5 as the default. For per-provider setup and how to switch the default provider or model, see [Using Multiple LLM Providers](/user-guide/tutorials/prowler-cloud-lighthouse-multi-llm).
+
+## FAQ
+
+**Which LLM providers are supported?**
+
+OpenAI (GPT models, including the default GPT-5.5), Amazon Bedrock (Claude, Llama, Titan, and others), and any OpenAI-compatible service such as OpenRouter.
+
+**Can Lighthouse AI change my cloud environment?**
+
+No. Lighthouse AI has read-only access to security data and no tools to modify resources, even when the connected cloud credentials would allow changes.
+
+## Looking for the Open Source Version?
+
+Lighthouse AI is also available in the self-hosted, open-source Prowler App. For its capabilities, FAQs, and limitations, see the open-source documentation.
+
+<Card title="Lighthouse AI (Open Source)" icon="github" href="/getting-started/products/prowler-lighthouse-ai">
+  Capabilities, FAQs, and limitations for Lighthouse AI in the open-source Prowler App
+</Card>
+
+## Getting Help
+
+For issues or suggestions with Lighthouse AI on Prowler Cloud, request support at [support.prowler.com](https://support.prowler.com) or [reach out through our Slack channel](https://goto.prowler.com/slack).

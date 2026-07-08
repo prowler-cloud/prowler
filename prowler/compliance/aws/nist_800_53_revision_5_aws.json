@@ -29,6 +29,9 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -49,6 +52,9 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -68,6 +74,9 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -87,6 +96,9 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -106,6 +118,9 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -124,6 +139,9 @@
       ],
       "Checks": [
         "iam_password_policy_minimum_length_14",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -202,6 +220,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -233,6 +259,9 @@
         }
       ],
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -269,6 +298,9 @@
         }
       ],
       "Checks": [
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -843,6 +875,9 @@
         "iam_rotate_access_key_90_days",
         "iam_user_mfa_enabled_console_access",
         "iam_user_mfa_enabled_console_access",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -917,6 +952,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1168,6 +1211,8 @@
         }
       ],
       "Checks": [
+        "iam_inline_policy_no_wildcard_marketplace_subscribe",
+        "iam_policy_no_wildcard_marketplace_subscribe",
         "ec2_ebs_public_snapshot",
         "ec2_instance_public_ip",
         "ec2_instance_imdsv2_enabled",
@@ -1177,6 +1222,9 @@
         "iam_customer_attached_policy_no_administrative_privileges",
         "iam_inline_policy_no_administrative_privileges",
         "iam_no_root_access_key",
+        "iam_role_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "awslambda_function_not_publicly_accessible",
@@ -1572,6 +1620,7 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -1596,6 +1645,14 @@
       "Checks": [
         "cloudtrail_multi_region_enabled",
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1795,6 +1852,20 @@
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1873,6 +1944,20 @@
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2130,6 +2215,7 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -2157,6 +2243,7 @@
         "cloudtrail_s3_dataevents_read_enabled",
         "cloudtrail_s3_dataevents_write_enabled",
         "cloudtrail_multi_region_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "elbv2_logging_enabled",
         "elb_logging_enabled",
@@ -2255,6 +2342,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2317,6 +2418,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2352,6 +2467,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2431,6 +2560,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2452,6 +2595,20 @@
         "guardduty_is_enabled",
         "rds_instance_enhanced_monitoring_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2487,6 +2644,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2869,6 +3040,14 @@
         "guardduty_is_enabled",
         "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4044,6 +4223,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4060,6 +4247,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4114,6 +4309,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4149,6 +4358,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4164,6 +4387,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4235,6 +4466,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4251,6 +4496,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4268,6 +4521,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4285,6 +4546,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4301,6 +4570,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4318,6 +4595,14 @@
       "Checks": [
         "guardduty_is_enabled",
         "ssm_managed_compliant_patching"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4334,6 +4619,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4350,6 +4643,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4366,6 +4667,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4383,6 +4692,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4400,6 +4717,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4481,6 +4806,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4523,6 +4856,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4540,6 +4881,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4556,6 +4905,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4572,6 +4929,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5227,6 +5592,9 @@
       "Checks": [
         "apigateway_restapi_client_certificate_enabled",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elb_ssl_listeners",
         "opensearch_service_domains_node_to_node_encryption_enabled",
         "s3_bucket_secure_transport_policy"
@@ -5514,6 +5882,9 @@
       ],
       "Checks": [
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elb_ssl_listeners"
       ]
     },
@@ -5642,6 +6013,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5809,6 +6188,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5849,6 +6236,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5866,6 +6261,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5883,6 +6286,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5899,6 +6310,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5915,6 +6334,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5947,6 +6374,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5971,6 +6406,14 @@
         "rds_instance_integration_cloudwatch_logs",
         "redshift_cluster_audit_logging",
         "s3_bucket_server_access_logging_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5987,6 +6430,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6004,6 +6455,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6021,6 +6480,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6037,6 +6504,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6073,6 +6548,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6089,6 +6572,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6156,6 +6647,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6172,6 +6671,14 @@
       ],
       "Checks": [
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6192,6 +6699,14 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6212,6 +6727,14 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

@@ -18,8 +18,13 @@ class SQLServer(AzureService):
         sql_servers = {}
         for subscription, client in self.clients.items():
             try:
+                sql_servers_list = self.list_with_rg_scope(
+                    subscription,
+                    client.servers.list,
+                    client.servers.list_by_resource_group,
+                )
+
                 sql_servers.update({subscription: []})
-                sql_servers_list = client.servers.list()
                 for sql_server in sql_servers_list:
                     resource_group = self._get_resource_group(sql_server.id)
                     auditing_policies = self._get_server_blob_auditing_policies(
@@ -72,7 +77,7 @@ class SQLServer(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return sql_servers
 
@@ -141,7 +146,7 @@ class SQLServer(AzureService):
                 )
         except Exception as error:
             logger.error(
-                f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return databases
 

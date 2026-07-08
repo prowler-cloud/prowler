@@ -9,14 +9,14 @@ import { PROVIDER_TAB, type ProviderTab } from "./provider-page-tabs.shared";
 
 interface ProviderPageTabsProps {
   activeTab: ProviderTab;
-  accountsContent: ReactNode;
-  accountGroupsContent: ReactNode;
+  providersContent: ReactNode;
+  providerGroupsContent: ReactNode;
 }
 
 export const ProviderPageTabs = ({
   activeTab,
-  accountsContent,
-  accountGroupsContent,
+  providersContent,
+  providerGroupsContent,
 }: ProviderPageTabsProps) => {
   const router = useRouter();
 
@@ -27,7 +27,7 @@ export const ProviderPageTabs = ({
       return;
     }
 
-    if (typedTab === PROVIDER_TAB.ACCOUNTS) {
+    if (typedTab === PROVIDER_TAB.PROVIDERS) {
       router.push("/providers");
     } else {
       router.push(`/providers?tab=${typedTab}`);
@@ -41,18 +41,18 @@ export const ProviderPageTabs = ({
       className="flex w-full flex-col gap-6"
     >
       <TabsList>
-        <TabsTrigger value={PROVIDER_TAB.ACCOUNTS}>Accounts</TabsTrigger>
-        <TabsTrigger value={PROVIDER_TAB.ACCOUNT_GROUPS}>
-          Account Groups
+        <TabsTrigger value={PROVIDER_TAB.PROVIDERS}>Providers</TabsTrigger>
+        <TabsTrigger value={PROVIDER_TAB.PROVIDER_GROUPS}>
+          Provider Groups
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value={PROVIDER_TAB.ACCOUNTS} className="mt-0">
-        {accountsContent}
+      <TabsContent value={PROVIDER_TAB.PROVIDERS} className="mt-0">
+        {providersContent}
       </TabsContent>
 
-      <TabsContent value={PROVIDER_TAB.ACCOUNT_GROUPS} className="mt-0">
-        {accountGroupsContent}
+      <TabsContent value={PROVIDER_TAB.PROVIDER_GROUPS} className="mt-0">
+        {providerGroupsContent}
       </TabsContent>
     </Tabs>
   );

@@ -20,6 +20,7 @@
       "Checks": [
         "defender_antiphishing_policy_configured",
         "defender_antispam_policy_inbound_no_allowed_domains",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -120,6 +121,8 @@
         "defenderxdr_endpoint_privileged_user_exposed_credentials",
         "defender_identity_health_issues_no_open",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_identity_protection_user_risk_enabled"
       ]
@@ -203,6 +206,11 @@
         "admincenter_users_admins_reduced_license_footprint",
         "entra_admin_portals_access_restriction",
         "entra_admin_users_phishing_resistant_mfa_enabled",
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
+        "entra_conditional_access_policy_directory_sync_account_excluded",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_policy_guest_users_access_restrictions",
         "entra_seamless_sso_disabled"
       ]
@@ -241,12 +249,19 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_break_glass_account_fido2_security_key_registered",
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_default_app_management_policy_enabled",
+        "entra_emergency_access_exclusion",
         "entra_all_apps_conditional_access_coverage",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_device_code_flow_blocked",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
         "entra_legacy_authentication_blocked",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
+        "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "entra_users_mfa_enabled",
         "exchange_organization_modern_authentication_enabled",
         "exchange_transport_config_smtp_auth_disabled",
@@ -269,6 +284,7 @@
         "entra_admin_portals_access_restriction",
         "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_guest_users_access_restrictions",
+        "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "sharepoint_external_sharing_managed",
         "sharepoint_external_sharing_restricted",
         "sharepoint_guest_sharing_restricted"
@@ -419,6 +435,7 @@
       ],
       "Checks": [
         "admincenter_groups_not_public_visibility",
+        "exchange_organization_delicensing_resiliency_enabled",
         "teams_meeting_recording_disabled"
       ]
     },
@@ -620,6 +637,9 @@
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_managed_device_required_for_authentication",
         "entra_managed_device_required_for_mfa_registration",
         "entra_users_mfa_capable",
@@ -654,10 +674,12 @@
         "entra_admin_users_phishing_resistant_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_break_glass_account_fido2_security_key_registered",
+        "entra_emergency_access_exclusion",
         "entra_app_registration_no_unused_privileged_permissions",
         "entra_policy_ensure_default_user_cannot_create_tenants",
         "entra_policy_guest_invite_only_for_admin_roles",
-        "entra_seamless_sso_disabled"
+        "entra_seamless_sso_disabled",
+        "entra_service_principal_no_secrets_for_permanent_tier0_roles"
       ]
     },
     {
@@ -676,6 +698,11 @@
         "entra_admin_portals_access_restriction",
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
         "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_directory_sync_account_excluded",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
         "entra_policy_guest_users_access_restrictions",
         "sharepoint_external_sharing_restricted"
       ]
@@ -696,12 +723,20 @@
         "entra_admin_users_mfa_enabled",
         "entra_admin_users_sign_in_frequency_enabled",
         "entra_all_apps_conditional_access_coverage",
+        "entra_conditional_access_policy_device_registration_mfa_required",
+        "entra_conditional_access_policy_mfa_enforced_for_guest_users",
+        "entra_intune_enrollment_sign_in_frequency_every_time",
         "entra_break_glass_account_fido2_security_key_registered",
         "entra_conditional_access_policy_approved_client_app_required_for_mobile",
+        "entra_conditional_access_policy_block_unknown_device_platforms",
         "entra_conditional_access_policy_device_code_flow_blocked",
+        "entra_conditional_access_policy_directory_sync_account_excluded",
+        "entra_conditional_access_policy_corporate_device_sign_in_frequency_enforced",
+        "entra_emergency_access_exclusion",
         "entra_identity_protection_sign_in_risk_enabled",
         "entra_managed_device_required_for_authentication",
         "entra_seamless_sso_disabled",
+        "entra_service_principal_no_secrets_for_permanent_tier0_roles",
         "entra_users_mfa_enabled"
       ]
     },
@@ -764,7 +799,9 @@
         "defender_antiphishing_policy_configured",
         "defender_safelinks_policy_enabled",
         "entra_admin_users_phishing_resistant_mfa_enabled",
-        "entra_conditional_access_policy_app_enforced_restrictions"
+        "entra_conditional_access_policy_app_enforced_restrictions",
+        "entra_conditional_access_policy_block_elevated_insider_risk",
+        "entra_conditional_access_policy_block_o365_elevated_insider_risk"
       ]
     },
     {

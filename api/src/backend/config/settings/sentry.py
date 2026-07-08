@@ -75,6 +75,8 @@ IGNORED_EXCEPTIONS = [
     # PowerShell Errors in User Authentication
     "Microsoft Teams User Auth connection failed: Please check your permissions and try again.",
     "Exchange Online User Auth connection failed: Please check your permissions and try again.",
+    # ASGI: Client disconnected before the response finished (health-check probes on /health/live)
+    "RequestAborted",
 ]
 
 
@@ -85,8 +87,20 @@ def before_send(event, hint):
     # Ignore logs with the ignored_exceptions
     # https://docs.python.org/3/library/logging.html#logrecord-objects
     if "log_record" in hint:
-        log_msg = hint["log_record"].msg
-        log_lvl = hint["log_record"].levelno
+        log_record = hint["log_record"]
+        log_msg = log_record.getMessage()
+        log_lvl = log_record.levelno
+
+        # The Neo4j driver logs transient connection errors (defunct
+        # connections, resets) at ERROR level via the `neo4j.io` logger.
+        # `RetryableSession` handles these with retries. If all retries
+        # are exhausted, the exception propagates and Sentry captures
+        # it as a normal exception event.
+        if (
+            getattr(log_record, "name", "").startswith("neo4j.io")
+            and "defunct" in log_msg
+        ):
+            return None
 
         # Handle Error and Critical events and discard the rest
         if log_lvl <= 40 and any(ignored in log_msg for ignored in IGNORED_EXCEPTIONS):
@@ -101,18 +115,27 @@ def before_send(event, hint):
     return event
 
 
-sentry_sdk.init(
-    dsn=env.str("DJANGO_SENTRY_DSN", ""),
-    # Add data like request headers and IP for users,
-    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
-    before_send=before_send,
-    send_default_pii=True,
-    _experiments={
-        # Set continuous_profiling_auto_start to True
-        # to automatically start the profiler on when
-        # possible.
-        "continuous_profiling_auto_start": True,
-    },
-    attach_stacktrace=True,
-    ignore_errors=IGNORED_EXCEPTIONS,
-)
+def initialize_sentry():
+    sentry_dsn = env.str("DJANGO_SENTRY_DSN", "")
+    if not sentry_dsn:
+        return
+
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        # Add data like request headers and IP for users,
+        # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+        before_send=before_send,
+        send_default_pii=True,
+        traces_sample_rate=env.float("DJANGO_SENTRY_TRACES_SAMPLE_RATE", default=0.02),
+        _experiments={
+            # Set continuous_profiling_auto_start to True
+            # to automatically start the profiler on when
+            # possible.
+            "continuous_profiling_auto_start": True,
+        },
+        attach_stacktrace=True,
+        ignore_errors=IGNORED_EXCEPTIONS,
+    )
+
+
+initialize_sentry()

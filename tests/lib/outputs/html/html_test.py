@@ -4,6 +4,7 @@ from io import StringIO
 from mock import MagicMock, patch
 
 from prowler.config.config import prowler_version, timestamp
+from prowler.lib.cli.redact import redact_argv
 from prowler.lib.logger import logger
 from prowler.lib.outputs.html.html import HTML
 from prowler.providers.github.models import GithubAppIdentityInfo
@@ -473,7 +474,7 @@ def get_aws_html_header(args: list) -> str:
                 </div>
                 </li>
                 <li class="list-group-item">
-                <b>Parameters used:</b> {" ".join(args)}
+                <b>Parameters used:</b> {redact_argv(args)}
                 </li>
                 <li class="list-group-item">
                 <b>Date:</b> {timestamp.isoformat()}
@@ -960,6 +961,75 @@ class TestHTML:
         summary = output.get_assessment_summary(provider)
 
         assert summary == image_list_html_assessment_summary
+
+    def test_stackit_get_assessment_summary(self):
+        """Test StackIT HTML assessment summary shows the project ID."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.identity.project_id = "f033ea6d-8697-40eb-a60e-acfa9128480d"
+        provider.identity.project_name = "ProwlerDev"
+        provider.identity.audited_regions = {"eu01", "eu02"}
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "StackIT Assessment Summary" in summary
+        assert "StackIT Credentials" in summary
+        assert "<b>Project ID:</b> f033ea6d-8697-40eb-a60e-acfa9128480d" in summary
+        assert "<b>Project Name:</b> ProwlerDev" in summary
+        assert "<b>Regions:</b> eu01, eu02" in summary
+        assert "<b>Authentication Type:</b> Service Account Key" in summary
+
+    def test_stackit_get_assessment_summary_without_project_name(self):
+        """Project ID is always shown; the Project Name line is omitted when
+        the service account cannot read it from Resource Manager."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "stackit"
+        provider.identity.project_id = "f033ea6d-8697-40eb-a60e-acfa9128480d"
+        provider.identity.project_name = ""
+        provider.identity.audited_regions = {"eu01"}
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "<b>Project ID:</b> f033ea6d-8697-40eb-a60e-acfa9128480d" in summary
+        assert "<b>Project Name:</b>" not in summary
+
+    def test_e2enetworks_get_assessment_summary(self):
+        """Test E2E Networks HTML assessment summary shows project and locations."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "e2enetworks"
+        provider.identity.project_id = 12345
+        provider.identity.locations = ["Delhi", "Chennai"]
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "E2E Networks Assessment Summary" in summary
+        assert "<b>Project ID:</b> 12345" in summary
+        assert "<b>Locations:</b> Delhi, Chennai" in summary
+        assert "API Key + Bearer Token" in summary
+
+    def test_e2enetworks_get_assessment_summary_escapes_locations(self):
+        """Test E2E Networks HTML assessment summary escapes user-controlled locations."""
+        findings = [generate_finding_output()]
+        output = HTML(findings)
+
+        provider = MagicMock()
+        provider.type = "e2enetworks"
+        provider.identity.project_id = 12345
+        provider.identity.locations = ['Delhi"><script>alert(1)</script>']
+
+        summary = output.get_assessment_summary(provider)
+
+        assert "<script>alert(1)</script>" not in summary
+        assert "Delhi&#34;&gt;&lt;script&gt;alert(1)&lt;/script&gt;" in summary
 
     def test_process_markdown_bold_text(self):
         """Test that **text** is converted to <strong>text</strong>"""

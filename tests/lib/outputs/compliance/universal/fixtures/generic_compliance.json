@@ -1,0 +1,185 @@
+{
+  "framework": "GenericCompliance",
+  "name": "Generic Compliance Framework",
+  "version": "1.0",
+  "description": "A generic compliance framework for validating common cloud security best practices using the universal compliance schema. Demonstrates both single-list and multi-provider dict Checks.",
+  "icon": "prowlerthreatscore",
+  "attributes_metadata": [
+    {
+      "key": "Section",
+      "label": "Section",
+      "type": "str",
+      "required": true,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "SubSection",
+      "label": "Sub Section",
+      "type": "str",
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    },
+    {
+      "key": "Type",
+      "label": "Type",
+      "type": "str",
+      "enum": [
+        "automated",
+        "manual"
+      ],
+      "required": false,
+      "output_formats": {
+        "csv": true,
+        "ocsf": true
+      }
+    }
+  ],
+  "outputs": {
+    "table_config": {
+      "group_by": "Section"
+    }
+  },
+  "requirements": [
+    {
+      "id": "gen-1.1",
+      "description": "Ensure IAM password policy requires minimum password length of 14 or greater",
+      "name": "Password Policy Length",
+      "attributes": {
+        "Section": "1. Identity and Access Management",
+        "SubSection": "1.1 Password Policies",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "iam_password_policy_minimum_length_14"
+        ]
+      }
+    },
+    {
+      "id": "gen-1.2",
+      "description": "Ensure multi-factor authentication (MFA) is enabled for all IAM users with console access",
+      "name": "MFA for Console Users",
+      "attributes": {
+        "Section": "1. Identity and Access Management",
+        "SubSection": "1.2 Multi-Factor Authentication",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "iam_user_mfa_enabled_console_access"
+        ],
+        "azure": [
+          "entra_non_privileged_user_has_mfa",
+          "entra_privileged_user_has_mfa"
+        ]
+      }
+    },
+    {
+      "id": "gen-1.3",
+      "description": "Ensure the root account has MFA enabled",
+      "name": "Root Account MFA",
+      "attributes": {
+        "Section": "1. Identity and Access Management",
+        "SubSection": "1.2 Multi-Factor Authentication",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "iam_root_mfa_enabled"
+        ]
+      }
+    },
+    {
+      "id": "gen-2.1",
+      "description": "Ensure audit logging is enabled in all regions",
+      "name": "Audit Logging Multi-Region",
+      "attributes": {
+        "Section": "2. Logging and Monitoring",
+        "SubSection": "2.1 Audit Logging",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_multi_region_enabled"
+        ],
+        "azure": [
+          "monitor_diagnostic_settings_exists"
+        ],
+        "gcp": [
+          "logging_audit_logging_enabled"
+        ]
+      }
+    },
+    {
+      "id": "gen-2.2",
+      "description": "Ensure audit log file validation is enabled",
+      "name": "Audit Log Validation",
+      "attributes": {
+        "Section": "2. Logging and Monitoring",
+        "SubSection": "2.1 Audit Logging",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "cloudtrail_log_file_validation_enabled"
+        ]
+      }
+    },
+    {
+      "id": "gen-3.1",
+      "description": "Ensure no security groups allow ingress from 0.0.0.0/0 to port 22",
+      "name": "SSH Public Access",
+      "attributes": {
+        "Section": "3. Networking",
+        "SubSection": "3.1 Security Groups",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22"
+        ],
+        "azure": [
+          "network_ssh_internet_access_restricted"
+        ],
+        "gcp": [
+          "compute_firewall_ssh_access_from_the_internet_allowed"
+        ]
+      }
+    },
+    {
+      "id": "gen-4.1",
+      "description": "Ensure object storage versioning is enabled",
+      "name": "Object Storage Versioning",
+      "attributes": {
+        "Section": "4. Data Protection",
+        "SubSection": "4.1 Object Storage",
+        "Type": "automated"
+      },
+      "checks": {
+        "aws": [
+          "s3_bucket_object_versioning"
+        ],
+        "gcp": [
+          "storage_bucket_versioning_enabled"
+        ]
+      }
+    },
+    {
+      "id": "gen-5.1",
+      "description": "Review organizational security policies and procedures",
+      "name": "Security Policy Review",
+      "attributes": {
+        "Section": "5. Governance",
+        "SubSection": "5.1 Policies",
+        "Type": "manual"
+      },
+      "checks": {}
+    }
+  ]
+}

@@ -1,18 +1,21 @@
 "use client";
 
+import { DataTableFilterCustom } from "@/components/shadcn/table";
 import { FilterOption } from "@/types";
 
-import { DataTableFilterCustom } from "../ui/table";
 import { CustomSearchInput } from "./custom-search-input";
 
 export interface FilterControlsProps {
   search?: boolean;
   customFilters?: FilterOption[];
+  /** Element rendered at the start of the filter grid (e.g. an active-filter chip) */
+  prependElement?: React.ReactNode;
 }
 
 export const FilterControls = ({
   search = false,
   customFilters,
+  prependElement,
 }: FilterControlsProps) => {
   return (
     <div className="flex flex-col">
@@ -23,7 +26,10 @@ export const FilterControls = ({
       </div>
       {customFilters && customFilters.length > 0 && (
         <>
-          <DataTableFilterCustom filters={customFilters} />
+          <DataTableFilterCustom
+            filters={customFilters}
+            prependElement={prependElement}
+          />
         </>
       )}
     </div>

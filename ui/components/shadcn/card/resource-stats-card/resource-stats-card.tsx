@@ -38,6 +38,15 @@ const cardVariants = cva("", {
   },
 });
 
+// Neutral surface + colored top bar; reads well in both light and dark modes.
+const accentBarByVariant: Record<CardVariant, string> = {
+  [CardVariant.default]: "",
+  [CardVariant.fail]: "bg-bg-fail-primary",
+  [CardVariant.pass]: "bg-bg-pass-primary",
+  [CardVariant.warning]: "bg-bg-warning-primary",
+  [CardVariant.info]: "bg-bg-data-info",
+};
+
 export interface ResourceStatsCardProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "color">,
     VariantProps<typeof cardVariants> {
@@ -66,6 +75,11 @@ export interface ResourceStatsCardProps
   // Vertical accent line color (optional, auto-determined from variant)
   accentColor?: string;
 
+  // Horizontal top accent bar. When set, the card renders on a neutral surface
+  // with a colored bar across the top using design tokens. Prefer this over
+  // `variant` when the surface needs to read well in both light and dark modes.
+  accent?: CardVariant;
+
   // Sub-statistics array (flexible items)
   stats?: StatItem[];
 
@@ -82,6 +96,7 @@ export const ResourceStatsCard = ({
   badge,
   label,
   accentColor,
+  accent,
   stats = [],
   variant = CardVariant.default,
   size = "md",
@@ -93,7 +108,14 @@ export const ResourceStatsCard = ({
   // Resolve size to ensure it's not null (CVA can return null but we need a defined value)
   const resolvedSize = size || "md";
 
-  // If containerless, render without outer wrapper
+  // `accent` takes precedence: it forces a neutral surface and a colored top bar,
+  // so the card reads well in both themes regardless of `variant`.
+  const resolvedVariant = accent ? CardVariant.default : variant;
+  const accentClassName = accent ? accentBarByVariant[accent] : "";
+
+  // If containerless, render without outer wrapper. `accent` is ignored in this
+  // mode because the caller supplies the container; consumers that need the
+  // accent bar can render it themselves or drop containerless.
   if (containerless) {
     return (
       <div
@@ -129,9 +151,25 @@ export const ResourceStatsCard = ({
     <Card
       ref={ref}
       variant="inner"
-      className={cn(cardVariants({ variant, size }), "flex-col", className)}
+      className={cn(
+        cardVariants({ variant: resolvedVariant, size }),
+        "flex-col",
+        accent &&
+          "border-border-neutral-secondary bg-bg-neutral-secondary relative overflow-hidden",
+        className,
+      )}
       {...props}
     >
+      {accent && (
+        <span
+          aria-hidden
+          data-slot="resource-stats-card-accent"
+          className={cn(
+            "absolute inset-x-0 top-0 h-1 rounded-t-[inherit]",
+            accentClassName,
+          )}
+        />
+      )}
       {header && <ResourceStatsCardHeader {...header} size={resolvedSize} />}
       {emptyState ? (
         <div className="flex h-[51px] w-full flex-col items-center justify-center">

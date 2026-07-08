@@ -4,8 +4,6 @@ on:
   pull_request:
     branches:
       - 'master'
-      - 'v3'
-      - 'v4.*'
       - 'v5.*'
     types:
       - 'opened'
@@ -16,6 +14,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   conventional-commit-check:
     runs-on: ubuntu-latest
@@ -25,6 +25,11 @@ jobs:
       pull-requests: read
 
     steps:
+      - name: Harden the runner (Audit all outbound calls)
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: audit
+
       - name: Check PR title format
         uses: agenthunt/conventional-commit-checker-action@f1823f632e95a64547566dcd2c7da920e67117ad # v2.0.1
         with:

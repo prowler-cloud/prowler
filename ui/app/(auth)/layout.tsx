@@ -2,14 +2,15 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
-import { redirect } from "next/navigation";
-import { ReactNode } from "react";
+import { connection } from "next/server";
+import { ReactNode, Suspense } from "react";
 
-import { auth } from "@/auth.config";
-import { NavigationProgress, Toaster } from "@/components/ui";
-import { fontSans } from "@/config/fonts";
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
+import { NavigationProgress, Toaster } from "@/components/shadcn";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
+import { readGatedEnv } from "@/lib/integrations";
 
 import { Providers } from "../providers";
 
@@ -31,34 +32,42 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const session = await auth();
+  // Force dynamic rendering so the read below resolves from the container env
+  // at request time rather than being snapshotted at build (independent of the
+  // <RuntimePublicConfig/> island's own connection() call).
+  await connection();
 
-  if (session?.user) {
-    redirect("/");
-  }
+  const gtmId = readGatedEnv(
+    "UI_GOOGLE_TAG_MANAGER_ENABLE",
+    "UI_GOOGLE_TAG_MANAGER_ID",
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
+  );
 
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <NavigationProgress />
+          <Suspense>
+            <NavigationProgress />
+          </Suspense>
           {children}
           <Toaster />
-          <GoogleTagManager
-            gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
-          />
+          {gtmId && <GoogleTagManager gtmId={gtmId} />}
         </Providers>
       </body>
     </html>

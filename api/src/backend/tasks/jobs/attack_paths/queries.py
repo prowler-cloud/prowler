@@ -2,9 +2,6 @@
 from tasks.jobs.attack_paths.config import (
     INTERNET_NODE_LABEL,
     PROWLER_FINDING_LABEL,
-    PROVIDER_ELEMENT_ID_PROPERTY,
-    PROVIDER_ID_PROPERTY,
-    PROVIDER_RESOURCE_LABEL,
 )
 
 
@@ -22,7 +19,6 @@ def render_cypher_template(template: str, replacements: dict[str, str]) -> str:
 
 
 # Findings queries (used by findings.py)
-# ---------------------------------------
 
 ADD_RESOURCE_LABEL_TEMPLATE = """
     MATCH (account:__ROOT_LABEL__ {id: $provider_uid})-->(r)
@@ -33,69 +29,62 @@ ADD_RESOURCE_LABEL_TEMPLATE = """
 """
 
 INSERT_FINDING_TEMPLATE = f"""
-    MATCH (account:__ROOT_NODE_LABEL__ {{id: $provider_uid}})
     UNWIND $findings_data AS finding_data
 
-    OPTIONAL MATCH (account)-->(resource_by_uid:__RESOURCE_LABEL__)
-        WHERE resource_by_uid.__NODE_UID_FIELD__ = finding_data.resource_uid
-    WITH account, finding_data, resource_by_uid
-
-    OPTIONAL MATCH (account)-->(resource_by_id:__RESOURCE_LABEL__)
+    OPTIONAL MATCH (resource_by_uid:__RESOURCE_LABEL__ {{__NODE_UID_FIELD__: finding_data.resource_uid}})
+    OPTIONAL MATCH (resource_by_id:__RESOURCE_LABEL__ {{id: finding_data.resource_uid}})
         WHERE resource_by_uid IS NULL
-            AND resource_by_id.id = finding_data.resource_uid
-    WITH account, finding_data, COALESCE(resource_by_uid, resource_by_id) AS resource
-        WHERE resource IS NOT NULL
+    OPTIONAL MATCH (resource_by_short:__RESOURCE_LABEL__ {{id: finding_data.resource_short_uid}})
+        WHERE resource_by_uid IS NULL AND resource_by_id IS NULL
+    WITH finding_data,
+         resource_by_uid,
+         resource_by_id,
+         head(collect(resource_by_short)) AS resource_by_short
+    WITH finding_data,
+         COALESCE(resource_by_uid, resource_by_id, resource_by_short) AS resource
 
-    MERGE (finding:{PROWLER_FINDING_LABEL} {{id: finding_data.id}})
-        ON CREATE SET
-            finding.id = finding_data.id,
-            finding.uid = finding_data.uid,
-            finding.inserted_at = finding_data.inserted_at,
-            finding.updated_at = finding_data.updated_at,
-            finding.first_seen_at = finding_data.first_seen_at,
-            finding.scan_id = finding_data.scan_id,
-            finding.delta = finding_data.delta,
-            finding.status = finding_data.status,
-            finding.status_extended = finding_data.status_extended,
-            finding.severity = finding_data.severity,
-            finding.check_id = finding_data.check_id,
-            finding.check_title = finding_data.check_title,
-            finding.muted = finding_data.muted,
-            finding.muted_reason = finding_data.muted_reason,
-            finding.provider_uid = $provider_uid,
-            finding.firstseen = timestamp(),
-            finding.lastupdated = $last_updated,
-            finding._module_name = 'cartography:prowler',
-            finding._module_version = $prowler_version
-        ON MATCH SET
-            finding.status = finding_data.status,
-            finding.status_extended = finding_data.status_extended,
-            finding.lastupdated = $last_updated
+    FOREACH (_ IN CASE WHEN resource IS NOT NULL THEN [1] ELSE [] END |
+        MERGE (finding:{PROWLER_FINDING_LABEL} {{id: finding_data.id}})
+            ON CREATE SET
+                finding.id = finding_data.id,
+                finding.uid = finding_data.uid,
+                finding.inserted_at = finding_data.inserted_at,
+                finding.updated_at = finding_data.updated_at,
+                finding.first_seen_at = finding_data.first_seen_at,
+                finding.scan_id = finding_data.scan_id,
+                finding.delta = finding_data.delta,
+                finding.status = finding_data.status,
+                finding.status_extended = finding_data.status_extended,
+                finding.severity = finding_data.severity,
+                finding.check_id = finding_data.check_id,
+                finding.check_title = finding_data.check_title,
+                finding.muted = finding_data.muted,
+                finding.muted_reason = finding_data.muted_reason,
+                finding.firstseen = timestamp(),
+                finding.lastupdated = $last_updated,
+                finding._module_name = 'cartography:prowler',
+                finding._module_version = $prowler_version
+            ON MATCH SET
+                finding.status = finding_data.status,
+                finding.status_extended = finding_data.status_extended,
+                finding.lastupdated = $last_updated
+        MERGE (resource)-[rel:HAS_FINDING]->(finding)
+            ON CREATE SET
+                rel.firstseen = timestamp(),
+                rel.lastupdated = $last_updated,
+                rel._module_name = 'cartography:prowler',
+                rel._module_version = $prowler_version
+            ON MATCH SET
+                rel.lastupdated = $last_updated
+    )
 
-    MERGE (resource)-[rel:HAS_FINDING]->(finding)
-        ON CREATE SET
-            rel.provider_uid = $provider_uid,
-            rel.firstseen = timestamp(),
-            rel.lastupdated = $last_updated,
-            rel._module_name = 'cartography:prowler',
-            rel._module_version = $prowler_version
-        ON MATCH SET
-            rel.lastupdated = $last_updated
-"""
+    WITH sum(CASE WHEN resource IS NOT NULL THEN 1 ELSE 0 END) AS merged_count,
+         sum(CASE WHEN resource IS NULL THEN 1 ELSE 0 END) AS dropped_count
 
-CLEANUP_FINDINGS_TEMPLATE = f"""
-    MATCH (finding:{PROWLER_FINDING_LABEL} {{provider_uid: $provider_uid}})
-        WHERE finding.lastupdated < $last_updated
-
-    WITH finding LIMIT $batch_size
-
-    DETACH DELETE finding
-
-    RETURN COUNT(finding) AS deleted_findings_count
+    RETURN merged_count, dropped_count
 """
 
 # Internet queries (used by internet.py)
-# ---------------------------------------
 
 CREATE_INTERNET_NODE = f"""
     MERGE (internet:{INTERNET_NODE_LABEL} {{id: 'Internet'}})
@@ -125,8 +114,8 @@ CREATE_CAN_ACCESS_RELATIONSHIPS_TEMPLATE = f"""
     RETURN COUNT(r) AS relationships_merged
 """
 
-# Sync queries (used by sync.py)
-# -------------------------------
+# Sync queries (used by sync.py to fetch from the cartography temp Neo4j DB)
+# The write side of sync lives in each sink (`api/attack_paths/sink/`).
 
 NODE_FETCH_QUERY = """
     MATCH (n)
@@ -149,20 +138,4 @@ RELATIONSHIPS_FETCH_QUERY = """
            properties(r) AS props
     ORDER BY internal_id
     LIMIT $batch_size
-"""
-
-NODE_SYNC_TEMPLATE = f"""
-    UNWIND $rows AS row
-    MERGE (n:__NODE_LABELS__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}})
-    SET n += row.props
-    SET n.{PROVIDER_ID_PROPERTY} = $provider_id
-"""
-
-RELATIONSHIP_SYNC_TEMPLATE = f"""
-    UNWIND $rows AS row
-    MATCH (s:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.start_element_id}})
-    MATCH (t:{PROVIDER_RESOURCE_LABEL} {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.end_element_id}})
-    MERGE (s)-[r:__REL_TYPE__ {{{PROVIDER_ELEMENT_ID_PROPERTY}: row.provider_element_id}}]->(t)
-    SET r += row.props
-    SET r.{PROVIDER_ID_PROPERTY} = $provider_id
 """

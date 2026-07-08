@@ -1,0 +1,137 @@
+---
+title: "Vercel Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.21.0" />
+
+Prowler for Vercel authenticates using an **API Token**.
+
+## Required Permissions
+
+Prowler requires read-only access to Vercel teams, projects, deployments, domains, and security settings. The API Token must have access to the target team scope.
+
+<Note>
+Vercel API Tokens inherit the permissions of the user that created them. Ensure the user has at least a **Viewer** role on the team to be scanned.
+</Note>
+
+| Resource | Access | Description |
+|----------|--------|-------------|
+| Teams | Read | Required to list teams, members, and SSO configuration |
+| Projects | Read | Required to list projects, environment variables, and deployment protection settings |
+| Deployments | Read | Required to list deployments and protection status |
+| Domains | Read | Required to list domains, DNS records, and SSL certificates |
+| Firewall | Read | Required to read WAF rules, rate limiting, and IP blocking configuration |
+
+---
+
+## API Token
+
+### Step 1: Create an API Token
+
+1. Log into the [Vercel Dashboard](https://vercel.com/dashboard).
+2. Click the account avatar in the bottom-left corner and select "Settings".
+
+    ![Vercel Account Settings](/user-guide/providers/vercel/images/vercel-account-settings.png)
+
+3. In the left sidebar, click "Tokens".
+4. Under **Create Token**, enter a descriptive name (e.g., "Prowler Scan").
+5. Select the **Scope** — choose the team to be scanned or "Full Account" for all teams.
+6. Set an **Expiration** date, or select "No expiration" for continuous scanning.
+7. Click **Create**.
+
+    ![Create Vercel Token](/user-guide/providers/vercel/images/vercel-create-token.png)
+
+8. Copy the token immediately.
+
+<Warning>
+Vercel only displays the token once. Copy it immediately and store it securely. If lost, a new token must be created.
+</Warning>
+
+### Step 2: Provide the Token to Prowler
+
+Export the token as an environment variable:
+
+```console
+export VERCEL_TOKEN="your-api-token-here"
+prowler vercel
+```
+
+---
+
+## Team Scoping (Optional)
+
+By default, Prowler auto-discovers all teams the authenticated user belongs to and scans each one. To restrict the scan to a specific team, provide the Team ID.
+
+### Locate the Team ID
+
+1. In the Vercel Dashboard, navigate to "Settings" for the target team.
+2. Scroll down to the **Team ID** section and copy the value.
+
+    ![Vercel Team ID](/user-guide/providers/vercel/images/vercel-team-id.png)
+
+### Provide the Team ID to Prowler
+
+Export the Team ID as an environment variable:
+
+```console
+export VERCEL_TOKEN="your-api-token-here"
+export VERCEL_TEAM="team_yourteamid"
+prowler vercel
+```
+
+---
+
+## Environment Variables Reference
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VERCEL_TOKEN` | Yes | Vercel API Bearer Token |
+| `VERCEL_TEAM` | No | Team ID or slug to scope the scan to a single team |
+
+---
+
+## Best Practices
+
+- **Create a dedicated token for Prowler** — Avoid reusing tokens shared with other integrations.
+- **Use environment variables** — Never hardcode credentials in scripts or commands.
+- **Scope tokens to specific teams** — When possible, limit token access to the team being scanned.
+- **Set token expiration** — Use time-limited tokens and rotate them regularly.
+- **Use least privilege** — Assign the Viewer role to the user creating the token unless write access is explicitly needed.
+
+---
+
+## Troubleshooting
+
+### "Vercel credentials not found" Error
+
+This error occurs when no API Token is provided. Ensure the `VERCEL_TOKEN` environment variable is set:
+
+```console
+export VERCEL_TOKEN="your-api-token-here"
+```
+
+### "Invalid or expired Vercel API token" Error
+
+- Verify the API Token is correct and has not expired.
+- Check that the token has not been revoked in the Vercel Dashboard under "Settings" > "Tokens".
+
+### "Insufficient permissions" Error
+
+- Ensure the user that created the token has at least a **Viewer** role on the target team.
+- If scanning a specific team, verify the token scope includes that team.
+
+### "Team not found or not accessible" Error
+
+This error occurs when the provided `VERCEL_TEAM` value does not match an accessible team. Verify the Team ID is correct:
+
+1. Navigate to the team "Settings" in the Vercel Dashboard.
+2. Copy the exact **Team ID** value from the settings page.
+
+### "Rate limit exceeded" Error
+
+Vercel applies rate limits to API requests. Prowler automatically retries rate-limited requests up to 3 times with exponential backoff. If this error persists:
+
+- Reduce the number of projects being scanned in a single run using the `--project` argument.
+- Wait a few minutes and retry the scan.

@@ -1,24 +1,8 @@
 import base64
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import update_last_login
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema_field
-from jwt.exceptions import InvalidKeyError
-from rest_framework.reverse import reverse
-from rest_framework.validators import UniqueTogetherValidator
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
-from rest_framework_json_api.serializers import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-
+import yaml
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -72,7 +56,23 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
+from drf_spectacular.utils import extend_schema_field
+from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from rest_framework.reverse import reverse
+from rest_framework.validators import UniqueTogetherValidator
+from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
+from rest_framework_json_api.serializers import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Base
 
@@ -1397,6 +1397,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "metadata",
             "details",
             "partition",
         ]
@@ -1404,6 +1405,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
         }
@@ -1529,6 +1531,32 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
+KUBERNETES_KUBECONFIG_EXEC_ERROR = (
+    "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud "
+    "for security reasons."
+)
+KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
+
+
+def kubeconfig_contains_exec_auth(kubeconfig: dict) -> bool:
+    users = kubeconfig.get("users", [])
+    if not isinstance(users, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+    for user_entry in users:
+        if not isinstance(user_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        user = user_entry.get("user", {})
+        if not isinstance(user, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if "exec" in user:
+            return True
+
+    return False
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
@@ -1543,6 +1571,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
                 serializer = GoogleWorkspaceProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.OKTA.value:
+                serializer = OktaProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1573,6 +1603,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = OpenStackCloudsYamlProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IMAGE.value:
                 serializer = ImageProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.VERCEL.value:
+                serializer = VercelProviderSecret(data=secret)
             else:
                 raise serializers.ValidationError(
                     {"provider": f"Provider type not supported {provider_type}"}
@@ -1686,6 +1718,15 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class OktaProviderSecret(serializers.Serializer):
+    okta_client_id = serializers.CharField()
+    okta_private_key = serializers.CharField()
+    okta_scopes = serializers.ListField(child=serializers.CharField(), required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
 class MongoDBAtlasProviderSecret(serializers.Serializer):
     atlas_public_key = serializers.CharField()
     atlas_private_key = serializers.CharField()
@@ -1696,6 +1737,22 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    def validate_kubeconfig_content(self, kubeconfig_content):
+        try:
+            kubeconfig = yaml.safe_load(kubeconfig_content)
+        except yaml.YAMLError as exc:
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_INVALID_ERROR
+            ) from exc
+
+        if not isinstance(kubeconfig, dict):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if kubeconfig_contains_exec_auth(kubeconfig):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_EXEC_ERROR)
+
+        return kubeconfig_content
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1777,6 +1834,13 @@ class ImageProviderSecret(serializers.Serializer):
                     "registry_username is required when registry_password is provided."
                 )
         return attrs
+
+
+class VercelProviderSecret(serializers.Serializer):
+    api_token = serializers.CharField()
+
+    class Meta:
+        resource_name = "provider-secrets"
 
 
 class AlibabaCloudProviderSecret(serializers.Serializer):
@@ -1959,7 +2023,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
         return value
 
     def validate_expires_at(self, value):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if value and value < now + timedelta(hours=24):
             raise ValidationError(
                 "Expiry date must be at least 24 hours in the future."
@@ -2713,11 +2777,11 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
                 )
             config_serializer = JiraConfigSerializer
             # Create non-editable configuration for JIRA integration
-            default_jira_issue_types = ["Task"]
+            # issue_types will be populated per project when connection is tested
             configuration.update(
                 {
                     "projects": {},
-                    "issue_types": default_jira_issue_types,
+                    "issue_types": {},
                     "domain": credentials.get("domain"),
                 }
             )
@@ -2932,13 +2996,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return representation
 
 
+class IntegrationJiraIssueTypesSerializer(BaseSerializerV1):
+    """
+    Serializer for Jira issue types response.
+    """
+
+    project_key = serializers.CharField(read_only=True)
+    issue_types = serializers.ListField(child=serializers.CharField(), read_only=True)
+
+    class JSONAPIMeta:
+        resource_name = "jira-issue-types"
+
+
 class IntegrationJiraDispatchSerializer(BaseSerializerV1):
     """
     Serializer for dispatching findings to JIRA integration.
     """
 
     project_key = serializers.CharField(required=True)
-    issue_type = serializers.ChoiceField(required=True, choices=["Task"])
+    issue_type = serializers.CharField(required=True)
 
     class JSONAPIMeta:
         resource_name = "integrations-jira-dispatches"
@@ -2964,6 +3040,23 @@ class IntegrationJiraDispatchSerializer(BaseSerializerV1):
                 {
                     "project_key": "The given project key is not available for this JIRA integration. Refresh the "
                     "connection if this is an error."
+                }
+            )
+
+        issue_type = attrs.get("issue_type")
+        available_issue_types = integration_instance.configuration.get(
+            "issue_types", {}
+        )
+        # Handle old format where issue_types was a flat list (e.g., ["Task"])
+        if not isinstance(available_issue_types, dict):
+            available_issue_types = {}
+        project_issue_types = available_issue_types.get(project_key, [])
+        if project_issue_types and issue_type not in project_issue_types:
+            raise ValidationError(
+                {
+                    "issue_type": f"The issue type '{issue_type}' is not available for project '{project_key}'. "
+                    f"Available types: {', '.join(project_issue_types)}. "
+                    "Refresh the connection if this is an error."
                 }
             )
 
@@ -3097,6 +3190,9 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 
 class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
+    callback_url = serializers.CharField(
+        required=False, allow_blank=True, max_length=2048
+    )
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"
@@ -4147,6 +4243,7 @@ class FindingGroupSerializer(BaseSerializerV1):
     check_description = serializers.CharField(required=False, allow_null=True)
     severity = serializers.CharField()
     status = serializers.CharField()
+    muted = serializers.BooleanField()
     impacted_providers = serializers.ListField(
         child=serializers.CharField(), required=False
     )
@@ -4154,9 +4251,25 @@ class FindingGroupSerializer(BaseSerializerV1):
     resources_total = serializers.IntegerField()
     pass_count = serializers.IntegerField()
     fail_count = serializers.IntegerField()
+    manual_count = serializers.IntegerField()
+    pass_muted_count = serializers.IntegerField()
+    fail_muted_count = serializers.IntegerField()
+    manual_muted_count = serializers.IntegerField()
     muted_count = serializers.IntegerField()
     new_count = serializers.IntegerField()
     changed_count = serializers.IntegerField()
+    new_fail_count = serializers.IntegerField()
+    new_fail_muted_count = serializers.IntegerField()
+    new_pass_count = serializers.IntegerField()
+    new_pass_muted_count = serializers.IntegerField()
+    new_manual_count = serializers.IntegerField()
+    new_manual_muted_count = serializers.IntegerField()
+    changed_fail_count = serializers.IntegerField()
+    changed_fail_muted_count = serializers.IntegerField()
+    changed_pass_count = serializers.IntegerField()
+    changed_pass_muted_count = serializers.IntegerField()
+    changed_manual_count = serializers.IntegerField()
+    changed_manual_muted_count = serializers.IntegerField()
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     failing_since = serializers.DateTimeField(required=False, allow_null=True)
@@ -4170,16 +4283,21 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
     Serializer for Finding Group Resources - resources within a finding group.
 
     Returns individual resources with their current status, severity,
-    and timing information.
+    and timing information. Orphan findings (without any resource) expose the
+    finding id as `id` so the row stays identifiable in the UI.
     """
 
-    id = serializers.UUIDField(source="resource_id")
+    id = serializers.UUIDField(source="row_id")
     resource = serializers.SerializerMethodField()
     provider = serializers.SerializerMethodField()
+    finding_id = serializers.UUIDField()
     status = serializers.CharField()
     severity = serializers.CharField()
+    muted = serializers.BooleanField()
+    delta = serializers.CharField(required=False, allow_null=True)
     first_seen_at = serializers.DateTimeField(required=False, allow_null=True)
     last_seen_at = serializers.DateTimeField(required=False, allow_null=True)
+    muted_reason = serializers.CharField(required=False, allow_null=True)
 
     class JSONAPIMeta:
         resource_name = "finding-group-resources"
@@ -4193,6 +4311,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
                 "service": {"type": "string"},
                 "region": {"type": "string"},
                 "type": {"type": "string"},
+                "resource_group": {"type": "string"},
             },
         }
     )
@@ -4204,6 +4323,7 @@ class FindingGroupResourceSerializer(BaseSerializerV1):
             "service": obj.get("resource_service", ""),
             "region": obj.get("resource_region", ""),
             "type": obj.get("resource_type", ""),
+            "resource_group": obj.get("resource_group", ""),
         }
 
     @extend_schema_field(

@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_block_o365_elevated_insider_risk",
+  "CheckTitle": "Conditional Access policy blocks Office 365 access for users with elevated insider risk",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "A Conditional Access policy configured to **block** Office 365 access for users flagged with **elevated insider risk** by Microsoft Purview Adaptive Protection.\n\nThis control uses behavioral signals to restrict access when a user's risk level indicates potential insider threat activity.",
+  "Risk": "Without a policy blocking Office 365 for elevated insider risk users, compromised or malicious insiders can continue accessing email, SharePoint, OneDrive, and Teams.\n\nThis may lead to **data exfiltration**, unauthorized sharing of sensitive information, or tampering with critical business communications.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/purview/insider-risk-management-adaptive-protection",
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/how-to-policy-insider-risk"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center https://entra.microsoft.com.\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Click **New policy**.\n4. Under **Users**, select **All users**.\n5. Under **Target resources** > **Cloud apps**, select **Office 365**.\n6. Under **Conditions** > **Insider risk**, select **Elevated**.\n7. Under **Grant**, select **Block access**.\n8. Set the policy to **On** and click **Create**.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a Conditional Access policy to **block** Office 365 access for users with **elevated insider risk** levels. This leverages Microsoft Purview Adaptive Protection signals to dynamically restrict access based on user behavior analysis.\n\nEnsure Insider Risk Management and Adaptive Protection are configured in Microsoft Purview as prerequisites.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_block_o365_elevated_insider_risk"
+    }
+  },
+  "Categories": [
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft 365 E5 or E5 Compliance license with Insider Risk Management configured and Adaptive Protection enabled in Microsoft Purview."
+}

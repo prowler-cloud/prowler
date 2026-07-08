@@ -22,6 +22,8 @@ const SIZE_CLASSES = {
 
 type ModalSize = keyof typeof SIZE_CLASSES;
 
+const preventInitialAutoFocus = (event: Event) => event.preventDefault();
+
 interface ModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +32,14 @@ interface ModalProps {
   children: ReactNode;
   size?: ModalSize;
   className?: string;
+  onOpenAutoFocus?: (event: Event) => void;
+  /**
+   * Cap the dialog at 90dvh and scroll overflowing content, instead of
+   * letting it grow past the viewport. Opt-in per modal (e.g. for content
+   * whose height depends on user input) rather than a DS-wide default, so
+   * existing modals keep their current sizing.
+   */
+  scrollable?: boolean;
 }
 
 export const Modal = ({
@@ -40,12 +50,18 @@ export const Modal = ({
   children,
   size = "xl",
   className,
+  onOpenAutoFocus = preventInitialAutoFocus,
+  scrollable = false,
 }: ModalProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        onOpenAutoFocus={onOpenAutoFocus}
+        // Radix requires an accessible description; opt out explicitly when none is provided.
+        {...(description ? {} : { "aria-describedby": undefined })}
         className={cn(
-          "border-border-neutral-secondary bg-bg-neutral-secondary",
+          "border-text-neutral-tertiary bg-bg-neutral-secondary rounded-[24px] border shadow-[0_0_200px_0_rgba(15,44,46,0.50)]",
+          scrollable && "max-h-[90dvh] overflow-y-auto",
           SIZE_CLASSES[size],
           className,
         )}
@@ -54,7 +70,7 @@ export const Modal = ({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             {description && (
-              <DialogDescription className="text-small text-gray-600 dark:text-gray-300">
+              <DialogDescription className="text-sm text-gray-600 dark:text-gray-300">
                 {description}
               </DialogDescription>
             )}

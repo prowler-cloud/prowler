@@ -7,81 +7,219 @@ import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { VerticalDotsIcon } from "@/components/icons";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isFindingGroupMuted } from "@/lib/findings-groups";
+import { getOptionalText } from "@/lib/utils";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
+import type { ProviderType } from "@/types/providers";
 
+import { canMuteFindingGroup } from "./finding-group-selection";
+import type { FindingTriageContext } from "./finding-note-modal";
+import { FindingNoteActionItem } from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 
 export interface FindingRowData {
   id: string;
-  attributes: {
+  attributes?: {
     muted?: boolean;
     check_metadata?: {
       checktitle?: string;
     };
+  };
+  triage?: FindingTriageSummary;
+  relationships?: {
+    resource?: {
+      attributes?: {
+        name?: string;
+      };
+    };
+    provider?: {
+      attributes?: {
+        alias?: string;
+        provider?: string;
+      };
+    };
+  };
+  // Flat shape for FindingGroupRow
+  rowType?: string;
+  checkId?: string;
+  checkTitle?: string;
+  muted?: boolean;
+  mutedCount?: number;
+  resourcesFail?: number;
+  resourcesTotal?: number;
+}
+
+/**
+ * Extract muted state and title from either FindingProps (nested attributes)
+ * or FindingGroupRow (flat shape with rowType discriminant).
+ */
+function extractRowInfo(data: FindingRowData) {
+  if (data.rowType === "group") {
+    const isMuted = isFindingGroupMuted({
+      muted: data.muted,
+      mutedCount: data.mutedCount ?? 0,
+      resourcesFail: data.resourcesFail ?? 0,
+      resourcesTotal: data.resourcesTotal ?? 0,
+    });
+
+    return {
+      isMuted,
+      canMute: canMuteFindingGroup({
+        resourcesFail: data.resourcesFail ?? 0,
+        resourcesTotal: data.resourcesTotal ?? 0,
+        muted: data.muted,
+        mutedCount: data.mutedCount ?? 0,
+      }),
+      title: data.checkTitle || "Security Finding",
+    };
+  }
+  return {
+    isMuted: data.attributes?.muted ?? false,
+    canMute: !(data.attributes?.muted ?? false),
+    title: data.attributes?.check_metadata?.checktitle || "Security Finding",
   };
 }
 
 interface DataTableRowActionsProps<T extends FindingRowData> {
   row: Row<T>;
   onMuteComplete?: (findingIds: string[]) => void;
+  findingContext?: FindingTriageContext;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 export function DataTableRowActions<T extends FindingRowData>({
   row,
   onMuteComplete,
+  findingContext,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
+  const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
+  const [mutePreparationError, setMutePreparationError] = useState<
+    string | null
+  >(null);
 
-  const isMuted = finding.attributes.muted;
+  const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
+  const resolvedFindingContext = findingContext ?? {
+    title: findingTitle,
+    resource: getOptionalText(
+      finding.relationships?.resource?.attributes?.name,
+    ),
+    provider: getOptionalText(
+      finding.relationships?.provider?.attributes?.alias,
+    ),
+    providerType: getOptionalText(
+      finding.relationships?.provider?.attributes?.provider,
+    ) as ProviderType | undefined,
+  };
 
   // Get selection context - if there are other selected rows, include them
   const selectionContext = useContext(FindingsSelectionContext);
-  const { selectedFindingIds, clearSelection } = selectionContext || {
-    selectedFindingIds: [],
-    clearSelection: () => {},
-  };
+  const { selectedFindingIds, clearSelection, resolveMuteIds } =
+    selectionContext || {
+      selectedFindingIds: [],
+      clearSelection: () => {},
+    };
 
-  const findingTitle =
-    finding.attributes.check_metadata?.checktitle || "Security Finding";
+  const [resolvedIds, setResolvedIds] = useState<string[]>([]);
+  const [isResolving, setIsResolving] = useState(false);
+
+  // For group rows, use checkId (for the resolve API); for regular findings, use id (UUID).
+  const isGroup = finding.rowType === "group";
+  const muteKey = isGroup ? (finding.checkId ?? finding.id) : finding.id;
 
   // If current finding is selected and there are multiple selections, mute all
   // Otherwise, just mute this single finding
-  const isCurrentSelected = selectedFindingIds.includes(finding.id);
+  const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
-  const getMuteIds = (): string[] => {
+  const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
-      // Mute all selected including current
       return selectedFindingIds;
     }
-    // Just mute the current finding
-    return [finding.id];
+    return [muteKey];
   };
 
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    const ids = getMuteIds();
+    const ids = getDisplayIds();
     if (ids.length > 1) {
-      return `Mute ${ids.length} Findings`;
+      return `Mute ${ids.length} ${isGroup ? "Finding Groups" : "Findings"}`;
     }
-    return "Mute Finding";
+    return isGroup ? "Mute Finding Group" : "Mute Finding";
+  };
+
+  const handleMuteModalOpenChange = (
+    nextOpen: boolean | ((previousOpen: boolean) => boolean),
+  ) => {
+    const resolvedOpen =
+      typeof nextOpen === "function" ? nextOpen(isMuteModalOpen) : nextOpen;
+    setIsMuteModalOpen(resolvedOpen);
+
+    if (!resolvedOpen) {
+      setIsPreparingMuteModal(false);
+      setMutePreparationError(null);
+      setResolvedIds([]);
+    }
+  };
+
+  const handleMuteClick = async () => {
+    const displayIds = getDisplayIds();
+
+    if (resolveMuteIds) {
+      setResolvedIds([]);
+      setMutePreparationError(null);
+      setIsPreparingMuteModal(true);
+      setIsMuteModalOpen(true);
+      setIsResolving(true);
+      try {
+        const ids = await resolveMuteIds(displayIds);
+        setResolvedIds(ids);
+        setMutePreparationError(
+          ids.length === 0
+            ? "No findings could be resolved for this group. Try refreshing the page and trying again."
+            : null,
+        );
+      } catch {
+        setMutePreparationError(
+          "We couldn't prepare this mute action. Please try again.",
+        );
+      } finally {
+        setIsPreparingMuteModal(false);
+        setIsResolving(false);
+      }
+    } else {
+      // Regular findings — IDs are already valid finding UUIDs
+      setResolvedIds(displayIds);
+      setIsMuteModalOpen(true);
+    }
   };
 
   const handleMuteComplete = () => {
     // Always clear selection when a finding is muted because:
-    // 1. If the muted finding was selected, its index now points to a different finding
-    // 2. rowSelection uses indices (0, 1, 2...) not IDs, so after refresh the wrong findings would appear selected
+    // rowSelection uses indices (0, 1, 2...) not IDs, so after refresh
+    // the wrong findings would appear selected
     clearSelection();
+    setResolvedIds([]);
     if (onMuteComplete) {
-      onMuteComplete(getMuteIds());
+      onMuteComplete(getDisplayIds());
       return;
     }
 
@@ -90,55 +228,59 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   return (
     <>
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={finding.id}
-        findingTitle={findingTitle}
-      />
+      {!isGroup && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          findingId={finding.id}
+          findingTitle={findingTitle}
+        />
+      )}
 
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
-        onOpenChange={setIsMuteModalOpen}
-        findingIds={getMuteIds()}
+        onOpenChange={handleMuteModalOpenChange}
+        findingIds={resolvedIds}
         onComplete={handleMuteComplete}
+        isBulkOperation={finding.rowType === "group"}
+        isPreparing={isPreparingMuteModal}
+        preparationError={mutePreparationError}
       />
 
-      <div className="flex items-center justify-end">
-        <ActionDropdown
-          trigger={
-            <button
-              type="button"
-              aria-label="Finding actions"
-              className="hover:bg-bg-neutral-tertiary rounded-md p-1 transition-colors"
-            >
-              <VerticalDotsIcon
-                size={20}
-                className="text-text-neutral-secondary"
-              />
-            </button>
-          }
-          ariaLabel="Finding actions"
-        >
+      <div
+        className="flex items-center justify-end"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <ActionDropdown ariaLabel="Finding actions">
+          {!isGroup && (
+            <FindingNoteActionItem
+              triage={finding.triage}
+              findingContext={resolvedFindingContext}
+              onTriageUpdateAction={onTriageUpdateAction}
+              onTriageNoteLoadAction={onTriageNoteLoadAction}
+            />
+          )}
           <ActionDropdownItem
             icon={
               isMuted ? (
                 <VolumeOff className="size-5" />
+              ) : isResolving ? (
+                <Spinner className="size-5" />
               ) : (
                 <VolumeX className="size-5" />
               )
             }
-            label={getMuteLabel()}
-            disabled={isMuted}
-            onSelect={() => {
-              setIsMuteModalOpen(true);
-            }}
+            label={isResolving ? "Resolving..." : getMuteLabel()}
+            disabled={!canMute || isResolving}
+            onSelect={handleMuteClick}
           />
-          <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
-          />
+          {!isGroup && (
+            <ActionDropdownItem
+              icon={<JiraIcon size={20} />}
+              label="Send to Jira"
+              onSelect={() => setIsJiraModalOpen(true)}
+            />
+          )}
         </ActionDropdown>
       </div>
     </>

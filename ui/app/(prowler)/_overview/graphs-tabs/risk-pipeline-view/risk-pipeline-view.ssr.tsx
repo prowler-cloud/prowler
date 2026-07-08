@@ -3,11 +3,16 @@ import {
   getFindingsBySeverity,
   SeverityByProviderType,
 } from "@/actions/overview";
-import { getProviders } from "@/actions/providers";
+import { OVERVIEW_FILTER_PARAM } from "@/actions/overview/overview-filters";
+import { getAllProviders } from "@/actions/providers";
 import { SankeyChart } from "@/components/graphs/sankey-chart";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
+import {
+  parseFilterIds,
+  scopeProvidersByGroup,
+} from "../../_lib/provider-scope";
 
 export async function RiskPipelineViewSSR({
   searchParams,
@@ -16,12 +21,18 @@ export async function RiskPipelineViewSSR({
 }) {
   const filters = pickFilterParams(searchParams);
 
-  const providerTypeFilter = filters["filter[provider_type__in]"];
-  const providerIdFilter = filters["filter[provider_id__in]"];
+  const providerTypeFilter = filters[OVERVIEW_FILTER_PARAM.PROVIDER_TYPE];
+  const providerIdFilter = filters[OVERVIEW_FILTER_PARAM.PROVIDER_ID];
+  const providerGroupsFilter = filters[OVERVIEW_FILTER_PARAM.PROVIDER_GROUPS];
 
   // Fetch providers list to know account types
-  const providersListResponse = await getProviders({ pageSize: 200 });
+  const providersListResponse = await getAllProviders();
   const allProviders = providersListResponse?.data || [];
+
+  // Scope the provider set to the selected groups so we enumerate only their
+  // provider types below (the per-type API calls also carry the group filter).
+  const selectedGroupIds = parseFilterIds(providerGroupsFilter);
+  const scopedProviders = scopeProvidersByGroup(allProviders, selectedGroupIds);
 
   // Build severityByProviderType based on filters
   const severityByProviderType: SeverityByProviderType = {};
@@ -29,14 +40,12 @@ export async function RiskPipelineViewSSR({
 
   if (providerIdFilter) {
     // Case: Accounts are selected - group by provider type and make parallel calls
-    const selectedAccountIds = String(providerIdFilter)
-      .split(",")
-      .map((id) => id.trim());
+    const selectedAccountIds = parseFilterIds(providerIdFilter);
 
     // Group selected accounts by provider type
     const accountsByType: Record<string, string[]> = {};
     for (const accountId of selectedAccountIds) {
-      const provider = allProviders.find((p) => p.id === accountId);
+      const provider = scopedProviders.find((p) => p.id === accountId);
       if (provider) {
         const type = provider.attributes.provider.toLowerCase();
         if (!accountsByType[type]) {
@@ -70,9 +79,9 @@ export async function RiskPipelineViewSSR({
     }
   } else if (providerTypeFilter) {
     // Case: Provider types are selected - make parallel calls for each type
-    selectedProviderTypes = String(providerTypeFilter)
-      .split(",")
-      .map((t) => t.trim().toLowerCase());
+    selectedProviderTypes = parseFilterIds(providerTypeFilter).map((type) =>
+      type.toLowerCase(),
+    );
 
     const severityPromises = selectedProviderTypes.map(async (providerType) => {
       const response = await getFindingsBySeverity({
@@ -93,9 +102,10 @@ export async function RiskPipelineViewSSR({
       }
     }
   } else {
-    // Case: No filters - get all provider types and make parallel calls
+    // Case: No account/type filter - enumerate provider types (scoped to the
+    // selected groups when a group filter is active) and make parallel calls.
     const allProviderTypes = Array.from(
-      new Set(allProviders.map((p) => p.attributes.provider.toLowerCase())),
+      new Set(scopedProviders.map((p) => p.attributes.provider.toLowerCase())),
     );
 
     const severityPromises = allProviderTypes.map(async (providerType) => {

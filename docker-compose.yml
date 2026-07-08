@@ -5,6 +5,13 @@
 #   docker compose -f docker-compose-dev.yml up
 #
 services:
+  api-init:
+    image: busybox:1.37.0@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028
+    volumes:
+      - ./_data/api:/data
+    command: ["sh", "-c", "chown -R 1000:1000 /data"]
+    restart: "no"
+
   api:
     hostname: "prowler-api"
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
@@ -17,12 +24,20 @@ services:
       - ./_data/api:/home/prowler/.config/prowler-api
       - output:/tmp/prowler_api_output
     depends_on:
+      api-init:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       valkey:
         condition: service_healthy
       neo4j:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:${DJANGO_PORT:-8080}/health/live || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
     entrypoint:
       - "/home/prowler/docker-entrypoint.sh"
       - "prod"
@@ -33,13 +48,19 @@ services:
       - path: .env
         required: false
     ports:
-      - ${UI_PORT:-3000}:${UI_PORT:-3000}
+      - ${UI_PORT:-3000}:3000
     depends_on:
       mcp-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   postgres:
-    image: postgres:16.3-alpine3.20
+    image: postgres:16.3-alpine3.20@sha256:36ed71227ae36305d26382657c0b96cbaf298427b3f1eaeb10d77a6dea3eec41
     hostname: "postgres-db"
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
@@ -59,7 +80,7 @@ services:
       retries: 5
 
   valkey:
-    image: valkey/valkey:7-alpine3.19
+    image: valkey/valkey:7-alpine3.19@sha256:4054fe7fc607b9326ac7c4691ed26e9670d2ff17a9fb28c2577adecf928acbcc
     hostname: "valkey"
     volumes:
       - ./_data/valkey:/data
@@ -75,7 +96,7 @@ services:
       retries: 3
 
   neo4j:
-    image: graphstack/dozerdb:5.26.3.0
+    image: graphstack/dozerdb:5.26.3.0@sha256:a77526ea3918fdc46d1fff70c4aea7d71d3874a26ecec059179d6775845b1247
     hostname: "neo4j"
     volumes:
       - ./_data/neo4j:/data
@@ -108,15 +129,15 @@ services:
 
   worker:
     image: prowlercloud/prowler-api:${PROWLER_API_VERSION:-stable}
+    # Give Celery soft shutdown time to drain/re-queue in-flight tasks on stop.
+    stop_grace_period: 120s
     env_file:
       - path: .env
         required: false
     volumes:
       - "output:/tmp/prowler_api_output"
     depends_on:
-      valkey:
-        condition: service_healthy
-      postgres:
+      api:
         condition: service_healthy
     ulimits:
       nofile:
@@ -132,16 +153,14 @@ services:
       - path: ./.env
         required: false
     depends_on:
-      valkey:
-        condition: service_healthy
-      postgres:
+      api:
         condition: service_healthy
     ulimits:
       nofile:
         soft: 65536
         hard: 65536
     entrypoint:
-      - "../docker-entrypoint.sh"
+      - "/home/prowler/docker-entrypoint.sh"
       - "beat"
 
   mcp-server:
@@ -159,6 +178,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 60s
 
 volumes:
   output:

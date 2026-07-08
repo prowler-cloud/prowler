@@ -34,6 +34,8 @@ def mock_make_api_call(self, operation_name, kwargs):
                 }
             ]
         }
+    if operation_name == "DescribeSnapshots":
+        return {"Snapshots": [{"SnapshotId": "snap-1234567890abcdef0"}]}
 
     return make_api_call(self, operation_name, kwargs)
 
@@ -44,6 +46,13 @@ def mock_generate_regional_clients(provider, service):
     )
     regional_client.region = AWS_REGION_US_EAST_1
     return {AWS_REGION_US_EAST_1: regional_client}
+
+
+def mock_generate_regional_clients_without_ec2(provider, service):
+    if service == "ec2":
+        return None
+
+    return mock_generate_regional_clients(provider, service)
 
 
 @patch(
@@ -92,3 +101,62 @@ class Test_DLM_Service:
                 )
             }
         }
+
+    def test_get_regions_with_snapshots(self):
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: True}
+
+
+@patch(
+    "prowler.providers.aws.aws_provider.AwsProvider.generate_regional_clients",
+    new=mock_generate_regional_clients_without_ec2,
+)
+@patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
+class Test_DLM_Service_Without_EC2_Regional_Clients:
+    def test_service_handles_missing_ec2_regional_clients(self):
+        aws_provider = set_mocked_aws_provider()
+        dlm = DLM(aws_provider)
+
+        assert dlm.regions_with_snapshots == {}
+
+
+class FakeEC2RegionalClient:
+    def __init__(self, responses):
+        self.region = AWS_REGION_US_EAST_1
+        self.requests = []
+        self.responses = list(responses)
+
+    def describe_snapshots(self, **kwargs):
+        self.requests.append(kwargs)
+        return self.responses.pop(0)
+
+
+class Test_DLM_Regions_With_Snapshots:
+    def test_get_regions_without_snapshots(self):
+        dlm = DLM.__new__(DLM)
+        dlm.regions_with_snapshots = {}
+        regional_client = FakeEC2RegionalClient([{"Snapshots": []}])
+
+        dlm._get_regions_with_snapshots(regional_client)
+
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: False}
+        assert regional_client.requests == [{"OwnerIds": ["self"], "MaxResults": 5}]
+
+    def test_get_regions_with_snapshots_after_pagination(self):
+        dlm = DLM.__new__(DLM)
+        dlm.regions_with_snapshots = {}
+        regional_client = FakeEC2RegionalClient(
+            [
+                {"Snapshots": [], "NextToken": "next-page"},
+                {"Snapshots": [{"SnapshotId": "snap-1234567890abcdef0"}]},
+            ]
+        )
+
+        dlm._get_regions_with_snapshots(regional_client)
+
+        assert dlm.regions_with_snapshots == {AWS_REGION_US_EAST_1: True}
+        assert regional_client.requests == [
+            {"OwnerIds": ["self"], "MaxResults": 5},
+            {"OwnerIds": ["self"], "MaxResults": 5, "NextToken": "next-page"},
+        ]

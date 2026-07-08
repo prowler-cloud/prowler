@@ -1,4 +1,5 @@
 import datetime
+from concurrent.futures import as_completed
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -14,9 +15,9 @@ class Codebuild(AWSService):
         super().__init__(__class__.__name__, provider)
         self.projects = {}
         self.__threading_call__(self._list_projects)
-        self.__threading_call__(self._list_builds_for_project, self.projects.values())
-        self.__threading_call__(self._batch_get_builds, self.projects.values())
-        self.__threading_call__(self._batch_get_projects, self.projects.values())
+        self.__threading_call__(self._list_builds_for_project)
+        self.__threading_call__(self._batch_get_builds)
+        self.__threading_call__(self._batch_get_projects)
         self.report_groups = {}
         self.__threading_call__(self._list_report_groups)
         self.__threading_call__(
@@ -44,10 +45,8 @@ class Codebuild(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _list_builds_for_project(self, project):
-        logger.info("Codebuild - Listing builds...")
+    def _fetch_project_last_build(self, regional_client, project):
         try:
-            regional_client = self.regional_clients[project.region]
             build_ids = regional_client.list_builds_for_project(
                 projectName=project.name
             ).get("ids", [])
@@ -58,28 +57,99 @@ class Codebuild(AWSService):
                 f"{project.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _batch_get_builds(self, project):
-        logger.info("Codebuild - Getting builds...")
+    def _list_builds_for_project(self, regional_client):
+        logger.info("Codebuild - Listing builds...")
         try:
-            if project.last_build and project.last_build.id:
-                regional_client = self.regional_clients[project.region]
-                builds_by_id = regional_client.batch_get_builds(
-                    ids=[project.last_build.id]
-                ).get("builds", [])
-                if len(builds_by_id) > 0:
-                    project.last_invoked_time = builds_by_id[0].get("endTime")
+            regional_projects = [
+                project
+                for project in self.projects.values()
+                if project.region == regional_client.region
+            ]
+
+            # list_builds_for_project has no batch API equivalent, so reuse the
+            # shared thread pool to issue per-project calls in parallel within
+            # this region — preserving the wall-clock performance of the
+            # previous implementation.
+            futures = [
+                self.thread_pool.submit(
+                    self._fetch_project_last_build, regional_client, project
+                )
+                for project in regional_projects
+            ]
+            for future in as_completed(futures):
+                try:
+                    future.result()
+                except Exception:
+                    pass
         except Exception as error:
             logger.error(
-                f"{regional_client.region}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
-    def _batch_get_projects(self, project):
+    def _batch_get_builds(self, regional_client):
+        logger.info("Codebuild - Getting builds...")
+        try:
+            # Collect all build IDs for this region
+            build_id_to_project = {}
+            for project in self.projects.values():
+                if (
+                    project.region == regional_client.region
+                    and project.last_build
+                    and project.last_build.id
+                ):
+                    build_id_to_project[project.last_build.id] = project
+
+            if not build_id_to_project:
+                return
+
+            build_ids = list(build_id_to_project.keys())
+
+            # batch_get_builds supports up to 100 IDs per call
+            for i in range(0, len(build_ids), 100):
+                batch = build_ids[i : i + 100]
+                response = regional_client.batch_get_builds(ids=batch)
+                for build_info in response.get("builds", []):
+                    build_id = build_info.get("id")
+                    if build_id in build_id_to_project:
+                        end_time = build_info.get("endTime")
+                        if end_time:
+                            build_id_to_project[build_id].last_invoked_time = end_time
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _batch_get_projects(self, regional_client):
         logger.info("Codebuild - Getting projects...")
         try:
-            regional_client = self.regional_clients[project.region]
-            project_info = regional_client.batch_get_projects(names=[project.name])[
-                "projects"
-            ][0]
+            # Collect all project names for this region
+            regional_projects = {
+                arn: project
+                for arn, project in self.projects.items()
+                if project.region == regional_client.region
+            }
+            if not regional_projects:
+                return
+
+            project_names = [project.name for project in regional_projects.values()]
+
+            # batch_get_projects supports up to 100 names per call
+            for i in range(0, len(project_names), 100):
+                batch = project_names[i : i + 100]
+                response = regional_client.batch_get_projects(names=batch)
+                for project_info in response.get("projects", []):
+                    project_arn = project_info.get("arn")
+                    if project_arn in regional_projects:
+                        self._parse_project_info(
+                            regional_projects[project_arn], project_info
+                        )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _parse_project_info(self, project, project_info):
+        try:
             project.buildspec = project_info["source"].get("buildspec")
             if project_info["source"]["type"] != "NO_SOURCE":
                 project.source = Source(

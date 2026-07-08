@@ -3,7 +3,7 @@
 ## Django Deployment Checklist Command
 
 ```bash
-cd api && poetry run python src/backend/manage.py check --deploy
+cd api && uv run python src/backend/manage.py check --deploy
 ```
 
 This command checks for common deployment issues and missing security settings.
@@ -164,8 +164,13 @@ POSTGRES_DB=...
 POSTGRES_USER=...
 POSTGRES_PASSWORD=...
 
-# Redis (for Celery)
-REDIS_URL=redis://host:6379/0
+# Valkey/Redis (for Celery)
+VALKEY_SCHEME=rediss
+VALKEY_USERNAME=default
+VALKEY_PASSWORD=<strong-password>
+VALKEY_HOST=host
+VALKEY_PORT=6379
+VALKEY_DB=0
 
 # Optional
 SENTRY_DSN=https://...@sentry.io/...

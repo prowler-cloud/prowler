@@ -339,17 +339,107 @@ class TestJiraIntegration:
         with pytest.raises(JiraRefreshTokenError):
             self.jira_integration.refresh_access_token()
 
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    @patch.object(Jira, "get_cloud_id", return_value="test_cloud_id")
+    def test_get_auth_sends_timeout(self, mock_get_cloud_id, mock_post):
+        """get_auth must pass a request timeout to avoid hanging on an unresponsive Jira."""
+        # To disable vulture
+        mock_get_cloud_id = mock_get_cloud_id
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "test_access_token",
+            "refresh_token": "test_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        self.jira_integration.get_auth("test_auth_code")
+
+        assert mock_post.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_sends_timeout(self, mock_get):
+        """get_cloud_id (OAuth path) must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [{"id": "test_cloud_id"}]
+        mock_get.return_value = mock_response
+
+        self.jira_integration.get_cloud_id("test_access_token")
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_sends_timeout(self, mock_get):
+        """get_cloud_id (basic-auth tenant_info path) must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"cloudId": "test_cloud_id"}
+        mock_get.return_value = mock_response
+
+        self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_refresh_access_token_sends_timeout(self, mock_post):
+        """refresh_access_token must pass a request timeout."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "access_token": "new_access_token",
+            "refresh_token": "new_refresh_token",
+            "expires_in": 3600,
+        }
+        mock_post.return_value = mock_response
+
+        self.jira_integration.refresh_access_token()
+
+        assert mock_post.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_projects_sends_timeout(
+        self, mock_get, mock_cloud_id, mock_get_access_token
+    ):
+        """get_projects must pass a request timeout."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = [{"key": "PROJ1", "name": "Project One"}]
+        mock_get.return_value = mock_response
+
+        self.jira_integration.get_projects()
+
+        assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
     @patch.object(Jira, "get_auth", return_value=None)
     @patch.object(
         Jira,
         "get_projects",
         return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
     )
-    def test_test_connection_successful(self, mock_get_projects, mock_get_auth):
+    @patch.object(
+        Jira,
+        "get_available_issue_types",
+        side_effect=lambda pk: ["Task", "Bug"] if pk == "PROJ1" else ["Story"],
+    )
+    def test_test_connection_successful(
+        self, mock_get_issue_types, mock_get_projects, mock_get_auth
+    ):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
         mock_get_projects = mock_get_projects
         mock_get_auth = mock_get_auth
+        mock_get_issue_types = mock_get_issue_types
 
         connection = Jira.test_connection(
             redirect_uri=self.redirect_uri,
@@ -360,6 +450,10 @@ class TestJiraIntegration:
         assert connection.is_connected
         assert connection.error is None
         assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}
+        assert connection.issue_types == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Story"],
+        }
 
     @patch.object(Jira, "get_basic_auth", return_value=None)
     @patch.object(
@@ -367,13 +461,19 @@ class TestJiraIntegration:
         "get_projects",
         return_value={"PROJ1": "Project One", "PROJ2": "Project Two"},
     )
+    @patch.object(
+        Jira,
+        "get_available_issue_types",
+        side_effect=lambda pk: ["Task", "Bug"] if pk == "PROJ1" else ["Story"],
+    )
     def test_test_connection_successful_basic_auth(
-        self, mock_get_projects, mock_get_basic_auth
+        self, mock_get_issue_types, mock_get_projects, mock_get_basic_auth
     ):
         """Test that a successful connection returns an active Connection object with projects."""
         # To disable vulture
         mock_get_projects = mock_get_projects
         mock_get_basic_auth = mock_get_basic_auth
+        mock_get_issue_types = mock_get_issue_types
 
         connection = Jira.test_connection(
             user_mail=self.user_mail,
@@ -384,6 +484,10 @@ class TestJiraIntegration:
         assert connection.is_connected
         assert connection.error is None
         assert connection.projects == {"PROJ1": "Project One", "PROJ2": "Project Two"}
+        assert connection.issue_types == {
+            "PROJ1": ["Task", "Bug"],
+            "PROJ2": ["Story"],
+        }
 
     @patch.object(
         Jira,
@@ -981,6 +1085,89 @@ class TestJiraIntegration:
             for node in paragraph.get("content", [])
             for mark in node.get("marks", [])
         )
+
+    @staticmethod
+    def _find_empty_text_nodes(node) -> List[str]:
+        # ADF forbids empty text nodes; collect any to assert the document is valid.
+        empties: List[str] = []
+
+        def walk(current) -> None:
+            if isinstance(current, dict):
+                if current.get("type") == "text" and current.get("text", "") == "":
+                    empties.append(current.get("text", ""))
+                for value in current.values():
+                    walk(value)
+            elif isinstance(current, list):
+                for item in current:
+                    walk(item)
+
+        walk(node)
+        return empties
+
+    def test_get_adf_description_empty_resource_name_has_no_empty_text_nodes(self):
+        # A resource without a name (e.g. an AWS-managed IAM policy) used to emit an
+        # empty ADF text node, making Jira reject the issue with 400 INVALID_INPUT.
+        adf_description = self.jira_integration.get_adf_description(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="CRITICAL",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#FF0000",
+            status_extended="Some status",
+            provider="aws",
+            region="eu-west-1",
+            resource_uid="arn:aws:iam::aws:policy/AdministratorAccess",
+            resource_name="",
+            recommendation_text="",
+        )
+
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        table = adf_description["content"][1]
+        resource_name_row = self._find_table_row(table["content"], "Resource Name")
+        value_cell = resource_name_row["content"][1]
+        assert self._collect_text_from_cell(value_cell) == "-"
+
+    @pytest.mark.parametrize(
+        "field, header",
+        [
+            ("check_id", "Check Id"),
+            ("check_title", "Check Title"),
+            ("status_extended", "Status Extended"),
+            ("provider", "Provider"),
+            ("region", "Region"),
+            ("resource_uid", "Resource UID"),
+            ("resource_name", "Resource Name"),
+        ],
+    )
+    def test_get_adf_description_empty_plain_text_fields_render_placeholder(
+        self, field, header
+    ):
+        base_kwargs = dict(
+            check_id="CHECK-1",
+            check_title="Sample check",
+            severity="HIGH",
+            severity_color="#FF0000",
+            status="FAIL",
+            status_color="#00FF00",
+            status_extended="Some status",
+            provider="aws",
+            region="us-east-1",
+            resource_uid="resource-1",
+            resource_name="resource-name",
+            recommendation_text="",
+        )
+        base_kwargs[field] = ""
+
+        adf_description = self.jira_integration.get_adf_description(**base_kwargs)
+
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        table = adf_description["content"][1]
+        row = self._find_table_row(table["content"], header)
+        value_cell = row["content"][1]
+        assert self._collect_text_from_cell(value_cell) == "-"
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
