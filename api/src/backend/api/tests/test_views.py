@@ -9894,7 +9894,6 @@ class TestProviderGroupMembershipViewSet:
     def test_destroy_relationship(
         self,
         authenticated_client,
-        aws_provider,
         provider_groups_fixture,
         aws_provider_pair,
     ):
@@ -9922,7 +9921,7 @@ class TestProviderGroupMembershipViewSet:
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
         relationships = ProviderGroupMembership.objects.filter(
-            provider_group=aws_provider.id
+            provider_group=provider_group.id
         )
         assert relationships.count() == 0
 

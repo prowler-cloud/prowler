@@ -2188,9 +2188,7 @@ def tenant_compliance_summary_fixture(tenants_fixture):
 
 
 @pytest.fixture
-def finding_groups_fixture(
-    tenants_fixture, aws_provider_pair, scans_fixture, resources_fixture
-):
+def finding_groups_fixture(tenants_fixture, scans_fixture, resources_fixture):
     """
     Create a comprehensive set of findings for testing Finding Groups aggregation.
 
@@ -2209,7 +2207,6 @@ def finding_groups_fixture(
     - Finding counts (pass, fail, muted, new, changed)
     """
     tenant = tenants_fixture[0]
-    provider1, provider2 = aws_provider_pair
     scan1, scan2, *_ = scans_fixture
     resource1, resource2, *_ = resources_fixture
 
@@ -2460,7 +2457,7 @@ def finding_groups_fixture(
 
 @pytest.fixture
 def finding_groups_title_variants_fixture(
-    tenants_fixture, aws_provider_pair, scans_fixture, resources_fixture
+    tenants_fixture, scans_fixture, resources_fixture
 ):
     """
     Two providers report the same check_id with different checktitle values.
@@ -2471,7 +2468,6 @@ def finding_groups_title_variants_fixture(
     of which title variant matches the search term.
     """
     tenant = tenants_fixture[0]
-    provider1, provider2 = aws_provider_pair
     scan1, scan2, *_ = scans_fixture
     resource1, resource2, *_ = resources_fixture
 

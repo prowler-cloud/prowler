@@ -27,7 +27,7 @@ Please add a detailed description of how to review this PR.
 - [ ] Review if the code is being covered by tests.
 - [ ] Review if code is being documented following this specification https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
-- [ ] Review if is needed to change the [Readme.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
+- [ ] Review if is needed to change the [README.md](https://github.com/prowler-cloud/prowler/blob/master/README.md)
 - [ ] Ensure new entries are added to [CHANGELOG.md](https://github.com/prowler-cloud/prowler/blob/master/prowler/CHANGELOG.md), if applicable.
 
 #### SDK/CLI

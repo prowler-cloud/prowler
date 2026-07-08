@@ -389,7 +389,7 @@ class TestPDFStylesCreation:
 class TestLoadFindingsForChecks:
     """Test suite for _load_findings_for_requirement_checks function."""
 
-    def test_empty_check_ids_returns_empty(self, tenants_fixture, aws_provider):
+    def test_empty_check_ids_returns_empty(self, tenants_fixture):
         """Test that empty check_ids list returns empty dict."""
         tenant = tenants_fixture[0]
 

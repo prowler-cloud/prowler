@@ -54,7 +54,9 @@ def patch_chart_helpers(
 def patch_report_gc(monkeypatch: Any) -> None:
     from tasks.jobs import report as report_module
     from tasks.jobs.reports import base as base_report_module
+    from tasks.jobs.reports import threatscore as threatscore_report_module
 
     gc_stub = SimpleNamespace(collect=lambda: 0)
     monkeypatch.setattr(report_module, "gc", gc_stub)
     monkeypatch.setattr(base_report_module, "gc", gc_stub)
+    monkeypatch.setattr(threatscore_report_module, "gc", gc_stub)
