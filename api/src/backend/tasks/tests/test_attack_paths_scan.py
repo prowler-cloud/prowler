@@ -106,11 +106,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_drop_db,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -204,11 +204,11 @@ class TestAttackPathsRun:
         self,
         mock_graph_database_preflight,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -311,11 +311,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -410,13 +410,13 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         """Failure during ingestion (before set_provider_graph_data_ready(False))
         must NOT flip graph_data_ready to True for providers that never had data."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -513,11 +513,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -626,11 +626,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -739,11 +739,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -857,11 +857,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -981,11 +981,11 @@ class TestAttackPathsRun:
         mock_event_loop,
         mock_stringify,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1078,12 +1078,12 @@ class TestAttackPathsRun:
 @pytest.mark.django_db
 class TestFailAttackPathsScan:
     def test_marks_executing_scan_as_failed(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1120,12 +1120,12 @@ class TestFailAttackPathsScan:
         }
 
     def test_drops_temp_database_even_when_drop_fails(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1156,12 +1156,12 @@ class TestFailAttackPathsScan:
         assert attack_paths_scan.state == StateChoices.FAILED
 
     def test_skips_already_failed_scan(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1203,12 +1203,12 @@ class TestFailAttackPathsScan:
             fail_attack_paths_scan(str(tenant.id), "nonexistent", "setup exploded")
 
     def test_fail_recovers_graph_data_ready_when_data_exists(
-        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
+        self, tenants_fixture, aws_provider, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1243,12 +1243,12 @@ class TestFailAttackPathsScan:
         mock_set_ready.assert_called_once_with(attack_paths_scan, True)
 
     def test_fail_leaves_graph_data_ready_false_when_no_data(
-        self, tenants_fixture, providers_fixture, scans_fixture, sink_backend_stub
+        self, tenants_fixture, aws_provider, scans_fixture, sink_backend_stub
     ):
         from tasks.jobs.attack_paths.db_utils import fail_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1279,12 +1279,12 @@ class TestFailAttackPathsScan:
         mock_set_ready.assert_not_called()
 
     def test_recover_graph_data_ready_never_raises(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import recover_graph_data_ready
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -1372,8 +1372,8 @@ class TestAttackPathsFindingsHelpers:
 
         assert mock_run_write.call_count == len(FINDINGS_INDEX_STATEMENTS)
 
-    def test_load_findings_batches_requests(self, providers_fixture):
-        provider = providers_fixture[0]
+    def test_load_findings_batches_requests(self, aws_provider):
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -1423,10 +1423,10 @@ class TestAttackPathsFindingsHelpers:
     def test_stream_findings_with_resources_returns_latest_scan_data(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -1527,11 +1527,11 @@ class TestAttackPathsFindingsHelpers:
     def test_enrich_batch_with_resources_single_resource(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """One finding + one resource = one output dict"""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -1611,11 +1611,11 @@ class TestAttackPathsFindingsHelpers:
     def test_enrich_batch_with_resources_multiple_resources(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """One finding + three resources = three output dicts"""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -1703,11 +1703,11 @@ class TestAttackPathsFindingsHelpers:
     def test_enrich_batch_with_resources_no_resources_skips(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Finding without resources should be skipped"""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -1768,9 +1768,9 @@ class TestAttackPathsFindingsHelpers:
         assert len(result) == 0
         mock_logger.warning.assert_not_called()
 
-    def test_generator_is_lazy(self, providers_fixture):
+    def test_generator_is_lazy(self, aws_provider):
         """Generator should not execute queries until iterated"""
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan_id = "some-scan-id"
@@ -1782,9 +1782,9 @@ class TestAttackPathsFindingsHelpers:
             # Nothing should be called yet
             mock_rls.assert_not_called()
 
-    def test_load_findings_empty_generator(self, providers_fixture):
+    def test_load_findings_empty_generator(self, aws_provider):
         """Empty generator should not call neo4j"""
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2248,10 +2248,10 @@ class TestAttackPathsDbUtilsGraphDataReady:
     """Tests for db_utils functions related to graph_data_ready lifecycle."""
 
     def test_database_defaults_allow_legacy_insert_without_cutover_columns(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2300,12 +2300,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         )
 
     def test_create_attack_paths_scan_first_scan_defaults_to_false(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2326,12 +2326,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_true_from_previous(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2371,13 +2371,13 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.sink_backend == "neptune"
 
     def test_create_attack_paths_scan_prefers_active_sink_ready_scan(
-        self, tenants_fixture, providers_fixture, scans_fixture, settings
+        self, tenants_fixture, aws_provider, scans_fixture, settings
     ):
         from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
 
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2425,12 +2425,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_is_migrated_false_from_legacy_ready(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2471,12 +2471,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_create_attack_paths_scan_inherits_false_when_no_previous_ready(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import create_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2514,12 +2514,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.sink_backend == "neo4j"
 
     def test_set_graph_data_ready_updates_field(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import set_graph_data_ready
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2553,12 +2553,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.graph_data_ready is True
 
     def test_finish_attack_paths_scan_does_not_modify_graph_data_ready(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import finish_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2584,12 +2584,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.graph_data_ready is True
 
     def test_finish_attack_paths_scan_preserves_graph_data_ready_on_failure(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import finish_attack_paths_scan
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
         scan = scans_fixture[0]
@@ -2619,12 +2619,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert attack_paths_scan.graph_data_ready is True
 
     def test_set_provider_graph_data_ready_updates_all_scans_for_provider_sink(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import set_provider_graph_data_ready
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2669,12 +2669,12 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert new_ap_scan.graph_data_ready is False
 
     def test_set_provider_graph_data_ready_preserves_other_sink_scans(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import set_provider_graph_data_ready
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2711,16 +2711,15 @@ class TestAttackPathsDbUtilsGraphDataReady:
         assert neptune_scan.graph_data_ready is False
 
     def test_set_provider_graph_data_ready_does_not_affect_other_providers(
-        self, tenants_fixture, providers_fixture, scans_fixture
+        self, tenants_fixture, aws_provider_pair, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import set_provider_graph_data_ready
 
         tenant = tenants_fixture[0]
-        provider_a = providers_fixture[0]
+        provider_a, provider_b = aws_provider_pair
         provider_a.provider = Provider.ProviderChoices.AWS
         provider_a.save()
 
-        provider_b = providers_fixture[1]
         provider_b.provider = Provider.ProviderChoices.AWS
         provider_b.save()
 
@@ -2808,13 +2807,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2857,13 +2856,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2894,13 +2893,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2924,13 +2923,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2966,13 +2965,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -2996,13 +2995,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant1 = tenants_fixture[0]
         tenant2 = tenants_fixture[1]
-        provider1 = providers_fixture[0]
+        provider1 = aws_provider
         provider1.provider = Provider.ProviderChoices.AWS
         provider1.save()
 
@@ -3043,13 +3042,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -3074,13 +3073,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -3113,13 +3112,13 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -3194,12 +3193,12 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
@@ -3249,12 +3248,12 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         provider.provider = Provider.ProviderChoices.AWS
         provider.save()
 
