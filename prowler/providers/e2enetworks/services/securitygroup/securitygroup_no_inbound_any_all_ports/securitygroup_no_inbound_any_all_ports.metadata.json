@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "securitygroup_no_inbound_any_all_ports",
-  "CheckTitle": "Check if E2E Networks security groups do not allow inbound all-protocol traffic from any source",
+  "CheckTitle": "E2E Networks security groups do not allow inbound all-protocol traffic from any source",
   "CheckType": [],
   "ServiceName": "securitygroup",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Check if E2E Networks security groups do not allow inbound all-protocol traffic from any source.",
-  "Risk": "Inbound all-protocol rules from any source expose services to the entire internet and increase the likelihood of unauthorized access.",
+  "Description": "**E2E Networks security groups** should not allow inbound **all-protocol** traffic from any source (`0.0.0.0/0`), which opens every port to the internet.",
+  "Risk": "Inbound **all-protocol** rules from any source expose services to the entire internet and greatly increase the likelihood of unauthorized access.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,14 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Replace overly permissive inbound rules with least-privilege access.",
+      "Text": "Replace overly permissive inbound rules with **least-privilege** rules scoped to specific ports and trusted sources.",
       "Url": "https://hub.prowler.com/check/securitygroup_no_inbound_any_all_ports"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
-  ]
+  "Notes": ""
 }

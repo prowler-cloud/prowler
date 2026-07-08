@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "network_vpc_is_active",
-  "CheckTitle": "Check if E2E Networks VPCs are active",
+  "CheckTitle": "E2E Networks VPCs are active",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "This check verifies that E2E Networks VPCs are in the active state so that attached workloads retain expected connectivity and network isolation.",
-  "Risk": "Inactive VPCs can cause connectivity failures and may leave workloads without expected network isolation.",
+  "Description": "**E2E Networks VPCs** should be in the `active` state so that attached workloads retain expected connectivity and network isolation.",
+  "Risk": "**Inactive VPCs** can cause connectivity failures and may leave workloads without the expected **network isolation** boundaries.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Activate VPCs that are inactive so dependent workloads keep expected connectivity and isolation.",
+      "Text": "Activate VPCs that are `inactive` so dependent workloads keep their expected connectivity and isolation.",
       "Url": "https://hub.prowler.com/check/network_vpc_is_active"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
-  ]
+  "Notes": ""
 }

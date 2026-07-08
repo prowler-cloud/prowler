@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "node_public_ip_not_assigned",
-  "CheckTitle": "Check if E2E Networks nodes do not have a public IP assigned",
+  "CheckTitle": "E2E Networks nodes do not have a public IP assigned",
   "CheckType": [],
   "ServiceName": "node",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "This check verifies that E2E Networks nodes are not assigned a public IP address, keeping compute instances off the public internet unless inbound access is explicitly required.",
-  "Risk": "Nodes with public IP addresses are directly reachable from the internet, expanding the attack surface and increasing exposure to unauthorized access attempts.",
+  "Description": "**E2E Networks nodes** should not be assigned a public IP address, keeping compute instances off the public internet unless inbound access is explicitly required.",
+  "Risk": "Nodes with **public IP addresses** are directly reachable from the internet, expanding the attack surface and increasing exposure to unauthorized access attempts.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,14 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove public IP addresses from nodes that do not require inbound internet access and reach them over private networking.",
+      "Text": "Remove **public IP addresses** from nodes that do not require inbound internet access and reach them over private networking.",
       "Url": "https://hub.prowler.com/check/node_public_ip_not_assigned"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "internet-exposed"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
-  ]
+  "Notes": ""
 }

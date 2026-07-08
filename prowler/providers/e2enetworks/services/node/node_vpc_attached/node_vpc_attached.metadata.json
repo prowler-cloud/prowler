@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "node_vpc_attached",
-  "CheckTitle": "Check if E2E Networks nodes are attached to a VPC",
+  "CheckTitle": "E2E Networks nodes are attached to a VPC",
   "CheckType": [],
   "ServiceName": "node",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "This check verifies that E2E Networks nodes are attached to a VPC so their traffic benefits from network isolation and segmentation controls.",
-  "Risk": "Nodes not attached to a VPC may lack network isolation controls, making traffic routing and segmentation harder to enforce.",
+  "Description": "**E2E Networks nodes** should be attached to a **VPC** so their traffic benefits from network isolation and segmentation controls.",
+  "Risk": "Nodes not attached to a **VPC** may lack network isolation controls, making traffic routing and **segmentation** harder to enforce.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Attach nodes to a VPC to enforce network isolation and segmentation for their traffic.",
+      "Text": "Attach nodes to a **VPC** to enforce network isolation and segmentation for their traffic.",
       "Url": "https://hub.prowler.com/check/node_vpc_attached"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
-  ]
+  "Notes": ""
 }

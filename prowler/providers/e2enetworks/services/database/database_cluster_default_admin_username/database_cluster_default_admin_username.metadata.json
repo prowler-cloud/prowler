@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "database_cluster_default_admin_username",
-  "CheckTitle": "Check if E2E Networks database clusters do not use the default admin username",
+  "CheckTitle": "E2E Networks database clusters do not use the default admin username",
   "CheckType": [],
   "ServiceName": "database",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "database",
-  "Description": "This check verifies that E2E Networks database clusters are configured with a custom administrative username instead of the well-known default, reducing the predictability of privileged credentials.",
-  "Risk": "Default admin usernames increase exposure to credential guessing and brute-force attacks against database clusters.",
+  "Description": "**E2E Networks database clusters** should be configured with a custom administrative username instead of the well-known default, reducing the predictability of privileged credentials.",
+  "Risk": "Default admin usernames are publicly known, so they increase exposure to **credential guessing** and **brute-force attacks** against the privileged database account.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Replace the default administrative username on database clusters with a unique, non-default account name.",
+      "Text": "Replace the default administrative username on database clusters with a unique, non-default account name and rotate the associated credentials.",
       "Url": "https://hub.prowler.com/check/database_cluster_default_admin_username"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
-  ]
+  "Notes": ""
 }

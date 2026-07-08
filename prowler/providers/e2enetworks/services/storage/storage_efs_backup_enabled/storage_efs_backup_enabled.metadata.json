@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "storage_efs_backup_enabled",
-  "CheckTitle": "Check if E2E Networks EFS volumes have backup enabled",
+  "CheckTitle": "E2E Networks EFS volumes have backup enabled",
   "CheckType": [],
   "ServiceName": "storage",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "storage",
-  "Description": "This check verifies that E2E Networks EFS shared file systems have backups enabled so data can be recovered after failures or accidental changes.",
-  "Risk": "Shared file systems without backups increase data-loss risk during failures or accidental changes.",
+  "Description": "**E2E Networks EFS shared file systems** should have **backups** enabled so data can be recovered after failures or accidental changes.",
+  "Risk": "Shared file systems without **backups** increase the risk of permanent **data loss** during failures or accidental changes.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/storage/parallel-file-storage/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,14 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable backups on EFS shared file systems to allow recovery after failures or accidental changes.",
+      "Text": "Enable **backups** on EFS shared file systems to allow recovery after failures or accidental changes.",
       "Url": "https://hub.prowler.com/check/storage_efs_backup_enabled"
     }
   },
-  "Categories": [],
+  "Categories": [
+    "resilience"
+  ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/storage/parallel-file-storage/"
-  ]
+  "Notes": ""
 }

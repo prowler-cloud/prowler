@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "node_rescue_mode_disabled",
-  "CheckTitle": "Check if E2E Networks nodes do not have rescue mode enabled",
+  "CheckTitle": "E2E Networks nodes do not have rescue mode enabled",
   "CheckType": [],
   "ServiceName": "node",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "This check verifies that E2E Networks nodes are not running in rescue mode, which grants elevated filesystem access and can bypass normal operating controls.",
-  "Risk": "Rescue mode provides elevated access to node filesystems and can bypass normal operating controls, increasing the risk of unauthorized data access or persistence.",
+  "Description": "**E2E Networks nodes** should not be running in **rescue mode**, which grants elevated filesystem access and can bypass normal operating controls.",
+  "Risk": "**Rescue mode** provides elevated access to node filesystems and can bypass normal operating controls, increasing the risk of unauthorized data access or persistence.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Disable rescue mode on nodes once recovery tasks are complete to restore normal operating controls.",
+      "Text": "Disable **rescue mode** on nodes once recovery tasks are complete to restore normal operating controls.",
       "Url": "https://hub.prowler.com/check/node_rescue_mode_disabled"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/nodes/"
-  ]
+  "Notes": ""
 }

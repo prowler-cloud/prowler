@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "network_vpc_has_attached_nodes",
-  "CheckTitle": "Check if E2E Networks VPCs have attached nodes",
+  "CheckTitle": "E2E Networks VPCs have attached nodes",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "This check verifies that E2E Networks VPCs have at least one node attached, identifying unused network segments that may indicate misconfiguration or forgotten resources.",
-  "Risk": "VPCs without attached nodes may indicate unused network segments or misconfiguration that weakens segmentation.",
+  "Description": "**E2E Networks VPCs** should have at least one node attached, identifying unused network segments that may indicate misconfiguration or forgotten resources.",
+  "Risk": "**VPCs without attached nodes** may indicate unused network segments or misconfiguration that weakens **network segmentation** and increases management overhead.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -27,8 +30,5 @@
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/network/vpc/"
-  ]
+  "Notes": ""
 }

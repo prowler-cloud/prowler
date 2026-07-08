@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "network_reserveip_floating_ip_unattached",
-  "CheckTitle": "Check if E2E Networks floating IPs are attached to nodes",
+  "CheckTitle": "E2E Networks floating IPs are attached to nodes",
   "CheckType": [],
   "ServiceName": "network",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "This check verifies that E2E Networks floating (reserved) IP addresses are attached to a node instead of being left unassigned, since idle floating IPs can be reassigned unexpectedly.",
-  "Risk": "Unattached floating IPs may be reassigned unexpectedly and disrupt secure routing assumptions.",
+  "Description": "**E2E Networks floating (reserved) IP addresses** should be attached to a node instead of being left unassigned, since idle floating IPs can be reassigned unexpectedly.",
+  "Risk": "**Unattached floating IPs** may be reassigned unexpectedly to other resources, disrupting secure routing assumptions and potentially exposing services.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/reserve-ip/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Attach unassigned floating IPs to the intended node or release them if they are no longer needed.",
+      "Text": "Attach unassigned **floating IPs** to the intended node, or release them if they are no longer needed.",
       "Url": "https://hub.prowler.com/check/network_reserveip_floating_ip_unattached"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/network/reserve-ip/"
-  ]
+  "Notes": ""
 }

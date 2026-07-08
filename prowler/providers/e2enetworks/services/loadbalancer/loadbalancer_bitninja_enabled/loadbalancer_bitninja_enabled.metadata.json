@@ -1,7 +1,7 @@
 {
   "Provider": "e2enetworks",
   "CheckID": "loadbalancer_bitninja_enabled",
-  "CheckTitle": "Check if E2E Networks load balancers have BitNinja protection enabled",
+  "CheckTitle": "E2E Networks load balancers have BitNinja protection enabled",
   "CheckType": [],
   "ServiceName": "loadbalancer",
   "SubServiceName": "",
@@ -9,9 +9,12 @@
   "Severity": "low",
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Check if E2E Networks load balancers have BitNinja protection enabled.",
-  "Risk": "Load balancers without BitNinja protection have reduced web application firewall coverage, increasing exposure to automated attacks and malicious traffic against public endpoints.",
+  "Description": "**E2E Networks load balancers** should have **BitNinja** protection enabled to provide web application firewall coverage on public endpoints.",
+  "Risk": "Load balancers without **BitNinja** protection have reduced **WAF** coverage, increasing exposure to automated attacks and malicious traffic against public endpoints.",
   "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/load-balancer/"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "",
@@ -20,15 +23,12 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable BitNinja protection on load balancer appliances.",
+      "Text": "Enable **BitNinja** protection on load balancer appliances to strengthen web application firewall coverage.",
       "Url": "https://hub.prowler.com/check/loadbalancer_bitninja_enabled"
     }
   },
   "Categories": [],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "",
-  "AdditionalURLs": [
-    "https://docs.e2enetworks.com/api/myaccount/compute/load-balancer/"
-  ]
+  "Notes": ""
 }
