@@ -1,3 +1,4 @@
+import json
 import time
 from datetime import UTC, datetime, timedelta
 from uuid import uuid4
@@ -104,6 +105,106 @@ def test_refresh_token(create_test_user, tenants_fixture):
 
 
 @pytest.mark.django_db
+def test_password_change_invalidates_existing_tokens(create_test_user, tenants_fixture):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, create_test_user.email, TEST_PASSWORD
+    )
+    auth_headers = get_authorization_header(access_token)
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(create_test_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": create_test_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=auth_headers,
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+
+    old_access_response = client.get(reverse("user-me"), headers=auth_headers)
+    assert old_access_response.status_code == 401
+
+    old_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_refresh_response.status_code == 400
+
+    new_access_token, _ = get_api_tokens(client, create_test_user.email, new_password)
+    new_access_response = client.get(
+        reverse("user-me"), headers=get_authorization_header(new_access_token)
+    )
+    assert new_access_response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_password_change_invalidates_rotated_refresh_token(
+    create_test_user, tenants_fixture
+):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, create_test_user.email, TEST_PASSWORD
+    )
+    rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert rotated_refresh_response.status_code == 200
+    rotated_refresh_token = rotated_refresh_response.json()["data"]["attributes"][
+        "refresh"
+    ]
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(create_test_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": create_test_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=get_authorization_header(access_token),
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+
+    old_rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": rotated_refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_rotated_refresh_response.status_code == 400
+
+
+@pytest.mark.django_db
 def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fixture):
     client = APIClient()
 
@@ -189,6 +290,7 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
 class TestTokenSwitchTenant:
     def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
         client = APIClient()
+        assert providers_fixture
 
         test_user = "test_email@prowler.com"
         test_password = "Test_password1@"
@@ -1403,6 +1505,7 @@ class TestAPIKeyMultiTenantWorkflows:
         Verifies RLS enforcement after authentication ensures tenant isolation.
         """
         client = APIClient()
+        assert providers_fixture
 
         user1 = User.objects.create_user(
             name="tenant1_user",

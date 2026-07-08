@@ -72,7 +72,13 @@ from rest_framework_json_api.relations import SerializerMethodResourceRelatedFie
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
 # Base
 
@@ -232,6 +238,18 @@ class TokenRefreshSerializer(BaseSerializerV1):
         try:
             # Validate the refresh token
             refresh = RefreshToken(refresh_token)
+            if api_settings.CHECK_REVOKE_TOKEN:
+                user_id = refresh.payload.get(api_settings.USER_ID_CLAIM)
+                try:
+                    user = User.objects.using(MainRouter.admin_db).get(
+                        **{api_settings.USER_ID_FIELD: user_id}
+                    )
+                except User.DoesNotExist:
+                    raise TokenError("User not found.") from None
+                if refresh.get(api_settings.REVOKE_TOKEN_CLAIM) != (
+                    get_md5_hash_password(user.password)
+                ):
+                    raise TokenError("The user's password has been changed.")
             # Generate new access token
             access_token = refresh.access_token
 
@@ -406,6 +424,19 @@ class UserUpdateSerializer(BaseWriteSerializer):
         if password:
             validate_password(password, user=instance)
             instance.set_password(password)
+            outstanding_token_ids = list(
+                OutstandingToken.objects.using(MainRouter.admin_db)
+                .filter(user_id=instance.id)
+                .values_list("id", flat=True)
+            )
+            if outstanding_token_ids:
+                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                    [
+                        BlacklistedToken(token_id=token_id)
+                        for token_id in outstanding_token_ids
+                    ],
+                    ignore_conflicts=True,
+                )
         return super().update(instance, validated_data)
 
 
