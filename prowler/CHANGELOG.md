@@ -6,7 +6,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- E2E Networks provider with `network`, `database`, and extended `storage` services (27 checks across compute, network, security groups, load balancers, storage, and DBaaS), plus a Cartography-style resource graph schema at `prowler/providers/e2enetworks/docs/schema.md` [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
+- E2E Networks provider with `network`, `database`, and extended `storage` services (27 checks across compute, network, security groups, load balancers, storage, and DBaaS) [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
 
 ---
 
