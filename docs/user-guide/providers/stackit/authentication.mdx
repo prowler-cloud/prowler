@@ -1,5 +1,6 @@
 ---
-title: 'StackIT Authentication'
+title: 'StackIT Authentication in Prowler'
+description: 'Authenticate Prowler to StackIT with a service account key file so the StackIT SDK signs the RSA challenge and mints short-lived access tokens for scans.'
 ---
 
 Prowler authenticates with StackIT using a **service account key file**. The StackIT SDK signs the RSA challenge in the key file and mints/refreshes access tokens internally for the life of the scan, so no manual token rotation is needed.

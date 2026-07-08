@@ -1,5 +1,6 @@
 ---
-title: 'Environment Variable Naming Convention'
+title: 'Environment Variable Naming Conventions'
+description: 'Namespace Prowler App, API, SDK, and MCP Server environment variables with component prefixes like UI_ and API_ to avoid conflicts in a shared .env file.'
 ---
 
 Prowler is a monorepo composed of several runtime components — Prowler App (the web user interface), Prowler API (the backend), Prowler SDK, and Prowler MCP Server (Model Context Protocol) — that frequently share a single `.env` file. To keep that shared configuration unambiguous, each component namespaces its environment variables with a component-specific prefix.
