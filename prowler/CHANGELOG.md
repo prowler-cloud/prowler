@@ -2,6 +2,8 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<!-- changelog: release notes start -->
+
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed

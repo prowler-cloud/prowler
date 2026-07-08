@@ -73,6 +73,7 @@ jobs:
             .github/scripts/osv-scan.sh
           files_ignore: |
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             **/AGENTS.md
 
       - name: Setup Python with uv

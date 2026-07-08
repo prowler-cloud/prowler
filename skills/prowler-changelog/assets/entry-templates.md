@@ -1,101 +1,73 @@
-# Changelog Entry Templates
+# Changelog Fragment Templates
 
-## Entry Placement Rule
+## Fragment basics
 
-**CRITICAL:** Always add new entries at the **BOTTOM** of each section (before the next section header or `---`).
+One fragment file per entry, under the component's `changelog.d/`:
 
-This maintains chronological order: oldest entries at top, newest at bottom.
-
-## Section Headers
-
-```markdown
-### 🚀 Added
-### 🔄 Changed
-### ⚠️ Deprecated
-### ❌ Removed
-### 🐞 Fixed
-### 🔐 Security
+```text
+<component>/changelog.d/<slug>.<type>.md
 ```
 
-## Entry Patterns
+- `<slug>`: free-form, descriptive (`[A-Za-z0-9][A-Za-z0-9._-]*`)
+- `<type>`: `added`, `changed`, `deprecated`, `removed`, `fixed`, `security`
+- Content: a single line with the entry text. **No PR link** (attached automatically at compile time) and no trailing period.
 
-> **Note:** Section headers already provide the verb. Entries describe WHAT, not the action.
->
-> **Link target rule:** Every entry MUST link to the PR (`https://github.com/prowler-cloud/prowler/pull/N`). Linking to `/issues/N` is FORBIDDEN — even when the PR fixes an issue. The issue↔PR mapping belongs in the PR body (`Fixes #N`), not here.
+> **Note:** The section header already provides the verb. Entries describe WHAT, not the action.
 
-### Feature Addition (🚀 Added)
-```markdown
-- Search bar when adding a provider [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- `{check_id}` check for {provider} provider [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- `/api/v1/{endpoint}` endpoint to {description} [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+## Content Patterns by Type
+
+### Feature Addition (`.added.md`)
+
+```text
+Search bar when adding a provider
+`{check_id}` check for {provider} provider
+`/api/v1/{endpoint}` endpoint to {description}
 ```
 
-### Behavior Change (🔄 Changed)
-```markdown
-- Lighthouse AI MCP tool filtering from blacklist to whitelist approach [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- {package} from {old} to {new} [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+### Behavior Change (`.changed.md`)
+
+```text
+Lighthouse AI MCP tool filtering from blacklist to whitelist approach
+{package} from {old} to {new}
 ```
 
-### Bug Fix (🐞 Fixed)
-```markdown
-- OCI update credentials form failing silently due to missing provider UID [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- {What was broken} in {component} [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+### Bug Fix (`.fixed.md`)
+
+```text
+OCI update credentials form failing silently due to missing provider UID
+{What was broken} in {component}
 ```
 
-> When a PR fixes a reported issue, the link still goes to the PR (`/pull/N`), never the issue (`/issues/N`). Reference the issue from the PR body with `Fixes #N`.
+### Security Patch (`.security.md`)
 
-### Security Patch (🔐 Security)
-```markdown
-- Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- {package} to version {version} (CVE-XXXX-XXXXX) [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+```text
+Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs
+{package} to version {version} (CVE-XXXX-XXXXX)
 ```
 
-### Removal (❌ Removed)
-```markdown
-- Deprecated {feature} from {location} [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
+### Removal (`.removed.md`)
+
+```text
+Deprecated {feature} from {location}
 ```
 
-## Version Header Templates
+## Full Examples
 
-### Unreleased
-```markdown
-## [X.Y.Z] (Prowler UNRELEASED)
+```bash
+echo 'Search bar when adding a provider' > ui/changelog.d/provider-search-bar.added.md
+
+echo '`kms_key_rotation_max_90_days` check for GCP provider, verifying KMS customer-managed keys are rotated every 90 days or less' > prowler/changelog.d/kms-rotation-90d.added.md
+
+echo 'OCI update credentials form failing silently due to missing provider UID' > ui/changelog.d/oci-credentials-form.fixed.md
 ```
 
-### Released
-```markdown
-## [X.Y.Z] (Prowler vA.B.C)
+Several entries in one PR → one file per entry, freely mixing types (different slugs when the type repeats):
 
----
+```text
+prowler/changelog.d/kms-rotation-check.added.md
+prowler/changelog.d/kms-rotation-docs.added.md
+prowler/changelog.d/kms-metadata-cache.changed.md
+prowler/changelog.d/kms-disabled-keys.fixed.md
 ```
 
-## Full Entry Example
-
-```markdown
-## [1.17.0] (Prowler UNRELEASED)
-
-### 🚀 Added
-
-- Search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
-- New findings table UI with new design system components [(#9699)](https://github.com/prowler-cloud/prowler/pull/9699)
-- YOUR NEW ENTRY GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
-### 🔄 Changed
-
-- Lighthouse AI MCP tool filtering from blacklist to whitelist approach [(#9802)](https://github.com/prowler-cloud/prowler/pull/9802)
-- YOUR NEW CHANGE GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
-### 🐞 Fixed
-
-- OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
-- YOUR NEW FIX GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
-### 🔐 Security
-
-- Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
-- YOUR NEW SECURITY FIX GOES HERE AT BOTTOM [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-
----
-```
-
-> **Remember:** Each new entry is added at the BOTTOM of its section to maintain chronological order.
+> **Remember:** never include the PR link in the fragment text; the compile step resolves and appends it automatically.
