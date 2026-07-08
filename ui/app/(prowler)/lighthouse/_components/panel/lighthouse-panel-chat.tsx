@@ -5,19 +5,23 @@ import { useState } from "react";
 
 import {
   archiveLighthouseV2Session,
-  getLighthouseV2Configurations,
   getLighthouseV2Sessions,
-  getLighthouseV2SupportedModels,
-  getLighthouseV2SupportedProviders,
 } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2SessionHistory } from "@/app/(prowler)/lighthouse/_components/history";
 import type { LighthouseChatConfig } from "@/app/(prowler)/lighthouse/_lib/chat-store";
-import { loadLighthouseV2ConnectedModels } from "@/app/(prowler)/lighthouse/_lib/model-loading";
-import { getOrCreatePanelChatStore } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import {
-  LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
-  LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+  LIGHTHOUSE_CHAT_CONFIG_STATUS,
+  loadLighthouseChatConfig,
+} from "@/app/(prowler)/lighthouse/_lib/load-chat-config";
+import {
+  getOrCreatePanelChatStore,
+  resetPanelChatStore,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
   notifyLighthouseV2SessionArchived,
+  onLighthouseV2ConfigurationsChanged,
+  onLighthouseV2SessionArchived,
+  onLighthouseV2SessionsChanged,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type { LighthouseV2Session } from "@/app/(prowler)/lighthouse/_types";
 import { LighthouseIconWithAura } from "@/components/icons";
@@ -76,6 +80,16 @@ export function resetPanelChatConfigCacheForTests(): void {
   cachedReadyState = null;
 }
 
+// Config CRUD happens on the settings route, where the global panel (and this
+// component) is unmounted — invalidate at module scope so the next open
+// rebuilds cache and store against the new configuration.
+if (typeof window !== "undefined") {
+  onLighthouseV2ConfigurationsChanged(() => {
+    cachedReadyState = null;
+    resetPanelChatStore();
+  });
+}
+
 export function LighthousePanelChat() {
   const [state, setState] = useState<PanelChatState>(
     () => cachedReadyState ?? { status: PANEL_CHAT_STATUS.LOADING },
@@ -94,6 +108,9 @@ export function LighthousePanelChat() {
     if (state.status !== PANEL_CHAT_STATUS.READY) {
       void load();
     }
+    // The module-scope listener above already invalidated cache and store
+    // (registration order); reload so an open panel refreshes in place.
+    return onLighthouseV2ConfigurationsChanged(() => void load());
   });
 
   if (state.status === PANEL_CHAT_STATUS.LOADING) {
@@ -137,28 +154,21 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
 
   useMountEffect(() => {
     void refreshSessions();
-    const refresh = () => void refreshSessions();
+    const unsubscribeSessionsChanged = onLighthouseV2SessionsChanged(() => {
+      void refreshSessions();
+    });
     // Archiving from any surface (sidebar, popover) must reset the panel chat
-    // too when its open session is the archived one.
-    const handleSessionArchived = (event: Event) => {
-      const archivedId = (event as CustomEvent<{ sessionId: string }>).detail
-        ?.sessionId;
-      if (archivedId) {
-        store.getState().handleSessionArchived(archivedId);
-      }
-    };
-
-    window.addEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);
-    window.addEventListener(
-      LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
-      handleSessionArchived,
+    // when its open session is the archived one, and drop the archived chat
+    // from the "Recent chats" list.
+    const unsubscribeSessionArchived = onLighthouseV2SessionArchived(
+      (sessionId) => {
+        store.getState().handleSessionArchived(sessionId);
+        void refreshSessions();
+      },
     );
     return () => {
-      window.removeEventListener(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, refresh);
-      window.removeEventListener(
-        LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
-        handleSessionArchived,
-      );
+      unsubscribeSessionsChanged();
+      unsubscribeSessionArchived();
     };
   });
 
@@ -280,51 +290,17 @@ function PanelChatConnectCta() {
 
 async function loadPanelChatState(): Promise<PanelChatState> {
   try {
-    const [configurationsResult, supportedProvidersResult] = await Promise.all([
-      getLighthouseV2Configurations(),
-      getLighthouseV2SupportedProviders(),
-    ]);
-    if ("error" in configurationsResult) {
-      return {
-        status: PANEL_CHAT_STATUS.ERROR,
-        message: configurationsResult.error,
-      };
+    const result = await loadLighthouseChatConfig();
+    if (result.status === LIGHTHOUSE_CHAT_CONFIG_STATUS.ERROR) {
+      return { status: PANEL_CHAT_STATUS.ERROR, message: result.message };
     }
-    if ("error" in supportedProvidersResult) {
-      return {
-        status: PANEL_CHAT_STATUS.ERROR,
-        message: supportedProvidersResult.error,
-      };
-    }
-
-    const configurations = configurationsResult.data;
-    const hasConnectedProvider = configurations.some(
-      (configuration) => configuration.connected === true,
-    );
-    if (!hasConnectedProvider) {
+    if (result.status === LIGHTHOUSE_CHAT_CONFIG_STATUS.NOT_CONFIGURED) {
       return { status: PANEL_CHAT_STATUS.NOT_CONFIGURED };
     }
-
-    const { modelsByProvider, failedModelProviders } =
-      await loadLighthouseV2ConnectedModels(
-        configurations,
-        getLighthouseV2SupportedModels,
-      );
-    // Surface (rather than silently swallow to []) connected providers whose
-    // models failed to load, so their empty list reads as a real backend failure.
-    const modelsError =
-      failedModelProviders.length > 0
-        ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
-        : undefined;
-
     return {
       status: PANEL_CHAT_STATUS.READY,
-      config: {
-        configurations,
-        modelsByProvider,
-        supportedProviders: supportedProvidersResult.data,
-      },
-      modelsError,
+      config: result.config,
+      modelsError: result.modelsError,
     };
   } catch {
     return {

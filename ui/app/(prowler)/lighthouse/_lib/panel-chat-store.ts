@@ -32,7 +32,13 @@ export function getPanelChatStoreIfExists(): LighthouseChatStore | null {
   return panelChatStore;
 }
 
-export function resetPanelChatStoreForTests(): void {
+// The config is captured in the store's closure at creation, so a
+// configuration change must tear the singleton down and rebuild it.
+export function resetPanelChatStore(): void {
   panelChatStore?.getState().destroy();
   panelChatStore = null;
+}
+
+export function resetPanelChatStoreForTests(): void {
+  resetPanelChatStore();
 }

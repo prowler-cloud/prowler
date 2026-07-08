@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resetPanelChatStoreForTests } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import { notifyLighthouseV2ConfigurationsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import { stubEventSource } from "@/app/(prowler)/lighthouse/_lib/testing/event-source-mock";
 import type {
   LighthouseV2Configuration,
@@ -240,6 +241,72 @@ describe("LighthousePanelChat", () => {
       ).toBeInTheDocument(),
     );
     expect(getConfigurationsMock).not.toHaveBeenCalled();
+  });
+
+  it("removes an archived chat from the recent chats list", async () => {
+    // Given: one recent chat
+    const user = userEvent.setup();
+    getSessionsMock.mockResolvedValue({
+      data: [session("session-1", "Counting critical findings")],
+    });
+    archiveSessionMock.mockResolvedValue({ data: { id: "session-1" } });
+    render(<LighthousePanelChat />);
+    await screen.findByText("Counting critical findings");
+
+    // When: archiving it from the panel (hover action + confirm dialog)
+    getSessionsMock.mockResolvedValue({ data: [] });
+    await user.click(
+      screen.getByRole("button", {
+        name: "Archive Counting critical findings",
+      }),
+    );
+    await user.click(
+      within(await screen.findByRole("dialog")).getByRole("button", {
+        name: "Archive",
+      }),
+    );
+
+    // Then: the archived chat leaves the list
+    await waitFor(() =>
+      expect(
+        screen.queryByText("Counting critical findings"),
+      ).not.toBeInTheDocument(),
+    );
+  });
+
+  it("swaps the connect CTA for the chat once a provider is connected", async () => {
+    // Given: no connected provider yet
+    getConfigurationsMock.mockResolvedValueOnce({
+      data: [{ ...configurations[0], connected: false }],
+    });
+    render(<LighthousePanelChat />);
+    await screen.findByRole("link", { name: "Connect an LLM provider" });
+
+    // When: a provider gets connected on the settings page
+    act(() => notifyLighthouseV2ConfigurationsChanged());
+
+    // Then: the panel reloads into the live chat
+    expect(
+      await screen.findByRole("textbox", { name: "Message" }),
+    ).toBeInTheDocument();
+  });
+
+  it("drops the cached config when configurations change while unmounted", async () => {
+    // Given: a cached config from a previous mount
+    const { unmount } = render(<LighthousePanelChat />);
+    await screen.findByRole("textbox", { name: "Message" });
+    unmount();
+    getConfigurationsMock.mockClear();
+
+    // When: config CRUD happens with the panel closed, then it reopens
+    notifyLighthouseV2ConfigurationsChanged();
+    render(<LighthousePanelChat />);
+
+    // Then: the stale cache is gone and the config reloads
+    expect(
+      await screen.findByRole("textbox", { name: "Message" }),
+    ).toBeInTheDocument();
+    expect(getConfigurationsMock).toHaveBeenCalled();
   });
 });
 

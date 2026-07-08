@@ -7,8 +7,8 @@ import {
   type LighthouseChatStore,
 } from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import {
-  LIGHTHOUSE_V2_NEW_CHAT_EVENT,
-  LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
+  onLighthouseV2NewChat,
+  onLighthouseV2SessionArchived,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type {
   LighthouseV2Configuration,
@@ -76,26 +76,15 @@ export function LighthouseV2ChatPage({
   // The sidebar "+" can't rely on routing to reset the latest conversation (its
   // URL was set via replaceState, invisible to Next's router), so reset in place.
   useMountEffect(() => {
-    const handleNewChat = () => store.getState().resetToNewChat();
-    const handleSessionArchived = (event: Event) => {
-      const archivedId = (event as CustomEvent<{ sessionId: string }>).detail
-        ?.sessionId;
-      if (archivedId) {
-        store.getState().handleSessionArchived(archivedId);
-      }
-    };
-
-    window.addEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, handleNewChat);
-    window.addEventListener(
-      LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
-      handleSessionArchived,
+    const unsubscribeNewChat = onLighthouseV2NewChat(() =>
+      store.getState().resetToNewChat(),
+    );
+    const unsubscribeSessionArchived = onLighthouseV2SessionArchived(
+      (sessionId) => store.getState().handleSessionArchived(sessionId),
     );
     return () => {
-      window.removeEventListener(LIGHTHOUSE_V2_NEW_CHAT_EVENT, handleNewChat);
-      window.removeEventListener(
-        LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT,
-        handleSessionArchived,
-      );
+      unsubscribeNewChat();
+      unsubscribeSessionArchived();
     };
   });
 

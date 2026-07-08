@@ -4,15 +4,13 @@ import {
   getLighthouseProvidersConfig,
   isLighthouseConfigured,
 } from "@/actions/lighthouse-v1/lighthouse";
-import {
-  getLighthouseV2Configurations,
-  getLighthouseV2Messages,
-  getLighthouseV2SupportedModels,
-  getLighthouseV2SupportedProviders,
-} from "@/app/(prowler)/lighthouse/_actions";
+import { getLighthouseV2Messages } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
 import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
-import { loadLighthouseV2ConnectedModels } from "@/app/(prowler)/lighthouse/_lib/model-loading";
+import {
+  LIGHTHOUSE_CHAT_CONFIG_STATUS,
+  loadLighthouseChatConfig,
+} from "@/app/(prowler)/lighthouse/_lib/load-chat-config";
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/ui";
@@ -33,34 +31,13 @@ export default async function AIChatbot({
     typeof params.session === "string" ? params.session : undefined;
 
   if (isCloud()) {
-    const [configurationsResult, supportedProvidersResult] = await Promise.all([
-      getLighthouseV2Configurations(),
-      getLighthouseV2SupportedProviders(),
-    ]);
-    const configurations =
-      "data" in configurationsResult ? configurationsResult.data : [];
-    const supportedProviders =
-      "data" in supportedProvidersResult ? supportedProvidersResult.data : [];
-    const connectedConfigurations = configurations.filter(
-      (configuration) => configuration.connected === true,
-    );
-
-    if (connectedConfigurations.length === 0) {
+    const chatConfigResult = await loadLighthouseChatConfig();
+    // Errors and the not-configured case both land on settings, where the
+    // user can connect (or fix) a provider.
+    if (chatConfigResult.status !== LIGHTHOUSE_CHAT_CONFIG_STATUS.READY) {
       return redirect(LIGHTHOUSE_ROUTE.SETTINGS);
     }
-
-    const { modelsByProvider, failedModelProviders } =
-      await loadLighthouseV2ConnectedModels(
-        configurations,
-        getLighthouseV2SupportedModels,
-      );
-    // Surface (rather than silently swallow to []) connected providers whose
-    // models failed to load, so their empty list reads as a real backend
-    // failure. Disconnected providers are never fetched (see model-loading.ts).
-    const modelsError =
-      failedModelProviders.length > 0
-        ? `Could not load available models for: ${failedModelProviders.join(", ")}. Try again shortly.`
-        : undefined;
+    const { config, modelsError } = chatConfigResult;
 
     const initialMessages = activeSessionId
       ? await getLighthouseV2Messages(activeSessionId)
@@ -83,9 +60,9 @@ export default async function AIChatbot({
         <div className="h-[calc(100dvh-6.5rem)] min-h-0 [contain:layout]">
           <LighthouseV2ChatPage
             key={chatRouteKey}
-            configurations={configurations}
-            modelsByProvider={modelsByProvider}
-            supportedProviders={supportedProviders}
+            configurations={config.configurations}
+            modelsByProvider={config.modelsByProvider}
+            supportedProviders={config.supportedProviders}
             initialSessionId={validSessionId}
             initialMessages={chatMessages}
             initialPrompt={initialPrompt}
