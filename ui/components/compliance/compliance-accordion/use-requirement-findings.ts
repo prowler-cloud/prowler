@@ -42,12 +42,17 @@ interface UseRequirementFindingsOptions {
 }
 
 // Authoritative per-scan findings metadata (the total ``count`` for that
-// scan's checks, and how many ``pages`` it spans). Sourced from each
-// per-scan response's pagination — not from the loaded rows — so the
-// per-provider breakdown can show real totals instead of a page-1 sample.
+// scan's checks, how many ``pages`` it spans, and the exact PASS / FAIL
+// split). All sourced from each per-scan response's pagination — not from the
+// loaded rows — so the per-provider breakdown shows real totals and an honest
+// pass/fail split regardless of the table's pagination. ``pass``/``fail`` come
+// from dedicated status-filtered count-only fetches (``page[size]=1``, only
+// ``meta.pagination.count`` is read).
 export interface CrossProviderScanMeta {
   count: number;
   pages: number;
+  pass: number;
+  fail: number;
 }
 
 interface UseRequirementFindingsReturn {
@@ -269,23 +274,52 @@ export function useRequirementFindings({
             },
           );
 
-          const responses = await Promise.all(
-            jobs.map(({ scanIdForAccount, checks }) =>
-              getFindings({
-                filters: {
-                  "filter[check_id__in]": checks,
-                  "filter[scan]": scanIdForAccount,
-                  "filter[muted]": mutedFilter,
-                  ...(region && { "filter[region__in]": region }),
-                },
-                page: parseInt(pageNumber, 10),
-                pageSize: parseInt(pageSize, 10),
-                sort: encodedSort,
-              }),
-            ),
+          // Per job, fetch the page of rows (feeds the table) plus two
+          // count-only requests scoped to PASS / FAIL (``page[size]=1`` — only
+          // ``meta.pagination.count`` is read). The count-only pair gives the
+          // per-provider breakdown an exact pass/fail split that does NOT
+          // depend on how many rows the table happens to have loaded, so a
+          // paginated provider no longer renders a "—" placeholder.
+          const readCount = (r: unknown) =>
+            (r as FindingsResponseLike)?.meta?.pagination?.count ?? 0;
+
+          const perJob = await Promise.all(
+            jobs.map(async ({ scanIdForAccount, checks }) => {
+              const baseFilters: Record<string, string> = {
+                "filter[check_id__in]": checks,
+                "filter[scan]": scanIdForAccount,
+                "filter[muted]": mutedFilter,
+                ...(region && { "filter[region__in]": region }),
+              };
+              const [main, passRes, failRes] = await Promise.all([
+                getFindings({
+                  filters: baseFilters,
+                  page: parseInt(pageNumber, 10),
+                  pageSize: parseInt(pageSize, 10),
+                  sort: encodedSort,
+                }),
+                getFindings({
+                  filters: { ...baseFilters, "filter[status__in]": "PASS" },
+                  page: 1,
+                  pageSize: 1,
+                  sort: encodedSort,
+                }),
+                getFindings({
+                  filters: { ...baseFilters, "filter[status__in]": "FAIL" },
+                  page: 1,
+                  pageSize: 1,
+                  sort: encodedSort,
+                }),
+              ]);
+              return { scanIdForAccount, main, passRes, failRes };
+            }),
           );
 
           if (cancelled) return;
+
+          // Only the row-page responses feed the merge and the failure check;
+          // the count-only responses are consumed for scanMeta below.
+          const responses = perJob.map((job) => job.main);
 
           // ``getFindings`` resolves to ``undefined`` on a failed request
           // rather than throwing, so a per-scan failure would otherwise be
@@ -301,16 +335,19 @@ export function useRequirementFindings({
             return;
           }
 
-          // Authoritative per-scan totals, aligned by index with ``jobs``
-          // (``responses[i]`` answers ``jobs[i]``). The breakdown reads these
-          // for real per-provider counts instead of counting loaded rows.
+          // Authoritative per-scan totals keyed by scan id. ``count``/``pages``
+          // come from the row-page response; ``pass``/``fail`` from the two
+          // count-only responses. The breakdown reads these for real
+          // per-provider counts instead of counting loaded rows.
           const scanMeta: Record<string, CrossProviderScanMeta> = {};
-          responses.forEach((r, index) => {
-            if (!r || typeof r !== "object" || !("data" in r)) return;
-            const pagination = (r as FindingsResponseLike).meta?.pagination;
-            scanMeta[jobs[index].scanIdForAccount] = {
+          perJob.forEach(({ scanIdForAccount, main, passRes, failRes }) => {
+            if (!main || typeof main !== "object" || !("data" in main)) return;
+            const pagination = (main as FindingsResponseLike).meta?.pagination;
+            scanMeta[scanIdForAccount] = {
               count: pagination?.count ?? 0,
               pages: pagination?.pages ?? 1,
+              pass: readCount(passRes),
+              fail: readCount(failRes),
             };
           });
 

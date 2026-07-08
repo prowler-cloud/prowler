@@ -68,6 +68,34 @@ async function flushAsync() {
   });
 }
 
+// The cross-provider fan-out fires, per scan, one row-page request plus two
+// count-only requests (``filter[status__in]`` PASS / FAIL, used only for their
+// ``meta.pagination.count``). Route the mock by scan id + status so the tests
+// stay independent of call ordering.
+function mockCrossProviderFindings(
+  config: Record<string, { main: unknown; pass?: number; fail?: number }>,
+) {
+  findingsActionsMock.getFindings.mockImplementation(
+    async ({ filters }: { filters: Record<string, string> }) => {
+      const scan = filters["filter[scan]"];
+      const status = filters["filter[status__in]"];
+      const entry = config[scan];
+      if (!entry) return undefined;
+      if (status === "PASS")
+        return {
+          data: [],
+          meta: { pagination: { count: entry.pass ?? 0, pages: 1 } },
+        };
+      if (status === "FAIL")
+        return {
+          data: [],
+          meta: { pagination: { count: entry.fail ?? 0, pages: 1 } },
+        };
+      return entry.main;
+    },
+  );
+}
+
 describe("useRequirementFindings", () => {
   beforeEach(() => {
     findingsActionsMock.getFindings.mockReset();
@@ -293,32 +321,41 @@ describe("useRequirementFindings", () => {
     );
   });
 
-  it("fans out one fetch per contributing scan and merges the counts in cross-provider mode", async () => {
+  it("fans out a row-page fetch plus count-only PASS/FAIL per scan and merges the counts in cross-provider mode", async () => {
     // Given: two providers, one scan each, with disjoint check sets.
     findingsActionsMock.getFindings.mockReset();
-    findingsActionsMock.getFindings
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-a",
-            attributes: { status: "FAIL" },
-            relationships: { scan: { data: { id: "scan-a" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-a" }],
-        meta: { pagination: { count: 1, pages: 1 } },
-      })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-b",
-            attributes: { status: "PASS" },
-            relationships: { scan: { data: { id: "scan-b" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-b" }],
-        meta: { pagination: { count: 2, pages: 1 } },
-      });
+    mockCrossProviderFindings({
+      "scan-a": {
+        main: {
+          data: [
+            {
+              id: "finding-a",
+              attributes: { status: "FAIL" },
+              relationships: { scan: { data: { id: "scan-a" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-a" }],
+          meta: { pagination: { count: 1, pages: 1 } },
+        },
+        pass: 0,
+        fail: 1,
+      },
+      "scan-b": {
+        main: {
+          data: [
+            {
+              id: "finding-b",
+              attributes: { status: "PASS" },
+              relationships: { scan: { data: { id: "scan-b" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-b" }],
+          meta: { pagination: { count: 2, pages: 1 } },
+        },
+        pass: 2,
+        fail: 0,
+      },
+    });
 
     // When
     const { result } = renderHook(() =>
@@ -333,48 +370,77 @@ describe("useRequirementFindings", () => {
     );
     await flushAsync();
 
-    // Then: one request per scan, each scoped to that provider's checks.
-    expect(findingsActionsMock.getFindings).toHaveBeenCalledTimes(2);
+    // Then: three requests per scan (row page + PASS count + FAIL count) → 6.
+    expect(findingsActionsMock.getFindings).toHaveBeenCalledTimes(6);
+    // The row-page request is scoped to that provider's checks, no status filter.
     expect(findingsActionsMock.getFindings).toHaveBeenCalledWith(
       expect.objectContaining({
         filters: expect.objectContaining({
           "filter[scan]": "scan-a",
           "filter[check_id__in]": "check_a",
         }),
+        pageSize: 10,
       }),
     );
-    // And the responses are merged: rows concatenated, counts summed.
+    // And a count-only PASS request (page size 1) for the same scan+checks.
+    expect(findingsActionsMock.getFindings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: expect.objectContaining({
+          "filter[scan]": "scan-a",
+          "filter[check_id__in]": "check_a",
+          "filter[status__in]": "PASS",
+        }),
+        pageSize: 1,
+      }),
+    );
+    // Only the row-page responses feed the merge: rows concatenated, counts summed.
     expect(result.current.findings?.data).toHaveLength(2);
     expect(result.current.findings?.meta?.pagination?.count).toBe(3);
+    // Exact per-scan pass/fail come from the count-only responses, not the rows.
+    expect(result.current.crossProviderScanMeta["scan-a"]).toEqual(
+      expect.objectContaining({ count: 1, pages: 1, pass: 0, fail: 1 }),
+    );
+    expect(result.current.crossProviderScanMeta["scan-b"]).toEqual(
+      expect.objectContaining({ count: 2, pages: 1, pass: 2, fail: 0 }),
+    );
   });
 
   it("takes the worst-case page count across scans so pagination reaches every tail", async () => {
     findingsActionsMock.getFindings.mockReset();
-    findingsActionsMock.getFindings
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-a",
-            attributes: { status: "FAIL", severity: "high" },
-            relationships: { scan: { data: { id: "scan-a" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-a" }],
+    mockCrossProviderFindings({
+      "scan-a": {
         // AWS spans many pages…
-        meta: { pagination: { count: 30, pages: 3 } },
-      })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-b",
-            attributes: { status: "PASS", severity: "low" },
-            relationships: { scan: { data: { id: "scan-b" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-b" }],
+        main: {
+          data: [
+            {
+              id: "finding-a",
+              attributes: { status: "FAIL", severity: "high" },
+              relationships: { scan: { data: { id: "scan-a" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-a" }],
+          meta: { pagination: { count: 30, pages: 3 } },
+        },
+        pass: 10,
+        fail: 20,
+      },
+      "scan-b": {
         // …Azure fits in one.
-        meta: { pagination: { count: 5, pages: 1 } },
-      });
+        main: {
+          data: [
+            {
+              id: "finding-b",
+              attributes: { status: "PASS", severity: "low" },
+              relationships: { scan: { data: { id: "scan-b" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-b" }],
+          meta: { pagination: { count: 5, pages: 1 } },
+        },
+        pass: 5,
+        fail: 0,
+      },
+    });
 
     const { result } = renderHook(() =>
       useRequirementFindings(
@@ -392,35 +458,45 @@ describe("useRequirementFindings", () => {
     // table's Next button stays enabled and AWS's later pages are reachable.
     expect(result.current.findings?.meta?.pagination?.pages).toBe(3);
     expect(result.current.findings?.meta?.pagination?.count).toBe(35);
+    // Pass/fail are exact even though AWS is paginated — they come from the
+    // count-only fetches, not the single loaded page.
+    expect(result.current.crossProviderScanMeta["scan-a"]).toEqual(
+      expect.objectContaining({ pages: 3, pass: 10, fail: 20 }),
+    );
   });
 
   it("globally re-sorts the merged rows by the active sort (FAIL/critical first)", async () => {
     findingsActionsMock.getFindings.mockReset();
     // Scan A returns a PASS/low row; scan B a FAIL/critical row. Concatenation
     // alone would list A before B and contradict the FAIL-first sort.
-    findingsActionsMock.getFindings
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-pass",
-            attributes: { status: "PASS", severity: "low" },
-            relationships: { scan: { data: { id: "scan-a" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-a" }],
-        meta: { pagination: { count: 1, pages: 1 } },
-      })
-      .mockResolvedValueOnce({
-        data: [
-          {
-            id: "finding-fail",
-            attributes: { status: "FAIL", severity: "critical" },
-            relationships: { scan: { data: { id: "scan-b" } } },
-          },
-        ],
-        included: [{ type: "scans", id: "scan-b" }],
-        meta: { pagination: { count: 1, pages: 1 } },
-      });
+    mockCrossProviderFindings({
+      "scan-a": {
+        main: {
+          data: [
+            {
+              id: "finding-pass",
+              attributes: { status: "PASS", severity: "low" },
+              relationships: { scan: { data: { id: "scan-a" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-a" }],
+          meta: { pagination: { count: 1, pages: 1 } },
+        },
+      },
+      "scan-b": {
+        main: {
+          data: [
+            {
+              id: "finding-fail",
+              attributes: { status: "FAIL", severity: "critical" },
+              relationships: { scan: { data: { id: "scan-b" } } },
+            },
+          ],
+          included: [{ type: "scans", id: "scan-b" }],
+          meta: { pagination: { count: 1, pages: 1 } },
+        },
+      },
+    });
 
     const { result } = renderHook(() =>
       useRequirementFindings(

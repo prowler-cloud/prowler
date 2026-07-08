@@ -127,51 +127,34 @@ export const ClientAccordionContent = ({
     patchTriageUpdate(input);
   };
 
-  // Per-provider finding tallies for the cross-provider breakdown.
-  //
-  // ``count`` is authoritative: it sums each of the provider's scans' real
-  // ``pagination.count`` (total findings for its checks), NOT the loaded page
-  // rows — a provider with 300 findings must read 300 here even while the
-  // table shows page 1.
-  //
-  // ``pass``/``fail`` can only be tallied from loaded rows, so they're honest
-  // only when every one of the provider's scans returned all its rows on this
-  // page (``pages <= 1``). When a provider is paginated, ``fullyLoaded`` is
-  // false and the caller renders "—" instead of a misleading partial split.
+  // Per-provider finding tallies for the cross-provider breakdown, sourced
+  // ENTIRELY from the authoritative per-scan metadata — never from the loaded
+  // table rows. ``count`` sums each scan's real ``pagination.count`` and
+  // ``pass``/``fail`` sum the exact status-filtered counts the hook fetched
+  // (count-only requests). Because none of this depends on the table's page,
+  // a paginated provider gets a correct split instead of a "—" placeholder.
   const providerFindingStats = (() => {
     const count: Record<string, number> = {};
     const pass: Record<string, number> = {};
     const fail: Record<string, number> = {};
-    const fullyLoaded: Record<string, boolean> = {};
     if (!isCrossProvider || !scanIdsByProvider) {
-      return { count, pass, fail, fullyLoaded };
+      return { count, pass, fail };
     }
-    const scanToProvider = new Map<string, string>();
     for (const [providerKey, scanIds] of Object.entries(scanIdsByProvider)) {
       count[providerKey] = 0;
       pass[providerKey] = 0;
       fail[providerKey] = 0;
-      fullyLoaded[providerKey] = true;
       if (Array.isArray(scanIds)) {
         for (const sid of scanIds) {
-          scanToProvider.set(sid, providerKey);
           const meta = crossProviderScanMeta[sid];
-          // No meta yet (scan errored or still loading) or the scan spans
-          // multiple pages → this provider's pass/fail can't be trusted.
-          count[providerKey] += meta?.count ?? 0;
-          if (!meta || meta.pages > 1) fullyLoaded[providerKey] = false;
+          if (!meta) continue;
+          count[providerKey] += meta.count ?? 0;
+          pass[providerKey] += meta.pass ?? 0;
+          fail[providerKey] += meta.fail ?? 0;
         }
       }
     }
-    for (const row of findings?.data ?? []) {
-      const sid = row.relationships?.scan?.data?.id;
-      const providerKey = sid ? scanToProvider.get(sid) : undefined;
-      if (!providerKey) continue;
-      const status = row.attributes?.status;
-      if (status === "PASS") pass[providerKey] += 1;
-      else if (status === "FAIL") fail[providerKey] += 1;
-    }
-    return { count, pass, fail, fullyLoaded };
+    return { count, pass, fail };
   })();
 
   const renderDetails = () => {
@@ -222,10 +205,6 @@ export const ClientAccordionContent = ({
                 const findingsCount = providerFindingStats.count[providerKey];
                 const passCount = providerFindingStats.pass[providerKey] ?? 0;
                 const failCount = providerFindingStats.fail[providerKey] ?? 0;
-                // Pass/Fail is only honest when the provider's rows are fully
-                // loaded (single page per scan); otherwise it's a page sample.
-                const passFailKnown =
-                  providerFindingStats.fullyLoaded[providerKey] ?? false;
                 return (
                   <tr
                     key={providerKey}
@@ -265,7 +244,7 @@ export const ClientAccordionContent = ({
                       {findingsLoaded ? (findingsCount ?? 0) : "—"}
                     </td>
                     <td className="px-3 py-2.5 text-right align-middle">
-                      {findingsLoaded && passFailKnown ? (
+                      {findingsLoaded ? (
                         <span className="font-mono tabular-nums">
                           <span className="text-bg-pass">{passCount}</span>
                           <span className="text-text-neutral-secondary">
@@ -274,16 +253,7 @@ export const ClientAccordionContent = ({
                           <span className="text-bg-fail">{failCount}</span>
                         </span>
                       ) : (
-                        <span
-                          className="text-text-neutral-secondary"
-                          title={
-                            findingsLoaded
-                              ? "Findings are paginated for this provider — open its scan to see the full pass/fail split."
-                              : undefined
-                          }
-                        >
-                          —
-                        </span>
+                        <span className="text-text-neutral-secondary">—</span>
                       )}
                     </td>
                     <td className="px-3 py-2.5 align-middle">
