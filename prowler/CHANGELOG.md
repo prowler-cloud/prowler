@@ -2,13 +2,7 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.34.0] (Prowler v5.34.0) - UNRELEASED
-
-### 🚀 Added
-
-- E2E Networks provider with `network`, `database`, and extended `storage` services (27 checks across compute, network, security groups, load balancers, storage, and DBaaS) [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
-
----
+<!-- changelog: release notes start -->
 
 ## [5.33.0] (Prowler v5.33.0)
 

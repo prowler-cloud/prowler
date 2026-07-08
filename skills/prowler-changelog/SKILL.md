@@ -6,7 +6,7 @@ description: >
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.0"
+  version: "2.0"
   scope: [root, ui, api, sdk, mcp_server]
   auto_invoke:
     - "Add changelog entry for a PR or feature"
@@ -16,70 +16,80 @@ metadata:
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash
 ---
 
-## Changelog Locations
+## How changelog entries work: fragments
 
-| Component | File | Version Prefix | Current Version |
-|-----------|------|----------------|-----------------|
-| UI | `ui/CHANGELOG.md` | None | 1.x.x |
-| API | `api/CHANGELOG.md` | None | 1.x.x |
-| MCP Server | `mcp_server/CHANGELOG.md` | None | 0.x.x |
-| SDK | `prowler/CHANGELOG.md` | None | 5.x.x |
+A PR never edits unreleased `CHANGELOG.md` content directly; use fragments instead. Released-block typo/correction fixes are the only direct-edit exception and are described below. For regular entries, add one small **fragment file** per entry under the component's `changelog.d/` directory. Fragments are compiled into the component's `CHANGELOG.md` at release time (deleting the consumed fragments), so concurrent PRs never conflict on the changelog.
 
-## Format Rules (keepachangelog.com)
+| Component | Fragments directory | Compiled file |
+|-----------|---------------------|---------------|
+| UI | `ui/changelog.d/` | `ui/CHANGELOG.md` |
+| API | `api/changelog.d/` | `api/CHANGELOG.md` |
+| MCP Server | `mcp_server/changelog.d/` | `mcp_server/CHANGELOG.md` |
+| SDK | `prowler/changelog.d/` | `prowler/CHANGELOG.md` |
 
-### Section Order (ALWAYS this order)
+"What's unreleased" = "what's in `changelog.d/`". The compiled `CHANGELOG.md` files contain only released versions.
 
-```markdown
-## [X.Y.Z] (Prowler vA.B.C) OR (Prowler UNRELEASED)
+## Fragment filename
 
-### Added
-### Changed
-### Deprecated
-### Removed
-### Fixed
-### Security
+```text
+<slug>.<type>.md
 ```
 
-### Emoji Prefixes (REQUIRED for ALL components)
+- `<slug>` is free-form (`[A-Za-z0-9][A-Za-z0-9._-]*`), chosen by the author, ideally descriptive of the change (e.g. `securityhub-delegated-admin`). The PR number is also a valid slug (e.g. `11259`) when it is already known; it is never required.
+- `<type>` maps 1:1 to the keepachangelog sections:
 
-| Section | Emoji | Usage |
-|---------|-------|-------|
-| Added | `### 🚀 Added` | New features, checks, endpoints |
-| Changed | `### 🔄 Changed` | Modifications to existing functionality |
-| Deprecated | `### ⚠️ Deprecated` | Features marked for removal |
-| Removed | `### ❌ Removed` | Deleted features |
-| Fixed | `### 🐞 Fixed` | Bug fixes |
-| Security | `### 🔐 Security` | Security patches, CVE fixes |
+| `<type>` | Section | Usage |
+|----------|---------|-------|
+| `added` | `### 🚀 Added` | New features, checks, endpoints |
+| `changed` | `### 🔄 Changed` | Modifications to existing functionality |
+| `deprecated` | `### ⚠️ Deprecated` | Features marked for removal |
+| `removed` | `### ❌ Removed` | Deleted features |
+| `fixed` | `### 🐞 Fixed` | Bug fixes |
+| `security` | `### 🔐 Security` | Security patches, CVE fixes |
 
-### Entry Format
+- A PR adds as many fragment files as entries it needs, freely mixing types: one file per entry. E.g. a PR touching Added, Changed and Fixed ships `kms-rotation-check.added.md` + `kms-metadata-cache.changed.md` + `kms-disabled-keys.fixed.md`, and all compile with the same PR link into their own sections.
+- Several entries of the SAME type: a different slug per entry (`kms-rotation-check.added.md`, `kms-rotation-docs.added.md`).
+- At least one fragment per touched component, same as the old one-entry-per-changelog rule.
 
-```markdown
-### Added
+## Fragment content
 
-- Existing entry one [(#XXXX)](https://github.com/prowler-cloud/prowler/pull/XXXX)
-- Existing entry two [(#YYYY)](https://github.com/prowler-cloud/prowler/pull/YYYY)
-- NEW ENTRY GOES HERE at the BOTTOM [(#ZZZZ)](https://github.com/prowler-cloud/prowler/pull/ZZZZ)
+The file contains ONLY the entry text, exactly as it should appear in the changelog, on a single line ending with a trailing newline:
 
-### Changed
-
-- Existing change [(#AAAA)](https://github.com/prowler-cloud/prowler/pull/AAAA)
-- NEW CHANGE ENTRY at BOTTOM [(#BBBB)](https://github.com/prowler-cloud/prowler/pull/BBBB)
+```bash
+echo '`securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator, is active in all opted-in regions, and has organization auto-enable on' > prowler/changelog.d/securityhub-delegated-admin.added.md
 ```
 
-**Rules:**
-- **ADD NEW ENTRIES AT THE BOTTOM of each section** (before next section header or `---`)
-- **Blank line after section header** before first entry
-- **Blank line between sections**
+**Rules (same prose conventions as always):**
+
+- **NEVER write the PR link in the text.** It is attached automatically at compile time (the compile workflow resolves the PR that added the fragment from git history). Writing `[(#NNNN)](...)` in a fragment produces a duplicated link.
+- No period at the end
+- Do NOT start with redundant verbs (the section header already provides the action)
 - Be specific: what changed, not why (that's in the PR)
 - Keep entries readable: use spaces around inline code and product names, and wrap endpoints, commands, errors, task names, and file paths in backticks
 - Avoid long run-on sentences; split complex changes into one concise result plus one concise context clause
-- One entry per PR (can link multiple PRs for related changes)
-- No period at the end
-- Do NOT start with redundant verbs (section header already provides the action)
-- **CRITICAL: Preserve section order** — when adding a new section to the UNRELEASED block, insert it in the correct position relative to existing sections (Added → Changed → Deprecated → Removed → Fixed → Security). Never append a new section at the top or bottom without checking order
-- **CRITICAL: ALWAYS link to the PR, NEVER to the issue.** Every entry MUST use `https://github.com/prowler-cloud/prowler/pull/N`. Linking to `/issues/N` is FORBIDDEN, even when the PR fixes an issue. The issue↔PR relationship belongs in the PR body (`Fixes #N`), not in the changelog. If a fix has no PR yet, do not add the entry until the PR exists.
 
-### Semantic Versioning Rules
+### Good fragments
+
+```text
+# ui/changelog.d/provider-search-bar.added.md
+Search bar when adding a provider
+
+# api/changelog.d/scan-dispatch-race.fixed.md
+`POST /api/v1/scans` no longer intermittently fails with `Scan matching query does not exist`; scan dispatch now publishes the `scan-perform` Celery task after the transaction commits
+
+# ui/changelog.d/node-24-bump.security.md
+Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs
+```
+
+### Bad fragments
+
+```text
+Fixed bug.                              # Too vague, has period, redundant verb
+Add search bar                          # Redundant verb (the section already says "Added")
+Search bar [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)   # NEVER include the PR link; it is added at compile time
+```
+
+## Semantic Versioning Rules
 
 Prowler follows [semver.org](https://semver.org/):
 
@@ -89,69 +99,26 @@ Prowler follows [semver.org](https://semver.org/):
 | New features (backwards compatible) | MINOR (x.**Y**.0) | 1.16.2 → 1.17.0 |
 | Breaking changes, removals | MAJOR (**X**.0.0) | 1.17.0 → 2.0.0 |
 
-**CRITICAL:** `### ❌ Removed` entries MUST only appear in MAJOR version releases. Removing features is a breaking change.
-
-### Released Versions Are Immutable
-
-**NEVER modify already released versions.** Once a version is released (has a Prowler version tag like `v5.16.0`), its changelog section is frozen.
-
-**Common issue:** A PR is created during release cycle X, includes a changelog entry, but merges after release. The entry is now in the wrong section.
-
-```markdown
-## [1.16.0] (Prowler v5.16.0)    ← RELEASED, DO NOT MODIFY
-
-### Added
-- Feature from merged PR [(#9999)]   ← WRONG! PR merged after release
-
-## [1.17.0] (Prowler UNRELEASED)  ← Move entry HERE
-```
-
-**Fix:** Move the entry from the released version to the UNRELEASED section.
-
-### Version Header Format
-
-```markdown
-## [1.17.0] (Prowler UNRELEASED)    # For unreleased changes
-## [1.16.0] (Prowler v5.16.0)       # For released versions
-
----                                  # Horizontal rule between versions
-```
-
-## Mandatory Changelog Preflight
-
-Before editing any `CHANGELOG.md`, always inspect the active release boundary:
-
-1. Read the UNRELEASED block plus the latest three released version blocks:
-   ```bash
-   awk '/^## \[/{n++} n<=4 {print}' ui/CHANGELOG.md
-   ```
-2. Identify the **only writable block**: the block whose header contains `(Prowler UNRELEASED)`.
-3. Treat every block whose header contains `(Prowler vX.Y.Z)` as immutable. Do not add, move, reword, reorder, or deduplicate entries there.
-4. If your PR's entry appears in any of the latest three released blocks, remove it from the released block and add it to the correct section in the UNRELEASED block.
-5. If there is no UNRELEASED block at the top, stop and ask before editing.
-
-**Do not trust the current topmost matching section name.** A released block can contain the same section heading (`### 🚀 Added`, `### 🔄 Changed`, etc.). Always anchor edits to the `Prowler UNRELEASED` version block first.
+**CRITICAL:** `removed` fragments MUST only ship in MAJOR version releases. Removing features is a breaking change.
 
 ## Mandatory Human Confirmation Gate
 
-Before creating or editing any changelog file (`CHANGELOG.md`), the agent MUST stop and get explicit user confirmation. This applies even when the changelog gate is failing, the required edit seems obvious, or the user asked to "fix the changelog".
+Before creating or editing any changelog fragment or `CHANGELOG.md` file, the agent MUST stop and get explicit user confirmation. This applies even when the changelog gate is failing, the required file seems obvious, or the user asked to "fix the changelog".
 
-Present the proposed changelog action before writing:
+Present the proposed action before writing:
 
-1. Target file path.
-2. Target version block and section.
-3. Exact entry to add, move, remove, or rewrite.
-4. Reason the changelog is needed.
+1. Target fragment path (component, slug, type) or CHANGELOG.md edit.
+2. Exact entry text.
+3. Reason the changelog entry is needed.
 
-Only proceed after an explicit approval such as "confirm", "approved", "sí", or equivalent. If the user rejects or does not answer, do not edit or create the changelog. Offer alternatives such as adding `no-changelog` when appropriate.
+Only proceed after an explicit approval such as "confirm", "approved", "sí", or equivalent. If the user rejects or does not answer, do not create or edit anything. Offer alternatives such as adding `no-changelog` when appropriate.
 
 ## Adding a Changelog Entry
 
 ### Step 1: Determine Affected Component(s)
 
 ```bash
-# Check which files changed
-git diff main...HEAD --name-only
+git diff master...HEAD --name-only | grep -E '^(ui|api|mcp_server|prowler)/' | cut -d/ -f1 | sort -u
 ```
 
 | Path Pattern | Component |
@@ -160,113 +127,62 @@ git diff main...HEAD --name-only
 | `api/**` | API |
 | `mcp_server/**` | MCP Server |
 | `prowler/**` | SDK |
-| Multiple | Update ALL affected changelogs |
+| Root `uv.lock` / `pyproject.toml` | SDK (the gate requires a `prowler/changelog.d/` fragment) |
+| Multiple | One fragment per affected component |
 
-### Step 2: Determine Change Type
+### Step 2: Create the fragment(s)
 
-| Change | Section |
-|--------|---------|
-| New feature, check, endpoint | 🚀 Added |
-| Behavior change, refactor | 🔄 Changed |
-| Bug fix | 🐞 Fixed |
-| CVE patch, security improvement | 🔐 Security |
-| Feature removal | ❌ Removed |
-| Deprecation notice | ⚠️ Deprecated |
-
-### Step 3: Add Entry at BOTTOM of Appropriate Section
-
-**CRITICAL:** Add new entries at the BOTTOM of each section, NOT at the top.
-
-**CRITICAL:** The link MUST point to the PR (`/pull/N`). Linking to `/issues/N` is FORBIDDEN. If the PR closes an issue, that mapping goes in the PR body via `Fixes #N` — never in the changelog entry.
-
-```markdown
-## [1.17.0] (Prowler UNRELEASED)
-
-### 🐞 Fixed
-
-- Existing fix one [(#9997)](https://github.com/prowler-cloud/prowler/pull/9997)
-- Existing fix two [(#9998)](https://github.com/prowler-cloud/prowler/pull/9998)
-- Button alignment in dashboard header [(#9999)](https://github.com/prowler-cloud/prowler/pull/9999)  ← NEW ENTRY AT BOTTOM
-
-### 🔐 Security
+```bash
+echo 'Entry text describing the change' > <component>/changelog.d/<slug>.<type>.md
 ```
 
-This maintains chronological order within each section (oldest at top, newest at bottom).
+### Step 3: Check pending fragments
 
-## Examples
-
-### Good Entries
-
-```markdown
-### 🚀 Added
-- Search bar when adding a provider [(#9634)](https://github.com/prowler-cloud/prowler/pull/9634)
-
-### 🐞 Fixed
-- OCI update credentials form failing silently due to missing provider UID [(#9746)](https://github.com/prowler-cloud/prowler/pull/9746)
-
-### 🔐 Security
-- Node.js from 20.x to 24.13.0 LTS, patching 8 CVEs [(#9797)](https://github.com/prowler-cloud/prowler/pull/9797)
-```
-
-### Readable Technical Entries
-
-```markdown
-# GOOD - Technical but readable
-### 🐞 Fixed
-- `POST /api/v1/scans` no longer intermittently fails with `Scan matching query does not exist`; scan dispatch now publishes the `scan-perform` Celery task after the transaction commits [(#11122)](https://github.com/prowler-cloud/prowler/pull/11122)
-- `entra_users_mfa_capable` no longer flags disabled guest users; Microsoft Graph is now the source of truth for `account_enabled` because EXO `Get-User` omits guest users [(#11002)](https://github.com/prowler-cloud/prowler/pull/11002)
-```
-
-### Bad Entries
-
-```markdown
-# BAD - Wrong section order (Fixed before Added)
-### 🐞 Fixed
-- Some bug fix [(#123)](...)
-
-### 🚀 Added
-- Some new feature [(#456)](...)
-
-- Fixed bug.                              # Too vague, has period
-- Added new feature for users             # Missing PR link, redundant verb
-- Add search bar [(#123)]                 # Redundant verb (section already says "Added")
-- This PR adds a cool new thing (#123)    # Wrong link format, conversational
-- Some bug fix [(#123)](https://github.com/prowler-cloud/prowler/issues/123)   # FORBIDDEN: must link to /pull/N, never /issues/N
-- POST /api/v1/scanswas intermittently failing withScan matching query does not existin thescan-performworker (#11122)  # Missing spaces/backticks, unreadable
-- entra_users_mfa_capable no longer flags disabled guest users by requesting accountEnabled and userType from Microsoft Graph via $select and using Graph as the source of truth for account_enabled (EXO Get-User does not return guest users) (#11002)  # Run-on sentence, identifiers not formatted
+```bash
+ls prowler/changelog.d/ api/changelog.d/ ui/changelog.d/ mcp_server/changelog.d/
 ```
 
 ## PR Changelog Gate
 
-The `pr-check-changelog.yml` workflow enforces changelog entries:
+The `pr-check-changelog.yml` workflow enforces fragments:
 
-1. **REQUIRED**: PRs touching `ui/`, `api/`, `mcp_server/`, or `prowler/` MUST update the corresponding changelog
-2. **SKIP**: Add `no-changelog` label to bypass (use sparingly for docs-only, CI-only changes)
+1. **REQUIRED**: PRs touching `ui/`, `api/`, `mcp_server/`, or `prowler/` MUST add (or fix) a fragment under the corresponding `changelog.d/`
+2. **VALIDATED**: added fragment filenames must match `<slug>.<type>.md` with a valid type
+3. **LINTED**: fragment content must NOT contain a hand-written PR link (`[(#N)](...)`); the gate fails if one is found because the link is attached automatically at compile time
+4. **SKIP**: Add `no-changelog` label to bypass (use sparingly for docs-only, CI-only changes)
 
-## Commands
+## Release flow (compile)
 
-```bash
-# Check which changelogs need updates based on changed files
-git diff main...HEAD --name-only | grep -E '^(ui|api|mcp_server|prowler)/' | cut -d/ -f1 | sort -u
+- At release time, the `compile-changelogs` workflow (manual dispatch: `prowler_version` + `target_branch`; per-component versions are auto-derived from each changelog's latest stamped heading plus the pending fragment types, with optional explicit overrides or `skip`) resolves each fragment's PR from git history, runs the compiler per component, and opens a `chore(changelog): vX.Y.Z` PR (labeled `no-changelog`) that inserts the stamped `## [X.Y.Z] (Prowler vX.Y.Z)` block into each `CHANGELOG.md` and deletes the consumed fragments. A human reviews and squash-merges it. `prepare-release.yml` then extracts the stamped sections exactly as before.
+- **Minor release (X.Y.0):** compile on `master` and merge the compile PR BEFORE cutting the `v5.X` branch.
+- **Patch release (X.Y.Z):** fixes are backported to `v5.X` with their fragment files (conflict-free); compile on `v5.X` and merge its PR there. The same workflow run automatically opens a second forward-sync PR against master (labeled `no-changelog`) that inserts the same stamped block under master's marker and deletes the consumed fragments, so the next minor cannot re-release them; merge it right after. Fragments that only existed on `v5.X` are skipped with a notice. No manual git is involved.
+- Entries within a section are ordered by PR number ascending (approximately chronological). Do not fight this ordering.
 
-# View current UNRELEASED section
-head -50 ui/CHANGELOG.md
-head -50 api/CHANGELOG.md
-head -50 mcp_server/CHANGELOG.md
-head -50 prowler/CHANGELOG.md
-```
+## Fixing an already-released entry
 
-## Migration Note
+Released version blocks in `CHANGELOG.md` are otherwise immutable, but typo/correction fixes to already-released entries are the one case where a PR edits `CHANGELOG.md` directly: make the edit and add the `no-changelog` label.
 
-**API, MCP Server, and SDK changelogs currently lack emojis.** When editing these files, add emoji prefixes to section headers as you update them:
+If a PR's entry shipped in the wrong released block (e.g. the PR merged after its release was cut), move the entry back to a fragment: delete it from the released block and recreate it as `<component>/changelog.d/<PR>.<type>.md` (label the PR `no-changelog` since it edits `CHANGELOG.md`).
+
+## Compiled CHANGELOG.md format (for reference)
+
+The compiler renders, per release, into each `CHANGELOG.md` right under the `<!-- changelog: release notes start -->` marker (never remove that marker):
 
 ```markdown
-# Before (legacy)
-### Added
+## [X.Y.Z] (Prowler vA.B.C)
 
-# After (standardized)
 ### 🚀 Added
+
+- Entry text [(#NNNN)](https://github.com/prowler-cloud/prowler/pull/NNNN)
+
+### 🐞 Fixed
+
+- Fix entry [(#NNNN)](https://github.com/prowler-cloud/prowler/pull/NNNN)
+
+---
 ```
+
+Section order is always: Added → Changed → Deprecated → Removed → Fixed → Security. `X.Y.Z` is the COMPONENT version; `A.B.C` is the Prowler release version. Every entry ends with its PR link; linking to `/issues/N` is forbidden (the issue↔PR mapping belongs in the PR body via `Fixes #N`).
 
 ## Resources
 

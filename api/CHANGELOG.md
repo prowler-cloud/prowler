@@ -2,6 +2,8 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<!-- changelog: release notes start -->
+
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added
