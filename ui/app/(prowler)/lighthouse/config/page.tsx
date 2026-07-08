@@ -1,16 +1,7 @@
-import { Spacer } from "@heroui/spacer";
+import { redirect } from "next/navigation";
 
-import { LighthouseSettings, LLMProvidersTable } from "@/components/lighthouse";
-import { ContentLayout } from "@/components/ui";
+import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 
-export const dynamic = "force-dynamic";
-
-export default async function ChatbotConfigPage() {
-  return (
-    <ContentLayout title="LLM Configuration">
-      <LLMProvidersTable />
-      <Spacer y={8} />
-      <LighthouseSettings />
-    </ContentLayout>
-  );
+export default function LighthouseConfigRedirectPage() {
+  redirect(LIGHTHOUSE_ROUTE.SETTINGS);
 }

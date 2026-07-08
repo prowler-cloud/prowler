@@ -16,6 +16,7 @@ import { Button } from "@/components/shadcn";
 import { useToast } from "@/components/ui";
 import { CustomInput } from "@/components/ui/custom";
 import { Form } from "@/components/ui/form";
+import { getSafeCallbackPath } from "@/lib/auth-callback-url";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -32,7 +33,7 @@ export const SignInForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -102,7 +103,7 @@ export const SignInForm = ({
         form.setValue("password", "");
       }
 
-      const result = await initiateSamlAuth(email);
+      const result = await initiateSamlAuth(email, callbackUrl);
 
       if (result.success && result.redirectUrl) {
         window.location.href = result.redirectUrl;
@@ -181,6 +182,7 @@ export const SignInForm = ({
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
+            callbackUrl={callbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
