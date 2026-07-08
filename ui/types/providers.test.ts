@@ -43,6 +43,11 @@ describe("getProviderDisplayName", () => {
     expect(getProviderDisplayName("template")).toBe("Template");
     expect(getProviderDisplayName("local-template")).toBe("Local Template");
   });
+
+  it("normalizes case for an unknown/dynamic provider id", () => {
+    expect(getProviderDisplayName("AWS_THING")).toBe("Aws Thing");
+    expect(getProviderDisplayName("Local-Template")).toBe("Local Template");
+  });
 });
 
 describe("isKnownProviderType / isConfigurableProvider", () => {

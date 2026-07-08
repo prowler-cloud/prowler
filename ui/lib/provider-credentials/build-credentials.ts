@@ -1,6 +1,9 @@
 import { filterEmptyValues, getFormValue } from "@/lib";
 import { ProviderType } from "@/types";
-import { isConfigurableProvider } from "@/types/providers";
+import {
+  isConfigurableProvider,
+  type KnownProviderType,
+} from "@/types/providers";
 
 import { ProviderCredentialFields } from "./provider-credential-fields";
 
@@ -463,7 +466,10 @@ export const buildSecretConfig = (
   const isServiceAccount =
     formData.get(ProviderCredentialFields.SERVICE_ACCOUNT_KEY) !== null;
 
-  const secretBuilders = {
+  const secretBuilders: Record<
+    KnownProviderType,
+    () => { secretType: string; secret: unknown }
+  > = {
     aws: () => ({
       secretType: isRole ? "role" : "static",
       secret: buildAWSSecret(formData, isRole),

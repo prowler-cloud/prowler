@@ -71,7 +71,7 @@ export function getProviderDisplayName(providerId: string): string {
   const normalized = providerId.toLowerCase();
   return isKnownProviderType(normalized)
     ? PROVIDER_DISPLAY_NAMES[normalized]
-    : humanizeProviderId(providerId);
+    : humanizeProviderId(normalized);
 }
 
 export interface ProviderProps {

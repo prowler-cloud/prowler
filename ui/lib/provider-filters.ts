@@ -2,15 +2,9 @@ export type ProviderFilterValue = string | string[] | undefined;
 export type ProviderFilters = Record<string, ProviderFilterValue>;
 
 interface AppendProviderFiltersOptions {
-  ensuredInFilterKey?: string;
   excludedKeys?: string[];
   excludedKeyIncludes?: string[];
 }
-
-type AppendSanitizedProviderTypeFiltersOptions = Omit<
-  AppendProviderFiltersOptions,
-  "ensuredInFilterKey"
->;
 
 export const PROVIDER_IN_FILTER_KEY = "filter[provider__in]";
 export const PROVIDER_TYPE_IN_FILTER_KEY = "filter[provider_type__in]";
@@ -38,22 +32,17 @@ export const appendSanitizedProviderFilters = (
   });
 };
 
+// Named aliases so call sites read by intent (provider-type vs provider-id
+// filters). Both forward to appendSanitizedProviderFilters unchanged: the UI no
+// longer forces a provider allowlist, so neither injects a default filter.
 export const appendSanitizedProviderTypeFilters = (
   url: URL,
   filters: ProviderFilters = {},
-  options: AppendSanitizedProviderTypeFiltersOptions = {},
-): void =>
-  appendSanitizedProviderFilters(url, filters, {
-    ...options,
-    ensuredInFilterKey: PROVIDER_TYPE_IN_FILTER_KEY,
-  });
+  options: AppendProviderFiltersOptions = {},
+): void => appendSanitizedProviderFilters(url, filters, options);
 
 export const appendSanitizedProviderInFilters = (
   url: URL,
   filters: ProviderFilters = {},
-  options: AppendSanitizedProviderTypeFiltersOptions = {},
-): void =>
-  appendSanitizedProviderFilters(url, filters, {
-    ...options,
-    ensuredInFilterKey: PROVIDER_IN_FILTER_KEY,
-  });
+  options: AppendProviderFiltersOptions = {},
+): void => appendSanitizedProviderFilters(url, filters, options);
