@@ -34,7 +34,8 @@
     }
   },
   "Categories": [
-    "secrets"
+    "secrets",
+    "ec2-imdsv1"
   ],
   "DependsOn": [],
   "RelatedTo": [],

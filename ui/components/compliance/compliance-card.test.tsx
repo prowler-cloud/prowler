@@ -13,9 +13,9 @@ describe("ComplianceCard", () => {
     expect(source).toContain('variant="base"');
   });
 
-  it("uses a responsive stacked layout for narrow screens", () => {
+  it("uses a single-column stacked layout", () => {
     expect(source).toContain("flex-col");
-    expect(source).toContain("sm:flex-row");
+    expect(source).not.toContain("sm:flex-row");
   });
 
   it("uses the shadcn progress component instead of Hero UI", () => {

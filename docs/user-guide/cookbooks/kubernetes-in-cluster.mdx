@@ -2,7 +2,7 @@
 title: 'Run Kubernetes In-Cluster and Send Findings to Prowler Cloud'
 ---
 
-This cookbook walks through deploying Prowler inside a Kubernetes cluster on a recurring schedule and automatically sending findings to Prowler Cloud via [Import Findings](/user-guide/tutorials/prowler-app-import-findings). By the end, security scan results from the cluster appear in Prowler Cloud without any manual file uploads.
+This cookbook walks through deploying Prowler inside a Kubernetes cluster on a recurring schedule and automatically sending findings to Prowler Cloud via [Import Findings](/user-guide/tutorials/prowler-import-findings). By the end, security scan results from the cluster appear in Prowler Cloud without any manual file uploads.
 
 ## Prerequisites
 
@@ -181,7 +181,7 @@ Once the job completes and findings are pushed:
 2. Open the "Scans" section to verify the ingestion job status
 3. Browse findings under the Kubernetes provider
 
-For details on the ingestion workflow and status tracking, refer to the [Import Findings](/user-guide/tutorials/prowler-app-import-findings) documentation.
+For details on the ingestion workflow and status tracking, refer to the [Import Findings](/user-guide/tutorials/prowler-import-findings) documentation.
 
 ## Tips and Troubleshooting
 
@@ -204,4 +204,4 @@ For details on the ingestion workflow and status tracking, refer to the [Import 
     --namespace prowler-ns
   ```
 
-* **Failed uploads**: If the push to Prowler Cloud fails, the scan still completes and findings are saved locally in the container. Check the [Import Findings troubleshooting section](/user-guide/tutorials/prowler-app-import-findings#troubleshooting) for common error messages.
+* **Failed uploads**: If the push to Prowler Cloud fails, the scan still completes and findings are saved locally in the container. Check the [Import Findings troubleshooting section](/user-guide/tutorials/prowler-import-findings#troubleshooting) for common error messages.

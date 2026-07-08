@@ -176,14 +176,12 @@ class RecordSet(BaseModel):
 
 class Route53Domains(AWSService):
     def __init__(self, provider):
-        # Call AWSService's __init__
-        super().__init__(__class__.__name__, provider)
+        # Route53Domains is a global service that supports endpoints in multiple AWS Regions
+        # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
+        region = "us-east-1" if provider.identity.partition == "aws" else None
+        super().__init__(__class__.__name__, provider, region=region)
         self.domains = {}
         if self.audited_partition == "aws":
-            # Route53Domains is a global service that supports endpoints in multiple AWS Regions
-            # but you must specify the US East (N. Virginia) Region to create, update, or otherwise work with domains.
-            self.region = "us-east-1"
-            self.client = self.session.client(self.service, self.region)
             self._list_domains()
             self._get_domain_detail()
             self._list_tags_for_domain()

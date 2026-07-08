@@ -4,19 +4,25 @@ import { Divider } from "@heroui/divider";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { AddIcon, InfoIcon } from "@/components/icons";
+import { LighthouseV2SidebarChat } from "@/app/(prowler)/lighthouse/_components/navigation";
+import { InfoIcon, ProwlerShort } from "@/components/icons";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { SidebarNavigationModeToggle } from "@/components/sidebar/navigation-mode-toggle";
 import { ScrollArea } from "@/components/ui/scroll-area/scroll-area";
 import { CollapsibleMenu } from "@/components/ui/sidebar/collapsible-menu";
 import { MenuItem } from "@/components/ui/sidebar/menu-item";
 import { useAuth } from "@/hooks";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
+import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";
 import { getMenuList } from "@/lib/menu-list";
+import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { cn } from "@/lib/utils";
+import { useScansStore } from "@/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
@@ -55,9 +61,18 @@ const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
 export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
+  const openLaunchScanModal = useScansStore(
+    (state) => state.openLaunchScanModal,
+  );
+  const isScansPage = pathname.startsWith("/scans");
+  const { apiDocsUrl } = useRuntimeConfig();
+  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const navigationMode = useSidebar((state) => state.navigationMode);
+  const setNavigationMode = useSidebar((state) => state.setNavigationMode);
 
   const menuList = getMenuList({
     pathname,
+    apiDocsUrl,
   });
 
   const labelsToHide = MENU_HIDE_RULES.filter((rule) =>
@@ -68,61 +83,86 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Launch Scan Button */}
-      <div className="shrink-0 px-2">
+      {/* Launch Scan Button — mt-1 aligns its top with the main content panel
+          (navbar 72px + py-4 = 88px), matching the fixed-height logo block. */}
+      <div className="mt-1 flex shrink-0 justify-center px-2">
         <Tooltip delayDuration={100}>
           <TooltipTrigger asChild>
-            <Button
-              asChild
-              className={cn(isOpen ? "w-full" : "w-14")}
-              variant="default"
-              size="default"
-            >
-              <Link href="/scans" aria-label="Launch Scan">
-                {isOpen ? "Launch Scan" : <AddIcon className="size-5" />}
-              </Link>
-            </Button>
+            {isScansPage ? (
+              <Button
+                type="button"
+                aria-label="Launch Scan"
+                className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
+                variant="default"
+                size="default"
+                onClick={openLaunchScanModal}
+              >
+                <LaunchScanButtonContent isOpen={isOpen} />
+              </Button>
+            ) : (
+              <Button
+                asChild
+                className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
+                variant="default"
+                size="default"
+              >
+                <Link href={LAUNCH_SCAN_HREF} aria-label="Launch Scan">
+                  <LaunchScanButtonContent isOpen={isOpen} />
+                </Link>
+              </Button>
+            )}
           </TooltipTrigger>
           {!isOpen && <TooltipContent side="right">Launch Scan</TooltipContent>}
         </Tooltip>
       </div>
 
+      <SidebarNavigationModeToggle
+        isOpen={isOpen}
+        value={navigationMode}
+        onChange={setNavigationMode}
+        chatEnabled={isCloudEnv}
+      />
+
       {/* Menu Items */}
       <div className="flex-1 overflow-hidden">
-        <ScrollArea className="h-full [&>div>div[style]]:block!">
-          <nav className="mt-2 w-full lg:mt-6">
-            <ul className="mx-2 flex flex-col items-start gap-1 pb-4">
-              {filteredMenuList.map((group, groupIndex) => (
-                <li key={groupIndex} className="w-full">
-                  {group.menus.map((menu, menuIndex) => (
-                    <div key={menuIndex} className="w-full">
-                      {menu.submenus && menu.submenus.length > 0 ? (
-                        <CollapsibleMenu
-                          icon={menu.icon}
-                          label={menu.label}
-                          submenus={menu.submenus}
-                          defaultOpen={menu.defaultOpen}
-                          isOpen={isOpen}
-                        />
-                      ) : (
-                        <MenuItem
-                          href={menu.href}
-                          label={menu.label}
-                          icon={menu.icon}
-                          active={menu.active}
-                          target={menu.target}
-                          tooltip={menu.tooltip}
-                          isOpen={isOpen}
-                          highlight={menu.highlight}
-                        />
-                      )}
-                    </div>
-                  ))}
-                </li>
-              ))}
-            </ul>
-          </nav>
-        </ScrollArea>
+        {isCloudEnv && navigationMode === SIDEBAR_NAVIGATION_MODE.CHAT ? (
+          <LighthouseV2SidebarChat isOpen={isOpen} />
+        ) : (
+          <ScrollArea className="h-full [&>div>div[style]]:block!">
+            <nav className="mt-2 w-full lg:mt-6">
+              <ul className="mx-2 flex flex-col items-start gap-1 pb-4">
+                {filteredMenuList.map((group, groupIndex) => (
+                  <li key={groupIndex} className="w-full">
+                    {group.menus.map((menu, menuIndex) => (
+                      <div key={menuIndex} className="w-full">
+                        {menu.submenus && menu.submenus.length > 0 ? (
+                          <CollapsibleMenu
+                            icon={menu.icon}
+                            label={menu.label}
+                            submenus={menu.submenus}
+                            defaultOpen={menu.defaultOpen}
+                            isOpen={isOpen}
+                          />
+                        ) : (
+                          <MenuItem
+                            href={menu.href}
+                            label={menu.label}
+                            icon={menu.icon}
+                            active={menu.active}
+                            target={menu.target}
+                            tooltip={menu.tooltip}
+                            isOpen={isOpen}
+                            highlight={menu.highlight}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </ScrollArea>
+        )}
       </div>
 
       {/* Footer */}
@@ -168,3 +208,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
     </div>
   );
 };
+
+function LaunchScanButtonContent({ isOpen }: { isOpen: boolean }) {
+  return (
+    <span className={cn("flex items-center", isOpen && "gap-2.5")}>
+      <ProwlerShort aria-hidden="true" className="size-5 text-current" />
+      {isOpen && <span className="text-xl leading-8">Scan</span>}
+    </span>
+  );
+}

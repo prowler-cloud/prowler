@@ -1,24 +1,8 @@
 import base64
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
-from django.conf import settings
-from django.contrib.auth import authenticate
-from django.contrib.auth.models import update_last_login
-from django.contrib.auth.password_validation import validate_password
-from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
-from drf_spectacular.utils import extend_schema_field
-from jwt.exceptions import InvalidKeyError
-from rest_framework.reverse import reverse
-from rest_framework.validators import UniqueTogetherValidator
-from rest_framework_json_api import serializers
-from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
-from rest_framework_json_api.serializers import ValidationError
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.tokens import RefreshToken
-
+import yaml
 from api.db_router import MainRouter
 from api.exceptions import ConflictException
 from api.models import (
@@ -72,7 +56,23 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from django.conf import settings
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import update_last_login
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import IntegrityError
+from drf_spectacular.utils import extend_schema_field
+from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
+from rest_framework.reverse import reverse
+from rest_framework.validators import UniqueTogetherValidator
+from rest_framework_json_api import serializers
+from rest_framework_json_api.relations import SerializerMethodResourceRelatedField
+from rest_framework_json_api.serializers import ValidationError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
 
 # Base
 
@@ -1397,6 +1397,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "service",
             "type_",
             "tags",
+            "metadata",
             "details",
             "partition",
         ]
@@ -1404,6 +1405,7 @@ class ResourceIncludeSerializer(RLSSerializer):
             "id": {"read_only": True},
             "inserted_at": {"read_only": True},
             "updated_at": {"read_only": True},
+            "metadata": {"read_only": True},
             "details": {"read_only": True},
             "partition": {"read_only": True},
         }
@@ -1529,6 +1531,32 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
+KUBERNETES_KUBECONFIG_EXEC_ERROR = (
+    "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud "
+    "for security reasons."
+)
+KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
+
+
+def kubeconfig_contains_exec_auth(kubeconfig: dict) -> bool:
+    users = kubeconfig.get("users", [])
+    if not isinstance(users, list):
+        raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+    for user_entry in users:
+        if not isinstance(user_entry, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        user = user_entry.get("user", {})
+        if not isinstance(user, dict):
+            raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if "exec" in user:
+            return True
+
+    return False
+
+
 class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
     @staticmethod
     def validate_secret_based_on_provider(
@@ -1543,6 +1571,8 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 serializer = GCPProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GOOGLEWORKSPACE.value:
                 serializer = GoogleWorkspaceProviderSecret(data=secret)
+            elif provider_type == Provider.ProviderChoices.OKTA.value:
+                serializer = OktaProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.GITHUB.value:
                 serializer = GithubProviderSecret(data=secret)
             elif provider_type == Provider.ProviderChoices.IAC.value:
@@ -1688,6 +1718,15 @@ class GoogleWorkspaceProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class OktaProviderSecret(serializers.Serializer):
+    okta_client_id = serializers.CharField()
+    okta_private_key = serializers.CharField()
+    okta_scopes = serializers.ListField(child=serializers.CharField(), required=False)
+
+    class Meta:
+        resource_name = "provider-secrets"
+
+
 class MongoDBAtlasProviderSecret(serializers.Serializer):
     atlas_public_key = serializers.CharField()
     atlas_private_key = serializers.CharField()
@@ -1698,6 +1737,22 @@ class MongoDBAtlasProviderSecret(serializers.Serializer):
 
 class KubernetesProviderSecret(serializers.Serializer):
     kubeconfig_content = serializers.CharField()
+
+    def validate_kubeconfig_content(self, kubeconfig_content):
+        try:
+            kubeconfig = yaml.safe_load(kubeconfig_content)
+        except yaml.YAMLError as exc:
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_INVALID_ERROR
+            ) from exc
+
+        if not isinstance(kubeconfig, dict):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
+
+        if kubeconfig_contains_exec_auth(kubeconfig):
+            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_EXEC_ERROR)
+
+        return kubeconfig_content
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1968,7 +2023,7 @@ class InvitationBaseWriteSerializer(BaseWriteSerializer):
         return value
 
     def validate_expires_at(self, value):
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if value and value < now + timedelta(hours=24):
             raise ValidationError(
                 "Expiry date must be at least 24 hours in the future."
@@ -3135,6 +3190,9 @@ class ProcessorUpdateSerializer(BaseWriteSerializer):
 
 class SamlInitiateSerializer(BaseSerializerV1):
     email_domain = serializers.CharField()
+    callback_url = serializers.CharField(
+        required=False, allow_blank=True, max_length=2048
+    )
 
     class JSONAPIMeta:
         resource_name = "saml-initiate"

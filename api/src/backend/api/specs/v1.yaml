@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.27.0
+  version: 1.35.0
   description: |-
     Prowler API specification.
 
@@ -9,7 +9,7 @@ info:
 paths:
   /api/v1/api-keys:
     get:
-      operationId: api_keys_list
+      operationId: api_v1_api_keys_list
       description: Retrieve a list of API keys for the tenant, with filtering support.
       summary: List API keys
       parameters:
@@ -141,7 +141,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedTenantApiKeyList'
           description: ''
     post:
-      operationId: api_keys_create
+      operationId: api_v1_api_keys_create
       description: Create a new API key for the tenant.
       summary: Create a new API key
       tags:
@@ -169,7 +169,7 @@ paths:
           description: ''
   /api/v1/api-keys/{id}:
     get:
-      operationId: api_keys_retrieve
+      operationId: api_v1_api_keys_retrieve
       description: Fetch detailed information about a specific API key by its ID.
       summary: Retrieve API key details
       parameters:
@@ -220,7 +220,7 @@ paths:
                 $ref: '#/components/schemas/TenantApiKeyResponse'
           description: ''
     patch:
-      operationId: api_keys_partial_update
+      operationId: api_v1_api_keys_partial_update
       description: Modify certain fields of an existing API key without affecting
         other settings.
       summary: Partially update an API key
@@ -257,7 +257,7 @@ paths:
           description: ''
   /api/v1/api-keys/{id}/revoke:
     delete:
-      operationId: api_keys_revoke_destroy
+      operationId: api_v1_api_keys_revoke_destroy
       description: Revoke an API key by its ID. This action is irreversible and will
         prevent the key from being used.
       summary: Revoke an API key
@@ -282,7 +282,7 @@ paths:
           description: API key was successfully revoked
   /api/v1/attack-paths-scans:
     get:
-      operationId: attack_paths_scans_list
+      operationId: api_v1_attack_paths_scans_list
       description: Retrieve Attack Paths scans for the tenant with support for filtering,
         ordering, and pagination.
       summary: List Attack Paths scans
@@ -353,10 +353,25 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -370,6 +385,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -389,13 +405,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -409,6 +426,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -430,6 +448,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -571,7 +590,7 @@ paths:
           description: ''
   /api/v1/attack-paths-scans/{id}:
     get:
-      operationId: attack_paths_scans_retrieve
+      operationId: api_v1_attack_paths_scans_retrieve
       description: Fetch full details for a specific Attack Paths scan.
       summary: Retrieve Attack Paths scan details
       parameters:
@@ -631,7 +650,7 @@ paths:
           description: ''
   /api/v1/attack-paths-scans/{id}/queries:
     get:
-      operationId: attack_paths_scans_queries_retrieve
+      operationId: api_v1_attack_paths_scans_queries_retrieve
       description: Retrieve the catalog of Attack Paths queries available for this
         Attack Paths scan.
       summary: List Attack Paths queries
@@ -694,7 +713,7 @@ paths:
           description: No queries found for the selected provider
   /api/v1/attack-paths-scans/{id}/queries/custom:
     post:
-      operationId: attack_paths_scans_queries_custom_create
+      operationId: api_v1_attack_paths_scans_queries_custom_create
       description: Execute a raw openCypher query against the Attack Paths graph.
         Results are filtered to the scan's provider and truncated to a maximum node
         count.
@@ -741,7 +760,7 @@ paths:
           description: Query execution failed due to a database error
   /api/v1/attack-paths-scans/{id}/queries/run:
     post:
-      operationId: attack_paths_scans_queries_run_create
+      operationId: api_v1_attack_paths_scans_queries_run_create
       description: Execute the selected Attack Paths query against the Attack Paths
         graph and return the resulting subgraph.
       summary: Execute an Attack Paths query
@@ -788,7 +807,7 @@ paths:
           description: Attack Paths query execution failed due to a database error
   /api/v1/attack-paths-scans/{id}/schema:
     get:
-      operationId: attack_paths_scans_schema_retrieve
+      operationId: api_v1_attack_paths_scans_schema_retrieve
       description: Return the cartography provider, version, and links to the schema
         documentation for the cloud provider associated with this Attack Paths scan.
       summary: Retrieve cartography schema metadata
@@ -835,9 +854,11 @@ paths:
           description: Unable to retrieve cartography schema due to a database error
   /api/v1/compliance-overviews:
     get:
-      operationId: compliance_overviews_list
-      description: Retrieve an overview of all the compliance in a given scan.
-      summary: List compliance overviews for a scan
+      operationId: api_v1_compliance_overviews_list
+      description: Retrieve compliance overview data for a scan. When provider filters
+        are provided, the endpoint uses the latest completed scan for each matching
+        provider.
+      summary: List compliance overviews
       parameters:
       - in: query
         name: fields[compliance-overviews]
@@ -897,6 +918,120 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 203afc16daac9b64
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 203afc16daac9b64
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
         name: filter[region]
         schema:
           type: string
@@ -918,8 +1053,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: Related scan ID.
-        required: true
+        description: Related scan ID. Required unless a provider filter is provided.
       - name: filter[search]
         required: false
         in: query
@@ -994,7 +1128,7 @@ paths:
           description: Compliance overviews generation task failed
   /api/v1/compliance-overviews/attributes:
     get:
-      operationId: compliance_overviews_attributes_retrieve
+      operationId: api_v1_compliance_overviews_attributes_retrieve
       description: Retrieve detailed attribute information for all requirements in
         a specific compliance framework along with the associated check IDs for each
         requirement.
@@ -1024,6 +1158,14 @@ paths:
           type: string
         description: Compliance framework ID to get attributes for.
         required: true
+      - in: query
+        name: filter[scan_id]
+        schema:
+          type: string
+          format: uuid
+        description: Scan ID used to resolve the provider for multi-provider universal
+          frameworks (e.g. CSA CCM), so the returned check IDs match the scan's provider.
+          When omitted, the first provider that declares the framework is used.
       tags:
       - Compliance Overview
       security:
@@ -1037,9 +1179,10 @@ paths:
           description: Compliance attributes obtained successfully
   /api/v1/compliance-overviews/metadata:
     get:
-      operationId: compliance_overviews_metadata_retrieve
-      description: Fetch unique metadata values from a set of compliance overviews.
-        This is useful for dynamic filtering.
+      operationId: api_v1_compliance_overviews_metadata_retrieve
+      description: Fetch unique metadata values from compliance overviews. This is
+        useful for dynamic filtering. When provider filters are provided, metadata
+        is computed from the latest completed scan for each matching provider.
       summary: Retrieve metadata values from compliance overviews
       parameters:
       - in: query
@@ -1054,12 +1197,208 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[compliance_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[compliance_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[framework__iexact]
+        schema:
+          type: string
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 203afc16daac9b64
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 203afc16daac9b64
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[scan_id]
         schema:
           type: string
           format: uuid
-        description: Related scan ID.
-        required: true
+        description: Related scan ID. Required unless a provider filter is provided.
+      - name: filter[search]
+        required: false
+        in: query
+        description: A search term.
+        schema:
+          type: string
+      - in: query
+        name: filter[version]
+        schema:
+          type: string
+      - in: query
+        name: filter[version__icontains]
+        schema:
+          type: string
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - compliance_id
+            - -compliance_id
+        explode: false
       tags:
       - Compliance Overview
       security:
@@ -1096,11 +1435,12 @@ paths:
           description: Compliance overviews generation task failed
   /api/v1/compliance-overviews/requirements:
     get:
-      operationId: compliance_overviews_requirements_retrieve
-      description: Retrieve a detailed overview of compliance requirements in a given
-        scan, grouped by compliance framework. This endpoint provides requirement-level
-        details and aggregates status across regions.
-      summary: List compliance requirements overview for a scan
+      operationId: api_v1_compliance_overviews_requirements_retrieve
+      description: Retrieve a detailed overview of compliance requirements, grouped
+        by compliance framework. This endpoint provides requirement-level details
+        and aggregates status across regions. When provider filters are provided,
+        the endpoint uses the latest completed scan for each matching provider.
+      summary: List compliance requirements overview
       parameters:
       - in: query
         name: fields[compliance-requirements-details]
@@ -1160,6 +1500,120 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          x-spec-enum-id: 203afc16daac9b64
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            x-spec-enum-id: 203afc16daac9b64
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
         name: filter[region]
         schema:
           type: string
@@ -1181,8 +1635,7 @@ paths:
         schema:
           type: string
           format: uuid
-        description: Related scan ID.
-        required: true
+        description: Related scan ID. Required unless a provider filter is provided.
       - name: filter[search]
         required: false
         in: query
@@ -1245,7 +1698,7 @@ paths:
           description: Compliance overviews generation task failed
   /api/v1/finding-groups:
     get:
-      operationId: finding_groups_list
+      operationId: api_v1_finding_groups_list
       description: "\n        Retrieve aggregated findings grouped by check_id.\n\n\
         \        Each group shows:\n        - Aggregated status (FAIL if any non-muted\
         \ failure)\n        - Maximum severity across all findings\n        - Resource\
@@ -1267,20 +1720,50 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[check_id]
         schema:
@@ -1298,6 +1781,36 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
       - in: query
         name: filter[inserted_at]
         schema:
@@ -1321,6 +1834,59 @@ paths:
           format: date
         description: Maximum date range is 7 days.
       - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -1339,7 +1905,6 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
           enum:
           - alibabacloud
           - aws
@@ -1353,6 +1918,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -1372,8 +1938,61 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
         schema:
           type: array
           items:
@@ -1381,12 +2000,166 @@ paths:
         description: Multiple values may be separated by commas.
         explode: false
         style: form
-      - name: filter[search]
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: filter[region]
         schema:
           type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
       - name: page[number]
         required: false
         in: query
@@ -1420,6 +2193,8 @@ paths:
             - -severity
             - status
             - -status
+            - muted
+            - -muted
             - impacted_providers
             - -impacted_providers
             - resources_fail
@@ -1430,12 +2205,44 @@ paths:
             - -pass_count
             - fail_count
             - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
             - muted_count
             - -muted_count
             - new_count
             - -new_count
             - changed_count
             - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
             - first_seen_at
             - -first_seen_at
             - last_seen_at
@@ -1456,7 +2263,7 @@ paths:
           description: ''
   /api/v1/finding-groups/{id}/resources:
     get:
-      operationId: finding_groups_resources_retrieve
+      operationId: api_v1_finding_groups_resources_retrieve
       description: "\n        Retrieve resources affected by a specific check (finding\
         \ group).\n\n        Returns individual resources with their current status,\
         \ severity,\n        and timing information including how long they have been\
@@ -1476,20 +2283,446 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[inserted_at]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[inserted_at__gte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[inserted_at__lte]
+        schema:
+          type: string
+          format: date
+        description: Maximum date range is 7 days.
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
       - in: path
         name: id
         schema:
@@ -1497,6 +2730,84 @@ paths:
           format: uuid
         description: A UUID string identifying this finding group daily summary.
         required: true
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - muted
+            - -muted
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
+        explode: false
       tags:
       - Finding Groups
       security:
@@ -1510,12 +2821,12 @@ paths:
           description: ''
   /api/v1/finding-groups/latest:
     get:
-      operationId: finding_groups_latest_retrieve
+      operationId: api_v1_finding_groups_latest_retrieve
       description: "\n        Retrieve the latest available state for each finding\
         \ group (check_id).\n\n        This endpoint returns finding groups without\
         \ requiring date filters,\n        automatically using the latest available\
-        \ data per check_id.\n        All other filters (provider_id, provider_type,\
-        \ check_id) are still supported.\n        "
+        \ data per check_id.\n        Provider, provider group, check, and computed\
+        \ filters are still supported.\n        "
       summary: List latest finding groups
       parameters:
       - in: query
@@ -1531,19 +2842,501 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - muted
+            - -muted
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
         explode: false
       tags:
       - Finding Groups
@@ -1558,7 +3351,7 @@ paths:
           description: ''
   /api/v1/finding-groups/latest/{check_id}/resources:
     get:
-      operationId: finding_groups_latest_resources_retrieve
+      operationId: api_v1_finding_groups_latest_resources_retrieve
       description: "\n        Retrieve resources affected by a specific check (finding\
         \ group) from the\n        latest completed scan for each provider.\n\n  \
         \      Returns individual resources with their current status, severity,\n\
@@ -1583,19 +3376,501 @@ paths:
             - check_description
             - severity
             - status
+            - muted
             - impacted_providers
             - resources_fail
             - resources_total
             - pass_count
             - fail_count
+            - manual_count
+            - pass_muted_count
+            - fail_muted_count
+            - manual_muted_count
             - muted_count
             - new_count
             - changed_count
+            - new_fail_count
+            - new_fail_muted_count
+            - new_pass_count
+            - new_pass_muted_count
+            - new_manual_count
+            - new_manual_muted_count
+            - changed_fail_count
+            - changed_fail_muted_count
+            - changed_pass_count
+            - changed_pass_muted_count
+            - changed_manual_count
+            - changed_manual_muted_count
             - first_seen_at
             - last_seen_at
             - failing_since
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: query
+        name: filter[category]
+        schema:
+          type: string
+      - in: query
+        name: filter[category__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_id]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[check_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[check_title__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[delta]
+        schema:
+          type: string
+          enum:
+          - changed
+          - new
+        description: |-
+          * `new` - New
+          * `changed` - Changed
+      - in: query
+        name: filter[impact]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[muted]
+        schema:
+          type: boolean
+        description: If this filter is not provided, muted and non-muted findings
+          will be returned.
+      - in: query
+        name: filter[provider]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_alias]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_alias__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+          enum:
+          - alibabacloud
+          - aws
+          - azure
+          - cloudflare
+          - gcp
+          - github
+          - googleworkspace
+          - iac
+          - image
+          - kubernetes
+          - m365
+          - mongodbatlas
+          - okta
+          - openstack
+          - oraclecloud
+          - vercel
+        description: |-
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - alibabacloud
+            - aws
+            - azure
+            - cloudflare
+            - gcp
+            - github
+            - googleworkspace
+            - iac
+            - image
+            - kubernetes
+            - m365
+            - mongodbatlas
+            - okta
+            - openstack
+            - oraclecloud
+            - vercel
+        description: |-
+          Multiple values may be separated by commas.
+
+          * `aws` - AWS
+          * `azure` - Azure
+          * `gcp` - GCP
+          * `kubernetes` - Kubernetes
+          * `m365` - M365
+          * `github` - GitHub
+          * `mongodbatlas` - MongoDB Atlas
+          * `iac` - IaC
+          * `oraclecloud` - Oracle Cloud Infrastructure
+          * `alibabacloud` - Alibaba Cloud
+          * `cloudflare` - Cloudflare
+          * `openstack` - OpenStack
+          * `image` - Image
+          * `googleworkspace` - Google Workspace
+          * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[provider_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[region]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[region__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_groups]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_name]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_name__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_type]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_type__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resource_uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[resource_uid__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[resources]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[scan]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[scan__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[service]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__icontains]
+        schema:
+          type: string
+      - in: query
+        name: filter[service__in]
+        schema:
+          type: array
+          items:
+            type: string
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: filter[severity]
+        schema:
+          type: string
+          enum:
+          - critical
+          - high
+          - informational
+          - low
+          - medium
+        description: |-
+          * `critical` - Critical
+          * `high` - High
+          * `medium` - Medium
+          * `low` - Low
+          * `informational` - Informational
+      - in: query
+        name: filter[status]
+        schema:
+          type: string
+          enum:
+          - FAIL
+          - MANUAL
+          - PASS
+        description: |-
+          * `FAIL` - Fail
+          * `PASS` - Pass
+          * `MANUAL` - Manual
+      - in: query
+        name: filter[uid]
+        schema:
+          type: string
+      - in: query
+        name: filter[updated_at]
+        schema:
+          type: string
+          format: date
+      - name: sort
+        required: false
+        in: query
+        description: '[list of fields to sort by](https://jsonapi.org/format/#fetching-sorting)'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - -id
+            - check_id
+            - -check_id
+            - check_title
+            - -check_title
+            - check_description
+            - -check_description
+            - severity
+            - -severity
+            - status
+            - -status
+            - muted
+            - -muted
+            - impacted_providers
+            - -impacted_providers
+            - resources_fail
+            - -resources_fail
+            - resources_total
+            - -resources_total
+            - pass_count
+            - -pass_count
+            - fail_count
+            - -fail_count
+            - manual_count
+            - -manual_count
+            - pass_muted_count
+            - -pass_muted_count
+            - fail_muted_count
+            - -fail_muted_count
+            - manual_muted_count
+            - -manual_muted_count
+            - muted_count
+            - -muted_count
+            - new_count
+            - -new_count
+            - changed_count
+            - -changed_count
+            - new_fail_count
+            - -new_fail_count
+            - new_fail_muted_count
+            - -new_fail_muted_count
+            - new_pass_count
+            - -new_pass_count
+            - new_pass_muted_count
+            - -new_pass_muted_count
+            - new_manual_count
+            - -new_manual_count
+            - new_manual_muted_count
+            - -new_manual_muted_count
+            - changed_fail_count
+            - -changed_fail_count
+            - changed_fail_muted_count
+            - -changed_fail_muted_count
+            - changed_pass_count
+            - -changed_pass_count
+            - changed_pass_muted_count
+            - -changed_pass_muted_count
+            - changed_manual_count
+            - -changed_manual_count
+            - changed_manual_muted_count
+            - -changed_manual_muted_count
+            - first_seen_at
+            - -first_seen_at
+            - last_seen_at
+            - -last_seen_at
+            - failing_since
+            - -failing_since
         explode: false
       tags:
       - Finding Groups
@@ -1610,7 +3885,7 @@ paths:
           description: ''
   /api/v1/findings:
     get:
-      operationId: findings_list
+      operationId: api_v1_findings_list
       description: Retrieve a list of all findings with options for filtering by various
         criteria.
       summary: List all findings
@@ -1752,13 +4027,11 @@ paths:
         name: filter[inserted_at__gte]
         schema:
           type: string
-          format: date
         description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
-          format: date
         description: Maximum date range is 7 days.
       - in: query
         name: filter[muted]
@@ -1799,6 +4072,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -1817,7 +4105,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -1831,6 +4119,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -1850,13 +4139,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -1870,6 +4160,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -1891,6 +4182,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -2104,17 +4396,21 @@ paths:
         name: filter[updated_at]
         schema:
           type: string
+      - in: query
+        name: filter[updated_at__date]
+        schema:
+          type: string
           format: date
       - in: query
         name: filter[updated_at__gte]
         schema:
           type: string
-          format: date-time
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[updated_at__lte]
         schema:
           type: string
-          format: date-time
+        description: Maximum date range is 7 days.
       - in: query
         name: include
         schema:
@@ -2172,7 +4468,7 @@ paths:
           description: ''
   /api/v1/findings/{id}:
     get:
-      operationId: findings_retrieve
+      operationId: api_v1_findings_retrieve
       description: Fetch detailed information about a specific finding by its ID.
       summary: Retrieve data from a specific finding
       parameters:
@@ -2236,7 +4532,7 @@ paths:
           description: ''
   /api/v1/findings/findings_services_regions:
     get:
-      operationId: findings_findings_services_regions_retrieve
+      operationId: api_v1_findings_findings_services_regions_retrieve
       description: Fetch services and regions affected in findings.
       summary: Retrieve the services and regions that are impacted by findings
       parameters:
@@ -2348,7 +4644,6 @@ paths:
         name: filter[inserted_at]
         schema:
           type: string
-          format: date
       - in: query
         name: filter[inserted_at__date]
         schema:
@@ -2358,13 +4653,11 @@ paths:
         name: filter[inserted_at__gte]
         schema:
           type: string
-          format: date
         description: Maximum date range is 7 days.
       - in: query
         name: filter[inserted_at__lte]
         schema:
           type: string
-          format: date
         description: Maximum date range is 7 days.
       - in: query
         name: filter[muted]
@@ -2405,6 +4698,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2423,7 +4731,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -2437,6 +4745,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -2456,13 +4765,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -2476,6 +4786,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -2497,6 +4808,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -2710,17 +5022,21 @@ paths:
         name: filter[updated_at]
         schema:
           type: string
+      - in: query
+        name: filter[updated_at__date]
+        schema:
+          type: string
           format: date
       - in: query
         name: filter[updated_at__gte]
         schema:
           type: string
-          format: date-time
+        description: Maximum date range is 7 days.
       - in: query
         name: filter[updated_at__lte]
         schema:
           type: string
-          format: date-time
+        description: Maximum date range is 7 days.
       - name: sort
         required: false
         in: query
@@ -2755,7 +5071,7 @@ paths:
           description: ''
   /api/v1/findings/latest:
     get:
-      operationId: findings_latest_retrieve
+      operationId: api_v1_findings_latest_retrieve
       description: Retrieve a list of the latest findings from the latest scans for
         each provider with options for filtering by various criteria.
       summary: List the latest findings
@@ -2919,6 +5235,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -2937,7 +5268,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -2951,6 +5282,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -2970,13 +5302,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -2990,6 +5323,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -3011,6 +5345,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -3255,7 +5590,7 @@ paths:
           description: ''
   /api/v1/findings/metadata:
     get:
-      operationId: findings_metadata_retrieve
+      operationId: api_v1_findings_metadata_retrieve
       description: Fetch unique metadata values from a set of findings. This is useful
         for dynamic filtering.
       summary: Retrieve metadata values from findings
@@ -3431,6 +5766,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -3449,7 +5799,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -3463,6 +5813,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -3482,13 +5833,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -3502,6 +5854,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -3523,6 +5876,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -3780,7 +6134,7 @@ paths:
           description: ''
   /api/v1/findings/metadata/latest:
     get:
-      operationId: findings_metadata_latest_retrieve
+      operationId: api_v1_findings_metadata_latest_retrieve
       description: Fetch unique metadata values from a set of findings from the latest
         scans for each provider. This is useful for dynamic filtering.
       summary: Retrieve metadata values from the latest findings
@@ -3931,6 +6285,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -3949,7 +6318,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -3963,6 +6332,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -3982,13 +6352,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -4002,6 +6373,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -4023,6 +6395,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -4255,7 +6628,7 @@ paths:
           description: ''
   /api/v1/integrations:
     get:
-      operationId: integrations_list
+      operationId: api_v1_integrations_list
       description: Retrieve a list of all configured integrations with options for
         filtering by various criteria.
       summary: List all integrations
@@ -4406,7 +6779,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedIntegrationList'
           description: ''
     post:
-      operationId: integrations_create
+      operationId: api_v1_integrations_create
       description: Register a new integration with the system, providing necessary
         configuration details.
       summary: Create a new integration
@@ -4435,9 +6808,17 @@ paths:
           description: ''
   /api/v1/integrations/{integration_pk}/jira/dispatches:
     post:
-      operationId: integrations_jira_dispatches_create
-      description: Send a set of filtered findings to the given integration. At least
-        one finding filter must be provided.
+      operationId: api_v1_integrations_jira_dispatches_create
+      description: |-
+        Send a set of filtered findings to the given integration. At least one finding filter must be provided.
+
+        ## Known Limitations
+
+        ### Issue Types with Required Custom Fields
+
+        Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not currently populate when creating work items. If a selected issue type enforces required fields beyond the standard set (e.g., "Team", "Epic Name"), the work item creation will fail.
+
+        To avoid this, select an issue type that does not require additional custom fields - **Task**, **Bug**, or **Story** typically work without restrictions. If unsure which issue types are available for a project, Prowler automatically fetches and displays them in the "Issue Type" selector when sending a finding.
       summary: Send findings to a Jira integration
       parameters:
       - in: query
@@ -4498,9 +6879,50 @@ paths:
                         task_args: null
                         metadata: null
           description: ''
+  /api/v1/integrations/{integration_pk}/jira/issue_types:
+    get:
+      operationId: api_v1_integrations_jira_issue_types_retrieve
+      description: Fetch the available issue types from Jira for a given project key
+        and update the integration configuration.
+      summary: Get available issue types for a Jira project
+      parameters:
+      - in: query
+        name: fields[jira-issue-types]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - project_key
+            - issue_types
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: integration_pk
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: project_key
+        schema:
+          type: string
+        description: The Jira project key to fetch issue types for.
+        required: true
+      tags:
+      - Integration
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/IntegrationJiraIssueTypesResponse'
+          description: ''
   /api/v1/integrations/{id}:
     get:
-      operationId: integrations_retrieve
+      operationId: api_v1_integrations_retrieve
       description: Fetch detailed information about a specific integration by its
         ID.
       summary: Retrieve integration details
@@ -4554,7 +6976,7 @@ paths:
                 $ref: '#/components/schemas/IntegrationResponse'
           description: ''
     patch:
-      operationId: integrations_partial_update
+      operationId: api_v1_integrations_partial_update
       description: Modify certain fields of an existing integration without affecting
         other settings.
       summary: Partially update an integration
@@ -4590,7 +7012,7 @@ paths:
                 $ref: '#/components/schemas/IntegrationUpdateResponse'
           description: ''
     delete:
-      operationId: integrations_destroy
+      operationId: api_v1_integrations_destroy
       description: Remove an integration from the system by its ID.
       summary: Delete an integration
       parameters:
@@ -4610,7 +7032,7 @@ paths:
           description: No response body
   /api/v1/integrations/{id}/connection:
     post:
-      operationId: integrations_connection_create
+      operationId: api_v1_integrations_connection_create
       description: Try to verify integration connection
       summary: Check integration connection
       parameters:
@@ -4649,7 +7071,7 @@ paths:
           description: ''
   /api/v1/invitations/accept:
     post:
-      operationId: invitations_accept_create
+      operationId: api_v1_invitations_accept_create
       description: Accept an invitation to an existing tenant. This invitation cannot
         be expired and the emails must match.
       summary: Accept an invitation
@@ -4678,7 +7100,7 @@ paths:
           description: ''
   /api/v1/lighthouse-configurations:
     get:
-      operationId: lighthouse_configurations_list
+      operationId: api_v1_lighthouse_configurations_list
       description: Retrieve a list of all Lighthouse AI configurations.
       summary: List all Lighthouse AI configurations
       parameters:
@@ -4751,7 +7173,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedLighthouseConfigList'
           description: ''
     post:
-      operationId: lighthouse_configurations_create
+      operationId: api_v1_lighthouse_configurations_create
       description: Create a new Lighthouse AI configuration with the specified details.
       summary: Create a new Lighthouse AI configuration
       tags:
@@ -4780,7 +7202,7 @@ paths:
           description: ''
   /api/v1/lighthouse-configurations/{id}:
     patch:
-      operationId: lighthouse_configurations_partial_update
+      operationId: api_v1_lighthouse_configurations_partial_update
       description: Update certain fields of an existing Lighthouse AI configuration.
       summary: Partially update a Lighthouse AI configuration
       parameters:
@@ -4814,7 +7236,7 @@ paths:
                 $ref: '#/components/schemas/LighthouseConfigUpdateResponse'
           description: ''
     delete:
-      operationId: lighthouse_configurations_destroy
+      operationId: api_v1_lighthouse_configurations_destroy
       description: Remove a Lighthouse AI configuration by its ID.
       summary: Delete a Lighthouse AI configuration
       parameters:
@@ -4833,7 +7255,7 @@ paths:
           description: No response body
   /api/v1/lighthouse-configurations/{id}/connection:
     post:
-      operationId: lighthouse_configurations_connection_create
+      operationId: api_v1_lighthouse_configurations_connection_create
       description: Verify the connection to the OpenAI API for a specific Lighthouse
         AI configuration.
       summary: Check the connection to the OpenAI API
@@ -4872,7 +7294,7 @@ paths:
           description: ''
   /api/v1/lighthouse/configuration:
     get:
-      operationId: lighthouse_configuration_list
+      operationId: api_v1_lighthouse_configuration_list
       description: Retrieve current tenant-level Lighthouse AI settings. Returns a
         single configuration object.
       summary: Get Lighthouse AI Tenant config
@@ -4947,7 +7369,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedLighthouseTenantConfigList'
           description: ''
     patch:
-      operationId: lighthouse_configuration_partial_update
+      operationId: api_v1_lighthouse_configuration_partial_update
       description: Update tenant-level settings. Validates that the default provider
         is configured and active and that default model IDs exist for the chosen providers.
         Auto-creates configuration if it doesn't exist.
@@ -4977,7 +7399,7 @@ paths:
           description: ''
   /api/v1/lighthouse/models:
     get:
-      operationId: lighthouse_models_list
+      operationId: api_v1_lighthouse_models_list
       description: List available LLM models per configured provider for the current
         tenant.
       summary: List all LLM models
@@ -5107,7 +7529,7 @@ paths:
           description: ''
   /api/v1/lighthouse/models/{id}:
     get:
-      operationId: lighthouse_models_retrieve
+      operationId: api_v1_lighthouse_models_retrieve
       description: Get details for a specific LLM model.
       summary: Retrieve LLM model details
       parameters:
@@ -5148,7 +7570,7 @@ paths:
           description: ''
   /api/v1/lighthouse/providers:
     get:
-      operationId: lighthouse_providers_list
+      operationId: api_v1_lighthouse_providers_list
       description: Retrieve all LLM provider configurations for the current tenant
       summary: List all LLM provider configurations
       parameters:
@@ -5263,7 +7685,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedLighthouseProviderConfigList'
           description: ''
     post:
-      operationId: lighthouse_providers_create
+      operationId: api_v1_lighthouse_providers_create
       description: Create a per-tenant configuration for an LLM provider. Only one
         configuration per provider type is allowed per tenant.
       summary: Create LLM provider configuration
@@ -5292,7 +7714,7 @@ paths:
           description: ''
   /api/v1/lighthouse/providers/{id}:
     get:
-      operationId: lighthouse_providers_retrieve
+      operationId: api_v1_lighthouse_providers_retrieve
       description: Get details for a specific provider configuration in the current
         tenant.
       summary: Retrieve LLM provider configuration
@@ -5333,7 +7755,7 @@ paths:
                 $ref: '#/components/schemas/LighthouseProviderConfigResponse'
           description: ''
     patch:
-      operationId: lighthouse_providers_partial_update
+      operationId: api_v1_lighthouse_providers_partial_update
       description: Partially update a provider configuration (e.g., base_url, is_active).
       summary: Update LLM provider configuration
       parameters:
@@ -5368,7 +7790,7 @@ paths:
                 $ref: '#/components/schemas/LighthouseProviderConfigUpdateResponse'
           description: ''
     delete:
-      operationId: lighthouse_providers_destroy
+      operationId: api_v1_lighthouse_providers_destroy
       description: Delete a provider configuration. Any tenant defaults that reference
         this provider are cleared during deletion.
       summary: Delete LLM provider configuration
@@ -5389,7 +7811,7 @@ paths:
           description: No response body
   /api/v1/lighthouse/providers/{id}/connection:
     post:
-      operationId: lighthouse_providers_connection_create
+      operationId: api_v1_lighthouse_providers_connection_create
       description: Validate provider credentials asynchronously and toggle is_active.
       summary: Check LLM provider connection
       parameters:
@@ -5428,7 +7850,7 @@ paths:
           description: ''
   /api/v1/lighthouse/providers/{id}/refresh-models:
     post:
-      operationId: lighthouse_providers_refresh_models_create
+      operationId: api_v1_lighthouse_providers_refresh_models_create
       description: Fetch available models for this provider configuration and upsert
         into catalog. Supports OpenAI, OpenAI-compatible, and AWS Bedrock providers.
       summary: Refresh LLM models catalog
@@ -5468,7 +7890,7 @@ paths:
           description: ''
   /api/v1/mute-rules:
     get:
-      operationId: mute_rules_list
+      operationId: api_v1_mute_rules_list
       description: Retrieve a list of all mute rules with filtering options.
       summary: List all mute rules
       parameters:
@@ -5614,7 +8036,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedMuteRuleList'
           description: ''
     post:
-      operationId: mute_rules_create
+      operationId: api_v1_mute_rules_create
       description: Create a new mute rule by providing finding IDs, name, and reason.
         The rule will immediately mute the selected findings and launch a background
         task to mute all historical findings with matching UIDs.
@@ -5644,7 +8066,7 @@ paths:
           description: ''
   /api/v1/mute-rules/{id}:
     get:
-      operationId: mute_rules_retrieve
+      operationId: api_v1_mute_rules_retrieve
       description: Fetch detailed information about a specific mute rule by ID.
       summary: Retrieve a mute rule
       parameters:
@@ -5695,7 +8117,7 @@ paths:
                 $ref: '#/components/schemas/MuteRuleResponse'
           description: ''
     patch:
-      operationId: mute_rules_partial_update
+      operationId: api_v1_mute_rules_partial_update
       description: Update certain fields of an existing mute rule (e.g., name, reason,
         enabled).
       summary: Partially update a mute rule
@@ -5731,7 +8153,7 @@ paths:
                 $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
     delete:
-      operationId: mute_rules_destroy
+      operationId: api_v1_mute_rules_destroy
       description: 'Remove a mute rule from the system. Note: Previously muted findings
         remain muted.'
       summary: Delete a mute rule
@@ -5752,7 +8174,7 @@ paths:
           description: No response body
   /api/v1/overviews/attack-surfaces:
     get:
-      operationId: overviews_attack_surfaces_list
+      operationId: api_v1_overviews_attack_surfaces_list
       description: Retrieve aggregated attack surface metrics from latest completed
         scans per provider.
       summary: Get attack surface overview
@@ -5772,6 +8194,21 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -5790,7 +8227,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -5804,6 +8241,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -5823,13 +8261,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -5843,6 +8282,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -5864,6 +8304,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -5915,7 +8356,7 @@ paths:
           description: ''
   /api/v1/overviews/categories:
     get:
-      operationId: overviews_categories_list
+      operationId: api_v1_overviews_categories_list
       description: 'Retrieve aggregated category metrics from latest completed scans
         per provider. Returns one row per category with total, failed, and new failed
         findings counts, plus a severity breakdown showing failed findings per severity
@@ -5951,6 +8392,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -5969,7 +8425,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -5983,6 +8439,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -6002,13 +8459,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -6022,6 +8480,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -6043,6 +8502,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -6096,7 +8556,7 @@ paths:
           description: ''
   /api/v1/overviews/compliance-watchlist:
     get:
-      operationId: overviews_compliance_watchlist_list
+      operationId: api_v1_overviews_compliance_watchlist_list
       description: 'Retrieve compliance metrics with FAIL-dominant aggregation. Without
         filters: uses pre-aggregated TenantComplianceSummary. With provider filters:
         queries ProviderComplianceScore with FAIL-dominant logic where any FAIL in
@@ -6119,6 +8579,21 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[provider_id]
         schema:
@@ -6151,6 +8626,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -6170,6 +8646,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6189,6 +8666,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -6210,6 +8688,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -6265,7 +8744,7 @@ paths:
           description: ''
   /api/v1/overviews/findings:
     get:
-      operationId: overviews_findings_retrieve
+      operationId: api_v1_overviews_findings_retrieve
       description: Fetch aggregated findings data across all providers, grouped by
         various metrics such as passed, failed, muted, and total findings. This endpoint
         calculates summary statistics based on the latest scans for each provider
@@ -6318,6 +8797,21 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -6336,7 +8830,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -6350,6 +8844,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -6369,13 +8864,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -6389,6 +8885,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -6410,6 +8907,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -6486,7 +8984,7 @@ paths:
           description: ''
   /api/v1/overviews/findings_severity:
     get:
-      operationId: overviews_findings_severity_retrieve
+      operationId: api_v1_overviews_findings_severity_retrieve
       description: Retrieve an aggregated summary of findings grouped by severity
         levels, such as low, medium, high, and critical. The response includes the
         total count of findings for each severity, considering only the latest scans
@@ -6531,6 +9029,21 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -6549,7 +9062,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -6563,6 +9076,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -6582,13 +9096,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -6602,6 +9117,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -6623,6 +9139,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -6702,7 +9219,7 @@ paths:
           description: ''
   /api/v1/overviews/findings_severity/timeseries:
     get:
-      operationId: overviews_findings_severity_timeseries_retrieve
+      operationId: api_v1_overviews_findings_severity_timeseries_retrieve
       description: Retrieve daily aggregated findings data grouped by severity levels
         over a date range. Returns one data point per day with counts of failed findings
         by severity (critical, high, medium, low, informational) and muted findings.
@@ -6739,6 +9256,21 @@ paths:
           type: string
           format: date
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -6770,6 +9302,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -6789,6 +9322,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
@@ -6808,6 +9342,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -6829,6 +9364,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -6876,7 +9412,7 @@ paths:
           description: ''
   /api/v1/overviews/providers:
     get:
-      operationId: overviews_providers_retrieve
+      operationId: api_v1_overviews_providers_retrieve
       description: Retrieve an aggregated overview of findings and resources grouped
         by providers. The response includes the count of passed, failed, and manual
         findings, along with the total number of resources managed by each provider.
@@ -6910,7 +9446,7 @@ paths:
           description: ''
   /api/v1/overviews/providers/count:
     get:
-      operationId: overviews_providers_count_retrieve
+      operationId: api_v1_overviews_providers_count_retrieve
       description: Retrieve the number of providers grouped by provider type. This
         endpoint counts every provider in the tenant, including those without completed
         scans.
@@ -6941,7 +9477,7 @@ paths:
           description: ''
   /api/v1/overviews/regions:
     get:
-      operationId: overviews_regions_retrieve
+      operationId: api_v1_overviews_regions_retrieve
       description: Retrieve an aggregated summary of findings grouped by region. The
         response includes the total, passed, failed, and muted findings for each region
         based on the latest completed scans per provider. Standard overview filters
@@ -6986,6 +9522,21 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -7004,7 +9555,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -7018,6 +9569,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -7037,13 +9589,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -7057,6 +9610,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -7078,6 +9632,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -7140,7 +9695,7 @@ paths:
           description: ''
   /api/v1/overviews/resource-groups:
     get:
-      operationId: overviews_resource_groups_list
+      operationId: api_v1_overviews_resource_groups_list
       description: Retrieve aggregated resource group metrics from latest completed
         scans per provider. Returns one row per resource group with total, failed,
         and new failed findings counts, plus a severity breakdown showing failed findings
@@ -7164,6 +9719,21 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -7182,7 +9752,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -7196,6 +9766,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -7215,13 +9786,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -7235,6 +9807,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -7256,6 +9829,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -7324,7 +9898,7 @@ paths:
           description: ''
   /api/v1/overviews/services:
     get:
-      operationId: overviews_services_retrieve
+      operationId: api_v1_overviews_services_retrieve
       description: Retrieve an aggregated summary of findings grouped by service.
         The response includes the total count of findings for each service, as long
         as there are at least one finding for that service.
@@ -7366,6 +9940,21 @@ paths:
           type: string
           format: date-time
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -7384,7 +9973,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -7398,6 +9987,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -7417,13 +10007,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -7437,6 +10028,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -7458,6 +10050,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -7516,7 +10109,7 @@ paths:
           description: ''
   /api/v1/overviews/threatscore:
     get:
-      operationId: overviews_threatscore_retrieve
+      operationId: api_v1_overviews_threatscore_retrieve
       description: Retrieve ThreatScore metrics. By default, returns the latest snapshot
         for each provider. Use snapshot_id to retrieve a specific historical snapshot.
       summary: Get ThreatScore snapshots
@@ -7548,6 +10141,38 @@ paths:
           basis by including a fields[TYPE] query parameter.
         explode: false
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+        description: Filter by provider group ID
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: string
+        description: Filter by multiple provider group IDs (comma-separated UUIDs)
+      - in: query
+        name: filter[provider_id]
+        schema:
+          type: string
+          format: uuid
+        description: Filter by specific provider ID
+      - in: query
+        name: filter[provider_id__in]
+        schema:
+          type: string
+        description: Filter by multiple provider IDs (comma-separated UUIDs)
+      - in: query
+        name: filter[provider_type]
+        schema:
+          type: string
+        description: Filter by provider type (aws, azure, gcp, etc.)
+      - in: query
+        name: filter[provider_type__in]
+        schema:
+          type: string
+        description: Filter by multiple provider types (comma-separated)
+      - in: query
         name: include
         schema:
           type: array
@@ -7559,27 +10184,6 @@ paths:
         description: include query parameter to allow the client to customize which
           related resources should be returned.
         explode: false
-      - in: query
-        name: provider_id
-        schema:
-          type: string
-          format: uuid
-        description: Filter by specific provider ID
-      - in: query
-        name: provider_id__in
-        schema:
-          type: string
-        description: Filter by multiple provider IDs (comma-separated UUIDs)
-      - in: query
-        name: provider_type
-        schema:
-          type: string
-        description: Filter by provider type (aws, azure, gcp, etc.)
-      - in: query
-        name: provider_type__in
-        schema:
-          type: string
-        description: Filter by multiple provider types (comma-separated)
       - in: query
         name: snapshot_id
         schema:
@@ -7600,7 +10204,7 @@ paths:
           description: ''
   /api/v1/processors:
     get:
-      operationId: processors_list
+      operationId: api_v1_processors_list
       description: Retrieve a list of all configured processors with options for filtering
         by various criteria.
       summary: List all processors
@@ -7695,7 +10299,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedProcessorList'
           description: ''
     post:
-      operationId: processors_create
+      operationId: api_v1_processors_create
       description: Register a new processor with the system, providing necessary configuration
         details. There can only be one processor of each type per tenant.
       summary: Create a new processor
@@ -7724,7 +10328,7 @@ paths:
           description: ''
   /api/v1/processors/{id}:
     get:
-      operationId: processors_retrieve
+      operationId: api_v1_processors_retrieve
       description: Fetch detailed information about a specific processor by its ID.
       summary: Retrieve processor details
       parameters:
@@ -7762,7 +10366,7 @@ paths:
                 $ref: '#/components/schemas/ProcessorResponse'
           description: ''
     patch:
-      operationId: processors_partial_update
+      operationId: api_v1_processors_partial_update
       description: Modify certain fields of an existing processor without affecting
         other settings.
       summary: Partially update a processor
@@ -7798,7 +10402,7 @@ paths:
                 $ref: '#/components/schemas/ProcessorUpdateResponse'
           description: ''
     delete:
-      operationId: processors_destroy
+      operationId: api_v1_processors_destroy
       description: Remove a processor from the system by its ID.
       summary: Delete a processor
       parameters:
@@ -7818,7 +10422,7 @@ paths:
           description: No response body
   /api/v1/provider-groups:
     get:
-      operationId: provider_groups_list
+      operationId: api_v1_provider_groups_list
       description: Retrieve a list of all provider groups with options for filtering
         by various criteria.
       summary: List all provider groups
@@ -7951,7 +10555,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedProviderGroupList'
           description: ''
     post:
-      operationId: provider_groups_create
+      operationId: api_v1_provider_groups_create
       description: Add a new provider group to the system by providing the required
         provider group details.
       summary: Create a new provider group
@@ -7980,7 +10584,7 @@ paths:
           description: ''
   /api/v1/provider-groups/{id}:
     get:
-      operationId: provider_groups_retrieve
+      operationId: api_v1_provider_groups_retrieve
       description: Fetch detailed information about a specific provider group by their
         ID.
       summary: Retrieve data from a provider group
@@ -8020,7 +10624,7 @@ paths:
                 $ref: '#/components/schemas/ProviderGroupResponse'
           description: ''
     patch:
-      operationId: provider_groups_partial_update
+      operationId: api_v1_provider_groups_partial_update
       description: Update certain fields of an existing provider group's information
         without affecting other fields.
       summary: Partially update a provider group
@@ -8056,7 +10660,7 @@ paths:
                 $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
     delete:
-      operationId: provider_groups_destroy
+      operationId: api_v1_provider_groups_destroy
       description: Remove a provider group from the system by their ID.
       summary: Delete a provider group
       parameters:
@@ -8076,7 +10680,7 @@ paths:
           description: No response body
   /api/v1/provider-groups/{id}/relationships/providers:
     post:
-      operationId: provider_groups_relationships_providers_create
+      operationId: api_v1_provider_groups_relationships_providers_create
       description: Add a new provider_group-providers relationship to the system by
         providing the required provider_group-providers details.
       summary: Create a new provider_group-providers relationship
@@ -8102,7 +10706,7 @@ paths:
         '400':
           description: Bad request (e.g., relationship already exists)
     patch:
-      operationId: provider_groups_relationships_providers_partial_update
+      operationId: api_v1_provider_groups_relationships_providers_partial_update
       description: Update the provider_group-providers relationship information without
         affecting other fields.
       summary: Partially update a provider_group-providers relationship
@@ -8126,7 +10730,7 @@ paths:
         '204':
           description: Relationship updated successfully
     delete:
-      operationId: provider_groups_relationships_providers_destroy
+      operationId: api_v1_provider_groups_relationships_providers_destroy
       description: Remove the provider_group-providers relationship from the system
         by their ID.
       summary: Delete a provider_group-providers relationship
@@ -8139,7 +10743,7 @@ paths:
           description: Relationship deleted successfully
   /api/v1/providers:
     get:
-      operationId: providers_list
+      operationId: api_v1_providers_list
       description: Retrieve a list of all providers with options for filtering by
         various criteria.
       summary: List all providers
@@ -8227,7 +10831,7 @@ paths:
         name: filter[provider]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -8241,6 +10845,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -8260,13 +10865,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -8280,6 +10886,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -8301,13 +10908,29 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
+        explode: false
+        style: form
+      - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
         explode: false
         style: form
       - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -8321,6 +10944,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -8340,13 +10964,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -8360,6 +10985,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -8381,6 +11007,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - name: filter[search]
@@ -8481,7 +11108,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedProviderList'
           description: ''
     post:
-      operationId: providers_create
+      operationId: api_v1_providers_create
       description: Add a new provider to the system by providing the required provider
         details.
       summary: Create a new provider
@@ -8510,7 +11137,7 @@ paths:
           description: ''
   /api/v1/providers/{id}:
     get:
-      operationId: providers_retrieve
+      operationId: api_v1_providers_retrieve
       description: Fetch detailed information about a specific provider by their ID.
       summary: Retrieve data from a provider
       parameters:
@@ -8563,7 +11190,7 @@ paths:
                 $ref: '#/components/schemas/ProviderResponse'
           description: ''
     patch:
-      operationId: providers_partial_update
+      operationId: api_v1_providers_partial_update
       description: Update certain fields of an existing provider's information without
         affecting other fields.
       summary: Partially update a provider
@@ -8599,7 +11226,7 @@ paths:
                 $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
     delete:
-      operationId: providers_destroy
+      operationId: api_v1_providers_destroy
       description: Remove a provider from the system by their ID.
       summary: Delete a provider
       parameters:
@@ -8638,7 +11265,7 @@ paths:
           description: ''
   /api/v1/providers/{id}/connection:
     post:
-      operationId: providers_connection_create
+      operationId: api_v1_providers_connection_create
       description: Try to verify connection. For instance, Role & Credentials are
         set correctly
       summary: Check connection
@@ -8678,7 +11305,7 @@ paths:
           description: ''
   /api/v1/providers/secrets:
     get:
-      operationId: providers_secrets_list
+      operationId: api_v1_providers_secrets_list
       description: Retrieve a list of all secrets with options for filtering by various
         criteria.
       summary: List all secrets
@@ -8770,7 +11397,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedProviderSecretList'
           description: ''
     post:
-      operationId: providers_secrets_create
+      operationId: api_v1_providers_secrets_create
       description: Add a new secret to the system by providing the required secret
         details.
       summary: Create a new secret
@@ -8799,7 +11426,7 @@ paths:
           description: ''
   /api/v1/providers/secrets/{id}:
     get:
-      operationId: providers_secrets_retrieve
+      operationId: api_v1_providers_secrets_retrieve
       description: Fetch detailed information about a specific secret by their ID.
       summary: Retrieve data from a secret
       parameters:
@@ -8837,7 +11464,7 @@ paths:
                 $ref: '#/components/schemas/ProviderSecretResponse'
           description: ''
     patch:
-      operationId: providers_secrets_partial_update
+      operationId: api_v1_providers_secrets_partial_update
       description: Update certain fields of an existing secret's information without
         affecting other fields.
       summary: Partially update a secret
@@ -8872,7 +11499,7 @@ paths:
                 $ref: '#/components/schemas/ProviderSecretUpdateResponse'
           description: ''
     delete:
-      operationId: providers_secrets_destroy
+      operationId: api_v1_providers_secrets_destroy
       description: Remove a secret from the system by their ID.
       summary: Delete a secret
       parameters:
@@ -8891,7 +11518,7 @@ paths:
           description: No response body
   /api/v1/resources:
     get:
-      operationId: resources_list
+      operationId: api_v1_resources_list
       description: Retrieve a list of all resources with options for filtering by
         various criteria. Resources are objects that are discovered by Prowler. They
         can be anything from a single host to a whole VPC.
@@ -9016,6 +11643,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -9034,7 +11676,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -9048,6 +11690,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -9067,13 +11710,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -9087,6 +11731,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -9108,6 +11753,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -9313,7 +11959,7 @@ paths:
           description: ''
   /api/v1/resources/{id}:
     get:
-      operationId: resources_retrieve
+      operationId: api_v1_resources_retrieve
       description: Fetch detailed information about a specific resource by their ID.
         A Resource is an object that is discovered by Prowler. It can be anything
         from a single host to a whole VPC.
@@ -9377,7 +12023,7 @@ paths:
           description: ''
   /api/v1/resources/{id}/events:
     get:
-      operationId: resources_events_list
+      operationId: api_v1_resources_events_list
       description: |-
         Retrieve events showing modification history for a resource. Returns who modified the resource and when. Currently only available for AWS resources.
 
@@ -9458,7 +12104,7 @@ paths:
           description: Provider service unavailable
   /api/v1/resources/latest:
     get:
-      operationId: resources_latest_retrieve
+      operationId: api_v1_resources_latest_retrieve
       description: Retrieve a list of the latest resources from the latest scans for
         each provider with options for filtering by various criteria.
       summary: List the latest resources
@@ -9567,6 +12213,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -9585,7 +12246,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -9599,6 +12260,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -9618,13 +12280,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -9638,6 +12301,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -9659,6 +12323,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -9819,7 +12484,7 @@ paths:
           description: ''
   /api/v1/resources/metadata:
     get:
-      operationId: resources_metadata_retrieve
+      operationId: api_v1_resources_metadata_retrieve
       description: Fetch unique metadata values from a set of resources. This is useful
         for dynamic filtering.
       summary: Retrieve metadata values from resources
@@ -9931,6 +12596,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -9949,7 +12629,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -9963,6 +12643,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -9982,13 +12663,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -10002,6 +12684,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -10023,6 +12706,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -10204,7 +12888,7 @@ paths:
           description: ''
   /api/v1/resources/metadata/latest:
     get:
-      operationId: resources_metadata_latest_retrieve
+      operationId: api_v1_resources_metadata_latest_retrieve
       description: Fetch unique metadata values from a set of resources from the latest
         scans for each provider. This is useful for dynamic filtering.
       summary: Retrieve metadata values from the latest resources
@@ -10301,6 +12985,21 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_id]
         schema:
           type: string
@@ -10319,7 +13018,7 @@ paths:
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -10333,6 +13032,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -10352,13 +13052,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -10372,6 +13073,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -10393,6 +13095,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -10541,7 +13244,7 @@ paths:
           description: ''
   /api/v1/roles:
     get:
-      operationId: roles_list
+      operationId: api_v1_roles_list
       description: Retrieve a list of all roles with options for filtering by various
         criteria.
       summary: List all roles
@@ -10710,7 +13413,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedRoleList'
           description: ''
     post:
-      operationId: roles_create
+      operationId: api_v1_roles_create
       description: Add a new role to the system by providing the required role details.
       summary: Create a new role
       tags:
@@ -10738,7 +13441,7 @@ paths:
           description: ''
   /api/v1/roles/{id}:
     get:
-      operationId: roles_retrieve
+      operationId: api_v1_roles_retrieve
       description: Fetch detailed information about a specific role by their ID.
       summary: Retrieve data from a role
       parameters:
@@ -10785,7 +13488,7 @@ paths:
                 $ref: '#/components/schemas/RoleResponse'
           description: ''
     patch:
-      operationId: roles_partial_update
+      operationId: api_v1_roles_partial_update
       description: Update selected fields on an existing role. When changing the `users`
         relationship of a role that grants MANAGE_ACCOUNT, the API blocks attempts
         that would leave the tenant without any MANAGE_ACCOUNT assignees and prevents
@@ -10823,7 +13526,7 @@ paths:
                 $ref: '#/components/schemas/SerializerMetaclassResponse'
           description: ''
     delete:
-      operationId: roles_destroy
+      operationId: api_v1_roles_destroy
       description: Delete the specified role. The API rejects deletion of the last
         role in the tenant that grants MANAGE_ACCOUNT.
       summary: Delete a role
@@ -10844,7 +13547,7 @@ paths:
           description: No response body
   /api/v1/roles/{id}/relationships/provider_groups:
     post:
-      operationId: roles_relationships_provider_groups_create
+      operationId: api_v1_roles_relationships_provider_groups_create
       description: Add a new role-provider_groups relationship to the system by providing
         the required role-provider_groups details.
       summary: Create a new role-provider_groups relationship
@@ -10870,7 +13573,7 @@ paths:
         '400':
           description: Bad request (e.g., relationship already exists)
     patch:
-      operationId: roles_relationships_provider_groups_partial_update
+      operationId: api_v1_roles_relationships_provider_groups_partial_update
       description: Update the role-provider_groups relationship information without
         affecting other fields.
       summary: Partially update a role-provider_groups relationship
@@ -10894,7 +13597,7 @@ paths:
         '204':
           description: Relationship updated successfully
     delete:
-      operationId: roles_relationships_provider_groups_destroy
+      operationId: api_v1_roles_relationships_provider_groups_destroy
       description: Remove the role-provider_groups relationship from the system by
         their ID.
       summary: Delete a role-provider_groups relationship
@@ -10907,7 +13610,7 @@ paths:
           description: Relationship deleted successfully
   /api/v1/saml-config:
     get:
-      operationId: saml_config_list
+      operationId: api_v1_saml_config_list
       description: Returns all the SAML-based SSO configurations associated with the
         current tenant.
       summary: List all SSO configurations
@@ -10976,7 +13679,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedSAMLConfigurationList'
           description: ''
     post:
-      operationId: saml_config_create
+      operationId: api_v1_saml_config_create
       description: Creates a new SAML SSO configuration for the current tenant, including
         email domain and metadata XML.
       summary: Create the SSO configuration
@@ -11005,7 +13708,7 @@ paths:
           description: ''
   /api/v1/saml-config/{id}:
     get:
-      operationId: saml_config_retrieve
+      operationId: api_v1_saml_config_retrieve
       description: Returns the details of a specific SAML configuration belonging
         to the current tenant.
       summary: Retrieve SSO configuration details
@@ -11043,7 +13746,7 @@ paths:
                 $ref: '#/components/schemas/SAMLConfigurationResponse'
           description: ''
     patch:
-      operationId: saml_config_partial_update
+      operationId: api_v1_saml_config_partial_update
       description: Partially updates an existing SAML SSO configuration. Supports
         changes to email domain and metadata XML.
       summary: Update the SSO configuration
@@ -11079,7 +13782,7 @@ paths:
                 $ref: '#/components/schemas/SAMLConfigurationResponse'
           description: ''
     delete:
-      operationId: saml_config_destroy
+      operationId: api_v1_saml_config_destroy
       description: Deletes an existing SAML SSO configuration associated with the
         current tenant.
       summary: Delete the SSO configuration
@@ -11100,7 +13803,7 @@ paths:
           description: No response body
   /api/v1/scans:
     get:
-      operationId: scans_list
+      operationId: api_v1_scans_list
       description: Retrieve a list of all scans with options for filtering by various
         criteria.
       summary: List all scans
@@ -11135,6 +13838,21 @@ paths:
         schema:
           type: string
           format: date
+      - in: query
+        name: filter[id]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[id__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
       - in: query
         name: filter[inserted_at]
         schema:
@@ -11196,10 +13914,25 @@ paths:
         explode: false
         style: form
       - in: query
+        name: filter[provider_groups]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[provider_groups__in]
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
         name: filter[provider_type]
         schema:
           type: string
-          x-spec-enum-id: c0d56cad8ab9abe5
+          x-spec-enum-id: 203afc16daac9b64
           enum:
           - alibabacloud
           - aws
@@ -11213,6 +13946,7 @@ paths:
           - kubernetes
           - m365
           - mongodbatlas
+          - okta
           - openstack
           - oraclecloud
           - vercel
@@ -11232,13 +13966,14 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
       - in: query
         name: filter[provider_type__in]
         schema:
           type: array
           items:
             type: string
-            x-spec-enum-id: c0d56cad8ab9abe5
+            x-spec-enum-id: 203afc16daac9b64
             enum:
             - alibabacloud
             - aws
@@ -11252,6 +13987,7 @@ paths:
             - kubernetes
             - m365
             - mongodbatlas
+            - okta
             - openstack
             - oraclecloud
             - vercel
@@ -11273,6 +14009,7 @@ paths:
           * `image` - Image
           * `googleworkspace` - Google Workspace
           * `vercel` - Vercel
+          * `okta` - Okta
         explode: false
         style: form
       - in: query
@@ -11425,7 +14162,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedScanList'
           description: ''
     post:
-      operationId: scans_create
+      operationId: api_v1_scans_create
       description: Trigger a manual scan by providing the required scan details. If
         `scanner_args` are not provided, the system will automatically use the default
         settings from the associated provider. If you do provide `scanner_args`, these
@@ -11473,7 +14210,7 @@ paths:
           description: ''
   /api/v1/scans/{id}:
     get:
-      operationId: scans_retrieve
+      operationId: api_v1_scans_retrieve
       description: Fetch detailed information about a specific scan by its ID.
       summary: Retrieve data from a specific scan
       parameters:
@@ -11532,7 +14269,7 @@ paths:
                 $ref: '#/components/schemas/ScanResponse'
           description: ''
     patch:
-      operationId: scans_partial_update
+      operationId: api_v1_scans_partial_update
       description: Update certain fields of an existing scan without affecting other
         fields.
       summary: Partially update a scan
@@ -11567,9 +14304,76 @@ paths:
               schema:
                 $ref: '#/components/schemas/ScanUpdateResponse'
           description: ''
+  /api/v1/scans/{id}/cis:
+    get:
+      operationId: api_v1_scans_cis_retrieve
+      description: Download the CIS Benchmark compliance report as a PDF file. When
+        a provider ships multiple CIS versions, the report is generated for the highest
+        available version.
+      summary: Retrieve CIS Benchmark compliance report
+      parameters:
+      - in: query
+        name: fields[scans]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - trigger
+            - state
+            - unique_resource_count
+            - progress
+            - duration
+            - provider
+            - task
+            - inserted_at
+            - started_at
+            - completed_at
+            - scheduled_at
+            - next_scan_at
+            - processor
+            - url
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: query
+        name: include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - provider
+        description: include query parameter to allow the client to customize which
+          related resources should be returned.
+        explode: false
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: PDF file containing the CIS compliance report
+        '202':
+          description: The task is in progress
+        '401':
+          description: API key missing or user not Authenticated
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: The scan has no CIS reports, or the CIS report generation task
+            has not started yet
   /api/v1/scans/{id}/compliance/{name}:
     get:
-      operationId: scans_compliance_retrieve
+      operationId: api_v1_scans_compliance_retrieve
       description: Download a specific compliance report (e.g., 'cis_1.4_aws') as
         a CSV file.
       summary: Retrieve compliance report as CSV
@@ -11606,11 +14410,63 @@ paths:
       responses:
         '200':
           description: CSV file containing the compliance report
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
         '404':
-          description: Compliance report not found
+          description: Compliance report not found, or the scan has no reports yet
+  /api/v1/scans/{id}/compliance/{name}/ocsf:
+    get:
+      operationId: api_v1_scans_compliance_ocsf_retrieve
+      description: Download a specific compliance report as an OCSF JSON file. Only
+        universal frameworks that declare an output configuration produce this artifact
+        (currently 'dora_2022_2554', 'csa_ccm_4.0' and 'cis_controls_8.1'); any other
+        framework returns 404.
+      summary: Retrieve compliance report as OCSF JSON
+      parameters:
+      - in: query
+        name: fields[scan-reports]
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - id
+            - name
+        description: endpoint return only specific fields in the response on a per-type
+          basis by including a fields[TYPE] query parameter.
+        explode: false
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this scan.
+        required: true
+      - in: path
+        name: name
+        schema:
+          type: string
+        description: The compliance report name, like 'dora_2022_2554'
+        required: true
+      tags:
+      - Scan
+      security:
+      - JWT or API Key: []
+      responses:
+        '200':
+          description: OCSF JSON file containing the compliance report
+        '202':
+          description: The task is in progress
+        '403':
+          description: There is a problem with credentials
+        '404':
+          description: Compliance report not found, the framework does not provide
+            an OCSF export, or the scan has no reports yet
   /api/v1/scans/{id}/csa:
     get:
-      operationId: scans_csa_retrieve
+      operationId: api_v1_scans_csa_retrieve
       description: Download CSA Cloud Controls Matrix (CCM) v4.0 compliance report
         as a PDF file.
       summary: Retrieve CSA CCM compliance report
@@ -11676,7 +14532,7 @@ paths:
             task has not started yet
   /api/v1/scans/{id}/ens:
     get:
-      operationId: scans_ens_retrieve
+      operationId: api_v1_scans_ens_retrieve
       description: Download ENS RD2022 compliance report (e.g., 'ens_rd2022_aws')
         as a PDF file.
       summary: Retrieve ENS RD2022 compliance report
@@ -11742,7 +14598,7 @@ paths:
             has not started yet
   /api/v1/scans/{id}/nis2:
     get:
-      operationId: scans_nis2_retrieve
+      operationId: api_v1_scans_nis2_retrieve
       description: Download NIS2 compliance report (Directive (EU) 2022/2555) as a
         PDF file.
       summary: Retrieve NIS2 compliance report
@@ -11808,7 +14664,7 @@ paths:
             task has not started yet
   /api/v1/scans/{id}/report:
     get:
-      operationId: scans_report_retrieve
+      operationId: api_v1_scans_report_retrieve
       description: Returns a ZIP file containing the requested report
       summary: Download ZIP report
       parameters:
@@ -11846,7 +14702,7 @@ paths:
             not started yet
   /api/v1/scans/{id}/threatscore:
     get:
-      operationId: scans_threatscore_retrieve
+      operationId: api_v1_scans_threatscore_retrieve
       description: Download a specific threatscore report (e.g., 'prowler_threatscore_aws')
         as a PDF file.
       summary: Retrieve threatscore report
@@ -11912,7 +14768,7 @@ paths:
             generation task has not started yet
   /api/v1/schedules/daily:
     post:
-      operationId: schedules_daily_create
+      operationId: api_v1_schedules_daily_create
       description: Schedules a daily scan for the specified provider. This endpoint
         creates a periodic task that will execute a scan every 24 hours.
       summary: Create a daily schedule scan for a given provider
@@ -11956,7 +14812,7 @@ paths:
           description: ''
   /api/v1/tasks:
     get:
-      operationId: tasks_list
+      operationId: api_v1_tasks_list
       description: Retrieve a list of all tasks with options for filtering by name,
         state, and other criteria.
       summary: List all tasks
@@ -12056,7 +14912,7 @@ paths:
           description: ''
   /api/v1/tasks/{id}:
     get:
-      operationId: tasks_retrieve
+      operationId: api_v1_tasks_retrieve
       description: Fetch detailed information about a specific task by its ID.
       summary: Retrieve data from a specific task
       parameters:
@@ -12096,7 +14952,7 @@ paths:
                 $ref: '#/components/schemas/TaskResponse'
           description: ''
     delete:
-      operationId: tasks_destroy
+      operationId: api_v1_tasks_destroy
       description: Try to revoke a task using its ID. Only tasks that are not yet
         in progress can be revoked.
       summary: Revoke a task
@@ -12136,7 +14992,7 @@ paths:
           description: ''
   /api/v1/tenants:
     get:
-      operationId: tenants_list
+      operationId: api_v1_tenants_list
       description: Retrieve a list of all tenants with options for filtering by various
         criteria.
       summary: List all tenants
@@ -12242,7 +15098,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedTenantList'
           description: ''
     post:
-      operationId: tenants_create
+      operationId: api_v1_tenants_create
       description: Add a new tenant to the system by providing the required tenant
         details.
       summary: Create a new tenant
@@ -12271,7 +15127,7 @@ paths:
           description: ''
   /api/v1/tenants/{id}:
     get:
-      operationId: tenants_retrieve
+      operationId: api_v1_tenants_retrieve
       description: Fetch detailed information about a specific tenant by their ID.
       summary: Retrieve data from a tenant
       parameters:
@@ -12306,7 +15162,7 @@ paths:
                 $ref: '#/components/schemas/TenantResponse'
           description: ''
     patch:
-      operationId: tenants_partial_update
+      operationId: api_v1_tenants_partial_update
       description: Update certain fields of an existing tenant's information without
         affecting other fields.
       summary: Partially update a tenant
@@ -12342,7 +15198,7 @@ paths:
                 $ref: '#/components/schemas/TenantResponse'
           description: ''
     delete:
-      operationId: tenants_destroy
+      operationId: api_v1_tenants_destroy
       description: Remove a tenant from the system by their ID.
       summary: Delete a tenant
       parameters:
@@ -12362,7 +15218,7 @@ paths:
           description: No response body
   /api/v1/tenants/{tenant_pk}/memberships:
     get:
-      operationId: tenants_memberships_list
+      operationId: api_v1_tenants_memberships_list
       description: List the membership details of users in a tenant you are a part
         of.
       summary: List tenant memberships
@@ -12381,12 +15237,53 @@ paths:
         description: endpoint return only specific fields in the response on a per-type
           basis by including a fields[TYPE] query parameter.
         explode: false
+      - in: query
+        name: filter[date_joined]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__date]
+        schema:
+          type: string
+          format: date
+      - in: query
+        name: filter[date_joined__gte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[date_joined__lte]
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: filter[role]
+        schema:
+          type: string
+          x-spec-enum-id: 12c359ee5dc51001
+          enum:
+          - member
+          - owner
+        description: |-
+          * `owner` - Owner
+          * `member` - Member
       - name: filter[search]
         required: false
         in: query
         description: A search term.
         schema:
           type: string
+      - in: query
+        name: filter[tenant]
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: filter[user]
+        schema:
+          type: string
+          format: uuid
       - name: page[number]
         required: false
         in: query
@@ -12439,10 +15336,13 @@ paths:
           description: ''
   /api/v1/tenants/{tenant_pk}/memberships/{id}:
     delete:
-      operationId: tenants_memberships_destroy
-      description: Delete the membership details of users in a tenant. You need to
-        be one of the owners to delete a membership that is not yours. If you are
-        the last owner of a tenant, you cannot delete your own membership.
+      operationId: api_v1_tenants_memberships_destroy
+      description: 'Delete a user''s membership from a tenant. This action: (1) removes
+        the membership, (2) revokes all refresh tokens for the expelled user, (3)
+        removes their role grants for this tenant, (4) cleans up orphaned roles, and
+        (5) deletes the user account if this was their last membership. You must be
+        a tenant owner to delete another user''s membership. The last owner of a tenant
+        cannot delete their own membership.'
       summary: Delete tenant memberships
       parameters:
       - in: path
@@ -12467,7 +15367,7 @@ paths:
           description: No response body
   /api/v1/tenants/invitations:
     get:
-      operationId: tenants_invitations_list
+      operationId: api_v1_tenants_invitations_list
       description: Retrieve a list of all tenant invitations with options for filtering
         by various criteria.
       summary: List all invitations
@@ -12649,7 +15549,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedInvitationList'
           description: ''
     post:
-      operationId: tenants_invitations_create
+      operationId: api_v1_tenants_invitations_create
       description: Add a new tenant invitation to the system by providing the required
         invitation details. The invited user will have to accept the invitations or
         create an account using the given code.
@@ -12679,7 +15579,7 @@ paths:
           description: ''
   /api/v1/tenants/invitations/{id}:
     get:
-      operationId: tenants_invitations_retrieve
+      operationId: api_v1_tenants_invitations_retrieve
       description: Fetch detailed information about a specific invitation by its ID.
       summary: Retrieve data from a tenant invitation
       parameters:
@@ -12720,7 +15620,7 @@ paths:
                 $ref: '#/components/schemas/InvitationResponse'
           description: ''
     patch:
-      operationId: tenants_invitations_partial_update
+      operationId: api_v1_tenants_invitations_partial_update
       description: Update certain fields of an existing tenant invitation's information
         without affecting other fields.
       summary: Partially update a tenant invitation
@@ -12755,7 +15655,7 @@ paths:
                 $ref: '#/components/schemas/InvitationUpdateResponse'
           description: ''
     delete:
-      operationId: tenants_invitations_destroy
+      operationId: api_v1_tenants_invitations_destroy
       description: Revoke a tenant invitation from the system by their ID.
       summary: Revoke a tenant invitation
       parameters:
@@ -12774,7 +15674,7 @@ paths:
           description: No response body
   /api/v1/tokens:
     post:
-      operationId: tokens_create
+      operationId: api_v1_tokens_create
       description: Obtain a token by providing valid credentials and an optional tenant
         ID.
       summary: Obtain a token
@@ -12804,7 +15704,7 @@ paths:
           description: ''
   /api/v1/tokens/refresh:
     post:
-      operationId: tokens_refresh_create
+      operationId: api_v1_tokens_refresh_create
       description: Refresh an access token by providing a valid refresh token. Former
         refresh tokens are invalidated when a new one is issued.
       summary: Refresh a token
@@ -12834,7 +15734,7 @@ paths:
           description: ''
   /api/v1/tokens/switch:
     post:
-      operationId: tokens_switch_create
+      operationId: api_v1_tokens_switch_create
       description: Switch tenant by providing a valid tenant ID. The authenticated
         user must belong to the tenant.
       summary: Switch tenant using a valid tenant ID
@@ -12863,7 +15763,7 @@ paths:
           description: ''
   /api/v1/users:
     get:
-      operationId: users_list
+      operationId: api_v1_users_list
       description: Retrieve a list of all users with options for filtering by various
         criteria.
       summary: List all users
@@ -12994,7 +15894,7 @@ paths:
                 $ref: '#/components/schemas/PaginatedUserList'
           description: ''
     post:
-      operationId: users_create
+      operationId: api_v1_users_create
       description: Create a new user account by providing the necessary registration
         details.
       summary: Register a new user
@@ -13031,7 +15931,7 @@ paths:
           description: ''
   /api/v1/users/{id}:
     get:
-      operationId: users_retrieve
+      operationId: api_v1_users_retrieve
       description: Fetch detailed information about an authenticated user.
       summary: Retrieve a user's information
       parameters:
@@ -13082,7 +15982,7 @@ paths:
                 $ref: '#/components/schemas/UserResponse'
           description: ''
     patch:
-      operationId: users_partial_update
+      operationId: api_v1_users_partial_update
       description: Partially update information about a user.
       summary: Update user information
       parameters:
@@ -13117,7 +16017,7 @@ paths:
                 $ref: '#/components/schemas/UserUpdateResponse'
           description: ''
     delete:
-      operationId: users_destroy
+      operationId: api_v1_users_destroy
       description: Remove the current user account from the system.
       summary: Delete the user account
       parameters:
@@ -13137,7 +16037,7 @@ paths:
           description: No response body
   /api/v1/users/{id}/relationships/roles:
     post:
-      operationId: users_relationships_roles_create
+      operationId: api_v1_users_relationships_roles_create
       description: Add a new user-roles relationship to the system by providing the
         required user-roles details.
       summary: Create a new user-roles relationship
@@ -13163,7 +16063,7 @@ paths:
         '400':
           description: Bad request (e.g., relationship already exists)
     patch:
-      operationId: users_relationships_roles_partial_update
+      operationId: api_v1_users_relationships_roles_partial_update
       description: Update the user-roles relationship information without affecting
         other fields. If the update would remove MANAGE_ACCOUNT from the last remaining
         user in the tenant, the API rejects the request with a 400 response.
@@ -13188,7 +16088,7 @@ paths:
         '204':
           description: Relationship updated successfully
     delete:
-      operationId: users_relationships_roles_destroy
+      operationId: api_v1_users_relationships_roles_destroy
       description: Remove the user-roles relationship from the system by their ID.
         If removing MANAGE_ACCOUNT would take it away from the last remaining user
         in the tenant, the API rejects the request with a 400 response. Users also
@@ -13204,7 +16104,7 @@ paths:
           description: Relationship deleted successfully
   /api/v1/users/{user_pk}/memberships:
     get:
-      operationId: users_memberships_list
+      operationId: api_v1_users_memberships_list
       description: Retrieve a list of all user memberships with options for filtering
         by various criteria.
       summary: List user memberships
@@ -13265,6 +16165,11 @@ paths:
         schema:
           type: string
           format: uuid
+      - in: query
+        name: filter[user]
+        schema:
+          type: string
+          format: uuid
       - name: page[number]
         required: false
         in: query
@@ -13312,7 +16217,7 @@ paths:
           description: ''
   /api/v1/users/{user_pk}/memberships/{id}:
     get:
-      operationId: users_memberships_retrieve
+      operationId: api_v1_users_memberships_retrieve
       description: Fetch detailed information about a specific user membership by
         their ID.
       summary: Retrieve membership data from the user
@@ -13357,7 +16262,7 @@ paths:
           description: ''
   /api/v1/users/me:
     get:
-      operationId: users_me_retrieve
+      operationId: api_v1_users_me_retrieve
       description: Fetch detailed information about the authenticated user.
       summary: Retrieve the current user's information
       parameters:
@@ -13460,6 +16365,7 @@ components:
                 query:
                   type: string
                   minLength: 1
+                  maxLength: 10000
               required:
               - query
       required:
@@ -14329,6 +17235,8 @@ components:
               type: string
             status:
               type: string
+            muted:
+              type: boolean
             impacted_providers:
               type: array
               items:
@@ -14341,11 +17249,43 @@ components:
               type: integer
             fail_count:
               type: integer
+            manual_count:
+              type: integer
+            pass_muted_count:
+              type: integer
+            fail_muted_count:
+              type: integer
+            manual_muted_count:
+              type: integer
             muted_count:
               type: integer
             new_count:
               type: integer
             changed_count:
+              type: integer
+            new_fail_count:
+              type: integer
+            new_fail_muted_count:
+              type: integer
+            new_pass_count:
+              type: integer
+            new_pass_muted_count:
+              type: integer
+            new_manual_count:
+              type: integer
+            new_manual_muted_count:
+              type: integer
+            changed_fail_count:
+              type: integer
+            changed_fail_muted_count:
+              type: integer
+            changed_pass_count:
+              type: integer
+            changed_pass_muted_count:
+              type: integer
+            changed_manual_count:
+              type: integer
+            changed_manual_muted_count:
               type: integer
             first_seen_at:
               type: string
@@ -14364,13 +17304,30 @@ components:
           - check_id
           - severity
           - status
+          - muted
           - resources_fail
           - resources_total
           - pass_count
           - fail_count
+          - manual_count
+          - pass_muted_count
+          - fail_muted_count
+          - manual_muted_count
           - muted_count
           - new_count
           - changed_count
+          - new_fail_count
+          - new_fail_muted_count
+          - new_pass_count
+          - new_pass_muted_count
+          - new_manual_count
+          - new_manual_muted_count
+          - changed_fail_count
+          - changed_fail_muted_count
+          - changed_pass_count
+          - changed_pass_muted_count
+          - changed_manual_count
+          - changed_manual_muted_count
     FindingGroupResponse:
       type: object
       properties:
@@ -14972,14 +17929,44 @@ components:
                   type: string
                   minLength: 1
                 issue_type:
-                  enum:
-                  - Task
                   type: string
-                  description: '* `Task` - Task'
-                  x-spec-enum-id: b527b0cec62087c1
+                  minLength: 1
               required:
               - project_key
               - issue_type
+      required:
+      - data
+    IntegrationJiraIssueTypes:
+      type: object
+      required:
+      - type
+      - id
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          description: The [type](https://jsonapi.org/format/#document-resource-object-identification)
+            member is used to describe resource objects that share common attributes
+            and relationships.
+          enum:
+          - jira-issue-types
+        id: {}
+        attributes:
+          type: object
+          properties:
+            project_key:
+              type: string
+              readOnly: true
+            issue_types:
+              type: array
+              items:
+                type: string
+              readOnly: true
+    IntegrationJiraIssueTypesResponse:
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/IntegrationJiraIssueTypes'
       required:
       - data
     IntegrationResponse:
@@ -18554,6 +21541,27 @@ components:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
                   - type: object
+                    title: Okta OAuth Credentials
+                    properties:
+                      okta_client_id:
+                        type: string
+                        description: Client ID of the Okta API Services app used for
+                          OAuth 2.0 private-key JWT authentication.
+                      okta_private_key:
+                        type: string
+                        description: PEM-encoded private key whose matching public
+                          key (JWK) is registered on the Okta service app.
+                      okta_scopes:
+                        type: array
+                        items:
+                          type: string
+                        description: OAuth scopes to request. Optional; defaults to
+                          the minimum set required to run the currently enabled Okta
+                          checks.
+                    required:
+                    - okta_client_id
+                    - okta_private_key
+                  - type: object
                     title: Vercel API Token
                     properties:
                       api_token:
@@ -19565,6 +22573,7 @@ components:
               - image
               - googleworkspace
               - vercel
+              - okta
               type: string
               description: |-
                 * `aws` - AWS
@@ -19582,7 +22591,8 @@ components:
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
                 * `vercel` - Vercel
-              x-spec-enum-id: c0d56cad8ab9abe5
+                * `okta` - Okta
+              x-spec-enum-id: 203afc16daac9b64
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19703,8 +22713,9 @@ components:
               - image
               - googleworkspace
               - vercel
+              - okta
               type: string
-              x-spec-enum-id: c0d56cad8ab9abe5
+              x-spec-enum-id: 203afc16daac9b64
               description: |-
                 Type of provider to create.
 
@@ -19723,6 +22734,7 @@ components:
                 * `image` - Image
                 * `googleworkspace` - Google Workspace
                 * `vercel` - Vercel
+                * `okta` - Okta
             uid:
               type: string
               title: Unique identifier for the provider, set by the provider
@@ -19775,8 +22787,9 @@ components:
                   - image
                   - googleworkspace
                   - vercel
+                  - okta
                   type: string
-                  x-spec-enum-id: c0d56cad8ab9abe5
+                  x-spec-enum-id: 203afc16daac9b64
                   description: |-
                     Type of provider to create.
 
@@ -19795,6 +22808,7 @@ components:
                     * `image` - Image
                     * `googleworkspace` - Google Workspace
                     * `vercel` - Vercel
+                    * `okta` - Okta
                 uid:
                   type: string
                   minLength: 3
@@ -20645,6 +23659,26 @@ components:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
               - type: object
+                title: Okta OAuth Credentials
+                properties:
+                  okta_client_id:
+                    type: string
+                    description: Client ID of the Okta API Services app used for OAuth
+                      2.0 private-key JWT authentication.
+                  okta_private_key:
+                    type: string
+                    description: PEM-encoded private key whose matching public key
+                      (JWK) is registered on the Okta service app.
+                  okta_scopes:
+                    type: array
+                    items:
+                      type: string
+                    description: OAuth scopes to request. Optional; defaults to the
+                      minimum set required to run the currently enabled Okta checks.
+                required:
+                - okta_client_id
+                - okta_private_key
+              - type: object
                 title: Vercel API Token
                 properties:
                   api_token:
@@ -21069,6 +24103,27 @@ components:
                     required:
                     - clouds_yaml_content
                     - clouds_yaml_cloud
+                  - type: object
+                    title: Okta OAuth Credentials
+                    properties:
+                      okta_client_id:
+                        type: string
+                        description: Client ID of the Okta API Services app used for
+                          OAuth 2.0 private-key JWT authentication.
+                      okta_private_key:
+                        type: string
+                        description: PEM-encoded private key whose matching public
+                          key (JWK) is registered on the Okta service app.
+                      okta_scopes:
+                        type: array
+                        items:
+                          type: string
+                        description: OAuth scopes to request. Optional; defaults to
+                          the minimum set required to run the currently enabled Okta
+                          checks.
+                    required:
+                    - okta_client_id
+                    - okta_private_key
                   - type: object
                     title: Vercel API Token
                     properties:
@@ -21504,6 +24559,26 @@ components:
                 required:
                 - clouds_yaml_content
                 - clouds_yaml_cloud
+              - type: object
+                title: Okta OAuth Credentials
+                properties:
+                  okta_client_id:
+                    type: string
+                    description: Client ID of the Okta API Services app used for OAuth
+                      2.0 private-key JWT authentication.
+                  okta_private_key:
+                    type: string
+                    description: PEM-encoded private key whose matching public key
+                      (JWK) is registered on the Okta service app.
+                  okta_scopes:
+                    type: array
+                    items:
+                      type: string
+                    description: OAuth scopes to request. Optional; defaults to the
+                      minimum set required to run the currently enabled Okta checks.
+                required:
+                - okta_client_id
+                - okta_private_key
               - type: object
                 title: Vercel API Token
                 properties:

@@ -10,7 +10,6 @@ from colorama import Fore, Style
 from colorama import init as colorama_init
 
 from prowler.config.config import (
-    EXTERNAL_TOOL_PROVIDERS,
     cloud_api_base_url,
     csv_file_suffix,
     get_available_compliance_frameworks,
@@ -20,7 +19,7 @@ from prowler.config.config import (
     orange_color,
     sarif_file_suffix,
 )
-from prowler.lib.banner import print_banner
+from prowler.lib.banner import print_banner, print_prowler_cloud_banner
 from prowler.lib.check.check import (
     exclude_checks_to_run,
     exclude_services_to_run,
@@ -45,7 +44,10 @@ from prowler.lib.check.check import (
 )
 from prowler.lib.check.checks_loader import load_checks_to_execute
 from prowler.lib.check.compliance import update_checks_metadata_with_compliance
-from prowler.lib.check.compliance_models import Compliance
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
 from prowler.lib.check.custom_checks_metadata import (
     parse_custom_checks_metadata_file,
     update_checks_metadata,
@@ -54,6 +56,9 @@ from prowler.lib.check.models import CheckMetadata
 from prowler.lib.cli.parser import ProwlerArgumentParser
 from prowler.lib.logger import logger, set_logging_config
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
+    ASDEssentialEightAWS,
+)
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
@@ -75,12 +80,10 @@ from prowler.lib.outputs.compliance.cis.cis_oraclecloud import OracleCloudCIS
 from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import (
     GoogleWorkspaceCISASCuBA,
 )
-from prowler.lib.outputs.compliance.compliance import display_compliance_table
-from prowler.lib.outputs.compliance.csa.csa_alibabacloud import AlibabaCloudCSA
-from prowler.lib.outputs.compliance.csa.csa_aws import AWSCSA
-from prowler.lib.outputs.compliance.csa.csa_azure import AzureCSA
-from prowler.lib.outputs.compliance.csa.csa_gcp import GCPCSA
-from prowler.lib.outputs.compliance.csa.csa_oraclecloud import OracleCloudCSA
+from prowler.lib.outputs.compliance.compliance import (
+    display_compliance_table,
+    process_universal_compliance_frameworks,
+)
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
@@ -99,6 +102,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
+    OktaIDaaSSTIG,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
     ProwlerThreatScoreAlibaba,
 )
@@ -134,6 +140,7 @@ from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from prowler.providers.e2enetworks.models import E2eNetworksOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
@@ -141,12 +148,16 @@ from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.image.exceptions.exceptions import ImageBaseException
 from prowler.providers.image.models import ImageOutputOptions
 from prowler.providers.kubernetes.models import KubernetesOutputOptions
+from prowler.providers.linode.models import LinodeOutputOptions
 from prowler.providers.llm.models import LLMOutputOptions
 from prowler.providers.m365.models import M365OutputOptions
 from prowler.providers.mongodbatlas.models import MongoDBAtlasOutputOptions
 from prowler.providers.nhn.models import NHNOutputOptions
+from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.scaleway.models import ScalewayOutputOptions
+from prowler.providers.stackit.models import StackITOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
 
 
@@ -193,14 +204,15 @@ def prowler():
 
     if not args.no_banner:
         legend = args.verbose or getattr(args, "fixer", None)
-        print_banner(legend)
+        print_banner(legend, provider)
 
     # We treat the compliance framework as another output format
     if compliance_framework:
         args.output_formats.extend(compliance_framework)
-    # If no input compliance framework, set all, unless a specific service or check is input
-    # Skip for IAC and LLM providers that don't use compliance frameworks
-    elif default_execution and provider not in ["iac", "llm"]:
+    # If no input compliance framework, set all, unless a specific service or check is input.
+    # Skip for tool-wrapper providers (iac, llm, image, and any external plug-in
+    # declaring `is_external_tool_provider = True`) — they don't use compliance frameworks.
+    elif default_execution and not Provider.is_tool_wrapper_provider(provider):
         args.output_formats.extend(get_available_compliance_frameworks(provider))
 
     # Set Logger configuration
@@ -235,13 +247,17 @@ def prowler():
     # Load compliance frameworks
     logger.debug("Loading compliance frameworks from .json files")
 
+    universal_frameworks = {}
+
     # Skip compliance frameworks for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         bulk_compliance_frameworks = Compliance.get_bulk(provider)
         # Complete checks metadata with the compliance framework specification
         bulk_checks_metadata = update_checks_metadata_with_compliance(
             bulk_compliance_frameworks, bulk_checks_metadata
         )
+        # Load universal compliance frameworks for new rendering pipeline
+        universal_frameworks = get_bulk_compliance_frameworks_universal(provider)
 
     # Update checks metadata if the --custom-checks-metadata-file is present
     custom_checks_metadata = None
@@ -254,12 +270,12 @@ def prowler():
         )
 
     if args.list_compliance:
-        print_compliance_frameworks(bulk_compliance_frameworks)
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_frameworks(all_frameworks)
         sys.exit()
     if args.list_compliance_requirements:
-        print_compliance_requirements(
-            bulk_compliance_frameworks, args.list_compliance_requirements
-        )
+        all_frameworks = {**bulk_compliance_frameworks, **universal_frameworks}
+        print_compliance_requirements(all_frameworks, args.list_compliance_requirements)
         sys.exit()
 
     # Load checks to execute
@@ -276,6 +292,7 @@ def prowler():
         provider=provider,
         list_checks=getattr(args, "list_checks", False)
         or getattr(args, "list_checks_json", False),
+        universal_frameworks=universal_frameworks,
     )
 
     # if --list-checks-json, dump a json file and exit
@@ -301,7 +318,7 @@ def prowler():
         sys.exit()
 
     # Skip service and check loading for external-tool providers
-    if provider not in EXTERNAL_TOOL_PROVIDERS:
+    if not Provider.is_tool_wrapper_provider(provider):
         # Import custom checks from folder
         if checks_folder:
             custom_checks = parse_checks_from_folder(global_provider, checks_folder)
@@ -400,6 +417,10 @@ def prowler():
         output_options = OCIOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "stackit":
+        output_options = StackITOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
     elif provider == "alibabacloud":
         output_options = AlibabaCloudOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
@@ -412,6 +433,36 @@ def prowler():
         output_options = VercelOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
+    elif provider == "e2enetworks":
+        output_options = E2eNetworksOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "okta":
+        output_options = OktaOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "scaleway":
+        output_options = ScalewayOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "linode":
+        output_options = LinodeOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    else:
+        # Dynamic fallback: any external/custom provider
+        try:
+            output_options = global_provider.get_output_options(
+                args, bulk_checks_metadata
+            )
+        except NotImplementedError:
+            # No provider-specific OutputOptions: use the generic default so the
+            # run still produces output instead of aborting.
+            from prowler.providers.common.models import default_output_options
+
+            output_options = default_output_options(
+                global_provider, args, bulk_checks_metadata
+            )
 
     # Run the quick inventory for the provider if available
     if hasattr(args, "quick_inventory") and args.quick_inventory:
@@ -421,7 +472,7 @@ def prowler():
     # Execute checks
     findings = []
 
-    if provider in EXTERNAL_TOOL_PROVIDERS:
+    if Provider.is_tool_wrapper_provider(provider):
         # For external-tool providers, run the scan directly
         if provider == "llm":
 
@@ -431,12 +482,19 @@ def prowler():
 
             findings = global_provider.run_scan(streaming_callback=streaming_callback)
         else:
-            # Original behavior for IAC and Image
-            try:
+            if provider == "image":
+                try:
+                    findings = global_provider.run()
+                except ImageBaseException as error:
+                    logger.critical(f"{error}")
+                    sys.exit(1)
+            else:
+                # IAC and external tool-wrapper providers registered via entry
+                # points. Unexpected failures propagate to the outer except
+                # Exception backstop further down in this file — keeping the
+                # branch free of an Image-specific catch that would otherwise
+                # mislead plug-in authors reading this code.
                 findings = global_provider.run()
-            except ImageBaseException as error:
-                logger.critical(f"{error}")
-                sys.exit(1)
             # Note: External tool providers don't support granular progress tracking since
             # they run external tools as a black box and return all findings at once.
             # Progress tracking would just be 0% → 100%.
@@ -624,15 +682,29 @@ def prowler():
                 )
 
     # Compliance Frameworks
-    # Source the framework listing from `bulk_compliance_frameworks.keys()`
-    # so it is by construction a subset of what the bulk loader can resolve.
-    # `get_available_compliance_frameworks(provider)` also discovers top-level
-    # multi-provider universal JSONs (e.g. `prowler/compliance/csa_ccm_4.0.json`)
-    # which `Compliance.get_bulk(provider)` does not load, and which the legacy
-    # output handlers below cannot consume — using it as the source produced
+    # Source the framework listing from the union of `bulk_compliance_frameworks`
+    # and `universal_frameworks` so universal-only frameworks (e.g.
+    # `prowler/compliance/csa_ccm_4.0.json`) — which `Compliance.get_bulk(provider)`
+    # does not load — still reach `process_universal_compliance_frameworks` below.
+    # The provider-specific block subtracts the names handled by the universal
+    # processor so the legacy per-provider handlers only see frameworks that the
+    # bulk loader actually resolved.
     input_compliance_frameworks = set(output_options.output_modes).intersection(
-        bulk_compliance_frameworks.keys()
+        set(bulk_compliance_frameworks.keys()) | set(universal_frameworks.keys())
     )
+
+    # ── Universal compliance frameworks (provider-agnostic) ──
+    universal_processed = process_universal_compliance_frameworks(
+        input_compliance_frameworks=input_compliance_frameworks,
+        universal_frameworks=universal_frameworks,
+        finding_outputs=finding_outputs,
+        output_directory=output_options.output_directory,
+        output_filename=output_options.output_filename,
+        provider=provider,
+        generated_outputs=generated_outputs,
+    )
+    input_compliance_frameworks -= universal_processed
+
     if provider == "aws":
         for compliance_name in input_compliance_frameworks:
             if compliance_name.startswith("cis_"):
@@ -648,6 +720,18 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
+            elif compliance_name.startswith("asd_essential_eight"):
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                asd_essential_eight = ASDEssentialEightAWS(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(asd_essential_eight)
+                asd_essential_eight.batch_write_data_to_file()
             elif compliance_name == "mitre_attack_aws":
                 # Generate MITRE ATT&CK Finding Object
                 filename = (
@@ -751,18 +835,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5)
                 c5.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_aws":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_aws = AWSCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_aws)
-                csa_ccm_4_0_aws.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -866,18 +938,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_azure)
                 c5_azure.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_azure":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_azure = AzureCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_azure)
-                csa_ccm_4_0_azure.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -981,18 +1041,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(c5_gcp)
                 c5_gcp.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_gcp":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_gcp = GCPCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_gcp)
-                csa_ccm_4_0_gcp.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1227,18 +1275,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_oraclecloud":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_oraclecloud = OracleCloudCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_oraclecloud)
-                csa_ccm_4_0_oraclecloud.batch_write_data_to_file()
             else:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1267,18 +1303,6 @@ def prowler():
                 )
                 generated_outputs["compliance"].append(cis)
                 cis.batch_write_data_to_file()
-            elif compliance_name == "csa_ccm_4.0_alibabacloud":
-                filename = (
-                    f"{output_options.output_directory}/compliance/"
-                    f"{output_options.output_filename}_{compliance_name}.csv"
-                )
-                csa_ccm_4_0_alibabacloud = AlibabaCloudCSA(
-                    findings=finding_outputs,
-                    compliance=bulk_compliance_frameworks[compliance_name],
-                    file_path=filename,
-                )
-                generated_outputs["compliance"].append(csa_ccm_4_0_alibabacloud)
-                csa_ccm_4_0_alibabacloud.batch_write_data_to_file()
             elif compliance_name == "prowler_threatscore_alibabacloud":
                 filename = (
                     f"{output_options.output_directory}/compliance/"
@@ -1292,6 +1316,57 @@ def prowler():
                 generated_outputs["compliance"].append(prowler_threatscore)
                 prowler_threatscore.batch_write_data_to_file()
             else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+    elif provider == "okta":
+        for compliance_name in input_compliance_frameworks:
+            if compliance_name.startswith("okta_idaas_stig"):
+                # Generate Okta IDaaS STIG Finding Object
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                okta_idaas_stig = OktaIDaaSSTIG(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(okta_idaas_stig)
+                okta_idaas_stig.batch_write_data_to_file()
+            else:
+                filename = (
+                    f"{output_options.output_directory}/compliance/"
+                    f"{output_options.output_filename}_{compliance_name}.csv"
+                )
+                generic_compliance = GenericCompliance(
+                    findings=finding_outputs,
+                    compliance=bulk_compliance_frameworks[compliance_name],
+                    file_path=filename,
+                )
+                generated_outputs["compliance"].append(generic_compliance)
+                generic_compliance.batch_write_data_to_file()
+    else:
+        # Dynamic fallback: any external/custom provider
+        try:
+            global_provider.generate_compliance_output(
+                finding_outputs,
+                bulk_compliance_frameworks,
+                input_compliance_frameworks,
+                output_options,
+                generated_outputs,
+            )
+        except NotImplementedError:
+            # Last resort: generic compliance
+            for compliance_name in input_compliance_frameworks:
                 filename = (
                     f"{output_options.output_directory}/compliance/"
                     f"{output_options.output_filename}_{compliance_name}.csv"
@@ -1402,11 +1477,18 @@ def prowler():
                     output_options.output_filename,
                     output_options.output_directory,
                     compliance_overview,
+                    universal_frameworks=universal_frameworks,
+                    provider=provider,
+                    output_formats=args.output_formats,
                 )
             if compliance_overview:
                 print(
                     f"\nDetailed compliance results are in {Fore.YELLOW}{output_options.output_directory}/compliance/{Style.RESET_ALL}\n"
                 )
+
+    # Promote Prowler Cloud as the last thing the user sees after the results
+    if not args.no_banner and not args.only_logs:
+        print_prowler_cloud_banner(provider)
 
     # If custom checks were passed, remove the modules
     if checks_folder:

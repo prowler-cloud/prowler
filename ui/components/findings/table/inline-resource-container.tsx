@@ -9,11 +9,16 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronsDown } from "lucide-react";
 import { useImperativeHandle, useRef } from "react";
 
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { cn } from "@/lib/utils";
 import { FindingGroupRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -52,6 +57,22 @@ interface InlineResourceContainerProps {
 
 /** Max skeleton rows that fit in the 440px scroll container */
 const MAX_SKELETON_ROWS = 7;
+const ACTIONS_COLUMN_ID = "actions";
+const COMPACT_LABELED_COLUMN_IDS = new Set([
+  "service",
+  "region",
+  "lastSeen",
+  "failingFor",
+  "triage",
+]);
+const STICKY_RESOURCE_ACTION_CELL_CLASS =
+  "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary group-data-[state=selected]:bg-bg-neutral-tertiary group-data-[state=selected]:before:to-bg-neutral-tertiary";
+
+const getResourceCellClassName = (columnId: string) =>
+  cn(
+    COMPACT_LABELED_COLUMN_IDS.has(columnId) && "align-top",
+    columnId === ACTIONS_COLUMN_ID && STICKY_RESOURCE_ACTION_CELL_CLASS,
+  );
 
 function ResourceSkeletonRow({
   isEmptyStateSized = false,
@@ -70,19 +91,30 @@ function ResourceSkeletonRow({
           <div className="bg-bg-input-primary border-border-input-primary size-5 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
         </div>
       </TableCell>
-      {/* Resource: icon + name + uid */}
-      <TableCell className={cellClassName}>
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-32 rounded" />
-            <Skeleton className="h-3.5 w-20 rounded" />
-          </div>
-        </div>
-      </TableCell>
       {/* Status */}
       <TableCell className={cellClassName}>
         <Skeleton className="h-6 w-11 rounded-md" />
+      </TableCell>
+      {/* Resource: name + uid */}
+      <TableCell className={cellClassName}>
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-32 rounded" />
+          <Skeleton className="h-3.5 w-20 rounded" />
+        </div>
+      </TableCell>
+      {/* Provider: alias + uid */}
+      <TableCell className={cellClassName}>
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-24 rounded" />
+          <Skeleton className="h-3.5 w-16 rounded" />
+        </div>
+      </TableCell>
+      {/* Severity */}
+      <TableCell className={cellClassName}>
+        <div className="flex items-center gap-2">
+          <Skeleton className="size-2 rounded-full" />
+          <Skeleton className="h-4.5 w-12 rounded" />
+        </div>
       </TableCell>
       {/* Service */}
       <TableCell className={cellClassName}>
@@ -92,23 +124,6 @@ function ResourceSkeletonRow({
       <TableCell className={cellClassName}>
         <Skeleton className="h-4.5 w-20 rounded" />
       </TableCell>
-      {/* Severity */}
-      <TableCell className={cellClassName}>
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-2 rounded-full" />
-          <Skeleton className="h-4.5 w-12 rounded" />
-        </div>
-      </TableCell>
-      {/* Account: provider icon + alias + uid */}
-      <TableCell className={cellClassName}>
-        <div className="flex items-center gap-2">
-          <Skeleton className="size-4 rounded" />
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-24 rounded" />
-            <Skeleton className="h-3.5 w-16 rounded" />
-          </div>
-        </div>
-      </TableCell>
       {/* Last seen */}
       <TableCell className={cellClassName}>
         <Skeleton className="h-4.5 w-24 rounded" />
@@ -117,9 +132,17 @@ function ResourceSkeletonRow({
       <TableCell className={cellClassName}>
         <Skeleton className="h-4.5 w-16 rounded" />
       </TableCell>
-      {/* Actions */}
+      {/* Triage */}
       <TableCell className={cellClassName}>
-        <Skeleton className="size-8 rounded-md" />
+        <Skeleton className="h-8 w-20 rounded-lg" />
+      </TableCell>
+      {/* Actions */}
+      <TableCell
+        className={cn(cellClassName, STICKY_RESOURCE_ACTION_CELL_CLASS)}
+      >
+        <div className="flex justify-end">
+          <Skeleton className="size-8 rounded-md" />
+        </div>
       </TableCell>
     </TableRow>
   );
@@ -166,6 +189,7 @@ export function InlineResourceContainer({
     handleMuteComplete,
     handleRowSelectionChange,
     resolveSelectedFindingIds,
+    updateTriageOptimistically,
   } = useFindingGroupResourceState({
     group,
     filters,
@@ -192,6 +216,10 @@ export function InlineResourceContainer({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    findingTitle: group.checkTitle,
+    onTriageUpdateAction: (input) =>
+      updateTriageOptimistically(input, updateFindingTriage),
+    onTriageNoteLoadAction: loadLatestFindingTriageNote,
   });
 
   const table = useReactTable({
@@ -220,9 +248,11 @@ export function InlineResourceContainer({
       }}
     >
       <tr>
-        <td colSpan={columnCount} className="p-0">
+        <td colSpan={columnCount} className="max-w-0 p-0">
           <AnimatePresence initial>
             <motion.div
+              // Onboarding anchor: the "Review the affected resources" tour step.
+              data-tour-id="explore-findings-resources"
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
@@ -232,10 +262,10 @@ export function InlineResourceContainer({
               <div className="relative">
                 <div
                   ref={combinedScrollRef}
-                  className="max-h-[440px] overflow-y-auto pl-6"
+                  className="minimal-scrollbar max-h-[440px] overflow-auto pl-6"
                 >
                   {/* Resource rows or skeleton placeholder */}
-                  <table className="-mt-2.5 w-full border-separate border-spacing-y-4">
+                  <table className="-mt-2.5 w-max min-w-full border-separate border-spacing-y-4">
                     <tbody>
                       {isLoading && rows.length === 0 ? (
                         Array.from({ length: skeletonRowCount }).map((_, i) => (
@@ -249,7 +279,7 @@ export function InlineResourceContainer({
                           <TableRow
                             key={row.id}
                             data-state={row.getIsSelected() && "selected"}
-                            className="cursor-pointer"
+                            className="group cursor-pointer"
                             onClick={(e) => {
                               // Don't open drawer if clicking interactive elements
                               // (links, buttons, checkboxes, dropdown items)
@@ -264,7 +294,12 @@ export function InlineResourceContainer({
                             }}
                           >
                             {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id}>
+                              <TableCell
+                                key={cell.id}
+                                className={getResourceCellClassName(
+                                  cell.column.id,
+                                )}
+                              >
                                 {flexRender(
                                   cell.column.columnDef.cell,
                                   cell.getContext(),
@@ -340,6 +375,7 @@ export function InlineResourceContainer({
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
+        onTriageUpdate={drawer.patchTriageUpdate}
       />
     </FindingsSelectionContext.Provider>
   );

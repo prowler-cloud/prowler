@@ -382,6 +382,14 @@
         "cloudtrail_multi_region_enabled",
         "config_recorder_all_regions_enabled",
         "s3_multi_region_access_point_public_access_block"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2234,6 +2242,14 @@
         "vpc_different_regions",
         "autoscaling_group_multiple_az",
         "storagegateway_gateway_fault_tolerant"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2261,6 +2277,14 @@
         "organizations_scp_check_deny_regions",
         "s3_multi_region_access_point_public_access_block",
         "vpc_different_regions"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2308,6 +2332,14 @@
         "organizations_scp_check_deny_regions",
         "s3_multi_region_access_point_public_access_block",
         "vpc_different_regions"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -2978,6 +3010,14 @@
         "guardduty_is_enabled",
         "athena_workgroup_enforce_configuration",
         "shield_advanced_protection_in_global_accelerators"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -3461,6 +3501,7 @@
       ],
       "Checks": [
         "kinesis_stream_data_retention_period",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events"
       ]
     },
@@ -3480,6 +3521,14 @@
         "cloudtrail_cloudwatch_logging_enabled",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -3669,6 +3718,7 @@
         "awslambda_function_invoke_api_operations_cloudtrail_logging_enabled",
         "bedrock_model_invocation_logging_enabled",
         "cloudfront_distributions_logging_enabled",
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_cloudwatch_logging_enabled",
         "cloudtrail_logs_s3_bucket_access_logging_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
@@ -4297,6 +4347,14 @@
         "guardduty_no_high_severity_findings",
         "guardduty_rds_protection_enabled",
         "guardduty_s3_protection_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4918,6 +4976,17 @@
         "elbv2_nlb_tls_termination_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "kafka_cluster_mutual_tls_authentication_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -4944,6 +5013,17 @@
         "elbv2_nlb_tls_termination_enabled",
         "transfer_server_in_transit_encryption_enabled",
         "kafka_cluster_mutual_tls_authentication_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -5218,6 +5298,14 @@
         "rds_instance_default_admin",
         "accessanalyzer_enabled",
         "efs_access_point_enforce_user_identity"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -5288,6 +5376,7 @@
         "cognito_user_pool_blocks_compromised_credentials_sign_in_attempts",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_secret_unused"
@@ -5734,6 +5823,14 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6097,6 +6194,17 @@
         "cloudfront_distributions_origin_traffic_encrypted",
         "glue_development_endpoints_job_bookmark_encryption_enabled",
         "cloudtrail_kms_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6193,6 +6301,17 @@
         "elb_ssl_listeners_use_acm_certificate",
         "iam_no_expired_server_certificates_stored",
         "rds_instance_certificate_expiration"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6304,6 +6423,17 @@
         "elb_ssl_listeners_use_acm_certificate",
         "iam_no_expired_server_certificates_stored",
         "rds_instance_certificate_expiration"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6359,6 +6489,7 @@
         "iam_rotate_access_key_90_days",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_administrator_access_policy",
         "iam_user_console_access_unused",
@@ -6389,6 +6520,14 @@
         "sns_topics_not_publicly_accessible",
         "sqs_queues_not_publicly_accessible",
         "vpc_peering_routing_tables_with_least_privilege"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6408,6 +6547,14 @@
         "ec2_instance_profile_attached",
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6473,6 +6620,7 @@
         "backup_recovery_point_encrypted",
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudfront_distributions_field_level_encryption_enabled",
         "cloudfront_distributions_origin_traffic_encrypted",
         "cloudtrail_kms_encryption_enabled",
@@ -6582,6 +6730,17 @@
         "kms_cmk_not_multi_region",
         "kms_key_not_publicly_accessible",
         "ec2_ebs_volume_encryption"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6730,6 +6889,7 @@
         "backup_recovery_point_encrypted",
         "backup_vaults_encrypted",
         "bedrock_model_invocation_logs_encryption_enabled",
+        "bedrock_prompt_encrypted_with_cmk",
         "cloudfront_distributions_field_level_encryption_enabled",
         "cloudfront_distributions_origin_traffic_encrypted",
         "cloudtrail_kms_encryption_enabled",
@@ -6803,6 +6963,17 @@
         "secretsmanager_not_publicly_accessible",
         "secretsmanager_secret_rotated_periodically",
         "secretsmanager_secret_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6836,6 +7007,17 @@
       ],
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6909,6 +7091,17 @@
         "secretsmanager_secret_rotated_periodically",
         "secretsmanager_secret_unused",
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -6931,6 +7124,17 @@
         "secretsmanager_secret_rotated_periodically",
         "secretsmanager_secret_unused",
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -8036,6 +8240,14 @@
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
         "cloudtrail_log_file_validation_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -8804,6 +9016,14 @@
         "guardduty_is_enabled",
         "cloudtrail_log_file_validation_enabled",
         "ssmincidents_enabled_with_plans"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -9726,6 +9946,14 @@
         "accessanalyzer_enabled_without_findings",
         "cloudfront_distributions_s3_origin_access_control",
         "cloudtrail_logs_s3_bucket_access_logging_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -10361,6 +10589,14 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -10451,6 +10687,14 @@
         "ec2_instance_profile_attached",
         "iam_role_cross_account_readonlyaccess_policy",
         "iam_securityaudit_role_created"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

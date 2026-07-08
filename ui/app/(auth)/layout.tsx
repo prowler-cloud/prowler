@@ -2,12 +2,15 @@ import "@/styles/globals.css";
 
 import { GoogleTagManager } from "@next/third-parties/google";
 import { Metadata, Viewport } from "next";
+import { connection } from "next/server";
 import { ReactNode, Suspense } from "react";
 
+import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress, Toaster } from "@/components/ui";
 import { fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
+import { readGatedEnv } from "@/lib/integrations";
 
 import { Providers } from "../providers";
 
@@ -29,10 +32,27 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function AuthLayout({ children }: { children: ReactNode }) {
+export default async function AuthLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  // Force dynamic rendering so the read below resolves from the container env
+  // at request time rather than being snapshotted at build (independent of the
+  // <RuntimePublicConfig/> island's own connection() call).
+  await connection();
+
+  const gtmId = readGatedEnv(
+    "UI_GOOGLE_TAG_MANAGER_ENABLE",
+    "UI_GOOGLE_TAG_MANAGER_ID",
+    "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
+  );
+
   return (
     <html suppressHydrationWarning lang="en">
-      <head />
+      <head>
+        <RuntimePublicConfig />
+      </head>
       <body
         suppressHydrationWarning
         className={cn(
@@ -46,9 +66,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           </Suspense>
           {children}
           <Toaster />
-          <GoogleTagManager
-            gtmId={process.env.NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID || ""}
-          />
+          {gtmId && <GoogleTagManager gtmId={gtmId} />}
         </Providers>
       </body>
     </html>

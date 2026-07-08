@@ -1,15 +1,19 @@
+import { InfoTooltip } from "@/components/shadcn/info-field/info-field";
 import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
+import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 
 interface ComplianceAccordionRequirementTitleProps {
   type: string;
   name: string;
   status: FindingStatus;
+  invalidConfig?: boolean;
 }
 
 export const ComplianceAccordionRequirementTitle = ({
   type,
   name,
   status,
+  invalidConfig = false,
 }: ComplianceAccordionRequirementTitleProps) => {
   return (
     <div className="flex w-full items-center justify-between gap-2">
@@ -20,6 +24,7 @@ export const ComplianceAccordionRequirementTitle = ({
           </span>
         )}
         <span>{name}</span>
+        {invalidConfig && <InfoTooltip content={INVALID_CONFIG_NOTE} />}
       </div>
       <StatusFindingBadge status={status} />
     </div>

@@ -1,3 +1,4 @@
+import fcntl
 import gc
 import os
 import re
@@ -7,9 +8,16 @@ from pathlib import Path
 from shutil import rmtree
 from uuid import UUID
 
-import fcntl
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import rls_transaction
+from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
@@ -18,15 +26,13 @@ from tasks.jobs.reports import (
     ENSReportGenerator,
     NIS2ReportGenerator,
     ThreatScoreReportGenerator,
+    build_provider_metadata,
 )
 from tasks.jobs.threatscore import compute_threatscore_metrics
-from tasks.jobs.threatscore_utils import _aggregate_requirement_statistics_from_database
-
-from api.db_router import READ_REPLICA_ALIAS, MainRouter
-from api.db_utils import rls_transaction
-from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
+from tasks.jobs.threatscore_utils import (
+    _aggregate_requirement_statistics_from_database,
+    _get_compliance_check_ids,
+)
 
 logger = get_task_logger(__name__)
 STALE_TMP_OUTPUT_MAX_AGE_HOURS = 48
@@ -427,6 +433,7 @@ def generate_threatscore_report(
     provider_obj: Provider | None = None,
     requirement_statistics: dict[str, dict[str, int]] | None = None,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    prowler_provider=None,
 ) -> None:
     """
     Generate a PDF compliance report based on Prowler ThreatScore framework.
@@ -455,6 +462,7 @@ def generate_threatscore_report(
         provider_obj=provider_obj,
         requirement_statistics=requirement_statistics,
         findings_cache=findings_cache,
+        prowler_provider=prowler_provider,
         only_failed=only_failed,
     )
 
@@ -469,6 +477,7 @@ def generate_ens_report(
     provider_obj: Provider | None = None,
     requirement_statistics: dict[str, dict[str, int]] | None = None,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    prowler_provider=None,
 ) -> None:
     """
     Generate a PDF compliance report for ENS RD2022 framework.
@@ -495,6 +504,7 @@ def generate_ens_report(
         provider_obj=provider_obj,
         requirement_statistics=requirement_statistics,
         findings_cache=findings_cache,
+        prowler_provider=prowler_provider,
         include_manual=include_manual,
     )
 
@@ -510,6 +520,7 @@ def generate_nis2_report(
     provider_obj: Provider | None = None,
     requirement_statistics: dict[str, dict[str, int]] | None = None,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    prowler_provider=None,
 ) -> None:
     """
     Generate a PDF compliance report for NIS2 Directive (EU) 2022/2555.
@@ -537,6 +548,7 @@ def generate_nis2_report(
         provider_obj=provider_obj,
         requirement_statistics=requirement_statistics,
         findings_cache=findings_cache,
+        prowler_provider=prowler_provider,
         only_failed=only_failed,
         include_manual=include_manual,
     )
@@ -553,6 +565,7 @@ def generate_csa_report(
     provider_obj: Provider | None = None,
     requirement_statistics: dict[str, dict[str, int]] | None = None,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    prowler_provider=None,
 ) -> None:
     """
     Generate a PDF compliance report for CSA Cloud Controls Matrix (CCM) v4.0.
@@ -560,7 +573,7 @@ def generate_csa_report(
     Args:
         tenant_id: The tenant ID for Row-Level Security context.
         scan_id: ID of the scan executed by Prowler.
-        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0_aws").
+        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0").
         output_path: Output PDF file path.
         provider_id: Provider ID for the scan.
         only_failed: If True, only include failed requirements in detailed section.
@@ -580,6 +593,7 @@ def generate_csa_report(
         provider_obj=provider_obj,
         requirement_statistics=requirement_statistics,
         findings_cache=findings_cache,
+        prowler_provider=prowler_provider,
         only_failed=only_failed,
         include_manual=include_manual,
     )
@@ -596,6 +610,7 @@ def generate_cis_report(
     provider_obj: Provider | None = None,
     requirement_statistics: dict[str, dict[str, int]] | None = None,
     findings_cache: dict[str, list[FindingOutput]] | None = None,
+    prowler_provider=None,
 ) -> None:
     """
     Generate a PDF compliance report for a specific CIS Benchmark variant.
@@ -627,6 +642,7 @@ def generate_cis_report(
         provider_obj=provider_obj,
         requirement_statistics=requirement_statistics,
         findings_cache=findings_cache,
+        prowler_provider=prowler_provider,
         only_failed=only_failed,
         include_manual=include_manual,
     )
@@ -771,6 +787,17 @@ def generate_compliance_reports(
         results["csa"] = {"upload": False, "path": ""}
         generate_csa = False
 
+    # Load the framework definitions for this provider once. We use this map
+    # both to pick the latest CIS variant and to precompute the set of
+    # check_ids each framework consumes (for findings_cache eviction).
+    frameworks_bulk: dict = {}
+    try:
+        frameworks_bulk = Compliance.get_bulk(provider_type)
+    except Exception as e:
+        logger.error("Error loading compliance frameworks for %s: %s", provider_type, e)
+        # Fall through; individual frameworks will still try and fail
+        # gracefully if their compliance_id is missing.
+
     # For CIS we do NOT pre-check the provider against a hard-coded whitelist
     # (that list drifts the moment a new CIS JSON ships). Instead, we inspect
     # the dynamically loaded framework map and pick the latest available CIS
@@ -778,7 +805,6 @@ def generate_compliance_reports(
     latest_cis: str | None = None
     if generate_cis:
         try:
-            frameworks_bulk = Compliance.get_bulk(provider_type)
             latest_cis = _pick_latest_cis_variant(
                 name for name in frameworks_bulk.keys() if name.startswith("cis_")
             )
@@ -815,9 +841,73 @@ def generate_compliance_reports(
         tenant_id, scan_id
     )
 
-    # Create shared findings cache
-    findings_cache = {}
+    # Build a credential-free provider metadata stub once for the whole
+    # report batch. FindingOutput.transform_api_finding only reads static
+    # attributes (type plus a few identity fields), so reports never decrypt
+    # the ProviderSecret nor construct a cloud SDK session — generation keeps
+    # working after credentials are deleted or invalidated (PROWLER-2145).
+    prowler_provider = build_provider_metadata(provider_obj)
+
+    # Create shared findings cache up front so the eviction closure below
+    # can reference it. Defined BEFORE the closure to avoid the UnboundLocalError
+    # trap if an early-return is later inserted between the closure and its
+    # first use.
+    findings_cache: dict[str, list[FindingOutput]] = {}
     logger.info("Created shared findings cache for all reports")
+
+    # Precompute the set of check_ids each framework consumes. After a
+    # framework finishes, every check_id that no remaining framework still
+    # needs is evicted from findings_cache so the dict does not keep
+    # growing through the batch (PROWLER-1733).
+    pending_checks_by_framework: dict[str, set[str]] = {}
+    if generate_threatscore:
+        pending_checks_by_framework["threatscore"] = _get_compliance_check_ids(
+            frameworks_bulk.get(f"prowler_threatscore_{provider_type}")
+        )
+    if generate_ens:
+        pending_checks_by_framework["ens"] = _get_compliance_check_ids(
+            frameworks_bulk.get(f"ens_rd2022_{provider_type}")
+        )
+    if generate_nis2:
+        pending_checks_by_framework["nis2"] = _get_compliance_check_ids(
+            frameworks_bulk.get(f"nis2_{provider_type}")
+        )
+    if generate_csa:
+        # csa_ccm_4.0 lives at the top level, not under compliance/{provider}/.
+        csa_framework = frameworks_bulk.get(
+            "csa_ccm_4.0"
+        ) or get_bulk_compliance_frameworks_universal(provider_type).get("csa_ccm_4.0")
+        pending_checks_by_framework["csa"] = _get_compliance_check_ids(csa_framework)
+    if generate_cis and latest_cis:
+        pending_checks_by_framework["cis"] = _get_compliance_check_ids(
+            frameworks_bulk.get(latest_cis)
+        )
+
+    def _evict_after_framework(done_key: str) -> int:
+        """Drop from findings_cache every check_id no pending framework still needs."""
+        done = pending_checks_by_framework.pop(done_key, set())
+        still_needed: set[str] = (
+            set().union(*pending_checks_by_framework.values())
+            if pending_checks_by_framework
+            else set()
+        )
+        exclusive = done - still_needed
+        evicted = 0
+        for cid in exclusive:
+            if findings_cache.pop(cid, None) is not None:
+                evicted += 1
+        if evicted:
+            logger.info(
+                "Evicted %d exclusive check entries from findings_cache after %s "
+                "(remaining cache size: %d)",
+                evicted,
+                done_key,
+                len(findings_cache),
+            )
+            # Release the lists' memory now instead of waiting for the next
+            # gc cycle; FindingOutput instances retain quite a bit of state.
+            gc.collect()
+        return evicted
 
     generated_report_keys: list[str] = []
     output_paths: dict[str, str] = {}
@@ -907,6 +997,7 @@ def generate_compliance_reports(
                 provider_obj=provider_obj,
                 requirement_statistics=requirement_statistics,
                 findings_cache=findings_cache,
+                prowler_provider=prowler_provider,
             )
 
             # Compute and store ThreatScore metrics snapshot
@@ -984,8 +1075,14 @@ def generate_compliance_reports(
                 logger.warning("ThreatScore report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error("Error generating ThreatScore report: %s", e)
+            logger.exception(
+                "compliance_report_failed framework=threatscore scan_id=%s tenant_id=%s",
+                scan_id,
+                tenant_id,
+            )
             results["threatscore"] = {"upload": False, "path": "", "error": str(e)}
+
+        _evict_after_framework("threatscore")
 
     # Generate ENS report
     if generate_ens:
@@ -1006,6 +1103,7 @@ def generate_compliance_reports(
                 provider_obj=provider_obj,
                 requirement_statistics=requirement_statistics,
                 findings_cache=findings_cache,
+                prowler_provider=prowler_provider,
             )
 
             upload_uri_ens = _upload_to_s3(
@@ -1020,8 +1118,14 @@ def generate_compliance_reports(
                 logger.warning("ENS report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error("Error generating ENS report: %s", e)
+            logger.exception(
+                "compliance_report_failed framework=ens scan_id=%s tenant_id=%s",
+                scan_id,
+                tenant_id,
+            )
             results["ens"] = {"upload": False, "path": "", "error": str(e)}
+
+        _evict_after_framework("ens")
 
     # Generate NIS2 report
     if generate_nis2:
@@ -1043,6 +1147,7 @@ def generate_compliance_reports(
                 provider_obj=provider_obj,
                 requirement_statistics=requirement_statistics,
                 findings_cache=findings_cache,
+                prowler_provider=prowler_provider,
             )
 
             upload_uri_nis2 = _upload_to_s3(
@@ -1057,14 +1162,20 @@ def generate_compliance_reports(
                 logger.warning("NIS2 report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error("Error generating NIS2 report: %s", e)
+            logger.exception(
+                "compliance_report_failed framework=nis2 scan_id=%s tenant_id=%s",
+                scan_id,
+                tenant_id,
+            )
             results["nis2"] = {"upload": False, "path": "", "error": str(e)}
+
+        _evict_after_framework("nis2")
 
     # Generate CSA CCM report
     if generate_csa:
         generated_report_keys.append("csa")
         csa_path = output_paths["csa"]
-        compliance_id_csa = f"csa_ccm_4.0_{provider_type}"
+        compliance_id_csa = "csa_ccm_4.0"
         pdf_path_csa = f"{csa_path}_csa_report.pdf"
         logger.info("Generating CSA CCM report with compliance %s", compliance_id_csa)
 
@@ -1080,6 +1191,7 @@ def generate_compliance_reports(
                 provider_obj=provider_obj,
                 requirement_statistics=requirement_statistics,
                 findings_cache=findings_cache,
+                prowler_provider=prowler_provider,
             )
 
             upload_uri_csa = _upload_to_s3(
@@ -1094,8 +1206,14 @@ def generate_compliance_reports(
                 logger.warning("CSA CCM report saved locally at %s", out_dir)
 
         except Exception as e:
-            logger.error("Error generating CSA CCM report: %s", e)
+            logger.exception(
+                "compliance_report_failed framework=csa scan_id=%s tenant_id=%s",
+                scan_id,
+                tenant_id,
+            )
             results["csa"] = {"upload": False, "path": "", "error": str(e)}
+
+        _evict_after_framework("csa")
 
     # Generate CIS Benchmark report for the latest available version only.
     # CIS ships multiple versions per provider (e.g. cis_1.4_aws, cis_5.0_aws,
@@ -1119,6 +1237,7 @@ def generate_compliance_reports(
                 provider_obj=provider_obj,
                 requirement_statistics=requirement_statistics,
                 findings_cache=findings_cache,
+                prowler_provider=prowler_provider,
             )
 
             upload_uri_cis = _upload_to_s3(
@@ -1147,14 +1266,22 @@ def generate_compliance_reports(
                 )
 
         except Exception as e:
-            logger.error("Error generating CIS report %s: %s", latest_cis, e)
+            logger.exception(
+                "compliance_report_failed framework=cis variant=%s scan_id=%s tenant_id=%s",
+                latest_cis,
+                scan_id,
+                tenant_id,
+            )
             results["cis"] = {
                 "upload": False,
                 "path": "",
                 "error": str(e),
             }
         finally:
-            # Free ReportLab/matplotlib memory before moving on.
+            # Free ReportLab/matplotlib memory before moving on. CIS is
+            # always the last framework, so evicting its entries clears the
+            # cache entirely (subject to its check_ids set).
+            _evict_after_framework("cis")
             gc.collect()
 
     # Clean up temporary files only if all generated reports were

@@ -1,7 +1,7 @@
 import {
   getComplianceCsv,
+  getComplianceOcsf,
   getCompliancePdfReport,
-  getExportsZip,
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
@@ -11,10 +11,14 @@ import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
-export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const baseUrl = process.env.AUTH_URL;
+export const apiBaseUrl = readEnv(
+  "UI_API_BASE_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
+);
 
 /**
  * Extracts a form value from a FormData object
@@ -102,48 +106,85 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
   return url.toString();
 };
 
+const REPORT_PREPARATION_ERROR =
+  "Unable to prepare the scan report. Please try again in a few minutes.";
+
+export const GENERIC_SERVER_ERROR_MESSAGE =
+  "Server is temporarily unavailable. Please try again in a few minutes.";
+
+const HTML_ERROR_PATTERN =
+  /(?:<!doctype\s+html|<html\b|<\/?(?:head|title|body|center|h1|h2|pre)\b)/i;
+
+export const sanitizeErrorMessage = (
+  message: string,
+  fallback = GENERIC_SERVER_ERROR_MESSAGE,
+): string => {
+  const trimmedMessage = message.trim();
+
+  if (!trimmedMessage) {
+    return fallback;
+  }
+
+  return HTML_ERROR_PATTERN.test(trimmedMessage) ? fallback : trimmedMessage;
+};
+
+const getPreflightErrorMessage = async (response: Response) => {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return REPORT_PREPARATION_ERROR;
+  }
+
+  return (await response.text()) || "An unknown error occurred.";
+};
+
 export const downloadScanZip = async (
   scanId: string,
   toast: ReturnType<typeof useToast>["toast"],
 ) => {
-  const result = await getExportsZip(scanId);
+  const reportUrl = `/api/scans/${encodeURIComponent(scanId)}/report`;
 
-  if (result?.pending) {
+  try {
+    const preflightResponse = await fetch(`${reportUrl}?preflight=1`, {
+      cache: "no-store",
+    });
+
+    if (preflightResponse.status === 202) {
+      toast({
+        title: "The report is still being generated",
+        description: "Please try again in a few minutes.",
+      });
+      return;
+    }
+
+    if (!preflightResponse.ok) {
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: await getPreflightErrorMessage(preflightResponse),
+      });
+      return;
+    }
+  } catch (_error) {
     toast({
-      title: "The report is still being generated",
-      description: "Please try again in a few minutes.",
+      variant: "destructive",
+      title: "Download Failed",
+      description: "Unable to start the report download. Please try again.",
     });
     return;
   }
 
-  if (result?.success && result.data) {
-    const binaryString = window.atob(result.data);
-    const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
+  const a = document.createElement("a");
+  a.href = reportUrl;
+  a.download = `scan-${scanId}-report.zip`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 
-    const blob = new Blob([bytes], { type: "application/zip" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = result.filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Download Complete",
-      description: "Your scan report has been downloaded successfully.",
-    });
-  } else {
-    toast({
-      variant: "destructive",
-      title: "Download Failed",
-      description: result?.error || "An unknown error occurred.",
-    });
-  }
+  toast({
+    title: "Download Started",
+    description: "Your browser is downloading the scan report.",
+  });
 };
 
 /**
@@ -226,6 +267,32 @@ export const downloadComplianceCsv = async (
     result,
     "text/csv",
     "The compliance report has been downloaded successfully.",
+    toast,
+  );
+};
+
+/**
+ * Download the per-framework OCSF JSON export.
+ *
+ * Only universal frameworks declaring an ``outputs`` block produce this
+ * artifact (currently DORA and CSA CCM 4.0); callers must gate the call
+ * via ``isOcsfSupported`` to avoid surfacing a broken download on
+ * frameworks the API will 404 on.
+ */
+export const downloadComplianceOcsf = async (
+  scanId: string,
+  complianceId: string,
+  toast: ReturnType<typeof useToast>["toast"],
+): Promise<void> => {
+  toast({
+    title: "Download Started",
+    description: "Preparing the OCSF report. This may take a moment.",
+  });
+  const result = await getComplianceOcsf(scanId, complianceId);
+  await downloadFile(
+    result,
+    "application/json",
+    "The compliance OCSF report has been downloaded successfully.",
     toast,
   );
 };
@@ -316,21 +383,6 @@ export const checkTaskStatus = async (
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to create dictionaries by type
-export function createDict(type: string, data: any) {
-  const includedField = data?.included?.filter(
-    (item: { type: string }) => item.type === type,
-  );
-
-  if (!includedField || includedField.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    includedField.map((item: { id: string }) => [item.id, item]),
-  );
-}
-
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
@@ -356,11 +408,11 @@ export function decryptKey(passkey: string) {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    return error.message;
+    return sanitizeErrorMessage(error.message);
   } else if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
+    return sanitizeErrorMessage(String(error.message));
   } else if (typeof error === "string") {
-    return error;
+    return sanitizeErrorMessage(error);
   } else {
     return "Oops! Something went wrong.";
   }
@@ -381,13 +433,12 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all the providers and its related resources",
+      "Grants tenant-wide visibility across all providers, accounts, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",
-    label: "Manage Cloud Providers",
-    description:
-      "Allows configuration and management of cloud provider connections",
+    label: "Manage Providers",
+    description: "Allows configuration and management of provider connections",
   },
   {
     field: "manage_integrations",
@@ -399,6 +450,11 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "manage_scans",
     label: "Manage Scans",
     description: "Allows launching and configuring scans security scans",
+  },
+  {
+    field: "manage_alerts",
+    label: "Manage Alerts",
+    description: "Allows creating and managing custom alerts",
   },
 
   {

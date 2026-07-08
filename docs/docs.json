@@ -70,7 +70,13 @@
           {
             "group": "Prowler Lighthouse AI",
             "pages": [
-              "getting-started/products/prowler-lighthouse-ai"
+              "getting-started/products/prowler-cloud-lighthouse"
+            ]
+          },
+          {
+            "group": "Prowler for Claude Code",
+            "pages": [
+              "getting-started/products/prowler-claude-code-plugin"
             ]
           },
           {
@@ -118,7 +124,11 @@
               "user-guide/tutorials/prowler-app-rbac",
               "user-guide/tutorials/prowler-app-multi-tenant",
               "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-app-import-findings",
+              "user-guide/tutorials/prowler-import-findings",
+              "user-guide/tutorials/prowler-scan-scheduling",
+              "user-guide/tutorials/prowler-alerts",
+              "user-guide/tutorials/prowler-app-scan-configuration",
+              "user-guide/tutorials/prowler-app-findings-triage",
               {
                 "group": "Mutelist",
                 "expanded": true,
@@ -144,8 +154,15 @@
                 ]
               },
               {
-                "group": "Lighthouse AI",
+                "group": "Lighthouse AI (Prowler Cloud)",
                 "pages": [
+                  "user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"
+                ]
+              },
+              {
+                "group": "Lighthouse AI (Open Source)",
+                "pages": [
+                  "getting-started/products/prowler-lighthouse-ai",
                   "user-guide/tutorials/prowler-app-lighthouse",
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
@@ -176,7 +193,6 @@
             "pages": [
               "user-guide/cli/tutorials/misc",
               "user-guide/cli/tutorials/reporting",
-              "user-guide/cli/tutorials/compliance",
               "user-guide/cli/tutorials/dashboard",
               "user-guide/cli/tutorials/configuration_file",
               "user-guide/cli/tutorials/logging",
@@ -229,6 +245,7 @@
                   "user-guide/providers/azure/authentication",
                   "user-guide/providers/azure/use-non-default-cloud",
                   "user-guide/providers/azure/subscriptions",
+                  "user-guide/providers/azure/resource-groups",
                   "user-guide/providers/azure/create-prowler-service-principal"
                 ]
               },
@@ -327,10 +344,46 @@
                 ]
               },
               {
+                "group": "Scaleway",
+                "pages": [
+                  "user-guide/providers/scaleway/getting-started-scaleway",
+                  "user-guide/providers/scaleway/authentication"
+                ]
+              },
+              {
+                "group": "StackIT",
+                "pages": [
+                  "user-guide/providers/stackit/getting-started-stackit",
+                  "user-guide/providers/stackit/authentication"
+                ]
+              },
+              {
                 "group": "Vercel",
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",
                   "user-guide/providers/vercel/authentication"
+                ]
+              },
+              {
+                "group": "Okta",
+                "pages": [
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication",
+                  "user-guide/providers/okta/retry-configuration"
+                ]
+              },
+              {
+                "group": "Linode",
+                "pages": [
+                  "user-guide/providers/linode/getting-started-linode",
+                  "user-guide/providers/linode/authentication"
+                ]
+              },
+              {
+                "group": "E2E Networks",
+                "pages": [
+                  "user-guide/providers/e2enetworks/getting-started-e2enetworks",
+                  "user-guide/providers/e2enetworks/authentication"
                 ]
               }
             ]
@@ -338,6 +391,7 @@
           {
             "group": "Compliance",
             "pages": [
+              "user-guide/compliance/tutorials/compliance",
               "user-guide/compliance/tutorials/threatscore"
             ]
           },
@@ -345,7 +399,8 @@
             "group": "Cookbooks",
             "pages": [
               "user-guide/cookbooks/kubernetes-in-cluster",
-              "user-guide/cookbooks/cicd-pipeline"
+              "user-guide/cookbooks/cicd-pipeline",
+              "user-guide/cookbooks/powerbi-cis-benchmarks"
             ]
           }
         ]
@@ -360,12 +415,15 @@
               "developer-guide/provider",
               "developer-guide/services",
               "developer-guide/checks",
+              "developer-guide/secret-scanning-checks",
               "developer-guide/outputs",
               "developer-guide/integrations",
               "developer-guide/security-compliance-framework",
               "developer-guide/lighthouse-architecture",
               "developer-guide/mcp-server",
-              "developer-guide/ai-skills"
+              "developer-guide/ai-skills",
+              "developer-guide/prowler-studio",
+              "developer-guide/server-sent-events"
             ]
           },
           {
@@ -378,13 +436,15 @@
               "developer-guide/kubernetes-details",
               "developer-guide/m365-details",
               "developer-guide/github-details",
-              "developer-guide/llm-details"
+              "developer-guide/llm-details",
+              "developer-guide/stackit-details"
             ]
           },
           {
             "group": "Miscellaneous",
             "pages": [
               "developer-guide/documentation",
+              "developer-guide/environment-variables",
               {
                 "group": "Testing",
                 "pages": [
@@ -503,6 +563,10 @@
   },
   "redirects": [
     {
+      "source": "/user-guide/cli/tutorials/compliance",
+      "destination": "/user-guide/compliance/tutorials/compliance"
+    },
+    {
       "source": "/projects/prowler-open-source/en/latest/tutorials/prowler-app-lighthouse",
       "destination": "/user-guide/tutorials/prowler-app-lighthouse"
     },
@@ -549,6 +613,14 @@
     {
       "source": "/contact",
       "destination": "/support"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-import-findings",
+      "destination": "/user-guide/tutorials/prowler-import-findings"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-app-alerts",
+      "destination": "/user-guide/tutorials/prowler-alerts"
     }
   ]
 }

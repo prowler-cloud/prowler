@@ -28,11 +28,12 @@
     }
   },
   "Categories": [
-    "internet-exposed"
+    "internet-exposed",
+    "vercel-pro-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [
     "project_deployment_protection_enabled"
   ],
-  "Notes": ""
+  "Notes": "Protecting production deployments requires Enterprise, or Pro plans with supported paid deployment protection options."
 }

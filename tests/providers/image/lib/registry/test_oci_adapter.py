@@ -1,4 +1,5 @@
 import base64
+import socket
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,6 +11,35 @@ from prowler.providers.image.exceptions.exceptions import (
     ImageRegistryNetworkError,
 )
 from prowler.providers.image.lib.registry.oci_adapter import OciRegistryAdapter
+
+
+def _fake_getaddrinfo(host_to_ip: dict):
+    """Build a getaddrinfo stub that resolves names from host_to_ip."""
+
+    def _stub(host, *_args, **_kwargs):
+        if host not in host_to_ip:
+            raise socket.gaierror(f"unresolved host: {host}")
+        ip = host_to_ip[host]
+        family = socket.AF_INET6 if ":" in ip else socket.AF_INET
+        return [(family, socket.SOCK_STREAM, 0, "", (ip, 0))]
+
+    return _stub
+
+
+@pytest.fixture(autouse=True)
+def _default_dns_resolves_public(monkeypatch):
+    """Make every host resolve to a public IP by default.
+
+    Individual tests may override with their own patch on
+    ``prowler.providers.image.lib.registry.base.socket.getaddrinfo``.
+    """
+
+    def _stub(_host, *_a, **_kw):
+        return [(socket.AF_INET, socket.SOCK_STREAM, 0, "", ("8.8.8.8", 0))]
+
+    monkeypatch.setattr(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo", _stub
+    )
 
 
 class TestOciAdapterInit:
@@ -56,7 +86,7 @@ class TestOciAdapterAuth:
         ping_resp = MagicMock(
             status_code=401,
             headers={
-                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry"'
             },
         )
         token_resp = MagicMock(status_code=200)
@@ -288,70 +318,323 @@ class TestOciAdapterRetry:
 
 class TestOciAdapterNextPageUrl:
     def test_no_link_header(self):
+        adapter = OciRegistryAdapter("https://reg.io")
         resp = MagicMock(headers={})
-        assert OciRegistryAdapter._next_page_url(resp) is None
+        assert adapter._next_page_url(resp) is None
 
     def test_link_header_with_next(self):
+        adapter = OciRegistryAdapter("https://reg.io")
         resp = MagicMock(
             headers={"Link": '<https://reg.io/v2/_catalog?n=200&last=b>; rel="next"'}
         )
-        assert (
-            OciRegistryAdapter._next_page_url(resp)
-            == "https://reg.io/v2/_catalog?n=200&last=b"
-        )
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"reg.io": "8.8.8.8"}),
+        ):
+            assert (
+                adapter._next_page_url(resp)
+                == "https://reg.io/v2/_catalog?n=200&last=b"
+            )
 
     def test_link_header_relative_url(self):
+        adapter = OciRegistryAdapter("https://reg.io")
         resp = MagicMock(
             headers={"Link": '</v2/_catalog?n=200&last=b>; rel="next"'},
             url="https://reg.io/v2/_catalog?n=200",
         )
-        assert (
-            OciRegistryAdapter._next_page_url(resp)
-            == "https://reg.io/v2/_catalog?n=200&last=b"
-        )
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"reg.io": "8.8.8.8"}),
+        ):
+            assert (
+                adapter._next_page_url(resp)
+                == "https://reg.io/v2/_catalog?n=200&last=b"
+            )
 
     def test_link_header_no_next(self):
+        adapter = OciRegistryAdapter("https://reg.io")
         resp = MagicMock(
             headers={"Link": '<https://reg.io/v2/_catalog?n=200>; rel="prev"'}
         )
-        assert OciRegistryAdapter._next_page_url(resp) is None
+        assert adapter._next_page_url(resp) is None
 
 
-class TestOciAdapterSSRF:
+class TestOutboundUrlValidator:
+    """Centralized SSRF defense (PRWLRHELP-2103).
+
+    Layers under test:
+      A. Parser unification — validator and connector use the same parser.
+      B. DNS resolution — reject hostnames pointing to non-public IPs.
+      C. Same registrable-domain — reject realm/pagination on unrelated hosts.
+    """
+
+    # --- A: scheme + literal IP rejection ---
+
     def test_reject_file_scheme(self):
-        adapter = OciRegistryAdapter("reg.io")
-        with pytest.raises(ImageRegistryAuthError, match="disallowed scheme"):
-            adapter._validate_realm_url("file:///etc/passwd")
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="scheme"):
+            adapter._validate_outbound_url("file:///etc/passwd")
 
     def test_reject_ftp_scheme(self):
-        adapter = OciRegistryAdapter("reg.io")
-        with pytest.raises(ImageRegistryAuthError, match="disallowed scheme"):
-            adapter._validate_realm_url("ftp://evil.com/token")
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="scheme"):
+            adapter._validate_outbound_url("ftp://reg.example.com/token")
 
-    def test_reject_private_ip(self):
-        adapter = OciRegistryAdapter("reg.io")
-        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
-            adapter._validate_realm_url("https://10.0.0.1/token")
+    def test_reject_private_ip_literal(self):
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://10.0.0.1/token")
 
-    def test_reject_loopback(self):
-        adapter = OciRegistryAdapter("reg.io")
-        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
-            adapter._validate_realm_url("https://127.0.0.1/token")
+    def test_reject_loopback_ip_literal(self):
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://127.0.0.1/token")
 
-    def test_reject_link_local(self):
-        adapter = OciRegistryAdapter("reg.io")
-        with pytest.raises(ImageRegistryAuthError, match="private/loopback"):
-            adapter._validate_realm_url("https://169.254.169.254/latest/meta-data")
+    def test_reject_link_local_ip_literal(self):
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://169.254.169.254/latest/meta-data")
 
-    def test_accept_public_https(self):
-        adapter = OciRegistryAdapter("reg.io")
-        # Should not raise
-        adapter._validate_realm_url("https://auth.example.com/token")
+    def test_reject_ipv6_loopback(self):
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url("https://[::1]/token")
 
-    def test_accept_hostname_not_ip(self):
-        adapter = OciRegistryAdapter("reg.io")
-        # Hostnames (not IPs) should pass even if they resolve to private IPs
-        adapter._validate_realm_url("https://internal.corp.com/token")
+    # --- A: parser-mismatch bypass (the headlining PRWLRHELP-2103 PoC) ---
+
+    def test_reject_parser_mismatch_bypass(self):
+        """Reporter PoC: the literal URL parses two different ways.
+
+        urlparse() sees host = 180.101.51.73 (public, would have been allowed)
+        requests connects to 127.0.0.1:6666 (loopback)
+        The validator must canonicalise via PreparedRequest and reject.
+        """
+        adapter = OciRegistryAdapter("reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter._validate_outbound_url(
+                "http://127.0.0.1:6666\\\\@180.101.51.73/token",
+                enforce_origin=False,
+            )
+
+    # --- B: DNS resolution to non-public IPs ---
+
+    def test_reject_hostname_resolving_to_loopback(self):
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"reg.example.com": "8.8.8.8", "localhost": "127.0.0.1"}
+            ),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url(
+                    "https://localhost/token", enforce_origin=False
+                )
+
+    def test_reject_hostname_resolving_to_metadata_ip(self):
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {
+                    "reg.example.com": "8.8.8.8",
+                    "metadata.aws.internal": "169.254.169.254",
+                }
+            ),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="non-public"):
+                adapter._validate_outbound_url(
+                    "https://metadata.aws.internal/", enforce_origin=False
+                )
+
+    def test_unresolvable_host_passes_validator(self):
+        """getaddrinfo failure is not the validator's concern — let requests fail naturally."""
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=socket.gaierror("nope"),
+        ):
+            # Same eTLD+1, unresolvable — validator should not raise.
+            adapter._validate_outbound_url(
+                "https://nx.example.com/token", enforce_origin=True
+            )
+
+    # --- C: same registrable-domain enforcement ---
+
+    def test_accept_same_etld1(self):
+        adapter = OciRegistryAdapter("https://registry-1.docker.io")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"registry-1.docker.io": "8.8.8.8", "auth.docker.io": "8.8.4.4"}
+            ),
+        ):
+            canonical = adapter._validate_outbound_url("https://auth.docker.io/token")
+        assert canonical == "https://auth.docker.io/token"
+
+    def test_accept_same_host(self):
+        adapter = OciRegistryAdapter("https://ghcr.io")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"ghcr.io": "8.8.8.8"}),
+        ):
+            adapter._validate_outbound_url("https://ghcr.io/token")
+
+    def test_reject_unrelated_host(self):
+        adapter = OciRegistryAdapter("https://registry-1.docker.io")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo(
+                {"registry-1.docker.io": "8.8.8.8", "attacker.com": "1.1.1.1"}
+            ),
+        ):
+            with pytest.raises(ImageRegistryAuthError, match="unrelated"):
+                adapter._validate_outbound_url("https://attacker.com/token")
+
+    def test_enforce_origin_false_allows_unrelated_public_host(self):
+        """When validating the registry URL itself (the trust anchor),
+        we don't compare it to itself — pass enforce_origin=False."""
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"public.elsewhere.io": "8.8.8.8"}),
+        ):
+            adapter._validate_outbound_url(
+                "https://public.elsewhere.io/", enforce_origin=False
+            )
+
+    # --- Returns canonical URL for the caller to use ---
+
+    def test_returns_canonical_url(self):
+        adapter = OciRegistryAdapter("https://ghcr.io")
+        with patch(
+            "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+            side_effect=_fake_getaddrinfo({"ghcr.io": "8.8.8.8"}),
+        ):
+            canonical = adapter._validate_outbound_url("https://ghcr.io/token")
+        assert canonical == "https://ghcr.io/token"
+
+
+class TestObtainBearerTokenAppliesValidator:
+    """Integration: malicious Www-Authenticate realm must be rejected before the second call."""
+
+    @patch(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+        side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_realm_with_parser_mismatch_payload_is_rejected(
+        self, mock_request, _mock_dns
+    ):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={
+                "Www-Authenticate": (
+                    'Bearer realm="http://127.0.0.1:6666\\\\@180.101.51.73/token",'
+                    'service="registry"'
+                )
+            },
+        )
+        mock_request.return_value = ping_resp
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with pytest.raises(ImageRegistryAuthError):
+            adapter._ensure_auth()
+        # Only the ping should have happened — not the realm GET.
+        assert mock_request.call_count == 1
+
+    @patch(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+        side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_realm_pointing_to_unrelated_host_is_rejected(
+        self, mock_request, _mock_dns
+    ):
+        ping_resp = MagicMock(
+            status_code=401,
+            headers={"Www-Authenticate": 'Bearer realm="https://attacker.com/token"'},
+        )
+        mock_request.return_value = ping_resp
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="unrelated"):
+            adapter._ensure_auth()
+        assert mock_request.call_count == 1
+
+
+class TestPaginationLinkValidator:
+    """The Link: rel=next URL is server-controlled and must go through the validator."""
+
+    @patch(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+        side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_pagination_to_unrelated_host_is_rejected(
+        self, mock_request, _mock_dns
+    ):
+        ping_resp = MagicMock(status_code=200)
+        catalog_page = MagicMock(
+            status_code=200,
+            headers={"Link": '<https://attacker.com/v2/_catalog?n=200>; rel="next"'},
+        )
+        catalog_page.json.return_value = {"repositories": ["a"]}
+        mock_request.side_effect = [ping_resp, catalog_page]
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="unrelated"):
+            adapter.list_repositories()
+
+    @patch(
+        "prowler.providers.image.lib.registry.base.socket.getaddrinfo",
+        side_effect=_fake_getaddrinfo({"reg.example.com": "8.8.8.8"}),
+    )
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_oci_pagination_to_metadata_ip_is_rejected(self, mock_request, _mock_dns):
+        ping_resp = MagicMock(status_code=200)
+        catalog_page = MagicMock(
+            status_code=200,
+            headers={"Link": '<http://169.254.169.254/latest/meta-data>; rel="next"'},
+        )
+        catalog_page.json.return_value = {"repositories": ["a"]}
+        mock_request.side_effect = [ping_resp, catalog_page]
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        with pytest.raises(ImageRegistryAuthError, match="non-public"):
+            adapter.list_repositories()
+
+
+class TestCrossOriginAuthorizationStrip:
+    """Bearer/Basic credentials must not leak to a host different from the registry."""
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_bearer_not_sent_to_different_host(self, mock_request):
+        resp_200 = MagicMock(status_code=200)
+        mock_request.return_value = resp_200
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        adapter._bearer_token = "secret-bearer"
+        # _do_authed_request — call with a different host
+        adapter._do_authed_request("GET", "https://other.example.com/v2/_catalog")
+        sent_headers = mock_request.call_args.kwargs.get("headers", {})
+        assert "Authorization" not in sent_headers
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_bearer_is_sent_to_same_host(self, mock_request):
+        resp_200 = MagicMock(status_code=200)
+        mock_request.return_value = resp_200
+        adapter = OciRegistryAdapter("https://reg.example.com")
+        adapter._bearer_token = "secret-bearer"
+        adapter._do_authed_request("GET", "https://reg.example.com/v2/_catalog")
+        sent_headers = mock_request.call_args.kwargs.get("headers", {})
+        assert sent_headers.get("Authorization") == "Bearer secret-bearer"
+
+    @patch("prowler.providers.image.lib.registry.base.requests.request")
+    def test_basic_auth_not_sent_to_different_host(self, mock_request):
+        resp_200 = MagicMock(status_code=200)
+        mock_request.return_value = resp_200
+        adapter = OciRegistryAdapter(
+            "https://reg.example.com", username="u", password="p"
+        )
+        adapter._basic_auth_verified = True
+        adapter._do_authed_request("GET", "https://other.example.com/v2/_catalog")
+        assert mock_request.call_args.kwargs.get("auth") is None
 
 
 class TestOciAdapterEmptyToken:
@@ -360,7 +643,7 @@ class TestOciAdapterEmptyToken:
         ping_resp = MagicMock(
             status_code=401,
             headers={
-                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry"'
             },
         )
         token_resp = MagicMock(status_code=200)
@@ -375,7 +658,7 @@ class TestOciAdapterEmptyToken:
         ping_resp = MagicMock(
             status_code=401,
             headers={
-                "Www-Authenticate": 'Bearer realm="https://auth.example.com/token",service="registry"'
+                "Www-Authenticate": 'Bearer realm="https://auth.reg.io/token",service="registry"'
             },
         )
         token_resp = MagicMock(status_code=200)

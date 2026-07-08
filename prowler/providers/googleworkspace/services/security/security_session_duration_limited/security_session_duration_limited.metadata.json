@@ -1,0 +1,37 @@
+{
+  "Provider": "googleworkspace",
+  "CheckID": "security_session_duration_limited",
+  "CheckTitle": "Google session control is configured to 12 hours or less",
+  "CheckType": [],
+  "ServiceName": "security",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The domain-level Google session control limits web session duration to **12 hours or less**. When a session expires, users must re-authenticate, reducing the window of opportunity for session hijacking.",
+  "Risk": "The default 14-day session duration means that a compromised session token provides an attacker with **two weeks of uninterrupted access** without re-authentication. Shorter session durations limit the impact of **stolen cookies, session hijacking, and unauthorized access** from shared or untrusted devices.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://knowledge.workspace.google.com/admin/security/set-session-length-for-google-services",
+    "https://docs.cloud.google.com/identity/docs/concepts/supported-policy-api-settings"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the Google **Admin console** at https://admin.google.com\n2. Navigate to **Security** > **Access and Data Control** > **Google session control**\n3. Set **Web session duration** to **12 hours** or less\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set **Google session control** web session duration to **12 hours or less** to limit the window of access from compromised sessions.",
+      "Url": "https://hub.prowler.com/check/security_session_duration_limited"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

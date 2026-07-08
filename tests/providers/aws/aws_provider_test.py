@@ -21,6 +21,7 @@ from prowler.providers.aws.config import (
     AWS_STS_GLOBAL_ENDPOINT_REGION,
     BOTO3_USER_AGENT_EXTRA,
     ROLE_SESSION_NAME,
+    get_default_session_config,
 )
 from prowler.providers.aws.exceptions.exceptions import (
     AWSArgumentTypeValidationError,
@@ -2241,6 +2242,12 @@ aws:
 
         assert session_config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
         assert session_config.retries == {"max_attempts": 10, "mode": "standard"}
+
+    def test_get_default_session_config(self):
+        config = get_default_session_config()
+
+        assert config.user_agent_extra == BOTO3_USER_AGENT_EXTRA
+        assert config.retries == {"max_attempts": 3, "mode": "standard"}
 
     @mock_aws
     @patch(

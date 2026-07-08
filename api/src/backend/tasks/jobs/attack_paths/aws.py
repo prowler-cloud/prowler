@@ -2,21 +2,21 @@
 # (https://github.com/cartography-cncf/cartography), which is licensed under the Apache 2.0 License.
 
 import time
-
 from typing import Any
 
 import aioboto3
 import boto3
+import botocore
 import neo4j
-
+from api.models import (
+    AttackPathsScan as ProwlerAPIAttackPathsScan,
+)
+from api.models import (
+    Provider as ProwlerAPIProvider,
+)
 from cartography.config import Config as CartographyConfig
 from cartography.intel import aws as cartography_aws
 from celery.utils.log import get_task_logger
-
-from api.models import (
-    AttackPathsScan as ProwlerAPIAttackPathsScan,
-    Provider as ProwlerAPIProvider,
-)
 from prowler.providers.common.provider import Provider as ProwlerSDKProvider
 from tasks.jobs.attack_paths import db_utils, utils
 
@@ -49,7 +49,7 @@ def start_aws_ingestion(
     }
 
     boto3_session = get_boto3_session(prowler_api_provider, prowler_sdk_provider)
-    regions: list[str] = list(prowler_sdk_provider._enabled_regions)
+    regions: list[str] = resolve_aws_regions(prowler_api_provider, prowler_sdk_provider)
     requested_syncs = list(cartography_aws.RESOURCE_FUNCTIONS.keys())
 
     sync_args = cartography_aws._build_aws_sync_kwargs(
@@ -74,13 +74,28 @@ def start_aws_ingestion(
     # Adding an extra field
     common_job_parameters["AWS_ID"] = prowler_api_provider.uid
 
-    cartography_aws._autodiscover_accounts(
-        neo4j_session,
-        boto3_session,
-        prowler_api_provider.uid,
-        cartography_config.update_tag,
-        common_job_parameters,
-    )
+    # AWS Organizations account autodiscovery. Inlined from Cartography's removed
+    # `_autodiscover_accounts` (deleted in `0.137.0`), as `load_aws_accounts` is still public.
+    try:
+        org_client = boto3_session.client("organizations")
+        paginator = org_client.get_paginator("list_accounts")
+        discovered = []
+        for page in paginator.paginate():
+            discovered.extend(page["Accounts"])
+        active_accounts = {
+            a["Name"]: a["Id"] for a in discovered if a["Status"] == "ACTIVE"
+        }
+        cartography_aws.organizations.load_aws_accounts(
+            neo4j_session,
+            active_accounts,
+            cartography_config.update_tag,
+            common_job_parameters,
+        )
+    except botocore.exceptions.ClientError:
+        logger.warning(
+            f"Account {prowler_api_provider.uid} lacks permissions for AWS "
+            "Organizations autodiscovery."
+        )
     db_utils.update_attack_paths_scan_progress(attack_paths_scan, 4)
 
     failed_syncs = sync_aws_account(
@@ -226,6 +241,48 @@ def get_boto3_session(
     return boto3_session
 
 
+def resolve_aws_regions(
+    prowler_api_provider: ProwlerAPIProvider,
+    prowler_sdk_provider: ProwlerSDKProvider,
+) -> list[str]:
+    """Resolve the regions to scan, falling back when `_enabled_regions` is `None`.
+
+    The SDK silently sets `_enabled_regions` to `None` when `ec2:DescribeRegions`
+    fails (missing IAM permission, transient error). Without a fallback the
+    Cartography ingestion crashes with a non-actionable `TypeError`. Try the
+    user's `audited_regions` next, then the partition's static region list.
+    Excluded regions are honored on every branch.
+    """
+    if prowler_sdk_provider._enabled_regions is not None:
+        regions = set(prowler_sdk_provider._enabled_regions)
+
+    elif prowler_sdk_provider.identity.audited_regions:
+        regions = set(prowler_sdk_provider.identity.audited_regions)
+
+    else:
+        partition = prowler_sdk_provider.identity.partition
+        try:
+            regions = prowler_sdk_provider.get_available_aws_service_regions(
+                "ec2", partition
+            )
+
+        except KeyError:
+            raise RuntimeError(
+                f"No region data available for partition {partition!r}; "
+                f"cannot determine regions to scan for "
+                f"{prowler_api_provider.uid}"
+            )
+
+        logger.warning(
+            f"Could not enumerate enabled regions for AWS account "
+            f"{prowler_api_provider.uid}; falling back to all regions in "
+            f"partition {partition!r}"
+        )
+
+    excluded = set(getattr(prowler_sdk_provider, "_excluded_regions", None) or ())
+    return sorted(regions - excluded)
+
+
 def get_aioboto3_session(boto3_session: boto3.Session) -> aioboto3.Session:
     return aioboto3.Session(botocore_session=boto3_session._session)
 
@@ -236,7 +293,7 @@ def sync_aws_account(
     sync_args: dict[str, Any],
     attack_paths_scan: ProwlerAPIAttackPathsScan,
 ) -> dict[str, str]:
-    current_progress = 4  # `cartography_aws._autodiscover_accounts`
+    current_progress = 4  # AWS Organizations account autodiscovery
     max_progress = (
         87  # `cartography_aws.RESOURCE_FUNCTIONS["permission_relationships"]` - 1
     )

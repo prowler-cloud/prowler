@@ -3,7 +3,9 @@ from uuid import uuid4
 
 from prowler.providers.azure.services.defender.defender_service import Assesment
 from tests.providers.azure.azure_fixtures import (
+    AZURE_SUBSCRIPTION_DISPLAY,
     AZURE_SUBSCRIPTION_ID,
+    AZURE_SUBSCRIPTION_NAME,
     set_mocked_azure_provider,
 )
 
@@ -11,6 +13,8 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_system_updates_are_applied:
     def test_defender_no_app_services(self):
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {}
 
         with (
@@ -34,6 +38,8 @@ class Test_defender_ensure_system_updates_are_applied:
     def test_defender_machines_no_log_analytics_installed(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Log Analytics agent should be installed on virtual machines": Assesment(
@@ -74,7 +80,7 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"
@@ -85,6 +91,8 @@ class Test_defender_ensure_system_updates_are_applied:
     ):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Log Analytics agent should be installed on virtual machines": Assesment(
@@ -125,7 +133,7 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"
@@ -134,6 +142,8 @@ class Test_defender_ensure_system_updates_are_applied:
     def test_defender_machines_no_system_updates_installed(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Log Analytics agent should be installed on virtual machines": Assesment(
@@ -174,7 +184,7 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"System updates are not applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"
@@ -185,6 +195,8 @@ class Test_defender_ensure_system_updates_are_applied:
     ):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock
+        defender_client.resource_groups = {}
+        defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.assessments = {
             AZURE_SUBSCRIPTION_ID: {
                 "Log Analytics agent should be installed on virtual machines": Assesment(
@@ -225,7 +237,7 @@ class Test_defender_ensure_system_updates_are_applied:
             assert result[0].status == "PASS"
             assert (
                 result[0].status_extended
-                == f"System updates are applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_ID}."
+                == f"System updates are applied for all the VMs in the subscription {AZURE_SUBSCRIPTION_DISPLAY}."
             )
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
             assert result[0].resource_name == "vm1"

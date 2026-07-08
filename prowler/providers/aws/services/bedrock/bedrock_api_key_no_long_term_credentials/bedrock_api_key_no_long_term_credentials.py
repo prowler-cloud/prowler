@@ -1,49 +1,62 @@
 from datetime import datetime, timezone
 
-from prowler.lib.check.models import Check, Check_Report_AWS
+from prowler.lib.check.models import Check, Check_Report_AWS, Severity
 from prowler.providers.aws.services.iam.iam_client import iam_client
+
+# Days threshold above which a Bedrock long-term API key is considered effectively non-expiring.
+NEVER_EXPIRES_THRESHOLD_DAYS = 10000
 
 
 class bedrock_api_key_no_long_term_credentials(Check):
-    """
-    Bedrock API keys should be short-lived to reduce the risk of unauthorized access.
-    This check verifies if there are any long-term Bedrock API keys.
-    If there are, it checks if they are expired or will be expired.
-    If they are expired, it will be marked as PASS.
-    If they are not expired, it will be marked as FAIL and the severity will be critical if the key will never expire.
+    """Amazon Bedrock long-term API keys should not be used outside of exploration.
+
+    AWS recommends short-term Bedrock API keys (session-scoped, valid up to 12 hours)
+    for any non-exploratory workload. ``ListServiceSpecificCredentials`` only enumerates
+    long-term keys, so every key inspected here is by definition a long-term credential.
+
+    PASS when the long-term key has already expired (it can no longer authenticate).
+    FAIL (critical) when the key is configured to never expire.
+    FAIL (high) for any other active long-term key.
     """
 
     def execute(self):
-        """
-        Execute the Bedrock API key no long-term credentials check.
-
-        Iterate over all the Bedrock API keys and check if they are expired or will be expired.
-
-        Returns:
-            List[Check_Report_AWS]: A list of report objects with the results of the check.
-        """
-
         findings = []
         for api_key in iam_client.service_specific_credentials:
             if api_key.service_name != "bedrock.amazonaws.com":
                 continue
-            if api_key.expiration_date:
-                report = Check_Report_AWS(metadata=self.metadata(), resource=api_key)
-                # Check if the expiration date is in the future
-                if api_key.expiration_date > datetime.now(timezone.utc):
-                    report.status = "FAIL"
-                    # Get the days until the expiration date
-                    days_until_expiration = (
-                        api_key.expiration_date - datetime.now(timezone.utc)
-                    ).days
-                    if days_until_expiration > 10000:
-                        self.Severity = "critical"
-                        report.status_extended = f"Long-term Bedrock API key {api_key.id} in user {api_key.user.name} exists and never expires."
-                    else:
-                        report.status_extended = f"Long-term Bedrock API key {api_key.id} in user {api_key.user.name} exists and will expire in {days_until_expiration} days."
-                else:
-                    report.status = "PASS"
-                    report.status_extended = f"Long-term Bedrock API key {api_key.id} in user {api_key.user.name} exists but has expired."
-                findings.append(report)
+            if not api_key.expiration_date:
+                continue
+
+            report = Check_Report_AWS(metadata=self.metadata(), resource=api_key)
+            now = datetime.now(timezone.utc)
+
+            if api_key.expiration_date <= now:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Bedrock long-term API key {api_key.id} in user "
+                    f"{api_key.user.name} has already expired and can no longer "
+                    f"authenticate."
+                )
+            elif (api_key.expiration_date - now).days > NEVER_EXPIRES_THRESHOLD_DAYS:
+                report.status = "FAIL"
+                report.check_metadata.Severity = Severity.critical
+                report.status_extended = (
+                    f"Bedrock long-term API key {api_key.id} in user "
+                    f"{api_key.user.name} is configured to never expire. Use "
+                    f"short-term Bedrock API keys (session-scoped, valid up to "
+                    f"12 hours) for non-exploratory workloads instead."
+                )
+            else:
+                days_until_expiration = (api_key.expiration_date - now).days
+                report.status = "FAIL"
+                report.status_extended = (
+                    f"Bedrock long-term API key {api_key.id} in user "
+                    f"{api_key.user.name} is active and will expire in "
+                    f"{days_until_expiration} days. Use short-term Bedrock API "
+                    f"keys (session-scoped, valid up to 12 hours) for "
+                    f"non-exploratory workloads instead."
+                )
+
+            findings.append(report)
 
         return findings

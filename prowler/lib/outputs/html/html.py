@@ -2,6 +2,7 @@ import sys
 from io import TextIOWrapper
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -73,8 +74,7 @@ class HTML(Output):
                 elif finding.status == "FAIL":
                     row_class = "table-danger"
 
-                self._data.append(
-                    f"""
+                self._data.append(f"""
                         <tr class="{row_class}">
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
@@ -89,8 +89,7 @@ class HTML(Output):
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>
                         </tr>
-                        """
-                )
+                        """)
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -143,8 +142,7 @@ class HTML(Output):
             from_cli (bool): whether the request is from the CLI or not
         """
         try:
-            file_descriptor.write(
-                f"""<!DOCTYPE html>
+            file_descriptor.write(f"""<!DOCTYPE html>
     <html lang="en">
     <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -253,8 +251,7 @@ class HTML(Output):
                     <th scope="col">Compliance</th>
                 </tr>
             </thead>
-            <tbody>"""
-            )
+            <tbody>""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -269,8 +266,7 @@ class HTML(Output):
             file_descriptor (file): the file descriptor to write the footer
         """
         try:
-            file_descriptor.write(
-                """
+            file_descriptor.write("""
             </tbody>
             </table>
         </div>
@@ -409,8 +405,7 @@ class HTML(Output):
 </body>
 
 </html>
-"""
-            )
+""")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
@@ -492,8 +487,11 @@ class HTML(Output):
         """
         try:
             printed_subscriptions = []
-            for key, value in provider.identity.subscriptions.items():
-                intermediate = f"{key} : {value}"
+            for (
+                subscription_id,
+                display_name,
+            ) in provider.identity.subscriptions.items():
+                intermediate = f"{display_name} : {subscription_id}"
                 printed_subscriptions.append(intermediate)
 
             # check if identity is str(coming from SP) or dict(coming from browser or)
@@ -1074,6 +1072,73 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_stackit_assessment_summary(provider: Provider) -> str:
+        """
+        get_stackit_assessment_summary gets the HTML assessment summary for the StackIT provider
+
+        Args:
+            provider (Provider): the StackIT provider object
+
+        Returns:
+            str: HTML assessment summary for the StackIT provider
+        """
+        try:
+            project_id = getattr(provider.identity, "project_id", "unknown")
+            project_name = getattr(provider.identity, "project_name", "")
+            audited_regions = getattr(provider.identity, "audited_regions", set())
+
+            project_name_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Project Name:</b> {project_name}
+                            </li>"""
+                if project_name
+                else ""
+            )
+
+            regions_item = (
+                f"""
+                            <li class="list-group-item">
+                                <b>Regions:</b> {", ".join(sorted(audited_regions))}
+                            </li>"""
+                if audited_regions
+                else ""
+            )
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            {project_name_item}
+                            {regions_item}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            StackIT Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication Type:</b> Service Account Key
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_cloudflare_assessment_summary(provider: Provider) -> str:
         """
         get_cloudflare_assessment_summary gets the HTML assessment summary for the Cloudflare provider
@@ -1333,6 +1398,46 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
+        try:
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_vercel_assessment_summary(provider: Provider) -> str:
         """
         get_vercel_assessment_summary gets the HTML assessment summary for the Vercel provider
@@ -1398,6 +1503,184 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_okta_assessment_summary(provider: Provider) -> str:
+        """
+        get_okta_assessment_summary gets the HTML assessment summary for the Okta provider
+
+        Args:
+            provider (Provider): the Okta provider object
+
+        Returns:
+            str: HTML assessment summary for the Okta provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Okta Domain:</b> {provider.identity.org_domain}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Client ID:</b> {provider.identity.client_id}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Okta Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_scaleway_assessment_summary(provider: Provider) -> str:
+        """
+        get_scaleway_assessment_summary gets the HTML assessment summary for the Scaleway provider
+
+        Args:
+            provider (Provider): the Scaleway provider object
+
+        Returns:
+            str: HTML assessment summary for the Scaleway provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Organization ID:</b> {provider.identity.organization_id}
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key
+                            </li>"""
+
+            access_key = getattr(provider.session, "access_key", None)
+            if access_key:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Access Key:</b> {access_key}
+                            </li>"""
+
+            bearer_type = getattr(provider.identity, "bearer_type", None)
+            bearer_email = getattr(provider.identity, "bearer_email", None)
+            bearer_id = getattr(provider.identity, "bearer_id", None)
+            if bearer_type:
+                bearer_label = bearer_email or bearer_id or "-"
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Bearer:</b> {bearer_type} ({bearer_label})
+                            </li>"""
+
+            region = getattr(provider.session, "default_region", None)
+            if region:
+                credentials_items += f"""
+                            <li class="list-group-item">
+                                <b>Default Region:</b> {region}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Scaleway Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Scaleway Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_linode_assessment_summary(provider: Provider) -> str:
+        """
+        get_linode_assessment_summary gets the HTML assessment summary for the Linode provider
+
+        Args:
+            provider (Provider): the Linode provider object
+
+        Returns:
+            str: HTML assessment summary for the Linode provider
+        """
+        try:
+            username = getattr(provider.identity, "username", None) or "-"
+            email = getattr(provider.identity, "email", None) or "-"
+            account_id = getattr(provider.identity, "account_id", None) or "-"
+
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Username:</b> {username}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Email:</b> {email}
+                            </li>"""
+
+            credentials_items = """
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Token
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Linode Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Linode Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_assessment_summary(provider: Provider) -> str:
         """
         get_assessment_summary gets the HTML assessment summary for the provider
@@ -1417,11 +1700,13 @@ class HTML(Output):
             # Azure_provider --> azure
             # Kubernetes_provider --> kubernetes
 
-            # Dynamically get the Provider quick inventory handler
-            provider_html_assessment_summary_function = (
-                f"get_{provider.type}_assessment_summary"
-            )
-            return getattr(HTML, provider_html_assessment_summary_function)(provider)
+            # Try static method first, fall back to provider method
+            method_name = f"get_{provider.type}_assessment_summary"
+            if hasattr(HTML, method_name):
+                return getattr(HTML, method_name)(provider)
+            else:
+                # Dynamic fallback: any external/custom provider
+                return provider.get_html_assessment_summary()
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"

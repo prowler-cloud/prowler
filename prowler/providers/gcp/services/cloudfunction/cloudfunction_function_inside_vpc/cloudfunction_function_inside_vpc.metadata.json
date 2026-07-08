@@ -1,0 +1,40 @@
+{
+  "Provider": "gcp",
+  "CheckID": "cloudfunction_function_inside_vpc",
+  "CheckTitle": "Cloud Function is connected to a VPC network",
+  "CheckType": [],
+  "ServiceName": "cloudfunction",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "cloudfunctions.googleapis.com/Function",
+  "Description": "Cloud Functions are attached to a **Serverless VPC Access connector** so egress traffic is routed through a private VPC network instead of the public internet.\n\nThe evaluation reviews each function's network configuration to confirm that a connector is configured.",
+  "Risk": "Without a VPC connector, Cloud Functions cannot privately reach internal resources such as `Cloud SQL`, `Memorystore`, or `GKE`, forcing those services to be exposed over public IPs. This expands the **attack surface**, weakens **confidentiality** of internal traffic, and breaks network segmentation controls required by most security frameworks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://cloud.google.com/functions/docs/networking/connecting-vpc",
+    "https://cloud.google.com/vpc/docs/serverless-vpc-access"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "gcloud functions deploy <FUNCTION_NAME> --region=<REGION> --vpc-connector=projects/<PROJECT_ID>/locations/<REGION>/connectors/<CONNECTOR_NAME> --egress-settings=all-traffic",
+      "NativeIaC": "",
+      "Other": "1. In Google Cloud Console, go to Cloud Functions\n2. Select the function and click Edit\n3. Under Connections, select the VPC connector for your network\n4. Set Egress settings to route all traffic through the VPC connector\n5. Save and redeploy the function",
+      "Terraform": "```hcl\nresource \"google_cloudfunctions2_function\" \"<example_resource_name>\" {\n  name     = \"<example_resource_name>\"\n  location = \"us-central1\"\n\n  service_config {\n    vpc_connector                 = \"<example_resource_id>\" # Critical: routes egress through the VPC\n    vpc_connector_egress_settings = \"ALL_TRAFFIC\"\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **defense in depth** by routing Cloud Function egress through a **Serverless VPC Access connector** when the function must reach internal resources.\n\nScope each connector to **least privilege** subnets so functions cannot reach unintended endpoints.",
+      "Url": "https://hub.prowler.com/check/cloudfunction_function_inside_vpc"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "cloudfunction_function_not_publicly_accessible",
+    "cloudsql_instance_public_ip",
+    "compute_instance_public_ip"
+  ],
+  "Notes": "A VPC connector must be created in the same region as the Cloud Function. This check only verifies that a connector is attached; it does not validate egress settings or connector configuration."
+}

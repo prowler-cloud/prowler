@@ -1,8 +1,12 @@
+import type { FindingsFilterParam } from "@/actions/findings/findings-filters";
 import type { FilterChip } from "@/components/filters/filter-summary-strip";
 import { formatLabel, getCategoryLabel, getGroupLabel } from "@/lib/categories";
-import { getScanEntityLabel } from "@/lib/helper-filters";
+import {
+  getProviderGroupDisplayValue,
+  getScanEntityLabel,
+} from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
-import { FilterParam } from "@/types/filters";
+import { ProviderGroup } from "@/types/components";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
@@ -10,6 +14,7 @@ import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
 interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
+  providerGroups?: ProviderGroup[];
 }
 
 const FINDING_DELTA_DISPLAY_NAMES: Record<string, string> = {
@@ -42,7 +47,7 @@ function getScanDisplayValue(
 }
 
 export function getFindingsFilterDisplayValue(
-  filterKey: string,
+  filterKey: FindingsFilterParam,
   value: string,
   options: GetFindingsFilterDisplayValueOptions = {},
 ): string {
@@ -52,6 +57,9 @@ export function getFindingsFilterDisplayValue(
   }
   if (filterKey === "filter[provider_id__in]") {
     return getProviderAccountDisplayValue(value, options.providers || []);
+  }
+  if (filterKey === "filter[provider_groups__in]") {
+    return getProviderGroupDisplayValue(value, options.providerGroups || []);
   }
   if (filterKey === "filter[scan__in]" || filterKey === "filter[scan]") {
     return getScanDisplayValue(value, options.scans || []);
@@ -95,12 +103,14 @@ export function getFindingsFilterDisplayValue(
 /**
  * Maps raw filter param keys (e.g. "filter[severity__in]") to human-readable labels.
  * Used to render chips in the FilterSummaryStrip.
- * Typed as Record<FilterParam, string> so TypeScript enforces exhaustiveness — any
- * addition to FilterParam will cause a compile error here if the label is missing.
+ * Typed as Record<FindingsFilterParam, string> so TypeScript enforces exhaustiveness
+ * — any addition to the findings filter set will cause a compile error here if the
+ * label is missing.
  */
-export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
+export const FILTER_KEY_LABELS: Record<FindingsFilterParam, string> = {
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
+  "filter[provider_groups__in]": "Provider Group",
   "filter[severity__in]": "Severity",
   "filter[status__in]": "Status",
   "filter[delta__in]": "Delta",
@@ -115,12 +125,16 @@ export const FILTER_KEY_LABELS: Record<FilterParam, string> = {
   "filter[scan_id]": "Scan",
   "filter[scan_id__in]": "Scan",
   "filter[inserted_at]": "Date",
+  "filter[inserted_at__gte]": "Date",
+  "filter[inserted_at__lte]": "Date",
   "filter[muted]": "Muted",
 };
 
 interface BuildFindingsFilterChipsOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
+  providerGroups?: ProviderGroup[];
+  includeMuted?: boolean;
 }
 
 /**
@@ -140,14 +154,14 @@ export function buildFindingsFilterChips(
 
   Object.entries(pendingFilters).forEach(([key, values]) => {
     if (!values || values.length === 0) return;
-    if (key === "filter[muted]") return;
-    const label = FILTER_KEY_LABELS[key as FilterParam] ?? key;
+    if (key === "filter[muted]" && !options.includeMuted) return;
+    const label = FILTER_KEY_LABELS[key as FindingsFilterParam] ?? key;
 
     const visibleValues = values;
     if (visibleValues.length === 0) return;
 
     const displayValues = visibleValues.map((value) =>
-      getFindingsFilterDisplayValue(key, value, options),
+      getFindingsFilterDisplayValue(key as FindingsFilterParam, value, options),
     );
 
     const chip: FilterChip = {

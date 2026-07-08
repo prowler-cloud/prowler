@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
-import { Container, CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
+import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
@@ -24,15 +24,36 @@ import {
 } from "@/components/ui/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
 import { FindingResourceRow } from "@/types";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
+import {
+  FindingNoteActionItem,
+  FindingTriageStatusCell,
+} from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
 
-const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
+const ResourceRowActions = ({
+  row,
+  findingTitle,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  row: Row<FindingResourceRow>;
+  findingTitle?: string;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
+}) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
@@ -113,6 +134,17 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <ActionDropdown ariaLabel="Resource actions">
+          <FindingNoteActionItem
+            triage={resource.triage}
+            findingContext={{
+              title: findingTitle || resource.checkId,
+              resource: resource.resourceName,
+              provider: resource.providerAlias,
+              providerType: resource.providerType,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+            onTriageNoteLoadAction={onTriageNoteLoadAction}
+          />
           <ActionDropdownItem
             icon={
               resource.isMuted ? (
@@ -141,11 +173,19 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
+  findingTitle?: string;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
+  findingTitle,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -203,23 +243,6 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Resource — name + uid (EntityInfo with resource icon)
-    {
-      id: "resource",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resource" />
-      ),
-      cell: ({ row }) => (
-        <div className="max-w-[240px]">
-          <EntityInfo
-            nameIcon={<Container className="size-4" />}
-            entityAlias={row.original.resourceName}
-            entityId={row.original.resourceUid}
-          />
-        </div>
-      ),
-      enableSorting: false,
-    },
     // Status
     {
       id: "status",
@@ -233,29 +256,35 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Service
+    // Resource — name + uid
     {
-      id: "service",
+      id: "resource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Service" />
+        <DataTableColumnHeader column={column} title="Resource" />
       ),
       cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[100px] truncate text-sm">
-          {row.original.service}
-        </p>
+        <div className="max-w-[240px]">
+          <EntityInfo
+            entityAlias={row.original.resourceName}
+            entityId={row.original.resourceUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
-    // Region
+    // Provider — alias + uid (same style as Resource)
     {
-      id: "region",
+      id: "provider",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Region" />
+        <DataTableColumnHeader column={column} title="Provider" />
       ),
       cell: ({ row }) => (
-        <p className="text-text-neutral-primary max-w-[120px] truncate text-sm">
-          {row.original.region}
-        </p>
+        <div className="max-w-[240px]">
+          <EntityInfo
+            entityAlias={row.original.providerAlias}
+            entityId={row.original.providerUid}
+          />
+        </div>
       ),
       enableSorting: false,
     },
@@ -268,20 +297,31 @@ export function getColumnFindingResources({
       cell: ({ row }) => <SeverityBadge severity={row.original.severity} />,
       enableSorting: false,
     },
-    // Account — alias + uid (EntityInfo with provider logo)
+    // Service
     {
-      id: "account",
+      id: "service",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Account" />
+        <DataTableColumnHeader column={column} title="Service" />
       ),
       cell: ({ row }) => (
-        <div className="max-w-[240px]">
-          <EntityInfo
-            cloudProvider={row.original.providerType}
-            entityAlias={row.original.providerAlias}
-            entityId={row.original.providerUid}
-          />
-        </div>
+        <InfoField label="Service" variant="compact">
+          {row.original.service || "-"}
+        </InfoField>
+      ),
+      enableSorting: false,
+    },
+    // Region
+    {
+      id: "region",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Region" />
+      ),
+      cell: ({ row }) => (
+        <InfoField label="Region" variant="compact">
+          <span className="block truncate whitespace-nowrap">
+            {row.original.region || "-"}
+          </span>
+        </InfoField>
       ),
       enableSorting: false,
     },
@@ -293,7 +333,7 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Last seen" variant="compact">
-          <DateWithTime dateTime={row.original.lastSeenAt} inline />
+          <DateWithTime dateTime={row.original.lastSeenAt} />
         </InfoField>
       ),
       enableSorting: false,
@@ -314,11 +354,36 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Actions column — mute only
+    // Triage — keep the compact label: these cells also render inside
+    // expanded finding-group rows, which have no header row of their own.
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <InfoField label="Triage" variant="compact">
+          <FindingTriageStatusCell
+            triage={row.original.triage}
+            onTriageUpdateAction={onTriageUpdateAction}
+          />
+        </InfoField>
+      ),
+      enableSorting: false,
+    },
+    // Actions column — utility actions are kept last.
     {
       id: "actions",
+      size: 56,
       header: () => <div className="w-10" />,
-      cell: ({ row }) => <ResourceRowActions row={row} />,
+      cell: ({ row }) => (
+        <ResourceRowActions
+          row={row}
+          findingTitle={findingTitle}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+        />
+      ),
       enableSorting: false,
     },
   ];

@@ -1,11 +1,13 @@
-FROM python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db AS build
+FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
+# Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.69.2
+ARG TRIVY_VERSION=0.71.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -14,6 +16,7 @@ ENV ZIZMOR_VERSION=${ZIZMOR_VERSION}
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
     wget \
+    git \
     libicu72 \
     gcc \
     g++ \
@@ -88,21 +91,38 @@ WORKDIR /home/prowler
 # Ensure output directory exists
 RUN mkdir -p /tmp/prowler_api_output
 
-COPY pyproject.toml ./
+COPY --chown=prowler:prowler pyproject.toml uv.lock ./
 
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir poetry==2.3.4
+    pip install --no-cache-dir uv==0.11.14
 
 ENV PATH="/home/prowler/.local/bin:$PATH"
 
-# Add `--no-root` to avoid installing the current project as a package
-RUN poetry install --no-root && \
-    rm -rf ~/.cache/pip
+# Add `--no-install-project` to avoid installing the current project as a package
+RUN uv sync --locked --no-install-project && \
+    rm -rf ~/.cache/uv
 
-RUN poetry run python "$(poetry env info --path)/src/prowler/prowler/providers/m365/lib/powershell/m365_powershell.py"
+RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
 
-COPY src/backend/ ./backend/
-COPY docker-entrypoint.sh ./docker-entrypoint.sh
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    gcc \
+    g++ \
+    make \
+    libxml2-dev \
+    libxmlsec1-dev \
+    pkg-config \
+    libtool \
+    libxslt1-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
+
+COPY --chown=prowler:prowler src/backend/ ./backend/
+COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh
 
 WORKDIR /home/prowler/backend
 

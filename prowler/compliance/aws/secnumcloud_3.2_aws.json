@@ -202,6 +202,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled",
         "ec2_instance_managed_by_ssm"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -295,6 +303,7 @@
       "Checks": [
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "iam_no_expired_server_certificates_stored"
@@ -322,6 +331,14 @@
         "iam_role_administratoraccess_policy",
         "iam_user_administrator_access_policy",
         "iam_user_two_active_access_key"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -340,6 +357,7 @@
         "iam_rotate_access_key_90_days",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "accessanalyzer_enabled_without_findings"
@@ -472,6 +490,9 @@
         "elbv2_ssl_listeners",
         "elb_insecure_ssl_ciphers",
         "elbv2_insecure_ssl_ciphers",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "redshift_cluster_in_transit_encryption_enabled",
         "elasticache_redis_cluster_in_transit_encryption_enabled",
         "dynamodb_accelerator_cluster_in_transit_encryption_enabled",
@@ -558,6 +579,17 @@
       "Checks": [
         "acm_certificates_expiration_check",
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -730,6 +762,14 @@
         "config_recorder_all_regions_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -769,6 +809,14 @@
         "guardduty_lambda_protection_enabled",
         "guardduty_eks_audit_log_enabled",
         "guardduty_eks_runtime_monitoring_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -816,6 +864,7 @@
         }
       ],
       "Checks": [
+        "cloudtrail_bedrock_logging_enabled",
         "cloudtrail_multi_region_enabled",
         "cloudtrail_multi_region_enabled_logging_management_events",
         "cloudtrail_s3_dataevents_read_enabled",
@@ -905,6 +954,20 @@
         "cloudwatch_changes_to_network_gateways_alarm_configured",
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1008,6 +1071,14 @@
         "config_recorder_all_regions_enabled",
         "config_recorder_using_aws_service_role",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1054,6 +1125,14 @@
       "Checks": [
         "guardduty_is_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1085,6 +1164,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled",
         "cloudtrail_multi_region_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1262,6 +1349,20 @@
         "guardduty_is_enabled",
         "securityhub_enabled",
         "cloudwatch_alarm_actions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1412,6 +1513,14 @@
       "Checks": [
         "backup_plans_exist",
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1475,6 +1584,20 @@
       "Checks": [
         "securityhub_enabled",
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1492,6 +1615,14 @@
       "Checks": [
         "inspector2_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

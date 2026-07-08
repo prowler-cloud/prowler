@@ -28,7 +28,8 @@
     }
   },
   "Categories": [
-    "trust-boundaries"
+    "trust-boundaries",
+    "vercel-hobby-plan"
   ],
   "DependsOn": [],
   "RelatedTo": [

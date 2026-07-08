@@ -48,6 +48,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -99,6 +113,20 @@
         "guardduty_no_high_severity_findings",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -144,6 +172,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -179,6 +221,26 @@
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "rds_instance_enhanced_monitoring_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -201,6 +263,20 @@
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -218,6 +294,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -243,6 +333,20 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -265,6 +369,20 @@
         "guardduty_is_enabled",
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -291,6 +409,20 @@
         "s3_bucket_server_access_logging_enabled",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -316,6 +448,20 @@
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -349,6 +495,14 @@
       "Checks": [
         "config_recorder_all_regions_enabled",
         "ec2_instance_managed_by_ssm"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -454,6 +608,20 @@
         "guardduty_is_enabled",
         "securityhub_enabled",
         "ssm_managed_compliant_patching"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -471,6 +639,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -488,6 +670,20 @@
       "Checks": [
         "guardduty_is_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -523,6 +719,26 @@
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "rds_instance_enhanced_monitoring_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -554,6 +770,26 @@
         "cloudwatch_log_metric_filter_unauthorized_api_calls",
         "rds_instance_enhanced_monitoring_enabled",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -577,6 +813,7 @@
         "iam_rotate_access_key_90_days",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused",
         "secretsmanager_automatic_rotation_enabled"
@@ -638,6 +875,7 @@
         "iam_no_root_access_key",
         "iam_role_access_not_stale_to_bedrock",
         "iam_user_access_not_stale_to_bedrock",
+        "iam_user_access_not_stale_to_sagemaker",
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ]
@@ -825,6 +1063,20 @@
         "sagemaker_notebook_instance_without_direct_internet_access_configured",
         "securityhub_enabled",
         "vpc_flow_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -879,6 +1131,14 @@
       "Checks": [
         "ec2_instance_managed_by_ssm",
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1033,6 +1293,14 @@
         "ec2_instance_managed_by_ssm",
         "ssm_managed_compliant_patching",
         "ssm_managed_compliant_patching"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

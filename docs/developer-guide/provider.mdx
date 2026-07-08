@@ -1003,7 +1003,7 @@ class ProwlerArgumentParser:
             formatter_class=RawTextHelpFormatter,
             usage="prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,nhn,dashboard,iac,your_provider} ...",
             epilog="""
-Available Cloud Providers:
+Available Providers:
   {aws,azure,gcp,kubernetes,m365,github,iac,nhn,your_provider}
     aws                 AWS Provider
     azure               Azure Provider
@@ -1277,10 +1277,12 @@ Dependencies ensure that your provider's required libraries are available when P
 **File:** `pyproject.toml`
 
 ```toml
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-# ... other dependencies
-your-sdk-library = "^1.0.0"  # Add your SDK dependency
+[project]
+requires-python = ">=3.10,<3.13"
+dependencies = [
+  # ... other dependencies
+  "your-sdk-library>=1.0.0,<2.0.0",  # Add your SDK dependency
+]
 ```
 
 #### Step 18: Create Tests
@@ -3419,7 +3421,7 @@ Use existing providers as templates, this will help you to understand better the
 - **Documentation & Maintenance**
 
     - **README Updates**: Update provider-specific documentation
-    - **Changelog**: Document changes and new features
+    - **Changelog**: Document changes and new features with a fragment under `prowler/changelog.d/` (see the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md))
     - **Examples**: Provide usage examples and common scenarios
     - **Troubleshooting**: Include common issues and solutions
     - **Documentation**: Update the provider documentation to include your new tool provider in the examples and implementation guidance.

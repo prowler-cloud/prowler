@@ -9,8 +9,8 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **emergency access** (break glass) account or group excluded from all policies. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured policies.",
-  "Risk": "Without emergency access accounts excluded from Conditional Access policies, a misconfiguration could lock out all administrators from the tenant. This creates a **critical availability risk** where legitimate administrators cannot access or remediate issues in the environment.",
+  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **emergency access** (break glass) account or group excluded from every enabled Conditional Access policy with a **Block** grant control. Emergency access accounts provide a fallback mechanism when normal administrative access is blocked due to misconfigured blocking policies.",
+  "Risk": "Without emergency access accounts excluded from every blocking Conditional Access policy, a misconfigured Block policy can lock out all administrators from the tenant. This creates a **critical availability risk** where legitimate administrators cannot access or remediate issues in the environment.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/role-based-access-control/security-emergency-access",
@@ -20,11 +20,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Create dedicated emergency access accounts or a security group in Microsoft Entra admin center.\n2. Navigate to Protection > Conditional Access > Policies.\n3. For each Conditional Access policy, add the emergency access account or group to the exclusion list under Users > Exclude.\n4. Ensure the emergency accounts are protected with strong credentials and limited usage.",
+      "Other": "1. Create dedicated emergency access accounts or a security group in Microsoft Entra admin center.\n2. Navigate to Protection > Conditional Access > Policies.\n3. For every Conditional Access policy whose grant control is **Block**, add the emergency access account or group to the exclusion list under Users > Exclude.\n4. Ensure the emergency accounts are protected with strong credentials and limited usage.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Create and maintain at least two emergency access accounts that are excluded from all Conditional Access policies. Store credentials securely offline, monitor usage, and test access regularly. Follow **least privilege** principles for these accounts while ensuring they can recover tenant access when needed.",
+      "Text": "Create and maintain at least two emergency access accounts that are excluded from every Conditional Access policy with a **Block** grant control so they can never be denied access by a misconfiguration. Store credentials securely offline, monitor usage, and test access regularly. Follow **least privilege** principles for these accounts while ensuring they can recover tenant access when needed.",
       "Url": "https://hub.prowler.com/check/entra_emergency_access_exclusion"
     }
   },

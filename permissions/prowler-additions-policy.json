@@ -36,7 +36,11 @@
         "lightsail:GetRelationalDatabases",
         "macie2:GetMacieSession",
         "macie2:GetAutomatedDiscoveryConfiguration",
+        "rolesanywhere:ListTagsForResource",
+        "rolesanywhere:ListTrustAnchors",
         "s3:GetAccountPublicAccessBlock",
+        "s3:GetObjectAcl",
+        "s3:ListBucket",
         "shield:DescribeProtection",
         "shield:GetSubscriptionState",
         "securityhub:BatchImportFindings",
@@ -61,7 +65,9 @@
       ],
       "Resource": [
         "arn:*:apigateway:*::/restapis/*",
-        "arn:*:apigateway:*::/apis/*"
+        "arn:*:apigateway:*::/apis/*",
+        "arn:*:apigateway:*::/domainnames",
+        "arn:*:apigateway:*::/domainnames/*"
       ],
       "Sid": "AllowAPIGatewayReadOnly"
     }

@@ -19,8 +19,12 @@ class ContainerRegistry(AzureService):
         registries = {}
         for subscription, client in self.clients.items():
             try:
-                registries_list = client.registries.list()
                 registries.update({subscription: {}})
+                registries_list = self.list_with_rg_scope(
+                    subscription,
+                    client.registries.list,
+                    client.registries.list_by_resource_group,
+                )
 
                 for registry in registries_list:
                     resource_group = self._get_resource_group(registry.id)
@@ -64,7 +68,7 @@ class ContainerRegistry(AzureService):
                     )
             except Exception as error:
                 logger.error(
-                    f"Subscription name: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         return registries
 
@@ -81,13 +85,13 @@ class ContainerRegistry(AzureService):
         monitor_diagnostics_settings = []
         try:
             monitor_diagnostics_settings = monitor_client.diagnostic_settings_with_uri(
-                self.subscriptions[subscription],
-                f"subscriptions/{self.subscriptions[subscription]}/resourceGroups/{resource_group}/providers/Microsoft.ContainerRegistry/registries/{registry_name}",
+                subscription,
+                f"subscriptions/{subscription}/resourceGroups/{resource_group}/providers/Microsoft.ContainerRegistry/registries/{registry_name}",
                 monitor_client.clients[subscription],
             )
         except Exception as error:
             logger.error(
-                f"Subscription name: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                f"Subscription ID: {self.subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return monitor_diagnostics_settings
 

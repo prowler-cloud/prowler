@@ -1,7 +1,7 @@
 ---
 name: prowler-ui
 description: >
-  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-15, tailwind-4.
+  Prowler UI-specific patterns. For generic patterns, see: typescript, react-19, nextjs-16, tailwind-4.
   Trigger: When working inside ui/ on Prowler-specific conventions (shadcn vs HeroUI legacy, folder placement, actions/adapters, shared types/hooks/lib).
 license: Apache-2.0
 metadata:
@@ -10,6 +10,7 @@ metadata:
   scope: [root, ui]
   auto_invoke:
     - "Creating/modifying Prowler UI components"
+    - "Reviewing Prowler UI components"
     - "Working on Prowler UI structure (actions/adapters/types/hooks)"
 allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ---
@@ -18,7 +19,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 - `typescript` - Const types, flat interfaces
 - `react-19` - No useMemo/useCallback, compiler
-- `nextjs-15` - App Router, Server Actions
+- `nextjs-16` - App Router, Server Actions
 - `tailwind-4` - cn() utility, styling rules
 - `zod-4` - Schema validation
 - `zustand-5` - State management
@@ -27,8 +28,8 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Tech Stack (Versions)
 
-```
-Next.js 15.5.9 | React 19.2.2 | Tailwind 4.1.13 | shadcn/ui
+```text
+Next.js 16.2.3 | React 19.2.5 | Tailwind 4.1.18 | shadcn/ui
 Zod 4.1.11 | React Hook Form 7.62.0 | Zustand 5.0.8
 NextAuth 5.0.0-beta.30 | Recharts 2.15.4
 HeroUI 2.8.4 (LEGACY - do not add new components)
@@ -39,11 +40,23 @@ HeroUI 2.8.4 (LEGACY - do not add new components)
 - **ALWAYS**: Use `shadcn/ui` + Tailwind (`components/shadcn/`)
 - **NEVER**: Add new HeroUI components (`components/ui/` is legacy only)
 
+## Design System Discipline (REQUIRED)
+
+Applies to ALL UI work. The design system is the single source of truth — reuse it exactly, extend it deliberately.
+
+- **Reuse first, never reinvent.** Before building anything, search `components/shadcn/` and existing usages in the codebase for an equivalent. Do NOT create a custom component, modal wrapper, or primitive when one already exists.
+- **Use exactly the defined variants/styles — no more, no less.** At the call site, drive appearance through the component's `variant`/`size`/`tone` props. Never add ad-hoc visual `className` (color, opacity, hover/focus/disabled, spacing-for-looks) to shared controls (`Button`, `SelectTrigger`, `SelectItem`, `Modal`, badges…), and never skip the correct semantic variant.
+- **Modals**: only `@/components/shadcn/modal`. **Selects**: `components/shadcn/select`.
+- **Colors**: reuse existing semantic tokens from `ui/styles/globals.css`. No raw Tailwind color utilities (e.g. `bg-blue-950/40`), no hex. If no token fits, STOP and ask the design owner — do not invent or near-duplicate tokens.
+- **Need a genuinely new variant/token?** That is a design-system change: add it to the shared component API (with design sign-off), then consume it. It is never a call-site decision.
+
+When reviewing UI PRs, flag: custom modals/primitives that duplicate shadcn, call-site visual `className` on shared controls, raw color utilities, and new variants/tokens introduced without going through the shared component API.
+
 ## DECISION TREES
 
 ### Component Placement
 
-```
+```text
 New feature UI? → shadcn/ui + Tailwind
 Existing HeroUI feature? → Keep HeroUI (don't mix)
 Used 1 feature? → features/{feature}/components/
@@ -54,7 +67,7 @@ Server component? → No directive needed
 
 ### Code Location
 
-```
+```text
 Server action      → actions/{feature}/{feature}.ts
 Data transform     → actions/{feature}/{feature}.adapter.ts
 Types (shared 2+)  → types/{domain}.ts
@@ -69,7 +82,7 @@ HeroUI components  → components/ui/ (LEGACY)
 
 ### Styling Decision
 
-```
+```text
 Tailwind class exists? → className
 Dynamic value?         → style prop
 Conditional styles?    → cn()
@@ -85,7 +98,7 @@ Recharts/library?      → CHART_COLORS constant + var()
 
 ## Project Structure
 
-```
+```text
 ui/
 ├── app/
 │   ├── (auth)/              # Auth pages (login, signup)

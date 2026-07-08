@@ -1,15 +1,16 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
-
-from cartography.config import Config as CartographyConfig
-from celery.utils.log import get_task_logger
-from tasks.jobs.attack_paths.config import is_provider_available
 
 from api.attack_paths import database as graph_database
 from api.db_utils import rls_transaction
 from api.models import AttackPathsScan as ProwlerAPIAttackPathsScan
 from api.models import Provider as ProwlerAPIProvider
 from api.models import StateChoices
+from cartography.config import Config as CartographyConfig
+from celery.utils.log import get_task_logger
+from django.conf import settings
+from django.db.models import Case, IntegerField, Value, When
+from tasks.jobs.attack_paths.config import is_provider_available
 
 logger = get_task_logger(__name__)
 
@@ -30,21 +31,43 @@ def create_attack_paths_scan(
         return None
 
     with rls_transaction(tenant_id):
-        # Inherit graph_data_ready from the previous scan for this provider,
-        # so queries remain available while the new scan runs.
-        previous_data_ready = ProwlerAPIAttackPathsScan.objects.filter(
-            tenant_id=tenant_id,
-            provider_id=provider_id,
-            graph_data_ready=True,
-        ).exists()
+        # Inherit metadata from the previous ready scan for this provider so
+        # queries remain available while the new scan runs. The new row only
+        # flips to the target sink after its own graph sync succeeds.
+        active_sink_backend = settings.ATTACK_PATHS_SINK_DATABASE
+        previous_ready = (
+            ProwlerAPIAttackPathsScan.objects.filter(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                graph_data_ready=True,
+            )
+            .annotate(
+                active_sink_rank=Case(
+                    When(sink_backend=active_sink_backend, then=Value(0)),
+                    default=Value(1),
+                    output_field=IntegerField(),
+                )
+            )
+            .order_by("active_sink_rank", "-inserted_at")
+            .first()
+        )
+        previous_data_ready = previous_ready is not None
+        inherited_is_migrated = previous_ready.is_migrated if previous_ready else False
+        inherited_sink_backend = (
+            previous_ready.sink_backend
+            if previous_ready
+            else ProwlerAPIAttackPathsScan.SinkBackendChoices.NEO4J
+        )
 
         attack_paths_scan = ProwlerAPIAttackPathsScan.objects.create(
             tenant_id=tenant_id,
             provider_id=provider_id,
             scan_id=scan_id,
             state=StateChoices.SCHEDULED,
-            started_at=datetime.now(tz=timezone.utc),
+            started_at=datetime.now(tz=UTC),
             graph_data_ready=previous_data_ready,
+            is_migrated=inherited_is_migrated,
+            sink_backend=inherited_sink_backend,
         )
         attack_paths_scan.save()
 
@@ -67,34 +90,61 @@ def retrieve_attack_paths_scan(
         return None
 
 
+def set_attack_paths_scan_task_id(
+    tenant_id: str,
+    scan_pk: str,
+    task_id: str,
+) -> None:
+    """Persist the Celery `task_id` on the `AttackPathsScan` row.
+
+    Called at dispatch time (when `apply_async` returns) so the row carries
+    the task id even while still `SCHEDULED`. This lets the periodic
+    cleanup revoke queued messages for scans that never reached a worker.
+    """
+    with rls_transaction(tenant_id):
+        ProwlerAPIAttackPathsScan.objects.filter(id=scan_pk).update(task_id=task_id)
+
+
 def starting_attack_paths_scan(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
-    task_id: str,
     cartography_config: CartographyConfig,
-) -> None:
+) -> bool:
+    """Flip the row from `SCHEDULED` to `EXECUTING` atomically.
+
+    Returns `False` if the row is gone or has already moved past
+    `SCHEDULED` (e.g., periodic cleanup raced ahead and marked it
+    `FAILED` while the worker message was still in flight).
+    """
     with rls_transaction(attack_paths_scan.tenant_id):
-        attack_paths_scan.task_id = task_id
-        attack_paths_scan.state = StateChoices.EXECUTING
-        attack_paths_scan.started_at = datetime.now(tz=timezone.utc)
-        attack_paths_scan.update_tag = cartography_config.update_tag
+        try:
+            locked = ProwlerAPIAttackPathsScan.objects.select_for_update().get(
+                id=attack_paths_scan.id
+            )
+        except ProwlerAPIAttackPathsScan.DoesNotExist:
+            return False
 
-        attack_paths_scan.save(
-            update_fields=[
-                "task_id",
-                "state",
-                "started_at",
-                "update_tag",
-            ]
-        )
+        if locked.state != StateChoices.SCHEDULED:
+            return False
+
+        locked.state = StateChoices.EXECUTING
+        locked.started_at = datetime.now(tz=UTC)
+        locked.update_tag = cartography_config.update_tag
+        locked.save(update_fields=["state", "started_at", "update_tag"])
+
+    # Keep the in-memory object the caller is holding in sync.
+    attack_paths_scan.state = locked.state
+    attack_paths_scan.started_at = locked.started_at
+    attack_paths_scan.update_tag = locked.update_tag
+    return True
 
 
-def _mark_scan_finished(
+def mark_scan_finished(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
     state: StateChoices,
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     """Set terminal fields on a scan. Caller must be inside a transaction."""
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
     duration = (
         int((now - attack_paths_scan.started_at).total_seconds())
         if attack_paths_scan.started_at
@@ -122,7 +172,7 @@ def finish_attack_paths_scan(
     ingestion_exceptions: dict[str, Any],
 ) -> None:
     with rls_transaction(attack_paths_scan.tenant_id):
-        _mark_scan_finished(attack_paths_scan, state, ingestion_exceptions)
+        mark_scan_finished(attack_paths_scan, state, ingestion_exceptions)
 
 
 def update_attack_paths_scan_progress(
@@ -143,19 +193,45 @@ def set_graph_data_ready(
         attack_paths_scan.save(update_fields=["graph_data_ready"])
 
 
+def set_scan_migrated(
+    attack_paths_scan: ProwlerAPIAttackPathsScan,
+    migrated: bool,
+    sink_backend: str | None = None,
+) -> None:
+    """Mark the scan as written with the current (migrated) schema.
+
+    Called after a successful sync so the read catalog and sink backend only
+    switch once the new graph is actually live.
+
+    # TODO: drop after Neptune cutover
+    """
+    with rls_transaction(attack_paths_scan.tenant_id):
+        attack_paths_scan.is_migrated = migrated
+        update_fields = ["is_migrated"]
+        if sink_backend is not None:
+            attack_paths_scan.sink_backend = sink_backend
+            update_fields.append("sink_backend")
+        attack_paths_scan.save(update_fields=update_fields)
+
+
 def set_provider_graph_data_ready(
     attack_paths_scan: ProwlerAPIAttackPathsScan,
     ready: bool,
+    sink_backend: str | None = None,
 ) -> None:
     """
-    Set `graph_data_ready` for ALL scans of the same provider.
+    Set `graph_data_ready` for scans of the same provider in one sink.
 
-    Used before drop/sync so that older scan IDs cannot bypass the query gate while the graph is being replaced.
+    Used before drop/sync so that older scan IDs in the target sink cannot
+    bypass the query gate while that sink's graph is being replaced. Scans
+    preserved in another sink stay queryable for rollback.
     """
+    target_sink_backend = sink_backend or attack_paths_scan.sink_backend
     with rls_transaction(attack_paths_scan.tenant_id):
         ProwlerAPIAttackPathsScan.objects.filter(
             tenant_id=attack_paths_scan.tenant_id,
             provider_id=attack_paths_scan.provider_id,
+            sink_backend=target_sink_backend,
         ).update(graph_data_ready=ready)
         attack_paths_scan.refresh_from_db(fields=["graph_data_ready"])
 
@@ -176,10 +252,15 @@ def recover_graph_data_ready(
     next successful scan) is a worse outcome for the user.
     """
     try:
+        from api.attack_paths import sink as sink_module
+
         tenant_db = graph_database.get_database_name(attack_paths_scan.tenant_id)
-        if graph_database.has_provider_data(
-            tenant_db, str(attack_paths_scan.provider_id)
-        ):
+        # TODO: drop after Neptune cutover
+        # Check the backend that actually holds this scan's data, not the
+        # currently configured sink, a stale `EXECUTING` scan from before a
+        # backend switch must still be recoverable
+        backend = sink_module.get_backend_for_scan(attack_paths_scan)
+        if backend.has_provider_data(tenant_db, str(attack_paths_scan.provider_id)):
             set_provider_graph_data_ready(attack_paths_scan, True)
             logger.info(
                 f"Recovered `graph_data_ready` for provider {attack_paths_scan.provider_id}"
@@ -221,6 +302,6 @@ def fail_attack_paths_scan(
             return
         if fresh.state in (StateChoices.COMPLETED, StateChoices.FAILED):
             return
-        _mark_scan_finished(fresh, StateChoices.FAILED, {"global_error": error})
+        mark_scan_finished(fresh, StateChoices.FAILED, {"global_error": error})
 
     recover_graph_data_ready(fresh)

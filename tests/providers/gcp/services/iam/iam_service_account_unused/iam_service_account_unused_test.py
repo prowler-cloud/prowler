@@ -179,3 +179,60 @@ class Test_iam_service_account_unused:
             assert result[1].project_id == GCP_PROJECT_ID
             assert result[1].location == GCP_US_CENTER1_LOCATION
             assert result[1].resource == iam_client.service_accounts[1]
+
+    def test_iam_service_account_disabled(self):
+        iam_client = mock.MagicMock()
+        monitoring_client = mock.MagicMock()
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_gcp_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.iam_client",
+                new=iam_client,
+            ),
+            mock.patch(
+                "prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused.monitoring_client",
+                new=monitoring_client,
+            ),
+        ):
+            from prowler.providers.gcp.services.iam.iam_service import ServiceAccount
+            from prowler.providers.gcp.services.iam.iam_service_account_unused.iam_service_account_unused import (
+                iam_service_account_unused,
+            )
+
+            iam_client.project_ids = [GCP_PROJECT_ID]
+            iam_client.region = GCP_US_CENTER1_LOCATION
+
+            iam_client.service_accounts = [
+                ServiceAccount(
+                    name="projects/my-project/serviceAccounts/disabled-sa@my-project.iam.gserviceaccount.com",
+                    email="disabled-sa@my-project.iam.gserviceaccount.com",
+                    display_name="Disabled service account",
+                    keys=[],
+                    project_id=GCP_PROJECT_ID,
+                    uniqueId="999888877776666",
+                    disabled=True,
+                )
+            ]
+
+            # The account is absent from the usage metrics, so a non-disabled
+            # account here would FAIL. Being disabled must take precedence and
+            # PASS, since a disabled account cannot authenticate or be used.
+            monitoring_client.sa_api_metrics = set()
+            monitoring_client.audit_config = {"max_unused_account_days": 30}
+
+            check = iam_service_account_unused()
+            result = check.execute()
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert (
+                result[0].status_extended
+                == f"Service Account {iam_client.service_accounts[0].email} is disabled and cannot be used."
+            )
+            assert result[0].resource_id == iam_client.service_accounts[0].email
+            assert result[0].project_id == GCP_PROJECT_ID
+            assert result[0].location == GCP_US_CENTER1_LOCATION
+            assert result[0].resource == iam_client.service_accounts[0]

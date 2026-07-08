@@ -3,8 +3,14 @@ import secrets
 import time
 import uuid
 from contextlib import ExitStack, contextmanager, nullcontext
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
+from api.db_router import (
+    READ_REPLICA_ALIAS,
+    get_read_db_alias,
+    reset_read_db_alias,
+    set_read_db_alias,
+)
 from celery.utils.log import get_task_logger
 from config.env import env
 from django.conf import settings
@@ -21,13 +27,6 @@ from psycopg2 import connect as psycopg2_connect
 from psycopg2 import sql as psycopg2_sql
 from psycopg2.extensions import AsIs, new_type, register_adapter, register_type
 from rest_framework_json_api.serializers import ValidationError
-
-from api.db_router import (
-    READ_REPLICA_ALIAS,
-    get_read_db_alias,
-    reset_read_db_alias,
-    set_read_db_alias,
-)
 
 logger = get_task_logger(__name__)
 
@@ -283,7 +282,7 @@ def one_week_from_now():
     """
     Return a datetime object with a date one week from now.
     """
-    return datetime.now(timezone.utc) + timedelta(days=7)
+    return datetime.now(UTC) + timedelta(days=7)
 
 
 def generate_random_token(length: int = 14, symbols: str | None = None) -> str:
@@ -518,10 +517,10 @@ def _should_create_index_on_partition(
             # Unknown month abbreviation, include it to be safe
             return True
 
-        partition_date = datetime(year, month, 1, tzinfo=timezone.utc)
+        partition_date = datetime(year, month, 1, tzinfo=UTC)
 
         # Get current month start
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         current_month_start = now.replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )

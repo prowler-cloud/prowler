@@ -1,4 +1,8 @@
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.cis.models import AzureCISModel
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
@@ -34,11 +38,18 @@ class AzureCIS(ComplianceOutput):
         Returns:
             - None
         """
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
         for finding in findings:
-            # Get the compliance requirements for the finding
-            finding_requirements = finding.compliance.get(compliance_name, [])
             for requirement in compliance.Requirements:
-                if requirement.Id in finding_requirements:
+                # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
+                if finding.check_id in requirement.Checks:
+                    row_status, row_status_extended = apply_config_status(
+                        finding.status,
+                        finding.status_extended,
+                        requirement_config_status.get(requirement.Id),
+                    )
                     for attribute in requirement.Attributes:
                         compliance_row = AzureCISModel(
                             Provider=finding.provider,
@@ -60,8 +71,8 @@ class AzureCIS(ComplianceOutput):
                             Requirements_Attributes_AdditionalInformation=attribute.AdditionalInformation,
                             Requirements_Attributes_DefaultValue=attribute.DefaultValue,
                             Requirements_Attributes_References=attribute.References,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
+                            Status=row_status,
+                            StatusExtended=row_status_extended,
                             ResourceId=finding.resource_uid,
                             ResourceName=finding.resource_name,
                             CheckId=finding.check_id,
