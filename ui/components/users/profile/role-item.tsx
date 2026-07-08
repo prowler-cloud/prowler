@@ -1,9 +1,8 @@
 "use client";
 
 import { Ban, Check } from "lucide-react";
-import { useState } from "react";
 
-import { Badge, Button, Card } from "@/components/shadcn";
+import { Badge, Card } from "@/components/shadcn";
 import { getRolePermissions } from "@/lib/permissions";
 import { RoleData, RoleDetail } from "@/types/users";
 
@@ -34,8 +33,6 @@ export const RoleItem = ({
   role: RoleData;
   roleDetail?: RoleDetail;
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-
   if (!roleDetail) {
     return (
       <Badge key={role.id} variant="info">
@@ -56,35 +53,26 @@ export const RoleItem = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Badge variant="info">{roleName}</Badge>
-          <span className="text-xs text-gray-500 capitalize">
-            {permissionState}
-          </span>
+          {permissionState && (
+            <Badge variant="tag" className="capitalize">
+              {permissionState}
+            </Badge>
+          )}
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="px-0"
-        >
-          {isExpanded ? "Hide details" : "Show details"}
-        </Button>
       </div>
 
-      {isExpanded && (
-        <div
-          id={detailsId}
-          className="animate-fadeIn border-border-neutral-primary border-t pt-4"
-          role="region"
-          aria-label={`Details for role ${roleName}`}
-        >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2">
-            {permissions.map(({ key, label, enabled }) => (
-              <PermissionItem key={key} label={label} enabled={enabled} />
-            ))}
-          </div>
+      <div
+        id={detailsId}
+        className="border-border-neutral-primary border-t pt-4"
+        role="region"
+        aria-label={`Details for role ${roleName}`}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2">
+          {permissions.map(({ key, label, enabled }) => (
+            <PermissionItem key={key} label={label} enabled={enabled} />
+          ))}
         </div>
-      )}
+      </div>
     </Card>
   );
 };
