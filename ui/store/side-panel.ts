@@ -34,6 +34,10 @@ interface SidePanelState {
   width: number;
   isResizing: boolean;
   contextTab: SidePanelContextTab | null;
+  // Token of the current context-tab owner (0 = none): several detail views
+  // can be mounted at once, but only the owner portals content and only the
+  // owner's unregister takes effect.
+  contextOwnerToken: number;
   // Portal target the context owner renders its detail content into.
   contextOutlet: HTMLElement | null;
   openPanel: (tab?: SidePanelTabId) => void;
@@ -41,10 +45,14 @@ interface SidePanelState {
   togglePanel: () => void;
   setWidth: (width: number) => void;
   setIsResizing: (isResizing: boolean) => void;
-  registerContextTab: (tab: SidePanelContextTab) => void;
-  unregisterContextTab: () => void;
+  registerContextTab: (tab: SidePanelContextTab) => number;
+  unregisterContextTab: (token: number) => void;
   setContextOutlet: (element: HTMLElement | null) => void;
 }
+
+// Monotonic so a recycled token can never let a stale detail view unregister
+// (or portal over) a later registrant.
+let contextTabTokenCounter = 0;
 
 export const useSidePanelStore = create<SidePanelState>()(
   persist(
@@ -55,6 +63,7 @@ export const useSidePanelStore = create<SidePanelState>()(
       width: SIDE_PANEL_DEFAULT_WIDTH,
       isResizing: false,
       contextTab: null,
+      contextOwnerToken: 0,
       contextOutlet: null,
       openPanel: (tab) =>
         set({
@@ -81,9 +90,14 @@ export const useSidePanelStore = create<SidePanelState>()(
       },
       setWidth: (width) => set({ width: clampSidePanelWidth(width) }),
       setIsResizing: (isResizing) => set({ isResizing }),
-      registerContextTab: (tab) =>
+      registerContextTab: (tab) => {
+        // A new detail view takes over the single context tab: ask the
+        // previous owner to close itself so it clears its own selection.
+        get().contextTab?.onRequestClose();
+        const token = ++contextTabTokenCounter;
         set((state) => ({
           contextTab: tab,
+          contextOwnerToken: token,
           selectedTab: SIDE_PANEL_TAB.CONTEXT,
           isOpen: true,
           hasBeenOpened: true,
@@ -92,20 +106,27 @@ export const useSidePanelStore = create<SidePanelState>()(
           width: clampSidePanelWidth(
             Math.max(state.width, SIDE_PANEL_DETAIL_MIN_WIDTH),
           ),
-        })),
-      unregisterContextTab: () =>
+        }));
+        return token;
+      },
+      unregisterContextTab: (token) => {
+        // Only the current owner may unregister: a replaced detail view
+        // unmounting later must not tear down its successor.
+        if (token !== get().contextOwnerToken) return;
         set((state) => ({
           contextTab: null,
+          contextOwnerToken: 0,
           // When the detail tab was showing, its content is gone: close the
           // panel and leave the AI tab as the next default.
           ...(state.selectedTab === SIDE_PANEL_TAB.CONTEXT
             ? { isOpen: false, selectedTab: SIDE_PANEL_TAB.AI_CHAT }
             : {}),
-        })),
+        }));
+      },
       setContextOutlet: (element) => set({ contextOutlet: element }),
     }),
     {
-      name: "side-panel",
+      name: "side-panel-store",
       // Only the last-used tab and width persist; the panel never auto-reopens
       // and a context tab cannot exist on a fresh load.
       partialize: (state) => ({

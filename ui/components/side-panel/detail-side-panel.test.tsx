@@ -47,6 +47,32 @@ function Host({ initialOpen = true }: { initialOpen?: boolean }) {
   );
 }
 
+// Mimics two findings-table rows, each mounting its own DetailSidePanel with
+// per-row open state — the real layout on the findings page.
+function DualHost() {
+  const [openA, setOpenA] = useState(false);
+  const [openB, setOpenB] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpenA(true)}>
+        Open A
+      </button>
+      <button type="button" onClick={() => setOpenB(true)}>
+        Open B
+      </button>
+      <GlobalSidePanel />
+      <DetailSidePanel open={openA} onOpenChange={setOpenA} title="Finding A">
+        <div data-testid="detail-a">A body</div>
+      </DetailSidePanel>
+      <DetailSidePanel open={openB} onOpenChange={setOpenB} title="Finding B">
+        <div data-testid="detail-b">B body</div>
+      </DetailSidePanel>
+      <output data-testid="open-a">{String(openA)}</output>
+      <output data-testid="open-b">{String(openB)}</output>
+    </>
+  );
+}
+
 describe("DetailSidePanel", () => {
   beforeEach(() => {
     isCloudMock.mockReturnValue(true);
@@ -56,6 +82,7 @@ describe("DetailSidePanel", () => {
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
       hasBeenOpened: false,
       contextTab: null,
+      contextOwnerToken: 0,
       contextOutlet: null,
     });
   });
@@ -104,6 +131,34 @@ describe("DetailSidePanel", () => {
     expect(await screen.findByTestId("panel-chat-content")).toBeInTheDocument();
     expect(screen.getByTestId("detail-content")).toBeInTheDocument();
     expect(screen.getByTestId("detail-content")).not.toBeVisible();
+  });
+
+  it("hands the panel to the newest detail view and closes the previous one", async () => {
+    // Given: finding A's detail view owns the panel
+    const user = userEvent.setup();
+    render(<DualHost />);
+    await user.click(screen.getByRole("button", { name: "Open A" }));
+    await screen.findByTestId("detail-a");
+
+    // When: the user opens finding B while A is still mounted
+    await user.click(screen.getByRole("button", { name: "Open B" }));
+
+    // Then: only B portals into the outlet; A closed itself
+    const detailB = await screen.findByTestId("detail-b");
+    expect(
+      screen.getByTestId("side-panel-context-outlet").contains(detailB),
+    ).toBe(true);
+    expect(screen.queryByTestId("detail-a")).not.toBeInTheDocument();
+    expect(screen.getByTestId("open-a")).toHaveTextContent("false");
+    expect(screen.getByTestId("open-b")).toHaveTextContent("true");
+
+    // When: the panel is dismissed
+    await user.click(screen.getByRole("button", { name: "Close side panel" }));
+
+    // Then: B (the current owner) is the one that clears its selection
+    expect(screen.getByTestId("open-b")).toHaveTextContent("false");
+    expect(screen.queryByTestId("detail-b")).not.toBeInTheDocument();
+    expect(useSidePanelStore.getState().contextTab).toBeNull();
   });
 
   it("registers nothing while closed and registers on open", async () => {

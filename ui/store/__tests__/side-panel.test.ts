@@ -17,6 +17,7 @@ describe("useSidePanelStore", () => {
       width: SIDE_PANEL_DEFAULT_WIDTH,
       isResizing: false,
       contextTab: null,
+      contextOwnerToken: 0,
       contextOutlet: null,
     });
   });
@@ -132,13 +133,13 @@ describe("useSidePanelStore", () => {
 
   it("unregistering the showing context tab closes the panel and falls back to AI", () => {
     // Given
-    useSidePanelStore.getState().registerContextTab({
+    const token = useSidePanelStore.getState().registerContextTab({
       label: "Details",
       onRequestClose: vi.fn(),
     });
 
     // When
-    useSidePanelStore.getState().unregisterContextTab();
+    useSidePanelStore.getState().unregisterContextTab(token);
 
     // Then
     const state = useSidePanelStore.getState();
@@ -149,20 +150,69 @@ describe("useSidePanelStore", () => {
 
   it("unregistering while the AI tab is showing keeps the panel open", () => {
     // Given: details registered but the user is chatting
-    useSidePanelStore.getState().registerContextTab({
+    const token = useSidePanelStore.getState().registerContextTab({
       label: "Details",
       onRequestClose: vi.fn(),
     });
     useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT);
 
     // When
-    useSidePanelStore.getState().unregisterContextTab();
+    useSidePanelStore.getState().unregisterContextTab(token);
 
     // Then: the chat survives; only the Details tab disappears
     const state = useSidePanelStore.getState();
     expect(state.contextTab).toBeNull();
     expect(state.isOpen).toBe(true);
     expect(state.selectedTab).toBe(SIDE_PANEL_TAB.AI_CHAT);
+  });
+
+  it("replacing the context tab asks the previous owner to close itself", () => {
+    // Given: finding A's detail view owns the context tab
+    const closeA = vi.fn();
+    useSidePanelStore
+      .getState()
+      .registerContextTab({ label: "Details", onRequestClose: closeA });
+
+    // When: finding B's detail view registers
+    const closeB = vi.fn();
+    useSidePanelStore
+      .getState()
+      .registerContextTab({ label: "Details", onRequestClose: closeB });
+
+    // Then: A is told to close; B stays untouched as the new owner
+    expect(closeA).toHaveBeenCalledTimes(1);
+    expect(closeB).not.toHaveBeenCalled();
+    expect(useSidePanelStore.getState().contextTab?.onRequestClose).toBe(
+      closeB,
+    );
+  });
+
+  it("ignores an unregister from a replaced (stale) owner", () => {
+    // Given: A registered, then B took over the context tab
+    const tokenA = useSidePanelStore.getState().registerContextTab({
+      label: "Details",
+      onRequestClose: vi.fn(),
+    });
+    const tokenB = useSidePanelStore.getState().registerContextTab({
+      label: "Details",
+      onRequestClose: vi.fn(),
+    });
+
+    // When: A unmounts late and unregisters with its stale token
+    useSidePanelStore.getState().unregisterContextTab(tokenA);
+
+    // Then: B's registration survives
+    const state = useSidePanelStore.getState();
+    expect(state.contextTab).not.toBeNull();
+    expect(state.contextOwnerToken).toBe(tokenB);
+    expect(state.isOpen).toBe(true);
+
+    // When: the current owner unregisters
+    useSidePanelStore.getState().unregisterContextTab(tokenB);
+
+    // Then
+    expect(useSidePanelStore.getState().contextTab).toBeNull();
+    expect(useSidePanelStore.getState().isOpen).toBe(false);
   });
 
   it("clamps resize widths to the allowed range", () => {
@@ -210,7 +260,9 @@ describe("useSidePanelStore", () => {
     });
 
     // Then: a transient context selection is persisted as the AI tab
-    const persisted = JSON.parse(localStorage.getItem("side-panel") ?? "{}");
+    const persisted = JSON.parse(
+      localStorage.getItem("side-panel-store") ?? "{}",
+    );
     expect(persisted.state).toEqual({
       selectedTab: SIDE_PANEL_TAB.AI_CHAT,
       width: SIDE_PANEL_DETAIL_MIN_WIDTH,

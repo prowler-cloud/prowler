@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
 import { createPortal } from "react-dom";
 
 import { useMountEffect } from "@/hooks/use-mount-effect";
@@ -36,16 +36,22 @@ function DetailSidePanelActive({
   description,
   children,
 }: Omit<DetailSidePanelProps, "open">) {
+  // Owner token from registration: several detail views can be mounted at
+  // once (one per table row); only the current owner may portal or unregister.
+  const [token, setToken] = useState<number | null>(null);
+
   useMountEffect(() => {
-    useSidePanelStore.getState().registerContextTab({
+    const registered = useSidePanelStore.getState().registerContextTab({
       label: "Details",
       onRequestClose: () => onOpenChange(false),
     });
-    return () => useSidePanelStore.getState().unregisterContextTab();
+    setToken(registered);
+    return () => useSidePanelStore.getState().unregisterContextTab(registered);
   });
 
+  const ownerToken = useSidePanelStore((state) => state.contextOwnerToken);
   const outlet = useSidePanelStore((state) => state.contextOutlet);
-  if (!outlet) return null;
+  if (!outlet || token === null || token !== ownerToken) return null;
 
   return createPortal(
     <div className="flex h-full min-h-0 flex-col">
