@@ -61,7 +61,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
@@ -424,19 +424,21 @@ class UserUpdateSerializer(BaseWriteSerializer):
         if password:
             validate_password(password, user=instance)
             instance.set_password(password)
-            outstanding_token_ids = list(
-                OutstandingToken.objects.using(MainRouter.admin_db)
-                .filter(user_id=instance.id)
-                .values_list("id", flat=True)
-            )
-            if outstanding_token_ids:
-                BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
-                    [
-                        BlacklistedToken(token_id=token_id)
-                        for token_id in outstanding_token_ids
-                    ],
-                    ignore_conflicts=True,
+            with transaction.atomic(using=MainRouter.admin_db):
+                outstanding_token_ids = list(
+                    OutstandingToken.objects.using(MainRouter.admin_db)
+                    .filter(user_id=instance.id)
+                    .values_list("id", flat=True)
                 )
+                if outstanding_token_ids:
+                    BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
+                        [
+                            BlacklistedToken(token_id=token_id)
+                            for token_id in outstanding_token_ids
+                        ],
+                        ignore_conflicts=True,
+                    )
+                return super().update(instance, validated_data)
         return super().update(instance, validated_data)
 
 
