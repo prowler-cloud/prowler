@@ -10,7 +10,7 @@
   "ResourceType": "NotDefined",
   "ResourceGroup": "network",
   "Description": "Servers should not have public IP addresses directly attached to their network interfaces unless strictly required. A public IP exposes the server to inbound traffic from the internet on all ports not blocked by a security group, increasing the attack surface.",
-  "Risk": "A server with a directly attached public IP is reachable from the internet. Combined with overly permissive security group rules, this can lead to unauthorized access, data exfiltration, or server compromise.",
+  "Risk": "**Direct internet exposure.** A server with a directly attached public IP can be reached from the internet. If its security groups allow broad inbound traffic, this exposure can enable unauthorized access, data exfiltration, or server compromise.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.stackit.cloud/products/network/core-networking/public-ip-address/",
@@ -24,7 +24,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Remove the directly attached public IP and route internet traffic through a load balancer, bastion host, or VPN instead.",
+      "Text": "**Remove direct public exposure.** Detach the public IP from the server network interface unless it is strictly required. Route internet-facing workloads through a load balancer, and use a bastion host or VPN for administrative access.",
       "Url": "https://hub.prowler.com/check/iaas_server_public_ip_attached"
     }
   },
