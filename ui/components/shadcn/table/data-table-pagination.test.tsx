@@ -10,11 +10,11 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("@/lib", () => ({
-  getPaginationInfo: () => ({
-    currentPage: 2,
-    totalPages: 4,
-    totalEntries: 40,
-    itemsPerPageOptions: [10, 20, 50],
+  getPaginationInfo: (metadata: MetaDataProps) => ({
+    currentPage: metadata.pagination.page,
+    totalPages: metadata.pagination.pages,
+    totalEntries: metadata.pagination.count,
+    itemsPerPageOptions: metadata.pagination.itemsPerPage ?? [10, 20, 50],
   }),
 }));
 
@@ -63,5 +63,26 @@ describe("DataTablePagination", () => {
     expect(screen.getByLabelText("Go to next page")).toHaveClass(
       "hover:text-text-neutral-primary",
     );
+  });
+
+  it("does not render an empty pagination container when there is only one page", () => {
+    // Given - Metadata for a table that does not need pagination
+    const singlePageMetadata: MetaDataProps = {
+      pagination: {
+        page: 1,
+        pages: 1,
+        count: 1,
+        itemsPerPage: [10, 20, 50],
+      },
+      version: "latest",
+    };
+
+    // When - Rendering pagination
+    const { container } = render(
+      <DataTablePagination metadata={singlePageMetadata} />,
+    );
+
+    // Then - No wrapper remains to add extra DataTable gap
+    expect(container).toBeEmptyDOMElement();
   });
 });

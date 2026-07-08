@@ -80,6 +80,8 @@ export function DataTablePagination({
     itemsPerPageOptions,
   } = getPaginationInfo(metadata);
 
+  if (totalPages <= 1) return null;
+
   // For controlled mode, use controlled values; for prefixed, read from URL; otherwise use metadata
   const currentPage = isControlled
     ? controlledPage

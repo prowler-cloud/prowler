@@ -1,4 +1,9 @@
-import { Badge } from "@/components/shadcn";
+import {
+  Badge,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn";
 
 import { FALLBACK_VALUES } from "./constants";
 import { EnrichedApiKey, getApiKeyStatus } from "./types";
@@ -11,11 +16,20 @@ const STATUS_BADGE_VARIANT = {
   warning: "warning",
 } as const;
 
-export const NameCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
-  <p className="text-sm font-medium">
-    {apiKey.attributes.name || FALLBACK_VALUES.UNNAMED}
-  </p>
-);
+export const NameCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => {
+  const name = apiKey.attributes.name || FALLBACK_VALUES.UNNAMED;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <p className="w-64 truncate text-sm font-medium whitespace-nowrap">
+          {name}
+        </p>
+      </TooltipTrigger>
+      <TooltipContent>{name}</TooltipContent>
+    </Tooltip>
+  );
+};
 
 export const PrefixCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
   <code className="rounded px-2 py-1 font-mono text-xs">
@@ -24,7 +38,7 @@ export const PrefixCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
 );
 
 export const DateCell = ({ date }: { date: string | null }) => (
-  <p className="text-sm">{formatRelativeTime(date)}</p>
+  <p className="text-sm whitespace-nowrap">{formatRelativeTime(date)}</p>
 );
 
 export const LastUsedCell = ({ apiKey }: { apiKey: EnrichedApiKey }) => (
