@@ -38,6 +38,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializer_utils.authentication import blacklist_user_refresh_tokens
 from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
@@ -73,10 +74,6 @@ from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.settings import api_settings
-from rest_framework_simplejwt.token_blacklist.models import (
-    BlacklistedToken,
-    OutstandingToken,
-)
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
 
@@ -425,19 +422,7 @@ class UserUpdateSerializer(BaseWriteSerializer):
             validate_password(password, user=instance)
             instance.set_password(password)
             with transaction.atomic(using=MainRouter.admin_db):
-                outstanding_token_ids = list(
-                    OutstandingToken.objects.using(MainRouter.admin_db)
-                    .filter(user_id=instance.id)
-                    .values_list("id", flat=True)
-                )
-                if outstanding_token_ids:
-                    BlacklistedToken.objects.using(MainRouter.admin_db).bulk_create(
-                        [
-                            BlacklistedToken(token_id=token_id)
-                            for token_id in outstanding_token_ids
-                        ],
-                        ignore_conflicts=True,
-                    )
+                blacklist_user_refresh_tokens(instance.id)
                 return super().update(instance, validated_data)
         return super().update(instance, validated_data)
 
