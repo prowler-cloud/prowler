@@ -35,7 +35,8 @@ export const kubeconfigContainsExecAuthentication = (
   }
 };
 
-export const addRoleFormSchema = z.object({
+// Create and edit share the same shape, so a single schema backs both flows.
+export const roleFormSchema = z.object({
   name: z.string().min(1, "Name is required"),
   manage_users: z.boolean().default(false),
   manage_account: z.boolean().default(false),
@@ -48,18 +49,7 @@ export const addRoleFormSchema = z.object({
   groups: z.array(z.string()).optional(),
 });
 
-export const editRoleFormSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  manage_users: z.boolean().default(false),
-  manage_account: z.boolean().default(false),
-  manage_billing: z.boolean().default(false),
-  manage_providers: z.boolean().default(false),
-  manage_integrations: z.boolean().default(false),
-  manage_scans: z.boolean().default(false),
-  manage_alerts: z.boolean().default(false),
-  unlimited_visibility: z.boolean().default(false),
-  groups: z.array(z.string()).optional(),
-});
+export type RoleFormValues = z.input<typeof roleFormSchema>;
 
 export const onDemandScanFormSchema = () =>
   z.object({
