@@ -200,6 +200,107 @@ describe("createLighthouseChatStore", () => {
     expect(selectLighthouseChatCanSend(store.getState())).toBe(false);
   });
 
+  it("reconciles the optimistic message when the send fails without a conflict", async () => {
+    // Given: the backend rejects the message with a plain failure
+    const store = makeStore();
+    sendMessageMock.mockResolvedValue({ error: "Send failed.", status: 500 });
+
+    // When
+    await store.getState().submitMessage("Summarize findings");
+
+    // Then: feedback surfaces without blocking, and the optimistic user
+    // message is reconciled against the server (it was never persisted)
+    expect(store.getState().feedback).toBe("Send failed.");
+    expect(store.getState().blockedByConflict).toBe(false);
+    expect(getMessagesMock).toHaveBeenCalledWith("session-1");
+    expect(store.getState().messages).toHaveLength(0);
+  });
+
+  it("drops a failed send once the chat points at another session", async () => {
+    // Given: a send still in flight
+    const store = makeStore();
+    let resolveSend: (value: unknown) => void = () => {};
+    sendMessageMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveSend = resolve;
+      }),
+    );
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(sendMessageMock).toHaveBeenCalled());
+
+    // When: the user opens another session before the send fails
+    await store.getState().openSession("session-9");
+    resolveSend({ error: "Send failed.", status: 500 });
+    await submitting;
+
+    // Then: the dead submission's failure never surfaces in the new session
+    expect(store.getState().activeSessionId).toBe("session-9");
+    expect(store.getState().feedback).toBeNull();
+  });
+
+  it("keeps a fast follow-up intact when the terminal refresh resolves late", async () => {
+    // Given: a completed run whose terminal message refresh is still in flight
+    const store = makeStore();
+    await store.getState().submitMessage("First question");
+    let resolveRefresh: (value: unknown) => void = () => {};
+    getMessagesMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveRefresh = resolve;
+      }),
+    );
+    eventSources[0].emit("message.end", { message_id: "message-1" });
+    await vi.waitFor(() =>
+      expect(getMessagesMock).toHaveBeenCalledWith("session-1"),
+    );
+
+    // When: the user sends a follow-up before that refresh resolves
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: { id: "task-2", name: "lighthouse-run", state: "executing" },
+      },
+    });
+    await store.getState().submitMessage("Follow-up question");
+    resolveRefresh({ data: [message("message-1", "assistant", "Answer")] });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    // Then: the stale snapshot erases neither the new optimistic message nor
+    // the follow-up's task id
+    expect(store.getState().streamState.activeTaskId).toBe("task-2");
+    expect(store.getState().messages.at(-1)?.parts[0]?.content).toEqual({
+      text: "Follow-up question",
+    });
+  });
+
+  it("abandons an in-flight submit after destroy", async () => {
+    // Given: destroy fires while the session create is still in flight
+    const store = makeStore({ syncUrlToSession: true });
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    let resolveCreate: (value: unknown) => void = () => {};
+    createSessionMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    const submitting = store.getState().submitMessage("Summarize findings");
+    store.getState().destroy();
+
+    // When
+    resolveCreate({
+      data: {
+        id: "session-1",
+        title: "Summarize findings",
+        isArchived: false,
+        insertedAt: "2026-06-24T10:00:00Z",
+        updatedAt: "2026-06-24T10:00:00Z",
+      },
+    });
+    await submitting;
+
+    // Then: no URL rewrite on whatever page is now open, no orphan stream
+    expect(replaceStateSpy).not.toHaveBeenCalled();
+    expect(eventSources).toHaveLength(0);
+  });
+
   it("opens an existing session client-side without navigation", async () => {
     // Given
     const store = makeStore({ syncUrlToSession: false });

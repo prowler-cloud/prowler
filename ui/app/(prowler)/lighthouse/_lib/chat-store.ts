@@ -102,6 +102,9 @@ export function createLighthouseChatStore(
   // serializable, no render depends on it, and here it survives the consuming
   // component unmounting — the reason this factory exists.
   let eventSource: EventSource | null = null;
+  // Set by destroy(): async flows check it after each await so a torn-down
+  // store never rewrites the URL of another page or opens an orphan stream.
+  let destroyed = false;
 
   const syncSessionUrl = (sessionId: string | null) => {
     if (!syncUrlToSession) return;
@@ -117,12 +120,15 @@ export function createLighthouseChatStore(
       eventSource = null;
     };
 
-    const refreshMessages = async (sessionId: string): Promise<boolean> => {
+    const refreshMessages = async (
+      sessionId: string,
+      shouldApply: () => boolean = () => true,
+    ): Promise<boolean> => {
       const result = await getLighthouseV2Messages(sessionId);
       // The fetch is async, so a reset (new chat, or archiving this session)
       // can land while it is in flight. Drop the stale result instead of
       // repopulating a chat that no longer points at this session.
-      if (sessionId !== get().activeSessionId) return false;
+      if (sessionId !== get().activeSessionId || !shouldApply()) return false;
       if ("data" in result) {
         set({ messages: result.data });
         return true;
@@ -143,7 +149,11 @@ export function createLighthouseChatStore(
         if (event.type === LIGHTHOUSE_V2_SSE_EVENT.ERROR) {
           set({ feedback: event.detail || "Agent run failed." });
         }
-        const refreshed = await refreshMessages(sessionId);
+        // A fast follow-up can start while this refresh is in flight; applying
+        // it would erase the new optimistic message and provisional task id.
+        const noNewerSubmission = () =>
+          !get().isSubmitting && !get().streamState.activeTaskId;
+        const refreshed = await refreshMessages(sessionId, noNewerSubmission);
         if (refreshed) {
           set({ streamState: createInitialLighthouseV2StreamState() });
         }
@@ -214,6 +224,7 @@ export function createLighthouseChatStore(
 
       const title = buildSessionTitle(text);
       const result = await createLighthouseV2Session(title);
+      if (destroyed) return null;
       if ("error" in result) {
         set({ feedback: result.error });
         return null;
@@ -286,7 +297,7 @@ export function createLighthouseChatStore(
         set({ isSubmitting: true });
         try {
           const sessionId = await ensureSession(trimmedText);
-          if (!sessionId) return;
+          if (!sessionId || destroyed) return;
 
           const selection = get().selectedModelSelection;
           if (!selection) return;
@@ -316,8 +327,12 @@ export function createLighthouseChatStore(
             provider: selection.providerType,
             model: selection.modelId,
           });
+          if (destroyed) return;
 
           if ("error" in result) {
+            // Stale guard: the chat may point at another session by now, so
+            // this failure must not clobber its stream state or feedback.
+            if (get().activeSessionId !== sessionId) return;
             closeStream();
             set({
               streamState: createInitialLighthouseV2StreamState(),
@@ -325,8 +340,10 @@ export function createLighthouseChatStore(
             });
             if (result.status === 409) {
               set({ blockedByConflict: true });
-              await refreshMessages(sessionId);
             }
+            // Reconcile the optimistic user message against the server on any
+            // failure — it may or may not have been persisted.
+            await refreshMessages(sessionId);
             return;
           }
 
@@ -393,6 +410,7 @@ export function createLighthouseChatStore(
       },
 
       destroy: () => {
+        destroyed = true;
         closeStream();
       },
     };
