@@ -85,6 +85,7 @@ dependencies = [
   "msgraph-sdk==1.55.0",
   "okta==3.4.2",
   "openstacksdk==4.2.0",
+  "oracledb==4.0.1",
   "pandas==2.2.3",
   "py-ocsf-models==0.8.1",
   "pydantic==2.12.5",

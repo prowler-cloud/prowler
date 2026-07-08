@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "configuration_dictionary_accessibility_disabled",
+  "CheckTitle": "Access to data dictionary objects is restricted (O7_DICTIONARY_ACCESSIBILITY is FALSE)",
+  "CheckType": [],
+  "ServiceName": "configuration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabaseParameter",
+  "ResourceGroup": "database",
+  "Description": "Checks that **O7_DICTIONARY_ACCESSIBILITY** is FALSE so ANY-style object privileges (SELECT ANY TABLE, etc.) do not extend to SYS-owned data dictionary objects (DBSAT finding CONF.SYSOBJ).",
+  "Risk": "With the parameter set to TRUE, users holding ANY privileges can read or modify dictionary base tables — including password verifiers — enabling credential theft and full database compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/O7_DICTIONARY_ACCESSIBILITY.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET o7_dictionary_accessibility=FALSE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET o7_dictionary_accessibility=FALSE SCOPE=SPFILE\n2. Restart the database\n3. Grant SELECT_CATALOG_ROLE or specific dictionary views to users who genuinely need dictionary access",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep O7_DICTIONARY_ACCESSIBILITY at its default FALSE and give dictionary access through SELECT_CATALOG_ROLE or explicit view grants instead.",
+      "Url": "https://hub.prowler.com/check/configuration_dictionary_accessibility_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

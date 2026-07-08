@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "users_inactive_account_lock_configured",
+  "CheckTitle": "Database users are locked after a period of inactivity",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OracleDatabaseUser",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that each non-Oracle-maintained database user has a profile with a limited **INACTIVE_ACCOUNT_TIME**, so unused accounts are locked automatically (DBSAT finding USER.INACTIVE).",
+  "Risk": "Dormant accounts are rarely monitored, keep their old privileges and often belong to departed users. They are prime targets for takeover because misuse is unlikely to be noticed.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/configuring-authentication.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER PROFILE <profile> LIMIT INACTIVE_ACCOUNT_TIME 90;",
+      "NativeIaC": "",
+      "Other": "1. Identify the profile of each failing user in DBA_USERS\n2. Set an inactivity limit: ALTER PROFILE <profile> LIMIT INACTIVE_ACCOUNT_TIME 90\n3. Review and drop accounts that are no longer needed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure INACTIVE_ACCOUNT_TIME in every profile so accounts that stay unused for the defined number of days are locked automatically.",
+      "Url": "https://hub.prowler.com/check/users_inactive_account_lock_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

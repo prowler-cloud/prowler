@@ -82,6 +82,11 @@ provider/linode:
       - any-glob-to-any-file: "prowler/providers/linode/**"
       - any-glob-to-any-file: "tests/providers/linode/**"
 
+provider/oracledb:
+  - changed-files:
+      - any-glob-to-any-file: "prowler/providers/oracledb/**"
+      - any-glob-to-any-file: "tests/providers/oracledb/**"
+
 github_actions:
   - changed-files:
       - any-glob-to-any-file: ".github/workflows/*"
@@ -121,6 +126,8 @@ mutelist:
       - any-glob-to-any-file: "tests/providers/vercel/lib/mutelist/**"
       - any-glob-to-any-file: "prowler/providers/okta/lib/mutelist/**"
       - any-glob-to-any-file: "tests/providers/okta/lib/mutelist/**"
+      - any-glob-to-any-file: "prowler/providers/oracledb/lib/mutelist/**"
+      - any-glob-to-any-file: "tests/providers/oracledb/lib/mutelist/**"
 
 integration/s3:
   - changed-files:

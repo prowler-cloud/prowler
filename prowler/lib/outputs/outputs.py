@@ -46,6 +46,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.region
     elif finding.check_metadata.Provider == "okta":
         details = finding.region
+    elif finding.check_metadata.Provider == "oracledb":
+        details = finding.region
     elif finding.check_metadata.Provider == "scaleway":
         details = finding.region
     elif finding.check_metadata.Provider == "linode":

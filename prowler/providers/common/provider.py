@@ -654,6 +654,20 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "oracledb":
+                    provider_class(
+                        oracledb_user=getattr(arguments, "oracledb_user", ""),
+                        oracledb_password=getattr(arguments, "oracledb_password", ""),
+                        oracledb_dsn=getattr(arguments, "oracledb_dsn", ""),
+                        oracledb_host=getattr(arguments, "oracledb_host", ""),
+                        oracledb_port=getattr(arguments, "oracledb_port", None),
+                        oracledb_service_name=getattr(
+                            arguments, "oracledb_service_name", ""
+                        ),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif arguments.provider == "scaleway":
                     # Credentials are read from the SCW_ACCESS_KEY /
                     # SCW_SECRET_KEY env vars by the provider itself; there

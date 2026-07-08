@@ -1,0 +1,9 @@
+Mutelist:
+  Accounts:
+    "ORCL.EXAMPLE.COM":
+      Checks:
+        "users_sample_schemas_removed":
+          Regions:
+            - "*"
+          Resources:
+            - "ORCL.EXAMPLE.COM"
