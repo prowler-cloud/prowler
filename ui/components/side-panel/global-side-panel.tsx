@@ -13,15 +13,18 @@ import {
 } from "@/components/shadcn/side-panel/side-panel";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
-import { SIDE_PANEL_PUSH_MEDIA_QUERY } from "@/lib/ui-layout";
+import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
+import {
+  clampSidePanelWidth,
+  SIDE_PANEL_MAX_WIDTH,
+  SIDE_PANEL_MIN_WIDTH,
+  SIDE_PANEL_PUSH_MEDIA_QUERY,
+} from "@/lib/ui-layout";
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
+import { SidePanelErrorBoundary } from "./side-panel-error-boundary";
 import { getVisibleSidePanelTabs } from "./side-panel-tabs";
-
-const isLighthouseRoute = (pathname: string | null) =>
-  Boolean(pathname?.startsWith(LIGHTHOUSE_ROUTE.CHAT));
 
 // Non-modal push panel (PostHog-style): no backdrop, MainLayout shifts the
 // page by the panel width so everything stays reachable. It hosts the fixed
@@ -50,7 +53,7 @@ export function GlobalSidePanel() {
       if (event.defaultPrevented) return;
       // The full-page chat owns its route: no panel there (read the live URL,
       // the mount closure would keep a stale pathname).
-      if (isLighthouseRoute(window.location.pathname)) return;
+      if (isLighthouseChatRoute(window.location.pathname)) return;
       const store = useSidePanelStore.getState();
       if ((event.metaKey || event.ctrlKey) && event.key === ".") {
         // Nothing to show in OSS without a detail view registered.
@@ -71,7 +74,7 @@ export function GlobalSidePanel() {
   });
 
   const registryTabs = getVisibleSidePanelTabs();
-  if (isLighthouseRoute(pathname)) return null;
+  if (isLighthouseChatRoute(pathname)) return null;
   if (registryTabs.length === 0 && !contextTab) return null;
 
   // The persisted tab can point at a tab that is not available here; fall
@@ -96,10 +99,15 @@ export function GlobalSidePanel() {
       aria-label="Side panel"
       data-testid="global-side-panel"
       className={cn("w-full", isResizing && "transition-none")}
-      style={{ width: isPushViewport ? width : undefined }}
+      // Re-clamp at consumption: a persisted width from a larger monitor
+      // rehydrates raw and would otherwise collapse <main> on this viewport.
+      style={{ width: isPushViewport ? clampSidePanelWidth(width) : undefined }}
     >
       {isPushViewport ? (
         <SidePanelResizeHandle
+          value={width}
+          min={SIDE_PANEL_MIN_WIDTH}
+          max={SIDE_PANEL_MAX_WIDTH}
           onResize={handleResize}
           onResizeStart={() => useSidePanelStore.getState().setIsResizing(true)}
           onResizeEnd={() => useSidePanelStore.getState().setIsResizing(false)}
@@ -176,11 +184,16 @@ export function GlobalSidePanel() {
         className="[contain:layout]"
       >
         {hasBeenOpened && activeRegistryTab ? (
-          // The fallback is the tab's own 1:1 skeleton, so the moment the
-          // lazy bundle downloads nothing visually jumps.
-          <Suspense fallback={<activeRegistryTab.Fallback />}>
-            <activeRegistryTab.Content />
-          </Suspense>
+          // The boundary keeps a chunk-load rejection inside the panel: this
+          // layout-level component sits above every segment error.tsx, so an
+          // uncaught error here would replace the whole app via global-error.
+          <SidePanelErrorBoundary>
+            {/* The fallback is the tab's own 1:1 skeleton, so the moment the
+                lazy bundle downloads nothing visually jumps. */}
+            <Suspense fallback={<activeRegistryTab.Fallback />}>
+              <activeRegistryTab.Content />
+            </Suspense>
+          </SidePanelErrorBoundary>
         ) : null}
       </SidePanelBody>
     </SidePanel>

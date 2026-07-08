@@ -18,8 +18,10 @@ export function clampSidePanelWidth(width: number): number {
     typeof window === "undefined"
       ? SIDE_PANEL_MAX_WIDTH
       : Math.floor(window.innerWidth * 0.85);
-  return Math.min(
-    Math.max(width, SIDE_PANEL_MIN_WIDTH),
-    Math.min(SIDE_PANEL_MAX_WIDTH, viewportCap),
+  // Enforce the minimum LAST: on tiny viewports the cap can fall below it,
+  // and a sub-minimum panel would be unusable.
+  return Math.max(
+    Math.min(width, SIDE_PANEL_MAX_WIDTH, viewportCap),
+    SIDE_PANEL_MIN_WIDTH,
   );
 }

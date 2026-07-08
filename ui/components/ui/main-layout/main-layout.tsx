@@ -5,8 +5,11 @@ import { usePathname } from "next/navigation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
-import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
-import { SIDE_PANEL_PUSH_MEDIA_QUERY } from "@/lib/ui-layout";
+import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
+import {
+  clampSidePanelWidth,
+  SIDE_PANEL_PUSH_MEDIA_QUERY,
+} from "@/lib/ui-layout";
 import { cn } from "@/lib/utils";
 import { useSidePanelStore } from "@/store/side-panel";
 
@@ -28,11 +31,14 @@ export default function MainLayout({
   const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
   if (!sidebar) return null;
   const { getOpenState, settings } = sidebar;
+  // Re-clamp at consumption: a persisted width from a larger monitor
+  // rehydrates raw and would otherwise collapse <main> on this viewport.
   const pushWidth =
     sidePanelOpen &&
+    sidePanelWidth !== undefined &&
     isPushViewport &&
-    !pathname?.startsWith(LIGHTHOUSE_ROUTE.CHAT)
-      ? sidePanelWidth
+    !isLighthouseChatRoute(pathname)
+      ? clampSidePanelWidth(sidePanelWidth)
       : undefined;
   return (
     <div className="relative flex h-dvh items-center justify-center overflow-hidden">

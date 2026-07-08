@@ -9,7 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
+import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
 import { isCloud } from "@/lib/shared/env";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
@@ -20,7 +20,7 @@ export function SidePanelTrigger() {
   // Lighthouse AI (and the panel itself) is cloud-only. On the full-page chat
   // route the panel is not available: the chat lives in one place at a time.
   if (!isCloud()) return null;
-  if (pathname?.startsWith(LIGHTHOUSE_ROUTE.CHAT)) return null;
+  if (isLighthouseChatRoute(pathname)) return null;
 
   return (
     <Tooltip delayDuration={100}>

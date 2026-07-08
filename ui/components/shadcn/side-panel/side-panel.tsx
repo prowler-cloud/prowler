@@ -1,6 +1,10 @@
 "use client";
 
-import { type ComponentProps, type PointerEvent } from "react";
+import {
+  type ComponentProps,
+  type KeyboardEvent,
+  type PointerEvent,
+} from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -60,18 +64,30 @@ export function SidePanelBody({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
+// Width added/removed per arrow-key press when resizing via keyboard.
+const KEYBOARD_RESIZE_STEP = 24;
+
 interface SidePanelResizeHandleProps {
   // Receives the pointer's clientX on every drag move; the caller derives the
-  // new width from it (for a right-anchored panel: viewport width - clientX).
+  // new width from it (for a right-anchored panel: viewport width - clientX)
+  // and clamps it.
   onResize: (clientX: number) => void;
   onResizeStart?: () => void;
   onResizeEnd?: () => void;
+  // Current width and bounds for the ARIA window-splitter contract and to
+  // derive keyboard steps.
+  value: number;
+  min: number;
+  max: number;
 }
 
 export function SidePanelResizeHandle({
   onResize,
   onResizeStart,
   onResizeEnd,
+  value,
+  min,
+  max,
 }: SidePanelResizeHandleProps) {
   const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -84,22 +100,42 @@ export function SidePanelResizeHandle({
     onResize(event.clientX);
   };
 
+  // Idempotent: also reached via onLostPointerCapture (capture already gone),
+  // e.g. when Escape closes the panel mid-drag and pointerup never arrives.
   const endResize = (event: PointerEvent<HTMLDivElement>) => {
-    if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
-    event.currentTarget.releasePointerCapture(event.pointerId);
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
     onResizeEnd?.();
+  };
+
+  // WAI-ARIA window splitter: arrows move the handle as a drag would, so on
+  // this right-docked panel ArrowLeft widens and ArrowRight narrows.
+  const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const step =
+      event.key === "ArrowLeft" ? KEYBOARD_RESIZE_STEP : -KEYBOARD_RESIZE_STEP;
+    // Same contract as a drag: report the clientX the handle would land on.
+    onResize(window.innerWidth - (value + step));
   };
 
   return (
     <div
       role="separator"
+      tabIndex={0}
       aria-orientation="vertical"
       aria-label="Resize panel"
-      className="hover:bg-border-neutral-secondary active:bg-border-neutral-secondary absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={Math.round(value)}
+      className="hover:bg-border-neutral-secondary active:bg-border-neutral-secondary focus-visible:ring-button-primary/50 absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize touch-none transition-colors outline-none focus-visible:ring-2"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={endResize}
       onPointerCancel={endResize}
+      onLostPointerCapture={endResize}
+      onKeyDown={handleKeyDown}
     />
   );
 }
