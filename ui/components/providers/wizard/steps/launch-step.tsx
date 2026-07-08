@@ -22,6 +22,7 @@ import {
   CloudFeatureBadge,
   CloudFeatureBadgeLink,
 } from "@/components/shared/cloud-feature-badge";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import { ToastAction, useToast } from "@/components/ui";
 import { EntityInfo } from "@/components/ui/entities";
 import {
@@ -350,20 +351,7 @@ export function LaunchStep({
         </p>
       )}
 
-      {(isLimitBlocked || isBlocked) && (
-        <p className="text-text-error-primary text-sm">
-          You have exceeded the usage limit of one provider. You can add more
-          providers and run unlimited scans by adding a subscription.{" "}
-          <Link
-            href="https://cloud.prowler.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Manage Billing
-          </Link>
-        </p>
-      )}
+      {(isLimitBlocked || isBlocked) && <UsageLimitMessage />}
 
       {isScheduleMode && (
         <ScanScheduleFields
