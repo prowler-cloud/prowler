@@ -48,7 +48,7 @@ class TestE2enetworksProvider:
             "E2E_NETWORKS_API_KEY": "env-api-key",
             "E2E_NETWORKS_AUTH_TOKEN": "env-auth-token",
             "E2E_NETWORKS_PROJECT_ID": "99",
-            "E2E_NETWORKS_LOCATION": "Chennai",
+            "E2E_NETWORKS_REGION": "Chennai",
         },
         clear=False,
     )

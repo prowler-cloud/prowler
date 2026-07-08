@@ -34,14 +34,16 @@ def init_parser(self):
         help="E2E Networks project ID. Use E2E_NETWORKS_PROJECT_ID env var instead of passing directly.",
     )
 
-    scope_group = e2enetworks_parser.add_argument_group("Scope")
-    scope_group.add_argument(
-        "--e2e-networks-location",
-        "--e2e-networks-locations",
-        nargs="*",
+    regions_subparser = e2enetworks_parser.add_argument_group("Regions")
+    regions_subparser.add_argument(
+        "--region",
+        "--filter-region",
+        "-f",
+        nargs="+",
         default=None,
-        metavar="LOCATION",
-        help="E2E Networks region(s) to scan (e.g. Delhi Chennai). Defaults to E2E_NETWORKS_LOCATION or Delhi.",
+        metavar="REGION",
+        help="E2E Networks region(s) to scan (e.g. Delhi Chennai). If omitted, "
+        "uses E2E_NETWORKS_REGION or scans all regions (Delhi, Chennai).",
     )
 
 

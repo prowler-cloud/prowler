@@ -17,7 +17,7 @@ Prowler requires read access to the E2E Networks project. The following values a
 | API Key | `E2E_NETWORKS_API_KEY` | Identifies the MyAccount API key used for requests |
 | Auth Token | `E2E_NETWORKS_AUTH_TOKEN` | Bearer token authorizing the API key |
 | Project ID | `E2E_NETWORKS_PROJECT_ID` | Numeric ID of the project to scan |
-| Location | `E2E_NETWORKS_LOCATION` | Optional region to scan (defaults to `Delhi`) |
+| Region | `E2E_NETWORKS_REGION` | Optional region to scan (defaults to all regions: Delhi, Chennai) |
 
 <Warning>
 The project ID must be an integer. A missing or non-numeric project ID stops the scan before any resource is read.
@@ -61,7 +61,7 @@ prowler e2enetworks
 To confirm that Prowler can reach the E2E Networks project, run a scan against a single location:
 
 ```bash
-prowler e2enetworks --e2e-networks-location Delhi
+prowler e2enetworks --region Delhi
 ```
 
 A successful run reports findings for the discovered resources. A failed run displays an error message indicating the credential or connectivity issue.

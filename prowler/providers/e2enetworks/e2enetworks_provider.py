@@ -97,9 +97,9 @@ class E2enetworksProvider(Provider):
         if locations:
             return locations
 
-        env_location = os.getenv("E2E_NETWORKS_LOCATION")
-        if env_location:
-            return [env_location]
+        env_region = os.getenv("E2E_NETWORKS_REGION")
+        if env_region:
+            return [env_region]
 
         return list(E2E_DEFAULT_LOCATIONS)
 
@@ -216,8 +216,8 @@ class E2enetworksProvider(Provider):
             project_value = project_id or os.getenv("E2E_NETWORKS_PROJECT_ID")
             project_id_int = int(project_value) if project_value else None
             resolved_locations = locations or (
-                [os.getenv("E2E_NETWORKS_LOCATION")]
-                if os.getenv("E2E_NETWORKS_LOCATION")
+                [os.getenv("E2E_NETWORKS_REGION")]
+                if os.getenv("E2E_NETWORKS_REGION")
                 else list(E2E_DEFAULT_LOCATIONS)
             )
 

@@ -44,12 +44,12 @@ prowler e2enetworks --checks node_encryption_enabled storage_block_volume_not_or
 prowler e2enetworks --services node
 ```
 
-### Scan Specific Locations
+### Scan Specific Regions
 
-Use `--e2e-networks-location` (alias `--e2e-networks-locations`) to limit the scan to one or more E2E Networks regions. When the flag is omitted, Prowler reads `E2E_NETWORKS_LOCATION` and falls back to `Delhi`.
+Use `--region` (aliases `--filter-region` / `-f`) to limit the scan to one or more E2E Networks regions. When the flag is omitted, Prowler reads `E2E_NETWORKS_REGION` and otherwise scans all regions (Delhi, Chennai).
 
 ```bash
-prowler e2enetworks --e2e-networks-location Delhi Mumbai
+prowler e2enetworks --region Delhi Chennai
 ```
 
 ## Available Services
