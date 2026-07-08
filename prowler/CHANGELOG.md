@@ -2,6 +2,14 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+## [5.34.0] (Prowler v5.34.0) - UNRELEASED
+
+### 🚀 Added
+
+- E2E Networks provider with `network`, `database`, and extended `storage` services (27 checks across compute, network, security groups, load balancers, storage, and DBaaS), plus a Cartography-style resource graph schema at `prowler/providers/e2enetworks/docs/schema.md` [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
+
+---
+
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed
@@ -121,7 +129,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
 - DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
-- E2E Networks provider with `network`, `database`, and extended `storage` services (27 checks across compute, network, security groups, load balancers, storage, and DBaaS), plus a Cartography-style resource graph schema at `prowler/providers/e2enetworks/docs/schema.md`
 - `cloudfront_distributions_pqc_tls_enabled` check for AWS provider to verify CloudFront distributions enforce a post-quantum TLS 1.3 security policy [(#11317)](https://github.com/prowler-cloud/prowler/pull/11317)
 - `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
 - `transfer_server_pqc_ssh_kex_enabled` check for AWS provider to verify Transfer Family servers use a post-quantum hybrid SSH key exchange security policy [(#11315)](https://github.com/prowler-cloud/prowler/pull/11315)
