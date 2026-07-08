@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "loadbalancer_backend_health_check_enabled",
+  "CheckTitle": "E2E Networks ALB load balancers have backend health checks enabled",
+  "CheckType": [],
+  "ServiceName": "loadbalancer",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks application load balancers** should have `HTTP` **health checks** configured for their backends so traffic is only routed to healthy nodes.",
+  "Risk": "Load balancers without backend **health checks** may route traffic to failed or unhealthy nodes, causing outages and masking active compromise on degraded backends.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/compute/load-balancer/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure `HTTP` **health checks** for ALB backends so unhealthy nodes are automatically removed from rotation.",
+      "Url": "https://hub.prowler.com/check/loadbalancer_backend_health_check_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

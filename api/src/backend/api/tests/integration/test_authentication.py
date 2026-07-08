@@ -187,7 +187,7 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
 
 @pytest.mark.django_db
 class TestTokenSwitchTenant:
-    def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
+    def test_switch_tenant_with_valid_token(self, tenants_fixture, aws_provider):
         client = APIClient()
 
         test_user = "test_email@prowler.com"
@@ -1396,7 +1396,7 @@ class TestAPIKeyMultiTenantWorkflows:
         assert me_response2.json()["data"]["id"] == str(user.id)
 
     def test_api_key_cannot_access_different_tenant_resources(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """API key from one tenant cannot access resources from another tenant.
 

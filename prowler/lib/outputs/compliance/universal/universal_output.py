@@ -26,6 +26,7 @@ PROVIDER_HEADER_MAP = {
     "oraclecloud": ("TenancyId", "account_uid", "Region", "region"),
     "alibabacloud": ("AccountId", "account_uid", "Region", "region"),
     "nhn": ("AccountId", "account_uid", "Region", "region"),
+    "e2enetworks": ("ProjectId", "account_uid", "Location", "region"),
 }
 _DEFAULT_HEADERS = ("AccountId", "account_uid", "Region", "region")
 

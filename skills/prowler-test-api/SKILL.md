@@ -31,7 +31,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ```text
 create_test_user (session) ─► tenants_fixture (function) ─► authenticated_client
                                      │
-                                     └─► providers_fixture ─► scans_fixture ─► findings_fixture
+                                     └─► aws_provider ─► scans_fixture ─► findings_fixture
 ```
 
 ### Key Fixtures
@@ -40,8 +40,12 @@ create_test_user (session) ─► tenants_fixture (function) ─► authenticate
 |---------|-------------|
 | `create_test_user` | Session user (`dev@prowler.com`) |
 | `tenants_fixture` | 3 tenants: [0],[1] have membership, [2] isolated |
-| `authenticated_client` | JWT client for tenant[0] |
-| `providers_fixture` | 9 providers in tenant[0] |
+| `authenticated_client` | Django test client with JWT for tenant[0] |
+| `authenticated_client_for_tenant_factory` | Creates a Django test client with JWT for a specific user and tenant |
+| `provider_factory` | Creates one validated provider with provider-specific defaults |
+| `aws_provider` | 1 AWS provider in tenant[0] |
+| `aws_provider_pair` | 2 AWS providers in tenant[0] |
+| `all_provider_types_fixture` | 1 provider for every supported provider type |
 | `tasks_fixture` | 2 Celery tasks with TaskResult |
 
 ### RBAC Fixtures
@@ -51,6 +55,14 @@ create_test_user (session) ─► tenants_fixture (function) ─► authenticate
 | `authenticated_client_rbac` | All permissions (admin) |
 | `authenticated_client_rbac_noroles` | Membership but NO roles |
 | `authenticated_client_no_permissions_rbac` | All permissions = False |
+
+Use `authenticated_client` for normal view behavior tests. It uses a cheap JWT
+and still runs the real request authentication path. Use serializer-generated
+JWTs or API-key clients only when the test is specifically about token
+obtain/refresh, invalid tokens, expired tokens, tenant switching by token, API
+keys, or unauthenticated 401 behavior. Use
+`authenticated_client_for_tenant_factory` when a test needs a cheap JWT client
+for a different user or tenant.
 
 ---
 

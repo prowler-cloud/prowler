@@ -77,6 +77,7 @@ jobs:
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             docs/**
             permissions/**
             api/**
@@ -613,6 +614,30 @@ jobs:
         with:
           flags: prowler-py${{ matrix.python-version }}-linode
           files: ./linode_coverage.xml
+
+      # E2E Networks Provider
+      - name: Check if E2E Networks files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-e2enetworks
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/e2enetworks/**
+            ./tests/**/e2enetworks/**
+            ./uv.lock
+
+      - name: Run E2E Networks tests
+        if: steps.changed-e2enetworks.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/e2enetworks --cov-report=xml:e2enetworks_coverage.xml tests/providers/e2enetworks
+
+      - name: Upload E2E Networks coverage to Codecov
+        if: steps.changed-e2enetworks.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-e2enetworks
+          files: ./e2enetworks_coverage.xml
 
       # External Provider (dynamic loading)
       - name: Check if External Provider files changed
