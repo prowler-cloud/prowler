@@ -10,8 +10,11 @@ import {
   resolveLighthouseOverviewBannerHref,
 } from "./lighthouse-banner";
 
+const NEW_CONVERSATION_CHAT_HREF =
+  "/lighthouse?prompt=Find%20and%20guide%20me%20to%20remediate%20which%20actually%20matters.%20What%20do%20I%20have%20to%20do%20today%20to%20be%20secure%3F";
+
 describe("resolveLighthouseOverviewBannerHref", () => {
-  it("routes to Lighthouse chat when any v2 configuration is connected", () => {
+  it("starts a new conversation with the remediation prompt when any v2 configuration is connected", () => {
     // Given / When
     const href = resolveLighthouseOverviewBannerHref([
       configuration("openai", false),
@@ -19,7 +22,7 @@ describe("resolveLighthouseOverviewBannerHref", () => {
     ]);
 
     // Then
-    expect(href).toBe("/lighthouse");
+    expect(href).toBe(NEW_CONVERSATION_CHAT_HREF);
   });
 
   it("routes to Lighthouse settings when no v2 configuration is connected", () => {
@@ -82,7 +85,7 @@ describe("getLighthouseOverviewBannerHref", () => {
     );
 
     // Then
-    expect(href).toBe("/lighthouse");
+    expect(href).toBe(NEW_CONVERSATION_CHAT_HREF);
   });
 });
 
