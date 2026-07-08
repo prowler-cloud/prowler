@@ -7,8 +7,6 @@ All notable changes to the **Prowler UI** are documented in this file.
 ### 🚀 Added
 
 - Owners can delete their last organization from the profile page [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
-- Cross-provider compliance view for universal frameworks, with a per-provider breakdown, provider/account/group filters, and combined PDF report generation [(#11745)](https://github.com/prowler-cloud/prowler/pull/11745)
-
 
 ### 🔄 Changed
 
