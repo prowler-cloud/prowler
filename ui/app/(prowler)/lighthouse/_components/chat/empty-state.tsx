@@ -76,7 +76,7 @@ export function ChatEmptyState({
                 text="Find and remediate which actually matters."
                 animateOn="view"
                 sequential
-                speed={40}
+                speed={15}
                 encryptedClassName="text-text-neutral-tertiary"
               />
             )}
@@ -94,7 +94,7 @@ export function ChatEmptyState({
                 text="What do you want to know today?"
                 animateOn="view"
                 sequential
-                speed={40}
+                speed={15}
                 encryptedClassName="text-text-neutral-tertiary"
               />
             )}
