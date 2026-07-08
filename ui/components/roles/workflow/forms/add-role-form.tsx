@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { DefaultValues } from "react-hook-form";
 
 import { addRole } from "@/actions/roles/roles";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import { getErrorMessage } from "@/lib";
 import { RoleFormValues } from "@/types";
 

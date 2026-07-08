@@ -16,8 +16,8 @@ import {
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import { Button } from "@/components/shadcn";
-import { ExpandableSection } from "@/components/ui/expandable-section";
-import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
+import { ExpandableSection } from "@/components/shadcn/expandable-section";
+import { DataTableFilterCustom } from "@/components/shadcn/table/data-table-filter-custom";
 import { useFilterBatch } from "@/hooks/use-filter-batch";
 import { getCategoryLabel, getGroupLabel } from "@/lib/categories";
 import { FILTER_FIELD, ScanEntity } from "@/types";

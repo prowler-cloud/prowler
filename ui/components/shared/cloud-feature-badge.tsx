@@ -24,7 +24,7 @@ const FEATURE_BADGE_VARIANT_CLASS: Record<
   NonNullable<MenuFeatureBadgeProps["variant"]>,
   string
 > = {
-  cloud: "text-primary-foreground",
+  cloud: "text-black",
   new: "bg-emerald-500 text-white",
 };
 

@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
   usePathname: () => "/findings",
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     data,
     toolbarRightContent,

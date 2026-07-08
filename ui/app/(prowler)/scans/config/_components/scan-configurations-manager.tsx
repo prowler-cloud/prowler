@@ -11,10 +11,10 @@ import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { Button, Card } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { ProviderProps } from "@/types/providers";
 import { ScanConfigurationData } from "@/types/scan-configurations";
@@ -199,12 +199,12 @@ export function ScanConfigurationsManager({
       {noMatchForProvider ? (
         <Card variant="base" padding="xl">
           <div className="text-center">
-            <p className="text-default-700 text-sm font-medium">
+            <p className="text-text-neutral-secondary text-sm font-medium">
               {providerFilter.length === 1
                 ? "No Scan Configuration is attached to this provider."
                 : "No Scan Configuration is attached to any of the selected providers."}
             </p>
-            <p className="text-default-500 mt-1 text-sm">
+            <p className="text-text-neutral-tertiary mt-1 text-sm">
               The next scan{providerFilter.length === 1 ? "" : "s"} will use the
               built-in defaults shipped with Prowler. Attach a Scan
               Configuration from the editor to override them.
@@ -241,7 +241,7 @@ export function ScanConfigurationsManager({
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to delete{" "}
             <strong>{pendingDelete?.attributes.name}</strong>? Attached
             providers will fall back to the built-in scan defaults on their next

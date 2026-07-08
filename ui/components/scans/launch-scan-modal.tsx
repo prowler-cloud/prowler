@@ -12,15 +12,15 @@ import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
+import { toast, ToastAction } from "@/components/shadcn/toast";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
-import { FormButtons } from "@/components/ui/form";
-import { toast, ToastAction } from "@/components/ui/toast";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleAttributesFromProvider,

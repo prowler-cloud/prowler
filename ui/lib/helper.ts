@@ -6,7 +6,7 @@ import {
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
