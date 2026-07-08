@@ -240,6 +240,91 @@ MIIEpQIBAAKCAQEA0Z3VS5JJcds3xfn/ygWyF8n0sMcD/QHWCJ7yGSEtLN2T
         )
 
 
+class TestTestConnectionRegionHandling:
+    """Tests for region handling in test_connection()."""
+
+    def test_config_file_auth_without_region_preserves_session_region_for_identity(
+        self,
+    ):
+        mock_session = OCISession(
+            config={
+                "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+                "user": "ocid1.user.oc1..aaaaaaaexample",
+                "region": "eu-frankfurt-1",
+            },
+            signer=None,
+            profile="DEFAULT",
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="ocid1.user.oc1..aaaaaaaexample",
+            region="eu-frankfurt-1",
+            profile="DEFAULT",
+            audited_regions={"eu-frankfurt-1"},
+            audited_compartments=[],
+        )
+
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ) as mock_set_identity,
+        ):
+            connection = OraclecloudProvider.test_connection(
+                oci_config_file="/tmp/config",
+                profile="DEFAULT",
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is True
+        mock_set_identity.assert_called_once_with(session=mock_session, region=None)
+
+    def test_instance_principal_auth_without_region_preserves_session_region_for_identity(
+        self,
+    ):
+        mock_signer = MagicMock()
+        mock_session = OCISession(
+            config={
+                "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+                "region": "uk-london-1",
+            },
+            signer=mock_signer,
+            profile=None,
+        )
+        mock_identity = OCIIdentityInfo(
+            tenancy_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            tenancy_name="test-tenancy",
+            user_id="instance-principal",
+            region="uk-london-1",
+            profile=None,
+            audited_regions={"uk-london-1"},
+            audited_compartments=[],
+        )
+
+        with (
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.setup_session",
+                return_value=mock_session,
+            ),
+            patch(
+                "prowler.providers.oraclecloud.oraclecloud_provider.OraclecloudProvider.set_identity",
+                return_value=mock_identity,
+            ) as mock_set_identity,
+        ):
+            connection = OraclecloudProvider.test_connection(
+                use_instance_principal=True,
+                raise_on_exception=False,
+            )
+
+        assert connection.is_connected is True
+        mock_set_identity.assert_called_once_with(session=mock_session, region=None)
+
+
 class TestOraclecloudProviderInit:
     """Tests for OraclecloudProvider initialization"""
 

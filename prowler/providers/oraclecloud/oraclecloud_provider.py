@@ -900,17 +900,21 @@ class OraclecloudProvider(Provider):
             session = None
 
             # If API key credentials are provided directly, create config from them
-            if user and fingerprint and tenancy:
+            has_direct_credentials = user and fingerprint and tenancy
+            identity_region = region
+            if has_direct_credentials:
                 import base64
 
                 logger.info("Using API key credentials from direct parameters")
+
+                identity_region = region or OraclecloudProvider._bootstrap_region
 
                 # Create config dict from provided credentials
                 config = {
                     "user": user,
                     "fingerprint": fingerprint,
                     "tenancy": tenancy,
-                    "region": region or OraclecloudProvider._bootstrap_region,
+                    "region": identity_region,
                 }
 
                 # Handle private key
@@ -959,7 +963,7 @@ class OraclecloudProvider(Provider):
 
             identity = OraclecloudProvider.set_identity(
                 session=session,
-                region=region or OraclecloudProvider._bootstrap_region,
+                region=identity_region,
             )
 
             # Validate provider_id if provided
