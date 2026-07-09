@@ -1,6 +1,5 @@
 import { Info } from "lucide-react";
 import Image from "next/image";
-import { redirect } from "next/navigation";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
@@ -29,6 +28,8 @@ import {
   CROSS_PROVIDER_FRAMEWORKS,
   parseCrossProviderFilters,
 } from "../_lib/cross-provider-frameworks";
+import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
+import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
   CrossProviderGroupOption,
@@ -65,11 +66,20 @@ export const CrossProviderDetail = async ({
       getAllProviderGroups(),
     ]);
 
-  if (overviewResponse && "redirectTo" in overviewResponse) {
-    redirect(overviewResponse.redirectTo);
+  if (
+    overviewResponse.status ===
+    CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR
+  ) {
+    return <CrossProviderErrorAlert result={overviewResponse.result} />;
   }
 
-  const overviewData = overviewResponse?.data;
+  if (
+    overviewResponse.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR
+  ) {
+    return <CrossProviderErrorAlert message={overviewResponse.message} />;
+  }
+
+  const overviewData = overviewResponse.response.data;
 
   if (!overviewData?.attributes) {
     return (

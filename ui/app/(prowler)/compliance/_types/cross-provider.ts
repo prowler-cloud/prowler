@@ -1,3 +1,4 @@
+import type { ActionErrorResult } from "@/lib/action-errors";
 import type { RequirementStatus } from "@/types/compliance";
 import type { ProviderType } from "@/types/providers";
 
@@ -75,6 +76,38 @@ export interface CrossProviderOverviewResponse {
   data: CrossProviderOverviewData;
 }
 
+export const CROSS_PROVIDER_OVERVIEW_RESULT_STATUS = {
+  SUCCESS: "success",
+  ACTION_ERROR: "action-error",
+  LOAD_ERROR: "load-error",
+} as const;
+
+export type CrossProviderOverviewResultStatus =
+  (typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS)[keyof typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS];
+
+export const CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE =
+  "Could not load cross-provider compliance data. Try again later.";
+
+export interface CrossProviderOverviewSuccessResult {
+  status: typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS;
+  response: CrossProviderOverviewResponse;
+}
+
+export interface CrossProviderOverviewActionErrorResult {
+  status: typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR;
+  result: ActionErrorResult;
+}
+
+export interface CrossProviderOverviewLoadErrorResult {
+  status: typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR;
+  message: string;
+}
+
+export type CrossProviderOverviewResult =
+  | CrossProviderOverviewSuccessResult
+  | CrossProviderOverviewActionErrorResult
+  | CrossProviderOverviewLoadErrorResult;
+
 /** Filters accepted by every cross-provider endpoint (comma-joined). */
 export interface CrossProviderApiFilters {
   scanIds?: string[];
@@ -82,11 +115,6 @@ export interface CrossProviderApiFilters {
   providerIds?: string;
   providerGroups?: string;
   regions?: string;
-}
-
-/** A 402 from the API resolves to this instead of data. */
-export interface BillingRedirect {
-  redirectTo: string;
 }
 
 /** Cross-provider context joined onto a mapped requirement, keyed by the

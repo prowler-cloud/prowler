@@ -1,5 +1,6 @@
 export * from "./compliance-page-tabs";
 export * from "./cross-provider-detail";
+export * from "./cross-provider-error-alert";
 export * from "./cross-provider-filters";
 export * from "./cross-provider-framework-card";
 export * from "./cross-provider-overview";

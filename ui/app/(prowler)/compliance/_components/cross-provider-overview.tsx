@@ -1,5 +1,4 @@
 import { Info } from "lucide-react";
-import { redirect } from "next/navigation";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
@@ -14,7 +13,9 @@ import {
   type CrossProviderFrameworkEntry,
   parseCrossProviderFilters,
 } from "../_lib/cross-provider-frameworks";
-import type { BillingRedirect, CrossProviderFrameworkSummary } from "../_types";
+import type { CrossProviderFrameworkSummary } from "../_types";
+import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
+import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
   CrossProviderGroupOption,
@@ -65,26 +66,42 @@ export const CrossProviderOverview = async ({
         getCrossProviderComplianceOverview({
           complianceId: entry.complianceId,
           filters,
-        }).then((response) => ({ entry, response })),
+        }).then((result) => ({ entry, result })),
       ),
     ),
     getAllProviders(),
     getAllProviderGroups(),
   ]);
 
-  // Cross-provider is subscription-gated tenant-wide: any 402 means every
-  // framework is gated, so forward the billing signal instead of rendering
-  // empty cards that would swallow it.
-  const billingRedirect = responses.find(
-    ({ response }) => response && "redirectTo" in response,
+  const actionError = responses.find(
+    ({ result }) =>
+      result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
   );
-  if (billingRedirect) {
-    redirect((billingRedirect.response as BillingRedirect).redirectTo);
+  if (
+    actionError?.result.status ===
+    CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR
+  ) {
+    return <CrossProviderErrorAlert result={actionError.result.result} />;
+  }
+
+  const loadError = responses.find(
+    ({ result }) =>
+      result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+  );
+  if (
+    loadError?.result.status ===
+    CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR
+  ) {
+    return <CrossProviderErrorAlert message={loadError.result.message} />;
   }
 
   const summaries: CrossProviderFrameworkSummary[] = responses.map(
-    ({ entry, response }) => {
-      const data = response && "data" in response ? response.data : undefined;
+    ({ entry, result }) => {
+      if (result.status !== CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS) {
+        return emptySummary(entry);
+      }
+
+      const data = result.response.data;
       if (!data?.attributes) return emptySummary(entry);
 
       const attrs = data.attributes;

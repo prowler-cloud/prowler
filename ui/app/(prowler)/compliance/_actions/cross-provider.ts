@@ -9,14 +9,19 @@ import {
   getAuthHeaders,
   getErrorMessage,
 } from "@/lib";
+import { hasActionError } from "@/lib/action-errors";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 import type {
-  BillingRedirect,
   CrossProviderApiFilters,
   CrossProviderOverviewResponse,
+  CrossProviderOverviewResult,
   LatestCrossProviderPdf,
+} from "../_types";
+import {
+  CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE,
+  CROSS_PROVIDER_OVERVIEW_RESULT_STATUS,
 } from "../_types";
 
 const CROSS_PROVIDER_API_PATH = "/cross-provider-compliance-overviews";
@@ -107,8 +112,8 @@ const applyFilters = (url: URL, filters?: CrossProviderApiFilters) => {
  * provider (Prowler Cloud only — the OSS API has no such endpoint).
  *
  * When `filters.scanIds` is omitted the API auto-selects the latest COMPLETED
- * scan per compatible provider. A 402 (subscription gate) resolves to
- * `{ redirectTo: "/billing" }` so callers can forward the billing signal.
+ * scan per compatible provider. Non-2xx responses are returned as structured
+ * action errors so callers can reuse the app-wide 402/403 handlers.
  */
 export const getCrossProviderComplianceOverview = async ({
   complianceId,
@@ -116,7 +121,7 @@ export const getCrossProviderComplianceOverview = async ({
 }: {
   complianceId: string;
   filters?: CrossProviderApiFilters;
-}): Promise<CrossProviderOverviewResponse | BillingRedirect | undefined> => {
+}): Promise<CrossProviderOverviewResult> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}`);
   url.searchParams.set("filter[compliance_id]", complianceId);
@@ -124,15 +129,25 @@ export const getCrossProviderComplianceOverview = async ({
 
   try {
     const response = await fetch(url.toString(), { headers });
+    const responseData = await handleApiResponse(response);
 
-    if (response.status === 402) {
-      return { redirectTo: "/billing" };
+    if (hasActionError(responseData)) {
+      return {
+        status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
+        result: responseData,
+      };
     }
 
-    return (await handleApiResponse(response)) as CrossProviderOverviewResponse;
+    return {
+      status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS,
+      response: responseData as CrossProviderOverviewResponse,
+    };
   } catch (error) {
     console.error("Error fetching cross-provider compliance overview:", error);
-    return undefined;
+    return {
+      status: CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+      message: CROSS_PROVIDER_OVERVIEW_LOAD_ERROR_MESSAGE,
+    };
   }
 };
 

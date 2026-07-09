@@ -90,7 +90,7 @@ describe("getCrossProviderComplianceOverview", () => {
     expect(url.searchParams.get("filter[region__in]")).toBe("eu-west-1");
   });
 
-  it("returns whatever handleApiResponse resolves for 2xx responses", async () => {
+  it("wraps successful overview responses", async () => {
     const payload = { data: { id: "csa_ccm_4.0" } };
     handleApiResponseMock.mockResolvedValue(payload);
 
@@ -98,28 +98,38 @@ describe("getCrossProviderComplianceOverview", () => {
       complianceId: "csa_ccm_4.0",
     });
 
-    expect(result).toEqual(payload);
+    expect(result).toEqual({ status: "success", response: payload });
   });
 
-  it("maps 402 to a billing redirect without delegating to handleApiResponse", async () => {
+  it("returns the shared action error shape for payment-required responses", async () => {
     fetchMock.mockResolvedValue(jsonResponse({ errors: [] }, 402));
+    handleApiResponseMock.mockResolvedValue({
+      error: "Payment required.",
+      status: 402,
+    });
 
     const result = await getCrossProviderComplianceOverview({
       complianceId: "csa_ccm_4.0",
     });
 
-    expect(result).toEqual({ redirectTo: "/billing" });
-    expect(handleApiResponseMock).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      status: "action-error",
+      result: { error: "Payment required.", status: 402 },
+    });
   });
 
-  it("returns undefined when the network call throws", async () => {
+  it("returns a load error when the network call throws", async () => {
     fetchMock.mockRejectedValue(new Error("boom"));
 
     const result = await getCrossProviderComplianceOverview({
       complianceId: "csa_ccm_4.0",
     });
 
-    expect(result).toBeUndefined();
+    expect(result).toEqual({
+      status: "load-error",
+      message:
+        "Could not load cross-provider compliance data. Try again later.",
+    });
   });
 });
 
