@@ -18,6 +18,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraNoProjectsError,
     JiraRefreshTokenError,
     JiraRequiredCustomFieldsError,
+    JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
 from prowler.lib.outputs.jira.jira import Jira
@@ -1692,7 +1693,7 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when the request fails."""
+        """Test that send_finding raises with Jira JSON error details."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1702,19 +1703,25 @@ class TestJiraIntegration:
         # Mock failed response
         mock_response = MagicMock()
         mock_response.status_code = 400
-        mock_response.json.return_value = {"errors": {"summary": "Required field"}}
+        mock_response.json.return_value = {
+            "errors": {"Team": "Team is required."},
+            "errorMessages": ["Field 'Team' cannot be set."],
+        }
         mock_post.return_value = mock_response
 
-        result = self.jira_integration.send_finding(
-            check_id="test-check",
-            check_title="Test Finding",
-            severity="High",
-            status="FAIL",
-            project_key="TEST",
-            issue_type="Bug",
-        )
+        with pytest.raises(JiraSendFindingsResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
 
-        assert result is False
+        assert "Failed to create Jira issue" in str(error.value)
+        assert "'Team': 'Team is required.'" in str(error.value)
+        assert "Field 'Team' cannot be set." in str(error.value)
         mock_post.assert_called_once()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
