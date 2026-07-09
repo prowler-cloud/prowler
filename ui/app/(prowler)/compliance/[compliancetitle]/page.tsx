@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -30,6 +31,7 @@ import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import {
   AttributesData,
@@ -38,16 +40,24 @@ import {
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
-interface ComplianceDetailSearchParams {
+import { CrossProviderDetail } from "../_components/cross-provider-detail";
+
+// Type alias (not interface) so it gets an implicit index signature and can
+// flow into CrossProviderDetail's generic searchParams record.
+type ComplianceDetailSearchParams = {
   complianceId: string;
   version?: string;
   scanId?: string;
   section?: string;
+  mode?: string;
   "filter[region__in]"?: string;
+  "filter[provider_type__in]"?: string;
+  "filter[provider_id__in]"?: string;
+  "filter[provider_groups__in]"?: string;
   "filter[cis_profile_level]"?: string;
   page?: string;
   pageSize?: string;
-}
+};
 
 export default async function ComplianceDetail({
   params,
@@ -58,7 +68,45 @@ export default async function ComplianceDetail({
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId, section } = resolvedSearchParams;
+  const { complianceId, version, scanId, section, mode } = resolvedSearchParams;
+
+  // Cross-provider mode replaces the per-scan pipeline with the universal
+  // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
+  // the route is blocked in OSS the same way the compliance tab is.
+  if (mode === "cross-provider") {
+    if (!isCloud()) {
+      redirect("/compliance");
+    }
+
+    const crossProviderTitle = compliancetitle.split("-").join(" ");
+    return (
+      <ContentLayout
+        title={
+          version ? `${crossProviderTitle} - ${version}` : crossProviderTitle
+        }
+      >
+        <Suspense
+          key={JSON.stringify(resolvedSearchParams)}
+          fallback={
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
+                <RequirementsStatusCardSkeleton />
+                <TopFailedSectionsCardSkeleton />
+              </div>
+              <SkeletonAccordion />
+            </div>
+          }
+        >
+          <CrossProviderDetail
+            compliancetitle={compliancetitle}
+            complianceId={complianceId}
+            searchParams={resolvedSearchParams}
+            targetSection={section}
+          />
+        </Suspense>
+      </ContentLayout>
+    );
+  }
   const regionFilter = resolvedSearchParams["filter[region__in]"];
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
