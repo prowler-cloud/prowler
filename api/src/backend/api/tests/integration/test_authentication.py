@@ -306,6 +306,7 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
 class TestTokenSwitchTenant:
     def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
         client = APIClient()
+        aws_provider = providers_fixture[0]
         assert aws_provider
 
         test_user = "test_email@prowler.com"
@@ -1521,6 +1522,7 @@ class TestAPIKeyMultiTenantWorkflows:
         Verifies RLS enforcement after authentication ensures tenant isolation.
         """
         client = APIClient()
+        aws_provider = providers_fixture[0]
         assert aws_provider
 
         user1 = User.objects.create_user(
