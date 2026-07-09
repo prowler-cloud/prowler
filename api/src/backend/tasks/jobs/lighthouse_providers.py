@@ -1,8 +1,15 @@
+import ssl
+from collections.abc import Iterable
+
 import boto3
+import httpcore
 import httpx
 import openai
 from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    resolve_lighthouse_openai_compatible_host,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
@@ -44,6 +51,55 @@ EXCLUDED_OPENAI_MODEL_SUBSTRINGS = (
     "-tts",  # TTS models (gpt-4o-mini-tts)
     "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, etc.)
 )
+
+
+class _LighthouseOpenAICompatibleNetworkBackend(httpcore.SyncBackend):
+    """Validate and pin DNS results immediately before TCP connections."""
+
+    def connect_tcp(
+        self,
+        host: str,
+        port: int,
+        timeout: float | None = None,
+        local_address: str | None = None,
+        socket_options: Iterable[httpcore.SOCKET_OPTION] | None = None,
+    ) -> httpcore.NetworkStream:
+        resolved_addresses = resolve_lighthouse_openai_compatible_host(host, port)
+        last_error: httpcore.ConnectError | httpcore.ConnectTimeout | None = None
+
+        for address in resolved_addresses:
+            try:
+                return super().connect_tcp(
+                    address,
+                    port,
+                    timeout=timeout,
+                    local_address=local_address,
+                    socket_options=socket_options,
+                )
+            except (httpcore.ConnectError, httpcore.ConnectTimeout) as error:
+                last_error = error
+
+        if last_error:
+            raise last_error
+        raise httpcore.ConnectError("No resolved addresses are available")
+
+
+class _LighthouseOpenAICompatibleHTTPTransport(httpx.HTTPTransport):
+    """HTTP transport that connects only to validated public IP addresses."""
+
+    def __init__(self) -> None:
+        self._pool = httpcore.ConnectionPool(
+            ssl_context=ssl.create_default_context(),
+            network_backend=_LighthouseOpenAICompatibleNetworkBackend(),
+        )
+
+
+def _create_openai_compatible_http_client() -> httpx.Client:
+    """Create the restricted HTTP client used for OpenAI-compatible providers."""
+    return httpx.Client(
+        follow_redirects=False,
+        transport=_LighthouseOpenAICompatibleHTTPTransport(),
+    )
 
 
 def _extract_error_message(e: Exception) -> str:
@@ -289,7 +345,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> dict:
                 }
 
             validate_lighthouse_openai_compatible_base_url(params["base_url"])
-            with httpx.Client(follow_redirects=False) as http_client:
+            with _create_openai_compatible_http_client() as http_client:
                 client = openai.OpenAI(
                     api_key=params["api_key"],
                     base_url=params["base_url"],
@@ -366,7 +422,7 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> dict[str, st
     Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
     validate_lighthouse_openai_compatible_base_url(base_url)
-    with httpx.Client(follow_redirects=False) as http_client:
+    with _create_openai_compatible_http_client() as http_client:
         client = openai.OpenAI(
             api_key=api_key,
             base_url=base_url,

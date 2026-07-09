@@ -1,10 +1,8 @@
 import ipaddress
 import socket
 import string
-from collections.abc import Iterable
 from urllib.parse import urlparse
 
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
@@ -24,21 +22,6 @@ def _normalize_hostname(hostname: str) -> str:
     return hostname.rstrip(".").lower()
 
 
-def _configured_lighthouse_allowed_hosts() -> tuple[str, ...]:
-    allowed_hosts = getattr(settings, "LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_HOSTS", ())
-    return tuple(host for host in allowed_hosts if host)
-
-
-def _is_allowed_lighthouse_host(hostname: str, allowed_hosts: Iterable[str]) -> bool:
-    normalized_allowed_hosts = [
-        _normalize_hostname(host.lstrip(".")) for host in allowed_hosts
-    ]
-    return any(
-        hostname == allowed_host or hostname.endswith(f".{allowed_host}")
-        for allowed_host in normalized_allowed_hosts
-    )
-
-
 def _validate_lighthouse_public_ip(address: str) -> None:
     ip_address = ipaddress.ip_address(address)
     if not ip_address.is_global:
@@ -48,10 +31,56 @@ def _validate_lighthouse_public_ip(address: str) -> None:
         )
 
 
+def resolve_lighthouse_openai_compatible_host(
+    hostname: str,
+    port: int,
+    *,
+    resolve_dns: bool = True,
+) -> tuple[str, ...]:
+    """Return public IP addresses that are safe for Lighthouse outbound use."""
+    hostname = _normalize_hostname(hostname)
+    if hostname in LIGHTHOUSE_BLOCKED_METADATA_HOSTS or hostname.endswith(".localhost"):
+        raise ValidationError(
+            _("Base URL must use an external public endpoint."),
+            code="lighthouse_base_url_blocked_host",
+        )
+
+    try:
+        _validate_lighthouse_public_ip(hostname)
+    except ValueError:
+        if not resolve_dns:
+            return ()
+    else:
+        return (hostname,)
+
+    try:
+        resolved_addresses = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
+    except socket.gaierror as error:
+        raise ValidationError(
+            _("Base URL host could not be resolved."),
+            code="lighthouse_base_url_resolution_failed",
+        ) from error
+
+    if not resolved_addresses:
+        raise ValidationError(
+            _("Base URL host could not be resolved."),
+            code="lighthouse_base_url_resolution_failed",
+        )
+
+    public_addresses: list[str] = []
+    for resolved_address in resolved_addresses:
+        socket_address = resolved_address[4]
+        resolved_ip_address = socket_address[0]
+        _validate_lighthouse_public_ip(resolved_ip_address)
+        if resolved_ip_address not in public_addresses:
+            public_addresses.append(resolved_ip_address)
+
+    return tuple(public_addresses)
+
+
 def validate_lighthouse_openai_compatible_base_url(
     base_url: str,
     *,
-    allowed_hosts: Iterable[str] | None = None,
     resolve_dns: bool = True,
 ) -> None:
     """Validate an OpenAI-compatible Lighthouse base URL before outbound use."""
@@ -76,51 +105,11 @@ def validate_lighthouse_openai_compatible_base_url(
             code="lighthouse_base_url_invalid_port",
         ) from error
 
-    hostname = _normalize_hostname(parsed.hostname)
-    if hostname in LIGHTHOUSE_BLOCKED_METADATA_HOSTS or hostname.endswith(".localhost"):
-        raise ValidationError(
-            _("Base URL must use an external public endpoint."),
-            code="lighthouse_base_url_blocked_host",
-        )
-
-    configured_allowed_hosts = (
-        tuple(allowed_hosts)
-        if allowed_hosts is not None
-        else _configured_lighthouse_allowed_hosts()
+    resolve_lighthouse_openai_compatible_host(
+        parsed.hostname,
+        port,
+        resolve_dns=resolve_dns,
     )
-    if configured_allowed_hosts and not _is_allowed_lighthouse_host(
-        hostname, configured_allowed_hosts
-    ):
-        raise ValidationError(
-            _("Base URL host is not an approved provider."),
-            code="lighthouse_base_url_unapproved_host",
-        )
-
-    try:
-        _validate_lighthouse_public_ip(hostname)
-    except ValueError:
-        if not resolve_dns:
-            return
-    else:
-        return
-
-    try:
-        resolved_addresses = socket.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
-    except socket.gaierror as error:
-        raise ValidationError(
-            _("Base URL host could not be resolved."),
-            code="lighthouse_base_url_resolution_failed",
-        ) from error
-
-    if not resolved_addresses:
-        raise ValidationError(
-            _("Base URL host could not be resolved."),
-            code="lighthouse_base_url_resolution_failed",
-        )
-
-    for resolved_address in resolved_addresses:
-        socket_address = resolved_address[4]
-        _validate_lighthouse_public_ip(socket_address[0])
 
 
 class MaximumLengthValidator:

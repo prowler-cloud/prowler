@@ -84,6 +84,14 @@ def _validate_lighthouse_base_url_without_dns(base_url: str) -> None:
         raise ValidationError({"base_url": error.messages[0]}) from error
 
 
+def _reraise_lighthouse_credentials_errors(error: ValidationError) -> None:
+    details = error.detail.copy()
+    for key, value in details.items():
+        error.detail[f"credentials/{key}"] = value
+        del error.detail[key]
+    raise error
+
+
 class BaseModelSerializerV1(serializers.ModelSerializer):
     def get_root_meta(self, _resource, _many):
         return {"version": "v1"}
@@ -3586,11 +3594,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
@@ -3599,11 +3603,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
@@ -3616,11 +3616,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 
@@ -3683,11 +3679,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             credentials is not None
             and provider_type
@@ -3711,11 +3703,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
             # Then enforce invariants about not changing the auth method
             # If the existing config uses an API key, forbid introducing access keys.
@@ -3758,11 +3746,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                         raise_exception=True
                     )
                 except ValidationError as e:
-                    details = e.detail.copy()
-                    for key, value in details.items():
-                        e.detail[f"credentials/{key}"] = value
-                        del e.detail[key]
-                    raise e
+                    _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 

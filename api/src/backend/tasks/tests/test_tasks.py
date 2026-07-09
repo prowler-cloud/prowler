@@ -19,6 +19,7 @@ from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
+    _LighthouseOpenAICompatibleNetworkBackend,
 )
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
@@ -1802,6 +1803,29 @@ class TestCheckLighthouseProviderConnectionTask:
         http_client = mock_openai.call_args.kwargs["http_client"]
         assert http_client.follow_redirects is False
 
+    def test_openai_compatible_network_backend_uses_validated_ip(self, monkeypatch):
+        backend = _LighthouseOpenAICompatibleNetworkBackend()
+        stream = MagicMock()
+
+        def resolve_to_public_ip(host, port):
+            del host, port
+            return ("93.184.216.34",)
+
+        monkeypatch.setattr(
+            "tasks.jobs.lighthouse_providers.resolve_lighthouse_openai_compatible_host",
+            resolve_to_public_ip,
+        )
+
+        with patch(
+            "tasks.jobs.lighthouse_providers.httpcore.SyncBackend.connect_tcp",
+            return_value=stream,
+        ) as mock_connect_tcp:
+            result = backend.connect_tcp("provider.example", 443, timeout=1.0)
+
+        assert result is stream
+        assert mock_connect_tcp.call_args.args[:2] == ("93.184.216.34", 443)
+        assert mock_connect_tcp.call_args.kwargs["timeout"] == 1.0
+
     def test_check_connection_provider_does_not_exist(self, tenants_fixture):
         """Test that checking non-existent provider raises DoesNotExist."""
         non_existent_id = str(uuid.uuid4())
@@ -1936,6 +1960,32 @@ class TestRefreshLighthouseProviderModelsTask:
         assert result["deleted"] == 0
         assert "base url" in result["error"].lower()
         mock_fetch.assert_not_called()
+
+    def test_refresh_models_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock(data=[])
+            mock_openai.return_value = mock_client
+
+            result = refresh_lighthouse_provider_models_task(
+                provider_config_id=str(provider_cfg.id),
+                tenant_id=str(tenants_fixture[0].id),
+            )
+
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
 
     def test_refresh_models_mixed_operations(self, tenants_fixture):
         """Test mixed create, update, and delete operations."""
