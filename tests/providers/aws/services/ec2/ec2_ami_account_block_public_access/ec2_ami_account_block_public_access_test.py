@@ -103,7 +103,7 @@ class Test_ec2_ami_account_block_public_access:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     @mock_aws
-    def test_ec2_ami_block_public_access_state_no_states(self):
+    def test_ec2_ami_block_public_access_no_resources(self):
         ec2_client = mock.MagicMock()
         ec2_client.ami_block_public_access_states = []
         ec2_client.audited_account = AWS_ACCOUNT_NUMBER
