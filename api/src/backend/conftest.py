@@ -67,6 +67,7 @@ API_JSON_CONTENT_TYPE = "application/vnd.api+json"
 NO_TENANT_HTTP_STATUS = status.HTTP_401_UNAUTHORIZED
 TEST_USER = "dev@prowler.com"
 TEST_PASSWORD = "testing_psswd"
+TEST_REPLICA_ALIAS = "test_replica"
 
 
 def _install_compliance_catalog_test_cache() -> None:
@@ -2483,8 +2484,27 @@ def pytest_collection_modifyitems(items):
     """Ensure test_rbac.py is executed first."""
     items.sort(key=lambda item: 0 if "test_rbac.py" in item.nodeid else 1)
 
+    if any(item.get_closest_marker("requires_test_replica_alias") for item in items):
+        default_database = settings.DATABASES["default"]
+        if TEST_REPLICA_ALIAS not in settings.DATABASES:
+            settings.DATABASES[TEST_REPLICA_ALIAS] = {
+                **default_database,
+                "TEST": {
+                    **default_database.get("TEST", {}),
+                    "MIRROR": "default",
+                },
+            }
+        django_connections.databases[TEST_REPLICA_ALIAS] = settings.DATABASES[
+            TEST_REPLICA_ALIAS
+        ]
+
 
 def pytest_configure(config):
+    config.addinivalue_line(
+        "markers",
+        "requires_test_replica_alias: creates a test-only replica alias mirrored "
+        "to default",
+    )
     # Apply the mock before the test session starts. This is necessary to avoid admin error when running the
     # 0004_rbac_missing_admin_roles migration
     patch("api.db_router.MainRouter.admin_db", new="default").start()

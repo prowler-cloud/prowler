@@ -1,8 +1,10 @@
 """Tests for rls_transaction retry and fallback logic."""
 
+from unittest.mock import patch
+
 import pytest
-from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import POSTGRES_TENANT_VAR, rls_transaction
+from conftest import TEST_REPLICA_ALIAS
 from django.db import DEFAULT_DB_ALIAS, OperationalError, connections
 from psycopg2 import OperationalError as Psycopg2OperationalError
 from rest_framework_json_api.serializers import ValidationError
@@ -39,13 +41,13 @@ class TestRLSTransaction:
             result = cursor.fetchone()
             assert result == (str(tenant.id),)
 
-    @pytest.mark.django_db(transaction=True, databases="__all__")
+    @pytest.mark.requires_test_replica_alias
+    @pytest.mark.django_db(
+        transaction=True, databases=[DEFAULT_DB_ALIAS, TEST_REPLICA_ALIAS]
+    )
     def test_mid_query_replica_connection_loss_falls_back_to_primary(self, tenant):
         """Real Django connection state: closed replica atomic falls back to primary."""
-        if not READ_REPLICA_ALIAS or READ_REPLICA_ALIAS not in connections:
-            pytest.skip("Read replica is not configured")
-
-        replica = connections[READ_REPLICA_ALIAS]
+        replica = connections[TEST_REPLICA_ALIAS]
         sql = "SELECT current_setting(%s, true), %s"
         params = [POSTGRES_TENANT_VAR, 42]
         failed_once = {"value": False}
@@ -62,10 +64,11 @@ class TestRLSTransaction:
                     ) from psycopg_error
             return execute(sql_arg, params_arg, many, context)
 
-        with rls_transaction(str(tenant.id), using=READ_REPLICA_ALIAS) as cursor:
-            with replica.execute_wrapper(close_replica_and_raise):
-                cursor.execute(sql, params)
-                result = cursor.fetchone()
+        with patch("api.db_utils.READ_REPLICA_ALIAS", TEST_REPLICA_ALIAS):
+            with rls_transaction(str(tenant.id), using=TEST_REPLICA_ALIAS) as cursor:
+                with replica.execute_wrapper(close_replica_and_raise):
+                    cursor.execute(sql, params)
+                    result = cursor.fetchone()
 
         assert failed_once["value"]
         assert result == (str(tenant.id), 42)

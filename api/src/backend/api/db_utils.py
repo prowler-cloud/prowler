@@ -257,7 +257,7 @@ def rls_transaction(
     # The fallback transaction.atomic() is registered into fallback_stack
     # via enter_context so its __exit__ runs when the outer with-ExitStack
     # block exits, with the right exc_info. No manual __enter__/__exit__.
-    _fallback = {"succeeded": False, "token": None}
+    _fallback = {"succeeded": False, "token": None, "caller_exited_cleanly": False}
 
     with ExitStack() as fallback_stack:
 
@@ -299,7 +299,6 @@ def rls_transaction(
         for attempt in range(1, max_attempts + 1):
             router_token = None
             yielded_cursor = False
-            _caller_exited_cleanly = False
 
             # On final attempt, fall back to primary
             if attempt == max_attempts and can_failover:
@@ -331,11 +330,11 @@ def rls_transaction(
                         with wrapper_cm:
                             yielded_cursor = True
                             yield cursor
-                            _caller_exited_cleanly = True
+                            _fallback["caller_exited_cleanly"] = True
                 return
             except OperationalError as e:
                 if yielded_cursor:
-                    if _fallback["succeeded"] and _caller_exited_cleanly:
+                    if _fallback["succeeded"] and _fallback["caller_exited_cleanly"]:
                         # Caller's queries succeeded on primary via failover.
                         # This error is transaction.atomic() cleanup on the
                         # dead replica connection, suppress it.
