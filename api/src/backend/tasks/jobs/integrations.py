@@ -541,7 +541,7 @@ def send_findings_to_jira(
                     issue_type=issue_type,
                 )
             except JiraBaseException as error:
-                error_message = str(error)
+                error_message = error.message or JIRA_GENERIC_SEND_ERROR
                 logger.exception(
                     "Failed to send finding %s to Jira: %s", finding_id, error_message
                 )

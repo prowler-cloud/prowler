@@ -1902,12 +1902,12 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 0,
             "failed_count": 1,
-            "error": str(JiraRequiredCustomFieldsError(message=error_message)),
+            "error": error_message,
         }
         mock_logger.exception.assert_called_with(
             "Failed to send finding %s to Jira: %s",
             "finding-1",
-            str(JiraRequiredCustomFieldsError(message=error_message)),
+            error_message,
         )
 
     @patch("tasks.jobs.integrations.rls_transaction")
