@@ -3,7 +3,19 @@ from prowler.providers.azure.services.app.app_client import app_client
 
 
 class app_function_ensure_http_is_redirected_to_https(Check):
-    def execute(self) -> Check_Report_Azure:
+    """Check if Azure Function Apps redirect HTTP traffic to HTTPS.
+
+    Verifies that the 'HTTPS Only' setting is enabled for every Function App,
+    so plaintext HTTP requests are redirected to encrypted HTTPS endpoints.
+    """
+
+    def execute(self) -> list[Check_Report_Azure]:
+        """Execute the check for every Function App in every subscription.
+
+        Returns:
+            A list of reports, one per Function App: PASS when HTTPS-only
+            is enabled, FAIL when it is disabled or unset.
+        """
         findings = []
 
         for (
