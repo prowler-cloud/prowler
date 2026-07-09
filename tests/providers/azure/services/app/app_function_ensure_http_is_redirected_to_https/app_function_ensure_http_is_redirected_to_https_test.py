@@ -147,4 +147,5 @@ class Test_app_function_ensure_http_is_redirected_to_https:
             )
             assert result[0].resource_name == "function1"
             assert result[0].resource_id == function_id
+            assert result[0].location == "West Europe"
             assert result[0].subscription == AZURE_SUBSCRIPTION_ID
