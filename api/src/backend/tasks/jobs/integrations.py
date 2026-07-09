@@ -14,6 +14,7 @@ from prowler.lib.outputs.compliance.generic.generic import GenericCompliance
 from prowler.lib.outputs.csv.csv import CSV
 from prowler.lib.outputs.finding import Finding as FindingOutput
 from prowler.lib.outputs.html.html import HTML
+from prowler.lib.outputs.jira.exceptions.exceptions import JiraBaseException
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from prowler.providers.aws.aws_provider import AwsProvider
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -25,6 +26,8 @@ from prowler.providers.common.models import Connection
 from tasks.utils import batched
 
 logger = get_task_logger(__name__)
+
+JIRA_GENERIC_SEND_ERROR = "Failed to create Jira issue."
 
 
 def get_s3_client_from_integration(
@@ -483,6 +486,7 @@ def send_findings_to_jira(
         jira_integration = initialize_prowler_integration(integration)
 
     num_tickets_created = 0
+    error_messages = []
     for finding_id in finding_ids:
         with rls_transaction(tenant_id):
             finding_instance = (
@@ -512,35 +516,54 @@ def send_findings_to_jira(
             recommendation = remediation.get("recommendation", {})
             remediation_code = remediation.get("code", {})
 
-            # Send the individual finding to Jira
-            result = jira_integration.send_finding(
-                check_id=finding_instance.check_id,
-                check_title=check_metadata.get("checktitle", ""),
-                severity=finding_instance.severity,
-                status=finding_instance.status,
-                status_extended=finding_instance.status_extended or "",
-                provider=finding_instance.scan.provider.provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=check_metadata.get("risk", ""),
-                recommendation_text=recommendation.get("text", ""),
-                recommendation_url=recommendation.get("url", ""),
-                remediation_code_native_iac=remediation_code.get("nativeiac", ""),
-                remediation_code_terraform=remediation_code.get("terraform", ""),
-                remediation_code_cli=remediation_code.get("cli", ""),
-                remediation_code_other=remediation_code.get("other", ""),
-                resource_tags=resource_tags,
-                compliance=finding_instance.compliance or {},
-                project_key=project_key,
-                issue_type=issue_type,
-            )
+            try:
+                # Send the individual finding to Jira
+                result = jira_integration.send_finding(
+                    check_id=finding_instance.check_id,
+                    check_title=check_metadata.get("checktitle", ""),
+                    severity=finding_instance.severity,
+                    status=finding_instance.status,
+                    status_extended=finding_instance.status_extended or "",
+                    provider=finding_instance.scan.provider.provider,
+                    region=region,
+                    resource_uid=resource_uid,
+                    resource_name=resource_name,
+                    risk=check_metadata.get("risk", ""),
+                    recommendation_text=recommendation.get("text", ""),
+                    recommendation_url=recommendation.get("url", ""),
+                    remediation_code_native_iac=remediation_code.get("nativeiac", ""),
+                    remediation_code_terraform=remediation_code.get("terraform", ""),
+                    remediation_code_cli=remediation_code.get("cli", ""),
+                    remediation_code_other=remediation_code.get("other", ""),
+                    resource_tags=resource_tags,
+                    compliance=finding_instance.compliance or {},
+                    project_key=project_key,
+                    issue_type=issue_type,
+                )
+            except JiraBaseException as error:
+                error_message = str(error)
+                logger.exception(
+                    "Failed to send finding %s to Jira: %s", finding_id, error_message
+                )
+                error_messages.append(error_message)
+                continue
+            except Exception:
+                logger.exception("Failed to send finding %s to Jira", finding_id)
+                error_messages.append(JIRA_GENERIC_SEND_ERROR)
+                continue
+
             if result:
                 num_tickets_created += 1
             else:
-                logger.error(f"Failed to send finding {finding_id} to Jira")
+                error_message = JIRA_GENERIC_SEND_ERROR
+                logger.error(error_message)
+                error_messages.append(error_message)
 
-    return {
+    result = {
         "created_count": num_tickets_created,
         "failed_count": len(finding_ids) - num_tickets_created,
     }
+    if error_messages:
+        result["error"] = "; ".join(dict.fromkeys(error_messages))
+
+    return result

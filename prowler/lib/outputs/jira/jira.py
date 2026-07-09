@@ -2170,10 +2170,10 @@ class Jira:
                         custom_fields_formatted = ", ".join(
                             [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
                         )
-                        logger.error(
-                            f"Jira project requires custom fields that are not supported: {custom_fields_formatted}"
+                        raise JiraRequiredCustomFieldsError(
+                            message=f"Jira project requires custom fields that are not supported: {custom_fields_formatted}",
+                            file=os.path.basename(__file__),
                         )
-                        return False
 
                 response_error = (
                     f"Failed to send finding: {response.status_code} - {response_json}"
@@ -2191,7 +2191,7 @@ class Jira:
                 return True
         except JiraRequiredCustomFieldsError as custom_fields_error:
             logger.error(f"Custom fields error: {custom_fields_error}")
-            return False
+            raise custom_fields_error
         except JiraRefreshTokenError as refresh_error:
             logger.error(f"Token refresh error: {refresh_error}")
             return False

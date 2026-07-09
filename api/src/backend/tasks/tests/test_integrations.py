@@ -1830,10 +1830,148 @@ class TestJiraIntegration:
         )
 
         # Assertions
-        assert result == {"created_count": 2, "failed_count": 1}
+        assert result == {
+            "created_count": 2,
+            "failed_count": 1,
+            "error": "Failed to create Jira issue.",
+        }
 
         # Verify error was logged for the failed finding
-        mock_logger.error.assert_called_with("Failed to send finding finding-2 to Jira")
+        mock_logger.error.assert_called_with("Failed to create Jira issue.")
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.logger")
+    def test_send_findings_to_jira_preserves_exception_message(
+        self,
+        mock_logger,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test Jira send exceptions are returned for UI polling."""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1"]
+        error_message = "Jira project requires custom fields: Team is required"
+
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        mock_jira_integration = MagicMock()
+        from prowler.lib.outputs.jira.exceptions.exceptions import (
+            JiraRequiredCustomFieldsError,
+        )
+
+        mock_jira_integration.send_finding.side_effect = JiraRequiredCustomFieldsError(
+            message=error_message
+        )
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        finding = MagicMock()
+        finding.id = "finding-1"
+        finding.check_id = "check_001"
+        finding.severity = "high"
+        finding.status = "FAIL"
+        finding.status_extended = "Resource is not compliant"
+        finding.compliance = {}
+        finding.resources.exists.return_value = False
+        finding.resources.first.return_value = None
+        finding.scan.provider.provider = "aws"
+        finding.check_metadata = {
+            "checktitle": "Check Title",
+            "risk": "High risk",
+            "remediation": {"recommendation": {}, "code": {}},
+        }
+        mock_select_related = mock_finding_model.all_objects.select_related.return_value
+        mock_finding_query = mock_select_related.prefetch_related.return_value
+        mock_finding_query.get.return_value = finding
+
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        assert result == {
+            "created_count": 0,
+            "failed_count": 1,
+            "error": str(JiraRequiredCustomFieldsError(message=error_message)),
+        }
+        mock_logger.exception.assert_called_with(
+            "Failed to send finding %s to Jira: %s",
+            "finding-1",
+            str(JiraRequiredCustomFieldsError(message=error_message)),
+        )
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.logger")
+    def test_send_findings_to_jira_sanitizes_unexpected_exception_message(
+        self,
+        mock_logger,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test unexpected Jira send exceptions do not leak raw details to UI."""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1"]
+
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        mock_jira_integration = MagicMock()
+        mock_jira_integration.send_finding.side_effect = Exception("token=secret-value")
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        finding = MagicMock()
+        finding.id = "finding-1"
+        finding.check_id = "check_001"
+        finding.severity = "high"
+        finding.status = "FAIL"
+        finding.status_extended = "Resource is not compliant"
+        finding.compliance = {}
+        finding.resources.exists.return_value = False
+        finding.resources.first.return_value = None
+        finding.scan.provider.provider = "aws"
+        finding.check_metadata = {
+            "checktitle": "Check Title",
+            "risk": "High risk",
+            "remediation": {"recommendation": {}, "code": {}},
+        }
+        mock_select_related = mock_finding_model.all_objects.select_related.return_value
+        mock_finding_query = mock_select_related.prefetch_related.return_value
+        mock_finding_query.get.return_value = finding
+
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        assert result == {
+            "created_count": 0,
+            "failed_count": 1,
+            "error": "Failed to create Jira issue.",
+        }
+        assert "secret-value" not in result["error"]
+        mock_logger.exception.assert_called_with(
+            "Failed to send finding %s to Jira", "finding-1"
+        )
 
     @patch("tasks.jobs.integrations.rls_transaction")
     @patch("tasks.jobs.integrations.Finding")

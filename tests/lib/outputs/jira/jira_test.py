@@ -1732,7 +1732,7 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when custom fields cause an error."""
+        """Test that send_finding raises when custom fields cause an error."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1750,16 +1750,18 @@ class TestJiraIntegration:
         }
         mock_post.return_value = mock_response
 
-        result = self.jira_integration.send_finding(
-            check_id="test-check",
-            check_title="Test Finding",
-            severity="High",
-            status="FAIL",
-            project_key="TEST",
-            issue_type="Bug",
-        )
+        with pytest.raises(JiraRequiredCustomFieldsError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
 
-        assert result is False
+        assert "Jira project requires custom fields" in str(error.value)
+        assert "customfield_10001" in str(error.value)
         mock_post.assert_called_once()
 
     def test_get_headers_oauth_with_access_token(self):
