@@ -1,10 +1,8 @@
 "use client";
 
-import { Chip } from "@heroui/chip";
 import { Ban, Check } from "lucide-react";
-import { useState } from "react";
 
-import { Button, Card } from "@/components/shadcn";
+import { Badge, Card } from "@/components/shadcn";
 import { getRolePermissions } from "@/lib/permissions";
 import { RoleData, RoleDetail } from "@/types/users";
 
@@ -35,13 +33,11 @@ export const RoleItem = ({
   role: RoleData;
   roleDetail?: RoleDetail;
 }) => {
-  const [isExpanded, setIsExpanded] = useState(true);
-
   if (!roleDetail) {
     return (
-      <Chip key={role.id} size="sm" variant="flat" color="primary">
+      <Badge key={role.id} variant="info">
         {role.id}
-      </Chip>
+      </Badge>
     );
   }
 
@@ -56,38 +52,27 @@ export const RoleItem = ({
     <Card variant="inner">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Chip size="sm" variant="flat" color="primary">
-            {roleName}
-          </Chip>
-          <span className="text-xs text-gray-500 capitalize">
-            {permissionState}
-          </span>
+          <Badge variant="info">{roleName}</Badge>
+          {permissionState && (
+            <Badge variant="tag" className="capitalize">
+              {permissionState}
+            </Badge>
+          )}
         </div>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="px-0"
-        >
-          {isExpanded ? "Hide details" : "Show details"}
-        </Button>
       </div>
 
-      {isExpanded && (
-        <div
-          id={detailsId}
-          className="animate-fadeIn border-border-neutral-primary border-t pt-4"
-          role="region"
-          aria-label={`Details for role ${roleName}`}
-        >
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2">
-            {permissions.map(({ key, label, enabled }) => (
-              <PermissionItem key={key} label={label} enabled={enabled} />
-            ))}
-          </div>
+      <div
+        id={detailsId}
+        className="border-border-neutral-primary border-t pt-4"
+        role="region"
+        aria-label={`Details for role ${roleName}`}
+      >
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-2">
+          {permissions.map(({ key, label, enabled }) => (
+            <PermissionItem key={key} label={label} enabled={enabled} />
+          ))}
         </div>
-      )}
+      </div>
     </Card>
   );
 };

@@ -1,7 +1,31 @@
 import logging
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
+from config.settings import sentry as sentry_settings
 from config.settings.sentry import before_send
+
+
+def test_initialize_sentry_skips_without_dsn():
+    with (
+        patch.object(sentry_settings.env, "str", return_value=""),
+        patch.object(sentry_settings.sentry_sdk, "init") as mock_init,
+    ):
+        sentry_settings.initialize_sentry()
+
+    mock_init.assert_not_called()
+
+
+def test_initialize_sentry_uses_configured_dsn():
+    sentry_dsn = "https://fake-public-key@sentry.example.invalid/1"
+
+    with (
+        patch.object(sentry_settings.env, "str", return_value=sentry_dsn),
+        patch.object(sentry_settings.sentry_sdk, "init") as mock_init,
+    ):
+        sentry_settings.initialize_sentry()
+
+    assert mock_init.call_args.kwargs["dsn"] == sentry_dsn
+    assert mock_init.call_args.kwargs["before_send"] is sentry_settings.before_send
 
 
 def _make_log_record(msg, level=logging.ERROR, name="test", args=None):

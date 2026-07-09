@@ -21,11 +21,13 @@ from api.models import (
     StateChoices,
     StatusChoices,
 )
+from django.db import IntegrityError, OperationalError
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
     _aggregate_findings_by_region,
+    _bulk_update_resource_failed_findings_counts,
     _copy_compliance_requirement_rows,
     _create_compliance_summaries,
     _create_finding_delta,
@@ -74,7 +76,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         with (
             patch("api.db_utils.rls_transaction"),
@@ -132,7 +134,7 @@ class TestPerformScan:
 
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             # Ensure the provider type is 'aws' to match our mocks
             provider.provider = Provider.ProviderChoices.AWS
@@ -241,11 +243,11 @@ class TestPerformScan:
         mock_prowler_scan_class,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
@@ -266,11 +268,11 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
@@ -302,11 +304,11 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
@@ -509,7 +511,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that failed findings increment the failed_findings_count"""
         with (
@@ -530,7 +532,7 @@ class TestPerformScan:
 
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             # Ensure the provider type is 'aws'
             provider.provider = Provider.ProviderChoices.AWS
@@ -587,7 +589,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that multiple FAIL findings on the same resource increment the counter correctly"""
         with (
@@ -604,7 +606,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -704,7 +706,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that muted FAIL findings do not increment the failed_findings_count"""
         with (
@@ -721,7 +723,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -775,13 +777,13 @@ class TestPerformScan:
     def test_perform_prowler_scan_reset_failed_findings_count(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         resources_fixture,
     ):
         """Test that failed_findings_count is reset to 0 at the beginning of each scan"""
         # Use existing resource from fixture and set initial failed_findings_count
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         resource = resources_fixture[0]
 
         # Set a non-zero failed_findings_count initially
@@ -858,11 +860,103 @@ class TestPerformScan:
         # Assert that failed_findings_count was reset to 0 during the scan
         assert resource.failed_findings_count == 0
 
+    def test_failed_findings_count_update_retries_deadlock_in_stable_order(
+        self, resources_fixture, monkeypatch
+    ):
+        resource1, resource2, _ = resources_fixture
+        tenant_id = str(resource1.tenant_id)
+        resource1.failed_findings_count = 2
+        resource2.failed_findings_count = 3
+        resources_to_update = [resource2, resource1]
+        expected_order = [
+            str(resource.id)
+            for resource in sorted(resources_to_update, key=lambda item: str(item.id))
+        ]
+        original_bulk_update = Resource.objects.bulk_update
+        bulk_update_calls = []
+
+        def flaky_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            if len(bulk_update_calls) == 1:
+                raise OperationalError("deadlock detected")
+            return original_bulk_update(objects, fields, batch_size=batch_size)
+
+        monkeypatch.setattr("tasks.jobs.scan.SCAN_DB_BATCH_SIZE", 10)
+        monkeypatch.setattr(Resource.objects, "bulk_update", flaky_bulk_update)
+
+        _bulk_update_resource_failed_findings_counts(
+            tenant_id=tenant_id,
+            scan_id="scan-id",
+            resources_to_update=resources_to_update,
+        )
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 2
+        assert resource2.failed_findings_count == 3
+        assert bulk_update_calls == [expected_order, expected_order]
+
+    def test_failed_findings_count_update_does_not_retry_integrity_error(
+        self, resources_fixture, monkeypatch
+    ):
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+
+        def failing_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            raise IntegrityError("constraint violation")
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", failing_bulk_update)
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        with pytest.raises(IntegrityError, match="constraint violation"):
+            _bulk_update_resource_failed_findings_counts(
+                tenant_id=str(resource.tenant_id),
+                scan_id="scan-id",
+                resources_to_update=[resource],
+            )
+
+        assert len(bulk_update_calls) == 1
+        assert sleep_calls == []
+
+    def test_failed_findings_count_update_adds_jitter_to_retry_backoff(
+        self, resources_fixture, monkeypatch
+    ):
+        from tasks.jobs import scan as scan_jobs
+
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+        original_bulk_update = Resource.objects.bulk_update
+
+        def flaky_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            if len(bulk_update_calls) == 1:
+                raise OperationalError("deadlock detected")
+            return original_bulk_update(objects, fields, batch_size=batch_size)
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", flaky_bulk_update)
+        monkeypatch.setattr(scan_jobs, "random", MagicMock())
+        scan_jobs.random.uniform.return_value = 0.037
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        _bulk_update_resource_failed_findings_counts(
+            tenant_id=str(resource.tenant_id),
+            scan_id="scan-id",
+            resources_to_update=[resource],
+        )
+
+        scan_jobs.random.uniform.assert_called_once_with(0, 0.1)
+        assert sleep_calls == [0.137]
+
     def test_perform_prowler_scan_with_active_mute_rules(
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test active MuteRule mutes findings with correct reason"""
         with (
@@ -879,7 +973,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -979,7 +1073,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test inactive MuteRule does not mute findings"""
         with (
@@ -996,7 +1090,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1065,7 +1159,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test mutelist processor takes precedence over MuteRule"""
         with (
@@ -1082,7 +1176,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1151,7 +1245,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test MuteRule with multiple finding UIDs mutes all findings"""
         with (
@@ -1168,7 +1262,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1250,7 +1344,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test scan continues when MuteRule loading fails"""
         with (
@@ -1268,7 +1362,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1333,7 +1427,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test muted_at timestamp is set correctly for muted findings"""
         with (
@@ -1350,7 +1444,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1937,7 +2031,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
         resources_fixture,
     ):
@@ -1988,7 +2082,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2026,7 +2120,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         """Re-running compliance materialization must not raise nor duplicate rows.
@@ -2081,7 +2175,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2089,7 +2183,7 @@ class TestCreateComplianceRequirements:
         ) as mock_compliance_template:
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.KUBERNETES
             provider.save()
@@ -2127,7 +2221,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2146,7 +2240,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider:
@@ -2230,7 +2324,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2268,7 +2362,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -4595,7 +4689,7 @@ class TestUpdateProviderComplianceScores:
         self,
         mock_psycopg_connection,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
         settings,
     ):
@@ -4703,7 +4797,7 @@ class TestResetEphemeralResourceFindingsCount:
         )
 
     def test_resets_only_resources_missing_from_full_scope_scan(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         tenant, *_ = tenants_fixture
         scan1, scan2, *_ = scans_fixture
@@ -4783,7 +4877,7 @@ class TestResetEphemeralResourceFindingsCount:
         assert result["reason"] == "scan not found"
 
     def test_skips_when_newer_scan_completed_for_same_provider(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         # If a newer completed scan exists for the same provider, our
         # ResourceScanSummary set is stale relative to the resources' current
@@ -4792,7 +4886,7 @@ class TestResetEphemeralResourceFindingsCount:
 
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
-        provider, *_ = providers_fixture
+        provider = aws_provider
         _, resource2, _ = resources_fixture
 
         Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
@@ -4822,7 +4916,7 @@ class TestResetEphemeralResourceFindingsCount:
         assert resource2.failed_findings_count == 5
 
     def test_does_not_touch_other_providers_resources(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
@@ -4888,14 +4982,14 @@ class TestResetEphemeralResourceFindingsCount:
         assert resource2.failed_findings_count == 5
 
     def test_ignores_sibling_scan_with_null_completed_at(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         # Postgres orders NULL first in DESC; a sibling COMPLETED scan with a
         # missing completed_at must not be treated as the latest scan and
         # cause us to incorrectly skip the reset.
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
-        provider, *_ = providers_fixture
+        provider = aws_provider
         resource1, resource2, _ = resources_fixture
 
         Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)

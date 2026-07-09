@@ -1,5 +1,5 @@
 import { InfoTooltip } from "@/components/shadcn/info-field/info-field";
-import { FindingStatus, StatusFindingBadge } from "@/components/ui/table";
+import { FindingStatus, StatusFindingBadge } from "@/components/shadcn/table";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 
 interface ComplianceAccordionRequirementTitleProps {
@@ -19,7 +19,7 @@ export const ComplianceAccordionRequirementTitle = ({
     <div className="flex w-full items-center justify-between gap-2">
       <div className="flex w-5/6 items-center gap-2">
         {type && (
-          <span className="bg-primary/10 text-primary rounded-md px-2 py-0.5 text-xs font-medium">
+          <span className="bg-button-primary/10 text-button-primary rounded-md px-2 py-0.5 text-xs font-medium">
             {type}
           </span>
         )}

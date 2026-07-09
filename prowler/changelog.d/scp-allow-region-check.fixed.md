@@ -1,0 +1,1 @@
+`organizations_scp_check_deny_regions` no longer reports false `FAIL` for AWS Organizations that restrict regions with Allow-based SCPs; the Allow path now checks the statement `Effect` instead of an always-false comparison that made it unreachable

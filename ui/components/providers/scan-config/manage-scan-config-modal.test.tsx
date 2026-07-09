@@ -15,11 +15,12 @@ vi.mock("@/actions/scan-configurations", () => ({
   setScanConfigurationProviders: setScanConfigurationProvidersMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
 }));
 
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ children }: { children: React.ReactNode }) => (
     <span>{children}</span>
   ),

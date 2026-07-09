@@ -32,11 +32,11 @@ vi.mock("@/components/shadcn", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <time>{dateTime}</time>,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>

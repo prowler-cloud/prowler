@@ -24,7 +24,7 @@ import {
 } from "@/components/scans/scans.utils";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,

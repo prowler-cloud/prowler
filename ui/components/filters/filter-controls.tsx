@@ -1,8 +1,7 @@
 "use client";
 
+import { DataTableFilterCustom } from "@/components/shadcn/table";
 import { FilterOption } from "@/types";
-
-import { DataTableFilterCustom } from "../ui/table";
 
 import { CustomSearchInput } from "./custom-search-input";
 

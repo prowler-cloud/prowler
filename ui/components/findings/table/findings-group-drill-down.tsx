@@ -20,9 +20,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-  SeverityBadge,
-  StatusFindingBadge,
-} from "@/components/ui/table";
+} from "@/components/shadcn/table";
+import { SeverityBadge, StatusFindingBadge } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
@@ -33,7 +32,6 @@ import {
 import { FindingGroupRow } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
-
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";
@@ -127,7 +125,7 @@ export function FindingsGroupDrillDown({
     >
       <div
         className={cn(
-          "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary",
+          "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary rounded-[14px] shadow-sm",
           "flex w-full flex-col overflow-auto border",
         )}
       >

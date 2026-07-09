@@ -331,6 +331,59 @@ class Test_App_get_apps:
         mock_client.web_apps.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
+    def test_get_apps_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.web_apps.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
+
+            app = App(set_mocked_azure_provider())
+
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = app._get_apps()
+
+        assert mock_client.web_apps.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_apps_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.web_apps.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
+
+            app = App(set_mocked_azure_provider())
+
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        app._get_apps()
+
+        mock_client.web_apps.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
 
 class Test_App_get_functions:
     def test_get_functions_no_resource_groups(self):
@@ -415,61 +468,6 @@ class Test_App_get_functions:
         mock_client.web_apps.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
-    def test_get_apps_with_multiple_resource_groups(self):
-        mock_client = MagicMock()
-        mock_client.web_apps.list_by_resource_group.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=MagicMock(),
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_service import App
-
-            app = App(set_mocked_azure_provider())
-
-        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        app.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
-
-        result = app._get_apps()
-
-        assert mock_client.web_apps.list_by_resource_group.call_count == 2
-        assert AZURE_SUBSCRIPTION_ID in result
-
-    def test_get_apps_with_mixed_case_resource_group(self):
-        mock_client = MagicMock()
-        mock_client.web_apps.list_by_resource_group.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=MagicMock(),
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_service import App
-
-            app = App(set_mocked_azure_provider())
-
-        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        app.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
-
-        app._get_apps()
-
-        mock_client.web_apps.list_by_resource_group.assert_called_once_with(
-            resource_group_name="RG"
-        )
-
-
-class Test_App_get_functions_extra:
     def test_get_functions_with_multiple_resource_groups(self):
         mock_client = MagicMock()
         mock_client.web_apps.list_by_resource_group.return_value = []

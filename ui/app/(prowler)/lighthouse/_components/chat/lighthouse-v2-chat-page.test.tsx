@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import {
+  LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
+  notifyLighthouseV2SessionArchived,
+} from "@/app/(prowler)/lighthouse/_lib/session-events";
 import type {
   LighthouseV2Configuration,
   LighthouseV2Message,
@@ -594,6 +597,79 @@ describe("LighthouseV2ChatPage", () => {
       expect(getMessagesMock).toHaveBeenCalledWith("session-1"),
     );
     expect(source.close).toHaveBeenCalled();
+  });
+
+  it("resets to a new chat when the live-created session is archived from the sidebar", async () => {
+    // Given: a session created in this chat (its URL was set via replaceState,
+    // so the sidebar cannot see it in Next's search params)
+    const user = userEvent.setup();
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalled());
+
+    // When: the sidebar archives that same session
+    act(() => notifyLighthouseV2SessionArchived("session-1"));
+
+    // Then: the chat resets in place and the URL leaves the dead session
+    await waitFor(() =>
+      expect(replaceStateSpy).toHaveBeenCalledWith(null, "", "/lighthouse"),
+    );
+    expect(screen.queryByText("Summarize findings")).not.toBeInTheDocument();
+    expect(eventSources[0].close).toHaveBeenCalled();
+    replaceStateSpy.mockRestore();
+  });
+
+  it("drops a stale message reload that resolves after the session is archived", async () => {
+    // Given: a live session whose message.end reload is still in flight
+    const user = userEvent.setup();
+    let resolveReload: (value: unknown) => void = () => {};
+    getMessagesMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveReload = resolve;
+      }),
+    );
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(eventSources).toHaveLength(1));
+
+    // When: the run ends (starting the async reload) and, before it resolves,
+    // the open session is archived and the chat resets
+    act(() => eventSources[0].emit("message.end", { message_id: "message-1" }));
+    await waitFor(() =>
+      expect(getMessagesMock).toHaveBeenCalledWith("session-1"),
+    );
+    act(() => notifyLighthouseV2SessionArchived("session-1"));
+
+    // The reload finally resolves with the (now archived) session's messages
+    await act(async () => {
+      resolveReload({
+        data: [message("message-1", "assistant", "Archived answer")],
+      });
+    });
+
+    // Then: the stale reload is ignored so the reset chat is not repopulated
+    expect(screen.queryByText("Archived answer")).not.toBeInTheDocument();
+  });
+
+  it("keeps the conversation when a different session is archived", async () => {
+    // Given
+    renderPage({
+      initialSessionId: "session-2",
+      initialMessages: [message("message-1", "assistant", "Existing answer")],
+    });
+
+    // When
+    act(() => notifyLighthouseV2SessionArchived("session-other"));
+
+    // Then
+    expect(screen.getByText("Existing answer")).toBeInTheDocument();
   });
 
   it("surfaces a connection error when the stream closes without retrying", async () => {

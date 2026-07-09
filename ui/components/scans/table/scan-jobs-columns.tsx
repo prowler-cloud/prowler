@@ -3,8 +3,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { StackedCell } from "@/components/shadcn";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { StatusBadge } from "@/components/ui/table/status-badge";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { StatusBadge } from "@/components/shadcn/table/status-badge";
 import { formatLocalDate, formatLocalTimeWithZone } from "@/lib/date-utils";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";

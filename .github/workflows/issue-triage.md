@@ -12,8 +12,8 @@ if: contains(toJson(github.event.issue.labels), 'status/needs-triage')
 
 timeout-minutes: 12
 
-rate-limit:
-  max: 5
+user-rate-limit:
+  max-runs-per-window: 5
   window: 60
 
 concurrency:
@@ -108,7 +108,7 @@ Triage the following GitHub issue using the Prowler Issue Triage Agent persona.
 
 ## Sanitized Issue Content
 
-${{ needs.activation.outputs.text }}
+${{ steps.sanitized.outputs.text }}
 
 ## Instructions
 

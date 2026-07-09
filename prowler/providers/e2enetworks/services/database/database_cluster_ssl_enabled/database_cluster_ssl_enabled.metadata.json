@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_cluster_ssl_enabled",
+  "CheckTitle": "E2E Networks database clusters have SSL enabled on the master node",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**E2E Networks database clusters** should require `SSL/TLS` on the master node so that client connections and credentials are encrypted **in transit**.",
+  "Risk": "Without `SSL/TLS`, database credentials and query data travel in **plaintext** and can be intercepted through man-in-the-middle or network eavesdropping attacks.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable `SSL/TLS` on the master node of database clusters to encrypt all client connections in transit.",
+      "Url": "https://hub.prowler.com/check/database_cluster_ssl_enabled"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

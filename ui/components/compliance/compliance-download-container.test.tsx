@@ -22,7 +22,8 @@ vi.mock("@/lib/helper", () => ({
   downloadCompliancePdf: downloadCompliancePdfMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   toast: {},
 }));
 
@@ -39,7 +40,6 @@ describe("ComplianceDownloadContainer", () => {
 
   it("uses the shared action dropdown for the card actions mode", () => {
     expect(source).toContain("ActionDropdown");
-    expect(source).not.toContain("@heroui/button");
   });
 
   it("should expose an accessible actions menu trigger", () => {

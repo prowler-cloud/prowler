@@ -12,6 +12,7 @@ on:
       - '.github/workflows/sdk-codeql.yml'
       - '.github/codeql/sdk-codeql-config.yml'
       - '!prowler/CHANGELOG.md'
+      - '!prowler/changelog.d/**'
   pull_request:
     branches:
       - 'master'
@@ -23,6 +24,7 @@ on:
       - '.github/workflows/sdk-codeql.yml'
       - '.github/codeql/sdk-codeql-config.yml'
       - '!prowler/CHANGELOG.md'
+      - '!prowler/changelog.d/**'
   schedule:
     - cron: '00 12 * * *'
 

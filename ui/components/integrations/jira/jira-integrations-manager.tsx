@@ -15,14 +15,15 @@ import {
   IntegrationCardHeader,
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
-import { Button, Card, CardContent, CardHeader } from "@/components/shadcn";
+import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";
 
+import { Card, CardContent, CardHeader } from "../../shadcn";
 import { JiraIntegrationForm } from "./jira-integration-form";
 
 interface JiraIntegrationsManagerProps {

@@ -18,9 +18,10 @@ import {
   Input,
   Textarea,
 } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { DOCS_URLS } from "@/lib/external-urls";
 import {
   convertToYaml,
   defaultScanConfigurationYaml,
@@ -189,28 +190,19 @@ function ScanConfigurationForm({
         <FieldLabel htmlFor="scan-configuration-yaml">
           Configuration (YAML)
         </FieldLabel>
-        <ul className="text-default-500 text-tiny mb-1 list-disc pl-5">
+        <ul className="text-text-neutral-tertiary mb-1 list-disc pl-5 text-xs">
           <li>
             Follows the structure of{" "}
-            <CustomLink
-              size="xs"
-              href="https://docs.prowler.com/user-guide/cli/tutorials/configuration_file"
-            >
+            <code className="bg-bg-neutral-tertiary text-text-neutral-secondary rounded px-1 py-0.5 font-mono">
               prowler/config/config.yaml
-            </CustomLink>
-            ; include only the keys you want to override.
-          </li>
-          <li>The configuration is validated on save.</li>
-          <li>
-            Learn more about configuring scans{" "}
-            <CustomLink
-              size="xs"
-              href="https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration"
-            >
+            </code>
+            ; include only the keys you want to override. Learn more{" "}
+            <CustomLink size="xs" href={DOCS_URLS.SCAN_CONFIGURATION}>
               here
             </CustomLink>
             .
           </li>
+          <li>The configuration is validated on save.</li>
         </ul>
         <Textarea
           id="scan-configuration-yaml"
@@ -233,7 +225,7 @@ function ScanConfigurationForm({
           {!yamlSyntax.isValid ? (
             <FieldError>{`Invalid YAML format: ${yamlSyntax.error}`}</FieldError>
           ) : configText.trim() && !configError ? (
-            <p className="text-tiny text-text-success-primary">
+            <p className="text-text-success-primary text-xs">
               Valid YAML format
             </p>
           ) : null}
@@ -243,7 +235,7 @@ function ScanConfigurationForm({
 
       <Field>
         <FieldLabel>Attach to providers (optional)</FieldLabel>
-        <p className="text-default-500 text-tiny">
+        <p className="text-text-neutral-tertiary text-xs">
           Pick the providers that should use this configuration on their next
           scan. You can save it without any and attach providers later — it just
           won&apos;t apply to a scan until one is attached.
@@ -257,7 +249,7 @@ function ScanConfigurationForm({
           )}
         </p>
         {selectableProviders.length === 0 ? (
-          <p className="text-default-500 text-tiny italic">
+          <p className="text-text-neutral-tertiary text-xs italic">
             {richProviders.length === 0
               ? "No providers available in this tenant."
               : "All providers are already attached to other Scan Configurations."}
