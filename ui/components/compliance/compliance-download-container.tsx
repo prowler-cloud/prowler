@@ -34,6 +34,9 @@ interface ComplianceDownloadContainerProps {
   orientation?: "row" | "column";
   buttonWidth?: "auto" | "icon";
   presentation?: "buttons" | "dropdown";
+  /** Custom dropdown trigger (e.g. an outline "Report" button); only used
+   *  when presentation is "dropdown". Defaults to the dots icon. */
+  dropdownTrigger?: React.ReactNode;
 }
 
 export const ComplianceDownloadContainer = ({
@@ -45,6 +48,7 @@ export const ComplianceDownloadContainer = ({
   orientation = "row",
   buttonWidth = "auto",
   presentation = "buttons",
+  dropdownTrigger,
 }: ComplianceDownloadContainerProps) => {
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
   const [isDownloadingOcsf, setIsDownloadingOcsf] = useState(false);
@@ -116,6 +120,7 @@ export const ComplianceDownloadContainer = ({
         <ActionDropdown
           variant={isIconWidth ? "bordered" : "table"}
           ariaLabel="Open compliance export actions"
+          trigger={dropdownTrigger}
         >
           <ActionDropdownItem
             icon={

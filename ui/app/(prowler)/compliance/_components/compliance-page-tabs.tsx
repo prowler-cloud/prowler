@@ -42,8 +42,13 @@ export const CompliancePageTabs = ({
   };
 
   return (
-    <Tabs value={activeTab} onValueChange={handleTabChange}>
-      <TabsList>
+    // Same layout spacing as the scans view tabs (scans-page-shell.tsx).
+    <Tabs
+      value={activeTab}
+      onValueChange={handleTabChange}
+      className="flex flex-col gap-[18px]"
+    >
+      <TabsList className="overflow-x-auto">
         <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Per Scan</TabsTrigger>
         <TabsTrigger
           value={COMPLIANCE_TAB.CROSS_PROVIDER}

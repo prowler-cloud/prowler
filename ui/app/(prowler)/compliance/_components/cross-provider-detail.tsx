@@ -11,6 +11,7 @@ import {
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Card } from "@/components/shadcn/card/card";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import type { Framework, RequirementsTotals } from "@/types/compliance";
 
@@ -173,36 +174,38 @@ export const CrossProviderDetail = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-3">
-          {logoPath && (
-            <div className="flex h-10 w-10 min-w-10 items-center justify-center rounded-md border border-gray-300 bg-white">
-              <Image
-                src={logoPath}
-                alt={`${compliancetitle} logo`}
-                width={32}
-                height={32}
-                className="h-8 w-8 object-contain"
-              />
-            </div>
-          )}
-          <p className="text-text-neutral-secondary max-w-3xl text-sm">
-            {attrs.description || catalogEntry?.description}
-          </p>
+      {/* Header card — mirrors the per-scan detail: filters on the left,
+          report actions and framework logo on the right (lighthouse-settings
+          card pattern). */}
+      <Card variant="base" className="w-full gap-4 p-4 md:p-5">
+        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 flex-1 flex-col justify-end gap-4">
+            <CrossProviderFilters
+              providerTypes={compatibleTypes}
+              providerAccounts={providerAccounts}
+              providerGroups={providerGroups}
+              regions={[]}
+            />
+          </div>
+          <div className="flex flex-shrink-0 items-start gap-4 self-end sm:self-start">
+            <CrossProviderPdfButton
+              complianceId={complianceId}
+              filters={{ ...filters, scanIds: attrs.scan_ids }}
+              latestPdf={latestPdf}
+            />
+            {logoPath && (
+              <div className="relative hidden h-24 w-24 sm:block">
+                <Image
+                  src={logoPath}
+                  alt={`${compliancetitle} logo`}
+                  fill
+                  className="rounded-lg border border-gray-300 bg-white object-contain p-0"
+                />
+              </div>
+            )}
+          </div>
         </div>
-        <CrossProviderPdfButton
-          complianceId={complianceId}
-          filters={{ ...filters, scanIds: attrs.scan_ids }}
-          latestPdf={latestPdf}
-        />
-      </div>
-
-      <CrossProviderFilters
-        providerTypes={compatibleTypes}
-        providerAccounts={providerAccounts}
-        providerGroups={providerGroups}
-        regions={[]}
-      />
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-[minmax(280px,400px)_minmax(280px,360px)_1fr]">
         <RequirementsStatusCard

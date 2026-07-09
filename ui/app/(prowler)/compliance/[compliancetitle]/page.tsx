@@ -1,3 +1,4 @@
+import { ChevronDownIcon } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -25,6 +26,8 @@ import {
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
@@ -224,33 +227,45 @@ export default async function ComplianceDetail({
 
   return (
     <ContentLayout title={finalPageTitle}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0 flex-1">
-          <ComplianceHeader
-            scans={[]}
-            uniqueRegions={uniqueRegions}
-            showSearch={false}
-            framework={compliancetitle}
-            showProviders={false}
-            logoPath={logoPath}
-            complianceTitle={compliancetitle}
-            selectedScan={selectedScan}
-          />
-        </div>
-        {selectedScanId && (
-          <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
-            <ComplianceDownloadContainer
-              scanId={selectedScanId}
-              complianceId={complianceId}
-              reportType={getReportTypeForCompliance(
-                attributesData?.data?.[0]?.attributes?.framework,
-                complianceId,
-                latestCisIds.has(complianceId),
-              )}
+      {/* Header card — same surface as the cross-provider detail: scan info
+          and filters on the left, report actions and framework logo on the
+          right (lighthouse-settings card pattern). */}
+      <Card variant="base" className="mb-6 w-full gap-4 p-4 md:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <ComplianceHeader
+              scans={[]}
+              uniqueRegions={uniqueRegions}
+              showSearch={false}
+              framework={compliancetitle}
+              showProviders={false}
+              logoPath={logoPath}
+              complianceTitle={compliancetitle}
+              selectedScan={selectedScan}
             />
           </div>
-        )}
-      </div>
+          {selectedScanId && (
+            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+              <ComplianceDownloadContainer
+                scanId={selectedScanId}
+                complianceId={complianceId}
+                presentation="dropdown"
+                dropdownTrigger={
+                  <Button variant="outline">
+                    Report
+                    <ChevronDownIcon />
+                  </Button>
+                }
+                reportType={getReportTypeForCompliance(
+                  attributesData?.data?.[0]?.attributes?.framework,
+                  complianceId,
+                  latestCisIds.has(complianceId),
+                )}
+              />
+            </div>
+          )}
+        </div>
+      </Card>
 
       <Suspense
         key={searchParamsKey}

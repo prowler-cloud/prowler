@@ -5,18 +5,12 @@ import { useState } from "react";
 
 import { Button, Checkbox, Label } from "@/components/shadcn";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/shadcn/dialog";
-import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { FormButtons } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
+import { Modal } from "@/components/shadcn/modal";
 import { toast } from "@/components/shadcn/toast";
 import {
   trackAndPollTask,
@@ -141,16 +135,20 @@ export const CrossProviderPdfButton = ({
         <Button onClick={() => setDialogOpen(true)}>Generate Report</Button>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Generate cross-provider PDF</DialogTitle>
-            <DialogDescription>
-              The report covers the providers, accounts and filters currently
-              applied to this view.
-            </DialogDescription>
-          </DialogHeader>
-
+      <Modal
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title="Generate Cross-Provider Report"
+        description="The report covers the providers, accounts and filters currently applied to this view."
+        size="xl"
+      >
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleGenerate();
+          }}
+          className="flex flex-col gap-6"
+        >
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
               <Label htmlFor="cross-provider-report-name">Report name</Label>
@@ -185,20 +183,14 @@ export const CrossProviderPdfButton = ({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setDialogOpen(false)}
-              disabled={submitting}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleGenerate} disabled={submitting}>
-              Generate
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          <FormButtons
+            onCancel={() => setDialogOpen(false)}
+            submitText="Generate"
+            loadingText="Starting..."
+            isDisabled={submitting}
+          />
+        </form>
+      </Modal>
     </>
   );
 };
