@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Framework } from "@/types/compliance";
@@ -8,12 +9,10 @@ vi.mock(
   "@/components/compliance/compliance-accordion/client-accordion-content",
   () => ({ ClientAccordionContent: () => null }),
 );
-// The requirement title reaches next-auth through the shadcn/table barrel
-// (data-table-pagination → @/lib). Same stubs as compliance-mapper.test.ts.
-vi.mock(
-  "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title",
-  () => ({ ComplianceAccordionRequirementTitle: () => null }),
-);
+// The section header reaches next-auth through the shadcn/table barrel
+// (data-table-pagination → @/lib). Same stub as compliance-mapper.test.ts.
+// The requirement title is rendered for real here — it only pulls the
+// leak-free status-finding-badge file + provider icons.
 vi.mock(
   "@/components/compliance/compliance-accordion/compliance-accordion-title",
   () => ({ ComplianceAccordionTitle: () => null }),
@@ -93,5 +92,25 @@ describe("toCrossProviderAccordionItems", () => {
       expect(child.title).toBeTruthy();
       expect(child.content).toBeTruthy();
     }
+  });
+
+  it("shows the status only once via the provider chips (no duplicate roll-up badge)", () => {
+    // A&A-01 has a single provider (aws FAIL): its status must appear once,
+    // in the chip — not also as a separate roll-up badge.
+    const { unmount } = render(<>{items[0].items?.[0].title}</>);
+
+    expect(screen.getByText("A&A-01 - Audit Policy")).toBeInTheDocument();
+    expect(screen.getAllByText(/^fail$/i)).toHaveLength(1);
+    unmount();
+  });
+
+  it("falls back to a single roll-up badge when a requirement has no per-provider breakdown", () => {
+    // A&A-02 is absent from the extras map, so it keeps one roll-up status.
+    render(<>{items[0].items?.[1].title}</>);
+
+    expect(
+      screen.getByText("A&A-02 - Independent Assessments"),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/^pass$/i)).toHaveLength(1);
   });
 });
