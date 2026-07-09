@@ -15,8 +15,7 @@ import {
   ALERT_TRIGGER_KINDS,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import { DOCS_URLS } from "@/lib/external-urls";
 import type { MetaDataProps, ScanEntity } from "@/types";

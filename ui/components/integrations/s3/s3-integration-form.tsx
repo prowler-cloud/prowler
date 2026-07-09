@@ -12,8 +12,7 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
-import { Separator } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Separator, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {

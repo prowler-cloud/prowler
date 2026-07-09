@@ -11,8 +11,7 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
-import { Field, FieldLabel } from "@/components/shadcn";
-import { ToastAction, useToast } from "@/components/shadcn";
+import { Field, FieldLabel, ToastAction, useToast } from "@/components/shadcn";
 import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,

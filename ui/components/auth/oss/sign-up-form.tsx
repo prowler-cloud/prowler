@@ -15,8 +15,7 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button, Checkbox } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, Checkbox, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {

@@ -7,8 +7,7 @@ import * as z from "zod";
 
 import { deleteUser } from "@/actions/users/users";
 import { DeleteIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Form } from "@/components/shadcn/form";
 
 const formSchema = z.object({

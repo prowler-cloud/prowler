@@ -1,7 +1,6 @@
 "use client";
 
-import { Control } from "react-hook-form";
-import { useWatch } from "react-hook-form";
+import { Control, useWatch } from "react-hook-form";
 
 import { WizardTextareaField } from "@/components/providers/workflow/forms/fields";
 import { KubernetesCredentials } from "@/types";

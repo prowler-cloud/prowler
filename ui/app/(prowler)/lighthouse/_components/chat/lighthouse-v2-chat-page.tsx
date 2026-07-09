@@ -52,6 +52,7 @@ import {
 import { useMountEffect } from "@/hooks/use-mount-effect";
 
 import { ProviderIcon } from "../config/provider-icon";
+
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { MessageBubble } from "./message-bubble";

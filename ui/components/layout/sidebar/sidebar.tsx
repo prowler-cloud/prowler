@@ -1,10 +1,9 @@
 "use client";
 
-import clsx from "clsx";
+import { clsx } from "clsx";
 import Link from "next/link";
 
-import { ProwlerShort } from "@/components/icons";
-import { ProwlerExtended } from "@/components/icons";
+import { ProwlerShort, ProwlerExtended } from "@/components/icons";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";

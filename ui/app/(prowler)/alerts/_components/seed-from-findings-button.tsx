@@ -27,8 +27,9 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  ToastAction,
+  useToast,
 } from "@/components/shadcn";
-import { ToastAction, useToast } from "@/components/shadcn";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
