@@ -1,6 +1,7 @@
 import type {
   AttributesData,
   AttributesItemData,
+  CheckProviderTypesMap,
   RequirementItemData,
   RequirementsData,
 } from "@/types/compliance";
@@ -10,6 +11,7 @@ import type {
   CrossProviderOverviewAttributes,
   CrossProviderRequirementExtras,
   ProviderBreakdownEntry,
+  ProviderCheckIdsMap,
 } from "../_types";
 
 /** The composed display name the per-scan mappers give every requirement.
@@ -97,6 +99,25 @@ export const buildRequirementExtrasMap = (
   }
 
   return extras;
+};
+
+/**
+ * Invert a requirement's per-provider check split into check id → provider
+ * types, so the combined checks list can label each check. Iterates
+ * PROVIDER_TYPES for a stable icon order regardless of API key order.
+ */
+export const invertCheckIdsByProvider = (
+  checkIdsByProvider: ProviderCheckIdsMap,
+): CheckProviderTypesMap => {
+  const byCheck: CheckProviderTypesMap = {};
+
+  for (const provider of PROVIDER_TYPES) {
+    for (const checkId of checkIdsByProvider[provider] ?? []) {
+      (byCheck[checkId] ??= []).push(provider);
+    }
+  }
+
+  return byCheck;
 };
 
 const isKnownProviderType = (value: string): value is ProviderType =>

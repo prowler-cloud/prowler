@@ -1,8 +1,7 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import type { Requirement } from "@/types/compliance";
+import type { CheckProviderTypesMap, Requirement } from "@/types/compliance";
 
 import type { CrossProviderRequirementExtras } from "../_types";
 import { CrossProviderRequirementContent } from "./cross-provider-requirement-content";
@@ -12,22 +11,25 @@ const { clientAccordionContentMock } = vi.hoisted(() => ({
   clientAccordionContentMock: vi.fn(
     ({
       requirement,
-      scanId,
+      scanIds,
     }: {
       requirement: Requirement;
-      scanId: string;
+      scanIds: string[];
       framework: string;
+      checkProviders: CheckProviderTypesMap;
+      disableFindings?: boolean;
     }) => (
       <div data-testid="findings-content">
-        {scanId}:{requirement.check_ids.join("|")}:{requirement.status}
+        {scanIds.join("|")}:{requirement.check_ids.join("|")}:
+        {requirement.status}
       </div>
     ),
   ),
 }));
 
 // The real ClientAccordionContent drags the findings/server-action chain into
-// jsdom; its behavior has its own tests. Here we assert the per-provider
-// fan-out composition around it.
+// jsdom; its behavior has its own tests. Here we assert the combined-view
+// composition around it.
 vi.mock(
   "@/components/compliance/compliance-accordion/client-accordion-content",
   () => ({ ClientAccordionContent: clientAccordionContentMock }),
@@ -40,14 +42,17 @@ const mappedRequirement: Requirement = {
   pass: 0,
   fail: 1,
   manual: 0,
-  check_ids: ["aws_check", "azure_check"],
+  check_ids: ["aws_check", "azure_check", "shared_check"],
   scope_applicability: "IaaS",
 };
 
 const extras: CrossProviderRequirementExtras = {
   requirementId: "A&A-01",
   providers: { aws: "FAIL", azure: "PASS" },
-  checkIdsByProvider: { aws: ["aws_check"], azure: ["azure_check"] },
+  checkIdsByProvider: {
+    aws: ["aws_check", "shared_check"],
+    azure: ["azure_check", "shared_check"],
+  },
   scanIdsByProvider: {
     aws: ["scan-aws-1", "scan-aws-2"],
     azure: ["scan-azure-1"],
@@ -68,7 +73,8 @@ describe("RequirementProviderChips", () => {
 });
 
 describe("CrossProviderRequirementContent", () => {
-  it("renders one collapsed section per contributing provider scan", () => {
+  it("renders the requirement once with all contributing scans combined", () => {
+    clientAccordionContentMock.mockClear();
     render(
       <CrossProviderRequirementContent
         requirement={mappedRequirement}
@@ -77,16 +83,23 @@ describe("CrossProviderRequirementContent", () => {
       />,
     );
 
-    // aws has two accounts (two scans) + azure one → three sections.
-    expect(screen.getByText("AWS — account 1 of 2")).toBeInTheDocument();
-    expect(screen.getByText("AWS — account 2 of 2")).toBeInTheDocument();
-    expect(screen.getByText("Azure")).toBeInTheDocument();
-    // Lazy: findings content is not mounted until a section expands.
-    expect(screen.queryByTestId("findings-content")).not.toBeInTheDocument();
+    // One combined block — no per-provider sections repeating the detail.
+    expect(clientAccordionContentMock).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText(/account 1 of/)).not.toBeInTheDocument();
+    expect(screen.getByTestId("findings-content")).toHaveTextContent(
+      "scan-aws-1|scan-aws-2|scan-azure-1:aws_check|azure_check|shared_check:FAIL",
+    );
+
+    // The mapped requirement passes through untouched (union checks,
+    // roll-up status, detail fields for getDetailsComponent).
+    const call = clientAccordionContentMock.mock.calls.at(-1)?.[0];
+    expect(call?.requirement).toBe(mappedRequirement);
+    expect(call?.framework).toBe("CSA-CCM");
+    expect(call?.disableFindings).toBe(false);
   });
 
-  it("expands a provider section into the per-scan findings scoped to that provider", async () => {
-    const user = userEvent.setup();
+  it("labels each check with the provider types that declare it", () => {
+    clientAccordionContentMock.mockClear();
     render(
       <CrossProviderRequirementContent
         requirement={mappedRequirement}
@@ -95,14 +108,45 @@ describe("CrossProviderRequirementContent", () => {
       />,
     );
 
-    await user.click(screen.getByText("Azure"));
-
-    // The synthesized requirement narrows check_ids and status to azure's.
-    expect(screen.getByTestId("findings-content")).toHaveTextContent(
-      "scan-azure-1:azure_check:PASS",
-    );
     const call = clientAccordionContentMock.mock.calls.at(-1)?.[0];
-    expect(call?.requirement.scope_applicability).toBe("IaaS");
-    expect(call?.framework).toBe("CSA-CCM");
+    expect(call?.checkProviders).toEqual({
+      aws_check: ["aws"],
+      azure_check: ["azure"],
+      shared_check: ["aws", "azure"],
+    });
+  });
+
+  it("disables findings when no provider contributed any check", () => {
+    clientAccordionContentMock.mockClear();
+    render(
+      <CrossProviderRequirementContent
+        requirement={{ ...mappedRequirement, check_ids: [], status: "MANUAL" }}
+        extras={{
+          ...extras,
+          providers: { aws: "MANUAL", azure: "MANUAL" },
+          checkIdsByProvider: {},
+        }}
+        framework="CSA-CCM"
+      />,
+    );
+
+    const call = clientAccordionContentMock.mock.calls.at(-1)?.[0];
+    expect(call?.disableFindings).toBe(true);
+  });
+
+  it("shows an empty state when no provider scan contributed", () => {
+    clientAccordionContentMock.mockClear();
+    render(
+      <CrossProviderRequirementContent
+        requirement={mappedRequirement}
+        extras={{ ...extras, providers: {} }}
+        framework="CSA-CCM"
+      />,
+    );
+
+    expect(
+      screen.getByText(/No provider scan contributed/),
+    ).toBeInTheDocument();
+    expect(clientAccordionContentMock).not.toHaveBeenCalled();
   });
 });

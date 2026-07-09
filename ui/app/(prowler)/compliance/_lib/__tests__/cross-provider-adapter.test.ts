@@ -92,6 +92,7 @@ import {
   buildRequirementExtrasMap,
   computeProviderBreakdown,
   crossProviderToMapperInput,
+  invertCheckIdsByProvider,
 } from "../cross-provider-adapter";
 
 const buildAttributes = (
@@ -292,6 +293,36 @@ describe("CSA grouping through the real mapper", () => {
     expect(framework.pass).toBe(1);
     expect(framework.fail).toBe(1);
     expect(framework.manual).toBe(1);
+  });
+});
+
+describe("invertCheckIdsByProvider", () => {
+  it("maps each check id to the provider types that declare it", () => {
+    expect(
+      invertCheckIdsByProvider({
+        aws: ["iam_check_1"],
+        azure: ["entra_check_1"],
+      }),
+    ).toEqual({
+      iam_check_1: ["aws"],
+      entra_check_1: ["azure"],
+    });
+  });
+
+  it("accumulates every provider for a check shared across providers", () => {
+    expect(
+      invertCheckIdsByProvider({
+        aws: ["shared_check", "iam_check_1"],
+        azure: ["shared_check"],
+      }),
+    ).toEqual({
+      shared_check: ["aws", "azure"],
+      iam_check_1: ["aws"],
+    });
+  });
+
+  it("returns an empty map for no per-provider checks", () => {
+    expect(invertCheckIdsByProvider({})).toEqual({});
   });
 });
 
