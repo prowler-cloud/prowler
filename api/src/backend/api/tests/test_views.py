@@ -16923,6 +16923,76 @@ class TestLighthouseProviderConfigViewSet:
         error_detail = str(resp.json()).lower()
         assert "base_url" in error_detail
 
+    @pytest.mark.parametrize(
+        "base_url",
+        [
+            "https://127.0.0.1/v1",
+            "https://169.254.169.254/latest/meta-data",
+        ],
+    )
+    def test_openai_compatible_rejects_internal_base_url_on_create(
+        self, authenticated_client, base_url
+    ):
+        payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": base_url,
+                    "credentials": {"api_key": "compat-key"},
+                },
+            }
+        }
+
+        resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "base_url" in str(resp.json()).lower()
+
+    def test_openai_compatible_rejects_internal_base_url_on_update(
+        self, authenticated_client
+    ):
+        create_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "attributes": {
+                    "provider_type": "openai_compatible",
+                    "base_url": "https://openrouter.ai/api/v1",
+                    "credentials": {"api_key": "compat-key-123"},
+                },
+            }
+        }
+        create_resp = authenticated_client.post(
+            reverse("lighthouse-providers-list"),
+            data=create_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+        assert create_resp.status_code == status.HTTP_201_CREATED
+        provider_id = create_resp.json()["data"]["id"]
+
+        patch_payload = {
+            "data": {
+                "type": "lighthouse-providers",
+                "id": provider_id,
+                "attributes": {
+                    "base_url": "https://169.254.169.254/latest/meta-data",
+                },
+            }
+        }
+
+        patch_resp = authenticated_client.patch(
+            reverse("lighthouse-providers-detail", kwargs={"pk": provider_id}),
+            data=patch_payload,
+            content_type=API_JSON_CONTENT_TYPE,
+        )
+
+        assert patch_resp.status_code == status.HTTP_400_BAD_REQUEST
+        assert "base_url" in str(patch_resp.json()).lower()
+
     def test_openai_compatible_invalid_credentials(self, authenticated_client):
         payload = {
             "data": {

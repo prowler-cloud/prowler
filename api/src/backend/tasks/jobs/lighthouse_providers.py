@@ -1,6 +1,8 @@
 import boto3
+import httpx
 import openai
 from api.models import LighthouseProviderConfiguration, LighthouseProviderModels
+from api.validators import validate_lighthouse_openai_compatible_base_url
 from botocore import UNSIGNED
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
@@ -114,6 +116,7 @@ def _extract_openai_compatible_params(
         return None
     if not isinstance(base_url, str) or not base_url:
         return None
+    validate_lighthouse_openai_compatible_base_url(base_url, resolve_dns=False)
     return {"base_url": base_url, "api_key": api_key}
 
 
@@ -285,13 +288,14 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> dict:
                     "error": "Base URL or API key is invalid or missing",
                 }
 
-            # Test connection using OpenAI SDK with custom base_url
-            # Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
-            client = openai.OpenAI(
-                api_key=params["api_key"],
-                base_url=params["base_url"],
-            )
-            _ = client.models.list()
+            validate_lighthouse_openai_compatible_base_url(params["base_url"])
+            with httpx.Client(follow_redirects=False) as http_client:
+                client = openai.OpenAI(
+                    api_key=params["api_key"],
+                    base_url=params["base_url"],
+                    http_client=http_client,
+                )
+                _ = client.models.list()
 
         else:
             return {"connected": False, "error": "Unsupported provider type"}
@@ -361,8 +365,14 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> dict[str, st
 
     Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
-    client = openai.OpenAI(api_key=api_key, base_url=base_url)
-    models = client.models.list()
+    validate_lighthouse_openai_compatible_base_url(base_url)
+    with httpx.Client(follow_redirects=False) as http_client:
+        client = openai.OpenAI(
+            api_key=api_key,
+            base_url=base_url,
+            http_client=http_client,
+        )
+        models = client.models.list()
 
     available_models: dict[str, str] = {}
     for model in models.data:

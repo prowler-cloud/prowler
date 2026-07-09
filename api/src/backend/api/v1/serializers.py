@@ -55,6 +55,7 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from api.validators import validate_lighthouse_openai_compatible_base_url
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -74,6 +75,13 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 # Base
+
+
+def _validate_lighthouse_base_url_without_dns(base_url: str) -> None:
+    try:
+        validate_lighthouse_openai_compatible_base_url(base_url, resolve_dns=False)
+    except DjangoValidationError as error:
+        raise ValidationError({"base_url": error.messages[0]}) from error
 
 
 class BaseModelSerializerV1(serializers.ModelSerializer):
@@ -3602,6 +3610,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
         ):
             if not base_url:
                 raise ValidationError({"base_url": "Base URL is required."})
+            _validate_lighthouse_base_url_without_dns(base_url)
             try:
                 OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
@@ -3733,24 +3742,27 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     }
                 )
         elif (
-            credentials is not None
-            and provider_type
+            provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
         ):
-            if base_url is None:
-                pass
-            elif not base_url:
+            effective_base_url = (
+                base_url if "base_url" in attrs else getattr(self.instance, "base_url")
+            )
+            if not effective_base_url:
                 raise ValidationError({"base_url": "Base URL cannot be empty."})
-            try:
-                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
-                    raise_exception=True
-                )
-            except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+            if "base_url" in attrs:
+                _validate_lighthouse_base_url_without_dns(effective_base_url)
+            if credentials is not None:
+                try:
+                    OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
+                        raise_exception=True
+                    )
+                except ValidationError as e:
+                    details = e.detail.copy()
+                    for key, value in details.items():
+                        e.detail[f"credentials/{key}"] = value
+                        del e.detail[key]
+                    raise e
 
         return super().validate(attrs)
 

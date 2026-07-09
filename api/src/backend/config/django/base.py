@@ -13,6 +13,9 @@ DEBUG = env.bool("DJANGO_DEBUG", default=False)
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 USE_X_FORWARDED_HOST = True
+LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_HOSTS = env.list(
+    "LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_HOSTS", default=[]
+)
 
 # Application definition
 
