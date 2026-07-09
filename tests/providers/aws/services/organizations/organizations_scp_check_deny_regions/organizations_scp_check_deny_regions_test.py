@@ -372,9 +372,7 @@ class Test_organizations_scp_check_deny_regions:
         org_id = response["Organization"]["Id"]
         policy_id = response_policy["Policy"]["PolicySummary"]["Id"]
 
-        aws_provider._audit_config = {
-            "organizations_enabled_regions": ["eu-central-1"]
-        }
+        aws_provider._audit_config = {"organizations_enabled_regions": ["eu-central-1"]}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -416,9 +414,7 @@ class Test_organizations_scp_check_deny_regions:
         org_id = response["Organization"]["Id"]
         policy_id = response_policy["Policy"]["PolicySummary"]["Id"]
 
-        aws_provider._audit_config = {
-            "organizations_enabled_regions": ["us-east-1"]
-        }
+        aws_provider._audit_config = {"organizations_enabled_regions": ["us-east-1"]}
 
         with mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
