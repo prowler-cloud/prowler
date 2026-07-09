@@ -28,7 +28,7 @@ declare global {
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
       UI_SENTRY_ENVIRONMENT?: string;
 
-      BILLING_CLOUD_ENABLE?: "true" | "false";
+      CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
       // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";

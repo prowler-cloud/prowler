@@ -2,7 +2,7 @@ import {
   assertGatedIntegrations,
   warnGatedIntegrationsMisconfig,
 } from "@/lib/integrations";
-import { readEnv } from "@/lib/runtime-env";
+import { readBoolEnv, readEnv } from "@/lib/runtime-env";
 
 // Boot-time required-env assertion so a misconfigured container fails fast
 // with a clear message. A key with a deprecated legacy name is satisfied by
@@ -23,6 +23,19 @@ for (const { key, legacy } of REQUIRED) {
 }
 
 assertGatedIntegrations();
+
+// `metronome` billing evaluates the BILLING_SYSTEM_METRONOME PostHog flag per
+// tenant, so PostHog must be enabled or every tenant would be misrouted to the
+// wrong billing system. Fail fast instead of degrading silently.
+if (
+  readEnv("CLOUD_BILLING_ENABLED") === "metronome" &&
+  !readBoolEnv("UI_POSTHOG_ENABLE")
+) {
+  throw new Error(
+    'CLOUD_BILLING_ENABLED is "metronome" but UI_POSTHOG_ENABLE is not "true"; PostHog is required for per-tenant billing routing.',
+  );
+}
+
 warnGatedIntegrationsMisconfig();
 
 export {};
