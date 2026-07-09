@@ -8,8 +8,8 @@ import * as z from "zod";
 import { revokeInvite } from "@/actions/invitations/invitation";
 import { DeleteIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
 
 const formSchema = z.object({
   invitationId: z.string(),

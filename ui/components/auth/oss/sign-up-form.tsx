@@ -1,6 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
@@ -16,16 +15,17 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { Button, Checkbox } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/shadcn/form";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -164,6 +164,7 @@ export const SignUpForm = ({
     <AuthLayout title="Sign up">
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -217,14 +218,18 @@ export const SignUpForm = ({
               name="termsAndConditions"
               render={({ field }) => (
                 <>
-                  <FormControl>
-                    <Checkbox
-                      isRequired
-                      className="py-4"
-                      size="sm"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      color="default"
+                  <div className="flex items-center gap-2 py-4">
+                    <FormControl>
+                      <Checkbox
+                        id="termsAndConditions"
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <label
+                      htmlFor="termsAndConditions"
+                      className="cursor-pointer text-sm"
                     >
                       I agree with the&nbsp;
                       <CustomLink
@@ -234,8 +239,9 @@ export const SignUpForm = ({
                         Terms of Service
                       </CustomLink>
                       &nbsp;of Prowler
-                    </Checkbox>
-                  </FormControl>
+                      <span className="text-text-error-primary">*</span>
+                    </label>
+                  </div>
                   <FormMessage className="text-text-error" />
                 </>
               )}

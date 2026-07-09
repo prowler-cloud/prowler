@@ -78,8 +78,14 @@ ENV HOSTNAME="0.0.0.0"
 # NOT baked into the image. Supply it via your orchestrator (docker-compose,
 # Helm/K8s):
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
-#   - optional: UI_API_DOCS_URL, UI_GOOGLE_TAG_MANAGER_ID, UI_SENTRY_DSN, UI_SENTRY_ENVIRONMENT
-#   - reserved: POSTHOG_KEY, POSTHOG_HOST, REO_DEV_CLIENT_ID (no consumer yet)
+#   - optional: UI_API_DOCS_URL
+#   - gated integrations (load only when *_ENABLED="true"; the value is then
+#     required or boot fails). Legacy names (NEXT_PUBLIC_*, POSTHOG_KEY/HOST)
+#     still activate without the flag:
+#       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
+#       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (no consumer yet)
+#   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
 CMD ["node", "server.js"]

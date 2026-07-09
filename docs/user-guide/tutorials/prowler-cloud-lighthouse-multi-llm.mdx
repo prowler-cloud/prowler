@@ -1,0 +1,81 @@
+---
+title: 'Using Multiple LLM Providers'
+---
+
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+Lighthouse AI on Prowler Cloud supports multiple Large Language Model (LLM) providers, so teams can choose the option that best fits their infrastructure, compliance requirements, and cost considerations. This guide explains how to configure and manage providers for Lighthouse AI on Prowler Cloud.
+
+<SubscriptionBanner />
+
+For a feature overview, see [Lighthouse AI on Prowler Cloud](/getting-started/products/prowler-cloud-lighthouse).
+
+## Supported Providers
+
+- **OpenAI:** GPT models, including the default GPT-5.5.
+- **Amazon Bedrock:** AWS-hosted access to Claude, Llama, Titan, and other models.
+- **OpenAI Compatible:** Any service exposing an OpenAI-compatible API endpoint, such as OpenRouter.
+
+## Model Requirements
+
+Lighthouse AI requires models that support all of the following:
+
+- **Text input:** Ability to receive text prompts.
+- **Text output:** Ability to generate text responses.
+- **Tool calling:** Ability to invoke tools to retrieve data from Prowler.
+
+Models without these capabilities are not going to work well.
+
+## Configuring Providers
+
+Navigate to **Configuration** → **Lighthouse AI** to see the available providers, each with its own connection option.
+
+To connect a provider:
+
+1. Click the desired provider.
+2. Enter the required credentials.
+3. Click **Save**. The connection is validated automatically before the provider becomes available.
+
+<img src="/images/prowler-app/lighthouse/prowler-cloud/config-page.png" alt="Lighthouse AI configuration page in Prowler Cloud" />
+
+The required information differs per provider:
+
+<Tabs>
+  <Tab title="OpenAI">
+    - **API Key:** OpenAI API key (starts with `sk-` or `sk-proj-`), created from the [OpenAI platform](https://platform.openai.com/api-keys).
+
+    Confirm the OpenAI account has sufficient credits and that the default GPT-5.5 model is not blocked in the organization settings.
+  </Tab>
+  <Tab title="Amazon Bedrock">
+    Connect using either an Amazon Bedrock API key or AWS IAM credentials.
+
+    **Amazon Bedrock API key**
+    - **Bedrock API Key:** The key generated from Amazon Bedrock.
+    - **AWS Region:** Region where Bedrock is available.
+
+    **AWS IAM Access Keys**
+    - **AWS Access Key ID** and **AWS Secret Access Key** for the IAM user.
+    - **AWS Region:** Region where Bedrock is available.
+    - The IAM user requires the `AmazonBedrockLimitedAccess` managed policy.
+  </Tab>
+  <Tab title="OpenAI Compatible">
+    Connect to any service exposing an OpenAI-compatible API endpoint that Prowler Cloud can reach over the Internet.
+
+    - **API Key:** API key from the compatible service.
+    - **Base URL:** API endpoint URL including the version (for example, `https://openrouter.ai/api/v1`).
+
+    ### Example: OpenRouter
+
+    1. Create an account at [OpenRouter](https://openrouter.ai/).
+    2. Generate an API key from the OpenRouter dashboard.
+    3. Enter the API key and set the base URL to `https://openrouter.ai/api/v1`.
+  </Tab>
+</Tabs>
+
+## Model Recommendations
+
+GPT-5.5 is the default and recommended model for Lighthouse AI on Prowler Cloud. Models from Amazon Bedrock and OpenAI-compatible endpoints can also be used, but performance is not guaranteed. Ensure any selected model supports text input, text output, and tool calling.
+
+## Getting Help
+
+For issues or suggestions with Lighthouse AI on Prowler Cloud, request support at [support.prowler.com](https://support.prowler.com) or [reach out through our Slack channel](https://goto.prowler.com/slack).

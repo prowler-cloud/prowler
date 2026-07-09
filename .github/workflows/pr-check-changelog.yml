@@ -19,6 +19,60 @@ concurrency:
 permissions: {}
 
 jobs:
+  test-changelog-attribution:
+    if: github.repository == 'prowler-cloud/prowler'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        with:
+          egress-policy: block
+          allowed-endpoints: >
+            api.github.com:443
+            github.com:443
+            objects.githubusercontent.com:443
+            pypi.org:443
+            files.pythonhosted.org:443
+
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Fetch PR base ref for tj-actions/changed-files
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: git fetch --depth=1 origin "${BASE_REF}"
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            .github/scripts/changelog_attribution.py
+            .github/workflows/pr-check-changelog.yml
+            .github/workflows/compile-changelogs.yml
+            .github/towncrier/template.md.jinja
+            */towncrier.toml
+            tests/github/**
+
+      - name: Set up Python
+        if: steps.changed-files.outputs.any_changed == 'true'
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.12'
+
+      - name: Test changelog attribution
+        if: steps.changed-files.outputs.any_changed == 'true'
+        run: |
+          python3 -m pip install --user --disable-pip-version-check pytest==9.0.3 towncrier==25.8.0
+          python3 -m pytest tests/github
+
   check-changelog:
     if: contains(github.event.pull_request.labels.*.name, 'no-changelog') == false
     runs-on: ubuntu-latest
@@ -62,53 +116,160 @@ jobs:
             uv.lock
             pyproject.toml
 
-      - name: Check for folder changes and changelog presence
+      - name: Check for folder changes and changelog fragment presence
         id: check-folders
         run: |
-          missing_changelogs=""
+          fragment_name_re='^[A-Za-z0-9][A-Za-z0-9._-]*\.(added|changed|deprecated|removed|fixed|security)(\.[0-9]+)?\.md$'
+          manual_pr_link_re='(\[\(#[0-9]+\)\]|\[#[0-9]+\]\(|\(#[0-9]+\)|github\.com/[^[:space:]/]+/[^[:space:]/]+/(pull|issues)/[0-9]+)'
+          folder_alt=$(echo "$MONITORED_FOLDERS" | tr ' ' '|')
+
+          missing_fragments=""
+          invalid_fragments=""
+          linked_fragments=""
+          handwritten_changelogs=""
+
+          all_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n')
+          added=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" | tr ' ' '\n')
+          added_or_renamed=$(printf '%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
+          added_modified_or_renamed=$(printf '%s\n%s\n%s' "${STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES}" "${STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES}" | tr ' ' '\n')
+
+          # Returns success if the folder has a valid fragment added, modified, or renamed.
+          has_changelog_update() {
+            local folder="$1"
+            if echo "$added_modified_or_renamed" | grep "^${folder}/changelog.d/" | sed "s|^${folder}/changelog.d/||" | grep -qE "$fragment_name_re"; then
+              return 0
+            fi
+            return 1
+          }
 
           if [[ "${STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED}" == "true" ]]; then
             # Check monitored folders
             for folder in $MONITORED_FOLDERS; do
-              # Get files changed in this folder
-              changed_in_folder=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep "^${folder}/" || true)
+              if echo "$all_changed" | grep -q "^${folder}/CHANGELOG.md$"; then
+                echo "Direct CHANGELOG.md edits are not allowed for ${folder}/"
+                handwritten_changelogs="${handwritten_changelogs}- \`${folder}/CHANGELOG.md\`"$'\n'
+              fi
+
+              changed_in_folder=$(echo "$all_changed" | grep "^${folder}/" | grep -v "^${folder}/CHANGELOG.md$" || true)
 
               if [ -n "$changed_in_folder" ]; then
                 echo "Detected changes in ${folder}/"
 
-                # Check if CHANGELOG.md was updated
-                if ! echo "$changed_in_folder" | grep -q "^${folder}/CHANGELOG.md$"; then
-                  echo "No changelog update found for ${folder}/"
-                  missing_changelogs="${missing_changelogs}- \`${folder}\`"$'\n'
+                if ! has_changelog_update "$folder"; then
+                  echo "No changelog fragment found for ${folder}/"
+                  missing_fragments="${missing_fragments}- \`${folder}\`"$'\n'
                 fi
               fi
             done
 
             # Check root-level dependency files (uv.lock, pyproject.toml)
             # These are associated with the prowler folder changelog
-            root_deps_changed=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep -E "^(uv\.lock|pyproject\.toml)$" || true)
+            root_deps_changed=$(echo "$all_changed" | grep -E "^(uv\.lock|pyproject\.toml)$" || true)
             if [ -n "$root_deps_changed" ]; then
               echo "Detected changes in root dependency files: $root_deps_changed"
-              # Check if prowler/CHANGELOG.md was already updated (might have been caught above)
-              prowler_changelog_updated=$(echo "${STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES}" | tr ' ' '\n' | grep "^prowler/CHANGELOG.md$" || true)
-              if [ -z "$prowler_changelog_updated" ]; then
+              if ! has_changelog_update "prowler"; then
                 # Only add if prowler wasn't already flagged
-                if ! echo "$missing_changelogs" | grep -q "prowler"; then
-                  echo "No changelog update found for root dependency changes"
-                  missing_changelogs="${missing_changelogs}- \`prowler\` (root dependency files changed)"$'\n'
+                if ! echo "$missing_fragments" | grep -q "prowler"; then
+                  echo "No changelog fragment found for root dependency changes"
+                  missing_fragments="${missing_fragments}- \`prowler\` (root dependency files changed)"$'\n'
                 fi
               fi
             fi
+
+            # Validate the filename of every fragment added by this PR
+            added_fragments=$(echo "$added_or_renamed" | grep -E "^(${folder_alt})/changelog\.d/" || true)
+            for fragment in $added_fragments; do
+              name=$(basename "$fragment")
+              if [ "$name" = ".gitkeep" ] || [ "$name" = "README.md" ]; then
+                continue
+              fi
+              if ! echo "$name" | grep -qE "$fragment_name_re"; then
+                echo "Invalid fragment filename: $fragment"
+                invalid_fragments="${invalid_fragments}- \`${fragment}\`"$'\n'
+              fi
+            done
+
+            # Lint fragment content: the PR link is attached automatically at
+            # compile time, so a hand-written PR or issue link would be wrong
+            touched_fragments=$(echo "$added_modified_or_renamed" | grep -E "^(${folder_alt})/changelog\.d/" || true)
+            for fragment in $touched_fragments; do
+              name=$(basename "$fragment")
+              if [ "$name" = ".gitkeep" ] || [ "$name" = "README.md" ] || [ ! -f "$fragment" ]; then
+                continue
+              fi
+              if grep -qE "$manual_pr_link_re" "$fragment"; then
+                echo "Fragment contains a hand-written PR or issue link: $fragment"
+                linked_fragments="${linked_fragments}- \`${fragment}\`"$'\n'
+              fi
+            done
           fi
 
-          {
-            echo "missing_changelogs<<EOF"
-            echo -e "${missing_changelogs}"
-            echo "EOF"
-          } >> $GITHUB_OUTPUT
+          # Suggest a slug derived from the branch name for the bot comment
+          suggested_slug=$(echo "$HEAD_REF" | tr '[:upper:]' '[:lower:]' | sed 's|.*/||; s/[^a-z0-9._-]/-/g; s/^[^a-z0-9]*//')
+          if [ -z "$suggested_slug" ]; then
+            suggested_slug="my-change"
+          fi
+
+          fragment_help="A changelog fragment is a small Markdown file named \`<slug>.<type>.md\` under \`<component>/changelog.d/\`, where \`<type>\` is one of \`added\`, \`changed\`, \`deprecated\`, \`removed\`, \`fixed\` or \`security\`. Its content is the changelog entry text, without the PR link (added automatically at release time) and without a trailing period. For example:
+
+          \`\`\`
+          echo 'Entry text describing the change' > <component>/changelog.d/${suggested_slug}.fixed.md
+          \`\`\`
+
+          If this PR does not need a changelog entry, add the \`no-changelog\` label instead."
+
+          if [ -n "$missing_fragments" ] || [ -n "$invalid_fragments" ] || [ -n "$linked_fragments" ] || [ -n "$handwritten_changelogs" ]; then
+            comment_body=""
+            if [ -n "$missing_fragments" ]; then
+              comment_body="⚠️ **Changes detected in the following folders without a changelog fragment:**"$'\n\n'"${missing_fragments}"$'\n'
+            fi
+            if [ -n "$invalid_fragments" ]; then
+              comment_body="${comment_body}⚠️ **Changelog fragment filenames that do not follow the naming convention:**"$'\n\n'"${invalid_fragments}"$'\n'
+            fi
+            if [ -n "$linked_fragments" ]; then
+              comment_body="${comment_body}⚠️ **Changelog fragments containing a hand-written PR or issue link (remove it; the PR link is attached automatically at release time):**"$'\n\n'"${linked_fragments}"$'\n'
+            fi
+            if [ -n "$handwritten_changelogs" ]; then
+              comment_body="${comment_body}⚠️ **Direct \`CHANGELOG.md\` edits are not allowed in regular PRs:**"$'\n\n'"${handwritten_changelogs}"$'\n'
+            fi
+            comment_body="${comment_body}${fragment_help}"
+          else
+            comment_body="✅ All required changelog fragments are present."
+          fi
+
+          write_multiline_output() {
+            local name="$1"
+            local value="$2"
+            local delimiter
+
+            while true; do
+              delimiter="EOF_$(openssl rand -hex 16)"
+              if ! grep -qxF "$delimiter" <<< "$value"; then
+                break
+              fi
+            done
+
+            {
+              echo "${name}<<${delimiter}"
+              if [ -n "$value" ]; then
+                printf '%s\n' "$value"
+              fi
+              echo "${delimiter}"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          write_multiline_output "missing_fragments" "$missing_fragments"
+          write_multiline_output "invalid_fragments" "$invalid_fragments"
+          write_multiline_output "linked_fragments" "$linked_fragments"
+          write_multiline_output "handwritten_changelogs" "$handwritten_changelogs"
+          write_multiline_output "comment_body" "$comment_body"
         env:
           STEPS_CHANGED_FILES_OUTPUTS_ANY_CHANGED: ${{ steps.changed-files.outputs.any_changed }}
           STEPS_CHANGED_FILES_OUTPUTS_ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+          STEPS_CHANGED_FILES_OUTPUTS_ADDED_FILES: ${{ steps.changed-files.outputs.added_files }}
+          STEPS_CHANGED_FILES_OUTPUTS_MODIFIED_FILES: ${{ steps.changed-files.outputs.modified_files }}
+          STEPS_CHANGED_FILES_OUTPUTS_RENAMED_FILES: ${{ steps.changed-files.outputs.renamed_files }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
 
       - name: Find existing changelog comment
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -128,14 +289,10 @@ jobs:
           edit-mode: replace
           body: |
             <!-- changelog-check -->
-            ${{ steps.check-folders.outputs.missing_changelogs != '' && format('⚠️ **Changes detected in the following folders without a corresponding update to the `CHANGELOG.md`:**
+            ${{ steps.check-folders.outputs.comment_body }}
 
-            {0}
-
-            Please add an entry to the corresponding `CHANGELOG.md` file to maintain a clear history of changes.', steps.check-folders.outputs.missing_changelogs) || '✅ All necessary `CHANGELOG.md` files have been updated.' }}
-
-      - name: Fail if changelog is missing
-        if: steps.check-folders.outputs.missing_changelogs != ''
+      - name: Fail if changelog fragment is missing or invalid
+        if: steps.check-folders.outputs.missing_fragments != '' || steps.check-folders.outputs.invalid_fragments != '' || steps.check-folders.outputs.linked_fragments != '' || steps.check-folders.outputs.handwritten_changelogs != ''
         run: |
-          echo "::error::Missing changelog updates in some folders"
+          echo "::error::Missing, invalid, or disallowed changelog updates"
           exit 1

@@ -8,7 +8,7 @@ import {
   getLighthouseProviderByType,
   updateLighthouseProviderByType,
 } from "@/actions/lighthouse-v1/lighthouse";
-import { FormButtons } from "@/components/ui/form";
+import { FormButtons } from "@/components/shadcn/form";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 import { getMainFields, getProviderConfig } from "./llm-provider-registry";

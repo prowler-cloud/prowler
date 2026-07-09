@@ -28,8 +28,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { ToastAction, useToast } from "@/components/shadcn";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { ToastAction, useToast } from "@/components/ui";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 

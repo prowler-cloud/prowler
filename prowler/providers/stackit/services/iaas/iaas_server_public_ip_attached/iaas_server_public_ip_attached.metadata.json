@@ -1,0 +1,37 @@
+{
+  "Provider": "stackit",
+  "CheckID": "iaas_server_public_ip_attached",
+  "CheckTitle": "IaaS servers do not have public IP addresses directly attached",
+  "CheckType": [],
+  "ServiceName": "iaas",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "Servers should not have public IP addresses directly attached to their network interfaces unless strictly required. A public IP exposes the server to inbound traffic from the internet on all ports not blocked by a security group, increasing the attack surface.",
+  "Risk": "**Direct internet exposure.** A server with a directly attached public IP can be reached from the internet. If its security groups allow broad inbound traffic, this exposure can enable unauthorized access, data exfiltration, or server compromise.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.stackit.cloud/products/network/core-networking/public-ip-address/",
+    "https://docs.stackit.cloud/products/network/core-networking/security-groups/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. In the StackIT Portal open Networking > Public IPs and identify the IP attached to the affected server's network interface. 2. Detach the public IP from the server. 3. Use a load balancer for internet-facing workloads or a bastion host / VPN for administrative access. 4. Re-run Prowler to confirm the finding is resolved.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "**Remove direct public exposure.** Detach the public IP from the server network interface unless it is strictly required. Route internet-facing workloads through a load balancer, and use a bastion host or VPN for administrative access.",
+      "Url": "https://hub.prowler.com/check/iaas_server_public_ip_attached"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check flags servers that have a public IP attached directly to a NIC. Evaluate whether internet exposure is intentional and whether appropriate security groups are in place."
+}

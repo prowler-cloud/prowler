@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { SearchParamsProps } from "@/types/components";
 
 import { MuteRulesTable, MuteRulesTableSkeleton } from "./_components/simple";

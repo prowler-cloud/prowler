@@ -24,7 +24,7 @@ import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,

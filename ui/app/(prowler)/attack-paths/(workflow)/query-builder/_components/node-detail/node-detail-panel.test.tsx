@@ -7,7 +7,7 @@ import type { GraphNode } from "@/types/attack-paths";
 
 import { NodeDetailPanel } from "./node-detail-panel";
 
-vi.mock("@/components/ui/sheet/sheet", () => ({
+vi.mock("@/components/shadcn/sheet/sheet", () => ({
   Sheet: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   SheetContent: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
