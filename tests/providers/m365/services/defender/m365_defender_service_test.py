@@ -9,6 +9,7 @@ from prowler.providers.m365.services.defender.defender_service import (
     Defender,
     DefenderInboundSpamPolicy,
     DkimConfig,
+    DomainDmarcConfiguration,
     InboundSpamRule,
     MalwarePolicy,
     MalwareRule,
@@ -210,6 +211,19 @@ def mock_defender_get_outbound_spam_filter_rule(_):
             users=["test@example.com"],
             groups=["example_group"],
             domains=["example.com"],
+        ),
+    }
+
+
+async def mock_defender_get_domain_dmarc_configurations(_):
+    return {
+        "domain1.com": DomainDmarcConfiguration(
+            domain="domain1.com",
+            dmarc_record="v=DMARC1; p=reject",
+        ),
+        "domain2.com": DomainDmarcConfiguration(
+            domain="domain2.com",
+            dmarc_record=None,
         ),
     }
 
@@ -554,3 +568,49 @@ class Test_Defender_Service:
             assert report_submission_policy.report_not_junk_addresses == []
             assert report_submission_policy.report_phish_addresses == []
             assert report_submission_policy.report_chat_message_enabled is True
+
+    @patch(
+        "prowler.providers.m365.services.defender.defender_service.Defender._get_domain_dmarc_configurations",
+        new=mock_defender_get_domain_dmarc_configurations,
+    )
+    def test_get_domain_dmarc_configurations(self):
+        with (
+            mock.patch(
+                "prowler.providers.m365.lib.powershell.m365_powershell.M365PowerShell.connect_exchange_online"
+            ),
+        ):
+            defender_client = Defender(
+                set_mocked_m365_provider(
+                    identity=M365IdentityInfo(tenant_domain=DOMAIN)
+                )
+            )
+            domain_dmarc_configurations = defender_client.domain_dmarc_configurations
+            assert len(domain_dmarc_configurations) == 2
+            assert (
+                domain_dmarc_configurations["domain1.com"].dmarc_record
+                == "v=DMARC1; p=reject"
+            )
+            assert domain_dmarc_configurations["domain2.com"].dmarc_record is None
+            defender_client.powershell.close()
+
+    def test_get_dmarc_txt_record_found(self):
+        class FakeAnswer:
+            def __init__(self, strings):
+                self.strings = strings
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.resolver.resolve",
+            return_value=[FakeAnswer([b"v=DMARC1; p=reject"])],
+        ):
+            record = Defender._get_dmarc_txt_record("domain1.com")
+            assert record == "v=DMARC1; p=reject"
+
+    def test_get_dmarc_txt_record_not_found(self):
+        import dns.resolver
+
+        with mock.patch(
+            "prowler.providers.m365.services.defender.defender_service.dns.resolver.resolve",
+            side_effect=dns.resolver.NXDOMAIN,
+        ):
+            record = Defender._get_dmarc_txt_record("domain2.com")
+            assert record is None
