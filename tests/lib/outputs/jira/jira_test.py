@@ -16,6 +16,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraNoProjectsError,
+    JiraNoTokenError,
     JiraRefreshTokenError,
     JiraRefreshTokenResponseError,
     JiraRequiredCustomFieldsError,
@@ -1834,6 +1835,24 @@ class TestJiraIntegration:
             )
 
         assert error.value.message == "Failed to refresh the access token"
+
+    @patch.object(Jira, "get_access_token", return_value=None)
+    def test_send_finding_reraises_no_token_error(self, mock_get_access_token):
+        """Test send_finding re-raises missing token errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraNoTokenError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert error.value.message == "No token was found"
 
     @patch.object(
         Jira,

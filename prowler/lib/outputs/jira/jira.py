@@ -52,7 +52,15 @@ class JiraConnection(Connection):
 
 
 def _format_jira_issue_creation_error(response_json: object, status_code: int) -> str:
-    """Build a safe Jira issue creation error message from structured fields."""
+    """Build a safe Jira issue creation error message from structured fields.
+
+    Args:
+        response_json: Parsed Jira response body.
+        status_code: HTTP status code returned by Jira.
+
+    Returns:
+        Safe issue creation error message for user-facing propagation.
+    """
     message_parts = []
 
     if not isinstance(response_json, dict):
@@ -2085,6 +2093,7 @@ class Jira:
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
             - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraNoTokenError: Failed to get an access token
             - JiraCreateIssueError: Failed to create an issue in Jira
             - JiraSendFindingsResponseError: Failed to send the finding to Jira
             - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
@@ -2238,8 +2247,9 @@ class Jira:
             logger.error(f"Token refresh error: {refresh_error}")
             raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
-            logger.error(f"Token response error: {response_error}")
             raise response_error
+        except JiraNoTokenError as no_token_error:
+            raise no_token_error
         except Exception as e:
             logger.error(f"Failed to send finding: {e}")
             return False
