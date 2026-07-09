@@ -9,6 +9,10 @@ from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 
 
 @pytest.mark.django_db
@@ -113,6 +117,15 @@ def test_password_change_invalidates_existing_tokens(create_test_user, tenants_f
         client, create_test_user.email, TEST_PASSWORD
     )
     auth_headers = get_authorization_header(access_token)
+    outstanding_token_ids = list(
+        OutstandingToken.objects.filter(user=create_test_user).values_list(
+            "id", flat=True
+        )
+    )
+    assert outstanding_token_ids
+    assert not BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).exists()
 
     password_change_payload = {
         "data": {
@@ -128,6 +141,9 @@ def test_password_change_invalidates_existing_tokens(create_test_user, tenants_f
         content_type="application/vnd.api+json",
     )
     assert password_change_response.status_code == 200, password_change_response.json()
+    assert BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).count() == len(outstanding_token_ids)
 
     old_access_response = client.get(reverse("user-me"), headers=auth_headers)
     assert old_access_response.status_code == 401
