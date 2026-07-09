@@ -125,8 +125,8 @@ class Test_datapipeline_pipeline_no_secrets_in_definition:
             "secrets_validate": True,
         }
 
-        with mock.patch(
-            "prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition.detect_secrets_scan_batch",
+        result, scan_batch = _execute_check_with_mocked_scan(
+            datapipeline_client,
             return_value={
                 0: [
                     {
@@ -138,8 +138,7 @@ class Test_datapipeline_pipeline_no_secrets_in_definition:
                     }
                 ]
             },
-        ) as scan_batch:
-            result = _execute_check(datapipeline_client)
+        )
 
         assert scan_batch.call_args.kwargs.get("validate") is True
         assert len(result) == 1
@@ -177,11 +176,10 @@ class Test_datapipeline_pipeline_no_secrets_in_definition:
         }
         datapipeline_client.audit_config = {"secrets_ignore_patterns": []}
 
-        with mock.patch(
-            "prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition.detect_secrets_scan_batch",
+        result, scan_batch = _execute_check_with_mocked_scan(
+            datapipeline_client,
             side_effect=SecretsScanError("scanner unavailable"),
-        ) as scan_batch:
-            result = _execute_check(datapipeline_client)
+        )
 
         scan_payloads = scan_batch.call_args.args[0]
         assert len(scan_payloads) == 2
@@ -228,3 +226,29 @@ def _execute_check(datapipeline_client):
 
         check = datapipeline_pipeline_no_secrets_in_definition()
         return check.execute()
+
+
+def _execute_check_with_mocked_scan(
+    datapipeline_client, return_value=None, side_effect=None
+):
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ),
+        mock.patch(
+            "prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition.datapipeline_client",
+            datapipeline_client,
+        ),
+    ):
+        import prowler.providers.aws.services.datapipeline.datapipeline_pipeline_no_secrets_in_definition.datapipeline_pipeline_no_secrets_in_definition as check_module
+
+        with mock.patch.object(
+            check_module,
+            "detect_secrets_scan_batch",
+            return_value=return_value,
+            side_effect=side_effect,
+        ) as scan_batch:
+            check = check_module.datapipeline_pipeline_no_secrets_in_definition()
+            return check.execute(), scan_batch
