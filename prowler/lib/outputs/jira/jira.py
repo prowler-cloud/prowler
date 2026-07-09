@@ -2236,10 +2236,10 @@ class Jira:
             raise response_error
         except JiraRefreshTokenError as refresh_error:
             logger.error(f"Token refresh error: {refresh_error}")
-            return False
+            raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
             logger.error(f"Token response error: {response_error}")
-            return False
+            raise response_error
         except Exception as e:
             logger.error(f"Failed to send finding: {e}")
             return False

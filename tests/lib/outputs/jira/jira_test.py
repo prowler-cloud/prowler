@@ -17,6 +17,7 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsResponseError,
     JiraNoProjectsError,
     JiraRefreshTokenError,
+    JiraRefreshTokenResponseError,
     JiraRequiredCustomFieldsError,
     JiraSendFindingsResponseError,
     JiraTestConnectionError,
@@ -1811,6 +1812,57 @@ class TestJiraIntegration:
         assert "Jira project requires custom fields" in str(error.value)
         assert "customfield_10001" in str(error.value)
         mock_post.assert_called_once()
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenError(message="Failed to refresh the access token"),
+    )
+    def test_send_finding_reraises_refresh_token_error(self, mock_get_access_token):
+        """Test send_finding re-raises refresh token errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert error.value.message == "Failed to refresh the access token"
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenResponseError(
+            message="Failed to refresh the access token, response code did not match 200"
+        ),
+    )
+    def test_send_finding_reraises_refresh_token_response_error(
+        self, mock_get_access_token
+    ):
+        """Test send_finding re-raises refresh token response errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert (
+            error.value.message
+            == "Failed to refresh the access token, response code did not match 200"
+        )
 
     def test_get_headers_oauth_with_access_token(self):
         """Test get_headers returns correct OAuth headers with access token."""

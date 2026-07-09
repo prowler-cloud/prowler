@@ -5,6 +5,10 @@ from api.db_router import READ_REPLICA_ALIAS, MainRouter
 from api.models import Integration
 from api.utils import prowler_integration_connection_test
 from django.db import OperationalError
+from prowler.lib.outputs.jira.exceptions.exceptions import (
+    JiraRefreshTokenError,
+    JiraRequiredCustomFieldsError,
+)
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHubConnection
 from prowler.providers.common.models import Connection
 from tasks.jobs.integrations import (
@@ -1867,11 +1871,76 @@ class TestJiraIntegration:
         mock_integration_model.objects.get.return_value = integration
 
         mock_jira_integration = MagicMock()
-        from prowler.lib.outputs.jira.exceptions.exceptions import (
-            JiraRequiredCustomFieldsError,
-        )
 
         mock_jira_integration.send_finding.side_effect = JiraRequiredCustomFieldsError(
+            message=error_message
+        )
+        mock_initialize_integration.return_value = mock_jira_integration
+
+        finding = MagicMock()
+        finding.id = "finding-1"
+        finding.check_id = "check_001"
+        finding.severity = "high"
+        finding.status = "FAIL"
+        finding.status_extended = "Resource is not compliant"
+        finding.compliance = {}
+        finding.resources.exists.return_value = False
+        finding.resources.first.return_value = None
+        finding.scan.provider.provider = "aws"
+        finding.check_metadata = {
+            "checktitle": "Check Title",
+            "risk": "High risk",
+            "remediation": {"recommendation": {}, "code": {}},
+        }
+        mock_select_related = mock_finding_model.all_objects.select_related.return_value
+        mock_finding_query = mock_select_related.prefetch_related.return_value
+        mock_finding_query.get.return_value = finding
+
+        result = send_findings_to_jira(
+            tenant_id, integration_id, project_key, issue_type, finding_ids
+        )
+
+        assert result == {
+            "created_count": 0,
+            "failed_count": 1,
+            "error": error_message,
+        }
+        mock_logger.exception.assert_called_with(
+            "Failed to send finding %s to Jira: %s",
+            "finding-1",
+            error_message,
+        )
+
+    @patch("tasks.jobs.integrations.rls_transaction")
+    @patch("tasks.jobs.integrations.Finding")
+    @patch("tasks.jobs.integrations.Integration")
+    @patch("tasks.jobs.integrations.initialize_prowler_integration")
+    @patch("tasks.jobs.integrations.logger")
+    def test_send_findings_to_jira_preserves_refresh_token_error_message(
+        self,
+        mock_logger,
+        mock_initialize_integration,
+        mock_integration_model,
+        mock_finding_model,
+        mock_rls_transaction,
+    ):
+        """Test Jira refresh token exceptions return their UI-friendly message."""
+        tenant_id = "tenant-123"
+        integration_id = "integration-456"
+        project_key = "PROJ"
+        issue_type = "Task"
+        finding_ids = ["finding-1"]
+        error_message = "Failed to refresh the access token"
+
+        mock_rls_transaction.return_value.__enter__ = MagicMock()
+        mock_rls_transaction.return_value.__exit__ = MagicMock()
+
+        integration = MagicMock()
+        mock_integration_model.objects.get.return_value = integration
+
+        mock_jira_integration = MagicMock()
+
+        mock_jira_integration.send_finding.side_effect = JiraRefreshTokenError(
             message=error_message
         )
         mock_initialize_integration.return_value = mock_jira_integration
