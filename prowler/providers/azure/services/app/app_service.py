@@ -178,9 +178,7 @@ class App(AzureService):
                                     ftps_state=getattr(
                                         function_config, "ftps_state", None
                                     ),
-                                    https_only=getattr(
-                                        function, "https_only", False
-                                    ),
+                                    https_only=getattr(function, "https_only", False),
                                 )
                             }
                         )
