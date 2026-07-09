@@ -15,6 +15,7 @@ import {
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
+import { TaskPollingWatcher } from "@/components/shared/task-polling-watcher";
 import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { isCloud } from "@/lib/shared/env";
@@ -106,6 +107,9 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
+          {/* Resumes persisted background-task polling (e.g. cross-provider
+              PDF generation) so completion toasts survive hard reloads. */}
+          <TaskPollingWatcher />
           <Toaster />
         </Providers>
       </body>
