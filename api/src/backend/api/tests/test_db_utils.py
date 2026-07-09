@@ -7,8 +7,10 @@ import pytest
 from api.db_utils import (
     POSTGRES_TENANT_VAR,
     SET_CONFIG_QUERY,
+    SET_TRANSACTION_READ_ONLY_QUERY,
     PostgresEnumMigration,
     _is_replica_connection_failure,
+    _is_safe_primary_replay,
     _should_create_index_on_partition,
     batch_delete,
     create_objects_in_batches,
@@ -1016,6 +1018,24 @@ class TestRlsTransaction:
     def test_replica_connection_failure_detection_rejects_query_errors(self, error):
         assert not _is_replica_connection_failure(error)
 
+    @pytest.mark.parametrize(
+        ("sql", "many", "expected"),
+        [
+            ("SELECT 1", False, True),
+            ("  -- leading comment\nSELECT 1", False, True),
+            ("/* leading comment */ SELECT 1", False, True),
+            ("SELECT 1", True, False),
+            ("SELECTING 1", False, False),
+            ("INSERT INTO fake_table (name) VALUES (%s)", False, False),
+            ("WITH rows AS (SELECT 1) SELECT * FROM rows", False, False),
+            ("SELECT * INTO fake_table_copy FROM fake_table", False, False),
+            ("SELECT * FROM fake_table FOR UPDATE", False, False),
+            ("SELECT * FROM fake_table FOR SHARE", False, False),
+        ],
+    )
+    def test_primary_replay_safety_detection(self, sql, many, expected):
+        assert _is_safe_primary_replay(sql, many) is expected
+
     def test_mid_query_failure_falls_directly_back_to_primary(
         self, tenants_fixture, enable_read_replica
     ):
@@ -1078,6 +1098,7 @@ class TestRlsTransaction:
                                     mock_primary_conn.cursor.assert_called_once_with()
                                     mock_primary_cursor.execute.assert_has_calls(
                                         [
+                                            call(SET_TRANSACTION_READ_ONLY_QUERY),
                                             call(
                                                 SET_CONFIG_QUERY,
                                                 [POSTGRES_TENANT_VAR, tenant_id],
@@ -1106,10 +1127,26 @@ class TestRlsTransaction:
                                 ]
                                 assert mock_replica_conn.execute_wrappers == []
 
-    def test_mid_query_fallback_replays_executemany(
-        self, tenants_fixture, enable_read_replica
+    @pytest.mark.parametrize(
+        ("sql", "params", "many"),
+        [
+            ("INSERT INTO fake_table (name) VALUES (%s)", [("one",), ("two",)], True),
+            ("INSERT INTO fake_table (name) VALUES (%s)", ["one"], False),
+            ("UPDATE fake_table SET name = %s", ["one"], False),
+            ("DELETE FROM fake_table WHERE id = %s", [1], False),
+            (
+                "WITH deleted AS (DELETE FROM fake_table RETURNING *) "
+                "SELECT * FROM deleted",
+                None,
+                False,
+            ),
+            ("SELECT * INTO fake_table_copy FROM fake_table", None, False),
+        ],
+    )
+    def test_mid_query_fallback_rejects_unsafe_replay(
+        self, tenants_fixture, enable_read_replica, sql, params, many
     ):
-        """executemany() failures preserve params and replay with executemany()."""
+        """Only single SELECT statements are replayed on primary."""
         tenant = tenants_fixture[0]
         tenant_id = str(tenant.id)
 
@@ -1117,7 +1154,7 @@ class TestRlsTransaction:
             with patch("api.db_utils.connections") as mock_connections:
                 (
                     mock_replica_conn,
-                    _mock_primary_conn,
+                    mock_primary_conn,
                     mock_primary_cursor,
                 ) = self._mock_replica_and_primary_connections(mock_connections)
 
@@ -1131,28 +1168,25 @@ class TestRlsTransaction:
                         with patch("api.db_utils.reset_read_db_alias"):
                             with rls_transaction(tenant_id):
                                 wrapper = mock_replica_conn.execute_wrappers[0]
-                                params = [("one",), ("two",)]
                                 mock_execute = MagicMock(
                                     side_effect=OperationalError(
                                         "server closed the connection"
                                     )
                                 )
 
-                                wrapper(
-                                    mock_execute,
-                                    "INSERT INTO fake_table (name) VALUES (%s)",
-                                    params,
-                                    True,
-                                    {"cursor": MagicMock()},
-                                )
+                                with pytest.raises(OperationalError):
+                                    wrapper(
+                                        mock_execute,
+                                        sql,
+                                        params,
+                                        many,
+                                        {"cursor": MagicMock()},
+                                    )
 
-                                mock_primary_cursor.execute.assert_called_once_with(
-                                    SET_CONFIG_QUERY, [POSTGRES_TENANT_VAR, tenant_id]
-                                )
-                                mock_primary_cursor.executemany.assert_called_once_with(
-                                    "INSERT INTO fake_table (name) VALUES (%s)",
-                                    params,
-                                )
+                                mock_primary_conn.ensure_connection.assert_not_called()
+                                mock_primary_conn.cursor.assert_not_called()
+                                mock_primary_cursor.execute.assert_not_called()
+                                mock_primary_cursor.executemany.assert_not_called()
 
     def test_mid_query_non_connection_error_does_not_fall_back(
         self, tenants_fixture, enable_read_replica
@@ -1211,6 +1245,7 @@ class TestRlsTransaction:
                     mock_primary_cursor,
                 ) = self._mock_replica_and_primary_connections(mock_connections)
                 mock_primary_cursor.execute.side_effect = [
+                    None,
                     None,
                     OperationalError("primary down"),
                 ]
@@ -1304,6 +1339,7 @@ class TestRlsTransaction:
 
                             mock_primary_cursor.execute.assert_has_calls(
                                 [
+                                    call(SET_TRANSACTION_READ_ONLY_QUERY),
                                     call(
                                         SET_CONFIG_QUERY,
                                         [POSTGRES_TENANT_VAR, tenant_id],

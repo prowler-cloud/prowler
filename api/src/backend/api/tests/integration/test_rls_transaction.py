@@ -39,7 +39,7 @@ class TestRLSTransaction:
             result = cursor.fetchone()
             assert result == (str(tenant.id),)
 
-    @pytest.mark.django_db(transaction=True)
+    @pytest.mark.django_db(transaction=True, databases="__all__")
     def test_mid_query_replica_connection_loss_falls_back_to_primary(self, tenant):
         """Real Django connection state: closed replica atomic falls back to primary."""
         if not READ_REPLICA_ALIAS or READ_REPLICA_ALIAS not in connections:

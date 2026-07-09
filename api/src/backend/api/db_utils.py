@@ -48,6 +48,7 @@ REPLICA_MAX_ATTEMPTS = env.int("POSTGRES_REPLICA_MAX_ATTEMPTS", default=3)
 REPLICA_RETRY_BASE_DELAY = env.float("POSTGRES_REPLICA_RETRY_BASE_DELAY", default=0.5)
 
 SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
+SET_TRANSACTION_READ_ONLY_QUERY = "SET TRANSACTION READ ONLY;"
 
 REPLICA_CONNECTION_SQLSTATE_PREFIXES = ("08",)
 REPLICA_CONNECTION_SQLSTATES = {"57P01", "57P02", "57P03"}
@@ -142,6 +143,47 @@ def _is_replica_connection_failure(error: BaseException) -> bool:
     return any(marker in message for marker in REPLICA_CONNECTION_ERROR_MESSAGES)
 
 
+def _strip_leading_sql_comments(sql: str) -> str:
+    if not isinstance(sql, str):
+        return ""
+
+    sql_text = sql.lstrip()
+    while True:
+        if sql_text.startswith("--"):
+            newline_index = sql_text.find("\n")
+            if newline_index == -1:
+                return ""
+            sql_text = sql_text[newline_index + 1 :].lstrip()
+            continue
+
+        if sql_text.startswith("/*"):
+            comment_end_index = sql_text.find("*/", 2)
+            if comment_end_index == -1:
+                return ""
+            sql_text = sql_text[comment_end_index + 2 :].lstrip()
+            continue
+
+        return sql_text
+
+
+def _is_safe_primary_replay(sql: str, many: bool) -> bool:
+    if many:
+        return False
+
+    sql_text = _strip_leading_sql_comments(sql)
+    if not re.match(r"(?is)^SELECT\b", sql_text):
+        return False
+
+    return not any(
+        re.search(pattern, sql_text, re.IGNORECASE | re.DOTALL)
+        for pattern in (
+            r"\bINTO\b",
+            r"\bFOR\s+(?:NO\s+KEY\s+)?UPDATE\b",
+            r"\bFOR\s+(?:KEY\s+)?SHARE\b",
+        )
+    )
+
+
 @contextmanager
 def psycopg_connection(database_alias: str):
     psycopg2_connection = None
@@ -181,7 +223,9 @@ def rls_transaction(
        back to the primary DB.
     2. **Post-yield** (mid-query failures): an ``execute_wrapper``
        intercepts connection-level ``OperationalError`` during
-       ``cursor.execute()`` calls and falls back directly to the primary DB.
+       ``cursor.execute()`` calls and falls back directly to the primary DB
+       for single ``SELECT`` statements. The primary fallback transaction is
+       read-only, and unsafe statements keep raising the original error.
        The wrapper swaps the inner cursor so ``fetchall()`` / ``fetchone()``
        read from the new connection transparently.
 
@@ -224,6 +268,8 @@ def rls_transaction(
             except OperationalError as err:
                 if not _is_replica_connection_failure(err):
                     raise
+                if not _is_safe_primary_replay(sql, many):
+                    raise
 
                 try:
                     connections[replica_alias].close()
@@ -239,13 +285,11 @@ def rls_transaction(
 
                 fallback_cursor = primary.cursor()
                 fallback_stack.callback(fallback_cursor.close)
+                fallback_cursor.execute(SET_TRANSACTION_READ_ONLY_QUERY)
                 fallback_cursor.execute(SET_CONFIG_QUERY, [parameter, value])
                 _fallback["token"] = set_read_db_alias(DEFAULT_DB_ALIAS)
 
-                if many:
-                    fallback_cursor.executemany(sql, params)
-                else:
-                    fallback_cursor.execute(sql, params)
+                fallback_cursor.execute(sql, params)
 
                 context["cursor"].db = primary
                 context["cursor"].cursor = fallback_cursor.cursor
