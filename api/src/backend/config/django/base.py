@@ -230,6 +230,7 @@ SIMPLE_JWT = {
     "JTI_CLAIM": "jti",
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "sub",
+    "CHECK_REVOKE_TOKEN": True,
     # Issuer and Audience claims, for the moment we will keep these values as default values, they may change in the
     # future.
     "AUDIENCE": env.str("DJANGO_JWT_AUDIENCE", "https://api.prowler.com"),
