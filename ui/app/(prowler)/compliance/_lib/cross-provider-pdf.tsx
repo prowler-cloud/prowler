@@ -9,17 +9,29 @@ import { getCrossProviderPdfBinary } from "../_actions/cross-provider";
 export const CROSS_PROVIDER_PDF_TASK_KIND = "cross-provider-pdf";
 
 /** Fetches the finished cross-provider PDF and hands it to the browser,
- *  reusing the shared base64→blob download + toast handling. */
+ *  reusing the shared base64→blob download + toast handling. Never rejects:
+ *  it is fired from toast actions and dropdown items whose rejections would
+ *  otherwise vanish unhandled. */
 export const downloadCrossProviderPdf = async (
   taskId: string,
 ): Promise<void> => {
-  const result = await getCrossProviderPdfBinary(taskId);
-  await downloadFile(
-    result,
-    "application/pdf",
-    "The cross-provider compliance PDF has been downloaded successfully.",
-    toast,
-  );
+  try {
+    const result = await getCrossProviderPdfBinary(taskId);
+    await downloadFile(
+      result,
+      "application/pdf",
+      "The cross-provider compliance PDF has been downloaded successfully.",
+      toast,
+    );
+  } catch {
+    // The action catches API failures itself; this guards the server-action
+    // RPC (e.g. a network drop between browser and Next server).
+    toast({
+      variant: "destructive",
+      title: "Download failed",
+      description: "Could not fetch the report. Please try again later.",
+    });
+  }
 };
 
 /**

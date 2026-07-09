@@ -15,10 +15,18 @@ import { SentryErrorSource, SentryErrorType } from "@/sentry";
 import type {
   BillingRedirect,
   CrossProviderApiFilters,
+  CrossProviderOverviewResponse,
   LatestCrossProviderPdf,
 } from "../_types";
 
 const CROSS_PROVIDER_API_PATH = "/cross-provider-compliance-overviews";
+
+/** Error payload shapes the PDF endpoints emit (JSON:API or plain). */
+interface PdfEndpointErrorBody {
+  errors?: Array<{ detail?: string }>;
+  error?: string;
+  message?: string;
+}
 
 /**
  * Extracts a user-safe message from a failed PDF endpoint response and, for
@@ -32,7 +40,9 @@ const getPdfEndpointErrorMessage = async (
   operation: string,
 ): Promise<string> => {
   const contentType = response.headers.get("content-type")?.toLowerCase() || "";
-  const errorData = contentType.includes("text/html")
+  const errorData: PdfEndpointErrorBody | null = contentType.includes(
+    "text/html",
+  )
     ? null
     : await response.json().catch(() => null);
 
@@ -106,7 +116,7 @@ export const getCrossProviderComplianceOverview = async ({
 }: {
   complianceId: string;
   filters?: CrossProviderApiFilters;
-}): Promise<unknown | BillingRedirect | undefined> => {
+}): Promise<CrossProviderOverviewResponse | BillingRedirect | undefined> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}`);
   url.searchParams.set("filter[compliance_id]", complianceId);
@@ -119,7 +129,7 @@ export const getCrossProviderComplianceOverview = async ({
       return { redirectTo: "/billing" };
     }
 
-    return await handleApiResponse(response);
+    return (await handleApiResponse(response)) as CrossProviderOverviewResponse;
   } catch (error) {
     console.error("Error fetching cross-provider compliance overview:", error);
     return undefined;

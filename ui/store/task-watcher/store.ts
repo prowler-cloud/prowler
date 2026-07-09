@@ -144,6 +144,15 @@ const pollUntilDone = async (taskId: string): Promise<void> => {
       TASK_WATCHER_STATUS.ERROR,
       "The task is taking too long. Try again later.",
     );
+  } catch {
+    // A thrown poll (e.g. the server-action RPC failing on a network drop)
+    // must still settle the task, or it stays PENDING in the persisted
+    // store and blocks the UI until the staleness ceiling.
+    settleTask(
+      taskId,
+      TASK_WATCHER_STATUS.ERROR,
+      "Tracking the task failed unexpectedly. Try again later.",
+    );
   } finally {
     activePolls.delete(taskId);
   }

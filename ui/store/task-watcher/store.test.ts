@@ -60,6 +60,18 @@ describe("task watcher store", () => {
     expect(onReady).not.toHaveBeenCalled();
   });
 
+  it("settles the task as error when polling itself throws", async () => {
+    pollMock.mockRejectedValue(new Error("network down"));
+
+    await trackAndPollTask({ taskId: "task-7", kind: "test-kind", meta: {} });
+
+    expect(useTaskWatcherStore.getState().tasks["task-7"]?.status).toBe(
+      TASK_WATCHER_STATUS.ERROR,
+    );
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onReady).not.toHaveBeenCalled();
+  });
+
   it("keeps polling through transient timeouts until the ceiling", async () => {
     pollMock
       .mockResolvedValueOnce({ ok: false, error: "Task timeout" })

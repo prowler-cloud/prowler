@@ -91,6 +91,14 @@ export const CrossProviderPdfButton = ({
           ...(reportName.trim() ? { reportLabel: reportName.trim() } : {}),
         },
       });
+    } catch {
+      // The action returns {error} for API failures; this guards the
+      // server-action RPC itself (e.g. a network drop mid-request).
+      toast({
+        variant: "destructive",
+        title: "Could not start report generation",
+        description: "An unexpected error occurred. Please try again later.",
+      });
     } finally {
       setSubmitting(false);
     }

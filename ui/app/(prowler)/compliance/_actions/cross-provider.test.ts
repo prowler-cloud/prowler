@@ -193,6 +193,25 @@ describe("generateCrossProviderPdf", () => {
     );
     expect(serialized).not.toContain("secret-name");
   });
+
+  it("falls back to the static message for text/html error pages", async () => {
+    // A proxy/gateway error page must not be parsed as JSON.
+    fetchMock.mockResolvedValue(
+      new Response("<html>Bad Gateway</html>", {
+        status: 422,
+        headers: { "Content-Type": "text/html" },
+      }),
+    );
+
+    const result = await generateCrossProviderPdf({
+      complianceId: "csa_ccm_4.0",
+    });
+
+    expect(result).toEqual({
+      error:
+        "Unable to start PDF generation. Contact support if the issue continues.",
+    });
+  });
 });
 
 describe("getCrossProviderPdfBinary", () => {
@@ -252,6 +271,17 @@ describe("getCrossProviderPdfBinary", () => {
 
     expect(result).toEqual({ error: "Report expired." });
   });
+
+  it("reports 5xx failures to Sentry", async () => {
+    fetchMock.mockResolvedValue(jsonResponse({}, 500));
+
+    const result = await getCrossProviderPdfBinary("task-1");
+
+    expect(result).toEqual({ error: "Generic server error." });
+    expect(captureExceptionMock).toHaveBeenCalledTimes(1);
+    const serialized = JSON.stringify(captureExceptionMock.mock.calls[0]);
+    expect(serialized).toContain("generate-pdf/{taskId}/download");
+  });
 });
 
 describe("getLatestCrossProviderPdf", () => {
@@ -304,5 +334,23 @@ describe("getLatestCrossProviderPdf", () => {
     });
 
     expect(result).toBeNull();
+  });
+
+  it("degrades to null on 5xx but still reports to Sentry", async () => {
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    fetchMock.mockResolvedValue(jsonResponse({}, 500));
+
+    const result = await getLatestCrossProviderPdf({
+      complianceId: "csa_ccm_4.0",
+    });
+
+    expect(result).toBeNull();
+    expect(captureExceptionMock).toHaveBeenCalledTimes(1);
+    const serialized = JSON.stringify(captureExceptionMock.mock.calls[0]);
+    expect(serialized).toContain("generate-pdf/latest");
+
+    consoleErrorSpy.mockRestore();
   });
 });
