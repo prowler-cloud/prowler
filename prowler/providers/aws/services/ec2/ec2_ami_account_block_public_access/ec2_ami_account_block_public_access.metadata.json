@@ -10,21 +10,24 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "AwsEc2Image",
+  "ResourceType": "Other",
   "ResourceGroup": "compute",
-  "Description": "AMI block public access configuration is assessed to see whether public sharing of AMIs is blocked in the account and region.",
-  "Risk": "Without blocking public access, AMIs could be accidentally or maliciously shared publicly, potentially exposing sensitive data, keys, and configurations.",
+  "Description": "AMI block public access configuration is assessed to see whether public sharing of AMIs is blocked in the account and Region. When enabled (`block-new-sharing`), no AMI in the Region can be made public regardless of individual image permissions.",
+  "Risk": "Without blocking public access, AMIs could be accidentally or maliciously shared publicly, exposing baked-in secrets, source code, and infrastructure details to unauthorized actors.",
   "RelatedUrl": "",
-  "AdditionalURLs": [],
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sharingamis-intro.html",
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/image-block-public-access.html"
+  ],
   "Remediation": {
     "Code": {
       "CLI": "aws ec2 enable-image-block-public-access --image-block-public-access-state block-new-sharing",
       "NativeIaC": "",
-      "Other": "",
-      "Terraform": ""
+      "Other": "1. In the AWS console, select the target Region in the top-right.\n2. Go to EC2 > AMIs.\n3. In the AMIs page, choose Block public access for AMIs (or EC2 Dashboard > Account attributes > Data protection and security).\n4. Choose Manage and enable Block public access.\n5. Save changes.",
+      "Terraform": "```hcl\nresource \"aws_ec2_image_block_public_access\" \"<example_resource_name>\" {\n  state = \"block-new-sharing\" # Blocks new public sharing of AMIs in the configured Region\n}\n```"
     },
     "Recommendation": {
-      "Text": "Ensure AMI block public access is enabled in the account.",
+      "Text": "Enable AMI block public access (`block-new-sharing`) in every active Region. Apply guardrails (SCPs) to prevent it from being disabled, and review any AMIs that are currently shared publicly.",
       "Url": "https://hub.prowler.com/check/ec2_ami_account_block_public_access"
     }
   },

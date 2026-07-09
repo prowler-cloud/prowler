@@ -10,7 +10,6 @@ class ec2_ami_account_block_public_access(Check):
                 metadata=self.metadata(),
                 resource=state,
             )
-            report.region = state.region
             report.resource_id = ec2_client.audited_account
             report.resource_arn = ec2_client.account_arn_template
 
