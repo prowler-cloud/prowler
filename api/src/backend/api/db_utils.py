@@ -334,11 +334,6 @@ def rls_transaction(
                             _caller_exited_cleanly = True
                 return
             except OperationalError as e:
-                try:
-                    connections[alias].close()
-                except Exception:
-                    pass  # Best-effort; connection may already be dead
-
                 if yielded_cursor:
                     if _fallback["succeeded"] and _caller_exited_cleanly:
                         # Caller's queries succeeded on primary via failover.
@@ -349,6 +344,11 @@ def rls_transaction(
 
                 if not can_failover or attempt == max_attempts:
                     raise
+
+                try:
+                    connections[alias].close()
+                except Exception:
+                    pass  # Best-effort; connection may already be dead
 
                 # Retry with exponential backoff
                 delay = REPLICA_RETRY_BASE_DELAY * (2 ** (attempt - 1))

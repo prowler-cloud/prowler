@@ -597,6 +597,7 @@ class TestRlsTransaction:
                                         raise OperationalError("Conflict with recovery")
 
                                 mock_sleep.assert_not_called()
+                                mock_conn.close.assert_not_called()
 
     def test_rls_transaction_max_attempts_for_replica(
         self, tenants_fixture, enable_read_replica
