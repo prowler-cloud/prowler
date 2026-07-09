@@ -18,8 +18,8 @@ export const DOCS_URLS = {
 } as const;
 
 // CloudFormation template URL for the ProwlerScan role.
-// Also used (URL-encoded) as the templateURL param in cloudformationQuickLink
-// and cloudformationOrgQuickLink below — keep both in sync.
+// Also used (URL-encoded) as the templateURL param in the quick-create links
+// built by getAWSCredentialsTemplateLinks and getAWSOrgDeploymentQuickLink below.
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
@@ -31,6 +31,11 @@ export const BILLING_URL = "https://cloud.prowler.com/billing";
 // Users in AWS GovCloud or China partitions would need different URLs.
 export const STACKSET_CONSOLE_URL =
   "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
+
+// Base URL for the CloudFormation "quick create stack" console flow.
+// Hardcoded to us-east-1, same rationale as STACKSET_CONSOLE_URL above.
+const CF_QUICKCREATE_BASE_URL =
+  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
 
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
@@ -126,11 +131,11 @@ export const getAWSCredentialsTemplateLinks = (
   externalId: string,
   bucketName?: string,
   integrationType?: IntegrationType,
+  bucketAccountId?: string,
 ): {
   cloudformation: string;
   terraform: string;
   cloudformationQuickLink: string;
-  cloudformationOrgQuickLink: string;
 } => {
   let links = {};
 
@@ -153,10 +158,14 @@ export const getAWSCredentialsTemplateLinks = (
   }
 
   const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
-  const cfBaseUrl =
-    "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+  // The template requires S3IntegrationBucketAccountId (owner account of the
+  // bucket) whenever EnableS3Integration is true, so include it alongside the
+  // bucket name to avoid a stack validation error on the quick-create flow.
   const s3Params = bucketName
-    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}`
+    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` +
+      (bucketAccountId
+        ? `&param_S3IntegrationBucketAccountId=${bucketAccountId}`
+        : "")
     : "";
 
   return {
@@ -165,11 +174,35 @@ export const getAWSCredentialsTemplateLinks = (
       terraform: string;
     }),
     cloudformationQuickLink:
-      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
+      `${CF_QUICKCREATE_BASE_URL}?templateURL=${encodedTemplateUrl}` +
       `&stackName=Prowler&param_ExternalId=${externalId}${s3Params}`,
-    cloudformationOrgQuickLink:
-      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
-      `&stackName=Prowler&param_ExternalId=${externalId}` +
-      `&param_EnableOrganizations=true${s3Params}`,
   };
+};
+
+// Builds the CloudFormation quick-create link that onboards an entire AWS
+// Organization in a single stack: it creates the ProwlerScan role in the
+// management account (DeployLocalRole) and a service-managed StackSet that
+// rolls the role out to the member accounts under the given OU/root
+// (DeployStackSet). Set deployFromDelegatedAdmin when launching from a
+// delegated administrator account instead of the management account.
+export const getAWSOrgDeploymentQuickLink = ({
+  externalId,
+  organizationalUnitId,
+  deployFromDelegatedAdmin = false,
+}: {
+  externalId: string;
+  organizationalUnitId: string;
+  deployFromDelegatedAdmin?: boolean;
+}): string => {
+  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
+
+  return (
+    `${CF_QUICKCREATE_BASE_URL}?templateURL=${encodedTemplateUrl}` +
+    `&stackName=Prowler&param_ExternalId=${externalId}` +
+    "&param_EnableOrganizations=true" +
+    "&param_DeployLocalRole=true" +
+    "&param_DeployStackSet=true" +
+    `&param_AWSOrganizationalUnitId=${organizationalUnitId}` +
+    (deployFromDelegatedAdmin ? "&param_DeployFromDelegatedAdmin=true" : "")
+  );
 };

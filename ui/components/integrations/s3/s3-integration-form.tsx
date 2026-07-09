@@ -75,6 +75,7 @@ export const S3IntegrationForm = ({
     defaultValues: {
       integration_type: "amazon_s3" as const,
       bucket_name: integration?.attributes.configuration.bucket_name || "",
+      bucket_account_id: "",
       output_directory:
         integration?.attributes.configuration.output_directory || "output",
       providers:
@@ -95,6 +96,26 @@ export const S3IntegrationForm = ({
 
   const isLoading = form.formState.isSubmitting;
 
+  // Derives the AWS Account ID that owns the S3 bucket from the selected
+  // provider(s). For AWS providers the uid is the 12-digit account id. This is
+  // the common case (bucket lives in a scanned account); cross-account buckets
+  // can still be overridden via the "Bucket owner account ID" field.
+  const deriveBucketAccountId = (): string => {
+    const selectedIds = form.getValues("providers") || [];
+    for (const id of selectedIds) {
+      const provider = providers.find((p) => p.id === id);
+      const uid = provider?.attributes.uid;
+      if (
+        provider?.attributes.provider === "aws" &&
+        uid &&
+        /^\d{12}$/.test(uid)
+      ) {
+        return uid;
+      }
+    }
+    return "";
+  };
+
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -103,10 +124,17 @@ export const S3IntegrationForm = ({
       return;
     }
 
-    // Validate current step fields for creation flow
+    // Validate current step fields for creation flow. bucket_account_id is
+    // validated here, while its input is visible, so a malformed value surfaces
+    // its error instead of silently blocking the step 1 submit.
     const stepFields =
       currentStep === 0
-        ? (["bucket_name", "output_directory", "providers"] as const)
+        ? ([
+            "bucket_name",
+            "output_directory",
+            "providers",
+            "bucket_account_id",
+          ] as const)
         : // Step 1: No required fields since role_arn and external_id are optional
           [];
 
@@ -259,12 +287,15 @@ export const S3IntegrationForm = ({
     // If editing credentials, show only credentials form
     if (isEditingCredentials || currentStep === 1) {
       const bucketName = form.getValues("bucket_name") || "";
+      const bucketAccountId =
+        form.getValues("bucket_account_id") || deriveBucketAccountId();
       const externalId =
         form.getValues("external_id") || session?.tenantId || "";
       const templateLinks = getAWSCredentialsTemplateLinks(
         externalId,
         bucketName,
         "amazon_s3",
+        bucketAccountId,
       );
 
       return (
@@ -346,6 +377,24 @@ export const S3IntegrationForm = ({
               variant="bordered"
               isRequired
             />
+
+            <div className="flex flex-col gap-1">
+              <CustomInput
+                control={form.control}
+                name="bucket_account_id"
+                type="text"
+                label="Bucket owner account ID (optional)"
+                labelPlacement="inside"
+                placeholder="Defaults to the selected account"
+                variant="bordered"
+                isRequired={false}
+              />
+              <p className="text-text-neutral-tertiary text-xs">
+                AWS account ID that owns the bucket. Leave empty to use the
+                selected account, or set it if the bucket lives in a different
+                account.
+              </p>
+            </div>
           </div>
         </>
       );
