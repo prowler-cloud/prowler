@@ -3,7 +3,7 @@ from prowler.providers.azure.services.app.app_client import app_client
 
 
 class app_function_ensure_http_is_redirected_to_https(Check):
-    def execute(self) -> Check_Report_Azure:
+    def execute(self) -> list[Check_Report_Azure]:
         findings = []
 
         for (
