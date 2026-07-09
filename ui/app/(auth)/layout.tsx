@@ -43,7 +43,7 @@ export default async function AuthLayout({
   await connection();
 
   const gtmId = readGatedEnv(
-    "UI_GOOGLE_TAG_MANAGER_ENABLE",
+    "UI_GOOGLE_TAG_MANAGER_ENABLED",
     "UI_GOOGLE_TAG_MANAGER_ID",
     "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
   );

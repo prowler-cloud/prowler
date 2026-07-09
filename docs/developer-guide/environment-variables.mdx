@@ -45,16 +45,16 @@ Prowler App gates each optional third-party integration behind an explicit enabl
 
 | Integration | Enable flag | Required configuration when enabled |
 |-------------|-------------|-------------------------------------|
-| Sentry (error monitoring) | `UI_SENTRY_ENABLE` | `UI_SENTRY_DSN` |
-| Google Tag Manager | `UI_GOOGLE_TAG_MANAGER_ENABLE` | `UI_GOOGLE_TAG_MANAGER_ID` |
-| PostHog (product analytics) | `UI_POSTHOG_ENABLE` | `UI_POSTHOG_KEY` and `UI_POSTHOG_HOST` |
+| Sentry (error monitoring) | `UI_SENTRY_ENABLED` | `UI_SENTRY_DSN` |
+| Google Tag Manager | `UI_GOOGLE_TAG_MANAGER_ENABLED` | `UI_GOOGLE_TAG_MANAGER_ID` |
+| PostHog (product analytics) | `UI_POSTHOG_ENABLED` | `UI_POSTHOG_KEY` and `UI_POSTHOG_HOST` |
 
 When an integration is enabled but its required configuration is missing, Prowler App fails fast at server startup with a clear error, so a misconfigured container never starts silently. A new `UI_*` value set while its enable flag is not `"true"` is ignored, and the server logs a one-time startup warning noting that the integration will not load. Legacy names follow the backward-compatible rule described in [Deprecated Names](#deprecated-names).
 
 PostHog support is currently limited to configuration validation: Prowler App reads and validates the PostHog variables but does not yet load a PostHog client.
 
 <Warning>
-Configuring an integration through the new `UI_*` variables now requires its enable flag. A deployment that adopted `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must also set `UI_SENTRY_ENABLE=true` or `UI_GOOGLE_TAG_MANAGER_ENABLE=true` to keep the integration active. Deployments still using the legacy names (`NEXT_PUBLIC_*`, or `POSTHOG_KEY` and `POSTHOG_HOST`) keep working without the flag.
+Configuring an integration through the new `UI_*` variables now requires its enable flag. A deployment that adopted `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must also set `UI_SENTRY_ENABLED=true` or `UI_GOOGLE_TAG_MANAGER_ENABLED=true` to keep the integration active. Deployments still using the legacy names (`NEXT_PUBLIC_*`, or `POSTHOG_KEY` and `POSTHOG_HOST`) keep working without the flag.
 </Warning>
 
 ## Upcoming Breaking Change
