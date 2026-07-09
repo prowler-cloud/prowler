@@ -1,3 +1,4 @@
+import fnmatch
 import json
 import os
 from operator import attrgetter
@@ -19,6 +20,7 @@ from hashlib import sha1, sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
+from pathlib import Path
 from time import mktime
 from typing import Any, Iterable, Mapping, Optional, Union
 
@@ -339,6 +341,57 @@ def detect_secrets_scan_batch(
             chunk = []
     _scan_batch_chunk(chunk, excluded_secrets, confidence, validate, results)
     return results
+
+
+def iter_zip_text_payloads(
+    zip_file,
+    ignored_files: Optional[list[str]] = None,
+) -> Iterable[tuple[str, str]]:
+    """Yield text payloads from a ZIP file after safe extraction.
+
+    ZIP members whose resolved destination escapes the extraction directory are
+    ignored to prevent path traversal writes. Unreadable files are skipped, and
+    file content is decoded with latin-1 so every byte maps to text for the
+    secret scanner.
+
+    Args:
+        zip_file: Open ``zipfile.ZipFile`` to inspect.
+        ignored_files: Package-relative glob patterns to skip.
+    Yields:
+        Tuples of ``(relative_file_path, decoded_content)``.
+    """
+    ignored_files = ignored_files or []
+    with tempfile.TemporaryDirectory() as tmp_dir_name:
+        target_path = Path(tmp_dir_name).resolve()
+        for member in zip_file.infolist():
+            member_path = (target_path / member.filename).resolve()
+            if target_path not in member_path.parents and member_path != target_path:
+                continue
+            if member.is_dir():
+                member_path.mkdir(parents=True, exist_ok=True)
+                continue
+            member_path.parent.mkdir(parents=True, exist_ok=True)
+            with (
+                zip_file.open(member) as source,
+                open(member_path, "wb") as target,
+            ):
+                target.write(source.read())
+
+        for root, _, files in os.walk(tmp_dir_name):
+            for file_name in files:
+                file_path = os.path.join(root, file_name)
+                relative_file_path = os.path.relpath(file_path, tmp_dir_name)
+                if any(
+                    fnmatch.fnmatch(relative_file_path, pattern)
+                    for pattern in ignored_files
+                ):
+                    continue
+                try:
+                    with open(file_path, "rb") as code_file:
+                        content = code_file.read().decode("latin-1")
+                except Exception:
+                    continue
+                yield relative_file_path, content
 
 
 def annotate_verified_secrets(report, secrets: list) -> None:

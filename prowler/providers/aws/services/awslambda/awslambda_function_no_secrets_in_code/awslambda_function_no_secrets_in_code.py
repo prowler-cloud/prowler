@@ -1,20 +1,17 @@
-import fnmatch
-import os
-import tempfile
 from collections import defaultdict
-from pathlib import Path
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     SecretsScanError,
     annotate_verified_secrets,
     detect_secrets_scan_batch,
+    iter_zip_text_payloads,
 )
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
 class awslambda_function_no_secrets_in_code(Check):
-    def execute(self):
+    def execute(self) -> list[Check_Report_AWS]:
         findings = []
         if not awslambda_client.functions:
             return findings
@@ -39,25 +36,6 @@ class awslambda_function_no_secrets_in_code(Check):
         functions_with_code = []
         functions_without_code = []
 
-        def safely_extract_zip_file(zip_file, target_dir):
-            target_path = Path(target_dir).resolve()
-            for member in zip_file.infolist():
-                member_path = (target_path / member.filename).resolve()
-                if (
-                    target_path not in member_path.parents
-                    and member_path != target_path
-                ):
-                    continue
-                if member.is_dir():
-                    member_path.mkdir(parents=True, exist_ok=True)
-                    continue
-                member_path.parent.mkdir(parents=True, exist_ok=True)
-                with (
-                    zip_file.open(member) as source,
-                    open(member_path, "wb") as target,
-                ):
-                    target.write(source.read())
-
         def code_payloads():
             for function, function_code in awslambda_client._get_function_code():
                 if not function_code:
@@ -65,25 +43,10 @@ class awslambda_function_no_secrets_in_code(Check):
                     continue
                 index = len(functions_with_code)
                 functions_with_code.append(function)
-                with tempfile.TemporaryDirectory() as tmp_dir_name:
-                    safely_extract_zip_file(function_code.code_zip, tmp_dir_name)
-                    for root, _, files in os.walk(tmp_dir_name):
-                        for file_name in files:
-                            file_path = os.path.join(root, file_name)
-                            relative_file_path = os.path.relpath(
-                                file_path, tmp_dir_name
-                            )
-                            if any(
-                                fnmatch.fnmatch(relative_file_path, pattern)
-                                for pattern in secrets_ignore_files
-                            ):
-                                continue
-                            try:
-                                with open(file_path, "rb") as code_file:
-                                    content = code_file.read().decode("latin-1")
-                            except Exception:
-                                continue
-                            yield (index, relative_file_path), content
+                for relative_file_path, content in iter_zip_text_payloads(
+                    function_code.code_zip, secrets_ignore_files
+                ):
+                    yield (index, relative_file_path), content
 
         scan_error = None
         try:
