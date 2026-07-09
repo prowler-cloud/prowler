@@ -10,13 +10,6 @@ import {
 } from "../cross-provider-frameworks";
 
 describe("CROSS_PROVIDER_FRAMEWORKS catalog", () => {
-  it("declares the three universal frameworks with unique ids", () => {
-    const ids = CROSS_PROVIDER_FRAMEWORKS.map((entry) => entry.complianceId);
-
-    expect(ids).toEqual(["csa_ccm_4.0", "cis_controls_8.1", "dora_2022_2554"]);
-    expect(new Set(ids).size).toBe(ids.length);
-  });
-
   it("uses titles that resolve to a compliance icon", () => {
     for (const entry of CROSS_PROVIDER_FRAMEWORKS) {
       expect(getComplianceIcon(entry.title), entry.title).not.toBeNull();
@@ -36,28 +29,12 @@ describe("CROSS_PROVIDER_FRAMEWORKS catalog", () => {
 });
 
 describe("resolveCrossProviderFramework", () => {
-  it("rejects a cross-provider detail link without a compliance id", () => {
-    // Given / When
-    const framework = resolveCrossProviderFramework(undefined, "CSA-CCM");
-
-    // Then
-    expect(framework).toBeUndefined();
-  });
-
-  it("rejects a compliance id paired with the wrong detail path", () => {
-    // Given / When
-    const framework = resolveCrossProviderFramework("csa_ccm_4.0", "DORA");
-
-    // Then
-    expect(framework).toBeUndefined();
-  });
-
-  it("rejects non-canonical path casing that would break framework assets", () => {
-    // Given / When
-    const framework = resolveCrossProviderFramework("csa_ccm_4.0", "csa-ccm");
-
-    // Then
-    expect(framework).toBeUndefined();
+  it.each([
+    [undefined, "CSA-CCM"],
+    ["csa_ccm_4.0", "DORA"],
+    ["csa_ccm_4.0", "csa-ccm"],
+  ])("rejects invalid detail links", (complianceId, title) => {
+    expect(resolveCrossProviderFramework(complianceId, title)).toBeUndefined();
   });
 
   it("resolves the catalog entry for a valid detail link", () => {

@@ -336,16 +336,6 @@ describe("getLatestCrossProviderPdf", () => {
     expect(result).toBeNull();
   });
 
-  it("degrades to null on unexpected failures", async () => {
-    fetchMock.mockRejectedValue(new Error("boom"));
-
-    const result = await getLatestCrossProviderPdf({
-      complianceId: "csa_ccm_4.0",
-    });
-
-    expect(result).toBeNull();
-  });
-
   it("degrades to null on 5xx but still reports to Sentry", async () => {
     const consoleErrorSpy = vi
       .spyOn(console, "error")

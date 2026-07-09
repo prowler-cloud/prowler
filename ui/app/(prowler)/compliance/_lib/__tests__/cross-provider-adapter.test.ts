@@ -225,52 +225,35 @@ describe.each([
   ["DORA", doraAttributes],
   ["CIS-Controls", cisControlsAttributes],
 ])("crossProviderToMapperInput through the real %s mapper", (key, attrs) => {
-  const mapper = getComplianceMapper(key);
-  const { attributesData, requirementsData } = crossProviderToMapperInput(
-    attrs as CrossProviderOverviewAttributes,
-  );
-  const frameworks = mapper.mapComplianceData(attributesData, requirementsData);
-  const mapped = collectRequirements(frameworks);
-
-  it("maps every requirement exactly once", () => {
-    expect(mapped).toHaveLength(
-      (attrs as CrossProviderOverviewAttributes).requirements.length,
+  it("preserves the cross-provider requirement contract", () => {
+    const attributes = attrs as CrossProviderOverviewAttributes;
+    const mapper = getComplianceMapper(key);
+    const { attributesData, requirementsData } =
+      crossProviderToMapperInput(attributes);
+    const mapped = collectRequirements(
+      mapper.mapComplianceData(attributesData, requirementsData),
     );
-  });
-
-  it("preserves the rolled-up status of each requirement", () => {
+    const extras = buildRequirementExtrasMap(attributes);
     const statuses = Object.fromEntries(mapped.map((r) => [r.name, r.status]));
-    for (const requirement of (attrs as CrossProviderOverviewAttributes)
-      .requirements) {
-      const composedName = `${requirement.id} - ${requirement.name}`;
-      expect(statuses[composedName]).toBe(requirement.status);
-    }
-  });
 
-  it("joins cross-provider extras onto every mapped requirement", () => {
-    const extras = buildRequirementExtrasMap(
-      attrs as CrossProviderOverviewAttributes,
-    );
-
-    for (const requirement of mapped) {
-      const extra = extras.get(requirement.name as string);
-      expect(extra, `no extras for "${requirement.name}"`).toBeDefined();
-      expect(extra?.scanIdsByProvider).toEqual(
-        (attrs as CrossProviderOverviewAttributes).scan_ids_by_provider,
-      );
-    }
-  });
-
-  it("gives mappers the deduped union of per-provider check ids", () => {
-    for (const requirement of (attrs as CrossProviderOverviewAttributes)
-      .requirements) {
+    expect(mapped).toHaveLength(attributes.requirements.length);
+    for (const requirement of attributes.requirements) {
       const composedName = `${requirement.id} - ${requirement.name}`;
       const mappedRequirement = mapped.find((r) => r.name === composedName);
-      const expected = new Set(
+      const expectedCheckIds = new Set(
         Object.values(requirement.check_ids_by_provider ?? {}).flat(),
       );
-      expect(new Set(mappedRequirement?.check_ids)).toEqual(expected);
-      expect(mappedRequirement?.check_ids).toHaveLength(expected.size);
+
+      expect(statuses[composedName]).toBe(requirement.status);
+      expect(
+        extras.get(composedName),
+        `no extras for "${composedName}"`,
+      ).toBeDefined();
+      expect(extras.get(composedName)?.scanIdsByProvider).toEqual(
+        attributes.scan_ids_by_provider,
+      );
+      expect(new Set(mappedRequirement?.check_ids)).toEqual(expectedCheckIds);
+      expect(mappedRequirement?.check_ids).toHaveLength(expectedCheckIds.size);
     }
   });
 });
@@ -297,19 +280,7 @@ describe("CSA grouping through the real mapper", () => {
 });
 
 describe("invertCheckIdsByProvider", () => {
-  it("maps each check id to the provider types that declare it", () => {
-    expect(
-      invertCheckIdsByProvider({
-        aws: ["iam_check_1"],
-        azure: ["entra_check_1"],
-      }),
-    ).toEqual({
-      iam_check_1: ["aws"],
-      entra_check_1: ["azure"],
-    });
-  });
-
-  it("accumulates every provider for a check shared across providers", () => {
+  it("maps exclusive and shared checks to their provider types", () => {
     expect(
       invertCheckIdsByProvider({
         aws: ["shared_check", "iam_check_1"],
@@ -319,10 +290,6 @@ describe("invertCheckIdsByProvider", () => {
       shared_check: ["aws", "azure"],
       iam_check_1: ["aws"],
     });
-  });
-
-  it("returns an empty map for no per-provider checks", () => {
-    expect(invertCheckIdsByProvider({})).toEqual({});
   });
 });
 

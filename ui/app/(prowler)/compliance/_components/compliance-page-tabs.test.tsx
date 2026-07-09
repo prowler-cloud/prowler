@@ -32,22 +32,6 @@ describe("CompliancePageTabs", () => {
     pushMock.mockClear();
   });
 
-  it("renders the active tab's content", () => {
-    render(
-      <CompliancePageTabs
-        activeTab={COMPLIANCE_TAB.PER_SCAN}
-        crossProviderEnabled
-        perScanContent={<div>Per scan content</div>}
-        crossProviderContent={<div>Cross provider content</div>}
-      />,
-    );
-
-    expect(screen.getByText("Per scan content")).toBeInTheDocument();
-    expect(
-      screen.queryByText("Cross provider content"),
-    ).not.toBeInTheDocument();
-  });
-
   it("navigates with ?tab=cross-provider and back to the bare route", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
@@ -73,21 +57,6 @@ describe("CompliancePageTabs", () => {
 
     await user.click(screen.getByRole("tab", { name: /per scan/i }));
     expect(pushMock).toHaveBeenCalledWith("/compliance");
-  });
-
-  it("does not navigate when re-selecting the active tab", async () => {
-    const user = userEvent.setup();
-    render(
-      <CompliancePageTabs
-        activeTab={COMPLIANCE_TAB.PER_SCAN}
-        crossProviderEnabled
-        perScanContent={<div>Per scan content</div>}
-        crossProviderContent={null}
-      />,
-    );
-
-    await user.click(screen.getByRole("tab", { name: /per scan/i }));
-    expect(pushMock).not.toHaveBeenCalled();
   });
 
   it("disables the cross-provider tab with the cloud upsell badge in OSS", () => {

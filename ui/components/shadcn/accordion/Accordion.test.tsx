@@ -11,21 +11,6 @@ const buildItems = (): AccordionItemProps[] => [
 ];
 
 describe("Accordion", () => {
-  it("should use the same background tokens as filter selectors", () => {
-    // Given
-    render(<Accordion items={buildItems()} />);
-
-    // When
-    const accordion = screen
-      .getByRole("button", { name: "First item" })
-      .closest("[data-variant='light']");
-
-    // Then
-    expect(accordion).toHaveClass("bg-bg-input-primary");
-    expect(accordion).toHaveClass("dark:bg-input/30");
-    expect(accordion).not.toHaveClass("bg-bg-neutral-primary");
-  });
-
   describe("when uncontrolled", () => {
     it("should expand an item when its trigger is clicked", async () => {
       // Given

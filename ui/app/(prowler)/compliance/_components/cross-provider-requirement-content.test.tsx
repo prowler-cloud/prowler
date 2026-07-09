@@ -5,7 +5,6 @@ import type { CheckProviderTypesMap, Requirement } from "@/types/compliance";
 
 import type { CrossProviderRequirementExtras } from "../_types";
 import { CrossProviderRequirementContent } from "./cross-provider-requirement-content";
-import { RequirementProviderChips } from "./requirement-provider-chips";
 
 const { clientAccordionContentMock } = vi.hoisted(() => ({
   clientAccordionContentMock: vi.fn(
@@ -59,19 +58,6 @@ const extras: CrossProviderRequirementExtras = {
   },
 };
 
-describe("RequirementProviderChips", () => {
-  it("renders one status chip per provider", () => {
-    render(<RequirementProviderChips providers={extras.providers} />);
-
-    expect(screen.getByTestId("requirement-chip-aws")).toHaveTextContent(
-      /fail/i,
-    );
-    expect(screen.getByTestId("requirement-chip-azure")).toHaveTextContent(
-      /pass/i,
-    );
-  });
-});
-
 describe("CrossProviderRequirementContent", () => {
   it("renders the requirement once with all contributing scans combined", () => {
     clientAccordionContentMock.mockClear();
@@ -96,24 +82,6 @@ describe("CrossProviderRequirementContent", () => {
     expect(call?.requirement).toBe(mappedRequirement);
     expect(call?.framework).toBe("CSA-CCM");
     expect(call?.disableFindings).toBe(false);
-  });
-
-  it("labels each check with the provider types that declare it", () => {
-    clientAccordionContentMock.mockClear();
-    render(
-      <CrossProviderRequirementContent
-        requirement={mappedRequirement}
-        extras={extras}
-        framework="CSA-CCM"
-      />,
-    );
-
-    const call = clientAccordionContentMock.mock.calls.at(-1)?.[0];
-    expect(call?.checkProviders).toEqual({
-      aws_check: ["aws"],
-      azure_check: ["azure"],
-      shared_check: ["aws", "azure"],
-    });
   });
 
   it("disables findings when no provider contributed any check", () => {

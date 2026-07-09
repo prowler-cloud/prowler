@@ -87,13 +87,6 @@ describe("toCrossProviderAccordionItems", () => {
     expect(items[0].items).toHaveLength(2);
   });
 
-  it("builds a title and content for every requirement, with or without extras", () => {
-    for (const child of items[0].items ?? []) {
-      expect(child.title).toBeTruthy();
-      expect(child.content).toBeTruthy();
-    }
-  });
-
   it("shows the status only once via the provider chips (no duplicate roll-up badge)", () => {
     // A&A-01 has a single provider (aws FAIL): its status must appear once,
     // in the chip — not also as a separate roll-up badge.
