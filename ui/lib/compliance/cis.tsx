@@ -38,8 +38,11 @@ export const mapComplianceData = (
     const attrs = metadataArray?.[0];
     if (!attrs) continue;
 
-    // Apply profile filter
-    if (filter === "Level 1" && attrs.Profile !== "Level 1") {
+    // Apply profile filter.
+    // Most CIS benchmarks use "Level 1"/"Level 2" as the Profile, but some
+    // (e.g. M365) prefix it with the license tier: "E3 Level 1", "E5 Level 2".
+    // Match by suffix so the Level 1 filter works across all CIS variants.
+    if (filter === "Level 1" && !attrs.Profile?.endsWith("Level 1")) {
       continue; // Skip Level 2 requirements when Level 1 is selected
     }
 
