@@ -39,7 +39,13 @@ const {
   storeState: {
     tasks: {} as Record<
       string,
-      { kind: string; status: string; meta: Record<string, string> }
+      {
+        taskId: string;
+        kind: string;
+        status: string;
+        meta: Record<string, string>;
+        startedAt: number;
+      }
     >,
   },
 }));
@@ -50,11 +56,13 @@ vi.mock("../_actions/cross-provider", () => ({
 
 vi.mock("../_lib/cross-provider-pdf", () => ({
   CROSS_PROVIDER_PDF_TASK_KIND: "cross-provider-pdf",
+  buildCrossProviderPdfTaskScope: vi.fn(() => "scope-1"),
   downloadCrossProviderPdf: downloadPdfMock,
   crossProviderPdfHandler: { onReady: vi.fn(), onError: vi.fn() },
 }));
 
 vi.mock("@/store/task-watcher/store", () => ({
+  TASK_WATCHER_STATUS: { PENDING: "pending", READY: "ready", ERROR: "error" },
   trackAndPollTask: trackAndPollMock,
   useTaskWatcherStore: (selector: (state: typeof storeState) => unknown) =>
     selector(storeState),
@@ -133,9 +141,11 @@ describe("CrossProviderPdfButton", () => {
   it("shows a generating state while a task for this framework is pending", () => {
     storeState.tasks = {
       "task-9": {
+        taskId: "task-9",
         kind: "cross-provider-pdf",
         status: "pending",
-        meta: { complianceId: "csa_ccm_4.0" },
+        meta: { complianceId: "csa_ccm_4.0", scopeKey: "scope-1" },
+        startedAt: Date.now(),
       },
     };
 
@@ -163,5 +173,59 @@ describe("CrossProviderPdfButton", () => {
     );
 
     await waitFor(() => expect(downloadPdfMock).toHaveBeenCalledWith("task-7"));
+  });
+
+  it("keeps a completed report downloadable after the ready toast closes", async () => {
+    // Given
+    storeState.tasks = {
+      "task-8": {
+        taskId: "task-8",
+        kind: "cross-provider-pdf",
+        status: "ready",
+        meta: {
+          complianceId: "csa_ccm_4.0",
+          scopeKey: "scope-1",
+          reportLabel: "quarterly-audit.pdf",
+        },
+        startedAt: Date.now(),
+      },
+    };
+    const user = userEvent.setup();
+    render(<CrossProviderPdfButton {...props} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: /report/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /download latest/i }),
+    );
+
+    // Then
+    await waitFor(() => expect(downloadPdfMock).toHaveBeenCalledWith("task-8"));
+  });
+
+  it("does not offer a completed report from a different filter scope", async () => {
+    // Given
+    storeState.tasks = {
+      "task-other-scope": {
+        taskId: "task-other-scope",
+        kind: "cross-provider-pdf",
+        status: "ready",
+        meta: {
+          complianceId: "csa_ccm_4.0",
+          scopeKey: "another-scope",
+        },
+        startedAt: Date.now(),
+      },
+    };
+    const user = userEvent.setup();
+    render(<CrossProviderPdfButton {...props} />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: /report/i }));
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /download latest/i }),
+    ).not.toBeInTheDocument();
   });
 });

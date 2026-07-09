@@ -62,6 +62,16 @@ export const CROSS_PROVIDER_FRAMEWORKS: CrossProviderFrameworkEntry[] = [
   },
 ];
 
+/** Resolves only canonical catalog links. Missing, unknown, or mismatched
+ * identities must not reach the API as an `undefined` or unrelated filter. */
+export const resolveCrossProviderFramework = (
+  complianceId: string | undefined,
+  title: string,
+): CrossProviderFrameworkEntry | undefined =>
+  CROSS_PROVIDER_FRAMEWORKS.find(
+    (entry) => entry.complianceId === complianceId && entry.title === title,
+  );
+
 /** Cross-provider filter params forwarded from the overview into detail
  *  links (and consumed back by the detail page). */
 const CROSS_PROVIDER_FILTER_PARAMS = [

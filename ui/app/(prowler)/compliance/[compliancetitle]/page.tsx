@@ -1,5 +1,5 @@
 import { ChevronDownIcon } from "lucide-react";
-import { redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -36,6 +36,7 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
+import type { SearchParamsProps } from "@/types";
 import {
   AttributesData,
   Framework,
@@ -44,35 +45,32 @@ import {
 import { ScanEntity } from "@/types/scans";
 
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
+import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
 
-// Type alias (not interface) so it gets an implicit index signature and can
-// flow into CrossProviderDetail's generic searchParams record.
-type ComplianceDetailSearchParams = {
-  complianceId: string;
-  version?: string;
-  scanId?: string;
-  section?: string;
-  mode?: string;
-  "filter[region__in]"?: string;
-  "filter[provider_type__in]"?: string;
-  "filter[provider_id__in]"?: string;
-  "filter[provider_groups__in]"?: string;
-  "filter[cis_profile_level]"?: string;
-  page?: string;
-  pageSize?: string;
-};
+const getSingleSearchParam = (
+  value: string | string[] | undefined,
+): string | undefined =>
+  typeof value === "string" && value ? value : undefined;
 
 export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
   params: Promise<{ compliancetitle: string }>;
-  searchParams: Promise<ComplianceDetailSearchParams>;
+  searchParams: Promise<SearchParamsProps>;
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId, section, mode } = resolvedSearchParams;
+  const complianceId = getSingleSearchParam(resolvedSearchParams.complianceId);
+  const version = getSingleSearchParam(resolvedSearchParams.version);
+  const scanId = getSingleSearchParam(resolvedSearchParams.scanId);
+  const section = getSingleSearchParam(resolvedSearchParams.section);
+  const mode = getSingleSearchParam(resolvedSearchParams.mode);
+
+  if (!complianceId) {
+    notFound();
+  }
 
   // Cross-provider mode replaces the per-scan pipeline with the universal
   // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
@@ -82,13 +80,17 @@ export default async function ComplianceDetail({
       redirect("/compliance");
     }
 
-    const crossProviderTitle = compliancetitle.split("-").join(" ");
+    const framework = resolveCrossProviderFramework(
+      complianceId,
+      compliancetitle,
+    );
+    if (!framework) {
+      notFound();
+    }
+
+    const crossProviderTitle = framework.title.split("-").join(" ");
     return (
-      <ContentLayout
-        title={
-          version ? `${crossProviderTitle} - ${version}` : crossProviderTitle
-        }
-      >
+      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
         <Suspense
           key={buildSearchParamsKey(resolvedSearchParams)}
           fallback={
@@ -111,8 +113,12 @@ export default async function ComplianceDetail({
       </ContentLayout>
     );
   }
-  const regionFilter = resolvedSearchParams["filter[region__in]"];
-  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
+  const regionFilter = getSingleSearchParam(
+    resolvedSearchParams["filter[region__in]"],
+  );
+  const cisProfileFilter = getSingleSearchParam(
+    resolvedSearchParams["filter[cis_profile_level]"],
+  );
   const logoPath = getComplianceIcon(compliancetitle);
 
   const searchParamsKey = buildSearchParamsKey(resolvedSearchParams);

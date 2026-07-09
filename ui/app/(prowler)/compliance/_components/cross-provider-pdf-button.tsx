@@ -13,12 +13,14 @@ import { Input } from "@/components/shadcn/input/input";
 import { Modal } from "@/components/shadcn/modal";
 import { toast } from "@/components/shadcn/toast";
 import {
+  TASK_WATCHER_STATUS,
   trackAndPollTask,
   useTaskWatcherStore,
 } from "@/store/task-watcher/store";
 
 import { generateCrossProviderPdf } from "../_actions/cross-provider";
 import {
+  buildCrossProviderPdfTaskScope,
   CROSS_PROVIDER_PDF_TASK_KIND,
   downloadCrossProviderPdf,
 } from "../_lib/cross-provider-pdf";
@@ -47,15 +49,38 @@ export const CrossProviderPdfButton = ({
   const [onlyFailed, setOnlyFailed] = useState(false);
   const [includeManual, setIncludeManual] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const taskScope = buildCrossProviderPdfTaskScope(complianceId, filters);
 
   const isGenerating = useTaskWatcherStore((state) =>
     Object.values(state.tasks).some(
       (task) =>
         task.kind === CROSS_PROVIDER_PDF_TASK_KIND &&
-        task.status === "pending" &&
-        task.meta.complianceId === complianceId,
+        task.status === TASK_WATCHER_STATUS.PENDING &&
+        task.meta.scopeKey === taskScope,
     ),
   );
+  const completedTask = useTaskWatcherStore((state) =>
+    Object.values(state.tasks).reduce<(typeof state.tasks)[string] | undefined>(
+      (latest, task) => {
+        if (
+          task.kind !== CROSS_PROVIDER_PDF_TASK_KIND ||
+          task.status !== TASK_WATCHER_STATUS.READY ||
+          task.meta.scopeKey !== taskScope
+        ) {
+          return latest;
+        }
+
+        return !latest || task.startedAt > latest.startedAt ? task : latest;
+      },
+      undefined,
+    ),
+  );
+  const availablePdf: LatestCrossProviderPdf | null = completedTask
+    ? {
+        taskId: completedTask.taskId,
+        filename: completedTask.meta.reportLabel,
+      }
+    : latestPdf;
 
   const handleGenerate = async () => {
     setSubmitting(true);
@@ -88,6 +113,7 @@ export const CrossProviderPdfButton = ({
         kind: CROSS_PROVIDER_PDF_TASK_KIND,
         meta: {
           complianceId,
+          scopeKey: taskScope,
           ...(reportName.trim() ? { reportLabel: reportName.trim() } : {}),
         },
       });
@@ -131,12 +157,12 @@ export const CrossProviderPdfButton = ({
             </Button>
           }
         >
-          {latestPdf && (
+          {availablePdf && (
             <ActionDropdownItem
               icon={<DownloadIcon />}
-              label={`Download latest${formatGeneratedAt(latestPdf.completedAt)}`}
-              description={latestPdf.filename}
-              onSelect={() => downloadCrossProviderPdf(latestPdf.taskId)}
+              label={`Download latest${formatGeneratedAt(availablePdf.completedAt)}`}
+              description={availablePdf.filename}
+              onSelect={() => downloadCrossProviderPdf(availablePdf.taskId)}
             />
           )}
           <ActionDropdownItem

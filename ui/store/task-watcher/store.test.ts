@@ -24,6 +24,11 @@ describe("task watcher store", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: undefined,
+    });
     useTaskWatcherStore.setState({ tasks: {} });
     registerTaskKindHandler("test-kind", { onReady, onError });
   });
@@ -44,6 +49,37 @@ describe("task watcher store", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
+  it("replaces settled results of the same kind when tracking new work", async () => {
+    // Given
+    pollMock.mockResolvedValue({ ok: true, state: "completed" });
+    useTaskWatcherStore.setState({
+      tasks: {
+        "previous-task": {
+          taskId: "previous-task",
+          kind: "test-kind",
+          status: TASK_WATCHER_STATUS.READY,
+          meta: {},
+          startedAt: Date.now() - 1000,
+        },
+      },
+    });
+
+    // When
+    await trackAndPollTask({
+      taskId: "replacement-task",
+      kind: "test-kind",
+      meta: {},
+    });
+
+    // Then
+    expect(
+      useTaskWatcherStore.getState().tasks["previous-task"],
+    ).toBeUndefined();
+    expect(
+      useTaskWatcherStore.getState().tasks["replacement-task"]?.status,
+    ).toBe(TASK_WATCHER_STATUS.READY);
+  });
+
   it("marks the task as error when the backend task fails", async () => {
     pollMock.mockResolvedValue({ ok: true, state: "failed" });
 
@@ -53,9 +89,7 @@ describe("task watcher store", () => {
       meta: {},
     });
 
-    expect(useTaskWatcherStore.getState().tasks["task-2"]?.status).toBe(
-      TASK_WATCHER_STATUS.ERROR,
-    );
+    expect(useTaskWatcherStore.getState().tasks["task-2"]).toBeUndefined();
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onReady).not.toHaveBeenCalled();
   });
@@ -65,9 +99,7 @@ describe("task watcher store", () => {
 
     await trackAndPollTask({ taskId: "task-7", kind: "test-kind", meta: {} });
 
-    expect(useTaskWatcherStore.getState().tasks["task-7"]?.status).toBe(
-      TASK_WATCHER_STATUS.ERROR,
-    );
+    expect(useTaskWatcherStore.getState().tasks["task-7"]).toBeUndefined();
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onReady).not.toHaveBeenCalled();
   });
@@ -102,12 +134,49 @@ describe("task watcher store", () => {
       meta: {},
     });
 
+    await vi.waitFor(() => expect(pollMock).toHaveBeenCalledTimes(1));
     resolvePoll({ ok: true, state: "completed" });
     await Promise.all([first, second]);
     await flush();
 
     expect(pollMock).toHaveBeenCalledTimes(1);
     expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not poll or notify after another tab settles the same task", async () => {
+    // Given
+    pollMock.mockResolvedValue({ ok: true, state: "completed" });
+    useTaskWatcherStore.setState({
+      tasks: {
+        "shared-task": {
+          taskId: "shared-task",
+          kind: "test-kind",
+          status: TASK_WATCHER_STATUS.PENDING,
+          meta: {},
+          startedAt: Date.now(),
+        },
+      },
+    });
+    const requestLock = vi.fn(
+      async (_name: string, callback: () => Promise<void>) => {
+        useTaskWatcherStore
+          .getState()
+          .resolveTask("shared-task", TASK_WATCHER_STATUS.READY);
+        await callback();
+      },
+    );
+    Object.defineProperty(navigator, "locks", {
+      configurable: true,
+      value: { request: requestLock },
+    });
+
+    // When
+    await resumePendingTasks();
+
+    // Then
+    expect(requestLock).toHaveBeenCalledTimes(1);
+    expect(pollMock).not.toHaveBeenCalled();
+    expect(onReady).not.toHaveBeenCalled();
   });
 
   it("resumes persisted pending tasks on watcher mount", async () => {
@@ -132,6 +201,40 @@ describe("task watcher store", () => {
     expect(onReady).toHaveBeenCalledTimes(1);
   });
 
+  it("discards settled tasks before resuming persisted work", async () => {
+    // Given
+    pollMock.mockResolvedValue({ ok: true, state: "completed" });
+    useTaskWatcherStore.setState({
+      tasks: {
+        "old-ready-task": {
+          taskId: "old-ready-task",
+          kind: "test-kind",
+          status: TASK_WATCHER_STATUS.READY,
+          meta: {},
+          startedAt: Date.now() - 1000,
+        },
+        "pending-task": {
+          taskId: "pending-task",
+          kind: "test-kind",
+          status: TASK_WATCHER_STATUS.PENDING,
+          meta: {},
+          startedAt: Date.now(),
+        },
+      },
+    });
+
+    // When
+    await resumePendingTasks();
+
+    // Then
+    expect(
+      useTaskWatcherStore.getState().tasks["old-ready-task"],
+    ).toBeUndefined();
+    expect(useTaskWatcherStore.getState().tasks["pending-task"]?.status).toBe(
+      TASK_WATCHER_STATUS.READY,
+    );
+  });
+
   it("expires stale persisted tasks instead of polling them", async () => {
     useTaskWatcherStore.setState({
       tasks: {
@@ -148,9 +251,7 @@ describe("task watcher store", () => {
     await resumePendingTasks();
 
     expect(pollMock).not.toHaveBeenCalled();
-    expect(useTaskWatcherStore.getState().tasks["task-6"]?.status).toBe(
-      TASK_WATCHER_STATUS.ERROR,
-    );
+    expect(useTaskWatcherStore.getState().tasks["task-6"]).toBeUndefined();
     expect(onError).toHaveBeenCalledTimes(1);
   });
 });

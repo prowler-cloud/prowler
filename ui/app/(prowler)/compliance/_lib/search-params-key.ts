@@ -8,7 +8,7 @@ const TABLE_STATE_PARAMS = ["page", "pageSize", "sort"];
  * navigations (pagination/sort) so only real query changes remount the tree.
  */
 export const buildSearchParamsKey = (
-  searchParams: Record<string, string | undefined>,
+  searchParams: Record<string, string | string[] | undefined>,
 ): string =>
   JSON.stringify(
     Object.fromEntries(

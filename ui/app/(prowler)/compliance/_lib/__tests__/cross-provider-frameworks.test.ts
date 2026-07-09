@@ -6,6 +6,7 @@ import { PROVIDER_TYPES } from "@/types/providers";
 import {
   buildCrossProviderDetailHref,
   CROSS_PROVIDER_FRAMEWORKS,
+  resolveCrossProviderFramework,
 } from "../cross-provider-frameworks";
 
 describe("CROSS_PROVIDER_FRAMEWORKS catalog", () => {
@@ -31,6 +32,46 @@ describe("CROSS_PROVIDER_FRAMEWORKS catalog", () => {
         entry.compatibleProviders.length,
       );
     }
+  });
+});
+
+describe("resolveCrossProviderFramework", () => {
+  it("rejects a cross-provider detail link without a compliance id", () => {
+    // Given / When
+    const framework = resolveCrossProviderFramework(undefined, "CSA-CCM");
+
+    // Then
+    expect(framework).toBeUndefined();
+  });
+
+  it("rejects a compliance id paired with the wrong detail path", () => {
+    // Given / When
+    const framework = resolveCrossProviderFramework("csa_ccm_4.0", "DORA");
+
+    // Then
+    expect(framework).toBeUndefined();
+  });
+
+  it("rejects non-canonical path casing that would break framework assets", () => {
+    // Given / When
+    const framework = resolveCrossProviderFramework("csa_ccm_4.0", "csa-ccm");
+
+    // Then
+    expect(framework).toBeUndefined();
+  });
+
+  it("resolves the catalog entry for a valid detail link", () => {
+    // Given
+    const expected = CROSS_PROVIDER_FRAMEWORKS[0];
+
+    // When
+    const framework = resolveCrossProviderFramework(
+      expected.complianceId,
+      expected.title,
+    );
+
+    // Then
+    expect(framework).toEqual(expected);
   });
 });
 

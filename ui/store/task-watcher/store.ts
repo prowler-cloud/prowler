@@ -100,14 +100,58 @@ const settleTask = (
   error?: string,
 ) => {
   const store = useTaskWatcherStore.getState();
+  const currentTask = store.tasks[taskId];
+  if (!currentTask || currentTask.status !== TASK_WATCHER_STATUS.PENDING) {
+    return;
+  }
+
   store.resolveTask(taskId, status, error);
   const task = useTaskWatcherStore.getState().tasks[taskId];
   if (!task) return;
 
   const handler = handlers.get(task.kind);
-  if (!handler) return;
-  if (status === TASK_WATCHER_STATUS.READY) handler.onReady(task);
-  else handler.onError(task);
+  if (handler) {
+    if (status === TASK_WATCHER_STATUS.READY) handler.onReady(task);
+    else handler.onError(task);
+  }
+
+  // Error details have no durable consumer after the handler surfaces them.
+  // Ready tasks stay available so feature UI can expose their result.
+  if (status === TASK_WATCHER_STATUS.ERROR) {
+    store.dismissTask(taskId);
+  }
+};
+
+const runPollLoop = async (taskId: string): Promise<void> => {
+  for (let round = 0; round < MAX_POLL_ROUNDS; round++) {
+    const result = await pollTaskUntilSettled(taskId);
+
+    if (result.ok) {
+      if (result.state === "completed") {
+        settleTask(taskId, TASK_WATCHER_STATUS.READY);
+      } else {
+        settleTask(
+          taskId,
+          TASK_WATCHER_STATUS.ERROR,
+          `Task ended in state "${result.state}".`,
+        );
+      }
+      return;
+    }
+
+    // "Task timeout" just means this server round expired while the task
+    // is still running — keep polling. Real errors settle immediately.
+    if (result.error !== "Task timeout") {
+      settleTask(taskId, TASK_WATCHER_STATUS.ERROR, result.error);
+      return;
+    }
+  }
+
+  settleTask(
+    taskId,
+    TASK_WATCHER_STATUS.ERROR,
+    "The task is taking too long. Try again later.",
+  );
 };
 
 const pollUntilDone = async (taskId: string): Promise<void> => {
@@ -115,35 +159,20 @@ const pollUntilDone = async (taskId: string): Promise<void> => {
   activePolls.add(taskId);
 
   try {
-    for (let round = 0; round < MAX_POLL_ROUNDS; round++) {
-      const result = await pollTaskUntilSettled(taskId);
+    const runIfPending = async () => {
+      // A different tab may have completed the task while this one waited for
+      // the cross-tab lock. Refresh persisted state before polling or notifying.
+      await useTaskWatcherStore.persist.rehydrate();
+      const task = useTaskWatcherStore.getState().tasks[taskId];
+      if (task?.status !== TASK_WATCHER_STATUS.PENDING) return;
+      await runPollLoop(taskId);
+    };
 
-      if (result.ok) {
-        if (result.state === "completed") {
-          settleTask(taskId, TASK_WATCHER_STATUS.READY);
-        } else {
-          settleTask(
-            taskId,
-            TASK_WATCHER_STATUS.ERROR,
-            `Task ended in state "${result.state}".`,
-          );
-        }
-        return;
-      }
-
-      // "Task timeout" just means this server round expired while the task
-      // is still running — keep polling. Real errors settle immediately.
-      if (result.error !== "Task timeout") {
-        settleTask(taskId, TASK_WATCHER_STATUS.ERROR, result.error);
-        return;
-      }
+    if (typeof navigator !== "undefined" && navigator.locks) {
+      await navigator.locks.request(`task-watcher:${taskId}`, runIfPending);
+    } else {
+      await runIfPending();
     }
-
-    settleTask(
-      taskId,
-      TASK_WATCHER_STATUS.ERROR,
-      "The task is taking too long. Try again later.",
-    );
   } catch {
     // A thrown poll (e.g. the server-action RPC failing on a network drop)
     // must still settle the task, or it stays PENDING in the persisted
@@ -175,7 +204,15 @@ export const trackAndPollTask = async ({
     return pollUntilDone(taskId);
   }
 
-  useTaskWatcherStore.getState().upsertTask({
+  const store = useTaskWatcherStore.getState();
+  Object.values(store.tasks)
+    .filter(
+      (task) =>
+        task.kind === kind && task.status !== TASK_WATCHER_STATUS.PENDING,
+    )
+    .forEach((task) => store.dismissTask(task.taskId));
+
+  store.upsertTask({
     taskId,
     kind,
     status: TASK_WATCHER_STATUS.PENDING,
@@ -190,9 +227,18 @@ export const trackAndPollTask = async ({
  *  pending longer than the staleness ceiling are settled as errors without
  *  hitting the API. Called once on app mount by `TaskPollingWatcher`. */
 export const resumePendingTasks = async (): Promise<void> => {
-  const pending = Object.values(useTaskWatcherStore.getState().tasks).filter(
+  const store = useTaskWatcherStore.getState();
+  const persistedTasks = Object.values(store.tasks);
+  const pending = persistedTasks.filter(
     (task) => task.status === TASK_WATCHER_STATUS.PENDING,
   );
+
+  // Settled entries already surfaced in the previous browser session. The
+  // server-rendered feature UI resolves durable results again on reload, so
+  // keeping these records would only grow localStorage forever.
+  persistedTasks
+    .filter((task) => task.status !== TASK_WATCHER_STATUS.PENDING)
+    .forEach((task) => store.dismissTask(task.taskId));
 
   await Promise.all(
     pending.map((task) => {
