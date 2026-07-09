@@ -1,3 +1,5 @@
+import type { ProviderType } from "./providers";
+
 export const REQUIREMENT_STATUS = {
   PASS: "PASS",
   FAIL: "FAIL",
@@ -47,6 +49,10 @@ export interface Requirement {
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
+
+/** Check id → provider types it belongs to, for provider-labeled check
+ *  lists in the cross-provider view (a check can exist in several). */
+export type CheckProviderTypesMap = Partial<Record<string, ProviderType[]>>;
 
 export interface Control {
   label: string;

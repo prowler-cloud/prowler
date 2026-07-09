@@ -32,6 +32,12 @@ describe("client accordion content", () => {
     expect(source).not.toContain("useRef");
   });
 
+  it("supports multi-scan queries and provider-labeled checks for the cross-provider view", () => {
+    // A single scanId still resolves to a one-element array for the hook.
+    expect(source).toContain("scanIds ?? (scanId ? [scanId] : [])");
+    expect(source).toContain("ChecksWithProviders");
+  });
+
   it("gates the skeleton on the hook loading state and surfaces fetch errors", () => {
     // A disabled fetch (e.g. "No findings" status) must not skeleton forever,
     // and a failed fetch must offer a retry instead of hanging.

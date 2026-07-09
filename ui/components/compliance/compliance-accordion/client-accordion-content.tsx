@@ -18,23 +18,31 @@ import { FINDINGS_DEFAULT_SORT, MUTED_FILTER } from "@/lib";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
-import { Requirement } from "@/types/compliance";
+import { CheckProviderTypesMap, Requirement } from "@/types/compliance";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
+import { ChecksWithProviders } from "./checks-with-providers";
 import { useRequirementFindings } from "./use-requirement-findings";
 
 interface ClientAccordionContentProps {
   requirement: Requirement;
-  scanId: string;
+  /** Single scan (per-scan compliance view). Ignored when `scanIds` is set. */
+  scanId?: string;
+  /** All scans to query at once (cross-provider view). */
+  scanIds?: string[];
   framework: string;
   disableFindings?: boolean;
+  /** When set, the checks list labels each check with its provider icons. */
+  checkProviders?: CheckProviderTypesMap;
 }
 
 export const ClientAccordionContent = ({
   requirement,
   framework,
   scanId,
+  scanIds,
   disableFindings = false,
+  checkProviders,
 }: ClientAccordionContentProps) => {
   const searchParams = useSearchParams();
   const pageNumber = searchParams.get("page") || "1";
@@ -49,6 +57,7 @@ export const ClientAccordionContent = ({
   const mutedFilter = searchParams.get("filter[muted]") || MUTED_FILTER.EXCLUDE;
 
   const checks = requirement.check_ids || [];
+  const resolvedScanIds = scanIds ?? (scanId ? [scanId] : []);
 
   const {
     findings,
@@ -63,7 +72,7 @@ export const ClientAccordionContent = ({
       checks.length > 0 &&
       requirement.status !== "No findings",
     checkIds: checks,
-    scanId,
+    scanIds: resolvedScanIds,
     pageNumber,
     pageSize,
     sort,
@@ -111,7 +120,14 @@ export const ClientAccordionContent = ({
       <div className="w-full flex-col">
         <div className="mt-[-8px] mb-1 h-1 w-full border-b border-gray-200 dark:border-gray-800" />
         <span className="text-gray-600 dark:text-gray-200" aria-label="Checks">
-          {checks.join(", ")}
+          {checkProviders ? (
+            <ChecksWithProviders
+              checks={checks}
+              checkProviders={checkProviders}
+            />
+          ) : (
+            checks.join(", ")
+          )}
         </span>
       </div>
     </div>
