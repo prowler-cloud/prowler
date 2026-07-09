@@ -178,6 +178,9 @@ class App(AzureService):
                                     ftps_state=getattr(
                                         function_config, "ftps_state", None
                                     ),
+                                    https_only=getattr(
+                                        function, "https_only", False
+                                    ),
                                 )
                             }
                         )
@@ -301,3 +304,4 @@ class FunctionApp:
     public_access: bool
     vnet_subnet_id: str
     ftps_state: Optional[str]
+    https_only: bool = False
