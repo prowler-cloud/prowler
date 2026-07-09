@@ -67,6 +67,27 @@ describe("pollJiraDispatchTask", () => {
     });
   });
 
+  it("should return a plural fallback error when a completed task has multiple failures without an error", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: {
+        created_count: 0,
+        failed_count: 3,
+      },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-123");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to create 3 Jira issues.",
+    });
+  });
+
   it("should surface task failure result errors", async () => {
     // Given
     pollTaskUntilSettledMock.mockResolvedValue({

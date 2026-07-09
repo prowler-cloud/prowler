@@ -1731,6 +1731,47 @@ class TestJiraIntegration:
     @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
     @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
     @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_response_error_without_json_body(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test send_finding raises with status-code context for non-JSON errors."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock()
+        mock_response.status_code = 502
+        mock_response.json.side_effect = ValueError("No JSON body")
+        mock_post.return_value = mock_response
+
+        with pytest.raises(JiraSendFindingsResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert "Failed to create Jira issue" in str(error.value)
+        assert "Jira returned status code 502" in str(error.value)
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_send_finding_custom_fields_error(
         self,
         mock_post,

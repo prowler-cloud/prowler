@@ -2184,7 +2184,9 @@ class Jira:
                         {}, response.status_code
                     )
                     logger.error(response_error)
-                    return False
+                    raise JiraSendFindingsResponseError(
+                        message=response_error, file=os.path.basename(__file__)
+                    )
 
                 # Check if the error is due to required custom fields
                 if (
