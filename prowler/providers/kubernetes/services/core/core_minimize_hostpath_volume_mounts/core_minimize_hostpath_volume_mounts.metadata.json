@@ -1,0 +1,38 @@
+{
+  "Provider": "kubernetes",
+  "CheckID": "core_minimize_hostpath_volume_mounts",
+  "CheckTitle": "Pod does not mount hostPath volumes",
+  "CheckType": [],
+  "ServiceName": "core",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "Pod",
+  "ResourceGroup": "container",
+  "Description": "**Kubernetes Pods** defining `hostPath` volumes are identified, meaning they mount files or directories from the node's filesystem directly into the pod.",
+  "Risk": "A **hostPath volume** exposes the node filesystem to the pod. A compromised container can read node secrets (e.g., kubelet credentials, container runtime sockets) (**C**), tamper with host binaries and configuration (**I**), and escalate privileges to the node, enabling **container escape** and **lateral movement** across the cluster (**A**).",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://kubernetes.io/docs/concepts/storage/volumes/#hostpath",
+    "https://kubernetes.io/docs/concepts/security/pod-security-standards/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Open Kubernetes Dashboard\n2. For controller-managed workloads (Deployment/DaemonSet/StatefulSet):\n   - Go to Workloads > select the workload > Edit\n   - In the Pod template, remove any volumes of type hostPath and replace them with PersistentVolumeClaims, ConfigMaps, Secrets or emptyDir as appropriate\n   - Save to roll out new Pods\n3. For standalone Pods:\n   - Go to Workloads > Pods > select the Pod > Delete\n   - Click Create > upload the Pod YAML without hostPath volumes and create the Pod",
+      "Terraform": "```hcl\nresource \"kubernetes_pod\" \"<example_resource_name>\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"ct\"\n      image = \"nginx\"\n      volume_mount {\n        name       = \"data\"\n        mount_path = \"/data\"\n      }\n    }\n    volume {\n      name = \"data\"\n      empty_dir {} # Critical: use emptyDir/PVC/ConfigMap instead of host_path so the Pod passes the check\n    }\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disallow `hostPath` volumes by default. Enforce **least privilege** with admission policies (Pod Security Standards `baseline`/`restricted` or policy engines) that block them, allowing narrowly scoped, read-only exceptions only for trusted system workloads. Prefer **PersistentVolumeClaims**, **ConfigMaps**, **Secrets** or **emptyDir** for **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/core_minimize_hostpath_volume_mounts"
+    }
+  },
+  "Categories": [
+    "container-security",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Some system workloads (e.g., CNI plugins, node agents, log collectors) legitimately require hostPath. Exceptions should be clearly defined, scoped to system namespaces and monitored."
+}

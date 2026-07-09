@@ -54,6 +54,11 @@ class Core(KubernetesService):
                         containers=containers,
                         init_containers=init_containers,
                         ephemeral_containers=ephemeral_containers,
+                        volumes=(
+                            [volume.to_dict() for volume in pod.spec.volumes]
+                            if pod.spec.volumes
+                            else []
+                        ),
                     )
         except Exception as error:
             logger.error(
@@ -188,6 +193,7 @@ class Pod(BaseModel):
     containers: Optional[dict]
     init_containers: Optional[dict] = None
     ephemeral_containers: Optional[dict] = None
+    volumes: Optional[List[dict]] = None
 
 
 class ConfigMap(BaseModel):
