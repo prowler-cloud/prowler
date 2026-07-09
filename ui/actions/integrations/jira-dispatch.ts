@@ -159,12 +159,18 @@ export const pollJiraDispatchTask = async (
   const jiraResult = result as JiraTaskResult | undefined;
 
   if (state === "completed") {
-    if (!jiraResult?.error) {
+    const createdCount = jiraResult?.created_count ?? 0;
+    const failedCount = jiraResult?.failed_count ?? 0;
+    if (!jiraResult?.error && failedCount === 0 && createdCount > 0) {
       return { success: true, message: "Finding successfully sent to Jira!" };
     }
     return {
       success: false,
-      error: jiraResult?.error || "Failed to create Jira issue.",
+      error:
+        jiraResult?.error ||
+        (failedCount > 1
+          ? `Failed to create ${failedCount} Jira issues.`
+          : "Failed to create Jira issue."),
     };
   }
 
