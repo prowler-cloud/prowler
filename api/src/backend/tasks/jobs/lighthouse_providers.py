@@ -52,6 +52,24 @@ EXCLUDED_OPENAI_MODEL_SUBSTRINGS = (
     "-instruct",  # Legacy instruct models (gpt-3.5-turbo-instruct, etc.)
 )
 
+OPENAI_COMPATIBLE_AUTHENTICATION_ERROR = "API key is invalid or missing"
+OPENAI_COMPATIBLE_CONNECTION_ERROR = "Provider connection failed"
+
+
+class _OpenAICompatibleProviderError(Exception):
+    """Sanitized OpenAI-compatible provider error safe for task results."""
+
+
+def _sanitize_openai_compatible_error(error: Exception) -> str:
+    status_code = getattr(error, "status_code", None)
+    if status_code is None:
+        response = getattr(error, "response", None)
+        status_code = getattr(response, "status_code", None)
+
+    if status_code == 401:
+        return OPENAI_COMPATIBLE_AUTHENTICATION_ERROR
+    return OPENAI_COMPATIBLE_CONNECTION_ERROR
+
 
 class _LighthouseOpenAICompatibleNetworkBackend(httpcore.SyncBackend):
     """Validate and pin DNS results immediately before TCP connections."""
@@ -100,6 +118,22 @@ def _create_openai_compatible_http_client() -> httpx.Client:
         follow_redirects=False,
         transport=_LighthouseOpenAICompatibleHTTPTransport(),
     )
+
+
+def _list_openai_compatible_models(base_url: str, api_key: str):
+    validate_lighthouse_openai_compatible_base_url(base_url)
+    try:
+        with _create_openai_compatible_http_client() as http_client:
+            client = openai.OpenAI(
+                api_key=api_key,
+                base_url=base_url,
+                http_client=http_client,
+            )
+            return client.models.list()
+    except Exception as error:
+        raise _OpenAICompatibleProviderError(
+            _sanitize_openai_compatible_error(error)
+        ) from error
 
 
 def _extract_error_message(e: Exception) -> str:
@@ -344,14 +378,7 @@ def check_lighthouse_provider_connection(provider_config_id: str) -> dict:
                     "error": "Base URL or API key is invalid or missing",
                 }
 
-            validate_lighthouse_openai_compatible_base_url(params["base_url"])
-            with _create_openai_compatible_http_client() as http_client:
-                client = openai.OpenAI(
-                    api_key=params["api_key"],
-                    base_url=params["base_url"],
-                    http_client=http_client,
-                )
-                _ = client.models.list()
+            _ = _list_openai_compatible_models(params["base_url"], params["api_key"])
 
         else:
             return {"connected": False, "error": "Unsupported provider type"}
@@ -421,14 +448,7 @@ def _fetch_openai_compatible_models(base_url: str, api_key: str) -> dict[str, st
 
     Note: base_url should include version (e.g., https://openrouter.ai/api/v1)
     """
-    validate_lighthouse_openai_compatible_base_url(base_url)
-    with _create_openai_compatible_http_client() as http_client:
-        client = openai.OpenAI(
-            api_key=api_key,
-            base_url=base_url,
-            http_client=http_client,
-        )
-        models = client.models.list()
+    models = _list_openai_compatible_models(base_url, api_key)
 
     available_models: dict[str, str] = {}
     for model in models.data:
