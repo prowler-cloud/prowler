@@ -444,8 +444,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def create(self, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         new_relationships = [
             UserRoleRelationship(
@@ -459,8 +459,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def update(self, instance, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         # Safeguard: A tenant must always have at least one user with MANAGE_ACCOUNT.
         # If the target roles do NOT include MANAGE_ACCOUNT, and the current user is
@@ -490,7 +490,7 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
                     }
                 )
 
-        instance.roles.clear()
+        UserRoleRelationship.objects.filter(user=instance, tenant_id=tenant_id).delete()
         new_relationships = [
             UserRoleRelationship(user=instance, role=r, tenant_id=tenant_id)
             for r in roles
