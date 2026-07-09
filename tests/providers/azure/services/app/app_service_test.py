@@ -222,7 +222,7 @@ class Test_App_Service:
                 location="West Europe",
                 kind="functionapp",
                 function_keys=None,
-                enviroment_variables=None,
+                environment_variables=None,
                 identity=ManagedServiceIdentity(type="SystemAssigned"),
                 public_access=True,
                 vnet_subnet_id="",
@@ -246,6 +246,56 @@ class Test_App_Service:
                 ].name
                 == "functionapp-1"
             )
+
+    def test_get_function_host_keys_logs_warning_on_optional_failure(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_client.web_apps.list_host_keys.side_effect = Exception("Forbidden")
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with (
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.warning"
+            ) as mock_warning,
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.error"
+            ) as mock_error,
+        ):
+            result = app._get_function_host_keys(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
+            )
+
+        assert result is None
+        mock_warning.assert_called_once()
+        mock_error.assert_not_called()
+
+    def test_list_application_settings_logs_warning_on_optional_failure(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_client.web_apps.list_application_settings.side_effect = Exception(
+            "Forbidden"
+        )
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with (
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.warning"
+            ) as mock_warning,
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.error"
+            ) as mock_error,
+        ):
+            result = app._list_application_settings(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
+            )
+
+        assert result is None
+        mock_warning.assert_called_once()
+        mock_error.assert_not_called()
 
 
 class Test_App_get_apps:
