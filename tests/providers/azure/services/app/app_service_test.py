@@ -227,6 +227,7 @@ class Test_App_Service:
                 public_access=True,
                 vnet_subnet_id="",
                 ftps_state="FtpsOnly",
+                https_only=True,
             )
 
             app_service = MagicMock()
@@ -240,6 +241,9 @@ class Test_App_Service:
                 ].ftps_state
                 == "FtpsOnly"
             )
+            assert app_service.functions["mock-subscription"][
+                "/subscriptions/resource_id"
+            ].https_only
             assert (
                 app_service.functions["mock-subscription"][
                     "/subscriptions/resource_id"
