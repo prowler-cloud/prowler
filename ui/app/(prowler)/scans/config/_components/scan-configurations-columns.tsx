@@ -8,8 +8,8 @@ import {
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { DateWithTime } from "@/components/ui/entities";
-import { DataTableColumnHeader } from "@/components/ui/table";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
 export const createScanConfigurationsColumns = (

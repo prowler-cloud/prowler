@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 import { ResourceDetailsSheet } from "@/components/resources/resource-details-sheet";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { MetaDataProps, ResourceProps } from "@/types";
 
 import { getColumnResources } from "./column-resources";

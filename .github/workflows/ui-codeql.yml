@@ -10,6 +10,7 @@ on:
       - '.github/workflows/ui-codeql.yml'
       - '.github/codeql/ui-codeql-config.yml'
       - '!ui/CHANGELOG.md'
+      - '!ui/changelog.d/**'
   pull_request:
     branches:
       - 'master'
@@ -19,6 +20,7 @@ on:
       - '.github/workflows/ui-codeql.yml'
       - '.github/codeql/ui-codeql-config.yml'
       - '!ui/CHANGELOG.md'
+      - '!ui/changelog.d/**'
   schedule:
     - cron: '00 12 * * *'
 

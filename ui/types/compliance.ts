@@ -127,7 +127,7 @@ export interface ISO27001AttributesMetadata {
 export interface CISAttributesMetadata {
   Section: string;
   SubSection: string | null;
-  Profile: string; // "Level 1" or "Level 2"
+  Profile: string; // "Level 1"/"Level 2" (M365 prefixes the tier: "E3 Level 1", "E5 Level 2")
   AssessmentStatus: string; // "Manual" or "Automated"
   Description: string;
   RationaleStatement: string;

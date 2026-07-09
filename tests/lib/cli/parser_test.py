@@ -17,7 +17,7 @@ prowler_command = "prowler"
 
 # capsys
 # https://docs.pytest.org/en/7.1.x/how-to/capture-stdout-stderr.html
-prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm} ..."
+prowler_default_usage_error = "usage: prowler [-h] [--version] {aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2enetworks,dashboard,iac,image,llm} ..."
 
 
 def mock_get_available_providers():
@@ -40,6 +40,7 @@ def mock_get_available_providers():
         "openstack",
         "stackit",
         "linode",
+        "e2enetworks",
     ]
 
 

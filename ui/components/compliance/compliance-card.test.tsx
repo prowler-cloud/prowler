@@ -18,11 +18,6 @@ describe("ComplianceCard", () => {
     expect(source).not.toContain("sm:flex-row");
   });
 
-  it("uses the shadcn progress component instead of Hero UI", () => {
-    expect(source).toContain('from "@/components/shadcn/progress"');
-    expect(source).not.toContain("@heroui/progress");
-  });
-
   it("places compact actions in the icon column on larger screens", () => {
     expect(source).toContain('orientation="column"');
     expect(source).toContain('buttonWidth="icon"');

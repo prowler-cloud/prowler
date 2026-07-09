@@ -5,15 +5,15 @@ import { ChevronRight } from "lucide-react";
 
 import { Checkbox } from "@/components/shadcn";
 import {
+  DataTableColumnHeader,
+  SeverityBadge,
+  StatusFindingBadge,
+} from "@/components/shadcn/table";
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import {
-  DataTableColumnHeader,
-  SeverityBadge,
-  StatusFindingBadge,
-} from "@/components/ui/table";
 import { cn } from "@/lib";
 import {
   canDrillDownFindingGroup,

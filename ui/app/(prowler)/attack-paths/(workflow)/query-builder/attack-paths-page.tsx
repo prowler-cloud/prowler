@@ -16,7 +16,7 @@ import { FindingDetailDrawer } from "@/components/findings/table";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
-import { Button } from "@/components/shadcn";
+import { Button, Card, useToast } from "@/components/shadcn";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +26,6 @@ import {
   DialogTrigger,
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
-import { useToast } from "@/components/ui";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
 import {
@@ -70,7 +69,7 @@ import {
 } from "./_lib/get-attack-paths-view-state";
 
 const SCROLL_CONTAINER_CLASS =
-  "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary relative z-0 flex w-full flex-col gap-4 overflow-auto border p-4";
+  "minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm";
 
 export default function AttackPathsPage() {
   const searchParams = useSearchParams();
@@ -427,9 +426,9 @@ export default function AttackPathsPage() {
       </div>
 
       {viewState === ATTACK_PATHS_VIEW_STATES.LOADING ? (
-        <div className={SCROLL_CONTAINER_CLASS}>
+        <Card variant="base" className={SCROLL_CONTAINER_CLASS}>
           <p className="text-sm">Loading scans...</p>
-        </div>
+        </Card>
       ) : viewState === ATTACK_PATHS_VIEW_STATES.NO_SCANS ? (
         // Keep the empty-scans tour anchor: attackPathsEmptyTour targets
         // data-tour-id="attack-paths-empty-scans-cta". The panel's NO_SCANS
@@ -463,7 +462,7 @@ export default function AttackPathsPage() {
           )}
 
           {scanId && (
-            <div className={SCROLL_CONTAINER_CLASS}>
+            <Card variant="base" className={SCROLL_CONTAINER_CLASS}>
               {queriesLoading ? (
                 <p className="text-sm">Loading queries...</p>
               ) : queriesError ? (
@@ -514,14 +513,14 @@ export default function AttackPathsPage() {
                   )}
                 </>
               )}
-            </div>
+            </Card>
           )}
 
           {(graphState.loading ||
             (graphState.data &&
               graphState.data.nodes &&
               graphState.data.nodes.length > 0)) && (
-            <div className={SCROLL_CONTAINER_CLASS}>
+            <Card variant="base" className={SCROLL_CONTAINER_CLASS}>
               {graphState.loading ? (
                 <GraphLoading />
               ) : graphState.data &&
@@ -664,7 +663,7 @@ export default function AttackPathsPage() {
                   </div>
                 </>
               ) : null}
-            </div>
+            </Card>
           )}
 
           {finding.findingDetails && (

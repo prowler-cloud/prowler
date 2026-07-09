@@ -230,12 +230,12 @@ class Defender(AzureService):
         iot_security_solutions = {}
         for subscription_id, client in self.clients.items():
             try:
+                iot_security_solutions.update({subscription_id: {}})
                 iot_security_solutions_list = self.list_with_rg_scope(
                     subscription_id,
                     client.iot_security_solution.list_by_subscription,
                     client.iot_security_solution.list_by_resource_group,
                 )
-                iot_security_solutions.update({subscription_id: {}})
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_id].update(
                         {

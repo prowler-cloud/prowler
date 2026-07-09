@@ -31,7 +31,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
   ),
@@ -373,7 +373,7 @@ describe("finding triage cells", () => {
       screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
     expect(
       screen.getByRole("link", { name: "Available in Prowler Cloud" }),
     ).toHaveAttribute("href", "https://prowler.com/pricing");

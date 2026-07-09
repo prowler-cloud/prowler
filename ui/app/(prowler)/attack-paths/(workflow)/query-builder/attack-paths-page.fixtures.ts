@@ -242,6 +242,40 @@ export const resourcesOnly = (): PageFixture => ({
   },
 });
 
+export const parameterizedQuery = (): PageFixture => ({
+  scans: [buildScan(TYPICAL_SCAN_ID)],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [
+    buildQuery(
+      "aws-internet-exposed-ec2-sensitive-s3-access",
+      "Internet-Exposed EC2 with Sensitive S3 Access",
+      {
+        parameters: [
+          {
+            name: "tag_key",
+            label: "Tag key",
+            data_type: "string",
+            description: "Tag key to filter the S3 bucket.",
+            placeholder: "DataClassification",
+          },
+          {
+            name: "tag_value",
+            label: "Tag value",
+            data_type: "string",
+            description: "Tag value to filter the S3 bucket.",
+            placeholder: "Sensitive",
+          },
+        ],
+      },
+    ),
+  ],
+  queryId: "aws-internet-exposed-ec2-sensitive-s3-access",
+  queryResult: {
+    nodes: [buildResourceNode("s3-1", "S3Bucket", "sensitive-data")],
+    relationships: [],
+  },
+});
+
 export const disconnected = (): PageFixture => ({
   scans: [buildScan(TYPICAL_SCAN_ID)],
   scanId: TYPICAL_SCAN_ID,
@@ -322,6 +356,7 @@ export const fixtures = {
   singleNode,
   findingsOnly,
   resourcesOnly,
+  parameterizedQuery,
   disconnected,
   large,
   edgeCases,
