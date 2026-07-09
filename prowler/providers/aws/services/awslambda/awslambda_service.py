@@ -195,12 +195,12 @@ class Lambda(AWSService):
             function = lambda_functions_to_fetch[fetched_lambda_code]
             try:
                 function_code = fetched_lambda_code.result()
-                if function_code:
-                    yield function, function_code
+                yield function, function_code
             except Exception as error:
                 logger.error(
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                yield function, None
 
     def _fetch_function_code(self, function_name, function_region):
         try:
@@ -232,12 +232,12 @@ class Lambda(AWSService):
             layer = lambda_layers_to_fetch[fetched_layer_code]
             try:
                 layer_code = fetched_layer_code.result()
-                if layer_code:
-                    yield layer, layer_code
+                yield layer, layer_code
             except Exception as error:
                 logger.error(
                     f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                yield layer, None
 
     def _fetch_layer_code(self, layer):
         try:
@@ -245,7 +245,7 @@ class Lambda(AWSService):
             layer_information = regional_client.get_layer_version_by_arn(Arn=layer.arn)
             if "Location" in layer_information["Content"]:
                 code_location_uri = layer_information["Content"]["Location"]
-                raw_code_zip = requests.get(code_location_uri).content
+                raw_code_zip = requests.get(code_location_uri, timeout=30).content
                 return LambdaCode(
                     location=code_location_uri,
                     code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),

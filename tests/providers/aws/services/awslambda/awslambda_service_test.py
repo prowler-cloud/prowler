@@ -46,7 +46,7 @@ def create_zip_file(code: str = "") -> io.BytesIO:
     return zip_output
 
 
-def mock_request_get(_):
+def mock_request_get(_, timeout=None):
     """Mock requests.get() to get the Lambda Code in Zip Format"""
     mock_resp = mock.MagicMock
     mock_resp.status_code = 200

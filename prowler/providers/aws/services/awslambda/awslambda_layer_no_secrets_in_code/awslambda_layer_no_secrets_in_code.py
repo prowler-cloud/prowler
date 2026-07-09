@@ -2,6 +2,7 @@ import fnmatch
 import os
 import tempfile
 from collections import defaultdict
+from pathlib import Path
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
@@ -27,15 +28,36 @@ class awslambda_layer_no_secrets_in_code(Check):
         validate = awslambda_client.audit_config.get("secrets_validate", False)
 
         layers_with_code = []
+        layers_without_code = []
+
+        def safely_extract_zip_file(zip_file, target_dir):
+            target_path = Path(target_dir).resolve()
+            for member in zip_file.infolist():
+                member_path = (target_path / member.filename).resolve()
+                if (
+                    target_path not in member_path.parents
+                    and member_path != target_path
+                ):
+                    continue
+                if member.is_dir():
+                    member_path.mkdir(parents=True, exist_ok=True)
+                    continue
+                member_path.parent.mkdir(parents=True, exist_ok=True)
+                with (
+                    zip_file.open(member) as source,
+                    open(member_path, "wb") as target,
+                ):
+                    target.write(source.read())
 
         def code_payloads():
             for layer, layer_code in awslambda_client._get_layer_code():
                 if not layer_code:
+                    layers_without_code.append(layer)
                     continue
                 index = len(layers_with_code)
                 layers_with_code.append(layer)
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
-                    layer_code.code_zip.extractall(tmp_dir_name)
+                    safely_extract_zip_file(layer_code.code_zip, tmp_dir_name)
                     for root, _, files in os.walk(tmp_dir_name):
                         for file_name in files:
                             file_path = os.path.join(root, file_name)
@@ -108,6 +130,15 @@ class awslambda_layer_no_secrets_in_code(Check):
                 )
                 annotate_verified_secrets(report, all_secrets)
 
+            findings.append(report)
+
+        for layer in layers_without_code:
+            report = Check_Report_AWS(metadata=self.metadata(), resource=layer)
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Could not retrieve Lambda layer {layer.name} code for secrets "
+                "scan; manual review is required."
+            )
             findings.append(report)
 
         return findings

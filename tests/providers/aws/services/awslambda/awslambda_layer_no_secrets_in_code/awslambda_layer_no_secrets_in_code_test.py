@@ -1,4 +1,5 @@
-import os
+import io
+import zipfile
 from unittest import mock
 
 from prowler.providers.aws.services.awslambda.awslambda_service import (
@@ -19,16 +20,12 @@ LAMBDA_LAYER_ARN = (
 
 
 def get_layer_code_from_files(files: dict) -> LambdaCode:
-    code_zip = mock.MagicMock()
-
-    def _extractall(path):
+    zip_output = io.BytesIO()
+    with zipfile.ZipFile(zip_output, "w", zipfile.ZIP_DEFLATED) as code_zip:
         for name, content in files.items():
-            os.makedirs(os.path.dirname(f"{path}/{name}"), exist_ok=True)
-            with open(f"{path}/{name}", "w") as fd:
-                fd.write(content)
-
-    code_zip.extractall.side_effect = _extractall
-    return LambdaCode(location="", code_zip=code_zip)
+            code_zip.writestr(name, content)
+    zip_output.seek(0)
+    return LambdaCode(location="", code_zip=zipfile.ZipFile(zip_output))
 
 
 def create_layer() -> Layer:
@@ -57,6 +54,19 @@ def mock_get_layer_code_with_ignored_secret():
             "python/lib/vendor.js": 'const password = "test-vendor-password";',
         }
     )
+
+
+def mock_get_layer_code_with_unsafe_secret():
+    yield create_layer(), get_layer_code_from_files(
+        {
+            "../config.py": 'db_password = "Tr0ub4dor3xKq9vLmZ"',
+            "python/lib/config.py": 'setting = "not-sensitive"',
+        }
+    )
+
+
+def mock_get_layer_code_without_payload():
+    yield create_layer(), None
 
 
 class Test_awslambda_layer_no_secrets_in_code:
@@ -179,6 +189,59 @@ class Test_awslambda_layer_no_secrets_in_code:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
+
+    def test_layer_code_unsafe_zip_path_is_not_extracted(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {LAMBDA_LAYER_ARN: create_layer()}
+        lambda_client._get_layer_code = mock_get_layer_code_with_unsafe_secret
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_code.awslambda_layer_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_code.awslambda_layer_no_secrets_in_code import (
+                awslambda_layer_no_secrets_in_code,
+            )
+
+            check = awslambda_layer_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
+    def test_layer_code_without_payload_reports_manual(self):
+        lambda_client = mock.MagicMock
+        lambda_client.layers = {LAMBDA_LAYER_ARN: create_layer()}
+        lambda_client._get_layer_code = mock_get_layer_code_without_payload
+        lambda_client.audit_config = {"secrets_ignore_patterns": []}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_code.awslambda_layer_no_secrets_in_code.awslambda_client",
+                new=lambda_client,
+            ),
+        ):
+            from prowler.providers.aws.services.awslambda.awslambda_layer_no_secrets_in_code.awslambda_layer_no_secrets_in_code import (
+                awslambda_layer_no_secrets_in_code,
+            )
+
+            check = awslambda_layer_no_secrets_in_code()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "MANUAL"
+            assert "Could not retrieve" in result[0].status_extended
 
     def test_scan_failure_reports_manual_not_pass(self):
         from prowler.lib.utils.utils import SecretsScanError

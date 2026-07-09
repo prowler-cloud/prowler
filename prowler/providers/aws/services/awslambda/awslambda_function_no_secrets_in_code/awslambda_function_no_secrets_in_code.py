@@ -2,6 +2,7 @@ import fnmatch
 import os
 import tempfile
 from collections import defaultdict
+from pathlib import Path
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
@@ -36,15 +37,36 @@ class awslambda_function_no_secrets_in_code(Check):
         # (function index, package-relative file name) so they can be grouped
         # back per function.
         functions_with_code = []
+        functions_without_code = []
+
+        def safely_extract_zip_file(zip_file, target_dir):
+            target_path = Path(target_dir).resolve()
+            for member in zip_file.infolist():
+                member_path = (target_path / member.filename).resolve()
+                if (
+                    target_path not in member_path.parents
+                    and member_path != target_path
+                ):
+                    continue
+                if member.is_dir():
+                    member_path.mkdir(parents=True, exist_ok=True)
+                    continue
+                member_path.parent.mkdir(parents=True, exist_ok=True)
+                with (
+                    zip_file.open(member) as source,
+                    open(member_path, "wb") as target,
+                ):
+                    target.write(source.read())
 
         def code_payloads():
             for function, function_code in awslambda_client._get_function_code():
                 if not function_code:
+                    functions_without_code.append(function)
                     continue
                 index = len(functions_with_code)
                 functions_with_code.append(function)
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
-                    function_code.code_zip.extractall(tmp_dir_name)
+                    safely_extract_zip_file(function_code.code_zip, tmp_dir_name)
                     for root, _, files in os.walk(tmp_dir_name):
                         for file_name in files:
                             file_path = os.path.join(root, file_name)
@@ -115,6 +137,15 @@ class awslambda_function_no_secrets_in_code(Check):
                 report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
                 annotate_verified_secrets(report, all_secrets)
 
+            findings.append(report)
+
+        for function in functions_without_code:
+            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+            report.status = "MANUAL"
+            report.status_extended = (
+                f"Could not retrieve Lambda function {function.name} code for secrets "
+                "scan; manual review is required."
+            )
             findings.append(report)
 
         return findings
