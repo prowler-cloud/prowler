@@ -231,14 +231,15 @@ def create_test_user(_session_test_user, django_db_blocker):
     """Re-create the session-scoped test user when a TransactionTestCase
     has truncated the users table."""
     with django_db_blocker.unblock():
-        if not User.objects.filter(pk=_session_test_user.pk).exists():
-            User.objects.create_user(
+        user = User.objects.filter(pk=_session_test_user.pk).first()
+        if user is None:
+            user = User.objects.create_user(
                 id=_session_test_user.pk,
                 name="testing",
                 email=TEST_USER,
                 password=TEST_PASSWORD,
             )
-    return _session_test_user
+    return user
 
 
 @pytest.fixture(scope="function")

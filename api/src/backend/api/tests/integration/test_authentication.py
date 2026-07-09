@@ -14,6 +14,19 @@ from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
 )
 
+PASSWORD_CHANGE_PASSWORD = "InitialSecret123@"
+
+
+@pytest.fixture
+def password_change_user(tenants_fixture):
+    user = User.objects.create_user(
+        name="password_change_user",
+        email=f"password-change-{uuid4()}@prowler.com",
+        password=PASSWORD_CHANGE_PASSWORD,
+    )
+    Membership.objects.create(user=user, tenant=tenants_fixture[0])
+    return user
+
 
 @pytest.mark.django_db
 def test_basic_authentication():
@@ -109,16 +122,16 @@ def test_refresh_token(create_test_user, tenants_fixture):
 
 
 @pytest.mark.django_db
-def test_password_change_invalidates_existing_tokens(create_test_user, tenants_fixture):
+def test_password_change_invalidates_existing_tokens(password_change_user):
     client = APIClient()
     new_password = "ChangedSecret123@"
 
     access_token, refresh_token = get_api_tokens(
-        client, create_test_user.email, TEST_PASSWORD
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
     )
     auth_headers = get_authorization_header(access_token)
     outstanding_token_ids = list(
-        OutstandingToken.objects.filter(user=create_test_user).values_list(
+        OutstandingToken.objects.filter(user=password_change_user).values_list(
             "id", flat=True
         )
     )
@@ -130,12 +143,12 @@ def test_password_change_invalidates_existing_tokens(create_test_user, tenants_f
     password_change_payload = {
         "data": {
             "type": "users",
-            "id": str(create_test_user.id),
+            "id": str(password_change_user.id),
             "attributes": {"password": new_password},
         }
     }
     password_change_response = client.patch(
-        reverse("user-detail", kwargs={"pk": create_test_user.id}),
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
         data=json.dumps(password_change_payload),
         headers=auth_headers,
         content_type="application/vnd.api+json",
@@ -160,7 +173,9 @@ def test_password_change_invalidates_existing_tokens(create_test_user, tenants_f
     )
     assert old_refresh_response.status_code == 400
 
-    new_access_token, _ = get_api_tokens(client, create_test_user.email, new_password)
+    new_access_token, _ = get_api_tokens(
+        client, password_change_user.email, new_password
+    )
     new_access_response = client.get(
         reverse("user-me"), headers=get_authorization_header(new_access_token)
     )
@@ -169,13 +184,13 @@ def test_password_change_invalidates_existing_tokens(create_test_user, tenants_f
 
 @pytest.mark.django_db
 def test_password_change_invalidates_rotated_refresh_token(
-    create_test_user, tenants_fixture
+    password_change_user,
 ):
     client = APIClient()
     new_password = "ChangedSecret123@"
 
     access_token, refresh_token = get_api_tokens(
-        client, create_test_user.email, TEST_PASSWORD
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
     )
     rotated_refresh_response = client.post(
         reverse("token-refresh"),
@@ -195,12 +210,12 @@ def test_password_change_invalidates_rotated_refresh_token(
     password_change_payload = {
         "data": {
             "type": "users",
-            "id": str(create_test_user.id),
+            "id": str(password_change_user.id),
             "attributes": {"password": new_password},
         }
     }
     password_change_response = client.patch(
-        reverse("user-detail", kwargs={"pk": create_test_user.id}),
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
         data=json.dumps(password_change_payload),
         headers=get_authorization_header(access_token),
         content_type="application/vnd.api+json",
