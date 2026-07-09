@@ -200,6 +200,14 @@ const baseS3IntegrationSchema = z.object({
   integration_type: z.literal("amazon_s3"),
   bucket_name: z.string().min(1, "Bucket name is required"),
   output_directory: z.string().min(1, "Output directory is required"),
+  // UI-only field used to prefill the S3IntegrationBucketAccountId parameter of
+  // the CloudFormation quick-create link. Not sent to the backend.
+  bucket_account_id: z
+    .string()
+    .optional()
+    .refine((value) => !value || /^\d{12}$/.test(value), {
+      message: "Must be a valid 12-digit AWS Account ID",
+    }),
   providers: z.array(z.string()).optional(),
   enabled: z.boolean().optional(),
   ...awsCredentialFields,
