@@ -44,6 +44,7 @@ import {
 import { ScanEntity } from "@/types/scans";
 
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
+import { buildSearchParamsKey } from "../_lib/search-params-key";
 
 // Type alias (not interface) so it gets an implicit index signature and can
 // flow into CrossProviderDetail's generic searchParams record.
@@ -89,7 +90,7 @@ export default async function ComplianceDetail({
         }
       >
         <Suspense
-          key={JSON.stringify(resolvedSearchParams)}
+          key={buildSearchParamsKey(resolvedSearchParams)}
           fallback={
             <div className="flex flex-col gap-8">
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
@@ -114,13 +115,7 @@ export default async function ComplianceDetail({
   const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
   const logoPath = getComplianceIcon(compliancetitle);
 
-  // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
-  const paramsForKey = Object.fromEntries(
-    Object.entries(resolvedSearchParams).filter(
-      ([key]) => key !== "page" && key !== "pageSize",
-    ),
-  );
-  const searchParamsKey = JSON.stringify(paramsForKey);
+  const searchParamsKey = buildSearchParamsKey(resolvedSearchParams);
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
