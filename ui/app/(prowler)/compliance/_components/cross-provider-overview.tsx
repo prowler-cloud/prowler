@@ -12,11 +12,9 @@ import { computeProviderBreakdown } from "../_lib/cross-provider-adapter";
 import {
   CROSS_PROVIDER_FRAMEWORKS,
   type CrossProviderFrameworkEntry,
+  parseCrossProviderFilters,
 } from "../_lib/cross-provider-frameworks";
-import type {
-  CrossProviderOverviewData,
-  ProviderBreakdownEntry,
-} from "../_types";
+import type { BillingRedirect, CrossProviderFrameworkSummary } from "../_types";
 import type {
   CrossProviderAccountOption,
   CrossProviderGroupOption,
@@ -24,23 +22,11 @@ import type {
 import { CrossProviderFilters } from "./cross-provider-filters";
 import { CrossProviderFrameworkCard } from "./cross-provider-framework-card";
 
-interface FrameworkCardSummary {
-  complianceId: string;
-  title: string;
-  version: string;
-  description: string;
-  requirementsPassed: number;
-  requirementsFailed: number;
-  requirementsManual: number;
-  totalRequirements: number;
-  providerBreakdown: ProviderBreakdownEntry[];
-}
-
 /** Zero-state summary: the framework renders with every compatible provider
  *  chip dimmed when the API returned nothing usable (e.g. no scans yet). */
 const emptySummary = (
   entry: CrossProviderFrameworkEntry,
-): FrameworkCardSummary => ({
+): CrossProviderFrameworkSummary => ({
   complianceId: entry.complianceId,
   title: entry.title,
   version: entry.version,
@@ -71,15 +57,7 @@ export const CrossProviderOverview = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const filters = {
-    providerTypes:
-      searchParams["filter[provider_type__in]"]?.toString() || undefined,
-    providerIds:
-      searchParams["filter[provider_id__in]"]?.toString() || undefined,
-    providerGroups:
-      searchParams["filter[provider_groups__in]"]?.toString() || undefined,
-    regions: searchParams["filter[region__in]"]?.toString() || undefined,
-  };
+  const filters = parseCrossProviderFilters(searchParams);
 
   const [responses, providersData, providerGroupsData] = await Promise.all([
     Promise.all(
@@ -98,20 +76,15 @@ export const CrossProviderOverview = async ({
   // framework is gated, so forward the billing signal instead of rendering
   // empty cards that would swallow it.
   const billingRedirect = responses.find(
-    ({ response }) =>
-      response &&
-      typeof response === "object" &&
-      "redirectTo" in response &&
-      response.redirectTo,
+    ({ response }) => response && "redirectTo" in response,
   );
   if (billingRedirect) {
-    redirect((billingRedirect.response as { redirectTo: string }).redirectTo);
+    redirect((billingRedirect.response as BillingRedirect).redirectTo);
   }
 
-  const summaries: FrameworkCardSummary[] = responses.map(
+  const summaries: CrossProviderFrameworkSummary[] = responses.map(
     ({ entry, response }) => {
-      const data = (response as { data?: CrossProviderOverviewData } | null)
-        ?.data;
+      const data = response && "data" in response ? response.data : undefined;
       if (!data?.attributes) return emptySummary(entry);
 
       const attrs = data.attributes;

@@ -35,10 +35,15 @@ interface CrossProviderFiltersProps {
   regions: string[];
 }
 
+interface UrlMultiSelectOption {
+  value: string;
+  label: string;
+}
+
 interface UrlMultiSelectProps {
   filterKey: string;
   placeholder: string;
-  options: { value: string; label: string }[];
+  options: UrlMultiSelectOption[];
 }
 
 const UrlMultiSelect = ({

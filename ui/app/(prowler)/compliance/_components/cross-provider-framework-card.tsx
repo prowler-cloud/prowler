@@ -20,19 +20,7 @@ import { cn } from "@/lib/utils";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 
 import { buildCrossProviderDetailHref } from "../_lib/cross-provider-frameworks";
-import type { ProviderBreakdownEntry } from "../_types";
-
-interface CrossProviderFrameworkCardProps {
-  complianceId: string;
-  title: string;
-  version: string;
-  description: string;
-  requirementsPassed: number;
-  requirementsFailed: number;
-  requirementsManual: number;
-  totalRequirements: number;
-  providerBreakdown: ProviderBreakdownEntry[];
-}
+import type { CrossProviderFrameworkSummary } from "../_types";
 
 export const CrossProviderFrameworkCard = ({
   complianceId,
@@ -44,7 +32,7 @@ export const CrossProviderFrameworkCard = ({
   requirementsManual,
   totalRequirements,
   providerBreakdown,
-}: CrossProviderFrameworkCardProps) => {
+}: CrossProviderFrameworkSummary) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -65,7 +53,7 @@ export const CrossProviderFrameworkCard = ({
   const navigateToDetail = () => {
     router.push(
       buildCrossProviderDetailHref(
-        { complianceId, title, version, description, compatibleProviders: [] },
+        { complianceId, title, version },
         Object.fromEntries(searchParams.entries()),
       ),
     );

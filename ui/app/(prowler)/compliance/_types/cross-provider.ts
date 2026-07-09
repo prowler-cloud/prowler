@@ -98,6 +98,21 @@ export interface CrossProviderRequirementExtras {
   scanIdsByProvider: ProviderScanIdsMap;
 }
 
+/** Card-ready framework roll-up shared by the overview grid (producer) and
+ *  `CrossProviderFrameworkCard` (props), so the `{...summary}` spread can
+ *  never drift between the two. */
+export interface CrossProviderFrameworkSummary {
+  complianceId: string;
+  title: string;
+  version: string;
+  description: string;
+  requirementsPassed: number;
+  requirementsFailed: number;
+  requirementsManual: number;
+  totalRequirements: number;
+  providerBreakdown: ProviderBreakdownEntry[];
+}
+
 export interface ProviderBreakdownEntry {
   provider: ProviderType;
   pass: number;

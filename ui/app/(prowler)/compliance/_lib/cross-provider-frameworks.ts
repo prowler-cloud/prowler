@@ -1,5 +1,7 @@
 import type { ProviderType } from "@/types/providers";
 
+import type { CrossProviderApiFilters } from "../_types";
+
 // Catalog of universal compliance frameworks served by the cross-provider
 // endpoint. Hardcoded because the API has no listing endpoint for universal
 // framework ids: when a new universal JSON ships in the SDK
@@ -69,8 +71,25 @@ const CROSS_PROVIDER_FILTER_PARAMS = [
   "filter[region__in]",
 ] as const;
 
+/** Parses the URL filter params every cross-provider endpoint accepts. Kept
+ *  next to CROSS_PROVIDER_FILTER_PARAMS so the overview and detail islands
+ *  build identical, typed filter objects. */
+export const parseCrossProviderFilters = (
+  searchParams: Record<string, string | string[] | undefined>,
+): CrossProviderApiFilters => ({
+  providerTypes:
+    searchParams["filter[provider_type__in]"]?.toString() || undefined,
+  providerIds: searchParams["filter[provider_id__in]"]?.toString() || undefined,
+  providerGroups:
+    searchParams["filter[provider_groups__in]"]?.toString() || undefined,
+  regions: searchParams["filter[region__in]"]?.toString() || undefined,
+});
+
 export const buildCrossProviderDetailHref = (
-  entry: CrossProviderFrameworkEntry,
+  entry: Pick<
+    CrossProviderFrameworkEntry,
+    "complianceId" | "title" | "version"
+  >,
   searchParams?: Record<string, string | string[] | undefined>,
 ): string => {
   const params = new URLSearchParams();

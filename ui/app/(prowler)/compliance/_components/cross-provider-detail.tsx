@@ -25,11 +25,10 @@ import {
   computeProviderBreakdown,
   crossProviderToMapperInput,
 } from "../_lib/cross-provider-adapter";
-import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
-import type {
-  CrossProviderApiFilters,
-  CrossProviderOverviewData,
-} from "../_types";
+import {
+  CROSS_PROVIDER_FRAMEWORKS,
+  parseCrossProviderFilters,
+} from "../_lib/cross-provider-frameworks";
 import type {
   CrossProviderAccountOption,
   CrossProviderGroupOption,
@@ -57,15 +56,7 @@ export const CrossProviderDetail = async ({
   searchParams,
   targetSection,
 }: CrossProviderDetailProps) => {
-  const filters: CrossProviderApiFilters = {
-    providerTypes:
-      searchParams["filter[provider_type__in]"]?.toString() || undefined,
-    providerIds:
-      searchParams["filter[provider_id__in]"]?.toString() || undefined,
-    providerGroups:
-      searchParams["filter[provider_groups__in]"]?.toString() || undefined,
-    regions: searchParams["filter[region__in]"]?.toString() || undefined,
-  };
+  const filters = parseCrossProviderFilters(searchParams);
 
   const [overviewResponse, providersData, providerGroupsData] =
     await Promise.all([
@@ -74,18 +65,11 @@ export const CrossProviderDetail = async ({
       getAllProviderGroups(),
     ]);
 
-  if (
-    overviewResponse &&
-    typeof overviewResponse === "object" &&
-    "redirectTo" in overviewResponse &&
-    overviewResponse.redirectTo
-  ) {
-    redirect(overviewResponse.redirectTo as string);
+  if (overviewResponse && "redirectTo" in overviewResponse) {
+    redirect(overviewResponse.redirectTo);
   }
 
-  const overviewData = (
-    overviewResponse as { data?: CrossProviderOverviewData } | undefined
-  )?.data;
+  const overviewData = overviewResponse?.data;
 
   if (!overviewData?.attributes) {
     return (
@@ -234,7 +218,6 @@ export const CrossProviderDetail = async ({
         />
       </div>
 
-      <div className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         items={accordionItems}
         defaultExpandedKeys={initialExpandedKeys}
