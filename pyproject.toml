@@ -72,11 +72,11 @@ dependencies = [
   "dash==3.1.1",
   "dash-bootstrap-components==2.0.3",
   "defusedxml==0.7.1",
-  "detect-secrets==1.5.0",
   "dulwich==1.2.5",
   "google-api-python-client==2.163.0",
   "google-auth-httplib2==0.2.0",
   "jsonschema==4.23.0",
+  "kingfisher-bin==1.104.0",
   "kubernetes==32.0.1",
   "linode-api4==5.45.0",
   "markdown==3.10.2",
@@ -125,7 +125,7 @@ maintainers = [{name = "Prowler Engineering", email = "engineering@prowler.com"}
 name = "prowler"
 readme = "README.md"
 requires-python = ">=3.10,<3.14"
-version = "5.32.0"
+version = "5.34.0"
 
 [project.scripts]
 prowler = "prowler.__main__:prowler"

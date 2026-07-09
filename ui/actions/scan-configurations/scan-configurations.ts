@@ -14,12 +14,16 @@ import {
   ScanConfigurationRequestBody,
 } from "@/types/scan-configurations";
 
-const SCAN_CONFIGURATION_PATH = "/scan-configurations";
+const SCAN_CONFIGURATION_PATH = "/scans/config";
 
 // Scan Configuration IDs are UUIDs. Validate before interpolating into request
 // URLs so a malformed/crafted value can't inject path segments (SSRF / path
 // injection).
 const scanConfigurationIdSchema = z.uuid();
+
+// Provider IDs are UUIDs too. Validate the whole array at the action boundary so
+// a malformed/crafted id fails here instead of relying on API-side validation.
+const providerIdsSchema = z.array(z.uuid());
 
 const parseConfiguration = (value: string): Record<string, unknown> => {
   // Backend (YamlOrJsonField) accepts either a YAML string or a JSON object.
@@ -36,6 +40,48 @@ const collectProviderIds = (formData: FormData): string[] => {
     .getAll("provider_ids")
     .map((v) => String(v))
     .filter(Boolean);
+};
+
+interface ApiErrorSource {
+  pointer?: string;
+}
+
+interface ApiError {
+  detail?: string;
+  title?: string;
+  source?: ApiErrorSource;
+}
+
+// Route each JSON:API error to the matching form field via its `source.pointer`
+// so it renders inline next to the offending input. Only errors we can't anchor
+// to a field fall back to `general` (surfaced as a toast). Shared by create and
+// update so both flows present validation errors identically — otherwise a
+// config error shows inline on create but as a toast on update.
+const mapApiErrorsToFields = (
+  errorData: { errors?: ApiError[]; message?: string } | null | undefined,
+  fallbackMessage: string,
+): ScanConfigurationErrors => {
+  const apiErrors = Array.isArray(errorData?.errors) ? errorData!.errors! : [];
+
+  if (apiErrors.length === 0) {
+    return { general: errorData?.message || fallbackMessage };
+  }
+
+  const errors: ScanConfigurationErrors = {};
+  const append = (key: keyof ScanConfigurationErrors, detail: string) => {
+    errors[key] = errors[key] ? `${errors[key]}\n${detail}` : detail;
+  };
+
+  for (const err of apiErrors) {
+    const detail = err?.detail || err?.title || fallbackMessage;
+    const pointer = err?.source?.pointer;
+    if (pointer?.includes("name")) append("name", detail);
+    else if (pointer?.includes("configuration"))
+      append("configuration", detail);
+    else if (pointer?.includes("provider_ids")) append("provider_ids", detail);
+    else append("general", detail);
+  }
+  return errors;
 };
 
 export const createScanConfiguration = async (
@@ -95,20 +141,12 @@ export const createScanConfiguration = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const detail =
-        errorData?.errors?.[0]?.detail ||
-        errorData?.message ||
-        `Failed to create Scan Configuration: ${response.statusText}`;
-      const pointer = errorData?.errors?.[0]?.source?.pointer as
-        | string
-        | undefined;
-      const errors: ScanConfigurationErrors = {};
-      if (pointer?.includes("name")) errors.name = detail;
-      else if (pointer?.includes("configuration"))
-        errors.configuration = detail;
-      else if (pointer?.includes("provider_ids")) errors.provider_ids = detail;
-      else errors.general = detail;
-      return { errors };
+      return {
+        errors: mapApiErrorsToFields(
+          errorData,
+          `Failed to create Scan Configuration: ${response.statusText}`,
+        ),
+      };
     }
 
     const data = await response.json();
@@ -199,11 +237,12 @@ export const updateScanConfiguration = async (
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const detail =
-        errorData?.errors?.[0]?.detail ||
-        errorData?.message ||
-        `Failed to update Scan Configuration: ${response.statusText}`;
-      return { errors: { general: detail } };
+      return {
+        errors: mapApiErrorsToFields(
+          errorData,
+          `Failed to update Scan Configuration: ${response.statusText}`,
+        ),
+      };
     }
 
     const data = await response.json();
@@ -225,30 +264,67 @@ export const updateScanConfiguration = async (
   }
 };
 
-export const getScanConfigurationSchema = async (): Promise<Record<
-  string,
-  unknown
-> | null> => {
-  const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}/scan-configurations/schema`);
+// Attach/detach providers on a scan configuration without touching its name or
+// YAML — a partial PATCH of `provider_ids` only. Used by the provider row to
+// associate/disassociate a config (editing the config itself lives in the Scan
+// Config view). The backend's `(tenant, provider)` uniqueness means attaching a
+// provider here moves it off any other config automatically.
+export const setScanConfigurationProviders = async (
+  configId: string,
+  providerIds: string[],
+): Promise<ScanConfigurationActionState> => {
+  const idResult = scanConfigurationIdSchema.safeParse(configId);
+  if (!idResult.success) {
+    return { errors: { general: "Invalid Scan Configuration ID" } };
+  }
+  const validId = idResult.data;
+  const providerIdsResult = providerIdsSchema.safeParse(providerIds);
+  if (!providerIdsResult.success) {
+    return { errors: { provider_ids: "Invalid provider ID" } };
+  }
+  const validProviderIds = providerIdsResult.data;
+  const headers = await getAuthHeaders({ contentType: true });
+
   try {
+    const url = new URL(`${apiBaseUrl}/scan-configurations/${validId}`);
+    // Partial update: only provider_ids (name/configuration are optional on the
+    // backend update serializer), so we don't type this as the full request body.
+    const bodyData = {
+      data: {
+        type: "scan-configurations" as const,
+        id: validId,
+        attributes: { provider_ids: validProviderIds },
+      },
+    };
     const response = await fetch(url.toString(), {
-      method: "GET",
+      method: "PATCH",
       headers,
+      body: JSON.stringify(bodyData),
     });
+
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch Scan Configuration schema: ${response.statusText}`,
-      );
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        errors: mapApiErrorsToFields(
+          errorData,
+          `Failed to update Scan Configuration: ${response.statusText}`,
+        ),
+      };
     }
-    const json = await response.json();
-    const schema = json?.data?.attributes?.schema as
-      | Record<string, unknown>
-      | undefined;
-    return schema ?? null;
+
+    revalidatePath(SCAN_CONFIGURATION_PATH);
+    revalidatePath("/providers");
+    return { success: "Scan Configuration updated successfully!" };
   } catch (error) {
-    console.error("Error fetching Scan Configuration schema:", error);
-    return null;
+    console.error("Error updating Scan Configuration providers:", error);
+    return {
+      errors: {
+        general:
+          error instanceof Error
+            ? error.message
+            : "Error updating Scan Configuration. Please try again.",
+      },
+    };
   }
 };
 

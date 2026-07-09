@@ -37,8 +37,12 @@ jobs:
           allowed-endpoints: >
             github.com:443
             registry.npmjs.org:443
+            nodejs.org:443
             fonts.googleapis.com:443
             fonts.gstatic.com:443
+            api.iconify.design:443
+            api.simplesvg.com:443
+            api.unisvg.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
             cdn.playwright.dev:443
@@ -60,6 +64,7 @@ jobs:
             .github/workflows/ui-tests.yml
           files_ignore: |
             ui/CHANGELOG.md
+            ui/changelog.d/**
             ui/README.md
             ui/AGENTS.md
 

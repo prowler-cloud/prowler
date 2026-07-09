@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { readEnv } from "./runtime-env";
+import { readBoolEnv, readEnv } from "./runtime-env";
 
 describe("readEnv", () => {
   afterEach(() => {
@@ -71,5 +71,53 @@ describe("readEnv", () => {
 
     // When / Then
     expect(readEnv("UI_API_BASE_URL", "NEXT_PUBLIC_API_BASE_URL")).toBeNull();
+  });
+});
+
+describe("readBoolEnv", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('is true only for the exact string "true"', () => {
+    // Given
+    vi.stubEnv("UI_SENTRY_ENABLE", "true");
+
+    // When / Then
+    expect(readBoolEnv("UI_SENTRY_ENABLE")).toBe(true);
+  });
+
+  it("trims surrounding whitespace before comparing", () => {
+    // Given - clean() does not trim a non-empty value, so readBoolEnv must
+    vi.stubEnv("UI_SENTRY_ENABLE", "  true  ");
+
+    // When / Then
+    expect(readBoolEnv("UI_SENTRY_ENABLE")).toBe(true);
+  });
+
+  it("is false when unset", () => {
+    // Given
+    vi.stubEnv("UI_SENTRY_ENABLE", undefined);
+
+    // When / Then
+    expect(readBoolEnv("UI_SENTRY_ENABLE")).toBe(false);
+  });
+
+  it('is false for "false"', () => {
+    // Given
+    vi.stubEnv("UI_SENTRY_ENABLE", "false");
+
+    // When / Then
+    expect(readBoolEnv("UI_SENTRY_ENABLE")).toBe(false);
+  });
+
+  it('is false for other truthy-looking values ("TRUE", "1", "yes")', () => {
+    for (const value of ["TRUE", "1", "yes"]) {
+      // Given
+      vi.stubEnv("UI_SENTRY_ENABLE", value);
+
+      // When / Then
+      expect(readBoolEnv("UI_SENTRY_ENABLE")).toBe(false);
+    }
   });
 });

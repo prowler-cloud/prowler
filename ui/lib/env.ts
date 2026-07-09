@@ -1,3 +1,7 @@
+import {
+  assertGatedIntegrations,
+  warnGatedIntegrationsMisconfig,
+} from "@/lib/integrations";
 import { readEnv } from "@/lib/runtime-env";
 
 // Boot-time required-env assertion so a misconfigured container fails fast
@@ -17,5 +21,8 @@ for (const { key, legacy } of REQUIRED) {
     throw new Error(`Missing required env: ${key}`);
   }
 }
+
+assertGatedIntegrations();
+warnGatedIntegrationsMisconfig();
 
 export {};

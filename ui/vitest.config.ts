@@ -105,17 +105,6 @@ export default defineConfig(() => {
         "next-themes",
 
         // App component lib
-        "@heroui/react",
-        "@heroui/accordion",
-        "@heroui/breadcrumbs",
-        "@heroui/card",
-        "@heroui/chip",
-        "@heroui/divider",
-        "@heroui/input",
-        "@heroui/switch",
-        "@heroui/theme",
-        "@heroui/tooltip",
-        "@heroui/use-clipboard",
         "@iconify/react",
 
         // Radix
@@ -132,6 +121,7 @@ export default defineConfig(() => {
         "@radix-ui/react-scroll-area",
         "@radix-ui/react-select",
         "@radix-ui/react-separator",
+        "@radix-ui/react-switch",
         "@radix-ui/react-tabs",
         "@radix-ui/react-toast",
         "@radix-ui/react-tooltip",
@@ -153,7 +143,6 @@ export default defineConfig(() => {
         "clsx",
         "tailwind-merge",
         "class-variance-authority",
-        "tailwind-variants",
 
         // App-level deps the page (or its children) pull in
         "@tanstack/react-table",

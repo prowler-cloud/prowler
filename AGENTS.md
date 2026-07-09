@@ -114,6 +114,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
+| Reviewing Prowler UI components | `prowler-ui` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Syncing compliance framework with upstream catalog | `prowler-compliance` |

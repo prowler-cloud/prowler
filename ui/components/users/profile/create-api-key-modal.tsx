@@ -5,11 +5,11 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { createApiKey } from "@/actions/api-keys/api-keys";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form, FormButtons } from "@/components/ui/form";
 
 import { DEFAULT_EXPIRY_DAYS } from "./api-keys/constants";
 import { calculateExpiryDate } from "./api-keys/utils";

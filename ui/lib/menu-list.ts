@@ -65,17 +65,21 @@ export const getMenuList = ({
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
-          active: pathname === "/lighthouse",
-        },
-      ],
-    },
+    ...(isCloudEnv
+      ? []
+      : [
+          {
+            groupLabel: "",
+            menus: [
+              {
+                href: "/lighthouse",
+                label: "Lighthouse AI",
+                icon: LighthouseIcon,
+                active: pathname === "/lighthouse",
+              },
+            ],
+          },
+        ]),
     {
       groupLabel: "",
       menus: [
@@ -95,6 +99,19 @@ export const getMenuList = ({
           href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
           label: "Findings",
           icon: Tag,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/scans",
+          label: "Scans",
+          icon: Timer,
+          // Exact match so it isn't also marked active on the `/scans/config`
+          // sub-route (mirrors the top-level Lighthouse entry).
+          active: pathname === "/scans",
         },
       ],
     },
@@ -133,18 +150,16 @@ export const getMenuList = ({
               active: pathname === "/mutelist",
             },
             {
-              href: "/scan-configurations",
-              label: "Scan Configuration",
+              href: "/scans/config",
+              label: "Scan",
               icon: SlidersHorizontal,
-              active: isCloudEnv && pathname.startsWith("/scan-configurations"),
+              active: isCloudEnv && pathname.startsWith("/scans/config"),
               highlight: true,
               disabled: !isCloudEnv,
               cloudOnly: !isCloudEnv,
             },
-            { href: "/scans", label: "Scan Jobs", icon: Timer },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
@@ -160,6 +175,7 @@ export const getMenuList = ({
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
+            { href: "/roles", label: "Roles", icon: UserCog },
           ],
           defaultOpen: false,
         },

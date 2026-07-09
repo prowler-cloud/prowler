@@ -55,6 +55,7 @@ jobs:
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             docs/**
             permissions/**
             api/**

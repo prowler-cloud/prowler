@@ -11,6 +11,8 @@ from prowler.providers.azure.services.postgresql.postgresql_service import (
 )
 from tests.providers.azure.azure_fixtures import (
     AZURE_SUBSCRIPTION_ID,
+    RESOURCE_GROUP,
+    RESOURCE_GROUP_LIST,
     set_mocked_azure_provider,
 )
 
@@ -243,6 +245,103 @@ class Test_SqlServer_Service:
         )
 
 
+class Test_PostgreSQL_get_flexible_servers:
+    def test_get_flexible_servers_no_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.PostgreSQL._get_flexible_servers",
+            return_value={},
+        ):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        postgresql.resource_groups = None
+
+        result = postgresql._get_flexible_servers()
+
+        mock_client.servers.list.assert_called_once()
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_with_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.PostgreSQL._get_flexible_servers",
+            return_value={},
+        ):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        postgresql.resource_groups = {AZURE_SUBSCRIPTION_ID: [RESOURCE_GROUP]}
+
+        result = postgresql._get_flexible_servers()
+
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            resource_group_name=RESOURCE_GROUP
+        )
+        mock_client.servers.list.assert_not_called()
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_empty_resource_group_for_subscription(self):
+        mock_client = MagicMock()
+
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.PostgreSQL._get_flexible_servers",
+            return_value={},
+        ):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        postgresql.resource_groups = {AZURE_SUBSCRIPTION_ID: []}
+
+        result = postgresql._get_flexible_servers()
+
+        mock_client.servers.list_by_resource_group.assert_not_called()
+        mock_client.servers.list.assert_not_called()
+        assert result[AZURE_SUBSCRIPTION_ID] == []
+
+    def test_get_flexible_servers_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.PostgreSQL._get_flexible_servers",
+            return_value={},
+        ):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        postgresql.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = postgresql._get_flexible_servers()
+
+        assert mock_client.servers.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_flexible_servers_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.servers.list_by_resource_group.return_value = []
+
+        with patch(
+            "prowler.providers.azure.services.postgresql.postgresql_service.PostgreSQL._get_flexible_servers",
+            return_value={},
+        ):
+            postgresql = PostgreSQL(set_mocked_azure_provider())
+
+        postgresql.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        postgresql.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        postgresql._get_flexible_servers()
+
+        mock_client.servers.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
+
 def _make_server(name):
     server = MagicMock()
     server.id = (
@@ -302,6 +401,42 @@ class Test_PostgreSQL_Service_Resilience:
         assert prd_server.connection_throttling is None
         dev_server = next(s for s in servers[AZURE_SUBSCRIPTION_ID] if s.name == "dev")
         assert dev_server.connection_throttling == "ON"
+
+    def test_log_retention_reads_flexible_server_parameter_name(self):
+        # Azure Flexible Server exposes log retention under the parameter
+        # "logfiles.retention_days". The legacy Single Server name
+        # "log_retention_days" does not exist on Flexible Server (Azure raises
+        # ConfigurationNotExists), which previously left log_retention_days=None
+        # and made postgresql_flexible_server_log_retention_days_greater_3 always
+        # FAIL. Regression test for #11757.
+        dev = _make_server("dev")
+
+        mock_client = MagicMock()
+        mock_client.servers.list.return_value = [dev]
+        server_details = MagicMock()
+        server_details.location = "westeurope"
+        mock_client.servers.get.return_value = server_details
+        mock_client.administrators.list_by_server.return_value = []
+        mock_client.firewall_rules.list_by_server.return_value = []
+
+        def configurations_get(resource_group, server_name, key):
+            if key == "log_retention_days":
+                raise ResourceNotFoundError(
+                    "(ConfigurationNotExists) The configuration "
+                    "'log_retention_days' does not exist for dev server "
+                    "version 18."
+                )
+            if key == "logfiles.retention_days":
+                return MagicMock(value="5")
+            return MagicMock(value="ON")
+
+        mock_client.configurations.get.side_effect = configurations_get
+
+        postgresql = self._build_service_with_client(mock_client)
+        servers = postgresql._get_flexible_servers()
+
+        dev_server = servers[AZURE_SUBSCRIPTION_ID][0]
+        assert dev_server.log_retention_days == "5"
 
     def test_unexpected_throttling_error_is_not_silently_collected(self):
         # An unexpected failure reading "connection_throttle.enable" (e.g. a

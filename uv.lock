@@ -1796,19 +1796,6 @@ wheels = [
 ]
 
 [[package]]
-name = "detect-secrets"
-version = "1.5.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pyyaml" },
-    { name = "requests" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/69/67/382a863fff94eae5a0cf05542179169a1c49a4c8784a9480621e2066ca7d/detect_secrets-1.5.0.tar.gz", hash = "sha256:6bb46dcc553c10df51475641bb30fd69d25645cc12339e46c824c1e0c388898a", size = 97351, upload-time = "2024-05-06T17:46:19.721Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/4e/5e/4f5fe4b89fde1dc3ed0eb51bd4ce4c0bca406246673d370ea2ad0c58d747/detect_secrets-1.5.0-py3-none-any.whl", hash = "sha256:e24e7b9b5a35048c313e983f76c4bd09dad89f045ff059e354f9943bf45aa060", size = 120341, upload-time = "2024-05-06T17:46:16.628Z" },
-]
-
-[[package]]
 name = "dill"
 version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -2467,6 +2454,19 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/02/d9/a01a3898657626cbcca9fa0e8fa58facb4632e172bdac622d47950f7e12a/keystoneauth1-5.14.0.tar.gz", hash = "sha256:7b942084d3db27dd285c13253cdfee10b05be0436db1c01e15dc744902197a7f", size = 288739, upload-time = "2026-05-13T09:09:26.125Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/72/eb/698dc17e4beb315f83a47d47be128b8a63303dc8b7e7c31110410e10a68b/keystoneauth1-5.14.0-py3-none-any.whl", hash = "sha256:f8c503a95fdd83b5b72736657e4ffbb53d4b28b01763f23013f0294ed8a0e4b9", size = 343268, upload-time = "2026-05-13T09:09:24.573Z" },
+]
+
+[[package]]
+name = "kingfisher-bin"
+version = "1.104.0"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1e/2b/324212f1baf482a7d4b66a2edf33073336735b67bb6b04a38d18fd9e67fb/kingfisher_bin-1.104.0-py3-none-macosx_10_9_x86_64.whl", hash = "sha256:8e3840e67004a971fef80aba240ee5c3c5f7a3a343a6d1083a2751aaf866d5d3", size = 14057606, upload-time = "2026-06-22T03:03:01.419Z" },
+    { url = "https://files.pythonhosted.org/packages/21/0a/cbf964da5102657cb9be4a59db7c9f7807ef88f9419673b7486daba785d3/kingfisher_bin-1.104.0-py3-none-macosx_11_0_arm64.whl", hash = "sha256:b838313411fa2166a318a45aec2cfcc238e2f30f5292e309ca1129a73180c851", size = 12468386, upload-time = "2026-06-22T03:03:03.951Z" },
+    { url = "https://files.pythonhosted.org/packages/0b/a0/cc7ef0ac28f147cdfc9d80e4239fff11c1329831c6f57510c929e848753c/kingfisher_bin-1.104.0-py3-none-manylinux_2_17_aarch64.musllinux_1_2_aarch64.whl", hash = "sha256:0a94abbf2154ef8a3b4845cc0240e2321cdc19e0f5c7f585ea5252e76b242f68", size = 13943188, upload-time = "2026-06-22T03:03:06.378Z" },
+    { url = "https://files.pythonhosted.org/packages/17/79/827cfd7787885798a00b5ab905bdc866ef6f8deeff0f708679b06bc9baaa/kingfisher_bin-1.104.0-py3-none-manylinux_2_17_x86_64.musllinux_1_2_x86_64.whl", hash = "sha256:f381274b946f7f68ed72911770fff72024f2192c6e2e2158f2a7fbfda8c482fb", size = 14757594, upload-time = "2026-06-22T03:03:08.66Z" },
+    { url = "https://files.pythonhosted.org/packages/da/93/b0061fc69cd10382f647f9266823f213fd0b3f168f8b5bd9151a2370abb1/kingfisher_bin-1.104.0-py3-none-win_amd64.whl", hash = "sha256:f228d0dd61a738673b1c536e965a5661a83b1ee6ca64186a46ba6ea81ab4fd0b", size = 27697957, upload-time = "2026-06-22T03:03:11.268Z" },
+    { url = "https://files.pythonhosted.org/packages/a5/fb/f062665b4eb3f77e799cb6335e56bc2945aea83787888a6c1ab329858d0a/kingfisher_bin-1.104.0-py3-none-win_arm64.whl", hash = "sha256:a7774d9d11815ca946bd80b8c9df0f1d39c36cb5a21def3323b99d148dc63065", size = 26063704, upload-time = "2026-06-22T03:03:14.08Z" },
 ]
 
 [[package]]
@@ -3553,7 +3553,7 @@ wheels = [
 
 [[package]]
 name = "prowler"
-version = "5.32.0"
+version = "5.34.0"
 source = { editable = "." }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
@@ -3605,12 +3605,12 @@ dependencies = [
     { name = "dash" },
     { name = "dash-bootstrap-components" },
     { name = "defusedxml" },
-    { name = "detect-secrets" },
     { name = "dulwich" },
     { name = "google-api-python-client" },
     { name = "google-auth-httplib2" },
     { name = "h2" },
     { name = "jsonschema" },
+    { name = "kingfisher-bin" },
     { name = "kubernetes" },
     { name = "linode-api4" },
     { name = "markdown" },
@@ -3714,12 +3714,12 @@ requires-dist = [
     { name = "dash", specifier = "==3.1.1" },
     { name = "dash-bootstrap-components", specifier = "==2.0.3" },
     { name = "defusedxml", specifier = "==0.7.1" },
-    { name = "detect-secrets", specifier = "==1.5.0" },
     { name = "dulwich", specifier = "==1.2.5" },
     { name = "google-api-python-client", specifier = "==2.163.0" },
     { name = "google-auth-httplib2", specifier = "==0.2.0" },
     { name = "h2", specifier = "==4.3.0" },
     { name = "jsonschema", specifier = "==4.23.0" },
+    { name = "kingfisher-bin", specifier = "==1.104.0" },
     { name = "kubernetes", specifier = "==32.0.1" },
     { name = "linode-api4", specifier = "==5.45.0" },
     { name = "markdown", specifier = "==3.10.2" },

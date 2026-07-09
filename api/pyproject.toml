@@ -71,7 +71,7 @@ name = "prowler-api"
 package-mode = false
 # Needed for the SDK compatibility
 requires-python = ">=3.11,<3.13"
-version = "1.33.0"
+version = "1.35.0"
 
 # Shared ruff baseline (kept in sync with mcp_server/pyproject.toml).
 # target-version tracks this project's lowest supported Python.
@@ -218,7 +218,6 @@ constraint-dependencies = [
   "debugpy==1.8.20",
   "decorator==5.2.1",
   "defusedxml==0.7.1",
-  "detect-secrets==1.5.0",
   "dill==0.4.1",
   "distro==1.9.0",
   "dj-rest-auth==7.0.1",
@@ -301,6 +300,7 @@ constraint-dependencies = [
   "jsonschema==4.23.0",
   "jsonschema-specifications==2025.9.1",
   "keystoneauth1==5.13.0",
+  "kingfisher-bin==1.104.0",
   "kiwisolver==1.4.9",
   "knack==0.11.0",
   "kombu==5.6.2",

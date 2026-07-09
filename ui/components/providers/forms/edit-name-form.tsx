@@ -5,8 +5,8 @@ import { useState } from "react";
 
 import { SaveIcon } from "@/components/icons";
 import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
 import { Input } from "@/components/shadcn/input/input";
-import { useToast } from "@/components/ui";
 
 interface EditNameFormProps {
   currentValue: string;

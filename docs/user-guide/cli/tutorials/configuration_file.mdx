@@ -2,6 +2,8 @@
 title: "Configuration File"
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 Several Prowler's checks have user configurable variables that can be modified in a common **configuration file**. This file can be found in the following [path](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml):
 
 ```
@@ -20,71 +22,180 @@ Numeric thresholds enforce hard limits. A value outside the accepted range is dr
 
 The following list includes all the AWS checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `acm_certificates_expiration_check`                           | `days_to_expire_threshold`                       | Integer         |
-| `acmpca_certificate_authority_pqc_key_algorithm`              | `acmpca_pqc_key_algorithms`                      | List of Strings |
-| `appstream_fleet_maximum_session_duration`                    | `max_session_duration_seconds`                   | Integer         |
-| `appstream_fleet_session_disconnect_timeout`                  | `max_disconnect_timeout_in_seconds`              | Integer         |
-| `appstream_fleet_session_idle_disconnect_timeout`             | `max_idle_disconnect_timeout_in_seconds`         | Integer         |
-| `autoscaling_find_secrets_ec2_launch_configuration`           | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_no_secrets_in_code`                       | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_no_secrets_in_variables`                  | `secrets_ignore_patterns`                        | List of Strings |
-| `awslambda_function_using_supported_runtimes`                 | `obsolete_lambda_runtimes`                       | Integer         |
-| `awslambda_function_vpc_is_in_multi_azs`                      | `lambda_min_azs`                                 | Integer         |
-| `cloudformation_stack_outputs_find_secrets`                   | `secrets_ignore_patterns`                        | List of Strings |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_actions`           | List of Strings |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_entropy`           | Integer         |
-| `cloudtrail_threat_detection_enumeration`                     | `threat_detection_enumeration_minutes`           | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_actions`  | List of Strings |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_entropy`  | Integer         |
-| `cloudtrail_threat_detection_privilege_escalation`            | `threat_detection_privilege_escalation_minutes`  | Integer         |
-| `cloudwatch_log_group_no_secrets_in_logs`                     | `secrets_ignore_patterns`                        | List of Strings |
-| `cloudwatch_log_group_retention_policy_specific_days_enabled` | `log_group_retention_days`                       | Integer         |
-| `codebuild_github_allowed_organizations`                      | `github_allowed_organizations`                   | List of Strings |
-| `codebuild_project_no_secrets_in_variables`                   | `excluded_sensitive_environment_variables`       | List of Strings |
-| `codebuild_project_no_secrets_in_variables`                   | `secrets_ignore_patterns`                        | List of Strings |
-| `config_recorder_all_regions_enabled`                         | `mute_non_default_regions`                       | Boolean         |
-| `drs_job_exist`                                               | `mute_non_default_regions`                       | Boolean         |
-| `ec2_elastic_ip_shodan`                                       | `shodan_api_key`                                 | String          |
-| `ec2_instance_older_than_specific_days`                       | `max_ec2_instance_age_in_days`                   | Integer         |
-| `ec2_instance_secrets_user_data`                              | `secrets_ignore_patterns`                        | List of Strings |
-| `ec2_launch_template_no_secrets`                              | `secrets_ignore_patterns`                        | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_instance_owners`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`   | `ec2_allowed_interface_types`                    | List of Strings |
-| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports`| `ec2_high_risk_ports`                    | List of Integer |
-| `ec2_securitygroup_with_many_ingress_egress_rules`            | `max_security_group_rules`                       | Integer         |
-| `ecs_task_definitions_no_environment_secrets`                 | `secrets_ignore_patterns`                        | List of Strings |
-| `ecr_repositories_scan_vulnerabilities_in_latest_image`       | `ecr_repository_vulnerability_minimum_severity`  | String          |
-| `eks_cluster_uses_a_supported_version`                        | `eks_cluster_oldest_version_supported`           | String          |
-| `eks_control_plane_logging_all_types_enabled`                 | `eks_required_log_types`                         | List of Strings |
-| `elasticache_redis_cluster_backup_enabled`                    | `minimum_snapshot_retention_period`              | Integer         |
-| `elb_is_in_multiple_az`                                       | `elb_min_azs`                                    | Integer         |
-| `elbv2_is_in_multiple_az`                                     | `elbv2_min_azs`                                  | Integer         |
-| `rolesanywhere_trust_anchor_pqc_pki`                          | `rolesanywhere_pqc_pca_key_algorithms`           | List of Strings |
-| `cloudfront_distributions_pqc_tls_enabled`                    | `cloudfront_pqc_min_protocol_versions`           | List of Strings |
-| `apigateway_domain_name_pqc_tls_enabled`                      | `apigateway_pqc_tls_allowed_policies`            | List of Strings |
-| `guardduty_is_enabled`                                        | `mute_non_default_regions`                       | Boolean         |
-| `iam_user_access_not_stale_to_sagemaker`                      | `max_unused_sagemaker_access_days`               | Integer         |
-| `iam_user_accesskey_unused`                                   | `max_unused_access_keys_days`                    | Integer         |
-| `iam_user_console_access_unused`                              | `max_console_access_days`                        | Integer         |
-| `organizations_delegated_administrators`                      | `organizations_trusted_delegated_administrators` | List of Strings |
-| `organizations_scp_check_deny_regions`                        | `organizations_enabled_regions`                  | List of Strings |
-| `rds_instance_backup_enabled`                                 | `check_rds_instance_replicas`                    | Boolean         |
-| `securityhub_enabled`                                         | `mute_non_default_regions`                       | Boolean         |
-| `secretsmanager_secret_unused`                                | `max_days_secret_unused`                         | Integer         |
-| `secretsmanager_secret_rotated_periodically`                  | `max_days_secret_unrotated`                      | Integer         |
-| `ssm_document_secrets`                                        | `secrets_ignore_patterns`                        | List of Strings |
-| `trustedadvisor_premium_support_plan_subscribed`              | `verify_premium_support_plans`                   | Boolean         |
-| `transfer_server_pqc_ssh_kex_enabled`                        | `transfer_pqc_ssh_allowed_policies`              | List of Strings |
-| `dynamodb_table_cross_account_access`                         | `trusted_account_ids`                            | List of Strings |
-| `eventbridge_bus_cross_account_access`                        | `trusted_account_ids`                            | List of Strings |
-| `eventbridge_schema_registry_cross_account_access`            | `trusted_account_ids`                            | List of Strings |
-| `s3_bucket_cross_account_access`                              | `trusted_account_ids`                            | List of Strings |
-| `ssm_documents_set_as_public`                                 | `trusted_account_ids`                            | List of Strings |
-| `vpc_endpoint_connections_trust_boundaries`                   | `trusted_account_ids`                            | List of Strings |
-| `vpc_endpoint_services_allowed_principals_trust_boundaries`   | `trusted_account_ids`                            | List of Strings |
-| `opensearch_service_domains_not_publicly_accessible`          | `trusted_ips`                                    | List of Strings |
+| Check Name                                                             | Value                                             | Type            | Default                                                                                                                              |
+|------------------------------------------------------------------------|---------------------------------------------------|-----------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| `accessanalyzer_enabled`                                               | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `acm_certificates_expiration_check`                                    | `days_to_expire_threshold`                        | Integer         | `7`                                                                                                                                  |
+| `acm_certificates_with_secure_key_algorithms`                          | `insecure_key_algorithms`                         | List of Strings | `["RSA-1024", "P-192"]`                                                                                                              |
+| `acmpca_certificate_authority_pqc_key_algorithm`                       | `acmpca_pqc_key_algorithms`                       | List of Strings | `["ML_DSA_44", "ML_DSA_65", "ML_DSA_87"]`                                                                                            |
+| `apigateway_domain_name_pqc_tls_enabled`                               | `apigateway_pqc_tls_allowed_policies`             | List of Strings | `["SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09", "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09", "SecurityPolicy_TLS13_1_2_PQ_2025_09"]` |
+| `apigateway_restapi_no_secrets_in_stage_variables`                     | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `appstream_fleet_maximum_session_duration`                             | `max_session_duration_seconds`                    | Integer         | `36000`                                                                                                                              |
+| `appstream_fleet_session_disconnect_timeout`                           | `max_disconnect_timeout_in_seconds`               | Integer         | `300`                                                                                                                                |
+| `appstream_fleet_session_idle_disconnect_timeout`                      | `max_idle_disconnect_timeout_in_seconds`          | Integer         | `600`                                                                                                                                |
+| `autoscaling_find_secrets_ec2_launch_configuration`                    | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_no_secrets_in_code`                                | `secrets_ignore_files`                            | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_no_secrets_in_code`                                | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_no_secrets_in_variables`                           | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `awslambda_function_using_supported_runtimes`                          | `obsolete_lambda_runtimes`                        | List of Strings | See `config.yaml`                                                                                                                    |
+| `awslambda_function_vpc_multi_az`                                      | `lambda_min_azs`                                  | Integer         | `2`                                                                                                                                  |
+| `cloudformation_stack_cdktoolkit_bootstrap_version`                    | `recommended_cdk_bootstrap_version`               | Integer         | `21`                                                                                                                                 |
+| `cloudformation_stack_outputs_find_secrets`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `cloudfront_distributions_pqc_tls_enabled`                             | `cloudfront_pqc_min_protocol_versions`            | List of Strings | `["TLSv1.3_2025"]`                                                                                                                   |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_actions`            | List of Strings | See `config.yaml`                                                                                                                    |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_minutes`            | Integer         | `1440`                                                                                                                               |
+| `cloudtrail_threat_detection_enumeration`                              | `threat_detection_enumeration_threshold`          | Float           | `0.3`                                                                                                                                |
+| `cloudtrail_threat_detection_llm_jacking`                              | `threat_detection_llm_jacking_actions`            | List of Strings | See `config.yaml`                                                                                                                    |
+| `cloudtrail_threat_detection_llm_jacking`                              | `threat_detection_llm_jacking_minutes`            | Integer         | `1440`                                                                                                                               |
+| `cloudtrail_threat_detection_llm_jacking`                              | `threat_detection_llm_jacking_threshold`          | Float           | `0.4`                                                                                                                                |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_actions`   | List of Strings | See `config.yaml`                                                                                                                    |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_minutes`   | Integer         | `1440`                                                                                                                               |
+| `cloudtrail_threat_detection_privilege_escalation`                     | `threat_detection_privilege_escalation_threshold` | Float           | `0.2`                                                                                                                                |
+| `cloudwatch_log_group_no_secrets_in_logs`                              | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `cloudwatch_log_group_retention_policy_specific_days_enabled`          | `log_group_retention_days`                        | Integer         | `365`                                                                                                                                |
+| `codebuild_project_no_secrets_in_variables`                            | `excluded_sensitive_environment_variables`        | List of Strings | `[]`                                                                                                                                 |
+| `codebuild_project_no_secrets_in_variables`                            | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `codebuild_project_uses_allowed_github_organizations`                  | `codebuild_github_allowed_organizations`          | List of Strings | `[]`                                                                                                                                 |
+| `config_delegated_admin_and_org_aggregator_all_regions`                | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `config_recorder_all_regions_enabled`                                  | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `documentdb_cluster_backup_enabled`                                    | `minimum_backup_retention_period`                 | Integer         | `7`                                                                                                                                  |
+| `drs_job_exist`                                                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `dynamodb_table_cross_account_access`                                  | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `ec2_elastic_ip_shodan`                                                | `shodan_api_key`                                  | String          | `null`                                                                                                                               |
+| `ec2_instance_older_than_specific_days`                                | `max_ec2_instance_age_in_days`                    | Integer         | `180`                                                                                                                                |
+| `ec2_instance_secrets_user_data`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ec2_launch_template_no_secrets`                                       | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`            | `ec2_allowed_instance_owners`                     | List of Strings | `["amazon-elb"]`                                                                                                                     |
+| `ec2_securitygroup_allow_ingress_from_internet_to_any_port`            | `ec2_allowed_interface_types`                     | List of Strings | `["api_gateway_managed", "vpc_endpoint"]`                                                                                            |
+| `ec2_securitygroup_allow_ingress_from_internet_to_high_risk_tcp_ports` | `ec2_high_risk_ports`                             | List of Integer | `[25, 110, 135, 143, 445, 3000, 4333, 5000, 5500, 8080, 8088]`                                                                       |
+| `ec2_securitygroup_with_many_ingress_egress_rules`                     | `max_security_group_rules`                        | Integer         | `50`                                                                                                                                 |
+| `ecr_repositories_scan_vulnerabilities_in_latest_image`                | `ecr_repository_vulnerability_minimum_severity`   | String          | `"MEDIUM"`                                                                                                                           |
+| `ecs_service_fargate_latest_platform_version`                          | `fargate_linux_latest_version`                    | String          | `"1.4.0"`                                                                                                                            |
+| `ecs_service_fargate_latest_platform_version`                          | `fargate_windows_latest_version`                  | String          | `"1.0.0"`                                                                                                                            |
+| `ecs_task_definitions_no_environment_secrets`                          | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `eks_cluster_uses_a_supported_version`                                 | `eks_cluster_oldest_version_supported`            | String          | `"1.28"`                                                                                                                             |
+| `eks_control_plane_logging_all_types_enabled`                          | `eks_required_log_types`                          | List of Strings | `["api", "audit", "authenticator", "controllerManager", "scheduler"]`                                                                |
+| `elasticache_redis_cluster_backup_enabled`                             | `minimum_snapshot_retention_period`               | Integer         | `7`                                                                                                                                  |
+| `elb_is_in_multiple_az`                                                | `elb_min_azs`                                     | Integer         | `2`                                                                                                                                  |
+| `elbv2_is_in_multiple_az`                                              | `elbv2_min_azs`                                   | Integer         | `2`                                                                                                                                  |
+| `eventbridge_bus_cross_account_access`                                 | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `eventbridge_schema_registry_cross_account_access`                     | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `glue_etl_jobs_no_secrets_in_arguments`                                | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `guardduty_delegated_admin_enabled_all_regions`                        | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `guardduty_is_enabled`                                                 | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `iam_role_access_not_stale_to_bedrock`                                 | `max_unused_bedrock_access_days`                  | Integer         | `60`                                                                                                                                 |
+| `iam_user_access_not_stale_to_bedrock`                                 | `max_unused_bedrock_access_days`                  | Integer         | `60`                                                                                                                                 |
+| `iam_user_access_not_stale_to_sagemaker`                               | `max_unused_sagemaker_access_days`                | Integer         | `90`                                                                                                                                 |
+| `iam_user_accesskey_unused`                                            | `max_unused_access_keys_days`                     | Integer         | `45`                                                                                                                                 |
+| `iam_user_console_access_unused`                                       | `max_console_access_days`                         | Integer         | `45`                                                                                                                                 |
+| `kinesis_stream_data_retention_period`                                 | `min_kinesis_stream_retention_hours`              | Integer         | `168`                                                                                                                                |
+| `neptune_cluster_backup_enabled`                                       | `minimum_backup_retention_period`                 | Integer         | `7`                                                                                                                                  |
+| `opensearch_service_domains_not_publicly_accessible`                   | `trusted_ips`                                     | List of Strings | `[]`                                                                                                                                 |
+| `organizations_delegated_administrators`                               | `organizations_trusted_delegated_administrators`  | List of Strings | `[]`                                                                                                                                 |
+| `organizations_scp_check_deny_regions`                                 | `organizations_enabled_regions`                   | List of Strings | `[]`                                                                                                                                 |
+| `rds_instance_backup_enabled`                                          | `check_rds_instance_replicas`                     | Boolean         | `False`                                                                                                                              |
+| `rolesanywhere_trust_anchor_pqc_pki`                                   | `rolesanywhere_pqc_pca_key_algorithms`            | List of Strings | `["ML_DSA_44", "ML_DSA_65", "ML_DSA_87"]`                                                                                            |
+| `s3_bucket_cross_account_access`                                       | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `s3_bucket_object_public`                                              | `s3_bucket_object_public_enabled`                 | Boolean         | `False`                                                                                                                              |
+| `s3_bucket_object_public`                                              | `s3_bucket_object_public_max_objects`             | Integer         | `100`                                                                                                                                |
+| `s3_bucket_object_public`                                              | `s3_bucket_object_public_sample_size`             | Integer         | `3`                                                                                                                                  |
+| `secretsmanager_has_restrictive_resource_policy`                       | `organizations_trusted_ids`                       | List of Strings | `[]`                                                                                                                                 |
+| `secretsmanager_secret_rotated_periodically`                           | `max_days_secret_unrotated`                       | Integer         | `90`                                                                                                                                 |
+| `secretsmanager_secret_unused`                                         | `max_days_secret_unused`                          | Integer         | `90`                                                                                                                                 |
+| `securityhub_delegated_admin_enabled_all_regions`                      | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `securityhub_enabled`                                                  | `mute_non_default_regions`                        | Boolean         | `False`                                                                                                                              |
+| `ssm_document_secrets`                                                 | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `ssm_documents_set_as_public`                                          | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `stepfunctions_statemachine_no_secrets_in_definition`                  | `secrets_ignore_patterns`                         | List of Strings | `[]`                                                                                                                                 |
+| `transfer_server_pqc_ssh_kex_enabled`                                  | `transfer_pqc_ssh_allowed_policies`               | List of Strings | `["TransferSecurityPolicy-2025-03", "TransferSecurityPolicy-FIPS-2025-03", "TransferSecurityPolicy-AS2Restricted-2025-07"]`          |
+| `trustedadvisor_premium_support_plan_subscribed`                       | `verify_premium_support_plans`                    | Boolean         | `True`                                                                                                                               |
+| `vpc_endpoint_connections_trust_boundaries`                            | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+| `vpc_endpoint_services_allowed_principals_trust_boundaries`            | `trusted_account_ids`                             | List of Strings | `[]`                                                                                                                                 |
+
+### Resource Scan Limit
+
+<VersionBadge version="5.32.0" />
+
+Some AWS services accumulate large numbers of resources (EBS snapshots, backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages). Scanning every resource increases scan time, cost, API throttling, and finding volume. By default, Prowler scans every resource. Configure a positive resource scan limit to cap how many resources Prowler analyzes for these high-volume AWS resource paths.
+
+The global default applies to the supported resources below and is overridable per resource. The default global value is `0`, which disables the limit and scans every resource. A global `null` value is also unlimited. For per-resource values, `null` means inherit the global default; set `0` or a negative value to disable that resource limit explicitly. Positive values enable limits.
+
+<Warning>
+When positive resource scan limits are configured, compliance results are based only on the selected resources, not on the full set of matching resources in the account. Treat compliance summaries and percentages as partial evidence, because unselected resources are not analyzed and can change the real compliance posture.
+</Warning>
+
+#### Global Behavior
+
+Resource scan limits select resources for analysis. They do not cap, prioritize, or reorder findings.
+
+* **`0`, negative, or global `null` values:** Disable the limit and keep the legacy behavior for that resource path. Prowler analyzes every discovered matching resource.
+* **Positive values:** Select at most that many resources for the affected resource path. A selected resource can produce zero, one, or many findings.
+* **No PASS/FAIL prioritization:** Prowler does not inspect the compliance result before selecting resources. Limits do not prefer failed resources, passed resources, or resources with more findings.
+* **Latest-first where possible:** When AWS exposes timestamps or useful ordering, Prowler selects the newest resources first. When AWS only exposes API order, Prowler preserves that API order and documents the behavior as best effort.
+* **Findings are downstream:** Checks only evaluate the resources exposed by the service client after selection. Findings from unselected resources are not produced because those resources are not analyzed.
+
+Exact list API call reduction depends on each AWS API's ordering and pagination capabilities. When Prowler must enumerate candidates locally to select the latest resources, list calls may still read candidates, but expensive per-resource enrichment calls are bounded to the selected resources for the supported paths below.
+
+#### Full Collections Versus Limited Analysis Sets
+
+Some checks need lightweight evidence from a complete resource collection to avoid incorrect cross-service conclusions, while other checks perform primary analysis on a limited resource set.
+
+Prowler keeps full lightweight collections where they are needed for cross-service evidence. For example:
+
+* **Lambda security groups and regions:** Prowler records security groups used by all discovered Lambda functions and the regions where functions exist before it limits Lambda functions for primary Lambda checks. This helps Amazon EC2 and Amazon Inspector checks avoid false positives such as treating Lambda security groups as unused or assuming a region has no Lambda functions.
+* **CloudWatch `all_log_groups`:** Prowler records all discovered CloudWatch log groups in `all_log_groups` before limiting the primary `log_groups` analysis set. Other services can still resolve log group evidence, while CloudWatch log group checks only analyze the selected log groups.
+
+This split is intentional. It reduces expensive per-resource analysis calls without discarding lightweight context that other services need for accurate results.
+
+#### Supported AWS Resource Limits
+
+| Value | Scope | Type |
+|-------|-------|------|
+| `max_scanned_resources_per_service` | Global default for all supported high-volume AWS resources (default `0`, disabled/unlimited) | Integer |
+| `max_ebs_snapshots` | EBS snapshots (`ec2_ebs_*` checks) | Integer |
+| `max_backup_recovery_points` | Backup recovery points (`backup_recovery_point_*`) | Integer |
+| `max_cloudwatch_log_groups` | CloudWatch log groups (`cloudwatch_log_group_*`) | Integer |
+| `max_lambda_functions` | Lambda functions (`awslambda_function_*`) | Integer |
+| `max_ecs_task_definitions` | ECS task definitions (`ecs_task_definitions_*`) | Integer |
+| `max_codeartifact_packages` | CodeArtifact packages (`codeartifact_packages_*`) | Integer |
+
+#### Resource Limit Behavior By Resource Path
+
+| Resource Path | What Prowler Discovers | What A Positive Limit Selects For Analysis | Ordering And Latest Behavior | AWS Calls Reduced | Drawbacks And Consequences |
+|---------------|------------------------|--------------------------------------------|------------------------------|-------------------|----------------------------|
+| EBS snapshots (`max_ebs_snapshots`) | Prowler lists self-owned snapshots and keeps lightweight evidence that volumes and regions have snapshots. | The selected EBS snapshots exposed to `ec2_ebs_*` checks. | Prowler sorts discovered snapshots by `StartTime` newest first, then applies the limit. Snapshots without a timestamp sort last. | Bounds expensive per-snapshot public attribute checks to selected snapshots. Snapshot listing still runs so Prowler can choose the newest snapshots and keep volume/region evidence. | Older unselected snapshots are not analyzed by snapshot checks. A public, unencrypted, or otherwise noncompliant older snapshot can be missed when the limit is lower than the number of snapshots. |
+| Backup recovery points (`max_backup_recovery_points`) | Prowler lists backup vaults, plans, selections, and recovery point candidates in discovered vaults. | The selected recovery points exposed to `backup_recovery_point_*` checks and tag hydration. | Prowler sorts discovered recovery points by `CreationDate` newest first across vaults, then applies the limit. Recovery points without a timestamp sort last. | Bounds recovery point tag calls to selected recovery points. Vault and recovery point list calls still run so Prowler can choose the newest points. | Older unselected recovery points are not analyzed. A nonencrypted or otherwise noncompliant older recovery point can be missed. |
+| CloudWatch log groups (`max_cloudwatch_log_groups`) | Prowler lists log groups into both `all_log_groups` and the primary `log_groups` collection. `all_log_groups` remains available as lightweight cross-service evidence. | The selected log groups exposed to `cloudwatch_log_group_*` checks, tag hydration, and log event retrieval for checks that need log contents. | Prowler sorts discovered log groups by `creationTime` newest first, then applies the limit. Log groups without a creation time sort last. | Bounds tag calls and log event retrieval to selected log groups. Log group listing still runs to build `all_log_groups` and choose newest log groups. | Older unselected log groups are not analyzed by CloudWatch log group checks. Retention, encryption, or secrets-in-logs issues in older log groups can be missed, although cross-service evidence can still use `all_log_groups`. |
+| Lambda functions (`max_lambda_functions`) | Prowler lists Lambda functions and records lightweight security group and region evidence for all discovered functions. | The selected Lambda functions exposed to `awslambda_function_*` checks and per-function enrichment such as tags, policies, function URLs, and event source mappings. | Prowler sorts discovered functions by `LastModified` newest first, then applies the limit. Functions without `LastModified` sort last. | Bounds per-function enrichment calls to selected functions. Function listing still runs to choose newest functions and keep security group/region evidence. | Older unselected functions are not analyzed by Lambda checks. Runtime, policy, URL, environment secret, or dead-letter queue issues in older functions can be missed. Cross-service checks can still use full Lambda security group and region evidence to avoid false positives. |
+| ECS task definitions (`max_ecs_task_definitions`) | Prowler lists ECS task definition ARN candidates in each region. Candidate ARNs can remain visible and discoverable through AWS list operations, even when not all are described. | The selected task definitions that Prowler describes and exposes to `ecs_task_definitions_*` checks. | Selection is not random. Prowler calls `ListTaskDefinitions` with `sort=DESC`, which asks AWS to return task definition ARNs in descending family and revision order. Prowler then interleaves regional candidate lists to avoid starving later regions before applying the limit. This selects the latest task definition revisions according to the ARN order AWS provides, while preserving regional fairness. | Bounds `DescribeTaskDefinition` calls to selected task definitions. Prowler may still list candidates so it can select the bounded set and keep discovery deterministic. | Unselected task definitions are not described or analyzed. Issues in older task definition revisions, or in lower-priority families outside the selected AWS `sort=DESC` order, can be missed. Because ECS ordering is family/revision based rather than a registration timestamp sort across every family, this is latest-first according to AWS task definition ARN ordering, not a global newest-by-time guarantee. |
+| CodeArtifact packages (`max_codeartifact_packages`) | Prowler lists CodeArtifact repositories and lazily lists packages inside them. | The selected packages exposed to `codeartifact_packages_*` checks, including latest-version metadata for those packages. | AWS `ListPackages` does not provide a newest-package timestamp ordering in this path. Prowler preserves repository order and package API order, then applies the limit. Latest package version metadata is retrieved for selected packages with `sortBy=PUBLISHED_TIME` and `maxResults=1`. | Bounds `ListPackageVersions` calls to selected packages and can stop package listing once the limit is reached. Repository listing still runs. | Package selection is best effort by API order, not newest package order. Packages outside the selected repository/API order are not analyzed, so origin restriction or latest-version issues can be missed. |
+
+Use limits when scan duration, API throttling, or cost are more important than exhaustive coverage for these high-volume resources. Keep limits disabled when you need complete evidence for every resource in the affected checks.
+
+### Validating Discovered Secrets
+
+<VersionBadge version="5.32.0" />
+
+By default, the secret-scanning checks run fully offline: secrets are detected but never sent anywhere. Setting `secrets_validate` to `True` additionally confirms whether each discovered secret is live by authenticating with it against the corresponding provider API. The discovered secret itself serves as the credential, so Prowler requires no additional permissions to validate it.
+
+`secrets_validate` applies to every AWS secret-scanning check listed above (those that accept `secrets_ignore_patterns`). The `--scan-secrets-validate` CLI flag is provider-wide: it also enables validation for the secret-scanning checks of other providers, such as the OpenStack metadata checks.
+
+To enable validation through the configuration file, set the value under the `aws` section:
+
+```yaml
+aws:
+  secrets_validate: True
+```
+
+To enable validation for a single scan (any provider), use Prowler CLI:
+
+```
+prowler aws --scan-secrets-validate
+```
+
+<Warning>
+Secret validation makes outbound network calls that authenticate with each discovered secret. The credential is exercised against the provider, so the call appears in the audited account's logs and can trigger its monitoring (for example, AWS CloudTrail records the validation request). Validation stays disabled by default so that scans remain fully offline.
+</Warning>
 
 
 ## Azure
@@ -92,20 +203,20 @@ The following list includes all the AWS checks with configurable variables that 
 ### Configurable Checks
 The following list includes all the Azure checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `network_public_ip_shodan`                                    | `shodan_api_key`                                 | String          |
-| `app_ensure_php_version_is_latest`                            | `php_latest_version`                             | String          |
-| `app_ensure_python_version_is_latest`                         | `python_latest_version`                          | String          |
-| `app_ensure_java_version_is_latest`                           | `java_latest_version`                            | String          |
-| `sqlserver_recommended_minimal_tls_version`                   | `recommended_minimal_tls_versions`               | List of Strings |
-| `vm_sufficient_daily_backup_retention_period`                 | `vm_backup_min_daily_retention_days`             | Integer         |
-| `vm_desired_sku_size`                                         | `desired_vm_sku_sizes`                           | List of Strings |
-| `storage_smb_channel_encryption_with_secure_algorithm`        | `recommended_smb_channel_encryption_algorithms`  | List of Strings |
-| `defender_attack_path_notifications_properly_configured`      | `defender_attack_path_minimal_risk_level`        | String          |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_threshold`    | Float           |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_minutes`      | Integer         |
-| `apim_threat_detection_llm_jacking`                           | `apim_threat_detection_llm_jacking_actions`      | List of Strings |
+| Check Name                                               | Value                                           | Type            | Default                                                    |
+|----------------------------------------------------------|-------------------------------------------------|-----------------|------------------------------------------------------------|
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_actions`     | List of Strings | See `config.yaml`                                          |
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_minutes`     | Integer         | `1440`                                                     |
+| `apim_threat_detection_llm_jacking`                      | `apim_threat_detection_llm_jacking_threshold`   | Float           | `0.1`                                                      |
+| `app_ensure_java_version_is_latest`                      | `java_latest_version`                           | String          | `"17"`                                                     |
+| `app_ensure_php_version_is_latest`                       | `php_latest_version`                            | String          | `"8.2"`                                                    |
+| `app_ensure_python_version_is_latest`                    | `python_latest_version`                         | String          | `"3.12"`                                                   |
+| `defender_attack_path_notifications_properly_configured` | `defender_attack_path_minimal_risk_level`       | String          | `"High"`                                                   |
+| `network_public_ip_shodan`                               | `shodan_api_key`                                | String          | `null`                                                     |
+| `sqlserver_recommended_minimal_tls_version`              | `recommended_minimal_tls_versions`              | List of Strings | `["1.2", "1.3"]`                                           |
+| `storage_smb_channel_encryption_with_secure_algorithm`   | `recommended_smb_channel_encryption_algorithms` | List of Strings | `["AES-256-GCM"]`                                          |
+| `vm_desired_sku_size`                                    | `desired_vm_sku_sizes`                          | List of Strings | `["Standard_A8_v2", "Standard_DS3_v2", "Standard_D4s_v3"]` |
+| `vm_sufficient_daily_backup_retention_period`            | `vm_backup_min_daily_retention_days`            | Integer         | `7`                                                        |
 
 
 ## GCP
@@ -113,23 +224,28 @@ The following list includes all the Azure checks with configurable variables tha
 ### Configurable Checks
 The following list includes all the GCP checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `compute_configuration_changes`                              | `compute_audit_log_lookback_days`                | Integer         |
-| `compute_instance_group_multiple_zones`                      | `mig_min_zones`                                  | Integer         |
+| Check Name                                        | Value                             | Type    | Default |
+|---------------------------------------------------|-----------------------------------|---------|---------|
+| `cloudstorage_bucket_sufficient_retention_period` | `storage_min_retention_days`      | Integer | `90`    |
+| `compute_instance_group_multiple_zones`           | `mig_min_zones`                   | Integer | `2`     |
+| `compute_public_address_shodan`                   | `shodan_api_key`                  | String  | `null`  |
+| `compute_snapshot_not_outdated`                   | `max_snapshot_age_days`           | Integer | `90`    |
+| `iam_sa_user_managed_key_unused`                  | `max_unused_account_days`         | Integer | `180`   |
+| `iam_service_account_unused`                      | `max_unused_account_days`         | Integer | `180`   |
+| `secretmanager_secret_rotation_enabled`           | `secretmanager_max_rotation_days` | Integer | `90`    |
 
 ## Kubernetes
 
 ### Configurable Checks
 The following list includes all the Kubernetes checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `audit_log_maxbackup`                                         | `audit_log_maxbackup`                            | String          |
-| `audit_log_maxsize`                                           | `audit_log_maxsize`                              | String          |
-| `audit_log_maxage`                                            | `audit_log_maxage`                               | String          |
-| `apiserver_strong_ciphers`                                    | `apiserver_strong_ciphers`                       | String          |
-| `kubelet_strong_ciphers_only`                                 | `kubelet_strong_ciphers`                         | String          |
+| Check Name                          | Value                      | Type            | Default                                                                                |
+|-------------------------------------|----------------------------|-----------------|----------------------------------------------------------------------------------------|
+| `apiserver_audit_log_maxage_set`    | `audit_log_maxage`         | Integer         | `30`                                                                                   |
+| `apiserver_audit_log_maxbackup_set` | `audit_log_maxbackup`      | Integer         | `10`                                                                                   |
+| `apiserver_audit_log_maxsize_set`   | `audit_log_maxsize`        | Integer         | `100`                                                                                  |
+| `apiserver_strong_ciphers_only`     | `apiserver_strong_ciphers` | List of Strings | `["TLS_AES_128_GCM_SHA256", "TLS_AES_256_GCM_SHA384", "TLS_CHACHA20_POLY1305_SHA256"]` |
+| `kubelet_strong_ciphers_only`       | `kubelet_strong_ciphers`   | List of Strings | See `config.yaml`                                                                      |
 
 
 ## M365
@@ -137,11 +253,13 @@ The following list includes all the Kubernetes checks with configurable variable
 ### Configurable Checks
 The following list includes all the Microsoft 365 checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                                    | Value                                            | Type            |
-|---------------------------------------------------------------|--------------------------------------------------|-----------------|
-| `entra_admin_users_sign_in_frequency_enabled`                 | `sign_in_frequency`                              | Integer         |
-| `teams_external_file_sharing_restricted`                      | `allowed_cloud_storage_services`                 | List of Strings |
-| `exchange_organization_mailtips_enabled`                      | `recommended_mailtips_large_audience_threshold`  | Integer         |
+| Check Name                                                         | Value                                           | Type            | Default            |
+|--------------------------------------------------------------------|-------------------------------------------------|-----------------|--------------------|
+| `defender_malware_policy_comprehensive_attachments_filter_applied` | `recommended_blocked_file_types`                | List of Strings | See check defaults |
+| `entra_admin_users_sign_in_frequency_enabled`                      | `sign_in_frequency`                             | Integer         | `4`                |
+| `exchange_organization_mailtips_enabled`                           | `recommended_mailtips_large_audience_threshold` | Integer         | `25`               |
+| `exchange_user_mailbox_auditing_enabled`                           | `audit_log_age`                                 | Integer         | `90`               |
+| `teams_external_file_sharing_restricted`                           | `allowed_cloud_storage_services`                | List of Strings | `[]`               |
 
 
 ## GitHub
@@ -149,35 +267,76 @@ The following list includes all the Microsoft 365 checks with configurable varia
 ### Configurable Checks
 The following list includes all the GitHub checks with configurable variables that can be changed in the configuration yaml file:
 
-| Check Name                                 | Value                                       | Type    |
-|--------------------------------------------|---------------------------------------------|---------|
-| `repository_inactive_not_archived`         | `inactive_not_archived_days_threshold`        | Integer |
+| Check Name                         | Value                                  | Type    | Default |
+|------------------------------------|----------------------------------------|---------|---------|
+| `repository_inactive_not_archived` | `inactive_not_archived_days_threshold` | Integer | `180`   |
 
 ## Vercel
 
 ### Configurable Checks
 The following list includes all the Vercel checks with configurable variables that can be changed in the configuration YAML file:
 
-| Check Name                                          | Value                              | Type            |
-|-----------------------------------------------------|------------------------------------|-----------------|
-| `authentication_no_stale_tokens`                    | `stale_token_threshold_days`       | Integer         |
-| `authentication_token_not_expired`                  | `days_to_expire_threshold`         | Integer         |
-| `deployment_production_uses_stable_target`          | `stable_branches`                  | List of Strings |
-| `domain_ssl_certificate_valid`                      | `days_to_expire_threshold`         | Integer         |
-| `project_environment_no_secrets_in_plain_type`      | `secret_suffixes`                  | List of Strings |
-| `team_member_role_least_privilege`                   | `max_owner_percentage`             | Integer         |
-| `team_member_role_least_privilege`                   | `max_owners`                       | Integer         |
-| `team_no_stale_invitations`                         | `stale_invitation_threshold_days`  | Integer         |
+| Check Name                                     | Value                             | Type            | Default                                                                  |
+|------------------------------------------------|-----------------------------------|-----------------|--------------------------------------------------------------------------|
+| `authentication_no_stale_tokens`               | `stale_token_threshold_days`      | Integer         | `90`                                                                     |
+| `authentication_token_not_expired`             | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
+| `deployment_production_uses_stable_target`     | `stable_branches`                 | List of Strings | `["main", "master"]`                                                     |
+| `domain_ssl_certificate_valid`                 | `days_to_expire_threshold`        | Integer         | `7`                                                                      |
+| `project_environment_no_secrets_in_plain_type` | `secret_suffixes`                 | List of Strings | `["_KEY", "_SECRET", "_TOKEN", "_PASSWORD", "_API_KEY", "_PRIVATE_KEY"]` |
+| `team_member_role_least_privilege`             | `max_owner_percentage`            | Integer         | `20`                                                                     |
+| `team_member_role_least_privilege`             | `max_owners`                      | Integer         | `3`                                                                      |
+| `team_no_stale_invitations`                    | `stale_invitation_threshold_days` | Integer         | `30`                                                                     |
 
 ## Okta
 
 ### Configurable Checks
 The following list includes all the Okta checks with configurable variables that can be changed in the configuration YAML file:
 
-| Check Name                                                    | Value                              | Type    |
-|---------------------------------------------------------------|------------------------------------|---------|
-| `application_admin_console_session_idle_timeout_15min`        | `okta_admin_console_idle_timeout_max_minutes` | Integer |
-| `signon_global_session_idle_timeout_15min`                    | `okta_max_session_idle_minutes`    | Integer |
+| Check Name                                             | Value                                         | Type            | Default |
+|--------------------------------------------------------|-----------------------------------------------|-----------------|---------|
+| `application_admin_console_session_idle_timeout_15min` | `okta_admin_console_idle_timeout_max_minutes` | Integer         | `15`    |
+| `idp_smart_card_dod_approved_ca`                       | `okta_dod_approved_ca_issuer_patterns`        | List of Strings | `[]`    |
+| `signon_global_session_idle_timeout_15min`             | `okta_max_session_idle_minutes`               | Integer         | `15`    |
+| `signon_global_session_lifetime_18h`                   | `okta_max_session_lifetime_minutes`           | Integer         | `1080`  |
+| `user_inactivity_automation_35d_enabled`               | `okta_user_inactivity_max_days`               | Integer         | `35`    |
+
+## Alibaba Cloud
+
+### Configurable Checks
+The following list includes all the Alibaba Cloud checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                           | Value                          | Type    | Default |
+|--------------------------------------|--------------------------------|---------|---------|
+| `cs_kubernetes_cluster_check_recent` | `max_cluster_check_days`       | Integer | `7`     |
+| `cs_kubernetes_cluster_check_weekly` | `max_cluster_check_days`       | Integer | `7`     |
+| `ram_user_console_access_unused`     | `max_console_access_days`      | Integer | `90`    |
+| `rds_instance_sql_audit_retention`   | `min_rds_audit_retention_days` | Integer | `180`   |
+| `sls_logstore_retention_period`      | `min_log_retention_days`       | Integer | `365`   |
+
+
+## MongoDB Atlas
+
+### Configurable Checks
+The following list includes all the MongoDB Atlas checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                         | Value                                       | Type    | Default |
+|----------------------------------------------------|---------------------------------------------|---------|---------|
+| `organizations_service_account_secrets_expiration` | `max_service_account_secret_validity_hours` | Integer | `8`     |
+
+
+## OpenStack
+
+### Configurable Checks
+The following list includes all the OpenStack checks with configurable variables that can be changed in the configuration YAML file:
+
+| Check Name                                        | Value                     | Type            | Default |
+|---------------------------------------------------|---------------------------|-----------------|---------|
+| `blockstorage_snapshot_metadata_sensitive_data`   | `secrets_ignore_patterns` | List of Strings | `[]`    |
+| `blockstorage_volume_metadata_sensitive_data`     | `secrets_ignore_patterns` | List of Strings | `[]`    |
+| `compute_instance_metadata_sensitive_data`        | `secrets_ignore_patterns` | List of Strings | `[]`    |
+| `image_not_shared_with_multiple_projects`         | `image_sharing_threshold` | Integer         | `5`     |
+| `objectstorage_container_metadata_sensitive_data` | `secrets_ignore_patterns` | List of Strings | `[]`    |
+
 
 ## Config YAML File Structure
 
@@ -191,6 +350,19 @@ aws:
   # AWS Global Configuration
   # aws.mute_non_default_regions --> Set to True to muted failed findings in non-default regions for AccessAnalyzer, GuardDuty, SecurityHub, DRS and Config
   mute_non_default_regions: False
+
+  # AWS Resource Scan Limit Configuration
+  # Disabled by default: scan every resource unless a positive limit is configured.
+  # Findings are not capped. Set to 0 (or a negative value) to disable the limit.
+  # aws.max_scanned_resources_per_service --> global default for all services below
+  max_scanned_resources_per_service: 0
+  # Per-service overrides. Leave as null to fall back to the global default.
+  max_ebs_snapshots: null
+  max_backup_recovery_points: null
+  max_cloudwatch_log_groups: null
+  max_lambda_functions: null
+  max_ecs_task_definitions: null
+  max_codeartifact_packages: null
   # If you want to mute failed findings only in specific regions, create a file with the following syntax and run it with `prowler aws -w mutelist.yaml`:
   # Mutelist:
   #  Accounts:

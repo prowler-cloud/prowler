@@ -407,6 +407,7 @@ class Provider(ABC):
                         tenant_id=arguments.tenant_id,
                         region=arguments.azure_region,
                         subscription_ids=arguments.subscription_id,
+                        resource_groups=arguments.resource_groups,
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
@@ -624,6 +625,16 @@ class Provider(ABC):
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,
                     )
+                elif arguments.provider == "e2enetworks":
+                    provider_class(
+                        api_key=getattr(arguments, "e2e_networks_api_key", None),
+                        auth_token=getattr(arguments, "e2e_networks_auth_token", None),
+                        project_id=getattr(arguments, "e2e_networks_project_id", None),
+                        locations=getattr(arguments, "region", None),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 elif arguments.provider == "okta":
                     provider_class(
                         okta_org_domain=getattr(arguments, "okta_org_domain", ""),
@@ -633,6 +644,12 @@ class Provider(ABC):
                             arguments, "okta_private_key_file", ""
                         ),
                         okta_scopes=getattr(arguments, "okta_scopes", None),
+                        okta_retries_max_attempts=getattr(
+                            arguments, "okta_retries_max_attempts", None
+                        ),
+                        okta_requests_per_second=getattr(
+                            arguments, "okta_requests_per_second", None
+                        ),
                         config_path=arguments.config_file,
                         mutelist_path=arguments.mutelist_file,
                         fixer_config=fixer_config,

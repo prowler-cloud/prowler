@@ -8,6 +8,10 @@ import {
   PROVIDERS_ROW_TYPE,
   type ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  type ScanConfigurationData,
+} from "@/types/scan-configurations";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 const { dataTableMockState, getColumnProvidersMock } = vi.hoisted(() => ({
@@ -17,7 +21,7 @@ const { dataTableMockState, getColumnProvidersMock } = vi.hoisted(() => ({
   getColumnProvidersMock: vi.fn((..._args: unknown[]) => []),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({
     onRowSelectionChange,
   }: {
@@ -40,6 +44,7 @@ vi.mock("./table", () => ({
 
 import {
   computeSelectedScheduleProviders,
+  createScanConfigIdByProviderId,
   ProvidersAccountsTable,
 } from "./providers-accounts-table";
 
@@ -90,6 +95,17 @@ const createProviderRow = (
 const providerOne = createProviderRow("provider-1", "111111111111", "Prod");
 const providerTwo = createProviderRow("provider-2", "222222222222", "Stage");
 const providerThree = createProviderRow("provider-3", "333333333333", "Dev");
+const scanConfig: ScanConfigurationData = {
+  type: "scan-configurations",
+  id: "config-1",
+  attributes: {
+    inserted_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    name: "Strict AWS",
+    configuration: {},
+    providers: ["provider-1"],
+  },
+};
 
 const organizationRow: ProvidersTableRow = {
   id: "org-1",
@@ -147,7 +163,42 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      [],
+      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      expect.any(Map),
     );
+  });
+
+  it("passes populated scan configs to provider row action columns", () => {
+    // Given/When
+    render(
+      <ProvidersAccountsTable
+        isCloud
+        metadata={metadata}
+        rows={[]}
+        scanConfigs={[scanConfig]}
+        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    // Then
+    const call = getColumnProvidersMock.mock.calls.at(-1);
+    expect(call?.[8]).toEqual([scanConfig]);
+    expect(call?.[9]).toBe(SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE);
+    expect(call?.[10]).toBeInstanceOf(Map);
+    expect((call?.[10] as Map<string, string>).get("provider-1")).toBe(
+      "config-1",
+    );
+  });
+
+  it("precomputes scan config ids by provider id once for row actions", () => {
+    // Given/When
+    const lookup = createScanConfigIdByProviderId([scanConfig]);
+
+    // Then
+    expect(lookup.get("provider-1")).toBe("config-1");
   });
 
   describe("schedule provider selection", () => {
@@ -268,6 +319,9 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+      [],
+      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      expect.any(Map),
     );
   });
 
@@ -301,6 +355,9 @@ describe("ProvidersAccountsTable", () => {
       expect.any(Function),
       expect.any(Function),
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
+      [],
+      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      expect.any(Map),
     );
   });
 });
