@@ -174,36 +174,49 @@ export const CrossProviderDetail = async ({
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Header card — mirrors the per-scan detail: filters on the left,
-          report actions and framework logo on the right (lighthouse-settings
-          card pattern). */}
+      {/* Header card — same structure as the per-scan detail: identity row
+          (logo + context) with the report action top-right, filters below
+          (lighthouse-settings card pattern). */}
       <Card variant="base" className="w-full gap-4 p-4 md:p-5">
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-          <div className="flex min-w-0 flex-1 flex-col justify-end gap-4">
-            <CrossProviderFilters
-              providerTypes={compatibleTypes}
-              providerAccounts={providerAccounts}
-              providerGroups={providerGroups}
-              regions={[]}
-            />
-          </div>
-          <div className="flex flex-shrink-0 items-start gap-4 self-end sm:self-start">
-            <CrossProviderPdfButton
-              complianceId={complianceId}
-              filters={{ ...filters, scanIds: attrs.scan_ids }}
-              latestPdf={latestPdf}
-            />
-            {logoPath && (
-              <div className="relative hidden h-24 w-24 sm:block">
-                <Image
-                  src={logoPath}
-                  alt={`${compliancetitle} logo`}
-                  fill
-                  className="rounded-lg border border-gray-300 bg-white object-contain p-0"
-                />
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex w-full items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-4">
+              {logoPath && (
+                <div className="relative h-12 w-12 shrink-0">
+                  <Image
+                    src={logoPath}
+                    alt={`${compliancetitle} logo`}
+                    fill
+                    className="rounded-lg border border-gray-300 bg-white object-contain p-0"
+                  />
+                </div>
+              )}
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <span className="truncate text-sm font-medium">
+                  {attrs.name || compliancetitle.split("-").join(" ")}
+                </span>
+                <p className="text-text-neutral-tertiary text-xs">
+                  {attrs.providers.length} of {compatibleTypes.length}{" "}
+                  compatible providers scanned · {attrs.scan_ids.length}{" "}
+                  {attrs.scan_ids.length === 1 ? "scan" : "scans"} aggregated
+                </p>
               </div>
-            )}
+            </div>
+            <div className="shrink-0">
+              <CrossProviderPdfButton
+                complianceId={complianceId}
+                filters={{ ...filters, scanIds: attrs.scan_ids }}
+                latestPdf={latestPdf}
+              />
+            </div>
           </div>
+
+          <CrossProviderFilters
+            providerTypes={compatibleTypes}
+            providerAccounts={providerAccounts}
+            providerGroups={providerGroups}
+            regions={[]}
+          />
         </div>
       </Card>
 

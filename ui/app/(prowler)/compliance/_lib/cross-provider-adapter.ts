@@ -104,9 +104,9 @@ const isKnownProviderType = (value: string): value is ProviderType =>
 
 /**
  * Per-provider score summary for the coverage panel and framework cards.
- * Providers are listed in `compatible_providers` order; entries the UI cannot
- * render (unknown provider types) are dropped. Score is the pass percentage
- * over non-manual requirements the provider contributed.
+ * Scanned providers come first, each group sorted alphabetically; entries the
+ * UI cannot render (unknown provider types) are dropped. Score is the pass
+ * percentage over non-manual requirements the provider contributed.
  */
 export const computeProviderBreakdown = (
   attrs: CrossProviderOverviewAttributes,
@@ -115,6 +115,11 @@ export const computeProviderBreakdown = (
 
   return attrs.compatible_providers
     .filter(isKnownProviderType)
+    .sort((a, b) => {
+      const aScanned = contributing.has(a);
+      if (aScanned !== contributing.has(b)) return aScanned ? -1 : 1;
+      return a.localeCompare(b);
+    })
     .map((provider) => {
       let pass = 0;
       let fail = 0;

@@ -321,6 +321,24 @@ describe("computeProviderBreakdown", () => {
     expect(gcp?.total).toBe(0);
   });
 
+  it("lists scanned providers first, each group alphabetically", () => {
+    const breakdown = computeProviderBreakdown(
+      buildAttributes({
+        framework: "CSA-CCM",
+        compatible_providers: ["oraclecloud", "gcp", "azure", "aws"],
+        providers: ["gcp", "aws"],
+        requirements: [],
+      }),
+    );
+
+    expect(breakdown.map((entry) => entry.provider)).toEqual([
+      "aws",
+      "gcp",
+      "azure",
+      "oraclecloud",
+    ]);
+  });
+
   it("ignores provider types the UI does not know", () => {
     const breakdown = computeProviderBreakdown(
       buildAttributes({

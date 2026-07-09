@@ -106,9 +106,13 @@ export const CrossProviderPdfButton = ({
 
   return (
     <>
+      {/* Same trigger as the per-scan detail's export dropdown, so both
+          compliance headers expose one consistent "Report" action. */}
       {isGenerating ? (
-        <Button disabled>Generating report…</Button>
-      ) : latestPdf ? (
+        <Button variant="outline" disabled>
+          Generating report…
+        </Button>
+      ) : (
         <ActionDropdown
           variant="bordered"
           ariaLabel="Compliance report actions"
@@ -119,20 +123,20 @@ export const CrossProviderPdfButton = ({
             </Button>
           }
         >
-          <ActionDropdownItem
-            icon={<DownloadIcon />}
-            label={`Download latest${formatGeneratedAt(latestPdf.completedAt)}`}
-            description={latestPdf.filename}
-            onSelect={() => downloadCrossProviderPdf(latestPdf.taskId)}
-          />
+          {latestPdf && (
+            <ActionDropdownItem
+              icon={<DownloadIcon />}
+              label={`Download latest${formatGeneratedAt(latestPdf.completedAt)}`}
+              description={latestPdf.filename}
+              onSelect={() => downloadCrossProviderPdf(latestPdf.taskId)}
+            />
+          )}
           <ActionDropdownItem
             icon={<FileTextIcon />}
             label="Generate new report…"
             onSelect={() => setDialogOpen(true)}
           />
         </ActionDropdown>
-      ) : (
-        <Button onClick={() => setDialogOpen(true)}>Generate Report</Button>
       )}
 
       <Modal

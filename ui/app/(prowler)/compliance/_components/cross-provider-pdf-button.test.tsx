@@ -78,11 +78,20 @@ describe("CrossProviderPdfButton", () => {
     generatePdfMock.mockResolvedValue({ taskId: "task-1" });
   });
 
+  const openGenerateModal = async (
+    user: ReturnType<typeof userEvent.setup>,
+  ) => {
+    await user.click(screen.getByRole("button", { name: /report/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /generate new report/i }),
+    );
+  };
+
   it("generates a report with the dialog options and tracks the task", async () => {
     const user = userEvent.setup();
     render(<CrossProviderPdfButton {...props} />);
 
-    await user.click(screen.getByRole("button", { name: /generate report/i }));
+    await openGenerateModal(user);
     await user.type(
       screen.getByLabelText(/report name/i),
       "quarterly-audit.pdf",
@@ -110,7 +119,7 @@ describe("CrossProviderPdfButton", () => {
     const user = userEvent.setup();
     render(<CrossProviderPdfButton {...props} />);
 
-    await user.click(screen.getByRole("button", { name: /generate report/i }));
+    await openGenerateModal(user);
     await user.click(screen.getByRole("button", { name: /^generate$/i }));
 
     await waitFor(() =>

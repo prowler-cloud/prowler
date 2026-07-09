@@ -25,7 +25,9 @@ export const ProviderCoverageCard = ({
       <CardHeader>
         <CardTitle>Provider Coverage</CardTitle>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
+      {/* Capped + scrollable so a long provider list never stretches the
+          sibling chart cards in the same grid row. */}
+      <CardContent className="minimal-scrollbar flex max-h-[300px] flex-col gap-4 overflow-y-auto">
         {breakdown.map((entry) => (
           <div
             key={entry.provider}
