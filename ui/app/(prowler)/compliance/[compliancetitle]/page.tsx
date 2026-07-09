@@ -407,7 +407,6 @@ const SSRComplianceContent = async ({
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
 
-      <div className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}
