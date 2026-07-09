@@ -16,6 +16,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_defender_ensure_notify_emails_to_owners:
     def test_defender_no_subscriptions(self):
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {}
 
@@ -40,6 +41,7 @@ class Test_defender_ensure_notify_emails_to_owners:
     def test_defender_no_notify_emails_to_owners(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -80,6 +82,7 @@ class Test_defender_ensure_notify_emails_to_owners:
     def test_defender_notify_emails_to_owners_off(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {
@@ -127,6 +130,7 @@ class Test_defender_ensure_notify_emails_to_owners:
     def test_defender_notify_emails_to_owners(self):
         resource_id = str(uuid4())
         defender_client = mock.MagicMock()
+        defender_client.resource_groups = {}
         defender_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         defender_client.security_contact_configurations = {
             AZURE_SUBSCRIPTION_ID: {

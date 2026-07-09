@@ -67,6 +67,7 @@ from django_filters.rest_framework import (
 )
 from rest_framework_json_api.django_filters.backends import DjangoFilterBackend
 from rest_framework_json_api.serializers import ValidationError
+from uuid6 import UUID
 
 
 class CustomDjangoFilterBackend(DjangoFilterBackend):
@@ -672,35 +673,32 @@ class LatestResourceFilter(ProviderRelationshipFilterSet):
         return queryset.filter(tags__text_search=value)
 
 
-class FindingFilter(CommonFindingFilters):
+FINDING_BASE_FILTER_FIELDS = {
+    "id": ["exact", "in"],
+    "uid": ["exact", "in"],
+    "scan": ["exact", "in"],
+    "delta": ["exact", "in"],
+    "status": ["exact", "in"],
+    "severity": ["exact", "in"],
+    "impact": ["exact", "in"],
+    "check_id": ["exact", "in", "icontains"],
+}
+
+
+class BaseFindingFilter(CommonFindingFilters):
+    DATE_FILTER_FIELDS = ()
+    DATE_FILTER_NAMES = ()
+    DATE_RANGE_HELP_TEXT = (
+        f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days."
+    )
+    DATE_FILTER_REQUIRED_DETAIL = "At least one date filter is required."
+
     scan = UUIDFilter(method="filter_scan_id")
     scan__in = UUIDInFilter(method="filter_scan_id_in")
 
-    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
-    inserted_at__gte = DateFilter(
-        method="filter_inserted_at_gte",
-        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-    )
-    inserted_at__lte = DateFilter(
-        method="filter_inserted_at_lte",
-        help_text=f"Maximum date range is {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-    )
-
     class Meta:
         model = Finding
-        fields = {
-            "id": ["exact", "in"],
-            "uid": ["exact", "in"],
-            "scan": ["exact", "in"],
-            "delta": ["exact", "in"],
-            "status": ["exact", "in"],
-            "severity": ["exact", "in"],
-            "impact": ["exact", "in"],
-            "check_id": ["exact", "in", "icontains"],
-            "inserted_at": ["date", "gte", "lte"],
-            "updated_at": ["gte", "lte"],
-        }
+        fields = FINDING_BASE_FILTER_FIELDS
         filter_overrides = {
             FindingDeltaEnumField: {
                 "filter_class": CharFilter,
@@ -723,17 +721,13 @@ class FindingFilter(CommonFindingFilters):
         return queryset.filter(resource_services__contains=[value])
 
     def filter_queryset(self, queryset):
-        if not (self.data.get("scan") or self.data.get("scan__in")) and not (
-            self.data.get("inserted_at")
-            or self.data.get("inserted_at__date")
-            or self.data.get("inserted_at__gte")
-            or self.data.get("inserted_at__lte")
+        if not (self.data.get("scan") or self.data.get("scan__in")) and not any(
+            self.data.get(filter_name) for filter_name in self.DATE_FILTER_NAMES
         ):
             raise ValidationError(
                 [
                     {
-                        "detail": "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
-                        "or filter[inserted_at.lte].",
+                        "detail": self.DATE_FILTER_REQUIRED_DETAIL,
                         "status": 400,
                         "source": {"pointer": "/data/attributes/inserted_at"},
                         "code": "required",
@@ -742,30 +736,41 @@ class FindingFilter(CommonFindingFilters):
             )
 
         cleaned = self.form.cleaned_data
-        exact_date = cleaned.get("inserted_at") or cleaned.get("inserted_at__date")
-        gte_date = cleaned.get("inserted_at__gte") or exact_date
-        lte_date = cleaned.get("inserted_at__lte") or exact_date
-
-        if gte_date is None:
-            gte_date = datetime.now(UTC).date()
-        if lte_date is None:
-            lte_date = datetime.now(UTC).date()
-
-        if abs(lte_date - gte_date) > timedelta(
-            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
-        ):
-            raise ValidationError(
-                [
-                    {
-                        "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
-                        "status": 400,
-                        "source": {"pointer": "/data/attributes/inserted_at"},
-                        "code": "invalid",
-                    }
-                ]
-            )
+        for field_name in self.DATE_FILTER_FIELDS:
+            self.validate_datetime_filter_range(cleaned, field_name)
 
         return super().filter_queryset(queryset)
+
+    def validate_datetime_filter_range(self, cleaned, field_name):
+        exact_value = cleaned.get(field_name) or cleaned.get(f"{field_name}__date")
+        gte_value = cleaned.get(f"{field_name}__gte") or exact_value
+        lte_value = cleaned.get(f"{field_name}__lte") or exact_value
+
+        if not (exact_value or gte_value or lte_value):
+            return
+
+        default_value = datetime.now(UTC).date()
+        gte_value = gte_value or default_value
+        lte_value = lte_value or default_value
+
+        gte_datetime = self.filter_value_to_datetime(gte_value, field_name)
+        lte_datetime = self.filter_value_to_datetime(lte_value, field_name)
+
+        if abs(lte_datetime - gte_datetime) <= timedelta(
+            days=settings.FINDINGS_MAX_DAYS_IN_RANGE
+        ):
+            return
+
+        raise ValidationError(
+            [
+                {
+                    "detail": f"The date range cannot exceed {settings.FINDINGS_MAX_DAYS_IN_RANGE} days.",
+                    "status": 400,
+                    "source": {"pointer": f"/data/attributes/{field_name}"},
+                    "code": "invalid",
+                }
+            ]
+        )
 
     #  Convert filter values to UUIDv7 values for use with partitioning
     def filter_scan_id(self, queryset, name, value):
@@ -824,27 +829,169 @@ class FindingFilter(CommonFindingFilters):
         datetime_value = self.maybe_date_to_datetime(value)
         start = uuid7_start(datetime_to_uuid7(datetime_value))
         end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
-
         return queryset.filter(id__gte=start, id__lt=end)
 
     def filter_inserted_at_gte(self, queryset, name, value):
         datetime_value = self.maybe_date_to_datetime(value)
         start = uuid7_start(datetime_to_uuid7(datetime_value))
-
         return queryset.filter(id__gte=start)
 
     def filter_inserted_at_lte(self, queryset, name, value):
         datetime_value = self.maybe_date_to_datetime(value)
         end = uuid7_start(datetime_to_uuid7(datetime_value + timedelta(days=1)))
-
         return queryset.filter(id__lt=end)
 
     @staticmethod
     def maybe_date_to_datetime(value):
-        dt = value
+        if isinstance(value, datetime):
+            return value
         if isinstance(value, date):
-            dt = datetime.combine(value, datetime.min.time(), tzinfo=UTC)
-        return dt
+            return datetime.combine(value, datetime.min.time(), tzinfo=UTC)
+        if isinstance(value, str):
+            return parse(value)
+        return value
+
+    @classmethod
+    def filter_value_to_datetime(cls, value, field_name):
+        try:
+            datetime_value = cls.maybe_date_to_datetime(value)
+        except (TypeError, ValueError, OverflowError):
+            raise ValidationError(
+                [
+                    {
+                        "detail": "Enter a valid date or datetime.",
+                        "status": 400,
+                        "source": {"pointer": f"/data/attributes/{field_name}"},
+                        "code": "invalid",
+                    }
+                ]
+            )
+
+        if datetime_value.tzinfo is None:
+            return datetime_value.replace(tzinfo=UTC)
+        return datetime_value.astimezone(UTC)
+
+
+class FindingFilter(BaseFindingFilter):
+    DATE_FILTER_FIELDS = ("inserted_at", "updated_at")
+    DATE_FILTER_NAMES = (
+        "inserted_at",
+        "inserted_at__date",
+        "inserted_at__gte",
+        "inserted_at__lte",
+        "updated_at",
+        "updated_at__date",
+        "updated_at__gte",
+        "updated_at__lte",
+    )
+    DATE_FILTER_REQUIRED_DETAIL = (
+        "At least one date filter is required: filter[inserted_at], filter[updated_at], "
+        "filter[inserted_at.gte], filter[updated_at.gte], filter[inserted_at.lte], "
+        "or filter[updated_at.lte]."
+    )
+
+    inserted_at = CharFilter(method="filter_inserted_at")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = CharFilter(
+        method="filter_inserted_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    inserted_at__lte = CharFilter(
+        method="filter_inserted_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    updated_at = CharFilter(method="filter_updated_at")
+    updated_at__date = DateFilter(method="filter_updated_at", lookup_expr="date")
+    updated_at__gte = CharFilter(
+        method="filter_updated_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    updated_at__lte = CharFilter(
+        method="filter_updated_at",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+
+    class Meta(BaseFindingFilter.Meta):
+        fields = FINDING_BASE_FILTER_FIELDS | {
+            "inserted_at": ["date", "gte", "lte"],
+            "updated_at": ["date", "gte", "lte"],
+        }
+
+    def filter_inserted_at(self, queryset, name, value):
+        start, end = self.filter_value_to_datetime_bounds(value, "inserted_at")
+
+        if name.endswith("__gte"):
+            return queryset.filter(id__gte=self.datetime_to_uuid7_boundary(start))
+        if name.endswith("__lte"):
+            return queryset.filter(id__lt=self.datetime_to_uuid7_boundary(end))
+
+        return queryset.filter(
+            id__gte=self.datetime_to_uuid7_boundary(start),
+            id__lt=self.datetime_to_uuid7_boundary(end),
+        )
+
+    def filter_updated_at(self, queryset, name, value):
+        start, end = self.filter_value_to_datetime_bounds(value, "updated_at")
+
+        if name.endswith("__gte"):
+            return queryset.filter(updated_at__gte=start)
+        if name.endswith("__lte"):
+            return queryset.filter(updated_at__lt=end)
+
+        return queryset.filter(updated_at__gte=start, updated_at__lt=end)
+
+    @classmethod
+    def filter_value_to_datetime_bounds(cls, value, field_name):
+        start = cls.filter_value_to_datetime(value, field_name)
+        if cls.is_date_filter_value(value):
+            return start, start + timedelta(days=1)
+        return start, start + timedelta(milliseconds=1)
+
+    @staticmethod
+    def datetime_to_uuid7_boundary(datetime_value):
+        timestamp_ms = int(datetime_value.timestamp() * 1000) & 0xFFFFFFFFFFFF
+        uuid_int = timestamp_ms << 80
+        uuid_int |= 0x7 << 76
+        uuid_int |= 0x2 << 62
+        return UUID(int=uuid_int)
+
+    @staticmethod
+    def is_date_filter_value(value):
+        if isinstance(value, datetime):
+            return False
+        if isinstance(value, date):
+            return True
+        return isinstance(value, str) and len(value.strip()) == 10
+
+
+class FindingMetadataFilter(BaseFindingFilter):
+    DATE_FILTER_FIELDS = ("inserted_at",)
+    DATE_FILTER_NAMES = (
+        "inserted_at",
+        "inserted_at__date",
+        "inserted_at__gte",
+        "inserted_at__lte",
+    )
+    DATE_FILTER_REQUIRED_DETAIL = (
+        "At least one date filter is required: filter[inserted_at], filter[inserted_at.gte], "
+        "or filter[inserted_at.lte]."
+    )
+
+    inserted_at = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__date = DateFilter(method="filter_inserted_at", lookup_expr="date")
+    inserted_at__gte = DateFilter(
+        method="filter_inserted_at_gte",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+    inserted_at__lte = DateFilter(
+        method="filter_inserted_at_lte",
+        help_text=BaseFindingFilter.DATE_RANGE_HELP_TEXT,
+    )
+
+    class Meta(BaseFindingFilter.Meta):
+        fields = FINDING_BASE_FILTER_FIELDS | {
+            "inserted_at": ["date", "gte", "lte"],
+        }
 
 
 class LatestFindingFilter(CommonFindingFilters):

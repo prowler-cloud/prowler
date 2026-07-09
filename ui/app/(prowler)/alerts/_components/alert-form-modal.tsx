@@ -594,22 +594,31 @@ const AlertFormModalContent = ({
         {errors.root && (
           <div className="text-text-error-primary text-sm">{errors.root}</div>
         )}
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        {/* mt-4 lifts the gap-4 container spacing to 32px so the distance to
+            the footer matches the launch scan and triage note modals. */}
+        <div className="mt-4 flex w-full justify-between gap-4">
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          {editingAlert && (
-            <Button
-              variant="outline"
-              onClick={handlePreview}
-              disabled={previewLoading || saving}
-            >
-              {previewLoading ? "Running..." : "Test"}
+          <div className="flex gap-4">
+            {editingAlert && (
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handlePreview}
+                disabled={previewLoading || saving}
+              >
+                {previewLoading ? "Running..." : "Test"}
+              </Button>
+            )}
+            <Button size="lg" onClick={handleSubmit} disabled={saving}>
+              {submitLabel}
             </Button>
-          )}
-          <Button onClick={handleSubmit} disabled={saving}>
-            {submitLabel}
-          </Button>
+          </div>
         </div>
       </div>
     </Modal>

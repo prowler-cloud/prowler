@@ -9,7 +9,7 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 import sentry_sdk
 from allauth.socialaccount.models import SocialAccount, SocialApp
@@ -50,6 +50,7 @@ from api.filters import (
     FindingGroupAggregatedComputedFilter,
     FindingGroupFilter,
     FindingGroupSummaryFilter,
+    FindingMetadataFilter,
     IntegrationFilter,
     IntegrationJiraFindingsFilter,
     InvitationFilter,
@@ -128,6 +129,7 @@ from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
     CustomOAuth2Client,
+    accept_invitation_for_user,
     get_findings_metadata_no_aggregations,
     initialize_prowler_integration,
     initialize_prowler_provider,
@@ -235,7 +237,7 @@ from api.v1.serializers import (
     UserUpdateSerializer,
 )
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
-from celery import chain, states
+from celery import chain
 from celery.result import AsyncResult
 from config.custom_logging import BackendLogger
 from config.env import env
@@ -281,7 +283,6 @@ from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
 from drf_spectacular.settings import spectacular_settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import (
@@ -320,17 +321,20 @@ from tasks.beat import schedule_provider_scan
 from tasks.jobs.attack_paths import db_utils as attack_paths_db_utils
 from tasks.jobs.export import get_s3_client
 from tasks.tasks import (
+    QUEUED_SCAN_TASK_STATE,
     backfill_compliance_summaries_task,
     backfill_scan_resource_summaries_task,
     check_integration_connection_task,
     check_lighthouse_connection_task,
     check_lighthouse_provider_connection_task,
     check_provider_connection_task,
+    create_scan_task_record,
     delete_provider_task,
     delete_tenant_task,
+    enqueue_scan_execution_on_commit,
+    get_active_provider_scan,
     jira_integration_task,
     mute_historical_findings_task,
-    perform_scan_task,
     reaggregate_all_finding_group_summaries_task,
     refresh_lighthouse_provider_models_task,
 )
@@ -541,6 +545,46 @@ class SchemaView(SpectacularAPIView):
         return super().get(request, *args, **kwargs)
 
 
+SAML_CALLBACK_SESSION_KEY = "saml_callback_url"
+
+
+def _safe_callback_path(value):
+    if not value or not isinstance(value, str):
+        return None
+    if not value.startswith("/") or value.startswith("//"):
+        return None
+    return value
+
+
+def _get_request_invitation_token(request):
+    for source_name in ("data", "POST"):
+        data = getattr(request, source_name, None) or {}
+        if not hasattr(data, "get"):
+            continue
+        invitation_token = data.get("invitation_token")
+        if invitation_token:
+            return invitation_token
+
+    wrapped_request = getattr(request, "_request", None)
+    if wrapped_request and wrapped_request is not request:
+        return _get_request_invitation_token(wrapped_request)
+
+    return None
+
+
+def _accept_social_invitation(request, user):
+    invitation_token = _get_request_invitation_token(request)
+    tenant_id = getattr(request, "prowler_invitation_tenant_id", None)
+    if invitation_token and not tenant_id:
+        invitation, _ = accept_invitation_for_user(
+            user=user,
+            invitation_token=invitation_token,
+            raise_not_found=True,
+        )
+        tenant_id = str(invitation.tenant_id)
+    return tenant_id
+
+
 @extend_schema(exclude=True)
 class GoogleSocialLoginView(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
@@ -551,7 +595,11 @@ class GoogleSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
             try:
                 serializer.is_valid(raise_exception=True)
             except TokenError as e:
@@ -576,7 +624,11 @@ class GithubSocialLoginView(SocialLoginView):
         original_response = super().get_response()
 
         if self.user and self.user.is_authenticated:
-            serializer = TokenSocialLoginSerializer(data={"email": self.user.email})
+            tenant_id = _accept_social_invitation(self.request, self.user)
+            serializer_data = {"email": self.user.email}
+            if tenant_id:
+                serializer_data["tenant_id"] = tenant_id
+            serializer = TokenSocialLoginSerializer(data=serializer_data)
 
             try:
                 serializer.is_valid(raise_exception=True)
@@ -636,6 +688,10 @@ class CustomSAMLLoginView(LoginView):
 
         This approach maintains security while providing better UX.
         """
+        callback_url = _safe_callback_path(request.GET.get("callback_url"))
+        request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        if callback_url:
+            request.session[SAML_CALLBACK_SESSION_KEY] = callback_url
         if request.method == "GET":
             # Convert GET to POST while preserving parameters
             request.method = "POST"
@@ -680,6 +736,11 @@ class SAMLInitiateAPIView(GenericAPIView):
             "saml_login", kwargs={"organization_slug": config.email_domain}
         )
         login_url = urljoin(api_host, login_path)
+        callback_url = _safe_callback_path(
+            serializer.validated_data.get("callback_url")
+        )
+        if callback_url:
+            login_url = f"{login_url}?{urlencode({'callback_url': callback_url})}"
 
         return redirect(login_url)
 
@@ -895,7 +956,13 @@ class TenantFinishACSView(FinishACSView):
             token=token_data, user=user
         )
         callback_url = env.str("SAML_SSO_CALLBACK_URL")
-        redirect_url = f"{callback_url}?id={saml_token.id}"
+        redirect_params = {"id": str(saml_token.id)}
+        saml_callback_url = _safe_callback_path(
+            request.session.pop(SAML_CALLBACK_SESSION_KEY, None)
+        )
+        if saml_callback_url:
+            redirect_params["callbackUrl"] = saml_callback_url
+        redirect_url = f"{callback_url}?{urlencode(redirect_params)}"
         request.session.pop("saml_user_created", None)
 
         return redirect(redirect_url)
@@ -947,8 +1014,8 @@ class UserViewSet(BaseUserViewset):
         """
         Returns the required permissions based on the request method.
         """
-        if self.action == "me":
-            # No permissions required for me request
+        if self.action in ["me", "partial_update"]:
+            # No permissions required for me and partial_update requests
             self.required_permissions = []
         else:
             # Require permission for the rest of the requests
@@ -1001,6 +1068,24 @@ class UserViewSet(BaseUserViewset):
             data=serializer.data,
             status=status.HTTP_200_OK,
         )
+
+    def partial_update(self, request, *args, **kwargs):
+        user = self.get_object()
+        if user.id != self.request.user.id:
+            role = get_role(self.request.user, self.request.tenant_id)
+            if not getattr(role, Permissions.MANAGE_USERS.value, False):
+                raise ValidationError(
+                    "Only users with manage users permission can update other users."
+                )
+
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        if getattr(user, "_prefetched_objects_cache", None):
+            user._prefetched_objects_cache = {}
+
+        return Response(serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         if kwargs["pk"] != str(self.request.user.id):
@@ -2634,12 +2719,23 @@ class ScanViewSet(BaseRLSViewSet):
     def create(self, request, *args, **kwargs):
         input_serializer = self.get_serializer(data=request.data)
         input_serializer.is_valid(raise_exception=True)
+        provider = input_serializer.validated_data.get("provider")
+        active_scan = None
 
         # Broker publish is deferred to on_commit so the worker cannot read
         # Scan before BaseRLSViewSet's dispatch-wide atomic commits.
         pre_task_id = str(uuid.uuid4())
 
         with transaction.atomic():
+            if provider:
+                provider = Provider.objects.select_for_update().get(
+                    id=provider.id,
+                    tenant_id=self.request.tenant_id,
+                )
+                active_scan = get_active_provider_scan(
+                    self.request.tenant_id, provider.id
+                )
+
             scan = input_serializer.save()
             scan.task_id = pre_task_id
             scan.save(update_fields=["task_id"])
@@ -2650,29 +2746,18 @@ class ScanViewSet(BaseRLSViewSet):
                 provider_id=str(scan.provider_id),
             )
 
-            task_result, _ = TaskResult.objects.get_or_create(
-                task_id=pre_task_id,
-                defaults={"status": states.PENDING, "task_name": "scan-perform"},
-            )
-            prowler_task, _ = Task.objects.update_or_create(
-                id=pre_task_id,
+            prowler_task = create_scan_task_record(
                 tenant_id=self.request.tenant_id,
-                defaults={"task_runner_task": task_result},
+                task_id=pre_task_id,
+                task_status=(QUEUED_SCAN_TASK_STATE if active_scan else None),
             )
 
-            scan_kwargs = {
-                "tenant_id": self.request.tenant_id,
-                "scan_id": str(scan.id),
-                "provider_id": str(scan.provider_id),
-                # Disabled for now
-                # checks_to_execute=scan.scanner_args.get("checks_to_execute")
-            }
-
-            transaction.on_commit(
-                lambda: perform_scan_task.apply_async(
-                    kwargs=scan_kwargs, task_id=pre_task_id
+            if not active_scan:
+                enqueue_scan_execution_on_commit(
+                    tenant_id=self.request.tenant_id,
+                    scan=scan,
+                    task_id=pre_task_id,
                 )
-            )
 
         self.response_serializer_class = TaskSerializer
         output_serializer = self.get_serializer(prowler_task)
@@ -3833,6 +3918,8 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
     def get_filterset_class(self):
         if self.action in ["latest", "metadata_latest"]:
             return LatestFindingFilter
+        if self.action == "metadata":
+            return FindingMetadataFilter
         return FindingFilter
 
     def get_queryset(self):
@@ -4368,25 +4455,12 @@ class InvitationAcceptViewSet(BaseRLSViewSet):
         invitation_token = serializer.validated_data["invitation_token"]
         user_email = request.user.email
 
-        invitation = validate_invitation(
-            invitation_token, user_email, raise_not_found=True
-        )
-
-        # Proceed with accepting the invitation
         user = User.objects.using(MainRouter.admin_db).get(email=user_email)
-        membership = Membership.objects.using(MainRouter.admin_db).create(
+        invitation, membership = accept_invitation_for_user(
             user=user,
-            tenant=invitation.tenant,
+            invitation_token=invitation_token,
+            raise_not_found=True,
         )
-        user_role = []
-        for role in invitation.roles.all():
-            user_role.append(
-                UserRoleRelationship.objects.using(MainRouter.admin_db).create(
-                    user=user, role=role, tenant=invitation.tenant
-                )
-            )
-        invitation.state = Invitation.State.ACCEPTED
-        invitation.save(using=MainRouter.admin_db)
 
         self.response_serializer_class = MembershipSerializer
         membership_serializer = self.get_serializer(membership)

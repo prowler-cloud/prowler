@@ -778,7 +778,7 @@ Before opening the pull request:
     uv run pre-commit run --all-files
     uv run pytest -n auto
     ```
-2. Add a changelog entry under the `### 🚀 Added` section of `prowler/CHANGELOG.md`, describing the new framework and the providers it covers.
+2. Add a changelog fragment `prowler/changelog.d/<slug>.added.md`, describing the new framework and the providers it covers (no PR link in the text; it is attached automatically at release time).
 3. Follow the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md) and set the PR title using Conventional Commits, e.g. `feat(compliance): add My Framework 1.0 for AWS`.
 4. Request review from the compliance codeowners listed in `.github/CODEOWNERS`.
 

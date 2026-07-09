@@ -1,0 +1,124 @@
+---
+title: "Findings Triage"
+description: "Track finding review status and team notes in Prowler Cloud."
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
+<VersionBadge version="5.32.0" />
+
+Findings Triage lets teams track review status and notes for individual findings in Prowler Cloud. Use it to record investigation state, remediation work, accepted risk, or false positive decisions without leaving the Findings workflow.
+
+<SubscriptionBanner />
+
+## What Is Findings Triage?
+
+Findings Triage adds a **Triage** status and team note workflow to individual finding rows. It is available from:
+
+- Expanded rows in **Finding Groups**
+- Standalone finding tables
+- Finding and resource detail drawers, including related findings tables
+
+Finding Groups rows do not show triage controls because a group row represents several findings. Expand a group to work with each affected resource.
+
+![Findings Triage Table](/images/prowler-app/findings-triage/findings-triage-table.png)
+
+## Required Permissions
+
+To update triage statuses and notes, the user role must have the **Manage Scans** permission. For more information, see [Role-Based Access Control (RBAC)](/user-guide/tutorials/prowler-app-rbac).
+
+Users without this permission can still see existing triage context when it is available, but cannot change statuses or save notes.
+
+## Triage Statuses
+
+The status selector includes manual statuses. Prowler also sets automatic statuses after scans.
+
+| Status | Type | Use It When |
+| --- | --- | --- |
+| **Open** | Manual | A failed finding has not been reviewed yet. A failed finding with no saved triage state also appears as **Open**. |
+| **Under Review** | Manual | A team is investigating the finding. |
+| **Remediating** | Manual | Work is in progress to fix the finding. |
+| **Risk Accepted** | Manual | The team accepts the risk and wants to mute the finding. |
+| **False Positive** | Manual | The finding does not apply and should be muted. |
+| **Resolved** | Automatic | A finding changed from `FAIL` to `PASS` in a later scan. A passed finding with no saved triage state also appears as **Resolved**. |
+| **Reopened** | Automatic | A finding changed from `PASS` to `FAIL` in a later scan. |
+
+![Findings Triage Status Selector](/images/prowler-app/findings-triage/findings-triage-status-dropdown.png)
+
+Resolved and Reopened are not manual selector options.
+
+These automatic states keep triage tied to the finding UID across scans, even when each scan creates a new finding snapshot.
+
+## Change a Triage Status
+
+<Steps>
+  <Step title="Open Findings">
+    Go to **Findings** in Prowler Cloud.
+  </Step>
+  <Step title="Select an individual finding">
+    Expand a Finding Group, open a resource findings table, or use a standalone finding row.
+  </Step>
+  <Step title="Open the triage selector">
+    In the **Triage** column, click the current status.
+  </Step>
+  <Step title="Choose a status">
+    Select **Open**, **Under Review**, **Remediating**, **Risk Accepted**, or **False Positive**.
+  </Step>
+</Steps>
+
+Changing a finding to **Risk Accepted** or **False Positive** will mute the finding. Prowler asks for confirmation and creates a mute rule for the finding.
+
+## Add or Edit a Triage Note
+
+Triage notes are visible only to the team in the current organization. Each note supports up to 500 characters.
+
+<Steps>
+  <Step title="Open the finding actions menu">
+    On an individual finding row, click the actions menu.
+  </Step>
+  <Step title="Open the note modal">
+    Click **Add Triage Note**. If a note already exists, click **Open note**.
+  </Step>
+  <Step title="Set status and note text">
+    Optionally change the status, then write the note.
+  </Step>
+  <Step title="Save changes">
+    Click **Save changes**.
+  </Step>
+</Steps>
+
+![Findings Triage Note Modal](/images/prowler-app/findings-triage/findings-triage-note-modal.png)
+
+To remove an existing note, clear the note text and save the change.
+
+## Mutelist Behavior
+
+Findings Triage uses Mutelist when a status means the finding should be muted:
+
+- **Risk Accepted** creates a mute rule because the team accepts the finding as a known risk.
+- **False Positive** creates a mute rule because the finding should not count as an active issue.
+
+Use [Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) to review, disable, or delete mute rules created through this workflow. For pattern-based muting, use [Advanced Mutelist](/user-guide/tutorials/prowler-app-mute-findings).
+
+<Warning>
+Muting a finding does not fix the underlying configuration. Review the finding before using **Risk Accepted** or **False Positive**.
+</Warning>
+
+## Troubleshooting
+
+### Triage controls do not appear
+
+Make sure the row is an individual finding row. Finding Groups rows do not show triage controls. Expand a group to see affected resources and their triage controls.
+
+### Changes cannot be saved
+
+Confirm that the user role has **Manage Scans** permission. Self-hosted Prowler App does not support Findings Triage writes.
+
+### Resolved or Reopened is missing from the selector
+
+This is expected. Prowler sets **Resolved** and **Reopened** automatically from scan result changes.
+
+### Risk Accepted or False Positive muted a finding
+
+This is expected. Those statuses create a mute rule through Mutelist.

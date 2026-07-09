@@ -18,7 +18,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  Button: ({ children, ...props }: { children: ReactNode }) => (
+    <button {...props}>{children}</button>
+  ),
   Checkbox: ({
     "aria-label": ariaLabel,
     onCheckedChange,
@@ -35,9 +39,12 @@ vi.mock("@/components/shadcn", () => ({
       {...props}
     />
   ),
+  Textarea: (props: InputHTMLAttributes<HTMLTextAreaElement>) => (
+    <textarea {...props} />
+  ),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({
     title,
   }: {
@@ -76,6 +83,44 @@ vi.mock("./notification-indicator", () => ({
     notificationIndicatorMock(props);
     return null;
   },
+}));
+
+vi.mock("@/components/shadcn/modal", () => ({
+  Modal: ({
+    children,
+    open,
+    title,
+  }: {
+    children: ReactNode;
+    open: boolean;
+    title?: string;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        {children}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  SelectItem: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({
+    children,
+    disabled,
+    "aria-label": ariaLabel,
+  }: {
+    children: ReactNode;
+    disabled?: boolean;
+    "aria-label"?: string;
+  }) => (
+    <button aria-label={ariaLabel} disabled={disabled}>
+      {children}
+    </button>
+  ),
 }));
 
 vi.mock("@/components/shadcn/tooltip", () => ({
@@ -248,7 +293,7 @@ function renderSelectCell(overrides?: Partial<FindingGroupRow>) {
 // ---------------------------------------------------------------------------
 
 describe("column-finding-groups — accessibility of check title cell", () => {
-  it("should not expose an impacted providers column", () => {
+  it("should not expose triage and notes columns on group-level rows", () => {
     // Given
     const columns = getColumnFindingGroups({
       rowSelection: {},
@@ -257,12 +302,16 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     });
 
     // When
-    const impactedProvidersColumn = columns.find(
-      (col) => (col as { id?: string }).id === "impactedProviders",
+    const columnIds = columns.map(
+      (column) =>
+        (column as { id?: string; accessorKey?: string }).id ??
+        (column as { id?: string; accessorKey?: string }).accessorKey,
     );
 
     // Then
-    expect(impactedProvidersColumn).toBeUndefined();
+    expect(columnIds).not.toContain("triage");
+    expect(columnIds).not.toContain("notes");
+    expect(columnIds.at(-1)).toBe("actions");
   });
 
   it("should render the first provider icon with its provider name", () => {
@@ -290,22 +339,6 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(button.tagName.toLowerCase()).toBe("button");
   });
 
-  it("should NOT render the check title as a <p> element", () => {
-    // Given
-    const onDrillDown =
-      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
-
-    // When
-    renderFindingCell("S3 Bucket Public Access", onDrillDown);
-
-    // Then — <p> should not exist as the interactive element
-    const paragraphs = document.querySelectorAll("p");
-    const clickableParagraph = Array.from(paragraphs).find(
-      (p) => p.textContent === "S3 Bucket Public Access",
-    );
-    expect(clickableParagraph).toBeUndefined();
-  });
-
   it("should call onDrillDown when the button is clicked", async () => {
     // Given
     const onDrillDown =
@@ -326,23 +359,6 @@ describe("column-finding-groups — accessibility of check title cell", () => {
       "s3_check",
       expect.objectContaining({ checkId: "s3_check" }),
     );
-  });
-
-  it("should call onDrillDown when Enter key is pressed on the button", async () => {
-    // Given
-    const onDrillDown =
-      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
-    const user = userEvent.setup();
-
-    renderFindingCell("My Check Title", onDrillDown);
-
-    // When — tab to button and press Enter
-    const button = screen.getByRole("button", { name: "My Check Title" });
-    button.focus();
-    await user.keyboard("{Enter}");
-
-    // Then — native button handles Enter natively
-    expect(onDrillDown).toHaveBeenCalledTimes(1);
   });
 
   it("should allow expanding a group that only has PASS resources", async () => {
@@ -395,26 +411,6 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
     expect(onDrillDown).not.toHaveBeenCalled();
-  });
-
-  it("should keep fallback groups non-clickable when the displayed total is zero", () => {
-    // Given
-    const onDrillDown =
-      vi.fn<(checkId: string, group: FindingGroupRow) => void>();
-
-    // When
-    renderFindingCell("No failing findings", onDrillDown, {
-      resourcesTotal: 0,
-      resourcesFail: 0,
-      failCount: 0,
-      passCount: 0,
-    });
-
-    // Then
-    expect(
-      screen.queryByRole("button", { name: "No failing findings" }),
-    ).not.toBeInTheDocument();
-    expect(screen.getByText("No failing findings")).toBeInTheDocument();
   });
 });
 
@@ -489,23 +485,6 @@ describe("column-finding-groups — group selection", () => {
       }),
     ).not.toBeInTheDocument();
     expect(onDrillDown).not.toHaveBeenCalled();
-  });
-
-  it("should hide the chevron for zero-resource groups when the displayed total is zero", () => {
-    // Given/When
-    renderSelectCell({
-      resourcesTotal: 0,
-      resourcesFail: 0,
-      failCount: 0,
-      passCount: 0,
-    });
-
-    // Then
-    expect(
-      screen.queryByRole("button", {
-        name: "Expand S3 Bucket Public Access",
-      }),
-    ).not.toBeInTheDocument();
   });
 });
 

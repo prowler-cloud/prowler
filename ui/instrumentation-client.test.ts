@@ -24,10 +24,13 @@ vi.mock("@/lib/get-runtime-config.client", () => ({
   getRuntimeConfigClient: getConfigMock,
 }));
 
-vi.mock("@/components/ui/navigation-progress/use-navigation-progress", () => ({
-  startProgress: vi.fn(),
-  cancelProgress: vi.fn(),
-}));
+vi.mock(
+  "@/components/shadcn/navigation-progress/use-navigation-progress",
+  () => ({
+    startProgress: vi.fn(),
+    cancelProgress: vi.fn(),
+  }),
+);
 
 describe("instrumentation-client Sentry init", () => {
   beforeEach(() => {

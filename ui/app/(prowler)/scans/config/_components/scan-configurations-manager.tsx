@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { Info, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import {
@@ -11,9 +11,11 @@ import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts
 import { BatchFiltersLayout } from "@/components/filters/batch-filters-layout";
 import { ClearFiltersButton } from "@/components/filters/clear-filters-button";
 import { Button, Card } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { ProviderProps } from "@/types/providers";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
@@ -148,6 +150,19 @@ export function ScanConfigurationsManager({
 
   return (
     <>
+      <div className="text-text-neutral-secondary mb-6 flex max-w-3xl items-start gap-2 text-sm">
+        <Info className="mt-0.5 size-4 shrink-0" />
+        <p>
+          By default, every provider uses Prowler&apos;s built-in configuration
+          baseline. Create a Scan Configuration to override specific values and
+          attach it to the providers that should use it. Learn more{" "}
+          <CustomLink size="sm" href={DOCS_URLS.SCAN_CONFIGURATION}>
+            here
+          </CustomLink>
+          .
+        </p>
+      </div>
+
       <div className="mb-6">
         <BatchFiltersLayout
           testIdPrefix="scan-configuration"
@@ -184,12 +199,12 @@ export function ScanConfigurationsManager({
       {noMatchForProvider ? (
         <Card variant="base" padding="xl">
           <div className="text-center">
-            <p className="text-default-700 text-sm font-medium">
+            <p className="text-text-neutral-secondary text-sm font-medium">
               {providerFilter.length === 1
                 ? "No Scan Configuration is attached to this provider."
                 : "No Scan Configuration is attached to any of the selected providers."}
             </p>
-            <p className="text-default-500 mt-1 text-sm">
+            <p className="text-text-neutral-tertiary mt-1 text-sm">
               The next scan{providerFilter.length === 1 ? "" : "s"} will use the
               built-in defaults shipped with Prowler. Attach a Scan
               Configuration from the editor to override them.
@@ -226,7 +241,7 @@ export function ScanConfigurationsManager({
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to delete{" "}
             <strong>{pendingDelete?.attributes.name}</strong>? Attached
             providers will fall back to the built-in scan defaults on their next

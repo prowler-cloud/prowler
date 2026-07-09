@@ -12,6 +12,8 @@ import {
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
 import { Field, FieldLabel } from "@/components/shadcn";
+import { ToastAction, useToast } from "@/components/shadcn";
+import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,
   RadioGroupItem,
@@ -22,8 +24,7 @@ import {
   CloudFeatureBadge,
   CloudFeatureBadgeLink,
 } from "@/components/shared/cloud-feature-badge";
-import { ToastAction, useToast } from "@/components/ui";
-import { EntityInfo } from "@/components/ui/entities";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
   getActionErrorMessage,
@@ -296,11 +297,11 @@ export function LaunchStep({
 
       <div className="flex items-center gap-3">
         <TreeStatusIcon status={TREE_ITEM_STATUS.SUCCESS} className="size-6" />
-        <h3 className="text-sm font-semibold">Account Connected!</h3>
+        <h3 className="text-sm font-semibold">Provider Connected!</h3>
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Your account is connected to Prowler and ready to Scan!
+        Your provider is connected to Prowler and ready to Scan!
       </p>
 
       {!providerId && (
@@ -350,20 +351,7 @@ export function LaunchStep({
         </p>
       )}
 
-      {(isLimitBlocked || isBlocked) && (
-        <p className="text-text-error-primary text-sm">
-          You have exceeded the usage limit of one provider. You can add more
-          providers and run unlimited scans by adding a subscription.{" "}
-          <Link
-            href="https://cloud.prowler.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Manage Billing
-          </Link>
-        </p>
-      )}
+      {(isLimitBlocked || isBlocked) && <UsageLimitMessage />}
 
       {isScheduleMode && (
         <ScanScheduleFields

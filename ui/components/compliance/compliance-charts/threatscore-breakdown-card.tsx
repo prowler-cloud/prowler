@@ -1,12 +1,12 @@
 "use client";
 
-import { Progress } from "@heroui/progress";
-
 import type { SectionScores } from "@/actions/overview/threat-score";
 import { RadialChart } from "@/components/graphs/radial-chart";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
+import { Progress } from "@/components/shadcn/progress";
 import {
   getScoreColor,
+  getScoreIndicatorClass,
   getScoreLabel,
   getScoreLevel,
   getScoreTextClass,
@@ -72,7 +72,7 @@ export function ThreatScoreBreakdownCard({
         {/* Pillar Breakdown */}
         <Card variant="inner" padding="sm" className="min-w-0 flex-1">
           <div className="mb-2">
-            <span className="text-default-600 text-xs font-medium tracking-wide uppercase">
+            <span className="text-text-neutral-secondary text-xs font-medium tracking-wide uppercase">
               Score by Pillar
             </span>
           </div>
@@ -80,7 +80,9 @@ export function ThreatScoreBreakdownCard({
             {pillars.map(({ name, score, hasData }) => (
               <div key={name} className="space-y-0.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-default-700 truncate pr-2">{name}</span>
+                  <span className="text-text-neutral-secondary truncate pr-2">
+                    {name}
+                  </span>
                   <span
                     className={`font-semibold ${
                       hasData
@@ -94,8 +96,9 @@ export function ThreatScoreBreakdownCard({
                 <Progress
                   aria-label={`${name} score`}
                   value={hasData ? score : 0}
-                  color={getScoreColor(score)}
-                  size="md"
+                  indicatorClassName={getScoreIndicatorClass(
+                    getScoreColor(score),
+                  )}
                   className="w-full"
                 />
               </div>
@@ -113,22 +116,22 @@ export function ThreatScoreBreakdownCardSkeleton() {
   return (
     <Card variant="base" className="flex h-full w-full animate-pulse flex-col">
       <CardHeader>
-        <div className="bg-default-200 h-5 w-40 rounded" />
+        <div className="bg-border-neutral-tertiary h-5 w-40 rounded" />
       </CardHeader>
       {/* Mobile: vertical, Tablet: horizontal, Desktop: vertical */}
       <CardContent className="flex flex-1 flex-col gap-4 md:flex-row md:items-stretch lg:flex-col">
         <div className="flex w-full flex-col items-center justify-center md:w-[160px] md:flex-shrink-0 lg:w-full">
-          <div className="bg-default-200 mx-auto h-[140px] w-[140px] rounded-full" />
+          <div className="bg-border-neutral-tertiary mx-auto h-[140px] w-[140px] rounded-full" />
         </div>
         <Card variant="inner" padding="sm" className="min-w-0 flex-1">
           <div className="space-y-2">
             {Array.from({ length: SKELETON_PILLAR_COUNT }, (_, i) => (
               <div key={i} className="space-y-0.5">
                 <div className="flex justify-between">
-                  <div className="bg-default-200 h-3 w-28 rounded" />
-                  <div className="bg-default-200 h-3 w-10 rounded" />
+                  <div className="bg-border-neutral-tertiary h-3 w-28 rounded" />
+                  <div className="bg-border-neutral-tertiary h-3 w-10 rounded" />
                 </div>
-                <div className="bg-default-200 h-2 w-full rounded" />
+                <div className="bg-border-neutral-tertiary h-2 w-full rounded" />
               </div>
             ))}
           </div>

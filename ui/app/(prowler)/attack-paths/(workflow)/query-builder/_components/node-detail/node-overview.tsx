@@ -1,8 +1,8 @@
 "use client";
 
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
 import { formatNodeLabels } from "../../_lib";
@@ -47,7 +47,7 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
 
       {/* Display all properties */}
       <div className="mt-4 border-t border-gray-200 pt-4 dark:border-gray-700">
-        <h4 className="dark:text-prowler-theme-pale/90 mb-3 text-sm font-semibold">
+        <h4 className="dark:text-text-neutral-primary/90 mb-3 text-sm font-semibold">
           Properties
         </h4>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">

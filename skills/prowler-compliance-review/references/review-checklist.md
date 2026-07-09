@@ -16,7 +16,7 @@
 |-----------|----------|
 | Compliance JSON | `prowler/compliance/{provider}/{framework}.json` |
 | Dashboard | `dashboard/compliance/{framework}_{provider}.py` |
-| CHANGELOG | `prowler/CHANGELOG.md` |
+| Changelog fragment | `prowler/changelog.d/` |
 | Checks | `prowler/providers/{provider}/services/{service}/{check}/` |
 
 ## Validation Script
@@ -40,7 +40,7 @@ When completing a compliance framework review, use this summary format:
 | JSON Valid | PASS/FAIL |
 | All Checks Exist | PASS/FAIL (N missing) |
 | No Duplicate IDs | PASS/FAIL |
-| CHANGELOG Entry | PASS/FAIL |
+| Changelog fragment | PASS/FAIL |
 | Dashboard File | PASS/FAIL |
 
 ### Statistics

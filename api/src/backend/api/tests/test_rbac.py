@@ -103,20 +103,84 @@ class TestUserViewSet:
         assert response.json()["data"]["attributes"]["name"] == "Updated Name"
 
     def test_partial_update_user_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, create_test_user
+        self, authenticated_client_no_permissions_rbac, create_test_user_rbac_limited
     ):
         updated_data = {
             "data": {
                 "type": "users",
+                "id": str(create_test_user_rbac_limited.id),
                 "attributes": {"name": "Updated Name"},
             }
         }
         response = authenticated_client_no_permissions_rbac.patch(
-            reverse("user-detail", kwargs={"pk": create_test_user.id}),
+            reverse("user-detail", kwargs={"pk": create_test_user_rbac_limited.id}),
             data=updated_data,
-            format="vnd.api+json",
+            content_type="application/vnd.api+json",
         )
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["name"] == "Updated Name"
+
+    def test_partial_update_other_user_with_no_permissions_denied(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        original_email = "target-rbac-update@example.com"
+        original_password = "OriginalPassword123@"
+        target_user = User.objects.create_user(
+            name="target_rbac_update",
+            email=original_email,
+            password=original_password,
+        )
+        Membership.objects.create(user=target_user, tenant=tenants_fixture[0])
+        updated_data = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {
+                    "email": "updated-target-rbac@example.com",
+                    "password": "UpdatedPassword123@",
+                },
+            }
+        }
+
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=updated_data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
+        assert target_user.check_password(original_password)
+
+    def test_partial_update_other_user_with_manage_users_allowed(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        user = authenticated_client_rbac_manage_users_only.user
+        tenant = Membership.objects.filter(user=user).first().tenant
+        target_user = User.objects.create_user(
+            name="target_manage_users_update",
+            email="target-manage-users-update@example.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=target_user, tenant=tenant)
+        updated_data = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"name": "Updated Target Name"},
+            }
+        }
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=updated_data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        target_user.refresh_from_db()
+        assert target_user.name == "Updated Target Name"
 
     def test_delete_user_with_all_permissions(
         self, authenticated_client_rbac, create_test_user_rbac
@@ -370,11 +434,11 @@ class TestUserViewSet:
 @pytest.mark.django_db
 class TestProviderViewSet:
     def test_list_providers_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
         response = authenticated_client_rbac.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(providers_fixture)
+        assert len(response.json()["data"]) == 1
 
     def test_list_providers_with_no_permissions(
         self, authenticated_client_no_permissions_rbac
@@ -386,9 +450,9 @@ class TestProviderViewSet:
         assert len(response.json()["data"]) == 0
 
     def test_retrieve_provider_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_rbac.get(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -396,9 +460,9 @@ class TestProviderViewSet:
         assert response.json()["data"]["attributes"]["alias"] == provider.alias
 
     def test_retrieve_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.get(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -422,9 +486,9 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_provider_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         payload = {
             "data": {
                 "type": "providers",
@@ -441,9 +505,9 @@ class TestProviderViewSet:
         assert response.json()["data"]["attributes"]["alias"] == "updated_alias"
 
     def test_partial_update_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         update_payload = {
             "data": {
                 "type": "providers",
@@ -464,7 +528,7 @@ class TestProviderViewSet:
         mock_delete_task,
         mock_task_get,
         authenticated_client_rbac,
-        providers_fixture,
+        aws_provider,
         tasks_fixture,
     ):
         prowler_task = tasks_fixture[0]
@@ -473,7 +537,7 @@ class TestProviderViewSet:
         mock_delete_task.return_value = task_mock
         mock_task_get.return_value = prowler_task
 
-        provider1, *_ = providers_fixture
+        provider1 = aws_provider
         response = authenticated_client_rbac.delete(
             reverse("provider-detail", kwargs={"pk": provider1.id})
         )
@@ -485,9 +549,9 @@ class TestProviderViewSet:
         assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_delete_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.delete(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -500,7 +564,7 @@ class TestProviderViewSet:
         mock_provider_connection,
         mock_task_get,
         authenticated_client_rbac,
-        providers_fixture,
+        aws_provider,
         tasks_fixture,
     ):
         prowler_task = tasks_fixture[0]
@@ -510,7 +574,7 @@ class TestProviderViewSet:
         mock_provider_connection.return_value = task_mock
         mock_task_get.return_value = prowler_task
 
-        provider1, *_ = providers_fixture
+        provider1 = aws_provider
         assert provider1.connected is None
         assert provider1.connection_last_checked_at is None
 
@@ -525,9 +589,9 @@ class TestProviderViewSet:
         assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_connection_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.post(
             reverse("provider-connection", kwargs={"pk": provider.id})
         )
@@ -540,12 +604,10 @@ class TestLimitedVisibility:
     TEST_PASSWORD = "Thisisapassword123@"
 
     @pytest.fixture
-    def limited_admin_user(
-        self, django_db_setup, django_db_blocker, tenants_fixture, providers_fixture
-    ):
+    def limited_admin_user(self, django_db_blocker, tenants_fixture, aws_provider):
         with django_db_blocker.unblock():
             tenant = tenants_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
             user = User.objects.create_user(
                 name="testing",
                 email=self.TEST_EMAIL,
@@ -592,25 +654,17 @@ class TestLimitedVisibility:
 
     @pytest.fixture
     def authenticated_client_rbac_limited(
-        self, limited_admin_user, tenants_fixture, client
+        self,
+        limited_admin_user,
+        tenants_fixture,
+        authenticated_client_for_tenant_factory,
     ):
-        client.user = limited_admin_user
-        tenant_id = tenants_fixture[0].id
-        serializer = TokenSerializer(
-            data={
-                "type": "tokens",
-                "email": self.TEST_EMAIL,
-                "password": self.TEST_PASSWORD,
-                "tenant_id": tenant_id,
-            }
+        return authenticated_client_for_tenant_factory(
+            limited_admin_user, tenants_fixture[0]
         )
-        serializer.is_valid(raise_exception=True)
-        access_token = serializer.validated_data["access"]
-        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-        return client
 
     def test_integrations(
-        self, authenticated_client_rbac_limited, integrations_fixture, providers_fixture
+        self, authenticated_client_rbac_limited, integrations_fixture
     ):
         # Integration 2 is related to provider1 and provider 2
         # This user cannot see provider 2
@@ -626,11 +680,11 @@ class TestLimitedVisibility:
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(
         self,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
@@ -640,7 +694,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
@@ -648,6 +702,7 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     @pytest.mark.parametrize(
         "endpoint_name",
         [
@@ -659,8 +714,7 @@ class TestLimitedVisibility:
         self,
         endpoint_name,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(
@@ -673,7 +727,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(
@@ -684,11 +738,11 @@ class TestLimitedVisibility:
         data = response.json()["data"]["attributes"].values()
         assert all(value == 0 for value in data)
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_services(
         self,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(
@@ -700,7 +754,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(
