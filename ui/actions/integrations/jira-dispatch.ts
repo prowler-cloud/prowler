@@ -159,8 +159,9 @@ export const pollJiraDispatchTask = async (
   const jiraResult = result as JiraTaskResult | undefined;
 
   if (state === "completed") {
+    const createdCount = jiraResult?.created_count ?? 0;
     const failedCount = jiraResult?.failed_count ?? 0;
-    if (!jiraResult?.error && failedCount === 0) {
+    if (!jiraResult?.error && failedCount === 0 && createdCount > 0) {
       return { success: true, message: "Finding successfully sent to Jira!" };
     }
     return {

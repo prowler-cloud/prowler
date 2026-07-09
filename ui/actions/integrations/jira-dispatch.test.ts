@@ -128,4 +128,25 @@ describe("pollJiraDispatchTask", () => {
       message: "Finding successfully sent to Jira!",
     });
   });
+
+  it("should return a fallback error when no Jira issue was created", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: {
+        created_count: 0,
+        failed_count: 0,
+      },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-123");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error: "Failed to create Jira issue.",
+    });
+  });
 });
