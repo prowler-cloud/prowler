@@ -49,6 +49,98 @@ REPLICA_RETRY_BASE_DELAY = env.float("POSTGRES_REPLICA_RETRY_BASE_DELAY", defaul
 
 SET_CONFIG_QUERY = "SELECT set_config(%s, %s::text, TRUE);"
 
+REPLICA_CONNECTION_SQLSTATE_PREFIXES = ("08",)
+REPLICA_CONNECTION_SQLSTATES = {"57P01", "57P02", "57P03"}
+REPLICA_NON_FAILOVER_SQLSTATES = {"57014", "40001", "40P01"}
+REPLICA_CONNECTION_ERROR_MESSAGES = (
+    "ssl syscall",
+    "eof detected",
+    "server closed the connection",
+    "connection already closed",
+    "connection not open",
+    "could not connect to server",
+    "connection refused",
+    "connection reset",
+    "connection timed out",
+    "lost synchronization",
+    "terminating connection",
+    "database system is starting up",
+    "database system is shutting down",
+    "database system is in recovery mode",
+)
+REPLICA_NON_FAILOVER_ERROR_MESSAGES = (
+    "canceling statement due to user request",
+    "deadlock detected",
+    "could not serialize access",
+)
+
+
+def _iter_exception_chain(error: BaseException):
+    seen = set()
+    pending = [error]
+    while pending:
+        current = pending.pop(0)
+        if current is None or id(current) in seen:
+            continue
+        seen.add(id(current))
+        yield current
+
+        cause = getattr(current, "__cause__", None)
+        context = getattr(current, "__context__", None)
+        if cause is not None:
+            pending.append(cause)
+        if context is not None:
+            pending.append(context)
+        for arg in getattr(current, "args", ()):
+            if isinstance(arg, BaseException):
+                pending.append(arg)
+
+
+def _get_exception_sqlstate(error: BaseException) -> str | None:
+    for attr in ("pgcode", "sqlstate"):
+        sqlstate = getattr(error, attr, None)
+        if sqlstate:
+            return sqlstate
+
+    diag = getattr(error, "diag", None)
+    if diag is not None:
+        sqlstate = getattr(diag, "sqlstate", None)
+        if sqlstate:
+            return sqlstate
+    return None
+
+
+def _is_replica_connection_failure(error: BaseException) -> bool:
+    """
+    Return True only for replica failures where retrying on primary is safe.
+
+    Query cancellations, serialization failures, and deadlocks should surface to
+    callers because replaying them can hide real query or concurrency problems.
+    """
+    messages = []
+    sqlstates = set()
+
+    for chained_error in _iter_exception_chain(error):
+        sqlstate = _get_exception_sqlstate(chained_error)
+        if sqlstate:
+            sqlstates.add(sqlstate)
+        messages.append(str(chained_error).lower())
+
+    if sqlstates & REPLICA_NON_FAILOVER_SQLSTATES:
+        return False
+    if any(
+        sqlstate.startswith(REPLICA_CONNECTION_SQLSTATE_PREFIXES)
+        or sqlstate in REPLICA_CONNECTION_SQLSTATES
+        for sqlstate in sqlstates
+    ):
+        return True
+
+    message = " ".join(messages)
+    if any(marker in message for marker in REPLICA_NON_FAILOVER_ERROR_MESSAGES):
+        return False
+
+    return any(marker in message for marker in REPLICA_CONNECTION_ERROR_MESSAGES)
+
 
 @contextmanager
 def psycopg_connection(database_alias: str):
@@ -79,20 +171,19 @@ def rls_transaction(
     """
     Context manager that opens an RLS-scoped database transaction.
 
-    Sets a Postgres configuration variable (``set_config``) so that
-    Row-Level Security policies can filter by tenant.  When *using*
-    points to a read replica and *retry_on_replica* is True, two
-    layers of retry protect against replica failures:
+    Sets a Postgres configuration variable (``set_config``) so that Row-Level
+    Security policies can filter by tenant. When *using* points to a read
+    replica and *retry_on_replica* is True, replica failures are handled in two
+    places:
 
     1. **Pre-yield** (connection-setup failures): the function retries
        up to ``REPLICA_MAX_ATTEMPTS`` times on the replica, then falls
        back to the primary DB.
     2. **Post-yield** (mid-query failures): an ``execute_wrapper``
-       intercepts ``OperationalError`` during ``cursor.execute()``
-       calls, retries on the replica with backoff, and falls back to
-       the primary if the replica stays down.  The wrapper swaps the
-       inner psycopg2 cursor so ``fetchall()`` / ``fetchone()`` read
-       from the new connection transparently.
+       intercepts connection-level ``OperationalError`` during
+       ``cursor.execute()`` calls and falls back directly to the primary DB.
+       The wrapper swaps the inner cursor so ``fetchall()`` / ``fetchone()``
+       read from the new connection transparently.
 
     Limitation: server-side cursors (``.iterator()``) fetch rows via
     ``fetchmany()``, which the wrapper does not intercept.  Call sites
@@ -104,7 +195,8 @@ def rls_transaction(
         parameter: Database configuration parameter name.
         using: Optional database alias.  Defaults to the active read
             alias or Django's default connection.
-        retry_on_replica: Whether to retry on replica failures.
+        retry_on_replica: Whether replica setup failures can retry and
+            connection-level mid-query failures can fall back to primary.
     """
     requested_alias = using or get_read_db_alias()
     db_alias = requested_alias or DEFAULT_DB_ALIAS
@@ -126,62 +218,37 @@ def rls_transaction(
     with ExitStack() as fallback_stack:
 
         def _query_failover(execute, sql, params, many, context):
-            """execute_wrapper: retry failed replica queries, then fall back to primary."""
+            """execute_wrapper: replay failed replica queries on the primary DB."""
             try:
                 return execute(sql, params, many, context)
             except OperationalError as err:
-                # Phase 1: retry on replica with exponential backoff
-                for retry in range(1, REPLICA_MAX_ATTEMPTS + 1):
-                    try:
-                        connections[replica_alias].close()
-                    except Exception:
-                        pass  # Best-effort; connection may already be dead
+                if not _is_replica_connection_failure(err):
+                    raise
 
-                    delay = REPLICA_RETRY_BASE_DELAY * (2 ** (retry - 1))
-                    logger.info(
-                        f"Mid-query failure on replica (retry {retry}/{REPLICA_MAX_ATTEMPTS}), "
-                        f"retrying in {delay:.1f}s. Error: {err}"
-                    )
-                    time.sleep(delay)
-
-                    try:
-                        replica_conn = connections[replica_alias]
-                        replica_conn.ensure_connection()
-                        replica_conn.connection.autocommit = False
-                        raw = replica_conn.connection.cursor()
-                        raw.execute(SET_CONFIG_QUERY, [parameter, value])
-                        if many:
-                            raw.executemany(sql, params)
-                        else:
-                            raw.execute(sql, params)
-                        context["cursor"].cursor = raw
-                        return None
-                    except OperationalError as retry_err:
-                        err = retry_err
-                        continue
-
-                # Phase 2: fall back to primary
                 try:
                     connections[replica_alias].close()
                 except Exception:
                     pass  # Best-effort; connection may already be dead
 
                 logger.warning(
-                    "Mid-query replica retries exhausted, falling back to primary DB"
+                    "Mid-query replica connection failure, falling back to primary DB"
                 )
                 primary = connections[DEFAULT_DB_ALIAS]
                 primary.ensure_connection()
                 fallback_stack.enter_context(transaction.atomic(using=DEFAULT_DB_ALIAS))
-                with primary.cursor() as setup_cursor:
-                    setup_cursor.execute(SET_CONFIG_QUERY, [parameter, value])
+
+                fallback_cursor = primary.cursor()
+                fallback_stack.callback(fallback_cursor.close)
+                fallback_cursor.execute(SET_CONFIG_QUERY, [parameter, value])
                 _fallback["token"] = set_read_db_alias(DEFAULT_DB_ALIAS)
 
-                raw = primary.connection.cursor()
                 if many:
-                    raw.executemany(sql, params)
+                    fallback_cursor.executemany(sql, params)
                 else:
-                    raw.execute(sql, params)
-                context["cursor"].cursor = raw
+                    fallback_cursor.execute(sql, params)
+
+                context["cursor"].db = primary
+                context["cursor"].cursor = fallback_cursor.cursor
                 _fallback["succeeded"] = True
                 return None
 
