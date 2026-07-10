@@ -13,7 +13,11 @@ import {
   MultiSelectValue,
 } from "@/components/shadcn/select/multiselect";
 import { useUrlFilters } from "@/hooks/use-url-filters";
-import { PROVIDER_DISPLAY_NAMES, type ProviderType } from "@/types/providers";
+import {
+  type KnownProviderType,
+  PROVIDER_DISPLAY_NAMES,
+  type ProviderType,
+} from "@/types/providers";
 
 export interface CrossProviderAccountOption {
   id: string;
@@ -28,7 +32,7 @@ export interface CrossProviderGroupOption {
 
 interface CrossProviderFiltersProps {
   /** Provider types offered by the visible universal frameworks. */
-  providerTypes: readonly ProviderType[];
+  providerTypes: readonly KnownProviderType[];
   providerAccounts: CrossProviderAccountOption[];
   providerGroups: CrossProviderGroupOption[];
 }

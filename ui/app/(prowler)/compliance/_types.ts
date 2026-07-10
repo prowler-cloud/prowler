@@ -1,6 +1,6 @@
 import type { ActionErrorResult } from "@/lib/action-errors";
 import type { RequirementStatus } from "@/types/compliance";
-import type { ProviderType } from "@/types/providers";
+import type { KnownProviderType, ProviderType } from "@/types/providers";
 
 // Types for the Cloud-only cross-provider compliance roll-up, backed by
 // GET /cross-provider-compliance-overviews (one universal framework
@@ -141,7 +141,9 @@ export interface CrossProviderFrameworkSummary {
 }
 
 export interface ProviderBreakdownEntry {
-  provider: ProviderType;
+  /** Narrowed to the known set: the breakdown only renders providers the UI
+   *  ships display names and icons for. */
+  provider: KnownProviderType;
   pass: number;
   fail: number;
   manual: number;

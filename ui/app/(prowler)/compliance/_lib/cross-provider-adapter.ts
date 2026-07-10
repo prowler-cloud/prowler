@@ -5,7 +5,7 @@ import type {
   RequirementItemData,
   RequirementsData,
 } from "@/types/compliance";
-import { PROVIDER_TYPES, type ProviderType } from "@/types/providers";
+import { isKnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
 import type {
   CrossProviderOverviewAttributes,
@@ -40,7 +40,11 @@ export const crossProviderToMapperInput = (
 
   for (const requirement of attrs.requirements) {
     const allCheckIds = Array.from(
-      new Set(Object.values(requirement.check_ids_by_provider ?? {}).flat()),
+      new Set(
+        Object.values(requirement.check_ids_by_provider ?? {}).flatMap(
+          (ids) => ids ?? [],
+        ),
+      ),
     );
 
     attributeItems.push({
@@ -119,9 +123,6 @@ export const invertCheckIdsByProvider = (
 
   return byCheck;
 };
-
-const isKnownProviderType = (value: string): value is ProviderType =>
-  (PROVIDER_TYPES as readonly string[]).includes(value);
 
 /**
  * Per-provider score summary for the coverage panel and framework cards.

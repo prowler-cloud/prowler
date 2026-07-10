@@ -1,4 +1,4 @@
-import type { ProviderType } from "@/types/providers";
+import type { KnownProviderType } from "@/types/providers";
 
 import type { CrossProviderApiFilters } from "../_types";
 
@@ -17,7 +17,7 @@ export interface CrossProviderFrameworkEntry {
   description: string;
   /** Static fallback for the per-provider chips; the API response's
    *  compatible_providers is authoritative at runtime. */
-  compatibleProviders: ProviderType[];
+  compatibleProviders: KnownProviderType[];
 }
 
 export const CROSS_PROVIDER_FRAMEWORKS: CrossProviderFrameworkEntry[] = [

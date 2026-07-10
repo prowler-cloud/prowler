@@ -153,7 +153,7 @@ export const CrossProviderDetail = async ({
     providersData?.data || []
   )
     .filter((provider) =>
-      compatibleTypes.includes(provider.attributes.provider),
+      compatibleTypes.some((type) => type === provider.attributes.provider),
     )
     .map((provider) => ({
       id: provider.id,

@@ -4,7 +4,7 @@ import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { SearchParamsProps } from "@/types";
-import type { ProviderType } from "@/types/providers";
+import type { KnownProviderType } from "@/types/providers";
 
 import { getCrossProviderComplianceOverview } from "../_actions/cross-provider";
 import { computeProviderBreakdown } from "../_lib/cross-provider-adapter";
@@ -125,7 +125,7 @@ export const CrossProviderOverview = async ({
     });
 
   const compatibleTypes = Array.from(
-    new Set<ProviderType>(
+    new Set<KnownProviderType>(
       CROSS_PROVIDER_FRAMEWORKS.flatMap((entry) => entry.compatibleProviders),
     ),
   ).sort();
@@ -134,7 +134,7 @@ export const CrossProviderOverview = async ({
     providersData?.data || []
   )
     .filter((provider) =>
-      compatibleTypes.includes(provider.attributes.provider),
+      compatibleTypes.some((type) => type === provider.attributes.provider),
     )
     .map((provider) => ({
       id: provider.id,
