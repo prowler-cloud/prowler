@@ -3,6 +3,7 @@ from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import httpx
 import openai
 import pytest
 from api.models import (
@@ -20,6 +21,7 @@ from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
+    _LighthouseOpenAICompatibleNetworkBackend,
 )
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
@@ -1566,7 +1568,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"connected": True, "error": None},
             ),
             (
@@ -1641,7 +1643,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-invalid"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 openai.APIConnectionError(request=MagicMock()),
             ),
             (
@@ -1755,6 +1757,166 @@ class TestCheckLighthouseProviderConnectionTask:
             provider_cfg.refresh_from_db()
             assert provider_cfg.is_active is False
 
+    def test_openai_compatible_connection_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["connected"] is False
+        assert "base url" in result["error"].lower()
+        mock_openai.assert_not_called()
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=False,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock()
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": True, "error": None}
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_openai_compatible_connection_masks_remote_http_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "Provider connection failed"}
+        assert remote_body not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_masks_remote_auth_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = {"error": {"message": "remote auth detail"}}
+        response = httpx.Response(
+            401,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.AuthenticationError(
+                "Unauthorized",
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "API key is invalid or missing"}
+        assert "remote auth detail" not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_network_backend_uses_validated_ip(self, monkeypatch):
+        backend = _LighthouseOpenAICompatibleNetworkBackend()
+        stream = MagicMock()
+
+        def resolve_to_public_ip(host, port):
+            del host, port
+            return ("93.184.216.34",)
+
+        monkeypatch.setattr(
+            "tasks.jobs.lighthouse_providers.resolve_lighthouse_openai_compatible_host",
+            resolve_to_public_ip,
+        )
+
+        with patch(
+            "tasks.jobs.lighthouse_providers.httpcore.SyncBackend.connect_tcp",
+            return_value=stream,
+        ) as mock_connect_tcp:
+            result = backend.connect_tcp("provider.example", 443, timeout=1.0)
+
+        assert result is stream
+        assert mock_connect_tcp.call_args.args[:2] == ("93.184.216.34", 443)
+        assert mock_connect_tcp.call_args.kwargs["timeout"] == 1.0
+
     def test_check_connection_provider_does_not_exist(self, tenants_fixture):
         """Test that checking non-existent provider raises DoesNotExist."""
         non_existent_id = str(uuid.uuid4())
@@ -1784,7 +1946,7 @@ class TestRefreshLighthouseProviderModelsTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"model-1": "Model One", "model-2": "Model Two"},
                 2,
             ),
@@ -1863,6 +2025,106 @@ class TestRefreshLighthouseProviderModelsTask:
                 ).count()
                 == expected_count
             )
+
+    def test_refresh_models_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch(
+            "tasks.jobs.lighthouse_providers._fetch_openai_compatible_models"
+        ) as mock_fetch:
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert "base url" in result["error"].lower()
+        mock_fetch.assert_not_called()
+
+    def test_refresh_models_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock(data=[])
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_refresh_models_masks_remote_http_error(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert result["error"] == "Provider connection failed"
+        assert remote_body not in result["error"]
 
     def test_refresh_models_mixed_operations(self, tenants_fixture):
         """Test mixed create, update, and delete operations."""
