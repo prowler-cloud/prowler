@@ -1,8 +1,12 @@
 import socket
 
 import pytest
-from api.validators import validate_lighthouse_openai_compatible_base_url
+from api.validators import (
+    resolve_lighthouse_openai_compatible_host,
+    validate_lighthouse_openai_compatible_base_url,
+)
 from django.core.exceptions import ValidationError
+from django.test import override_settings
 
 
 def test_lighthouse_base_url_rejects_http_scheme():
@@ -148,3 +152,95 @@ def test_lighthouse_base_url_accepts_public_resolved_address(monkeypatch):
         validate_lighthouse_openai_compatible_base_url("https://openrouter.ai/api/v1")
         is None
     )
+
+
+@override_settings(
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["custom-openai.internal"]
+)
+def test_lighthouse_base_url_accepts_allowlisted_host_without_resolution(monkeypatch):
+    def fail_resolution(*_args, **_kwargs):
+        raise AssertionError("allowlisted hosts must not be resolved")
+
+    monkeypatch.setattr("api.validators.socket.getaddrinfo", fail_resolution)
+
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            "https://custom-openai.internal/v1"
+        )
+        is None
+    )
+
+
+@override_settings(
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["custom-openai.internal"]
+)
+def test_lighthouse_resolve_returns_allowlisted_hostname_unpinned():
+    assert resolve_lighthouse_openai_compatible_host(
+        "Custom-OpenAI.internal.", 443
+    ) == ("custom-openai.internal",)
+
+
+@override_settings(LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["localhost"])
+def test_lighthouse_base_url_accepts_allowlisted_blocked_host():
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            "https://localhost/v1",
+            resolve_dns=False,
+        )
+        is None
+    )
+
+
+@override_settings(LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["10.0.0.1"])
+def test_lighthouse_base_url_accepts_allowlisted_private_ip_literal():
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            "https://10.0.0.1/v1",
+            resolve_dns=False,
+        )
+        is None
+    )
+
+
+@override_settings(
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=[" Custom-OpenAI.Internal. "]
+)
+def test_lighthouse_allowlist_entries_are_normalized():
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            "https://custom-openai.internal/v1",
+            resolve_dns=False,
+        )
+        is None
+    )
+
+
+@override_settings(
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["custom-openai.internal"]
+)
+def test_lighthouse_base_url_rejects_host_not_in_allowlist():
+    with pytest.raises(ValidationError, match="external public endpoint"):
+        validate_lighthouse_openai_compatible_base_url(
+            "https://localhost/v1",
+            resolve_dns=False,
+        )
+
+
+@override_settings(LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=[""])
+def test_lighthouse_allowlist_ignores_empty_entries():
+    with pytest.raises(ValidationError, match="external public endpoint"):
+        validate_lighthouse_openai_compatible_base_url(
+            "https://localhost/v1",
+            resolve_dns=False,
+        )
+
+
+@override_settings(
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=["custom-openai.internal"]
+)
+def test_lighthouse_base_url_allowlisted_host_still_requires_https():
+    with pytest.raises(ValidationError, match="HTTPS"):
+        validate_lighthouse_openai_compatible_base_url(
+            "http://custom-openai.internal/v1",
+            resolve_dns=False,
+        )
