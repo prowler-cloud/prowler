@@ -109,16 +109,22 @@ def validate_lighthouse_openai_compatible_base_url(
         )
 
     try:
-        port = parsed.port or 443
+        port = parsed.port
     except ValueError as error:
         raise ValidationError(
             _("Base URL port is invalid."),
             code="lighthouse_base_url_invalid_port",
         ) from error
 
+    if port is not None and not 1 <= port <= 65535:
+        raise ValidationError(
+            _("Base URL port is invalid."),
+            code="lighthouse_base_url_invalid_port",
+        )
+
     resolve_lighthouse_openai_compatible_host(
         parsed.hostname,
-        port,
+        port or 443,
         resolve_dns=resolve_dns,
     )
 

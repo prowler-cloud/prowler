@@ -13,6 +13,34 @@ def test_lighthouse_base_url_rejects_http_scheme():
         )
 
 
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://openrouter.ai:0/api/v1",
+        "https://openrouter.ai:-1/api/v1",
+        "https://openrouter.ai:65536/api/v1",
+        "https://openrouter.ai:invalid/api/v1",
+    ],
+)
+def test_lighthouse_base_url_rejects_invalid_port(base_url):
+    with pytest.raises(ValidationError, match="port is invalid"):
+        validate_lighthouse_openai_compatible_base_url(
+            base_url,
+            resolve_dns=False,
+        )
+
+
+@pytest.mark.parametrize("port", [1, 65535])
+def test_lighthouse_base_url_accepts_valid_port_boundaries(port):
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            f"https://openrouter.ai:{port}/api/v1",
+            resolve_dns=False,
+        )
+        is None
+    )
+
+
 def test_lighthouse_base_url_rejects_localhost():
     with pytest.raises(ValidationError, match="external public endpoint"):
         validate_lighthouse_openai_compatible_base_url(
