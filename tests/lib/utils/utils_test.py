@@ -3,6 +3,7 @@ import os
 import subprocess
 import tempfile
 import zipfile
+from builtins import open as builtin_open
 from datetime import datetime
 from time import mktime
 
@@ -148,6 +149,25 @@ class Test_iter_zip_text_payloads:
             payloads = dict(iter_zip_text_payloads(archive))
 
         assert payloads == {"pkg/module.py": "safe"}
+
+    def test_skips_files_that_cannot_be_read(self):
+        def open_unless_unreadable(file_path, mode="r", *args, **kwargs):
+            if str(file_path).endswith("unreadable.py") and mode == "rb":
+                raise OSError("cannot read")
+            return builtin_open(file_path, mode, *args, **kwargs)
+
+        with _zip_file(
+            {
+                "unreadable.py": "skip me",
+                "safe.py": "safe",
+            }
+        ) as archive:
+            with patch(
+                "prowler.lib.utils.utils.open", side_effect=open_unless_unreadable
+            ):
+                payloads = dict(iter_zip_text_payloads(archive))
+
+        assert payloads == {"safe.py": "safe"}
 
 
 class Test_detect_secrets_scan_batch_invalid_line:
