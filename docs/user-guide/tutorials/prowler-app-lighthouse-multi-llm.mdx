@@ -128,6 +128,25 @@ To connect a provider:
     3. Configure in Lighthouse AI:
        - **API Key**: OpenRouter API key
        - **Base URL**: `https://openrouter.ai/api/v1`
+
+    ### Base URL Validation
+
+    To prevent server-side request forgery (SSRF), Prowler API validates the base URL before connecting to it:
+
+    - The URL must use HTTPS.
+    - The host must resolve to a public IP address. Private, loopback, link-local, and cloud metadata addresses are rejected.
+
+    <Warning>
+    This validation can break configurations that point to internal endpoints, such as a self-hosted Ollama server. This is intentional: it fixes a security issue where the Prowler API could be directed to internal services. Internal endpoints must now be allowed explicitly through `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS`.
+    </Warning>
+
+    To allow internal endpoints, set a comma-separated list of hostnames or IP addresses in the Prowler API environment (for Docker Compose deployments, the shared `.env` file):
+
+    ```bash
+    LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS=custom-openai.internal,10.0.0.20
+    ```
+
+    Hosts in this list skip the public-endpoint validation. HTTPS is still required, so the endpoint needs a certificate the Prowler API trusts.
   </Tab>
 </Tabs>
 
