@@ -1,3 +1,5 @@
+import { ChevronDownIcon } from "lucide-react";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import {
@@ -24,13 +26,17 @@ import {
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { Button } from "@/components/shadcn/button/button";
+import { Card } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
 import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
+import type { SearchParamsProps } from "@/types";
 import {
   AttributesData,
   Framework,
@@ -38,38 +44,84 @@ import {
 } from "@/types/compliance";
 import { ScanEntity } from "@/types/scans";
 
-interface ComplianceDetailSearchParams {
-  complianceId: string;
-  version?: string;
-  scanId?: string;
-  section?: string;
-  "filter[region__in]"?: string;
-  "filter[cis_profile_level]"?: string;
-  page?: string;
-  pageSize?: string;
-}
+import { CrossProviderDetail } from "../_components/cross-provider-detail";
+import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
+import { buildSearchParamsKey } from "../_lib/search-params-key";
+
+const getSingleSearchParam = (
+  value: string | string[] | undefined,
+): string | undefined =>
+  typeof value === "string" && value ? value : undefined;
 
 export default async function ComplianceDetail({
   params,
   searchParams,
 }: {
   params: Promise<{ compliancetitle: string }>;
-  searchParams: Promise<ComplianceDetailSearchParams>;
+  searchParams: Promise<SearchParamsProps>;
 }) {
   const { compliancetitle } = await params;
   const resolvedSearchParams = await searchParams;
-  const { complianceId, version, scanId, section } = resolvedSearchParams;
-  const regionFilter = resolvedSearchParams["filter[region__in]"];
-  const cisProfileFilter = resolvedSearchParams["filter[cis_profile_level]"];
+  const complianceId = getSingleSearchParam(resolvedSearchParams.complianceId);
+  const version = getSingleSearchParam(resolvedSearchParams.version);
+  const scanId = getSingleSearchParam(resolvedSearchParams.scanId);
+  const section = getSingleSearchParam(resolvedSearchParams.section);
+  const mode = getSingleSearchParam(resolvedSearchParams.mode);
+
+  if (!complianceId) {
+    notFound();
+  }
+
+  // Cross-provider mode replaces the per-scan pipeline with the universal
+  // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
+  // the route is blocked in OSS the same way the compliance tab is.
+  if (mode === "cross-provider") {
+    if (!isCloud()) {
+      redirect("/compliance");
+    }
+
+    const framework = resolveCrossProviderFramework(
+      complianceId,
+      compliancetitle,
+    );
+    if (!framework) {
+      notFound();
+    }
+
+    const crossProviderTitle = framework.title.split("-").join(" ");
+    return (
+      <ContentLayout title={`${crossProviderTitle} - ${framework.version}`}>
+        <Suspense
+          key={buildSearchParamsKey(resolvedSearchParams)}
+          fallback={
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
+                <RequirementsStatusCardSkeleton />
+                <TopFailedSectionsCardSkeleton />
+              </div>
+              <SkeletonAccordion />
+            </div>
+          }
+        >
+          <CrossProviderDetail
+            compliancetitle={compliancetitle}
+            complianceId={complianceId}
+            searchParams={resolvedSearchParams}
+            targetSection={section}
+          />
+        </Suspense>
+      </ContentLayout>
+    );
+  }
+  const regionFilter = getSingleSearchParam(
+    resolvedSearchParams["filter[region__in]"],
+  );
+  const cisProfileFilter = getSingleSearchParam(
+    resolvedSearchParams["filter[cis_profile_level]"],
+  );
   const logoPath = getComplianceIcon(compliancetitle);
 
-  // Create a key that excludes pagination parameters to preserve accordion state avoiding reloads with pagination
-  const paramsForKey = Object.fromEntries(
-    Object.entries(resolvedSearchParams).filter(
-      ([key]) => key !== "page" && key !== "pageSize",
-    ),
-  );
-  const searchParamsKey = JSON.stringify(paramsForKey);
+  const searchParamsKey = buildSearchParamsKey(resolvedSearchParams);
 
   const formattedTitle = compliancetitle.split("-").join(" ");
   const pageTitle = version
@@ -176,33 +228,45 @@ export default async function ComplianceDetail({
 
   return (
     <ContentLayout title={finalPageTitle}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-        <div className="min-w-0 flex-1">
-          <ComplianceHeader
-            scans={[]}
-            uniqueRegions={uniqueRegions}
-            showSearch={false}
-            framework={compliancetitle}
-            showProviders={false}
-            logoPath={logoPath}
-            complianceTitle={compliancetitle}
-            selectedScan={selectedScan}
-          />
-        </div>
-        {selectedScanId && (
-          <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
-            <ComplianceDownloadContainer
-              scanId={selectedScanId}
-              complianceId={complianceId}
-              reportType={getReportTypeForCompliance(
-                attributesData?.data?.[0]?.attributes?.framework,
-                complianceId,
-                latestCisIds.has(complianceId),
-              )}
+      {/* Header card — same surface as the cross-provider detail: scan info
+          and filters on the left, report actions and framework logo on the
+          right (lighthouse-settings card pattern). */}
+      <Card variant="base" className="mb-6 w-full gap-4 p-4 md:p-5">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="min-w-0 flex-1">
+            <ComplianceHeader
+              scans={[]}
+              uniqueRegions={uniqueRegions}
+              showSearch={false}
+              framework={compliancetitle}
+              showProviders={false}
+              logoPath={logoPath}
+              complianceTitle={compliancetitle}
+              selectedScan={selectedScan}
             />
           </div>
-        )}
-      </div>
+          {selectedScanId && (
+            <div className="mb-4 flex-shrink-0 self-end sm:mb-0 sm:self-start sm:pt-1">
+              <ComplianceDownloadContainer
+                scanId={selectedScanId}
+                complianceId={complianceId}
+                presentation="dropdown"
+                dropdownTrigger={
+                  <Button variant="outline">
+                    Report
+                    <ChevronDownIcon />
+                  </Button>
+                }
+                reportType={getReportTypeForCompliance(
+                  attributesData?.data?.[0]?.attributes?.framework,
+                  complianceId,
+                  latestCisIds.has(complianceId),
+                )}
+              />
+            </div>
+          )}
+        </div>
+      </Card>
 
       <Suspense
         key={searchParamsKey}
@@ -349,7 +413,6 @@ const SSRComplianceContent = async ({
         {/* <SectionsFailureRateCard categories={categoryHeatmapData} /> */}
       </div>
 
-      <div className="bg-border-neutral-primary h-1 w-full rounded-full" />
       <ClientAccordionWrapper
         hideExpandButton={complianceId.includes("mitre_attack")}
         items={accordionItems}

@@ -111,7 +111,7 @@ export const Accordion = ({
     <div
       data-variant={variant}
       className={cn(
-        "bg-bg-neutral-primary border-border-neutral-secondary w-full rounded-lg border px-2 py-1",
+        "bg-bg-input-primary dark:bg-input/30 border-border-neutral-secondary w-full rounded-lg border px-2 py-1",
         className,
       )}
     >
