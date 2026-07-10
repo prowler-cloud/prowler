@@ -7,6 +7,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
 LIGHTHOUSE_OPENAI_COMPATIBLE_ALLOWED_SCHEMES = frozenset({"https"})
+LIGHTHOUSE_NAT64_WELL_KNOWN_PREFIX = ipaddress.IPv6Network("64:ff9b::/96")
 LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
     {
         "169.254.169.254",
@@ -24,6 +25,16 @@ def _normalize_hostname(hostname: str) -> str:
 
 def _validate_lighthouse_public_ip(address: str) -> None:
     ip_address = ipaddress.ip_address(address)
+    if isinstance(ip_address, ipaddress.IPv6Address):
+        # Classify transition addresses by their effective IPv4 destination.
+        embedded_ip_address = ip_address.ipv4_mapped or ip_address.sixtofour
+        if (
+            embedded_ip_address is None
+            and ip_address in LIGHTHOUSE_NAT64_WELL_KNOWN_PREFIX
+        ):
+            embedded_ip_address = ipaddress.IPv4Address(int(ip_address) & 0xFFFFFFFF)
+        if embedded_ip_address is not None:
+            ip_address = embedded_ip_address
     if not ip_address.is_global:
         raise ValidationError(
             _("Base URL must use an external public endpoint."),

@@ -38,6 +38,40 @@ def test_lighthouse_base_url_rejects_metadata_ip_literal():
         )
 
 
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://[::ffff:169.254.169.254]/v1",
+        "https://[64:ff9b::a9fe:a9fe]/v1",
+        "https://[2002:a9fe:a9fe::]/v1",
+    ],
+)
+def test_lighthouse_base_url_rejects_embedded_non_global_ip(base_url):
+    with pytest.raises(ValidationError, match="external public endpoint"):
+        validate_lighthouse_openai_compatible_base_url(
+            base_url,
+            resolve_dns=False,
+        )
+
+
+@pytest.mark.parametrize(
+    "base_url",
+    [
+        "https://[::ffff:93.184.216.34]/v1",
+        "https://[64:ff9b::5db8:d822]/v1",
+        "https://[2002:5db8:d822::]/v1",
+    ],
+)
+def test_lighthouse_base_url_accepts_embedded_public_ip(base_url):
+    assert (
+        validate_lighthouse_openai_compatible_base_url(
+            base_url,
+            resolve_dns=False,
+        )
+        is None
+    )
+
+
 def test_lighthouse_base_url_accepts_hostname_without_dns_resolution():
     assert (
         validate_lighthouse_openai_compatible_base_url(
