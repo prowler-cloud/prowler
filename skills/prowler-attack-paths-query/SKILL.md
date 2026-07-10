@@ -195,7 +195,8 @@ When all matching principals can target the same independent resource set, colle
 ```cypher
 WITH aws, collect(DISTINCT path_principal) AS principal_paths
 MATCH path_target = (aws)--(target)
-WITH principal_paths + collect(DISTINCT path_target) AS paths
+WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+WITH principal_paths + target_paths AS paths
 ```
 
 Statements that constrain a target are still checked via `HAS_RESOURCE` traversals (`res`, `res2`). See IAM-015 or EC2-001 in `aws.py`.
@@ -419,6 +420,7 @@ Queries must run on both Neo4j and Amazon Neptune. Avoid these constructs:
 | `FOREACH`                               | `WITH` + `UNWIND` + `SET`                                                                                                                   |
 | Regex `=~`                              | `toLower()` + exact match, or `STARTS WITH` / `CONTAINS`                                                                                    |
 | `CALL () { UNION }`                     | Multi-label `OR` in `WHERE` (see pattern above)                                                                                             |
+| Carried value plus aggregate expression | Project the aggregate first: `WITH principal_paths, collect(...) AS target_paths`, then combine lists in the next `WITH`                    |
 | `any(x IN list ...)`                    | `size([x IN list WHERE pred]) > 0`                                                                                                          |
 | `all(x IN list ...)`                    | `size([x IN list WHERE pred]) = size(list)`                                                                                                 |
 | `none(x IN list ...)`                   | `size([x IN list WHERE pred]) = 0`                                                                                                          |
