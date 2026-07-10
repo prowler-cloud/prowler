@@ -33,18 +33,18 @@ describe("buildCrossProviderPdfTaskScope", () => {
     expect(first).toBe(second);
   });
 
-  it("keeps reports from different effective filters in separate scopes", () => {
+  it("keeps reports from different provider groups in separate scopes", () => {
     // Given / When
-    const euScope = buildCrossProviderPdfTaskScope("csa_ccm_4.0", {
+    const productionScope = buildCrossProviderPdfTaskScope("csa_ccm_4.0", {
       scanIds: ["scan-1"],
-      regions: "eu-west-1",
+      providerGroups: "production",
     });
-    const usScope = buildCrossProviderPdfTaskScope("csa_ccm_4.0", {
+    const developmentScope = buildCrossProviderPdfTaskScope("csa_ccm_4.0", {
       scanIds: ["scan-1"],
-      regions: "us-east-1",
+      providerGroups: "development",
     });
 
     // Then
-    expect(euScope).not.toBe(usScope);
+    expect(productionScope).not.toBe(developmentScope);
   });
 });

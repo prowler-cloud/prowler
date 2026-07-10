@@ -35,6 +35,7 @@ import type {
   CrossProviderGroupOption,
 } from "./cross-provider-filters";
 import { CrossProviderFilters } from "./cross-provider-filters";
+import { CrossProviderHubLink } from "./cross-provider-hub-link";
 import { CrossProviderPdfButton } from "./cross-provider-pdf-button";
 import { ProviderCoverageCard } from "./provider-coverage-card";
 
@@ -186,9 +187,12 @@ export const CrossProviderDetail = async ({
                 </div>
               )}
               <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium">
-                  {attrs.name || compliancetitle.split("-").join(" ")}
-                </span>
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-sm font-medium">
+                    {attrs.name || compliancetitle.split("-").join(" ")}
+                  </span>
+                  <CrossProviderHubLink complianceId={complianceId} />
+                </div>
                 <p className="text-text-neutral-tertiary text-xs">
                   {attrs.providers.length} of {compatibleTypes.length}{" "}
                   compatible providers scanned · {attrs.scan_ids.length}{" "}
@@ -209,7 +213,6 @@ export const CrossProviderDetail = async ({
             providerTypes={compatibleTypes}
             providerAccounts={providerAccounts}
             providerGroups={providerGroups}
-            regions={[]}
           />
         </div>
       </Card>

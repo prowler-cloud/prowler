@@ -79,7 +79,7 @@ describe("buildCrossProviderDetailHref", () => {
     expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws,gcp");
     expect(url.searchParams.get("filter[provider_id__in]")).toBe("prov-1");
     expect(url.searchParams.get("filter[provider_groups__in]")).toBe("group-1");
-    expect(url.searchParams.get("filter[region__in]")).toBe("eu-west-1");
+    expect(url.searchParams.has("filter[region__in]")).toBe(false);
     expect(url.searchParams.has("filter[cis_profile_level]")).toBe(false);
     expect(url.searchParams.has("scanId")).toBe(false);
     expect(url.searchParams.has("tab")).toBe(false);

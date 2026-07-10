@@ -149,9 +149,6 @@ export const CrossProviderOverview = async ({
         providerTypes={compatibleTypes}
         providerAccounts={providerAccounts}
         providerGroups={providerGroups}
-        // The API has no cross-provider region catalog endpoint yet; the
-        // filter is hidden until options exist (URL param still honored).
-        regions={[]}
       />
 
       {summaries.every((summary) => summary.totalRequirements === 0) && (

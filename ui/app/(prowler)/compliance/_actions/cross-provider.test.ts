@@ -78,7 +78,6 @@ describe("getCrossProviderComplianceOverview", () => {
         providerTypes: "aws,gcp",
         providerIds: "prov-1",
         providerGroups: "group-1",
-        regions: "eu-west-1",
       },
     });
 
@@ -87,7 +86,7 @@ describe("getCrossProviderComplianceOverview", () => {
     expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws,gcp");
     expect(url.searchParams.get("filter[provider_id__in]")).toBe("prov-1");
     expect(url.searchParams.get("filter[provider_groups__in]")).toBe("group-1");
-    expect(url.searchParams.get("filter[region__in]")).toBe("eu-west-1");
+    expect(url.searchParams.has("filter[region__in]")).toBe(false);
   });
 
   it("wraps successful overview responses", async () => {
@@ -134,7 +133,7 @@ describe("getCrossProviderComplianceOverview", () => {
 });
 
 describe("generateCrossProviderPdf", () => {
-  it("POSTs generate-pdf with filters and report options, returning the task id", async () => {
+  it("POSTs generate-pdf with filters and an optional report name", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({ data: { type: "tasks", id: "task-1" } }, 202),
     );
@@ -143,8 +142,6 @@ describe("generateCrossProviderPdf", () => {
       complianceId: "csa_ccm_4.0",
       filters: { scanIds: ["scan-1"], providerTypes: "aws" },
       reportName: "quarterly.pdf",
-      onlyFailed: true,
-      includeManual: false,
     });
 
     expect(result).toEqual({ taskId: "task-1" });
@@ -158,11 +155,11 @@ describe("generateCrossProviderPdf", () => {
     expect(url.searchParams.get("filter[scan__in]")).toBe("scan-1");
     expect(url.searchParams.get("filter[provider_type__in]")).toBe("aws");
     expect(url.searchParams.get("report_name")).toBe("quarterly.pdf");
-    expect(url.searchParams.get("only_failed")).toBe("true");
-    expect(url.searchParams.get("include_manual")).toBe("false");
+    expect(url.searchParams.has("only_failed")).toBe(false);
+    expect(url.searchParams.has("include_manual")).toBe(false);
   });
 
-  it("omits report options that were not provided", async () => {
+  it("omits the optional report name when not provided", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({ data: { type: "tasks", id: "task-1" } }, 202),
     );
@@ -171,8 +168,6 @@ describe("generateCrossProviderPdf", () => {
 
     const url = lastFetchUrl();
     expect(url.searchParams.has("report_name")).toBe(false);
-    expect(url.searchParams.has("only_failed")).toBe(false);
-    expect(url.searchParams.has("include_manual")).toBe(false);
   });
 
   it("returns the API error detail when generation fails", async () => {

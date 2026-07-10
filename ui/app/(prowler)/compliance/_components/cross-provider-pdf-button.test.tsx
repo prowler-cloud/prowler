@@ -95,25 +95,27 @@ describe("CrossProviderPdfButton", () => {
     );
   };
 
-  it("generates a report with the dialog options and tracks the task", async () => {
+  it("generates a named report without unsupported requirement options", async () => {
+    // Given
     const user = userEvent.setup();
     render(<CrossProviderPdfButton {...props} />);
 
+    // When
     await openGenerateModal(user);
     await user.type(
       screen.getByLabelText(/report name/i),
       "quarterly-audit.pdf",
     );
-    await user.click(screen.getByLabelText(/only failed/i));
+    expect(screen.queryByLabelText(/only failed/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/include manual/i)).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: /^generate$/i }));
 
+    // Then
     await waitFor(() => expect(generatePdfMock).toHaveBeenCalledTimes(1));
     expect(generatePdfMock).toHaveBeenCalledWith({
       complianceId: "csa_ccm_4.0",
       filters: props.filters,
       reportName: "quarterly-audit.pdf",
-      onlyFailed: true,
-      includeManual: false,
     });
     expect(trackAndPollMock).toHaveBeenCalledWith({
       taskId: "task-1",

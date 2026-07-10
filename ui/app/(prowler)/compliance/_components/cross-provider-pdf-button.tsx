@@ -3,7 +3,7 @@
 import { ChevronDownIcon, DownloadIcon, FileTextIcon } from "lucide-react";
 import { useState } from "react";
 
-import { Button, Checkbox, Label } from "@/components/shadcn";
+import { Button, Label } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -46,8 +46,6 @@ export const CrossProviderPdfButton = ({
 }: CrossProviderPdfButtonProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [reportName, setReportName] = useState("");
-  const [onlyFailed, setOnlyFailed] = useState(false);
-  const [includeManual, setIncludeManual] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const taskScope = buildCrossProviderPdfTaskScope(complianceId, filters);
 
@@ -89,8 +87,6 @@ export const CrossProviderPdfButton = ({
         complianceId,
         filters,
         reportName: reportName.trim() || undefined,
-        onlyFailed,
-        includeManual,
       });
 
       if ("error" in result) {
@@ -196,28 +192,6 @@ export const CrossProviderPdfButton = ({
                 value={reportName}
                 onChange={(event) => setReportName(event.target.value)}
               />
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="cross-provider-only-failed"
-                checked={onlyFailed}
-                onCheckedChange={(checked) => setOnlyFailed(checked === true)}
-              />
-              <Label htmlFor="cross-provider-only-failed">
-                Only failed requirements
-              </Label>
-            </div>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="cross-provider-include-manual"
-                checked={includeManual}
-                onCheckedChange={(checked) =>
-                  setIncludeManual(checked === true)
-                }
-              />
-              <Label htmlFor="cross-provider-include-manual">
-                Include manual requirements
-              </Label>
             </div>
           </div>
 

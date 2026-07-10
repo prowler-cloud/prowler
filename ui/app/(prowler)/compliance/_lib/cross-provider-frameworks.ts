@@ -78,7 +78,6 @@ const CROSS_PROVIDER_FILTER_PARAMS = [
   "filter[provider_type__in]",
   "filter[provider_id__in]",
   "filter[provider_groups__in]",
-  "filter[region__in]",
 ] as const;
 
 /** Parses the URL filter params every cross-provider endpoint accepts. Kept
@@ -92,7 +91,6 @@ export const parseCrossProviderFilters = (
   providerIds: searchParams["filter[provider_id__in]"]?.toString() || undefined,
   providerGroups:
     searchParams["filter[provider_groups__in]"]?.toString() || undefined,
-  regions: searchParams["filter[region__in]"]?.toString() || undefined,
 });
 
 export const buildCrossProviderDetailHref = (

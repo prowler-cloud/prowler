@@ -16,10 +16,12 @@ interface ProviderCoverageCardProps {
 }
 
 /** Per-provider pass score for the cross-provider detail: one row per
- *  compatible provider, dimmed when no completed scan contributed. */
+ *  provider with a completed scan. */
 export const ProviderCoverageCard = ({
   breakdown,
 }: ProviderCoverageCardProps) => {
+  const scannedProviders = breakdown.filter((entry) => !entry.unscanned);
+
   return (
     <Card variant="base" className="flex h-full min-h-[372px] flex-col">
       <CardHeader>
@@ -28,11 +30,15 @@ export const ProviderCoverageCard = ({
       {/* Capped + scrollable so a long provider list never stretches the
           sibling chart cards in the same grid row. */}
       <CardContent className="minimal-scrollbar flex max-h-[300px] flex-col gap-4 overflow-y-auto">
-        {breakdown.map((entry) => (
+        {scannedProviders.length === 0 && (
+          <p className="text-text-neutral-secondary text-sm">
+            No scanned providers for this framework yet.
+          </p>
+        )}
+        {scannedProviders.map((entry) => (
           <div
             key={entry.provider}
             data-testid={`coverage-row-${entry.provider}`}
-            className={entry.unscanned ? "opacity-50" : undefined}
           >
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="flex min-w-0 items-center gap-2">
@@ -41,31 +47,23 @@ export const ProviderCoverageCard = ({
                   {PROVIDER_DISPLAY_NAMES[entry.provider]}
                 </span>
               </span>
-              {entry.unscanned ? (
-                <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
-                  No completed scan
-                </span>
-              ) : (
-                <span className="text-text-neutral-secondary text-xs">
-                  {entry.score}%
-                </span>
-              )}
+              <span className="text-text-neutral-secondary text-xs">
+                {entry.score}%
+              </span>
             </div>
-            {!entry.unscanned && (
-              <div className="mt-1.5 flex items-center gap-3">
-                <Progress
-                  aria-label={`${PROVIDER_DISPLAY_NAMES[entry.provider]} passing score`}
-                  value={entry.score}
-                  className="border-border-neutral-secondary h-2 border"
-                  indicatorClassName={getScoreIndicatorClass(
-                    getScoreColor(entry.score),
-                  )}
-                />
-                <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
-                  {entry.pass}/{entry.pass + entry.fail} · {entry.manual} manual
-                </span>
-              </div>
-            )}
+            <div className="mt-1.5 flex items-center gap-3">
+              <Progress
+                aria-label={`${PROVIDER_DISPLAY_NAMES[entry.provider]} passing score`}
+                value={entry.score}
+                className="border-border-neutral-secondary h-2 border"
+                indicatorClassName={getScoreIndicatorClass(
+                  getScoreColor(entry.score),
+                )}
+              />
+              <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
+                {entry.pass}/{entry.pass + entry.fail} · {entry.manual} manual
+              </span>
+            </div>
           </div>
         ))}
       </CardContent>

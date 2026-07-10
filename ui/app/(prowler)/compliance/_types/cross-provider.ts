@@ -114,7 +114,6 @@ export interface CrossProviderApiFilters {
   providerTypes?: string;
   providerIds?: string;
   providerGroups?: string;
-  regions?: string;
 }
 
 /** Cross-provider context joined onto a mapped requirement, keyed by the

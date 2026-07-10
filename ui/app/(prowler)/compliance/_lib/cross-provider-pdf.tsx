@@ -28,7 +28,6 @@ export const buildCrossProviderPdfTaskScope = (
     providerTypes: normalizeCommaSeparatedFilter(filters.providerTypes),
     providerIds: normalizeCommaSeparatedFilter(filters.providerIds),
     providerGroups: normalizeCommaSeparatedFilter(filters.providerGroups),
-    regions: normalizeCommaSeparatedFilter(filters.regions),
   });
 
 /** Fetches the finished cross-provider PDF and hands it to the browser,

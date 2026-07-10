@@ -31,8 +31,6 @@ interface CrossProviderFiltersProps {
   providerTypes: readonly ProviderType[];
   providerAccounts: CrossProviderAccountOption[];
   providerGroups: CrossProviderGroupOption[];
-  /** Region options; the filter is hidden when empty. */
-  regions: string[];
 }
 
 interface UrlMultiSelectOption {
@@ -63,7 +61,7 @@ const UrlMultiSelect = ({
         values={values}
         onValuesChange={(nextValues) => updateFilter(filterKey, nextValues)}
       >
-        <MultiSelectTrigger size="default">
+        <MultiSelectTrigger size="default" aria-label={placeholder}>
           <MultiSelectValue placeholder={placeholder} />
         </MultiSelectTrigger>
         <MultiSelectContent search={options.length > 8} width="wide">
@@ -84,13 +82,12 @@ export const CrossProviderFilters = ({
   providerTypes,
   providerAccounts,
   providerGroups,
-  regions,
 }: CrossProviderFiltersProps) => {
   return (
     <div className="flex flex-wrap items-center gap-4">
       <UrlMultiSelect
         filterKey="provider_type__in"
-        placeholder="All Providers"
+        placeholder="Provider type"
         options={providerTypes.map((type) => ({
           value: type,
           label: PROVIDER_DISPLAY_NAMES[type],
@@ -98,7 +95,7 @@ export const CrossProviderFilters = ({
       />
       <UrlMultiSelect
         filterKey="provider_id__in"
-        placeholder="All Accounts"
+        placeholder="Providers"
         options={providerAccounts.map((account) => ({
           value: account.id,
           label: account.label,
@@ -106,19 +103,12 @@ export const CrossProviderFilters = ({
       />
       <UrlMultiSelect
         filterKey="provider_groups__in"
-        placeholder="All Groups"
+        placeholder="Provider group"
         options={providerGroups.map((group) => ({
           value: group.id,
           label: group.name,
         }))}
       />
-      {regions.length > 0 && (
-        <UrlMultiSelect
-          filterKey="region__in"
-          placeholder="All Regions"
-          options={regions.map((region) => ({ value: region, label: region }))}
-        />
-      )}
       <ClearFiltersButton showCount />
     </div>
   );

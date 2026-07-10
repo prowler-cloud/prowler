@@ -98,7 +98,6 @@ const applyFilters = (url: URL, filters?: CrossProviderApiFilters) => {
     "filter[provider_type__in]": filters.providerTypes,
     "filter[provider_id__in]": filters.providerIds,
     "filter[provider_groups__in]": filters.providerGroups,
-    "filter[region__in]": filters.regions,
   };
   for (const [key, value] of Object.entries(paramMap)) {
     if (value && value.trim().length > 0) {
@@ -165,27 +164,17 @@ export const generateCrossProviderPdf = async ({
   complianceId,
   filters,
   reportName,
-  onlyFailed,
-  includeManual,
 }: {
   complianceId: string;
   filters?: CrossProviderApiFilters;
   /** Optional download filename; sanitized server-side. */
   reportName?: string;
-  onlyFailed?: boolean;
-  includeManual?: boolean;
 }): Promise<{ taskId: string } | { error: string }> => {
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/generate-pdf`);
   url.searchParams.set("filter[compliance_id]", complianceId);
   applyFilters(url, filters);
   if (reportName) url.searchParams.set("report_name", reportName);
-  if (onlyFailed !== undefined) {
-    url.searchParams.set("only_failed", String(onlyFailed));
-  }
-  if (includeManual !== undefined) {
-    url.searchParams.set("include_manual", String(includeManual));
-  }
 
   try {
     const response = await fetch(url.toString(), { method: "POST", headers });
