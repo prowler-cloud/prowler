@@ -1,4 +1,4 @@
-import { Info } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
@@ -73,6 +73,8 @@ export const CrossProviderOverview = async ({
     getAllProviderGroups(),
   ]);
 
+  // Action errors (402 usage limit, 403) gate the whole feature, not one
+  // framework, so any of them replaces the tab instead of degrading it.
   const actionError = responses.find(
     ({ result }) =>
       result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.ACTION_ERROR,
@@ -84,19 +86,23 @@ export const CrossProviderOverview = async ({
     return <CrossProviderErrorAlert result={actionError.result.result} />;
   }
 
-  const loadError = responses.find(
-    ({ result }) =>
-      result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+  // Load errors are per-framework and often transient: degrade to a partial
+  // view with a warning, and only replace the tab when nothing loaded.
+  const loadErrors = responses.flatMap(({ entry, result }) =>
+    result.status === CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR
+      ? [{ entry, result }]
+      : [],
   );
-  if (
-    loadError?.result.status ===
-    CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR
-  ) {
-    return <CrossProviderErrorAlert message={loadError.result.message} />;
+  if (loadErrors.length === responses.length && loadErrors.length > 0) {
+    return <CrossProviderErrorAlert message={loadErrors[0].result.message} />;
   }
 
-  const summaries: CrossProviderFrameworkSummary[] = responses.map(
-    ({ entry, result }) => {
+  const summaries: CrossProviderFrameworkSummary[] = responses
+    .filter(
+      ({ result }) =>
+        result.status !== CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.LOAD_ERROR,
+    )
+    .map(({ entry, result }) => {
       if (result.status !== CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS) {
         return emptySummary(entry);
       }
@@ -116,8 +122,7 @@ export const CrossProviderOverview = async ({
         totalRequirements: attrs.total_requirements,
         providerBreakdown: computeProviderBreakdown(attrs),
       };
-    },
-  );
+    });
 
   const compatibleTypes = Array.from(
     new Set<ProviderType>(
@@ -151,16 +156,28 @@ export const CrossProviderOverview = async ({
         providerGroups={providerGroups}
       />
 
-      {summaries.every((summary) => summary.totalRequirements === 0) && (
-        <Alert variant="info">
-          <Info className="size-4" />
+      {loadErrors.length > 0 && (
+        <Alert variant="warning">
+          <AlertTriangle className="size-4" />
           <AlertDescription>
-            No cross-provider compliance data yet. Universal frameworks
-            aggregate the latest completed scan of every compatible provider —
-            run a scan to populate these cards.
+            Could not load{" "}
+            {loadErrors.map(({ entry }) => entry.title).join(", ")}. Showing the
+            frameworks that loaded — try again later.
           </AlertDescription>
         </Alert>
       )}
+
+      {loadErrors.length === 0 &&
+        summaries.every((summary) => summary.totalRequirements === 0) && (
+          <Alert variant="info">
+            <Info className="size-4" />
+            <AlertDescription>
+              No cross-provider compliance data yet. Universal frameworks
+              aggregate the latest completed scan of every compatible provider —
+              run a scan to populate these cards.
+            </AlertDescription>
+          </Alert>
+        )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {summaries.map((summary) => (
