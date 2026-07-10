@@ -570,3 +570,38 @@ class Test_App_get_functions:
         mock_client.web_apps.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
         )
+
+    def test_get_functions_sets_https_only(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_function = MagicMock()
+        mock_function.id = "/subscriptions/resource_id"
+        mock_function.name = "functionapp-1"
+        mock_function.location = "West Europe"
+        mock_function.kind = "functionapp"
+        mock_function.resource_group = RESOURCE_GROUP
+        mock_function.identity = None
+        mock_function.public_network_access = "Enabled"
+        mock_function.virtual_network_subnet_id = ""
+        mock_function.https_only = True
+        mock_client.web_apps.list.return_value = [mock_function]
+
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = None
+        app._get_function_host_keys = MagicMock(return_value=None)
+        app._list_application_settings = MagicMock(
+            return_value=MagicMock(properties={})
+        )
+        app._get_function_config = MagicMock(
+            return_value=MagicMock(ftps_state="FtpsOnly")
+        )
+
+        result = app._get_functions()
+
+        function = result[AZURE_SUBSCRIPTION_ID][mock_function.id]
+        assert function.https_only is True
+        app._get_function_host_keys.assert_called_once_with(
+            AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
+        )
