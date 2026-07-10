@@ -36,7 +36,7 @@ interface PdfEndpointErrorBody {
 /**
  * Extracts a user-safe message from a failed PDF endpoint response and, for
  * unexpected failures, reports it to Sentry. `operation` must be a STATIC
- * route template (e.g. `POST .../generate-pdf/{taskId}/download`) — never the
+ * route template (e.g. `GET .../pdf/{taskId}`) — never the
  * resolved URL, which would carry the task id or a user-typed report name.
  */
 const getPdfEndpointErrorMessage = async (
@@ -171,7 +171,7 @@ export const generateCrossProviderPdf = async ({
   reportName?: string;
 }): Promise<{ taskId: string } | { error: string }> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/generate-pdf`);
+  const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/pdf`);
   url.searchParams.set("filter[compliance_id]", complianceId);
   applyFilters(url, filters);
   if (reportName) url.searchParams.set("report_name", reportName);
@@ -184,7 +184,7 @@ export const generateCrossProviderPdf = async ({
         await getPdfEndpointErrorMessage(
           response,
           "Unable to start PDF generation. Contact support if the issue continues.",
-          `POST ${CROSS_PROVIDER_API_PATH}/generate-pdf`,
+          `POST ${CROSS_PROVIDER_API_PATH}/pdf`,
         ),
       );
     }
@@ -220,7 +220,7 @@ export const getCrossProviderPdfBinary = async (
 
   const headers = await getAuthHeaders({ contentType: false });
   const url = new URL(
-    `${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/generate-pdf/${encodeURIComponent(safeTaskId)}/download`,
+    `${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/pdf/${encodeURIComponent(safeTaskId)}`,
   );
 
   try {
@@ -240,7 +240,7 @@ export const getCrossProviderPdfBinary = async (
         await getPdfEndpointErrorMessage(
           response,
           "Unable to retrieve the compliance PDF report. Contact support if the issue continues.",
-          `GET ${CROSS_PROVIDER_API_PATH}/generate-pdf/{taskId}/download`,
+          `GET ${CROSS_PROVIDER_API_PATH}/pdf/{taskId}`,
         ),
       );
     }
@@ -278,9 +278,7 @@ export const getLatestCrossProviderPdf = async ({
   filters?: CrossProviderApiFilters;
 }): Promise<LatestCrossProviderPdf | null> => {
   const headers = await getAuthHeaders({ contentType: false });
-  const url = new URL(
-    `${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/generate-pdf/latest`,
-  );
+  const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/pdf/latest`);
   url.searchParams.set("filter[compliance_id]", complianceId);
   applyFilters(url, filters);
 
@@ -294,7 +292,7 @@ export const getLatestCrossProviderPdf = async ({
         await getPdfEndpointErrorMessage(
           response,
           "Unable to check for an existing PDF report.",
-          `GET ${CROSS_PROVIDER_API_PATH}/generate-pdf/latest`,
+          `GET ${CROSS_PROVIDER_API_PATH}/pdf/latest`,
         ),
       );
     }

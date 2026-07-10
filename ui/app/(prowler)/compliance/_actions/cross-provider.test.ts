@@ -133,7 +133,7 @@ describe("getCrossProviderComplianceOverview", () => {
 });
 
 describe("generateCrossProviderPdf", () => {
-  it("POSTs generate-pdf with filters and an optional report name", async () => {
+  it("POSTs pdf with filters and an optional report name", async () => {
     fetchMock.mockResolvedValue(
       jsonResponse({ data: { type: "tasks", id: "task-1" } }, 202),
     );
@@ -149,7 +149,7 @@ describe("generateCrossProviderPdf", () => {
     expect((call?.[1] as RequestInit).method).toBe("POST");
     const url = lastFetchUrl();
     expect(url.pathname).toBe(
-      "/api/v1/cross-provider-compliance-overviews/generate-pdf",
+      "/api/v1/cross-provider-compliance-overviews/pdf",
     );
     expect(url.searchParams.get("filter[compliance_id]")).toBe("csa_ccm_4.0");
     expect(url.searchParams.get("filter[scan__in]")).toBe("scan-1");
@@ -193,9 +193,7 @@ describe("generateCrossProviderPdf", () => {
     expect(result).toEqual({ error: "Generic server error." });
     expect(captureExceptionMock).toHaveBeenCalledTimes(1);
     const serialized = JSON.stringify(captureExceptionMock.mock.calls[0]);
-    expect(serialized).toContain(
-      "cross-provider-compliance-overviews/generate-pdf",
-    );
+    expect(serialized).toContain("cross-provider-compliance-overviews/pdf");
     expect(serialized).not.toContain("secret-name");
   });
 
@@ -236,7 +234,7 @@ describe("getCrossProviderPdfBinary", () => {
       taskId: "task-1",
     });
     expect(lastFetchUrl().pathname).toBe(
-      "/api/v1/cross-provider-compliance-overviews/generate-pdf/task-1/download",
+      "/api/v1/cross-provider-compliance-overviews/pdf/task-1",
     );
   });
 
@@ -285,7 +283,7 @@ describe("getCrossProviderPdfBinary", () => {
     expect(result).toEqual({ error: "Generic server error." });
     expect(captureExceptionMock).toHaveBeenCalledTimes(1);
     const serialized = JSON.stringify(captureExceptionMock.mock.calls[0]);
-    expect(serialized).toContain("generate-pdf/{taskId}/download");
+    expect(serialized).toContain("pdf/{taskId}");
   });
 });
 
@@ -316,7 +314,7 @@ describe("getLatestCrossProviderPdf", () => {
     });
     const url = lastFetchUrl();
     expect(url.pathname).toBe(
-      "/api/v1/cross-provider-compliance-overviews/generate-pdf/latest",
+      "/api/v1/cross-provider-compliance-overviews/pdf/latest",
     );
     expect(url.searchParams.get("filter[scan__in]")).toBe("scan-1");
   });
@@ -344,7 +342,7 @@ describe("getLatestCrossProviderPdf", () => {
     expect(result).toBeNull();
     expect(captureExceptionMock).toHaveBeenCalledTimes(1);
     const serialized = JSON.stringify(captureExceptionMock.mock.calls[0]);
-    expect(serialized).toContain("generate-pdf/latest");
+    expect(serialized).toContain("pdf/latest");
 
     consoleErrorSpy.mockRestore();
   });
