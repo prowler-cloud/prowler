@@ -3,6 +3,7 @@ import socket
 import string
 from urllib.parse import urlparse
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
 
@@ -21,6 +22,14 @@ LIGHTHOUSE_BLOCKED_METADATA_HOSTS = frozenset(
 
 def _normalize_hostname(hostname: str) -> str:
     return hostname.rstrip(".").lower()
+
+
+def _lighthouse_openai_compatible_allowed_hosts() -> frozenset[str]:
+    return frozenset(
+        _normalize_hostname(allowed_host.strip())
+        for allowed_host in settings.LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS
+        if allowed_host and allowed_host.strip()
+    )
 
 
 def _validate_lighthouse_public_ip(address: str) -> None:
@@ -50,6 +59,12 @@ def resolve_lighthouse_openai_compatible_host(
 ) -> tuple[str, ...]:
     """Return public IP addresses that are safe for Lighthouse outbound use."""
     hostname = _normalize_hostname(hostname)
+    if hostname in _lighthouse_openai_compatible_allowed_hosts():
+        # Operator-allowlisted hosts skip the public-endpoint checks; returning
+        # the hostname makes the network backend connect through regular DNS
+        # resolution instead of pinned addresses.
+        return (hostname,)
+
     if hostname in LIGHTHOUSE_BLOCKED_METADATA_HOSTS or hostname.endswith(".localhost"):
         raise ValidationError(
             _("Base URL must use an external public endpoint."),
