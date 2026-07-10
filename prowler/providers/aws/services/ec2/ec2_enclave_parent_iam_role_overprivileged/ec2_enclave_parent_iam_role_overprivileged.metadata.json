@@ -1,0 +1,41 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_enclave_parent_iam_role_overprivileged",
+  "CheckTitle": "Nitro Enclave parent instance role does not grant wildcard access to sensitive services",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices",
+    "TTPs/Privilege Escalation"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "nitro-enclaves",
+  "ResourceIdTemplate": "arn:partition:ec2:region:account-id:instance/instance-id",
+  "Severity": "high",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**Nitro Enclave** parent IAM roles are evaluated for wildcard grants of `kms:*`, `secretsmanager:*`, `ssm:*`, or full administrator access (`*` on `Resource: \"*\"`) across attached managed policies and inline policies. The enclave inherits this identity.",
+  "Risk": "Wildcard grants on secret-holding services widen the **blast radius** of any parent compromise: a workload on the parent can retrieve every secret the enclave was meant to gate, defeating the **least-privilege** boundary the enclave enforces.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/kms/latest/developerguide/policy-conditions.html#conditions-nitro-enclaves",
+    "https://docs.aws.amazon.com/enclaves/latest/user/nitro-enclave-concepts.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws iam put-role-policy --role-name <role> --policy-name enclave-least-privilege --policy-document file://policy.json",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::IAM::Role\n    Properties:\n      Policies:\n        - PolicyName: enclave-least-privilege\n          PolicyDocument:\n            Statement:\n              - Effect: Allow\n                Action: kms:Decrypt  # critical: no wildcards on sensitive services\n                Resource: arn:aws:kms:region:acct:key/<enclave-key-id>\n```",
+      "Other": "1. Enumerate the managed and inline policies attached to the enclave parent's role.\n2. Replace wildcard actions (kms:*, secretsmanager:*, ssm:*, *) with the specific API operations the workload needs.\n3. Scope `Resource` to the exact key, secret, or parameter ARNs.\n4. Where possible, add condition keys such as `kms:RecipientAttestation:*` to gate KMS use on the enclave measurement.",
+      "Terraform": "```hcl\nresource \"aws_iam_role_policy\" \"example_resource\" {\n  role = var.enclave_parent_role_name\n  policy = jsonencode({\n    Statement = [{\n      Effect = \"Allow\"\n      Action = \"kms:Decrypt\"  # critical: no wildcards on sensitive services\n      Resource = var.enclave_key_arn\n    }]\n  })\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **least privilege** to any identity that will be inherited by a hardware trust boundary: scope permissions to the specific resources the workload requires, and prefer attestation-conditioned grants over broad service-level wildcards.",
+      "Url": "https://hub.prowler.com/check/ec2_enclave_parent_iam_role_overprivileged"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "privilege-escalation"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

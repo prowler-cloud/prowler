@@ -339,6 +339,7 @@ class VPC(AWSService):
                                 regional_client.region
                             ]
                             public = False
+                            public_ipv6 = False
                             nat_gateway = False
                             route_tables_for_subnet = (
                                 regional_client_for_subnet.describe_route_tables(
@@ -374,6 +375,16 @@ class VPC(AWSService):
                                     ):
                                         # If the route table has a default route to an internet gateway, the subnet is public
                                         public = True
+                                    if (
+                                        "GatewayId" in route
+                                        and "igw" in route["GatewayId"]
+                                        and route.get("DestinationIpv6CidrBlock", "")
+                                        == "::/0"
+                                    ):
+                                        # ::/0 → IGW makes the subnet reachable
+                                        # from the public IPv6 Internet. Egress-only
+                                        # IGWs are outbound-only and do not count.
+                                        public_ipv6 = True
                                     if "NatGatewayId" in route:
                                         nat_gateway = True
                             subnet_name = ""
@@ -391,6 +402,7 @@ class VPC(AWSService):
                                 region=regional_client.region,
                                 availability_zone=subnet["AvailabilityZone"],
                                 public=public,
+                                public_ipv6=public_ipv6,
                                 nat_gateway=nat_gateway,
                                 tags=subnet.get("Tags"),
                                 mapPublicIpOnLaunch=subnet["MapPublicIpOnLaunch"],
@@ -449,6 +461,7 @@ class VpcSubnet(BaseModel):
     cidr_block: Optional[str]
     availability_zone: str
     public: bool
+    public_ipv6: bool = False
     in_use: bool = False
     nat_gateway: bool
     region: str

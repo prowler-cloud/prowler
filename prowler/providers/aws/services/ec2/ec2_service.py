@@ -121,6 +121,13 @@ class EC2(AWSService):
                                     virtualization_type=instance.get(
                                         "VirtualizationType"
                                     ),
+                                    enclaves_enabled=instance.get(
+                                        "EnclaveOptions", {}
+                                    ).get("Enabled", False),
+                                    hibernation_enabled=instance.get(
+                                        "HibernationOptions", {}
+                                    ).get("Configured", False),
+                                    platform=instance.get("Platform"),
                                     tags=instance.get("Tags"),
                                 )
                             )
@@ -717,6 +724,9 @@ class Instance(BaseModel):
     instance_profile: Optional[dict]
     network_interfaces: Optional[list]
     virtualization_type: Optional[str]
+    enclaves_enabled: Optional[bool] = False
+    hibernation_enabled: Optional[bool] = False
+    platform: Optional[str] = None
     tags: Optional[list] = []
 
 

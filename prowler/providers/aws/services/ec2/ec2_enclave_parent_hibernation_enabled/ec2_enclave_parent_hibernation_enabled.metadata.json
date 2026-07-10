@@ -1,0 +1,38 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_enclave_parent_hibernation_enabled",
+  "CheckTitle": "Nitro Enclave parent instance does not have hibernation enabled",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "nitro-enclaves",
+  "ResourceIdTemplate": "arn:partition:ec2:region:account-id:instance/instance-id",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "**Nitro Enclave** parent instances are evaluated for the `HibernationOptions.Configured` flag. AWS blocks combining `EnclaveOptions.Enabled=true` with `HibernationOptions.Configured=true` at the RunInstances API (`InvalidParameterCombination`); this control is a **defense-in-depth** guard against platform drift or an undocumented launch path.",
+  "Risk": "Hibernation serializes RAM to EBS. If enclave memory ever reaches the parent's hibernation image, the **confidentiality** guarantee the enclave provides is broken outside the hardware trust boundary the enclave was designed to enforce.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/hibernating-prerequisites.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "```yaml\nResources:\n  example_resource:\n    Type: AWS::EC2::Instance\n    Properties:\n      EnclaveOptions: { Enabled: true }\n      HibernationOptions: { Configured: false }  # critical: never hibernate an enclave parent\n```",
+      "Other": "1. Treat this finding as a platform anomaly: the state is normally rejected by the RunInstances API.\n2. Capture instance metadata (launch template, CloudFormation stack, service-linked automation) for forensics.\n3. Terminate the instance and relaunch with `HibernationOptions.Configured=false`.\n4. Audit the launch pathway that produced this combination.",
+      "Terraform": "```hcl\nresource \"aws_instance\" \"example_resource\" {\n  enclave_options { enabled = true }\n  hibernation = false  # critical: never hibernate an enclave parent\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Uphold the **hardware trust boundary** of the enclave by ensuring parent instances cannot serialize memory to persistent storage. Treat any occurrence of the enclave+hibernation combination as a platform anomaly worth investigating.",
+      "Url": "https://hub.prowler.com/check/ec2_enclave_parent_hibernation_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

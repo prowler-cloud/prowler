@@ -1,0 +1,40 @@
+{
+  "Provider": "aws",
+  "CheckID": "kms_key_enclave_pcr_too_broad",
+  "CheckTitle": "KMS enclave key attestation binds at least two distinct PCR values",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "kms",
+  "SubServiceName": "nitro-enclaves",
+  "ResourceIdTemplate": "arn:partition:kms:region:account-id:key/key-id",
+  "Severity": "high",
+  "ResourceType": "AwsKmsKey",
+  "ResourceGroup": "security",
+  "Description": "**Enclave-scoped KMS keys** are evaluated on the breadth of their attestation conditions: every sensitive `Allow` statement must reference at least two distinct `kms:RecipientAttestation:*` bindings. `ImageSha384` collapses with `PCR0`; custom PCR IDs beyond 0-4 and 8 count toward the threshold.",
+  "Risk": "`PCR0` alone (the enclave image hash) can be satisfied by any enclave built from the same EIF, allowing image-drift and supply-chain substitutions to preserve KMS access. A single-binding condition weakens the **integrity** the attestation was supposed to provide.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/enclaves/latest/user/set-up-attestation.html",
+    "https://docs.aws.amazon.com/enclaves/latest/user/kms.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws kms put-key-policy --key-id <key-id> --policy-name default --policy file://enclave-policy.json",
+      "NativeIaC": "```yaml\nCondition:\n  StringEqualsIgnoreCase:\n    kms:RecipientAttestation:PCR0: <expected-pcr0>\n    kms:RecipientAttestation:PCR1: <expected-pcr1>  # critical: second distinct PCR binding\n```",
+      "Other": "1. Include at least two distinct `kms:RecipientAttestation:PCR<N>` condition keys per sensitive Allow statement.\n2. Prefer combinations such as `PCR0 + PCR1` (image + kernel), `PCR0 + PCR8` (image + signing certificate), or `PCR0 + custom PCR`.\n3. Reject policies whose only binding is `PCR0` or `ImageSha384` because they collapse to a single measurement.",
+      "Terraform": "```hcl\ncondition {\n  test = \"StringEqualsIgnoreCase\"\n  variable = \"kms:RecipientAttestation:PCR1\"  # critical: second distinct PCR binding\n  values = [var.expected_pcr1]\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Apply **defense in depth** to the attestation contract: require multiple distinct PCR measurements so image-only substitutions and partial supply-chain compromises cannot preserve KMS access on their own.",
+      "Url": "https://hub.prowler.com/check/kms_key_enclave_pcr_too_broad"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
