@@ -6,7 +6,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select/Select";
+} from "@/components/shadcn/select/select";
 
 interface MapRegionFilterProps {
   regions: string[];

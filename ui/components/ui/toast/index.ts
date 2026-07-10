@@ -1,3 +1,3 @@
-export * from "./Toast";
-export * from "./Toaster";
-export * from "./use-toast";
+// Temporary re-export shim for prowler-cloud overlay imports.
+// Remove after the cloud repo migrates to @/components/shadcn paths.
+export * from "@/components/shadcn/toast";

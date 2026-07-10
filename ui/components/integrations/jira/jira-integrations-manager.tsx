@@ -16,9 +16,9 @@ import {
   IntegrationSkeleton,
 } from "@/components/integrations/shared";
 import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { DataTablePagination } from "@/components/ui/table/data-table-pagination";
+import { DataTablePagination } from "@/components/shadcn/table/data-table-pagination";
 import { triggerTestConnectionWithDelay } from "@/lib/integrations/test-connection-helper";
 import { MetaDataProps } from "@/types";
 import { IntegrationProps } from "@/types/integrations";

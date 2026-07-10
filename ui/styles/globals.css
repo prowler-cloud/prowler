@@ -1,9 +1,9 @@
 @import "tailwindcss";
-/* All @import rules must precede @config/@source — a late @import is invalid
+/* All @import rules must precede @plugin/@source — a late @import is invalid
  * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
 @import "./tours.css";
-
-@config "../tailwind.config.js";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -19,6 +19,13 @@
 @custom-variant lg (@container (width >= 64rem));
 @custom-variant xl (@container (width >= 80rem));
 @custom-variant 2xl (@container (width >= 96rem));
+
+/* Fonts are provided by next/font as CSS variables on <html>; `inline` avoids
+ * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
@@ -250,6 +257,57 @@
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+
+  /* Breakpoints */
+  --breakpoint-3xl: 1920px;
+
+  /* Animations */
+  --animate-fade-in: fade-in 200ms ease-out forwards;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Used from plain CSS (`.animate-download-icon`), so it must always be
+ * emitted — keep it outside @theme. */
+@keyframes dropArrow {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ===== CONTAINER UTILITY ===== */
@@ -519,11 +577,6 @@
     background-color: rgb(100 116 139 / 0.7);
   }
 
-  .checkbox-update {
-    margin-right: 0.5rem;
-    background-color: var(--background);
-  }
-
   /* Download icon animation */
   .animate-download-icon polyline,
   .animate-download-icon line {
@@ -537,8 +590,29 @@
 @layer base {
   /* Global base styles */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-neutral-primary text-text-neutral-primary;
   }
+}
+
+/* Neutralize the browser's native autofill highlight (Chromium/WebKit paint a
+   forced blue/yellow background on :autofill). box-shadow inset masks it; the
+   long transition stops the native color from flashing before the mask lands.
+   Kept UNLAYERED + !important: the mask is a box-shadow and collides with
+   shadcn's focus:ring (also a box-shadow, in @layer utilities) — a layered
+   rule can't win that, so this sits outside the cascade layers. */
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-neutral-secondary) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  caret-color: var(--text-neutral-secondary);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Override vaul's injected user-select: none to allow text selection in drawers */

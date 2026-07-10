@@ -11,7 +11,7 @@ import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 interface UseRequirementFindingsOptions {
   enabled: boolean;
   checkIds: string[];
-  scanId: string;
+  scanIds: string[];
   pageNumber: string;
   pageSize: string;
   sort: string;
@@ -33,7 +33,7 @@ const FINDINGS_LOAD_ERROR = "Could not load findings.";
 export function useRequirementFindings({
   enabled,
   checkIds,
-  scanId,
+  scanIds,
   pageNumber,
   pageSize,
   sort,
@@ -45,10 +45,12 @@ export function useRequirementFindings({
   const [error, setError] = useState<string | null>(null);
   const [reloadNonce, setReloadNonce] = useState(0);
 
-  // Depend on the joined value, not the array: the requirement prop gets a
+  // Depend on the joined values, not the arrays: the requirement prop gets a
   // fresh identity on every parent render and must not retrigger the fetch.
   const checkIdsKey = checkIds.join(",");
-  const isFetchEnabled = enabled && checkIdsKey.length > 0;
+  const scanIdsKey = scanIds.join(",");
+  const isFetchEnabled =
+    enabled && checkIdsKey.length > 0 && scanIdsKey.length > 0;
   // A skipped fetch is not a pending one; without this the caller would show
   // a skeleton forever for requirements whose fetch never runs.
   const isLoading = isFetchEnabled && findings === null && error === null;
@@ -66,7 +68,7 @@ export function useRequirementFindings({
         const findingsData = await getFindings({
           filters: {
             "filter[check_id__in]": checkIdsKey,
-            "filter[scan]": scanId,
+            "filter[scan__in]": scanIdsKey,
             "filter[muted]": mutedFilter,
             ...(region && { "filter[region__in]": region }),
           },
@@ -116,7 +118,7 @@ export function useRequirementFindings({
   }, [
     isFetchEnabled,
     checkIdsKey,
-    scanId,
+    scanIdsKey,
     pageNumber,
     pageSize,
     sort,

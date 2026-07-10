@@ -18,9 +18,9 @@ import {
   Input,
   Textarea,
 } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DOCS_URLS } from "@/lib/external-urls";
 import {
   convertToYaml,
@@ -30,6 +30,8 @@ import {
 import { scanConfigurationFormSchema } from "@/types/formSchemas";
 import { ProviderProps } from "@/types/providers";
 import { ScanConfigurationData } from "@/types/scan-configurations";
+
+import { getSelectableProviders } from "./scan-configuration-providers";
 
 interface ScanConfigurationEditorProps {
   open: boolean;
@@ -90,21 +92,12 @@ function ScanConfigurationForm({
     ? validateYaml(configText)
     : { isValid: true as const };
 
-  // A provider can only be attached to one config at a time. We exclude
-  // providers that are owned by *other* configs from the selector so the user
-  // can't double-attach them. (AccountsSelector doesn't expose a per-option
-  // disabled state, so filtering out is the cleanest contract here.)
-  const ownerByProvider = new Map<string, string>();
-  for (const c of existingConfigs) {
-    if (config && c.id === config.id) continue;
-    for (const pid of c.attributes.providers || []) {
-      ownerByProvider.set(pid, c.attributes.name);
-    }
-  }
-  const selectableProviders = richProviders.filter(
-    (p) => !ownerByProvider.has(p.id),
-  );
-  const lockedCount = richProviders.length - selectableProviders.length;
+  // Dynamic providers can't use a Scan Configuration, and a provider can only be
+  // attached to one config at a time, so both are excluded from the selector.
+  // (AccountsSelector doesn't expose a per-option disabled state, so filtering
+  // out is the cleanest contract here.)
+  const { selectableProviders, configurableCount, lockedCount } =
+    getSelectableProviders(richProviders, existingConfigs, config?.id ?? null);
 
   const onSubmit = form.handleSubmit(async (values) => {
     // Block on a YAML syntax error (the inline message already explains it); the
@@ -190,10 +183,10 @@ function ScanConfigurationForm({
         <FieldLabel htmlFor="scan-configuration-yaml">
           Configuration (YAML)
         </FieldLabel>
-        <ul className="text-default-500 text-tiny mb-1 list-disc pl-5">
+        <ul className="text-text-neutral-tertiary mb-1 list-disc pl-5 text-xs">
           <li>
             Follows the structure of{" "}
-            <code className="bg-default-100 text-default-600 rounded px-1 py-0.5 font-mono">
+            <code className="bg-bg-neutral-tertiary text-text-neutral-secondary rounded px-1 py-0.5 font-mono">
               prowler/config/config.yaml
             </code>
             ; include only the keys you want to override. Learn more{" "}
@@ -225,7 +218,7 @@ function ScanConfigurationForm({
           {!yamlSyntax.isValid ? (
             <FieldError>{`Invalid YAML format: ${yamlSyntax.error}`}</FieldError>
           ) : configText.trim() && !configError ? (
-            <p className="text-tiny text-text-success-primary">
+            <p className="text-text-success-primary text-xs">
               Valid YAML format
             </p>
           ) : null}
@@ -235,7 +228,7 @@ function ScanConfigurationForm({
 
       <Field>
         <FieldLabel>Attach to providers (optional)</FieldLabel>
-        <p className="text-default-500 text-tiny">
+        <p className="text-text-neutral-tertiary text-xs">
           Pick the providers that should use this configuration on their next
           scan. You can save it without any and attach providers later — it just
           won&apos;t apply to a scan until one is attached.
@@ -249,10 +242,12 @@ function ScanConfigurationForm({
           )}
         </p>
         {selectableProviders.length === 0 ? (
-          <p className="text-default-500 text-tiny italic">
+          <p className="text-text-neutral-tertiary text-xs italic">
             {richProviders.length === 0
               ? "No providers available in this tenant."
-              : "All providers are already attached to other Scan Configurations."}
+              : configurableCount === 0
+                ? "Dynamic providers can't use custom Scan Configurations, so there are none to attach."
+                : "All providers are already attached to other Scan Configurations."}
           </p>
         ) : (
           <AccountsSelector

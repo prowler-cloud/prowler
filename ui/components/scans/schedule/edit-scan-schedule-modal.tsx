@@ -16,10 +16,10 @@ import {
   type ProviderTypeIconStackItem,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, FieldError } from "@/components/shadcn";
+import { EntityInfo } from "@/components/shadcn/entities";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { EntityInfo } from "@/components/ui/entities";
-import { FormButtons } from "@/components/ui/form";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/shadcn/toast";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {

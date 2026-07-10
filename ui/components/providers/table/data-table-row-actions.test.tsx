@@ -87,7 +87,8 @@ vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: vi.fn() }),
 }));
 
@@ -107,6 +108,51 @@ const createRow = (hasSecret = false) =>
         provider: "aws",
         uid: "111111111111",
         alias: "AWS App Account",
+        status: "completed",
+        resources: 0,
+        connection: {
+          connected: true,
+          last_checked_at: "2025-02-13T11:17:00Z",
+        },
+        scanner_args: {
+          only_logs: false,
+          excluded_checks: [],
+          aws_retries_max_attempts: 3,
+        },
+        inserted_at: "2025-02-13T11:17:00Z",
+        updated_at: "2025-02-13T11:17:00Z",
+        created_by: {
+          object: "user",
+          id: "user-1",
+        },
+      },
+      relationships: {
+        secret: {
+          data: hasSecret ? { id: "secret-1", type: "secrets" } : null,
+        },
+        provider_groups: {
+          meta: {
+            count: 0,
+          },
+          data: [],
+        },
+      },
+      groupNames: [],
+    },
+  }) as unknown as Row<ProvidersTableRow>;
+
+// A dynamic provider outside the hardcoded configurable set (read-only in the UI).
+const createDynamicRow = (hasSecret = true) =>
+  ({
+    original: {
+      id: "provider-dyn-1",
+      rowType: PROVIDERS_ROW_TYPE.PROVIDER,
+      type: "providers",
+      attributes: {
+        provider: "template",
+        is_dynamic: true,
+        uid: "template-account-0001",
+        alias: "Template Plug-in",
         status: "completed",
         resources: 0,
         connection: {
@@ -255,6 +301,37 @@ describe("DataTableRowActions", () => {
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("Delete Provider")).toBeInTheDocument();
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+  });
+
+  it("blocks provider-account actions (alias/credentials/delete) for a dynamic provider but keeps operational actions", async () => {
+    // Given a dynamic provider outside the configurable set, with the advanced
+    // schedule capability enabled (so Edit Scan Schedule can show).
+    const user = userEvent.setup();
+    render(
+      <DataTableRowActions
+        row={createDynamicRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then — provider-account CRUD is suppressed (can't add/edit/delete it)
+    expect(screen.queryByText("Edit Provider Alias")).not.toBeInTheDocument();
+    expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
+    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
+    expect(screen.queryByText("Delete Provider")).not.toBeInTheDocument();
+    // ...but operational actions the provider exists for stay available
+    expect(screen.getByText("Test Connection")).toBeInTheDocument();
+    expect(screen.getByText("View Scan Jobs")).toBeInTheDocument();
+    expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
   });
 
   it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
@@ -446,6 +523,37 @@ describe("DataTableRowActions", () => {
       .getByText("Scan Configuration unavailable")
       .closest("[role='menuitem']");
     expect(item).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("hides Edit Scan Configuration for dynamic providers in Prowler Cloud", async () => {
+    // Given a dynamic provider in a Cloud tenant with scan configs available.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createDynamicRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        scanConfigs={[]}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then — dynamic providers can't use a Scan Configuration, so the action is
+    // absent entirely, not merely shown as "unavailable".
+    expect(
+      screen.queryByText("Edit Scan Configuration"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Scan Configuration unavailable"),
+    ).not.toBeInTheDocument();
   });
 
   it("renders Update Credentials for provider rows with credentials", async () => {

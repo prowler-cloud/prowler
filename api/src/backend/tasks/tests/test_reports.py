@@ -45,12 +45,46 @@ from tasks.jobs.reports import (
     get_color_for_risk_level,
     get_color_for_weight,
 )
+from tasks.jobs.reports import cis as cis_report_module
+from tasks.jobs.reports import csa as csa_report_module
+from tasks.jobs.reports import ens as ens_report_module
+from tasks.jobs.reports import nis2 as nis2_report_module
+from tasks.jobs.reports import threatscore as threatscore_report_module
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _load_findings_for_requirement_checks,
 )
+from tasks.tests.report_test_helpers import patch_chart_helpers, patch_report_gc
 
 matplotlib.use("Agg")  # Use non-interactive backend for tests
+
+
+@pytest.fixture
+def patch_report_rendering(monkeypatch):
+    patch_report_gc(monkeypatch)
+    patch_chart_helpers(
+        monkeypatch,
+        cis_report_module,
+        (
+            "create_pie_chart",
+            "create_horizontal_bar_chart",
+            "create_stacked_bar_chart",
+        ),
+    )
+    patch_chart_helpers(
+        monkeypatch, csa_report_module, ("create_horizontal_bar_chart",)
+    )
+    patch_chart_helpers(
+        monkeypatch,
+        ens_report_module,
+        ("create_horizontal_bar_chart", "create_radar_chart"),
+    )
+    patch_chart_helpers(
+        monkeypatch, nis2_report_module, ("create_horizontal_bar_chart",)
+    )
+    patch_chart_helpers(
+        monkeypatch, threatscore_report_module, ("create_vertical_bar_chart",)
+    )
 
 
 @pytest.mark.django_db
@@ -355,7 +389,7 @@ class TestPDFStylesCreation:
 class TestLoadFindingsForChecks:
     """Test suite for _load_findings_for_requirement_checks function."""
 
-    def test_empty_check_ids_returns_empty(self, tenants_fixture, providers_fixture):
+    def test_empty_check_ids_returns_empty(self, tenants_fixture):
         """Test that empty check_ids list returns empty dict."""
         tenant = tenants_fixture[0]
 
@@ -1041,6 +1075,7 @@ class TestStaleCleanupProtectionHelpers:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateThreatscoreReportFunction:
     """Test suite for generate_threatscore_report function."""
 
@@ -1050,12 +1085,12 @@ class TestGenerateThreatscoreReportFunction:
         mock_build_provider_metadata,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that exceptions during report generation are properly handled."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         mock_build_provider_metadata.side_effect = Exception("Test exception")
 
@@ -1072,6 +1107,7 @@ class TestGenerateThreatscoreReportFunction:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateComplianceReportsOptimized:
     """Test suite for generate_compliance_reports function."""
 
@@ -1087,12 +1123,12 @@ class TestGenerateComplianceReportsOptimized:
         mock_upload,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that function returns early when scan has no findings."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         result = generate_compliance_reports(
             tenant_id=str(tenant.id),
@@ -1144,14 +1180,14 @@ class TestGenerateComplianceReportsOptimized:
         mock_upload,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Scan with no findings and ``generate_cis=True`` must yield a flat
         ``{"upload": False, "path": ""}`` entry, consistent with the other
         frameworks (no nested dict, no sentinel keys)."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         result = generate_compliance_reports(
             tenant_id=str(tenant.id),
@@ -1439,6 +1475,7 @@ class TestGenerateComplianceReportsOptimized:
 
 
 @pytest.mark.django_db
+@pytest.mark.usefixtures("patch_report_rendering")
 class TestGenerateComplianceReportsCIS:
     """Test suite covering the CIS branch of generate_compliance_reports."""
 
@@ -1468,7 +1505,7 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """CIS branch should generate a single PDF for the highest version.
 
@@ -1478,7 +1515,7 @@ class TestGenerateComplianceReportsCIS:
         """
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
 
@@ -1527,12 +1564,12 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """A failure in the latest CIS variant must be surfaced in the flat results entry."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
 
@@ -1574,14 +1611,14 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """When ``Compliance.get_bulk`` returns no CIS entry the CIS branch
         must skip cleanly and record a flat ``{"upload": False, "path": ""}``
         entry — no hard-coded provider whitelist is consulted."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
         mock_stats.return_value = {}
@@ -1613,12 +1650,12 @@ class TestGenerateComplianceReportsCIS:
         monkeypatch,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """CIS output dir errors must be captured in results (not raised)."""
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         self._force_scan_has_findings(monkeypatch)
         mock_stats.return_value = {}

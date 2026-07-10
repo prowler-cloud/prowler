@@ -19,7 +19,7 @@ import * as Sentry from "@sentry/nextjs";
 import {
   cancelProgress,
   startProgress,
-} from "@/components/ui/navigation-progress/use-navigation-progress";
+} from "@/components/shadcn/navigation-progress/use-navigation-progress";
 import { getRuntimeConfigClient } from "@/lib/get-runtime-config.client";
 
 export const NAVIGATION_TYPE = {

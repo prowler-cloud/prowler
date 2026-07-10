@@ -50,7 +50,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedule: updateScheduleMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -74,7 +74,7 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -130,15 +130,17 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
 } from "@/lib/action-errors";
+import { ProviderProps } from "@/types";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
-const provider = {
+const provider: ProviderProps = {
   id: "provider-1",
   type: "providers" as const,
   attributes: {
     provider: "aws" as const,
+    is_dynamic: false,
     uid: "123456789012",
     alias: "Production",
     status: "completed" as const,

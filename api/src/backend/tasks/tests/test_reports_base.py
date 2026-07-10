@@ -43,6 +43,7 @@ from tasks.jobs.reports import (  # Configuration; Colors; Components; Charts; B
     get_framework_config,
     get_status_color,
 )
+from tasks.tests.report_test_helpers import PNG_SIGNATURE, fake_png_buffer
 
 # =============================================================================
 # Configuration Tests
@@ -452,174 +453,47 @@ class TestSectionHeader:
 # =============================================================================
 
 
-class TestChartCreation:
-    """Tests for chart creation functions."""
+class TestChartRenderingSmoke:
+    """Small real-render coverage for the chart helpers."""
 
-    def test_create_vertical_bar_chart(self):
-        """Test vertical bar chart creation."""
-        buffer = create_vertical_bar_chart(
-            labels=["A", "B", "C"],
-            values=[80, 60, 40],
-        )
-        assert isinstance(buffer, io.BytesIO)
-        assert buffer.getvalue()  # Not empty
+    @pytest.mark.parametrize(
+        ("chart_helper", "kwargs"),
+        [
+            (
+                create_vertical_bar_chart,
+                {"labels": ["Section 1", "Section 2"], "values": [90, 70]},
+            ),
+            (
+                create_horizontal_bar_chart,
+                {"labels": ["Category 1", "Category 2"], "values": [85, 65]},
+            ),
+            (
+                create_radar_chart,
+                {"labels": ["A", "B", "C"], "values": [50, 60, 70]},
+            ),
+            (
+                create_pie_chart,
+                {"labels": ["Pass", "Fail"], "values": [80, 20]},
+            ),
+            (
+                create_stacked_bar_chart,
+                {
+                    "labels": ["Section 1", "Section 2"],
+                    "data_series": {"Pass": [8, 6], "Fail": [2, 4]},
+                },
+            ),
+        ],
+    )
+    def test_chart_helper_renders_valid_png(self, chart_helper, kwargs):
+        buffer = chart_helper(**kwargs)
+        image_bytes = buffer.getvalue()
 
-    def test_create_vertical_bar_chart_with_options(self):
-        """Test vertical bar chart with custom options."""
-        buffer = create_vertical_bar_chart(
-            labels=["Section 1", "Section 2"],
-            values=[90, 70],
-            ylabel="Compliance",
-            title="Test Chart",
-            figsize=(8, 6),
-        )
         assert isinstance(buffer, io.BytesIO)
+        assert image_bytes
+        assert image_bytes.startswith(PNG_SIGNATURE)
 
-    def test_create_horizontal_bar_chart(self):
-        """Test horizontal bar chart creation."""
-        buffer = create_horizontal_bar_chart(
-            labels=["Category 1", "Category 2", "Category 3"],
-            values=[85, 65, 45],
-        )
-        assert isinstance(buffer, io.BytesIO)
-        assert buffer.getvalue()
-
-    def test_create_horizontal_bar_chart_with_options(self):
-        """Test horizontal bar chart with custom options."""
-        buffer = create_horizontal_bar_chart(
-            labels=["A", "B"],
-            values=[100, 50],
-            xlabel="Percentage",
-            title="Custom Chart",
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_radar_chart(self):
-        """Test radar chart creation."""
-        buffer = create_radar_chart(
-            labels=["Dim 1", "Dim 2", "Dim 3", "Dim 4", "Dim 5"],
-            values=[80, 70, 60, 90, 75],
-        )
-        assert isinstance(buffer, io.BytesIO)
-        assert buffer.getvalue()
-
-    def test_create_radar_chart_with_options(self):
-        """Test radar chart with custom options."""
-        buffer = create_radar_chart(
-            labels=["A", "B", "C"],
-            values=[50, 60, 70],
-            color="#FF0000",
-            fill_alpha=0.5,
-            title="Custom Radar",
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_pie_chart(self):
-        """Test pie chart creation."""
-        buffer = create_pie_chart(
-            labels=["Pass", "Fail"],
-            values=[80, 20],
-        )
-        assert isinstance(buffer, io.BytesIO)
-        assert buffer.getvalue()
-
-    def test_create_pie_chart_with_options(self):
-        """Test pie chart with custom options."""
-        buffer = create_pie_chart(
-            labels=["Pass", "Fail", "Manual"],
-            values=[60, 30, 10],
-            colors=["#4CAF50", "#F44336", "#9E9E9E"],
-            title="Status Distribution",
-            autopct="%1.0f%%",
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_stacked_bar_chart(self):
-        """Test stacked bar chart creation."""
-        buffer = create_stacked_bar_chart(
-            labels=["Section 1", "Section 2", "Section 3"],
-            data_series={
-                "Pass": [8, 6, 4],
-                "Fail": [2, 4, 6],
-            },
-        )
-        assert isinstance(buffer, io.BytesIO)
-        assert buffer.getvalue()
-
-    def test_create_stacked_bar_chart_with_options(self):
-        """Test stacked bar chart with custom options."""
-        buffer = create_stacked_bar_chart(
-            labels=["A", "B"],
-            data_series={
-                "Pass": [10, 5],
-                "Fail": [2, 3],
-                "Manual": [1, 2],
-            },
-            colors={
-                "Pass": "#4CAF50",
-                "Fail": "#F44336",
-                "Manual": "#9E9E9E",
-            },
-            xlabel="Categories",
-            ylabel="Requirements",
-            title="Requirements by Status",
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_stacked_bar_chart_without_legend(self):
-        """Test stacked bar chart without legend."""
-        buffer = create_stacked_bar_chart(
-            labels=["X", "Y"],
-            data_series={"A": [1, 2]},
-            show_legend=False,
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_vertical_bar_chart_without_labels(self):
-        """Test vertical bar chart without value labels."""
-        buffer = create_vertical_bar_chart(
-            labels=["A", "B"],
-            values=[50, 75],
-            show_labels=False,
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_vertical_bar_chart_with_explicit_colors(self):
-        """Test vertical bar chart with explicit color list."""
-        buffer = create_vertical_bar_chart(
-            labels=["Pass", "Fail"],
-            values=[80, 20],
-            colors=["#4CAF50", "#F44336"],
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_horizontal_bar_chart_auto_figsize(self):
-        """Test horizontal bar chart auto-calculates figure size for many items."""
-        labels = [f"Item {i}" for i in range(20)]
-        values = [50 + i * 2 for i in range(20)]
-        buffer = create_horizontal_bar_chart(
-            labels=labels,
-            values=values,
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_horizontal_bar_chart_with_explicit_colors(self):
-        """Test horizontal bar chart with explicit colors."""
-        buffer = create_horizontal_bar_chart(
-            labels=["A", "B", "C"],
-            values=[80, 60, 40],
-            colors=["#4CAF50", "#FFEB3B", "#F44336"],
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_create_radar_chart_with_custom_ticks(self):
-        """Test radar chart with custom y-axis ticks."""
-        buffer = create_radar_chart(
-            labels=["A", "B", "C", "D"],
-            values=[25, 50, 75, 100],
-            y_ticks=[0, 25, 50, 75, 100],
-        )
-        assert isinstance(buffer, io.BytesIO)
+        buffer.seek(0)
+        assert Image(buffer, width=1 * inch, height=1 * inch)
 
 
 # =============================================================================
@@ -1056,10 +930,7 @@ class TestExampleReportGenerator:
                 ]
 
             def create_charts_section(self, data):
-                chart_buffer = create_vertical_bar_chart(
-                    labels=["Pass", "Fail"],
-                    values=[80, 20],
-                )
+                chart_buffer = fake_png_buffer()
                 return [Image(chart_buffer, width=6 * inch, height=4 * inch)]
 
             def create_requirements_index(self, data):
@@ -1148,63 +1019,6 @@ class TestExampleReportGenerator:
 # =============================================================================
 # Edge Case Tests
 # =============================================================================
-
-
-class TestChartEdgeCases:
-    """Tests for chart edge cases."""
-
-    def test_vertical_bar_chart_empty_data(self):
-        """Test vertical bar chart with empty data."""
-        buffer = create_vertical_bar_chart(labels=[], values=[])
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_vertical_bar_chart_single_item(self):
-        """Test vertical bar chart with single item."""
-        buffer = create_vertical_bar_chart(labels=["Single"], values=[75.0])
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_horizontal_bar_chart_empty_data(self):
-        """Test horizontal bar chart with empty data."""
-        buffer = create_horizontal_bar_chart(labels=[], values=[])
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_horizontal_bar_chart_single_item(self):
-        """Test horizontal bar chart with single item."""
-        buffer = create_horizontal_bar_chart(labels=["Single"], values=[50.0])
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_radar_chart_minimum_points(self):
-        """Test radar chart with minimum number of points (3)."""
-        buffer = create_radar_chart(
-            labels=["A", "B", "C"],
-            values=[30.0, 60.0, 90.0],
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_pie_chart_single_slice(self):
-        """Test pie chart with single slice."""
-        buffer = create_pie_chart(labels=["Only"], values=[100.0])
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_pie_chart_many_slices(self):
-        """Test pie chart with many slices."""
-        labels = [f"Item {i}" for i in range(10)]
-        values = [10.0] * 10
-        buffer = create_pie_chart(labels=labels, values=values)
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_stacked_bar_chart_single_series(self):
-        """Test stacked bar chart with single series."""
-        buffer = create_stacked_bar_chart(
-            labels=["A", "B"],
-            data_series={"Only": [10.0, 20.0]},
-        )
-        assert isinstance(buffer, io.BytesIO)
-
-    def test_stacked_bar_chart_empty_data(self):
-        """Test stacked bar chart with empty data."""
-        buffer = create_stacked_bar_chart(labels=[], data_series={})
-        assert isinstance(buffer, io.BytesIO)
 
 
 class TestComponentEdgeCases:

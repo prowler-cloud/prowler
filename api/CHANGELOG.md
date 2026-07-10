@@ -2,6 +2,23 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<!-- changelog: release notes start -->
+
+
+## [1.34.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- Session tokens are rejected after account password updates [(#11914)](https://github.com/prowler-cloud/prowler/pull/11914)
+- Jira dispatch task results now surface user-facing Jira failure messages [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- AWS Attack Paths privilege escalation queries no longer fail on Neo4j with `Aggregation column contains implicit grouping expressions` [(#11939)](https://github.com/prowler-cloud/prowler/pull/11939)
+
+### 🔐 Security
+
+- OpenAI-compatible Lighthouse provider base URLs are restricted before connection checks [(#11940)](https://github.com/prowler-cloud/prowler/pull/11940)
+- `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS` environment variable to allow internal hosts as OpenAI-compatible Lighthouse AI base URLs [(#11942)](https://github.com/prowler-cloud/prowler/pull/11942)
+
+---
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added

@@ -101,9 +101,7 @@ function DeltaIndicator({
           <div
             className={cn(
               "size-1.5 rounded-full",
-              delta === DeltaValues.NEW
-                ? "bg-system-severity-high"
-                : "bg-system-severity-low",
+              delta === DeltaValues.NEW ? "bg-bg-data-high" : "bg-bg-data-low",
             )}
           />
         </button>

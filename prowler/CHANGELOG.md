@@ -2,6 +2,21 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
+<!-- changelog: release notes start -->
+
+
+## [5.33.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- ECS task definition resource limits now select the latest task definitions by registration date instead of relying on ARN ordering [(#11891)](https://github.com/prowler-cloud/prowler/pull/11891)
+- `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11900)](https://github.com/prowler-cloud/prowler/pull/11900)
+- `dms_instance_no_public_access` no longer initializes the full EC2 service when there are no DMS replication instances [(#11902)](https://github.com/prowler-cloud/prowler/pull/11902)
+- `organizations_scp_check_deny_regions` no longer reports false `FAIL` for AWS Organizations that restrict regions with Allow-based SCPs; the Allow path now checks the statement `Effect` instead of an always-false comparison that made it unreachable [(#11915)](https://github.com/prowler-cloud/prowler/pull/11915)
+- Jira issue creation failures now preserve safe structured response details from Jira [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- Azure Function App optional permission failures now log as warnings, and Function App environment variable fields use the correct spelling internally [(#11926)](https://github.com/prowler-cloud/prowler/pull/11926)
+
+---
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed

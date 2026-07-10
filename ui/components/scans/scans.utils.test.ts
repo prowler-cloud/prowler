@@ -177,6 +177,7 @@ describe("buildPendingScheduleRows", () => {
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid: `uid-${id}`,
       alias: `alias-${id}`,
       status: "completed",

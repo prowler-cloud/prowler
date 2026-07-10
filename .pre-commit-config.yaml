@@ -144,7 +144,7 @@ repos:
 
       - id: generate-provider-cards
         name: "Docs - regenerate provider cards snippet"
-        entry: python docs/scripts/generate_provider_cards.py
+        entry: python3 docs/scripts/generate_provider_cards.py
         language: system
         files: { glob: ["docs/user-guide/providers/**/getting-started-*.mdx", "docs/scripts/generate_provider_cards.py", "docs/snippets/provider-cards.mdx", "api/src/backend/api/models.py"] }
         pass_filenames: false

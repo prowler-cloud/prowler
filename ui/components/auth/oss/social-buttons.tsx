@@ -7,7 +7,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { appendCallbackState } from "@/lib/auth-callback-url";
 
 type SocialProvider = {
@@ -73,7 +73,7 @@ const SocialButton = ({
         {provider.isOAuthEnabled ? (
           disabledTooltipContent
         ) : (
-          <div className="flex-inline text-small">
+          <div className="flex-inline text-sm">
             {provider.disabledDocs.message}{" "}
             <CustomLink href={provider.disabledDocs.href}>
               Read the docs

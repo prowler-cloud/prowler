@@ -6,17 +6,18 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
+import { NavigationProgress } from "@/components/shadcn/navigation-progress";
+import { Toaster } from "@/components/shadcn/toast";
+import { TaskPollingWatcher } from "@/components/shared/task-polling-watcher";
 import { GlobalSidePanel } from "@/components/side-panel";
-import MainLayout from "@/components/ui/main-layout/main-layout";
-import { NavigationProgress } from "@/components/ui/navigation-progress";
-import { Toaster } from "@/components/ui/toast";
-import { fontSans } from "@/config/fonts";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
@@ -88,8 +89,9 @@ export default async function RootLayout({
         // the viewport, so their container-query breakpoints keep classic
         // viewport semantics; content inside <main> queries <main> instead.
         className={cn(
-          "bg-background @container min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary @container min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
@@ -113,6 +115,9 @@ export default async function RootLayout({
           {/* Always mounted: it hosts the detail (finding/resource) views in
               every deployment; the AI tab inside is cloud-gated on its own. */}
           <GlobalSidePanel />
+          {/* Resumes persisted background-task polling (e.g. cross-provider
+              PDF generation) so completion toasts survive hard reloads. */}
+          <TaskPollingWatcher />
           <Toaster />
         </Providers>
       </body>

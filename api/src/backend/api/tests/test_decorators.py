@@ -40,10 +40,10 @@ class TestSetTenantDecorator:
 
 @pytest.mark.django_db
 class TestHandleProviderDeletionDecorator:
-    def test_success_no_exception(self, tenants_fixture, providers_fixture):
+    def test_success_no_exception(self, tenants_fixture, aws_provider):
         """Decorated function runs normally when no exception is raised."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         @handle_provider_deletion
         def task_func(**kwargs):
@@ -127,11 +127,11 @@ class TestHandleProviderDeletionDecorator:
     @patch("api.decorators.rls_transaction")
     @patch("api.decorators.Provider.objects.filter")
     def test_provider_exists_reraises_original(
-        self, mock_filter, mock_rls, tenants_fixture, providers_fixture
+        self, mock_filter, mock_rls, tenants_fixture, aws_provider
     ):
         """Re-raises original exception when provider still exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         mock_rls.return_value.__enter__ = lambda s: None
         mock_rls.return_value.__exit__ = lambda s, *args: None
@@ -187,11 +187,11 @@ class TestHandleProviderDeletionDecorator:
     @patch("api.decorators.rls_transaction")
     @patch("api.decorators.Provider.objects.filter")
     def test_database_error_provider_exists_reraises(
-        self, mock_filter, mock_rls, tenants_fixture, providers_fixture
+        self, mock_filter, mock_rls, tenants_fixture, aws_provider
     ):
         """Re-raises original DatabaseError when provider still exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         mock_rls.return_value.__enter__ = lambda s: None
         mock_rls.return_value.__exit__ = lambda s, *args: None
