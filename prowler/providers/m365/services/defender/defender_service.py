@@ -1,6 +1,7 @@
 import asyncio
 from typing import List, Optional
 
+import dns.asyncresolver
 import dns.exception
 import dns.resolver
 from pydantic.v1 import BaseModel
@@ -680,14 +681,30 @@ class Defender(M365Service):
         logger.info("M365 - Getting Defender domain DMARC configurations...")
         domain_dmarc_configurations = {}
         try:
+            verified_domain_ids = []
             domains_list = await self.client.domains.get()
-            for domain in getattr(domains_list, "value", []) or []:
-                if not domain or not getattr(domain, "is_verified", False):
-                    continue
-                domain_id = domain.id
+
+            while domains_list:
+                for domain in getattr(domains_list, "value", []) or []:
+                    if not domain or not getattr(domain, "is_verified", False):
+                        continue
+                    verified_domain_ids.append(domain.id)
+
+                next_link = getattr(domains_list, "odata_next_link", None)
+                if not next_link:
+                    break
+                domains_list = await self.client.domains.with_url(next_link).get()
+
+            dmarc_records = await asyncio.gather(
+                *(
+                    self._get_dmarc_txt_record(domain_id)
+                    for domain_id in verified_domain_ids
+                )
+            )
+            for domain_id, dmarc_record in zip(verified_domain_ids, dmarc_records):
                 domain_dmarc_configurations[domain_id] = DomainDmarcConfiguration(
                     domain=domain_id,
-                    dmarc_record=self._get_dmarc_txt_record(domain_id),
+                    dmarc_record=dmarc_record,
                 )
         except Exception as error:
             logger.error(
@@ -696,7 +713,7 @@ class Defender(M365Service):
         return domain_dmarc_configurations
 
     @staticmethod
-    def _get_dmarc_txt_record(domain: str) -> Optional[str]:
+    async def _get_dmarc_txt_record(domain: str) -> Optional[str]:
         """
         Resolve the DMARC DNS TXT record published at ``_dmarc.<domain>``.
 
@@ -708,7 +725,7 @@ class Defender(M365Service):
                 found, or ``None`` if no DMARC record exists or the lookup fails.
         """
         try:
-            answers = dns.resolver.resolve(f"_dmarc.{domain}", "TXT")
+            answers = await dns.asyncresolver.resolve(f"_dmarc.{domain}", "TXT")
             for answer in answers:
                 record = "".join(
                     part.decode() if isinstance(part, bytes) else part
