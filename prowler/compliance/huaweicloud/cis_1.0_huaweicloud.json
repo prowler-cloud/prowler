@@ -1,0 +1,450 @@
+{
+  "Framework": "CIS",
+  "Name": "CIS Huawei Cloud Foundations Benchmark v1.0.0",
+  "Version": "1.0",
+  "Provider": "HuaweiCloud",
+  "Description": "CIS Huawei Cloud Foundations Benchmark v1.0.0 provides prescriptive guidance for configuring security options for a subset of Huawei Cloud services. It has been developed to help cloud operators establish a secure baseline configuration for their Huawei Cloud environment.",
+  "Requirements": [
+    {
+      "Id": "1.1",
+      "Description": "Ensure IAM password policy requires minimum password length of 14 or greater",
+      "Checks": [
+        "iam_account_password_policy"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure IAM password policy requires a minimum password length of 14 or greater characters.",
+          "RationaleStatement": "Short passwords are easier to crack via brute force attacks. A minimum length of 14 characters significantly increases the keyspace and provides exponentially more security against automated password cracking.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Choose IAM & Security. 3. Click the Password Policy tab. 4. Set Minimum Password Length to 14 or greater. 5. Click OK.",
+          "AuditProcedure": "Run prowler to check the IAM password policy minimum length configuration.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0060.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.2",
+      "Description": "Ensure IAM password policy requires passwords to expire",
+      "Checks": [
+        "iam_password_policy_expires_passwords"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure IAM password policy requires passwords to expire after a defined period.",
+          "RationaleStatement": "Regular password expiration reduces the risk of compromised credentials being used indefinitely. It forces users to periodically update their passwords, limiting the window of opportunity for attackers.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Choose IAM & Security. 3. Click the Password Policy tab. 4. Set Password Validity Period to a non-zero value (e.g., 90 days). 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if the IAM password policy has a password validity period set.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0060.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.3",
+      "Description": "Ensure IAM password policy prevents password reuse",
+      "Checks": [
+        "iam_password_policy_reuse_prevention"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure IAM password policy disallows reuse of at least the last 3 passwords.",
+          "RationaleStatement": "Preventing password reuse ensures users cannot cycle through previously used passwords, which reduces the risk of compromised credentials being reused.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Choose IAM & Security. 3. Click the Password Policy tab. 4. Set Number of Recent Passwords Disallowed to 3 or greater. 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if the IAM password policy disallows reuse of at least 3 recent passwords.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0060.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.4",
+      "Description": "Ensure IAM password policy requires character combination",
+      "Checks": [
+        "iam_password_policy_char_combination"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure IAM password policy requires at least 3 character types (uppercase, lowercase, digits, special characters).",
+          "RationaleStatement": "Requiring multiple character types increases password complexity and makes passwords more resistant to dictionary and brute force attacks.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Choose IAM & Security. 3. Click the Password Policy tab. 4. Set Password Character Combination to 3 or greater. 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if the IAM password policy requires at least 3 character types.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0060.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.5",
+      "Description": "Ensure IAM password policy enforces minimum password age",
+      "Checks": [
+        "iam_password_policy_minimum_age"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure IAM password policy enforces a minimum password age to prevent users from changing passwords too frequently.",
+          "RationaleStatement": "A minimum password age prevents users from rapidly cycling through passwords to bypass password reuse restrictions.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Choose IAM & Security. 3. Click the Password Policy tab. 4. Set Minimum Password Age to a non-zero value (e.g., 1 day). 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if the IAM password policy enforces a minimum password age.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0060.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.6",
+      "Description": "Ensure root account has hardware MFA enabled",
+      "Checks": [
+        "iam_root_hardware_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure the root account has hardware multi-factor authentication (MFA) enabled.",
+          "RationaleStatement": "The root account is the most privileged account in the Huawei Cloud environment. Enabling hardware MFA provides an additional layer of security against unauthorized access.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console as root. 2. Go to IAM & Security. 3. Click the MFA tab. 4. Enable virtual or hardware MFA for the root account. 5. Follow the setup instructions.",
+          "AuditProcedure": "Run prowler to check if the root account has hardware MFA enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0012.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.7",
+      "Description": "Ensure all IAM users have MFA enabled",
+      "Checks": [
+        "iam_user_mfa_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure all IAM users have multi-factor authentication (MFA) enabled.",
+          "RationaleStatement": "MFA provides an additional layer of security against unauthorized access. Without MFA, a compromised password alone is sufficient to gain access.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to IAM & Security > Users. 3. For each user, click Enable MFA and follow the setup instructions.",
+          "AuditProcedure": "Run prowler to check if all IAM users have MFA enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0012.html"
+        }
+      ]
+    },
+    {
+      "Id": "1.8",
+      "Description": "Ensure disabled IAM users are reviewed",
+      "Checks": [
+        "iam_user_disabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "1 Identity and Access Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure disabled IAM users are identified and reviewed for potential removal.",
+          "RationaleStatement": "Disabled user accounts may retain permissions and could be re-enabled by an attacker. Regular review ensures stale accounts are removed.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to IAM & Security > Users. 3. Review disabled users. 4. Remove accounts that are no longer needed.",
+          "AuditProcedure": "Run prowler to identify disabled IAM users.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0033.html"
+        }
+      ]
+    },
+    {
+      "Id": "2.1",
+      "Description": "Ensure OBS buckets have encryption enabled",
+      "Checks": [
+        "obs_bucket_encryption"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure all OBS buckets have server-side encryption enabled.",
+          "RationaleStatement": "Encrypting data at rest protects against unauthorized access to stored data if the underlying storage is compromised.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Object Storage Service. 3. Select each bucket. 4. Enable server-side encryption. 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if all OBS buckets have encryption enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0125.html"
+        }
+      ]
+    },
+    {
+      "Id": "2.2",
+      "Description": "Ensure OBS buckets are not publicly accessible",
+      "Checks": [
+        "obs_bucket_public_access"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure OBS buckets do not allow public read or write access.",
+          "RationaleStatement": "Publicly accessible buckets expose data to anyone on the internet, which can lead to data breaches and unauthorized access.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Object Storage Service. 3. Select each bucket. 4. Review and modify the bucket ACL to remove public access. 5. Click OK.",
+          "AuditProcedure": "Run prowler to check if any OBS buckets are publicly accessible.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0113.html"
+        }
+      ]
+    },
+    {
+      "Id": "2.3",
+      "Description": "Ensure EVS volumes have encryption enabled",
+      "Checks": [
+        "evs_volume_encryption"
+      ],
+      "Attributes": [
+        {
+          "Section": "2 Storage",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure all EVS volumes have encryption enabled.",
+          "RationaleStatement": "Encrypting EVS volumes protects data at rest against unauthorized access if the physical storage media is compromised.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Elastic Volume Service. 3. For each unencrypted volume, create an encrypted volume and migrate data. 4. Delete the unencrypted volume.",
+          "AuditProcedure": "Run prowler to check if all EVS volumes have encryption enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-evs/evs_01_0044.html"
+        }
+      ]
+    },
+    {
+      "Id": "3.1",
+      "Description": "Ensure default security groups restrict all traffic",
+      "Checks": [
+        "vpc_default_security_group_restricts_all_traffic"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Network Security",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure default security groups do not allow unrestricted inbound or outbound traffic.",
+          "RationaleStatement": "Default security groups with open rules expose resources to traffic from any source, increasing the attack surface.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to VPC > Security Groups. 3. Select the default security group. 4. Remove any rules with 0.0.0.0/0 or ::/0 as source/destination. 5. Add restrictive rules as needed.",
+          "AuditProcedure": "Run prowler to check if default security groups restrict all traffic.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/vpc_faq/vpc_faq_0036.html"
+        }
+      ]
+    },
+    {
+      "Id": "3.2",
+      "Description": "Ensure security groups do not allow open ingress on sensitive ports",
+      "Checks": [
+        "vpc_security_group_open_ingress"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Network Security",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure security groups do not allow open ingress (0.0.0.0/0) on sensitive ports (SSH, RDP, MySQL, Redis, MongoDB).",
+          "RationaleStatement": "Exposing sensitive ports to the internet allows attackers to attempt brute force attacks, exploitation, or unauthorized access to services.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to VPC > Security Groups. 3. For each security group, review ingress rules. 4. Remove or restrict rules that allow 0.0.0.0/0 on sensitive ports. 5. Use bastion host or VPN for access instead.",
+          "AuditProcedure": "Run prowler to check if any security groups allow open ingress on sensitive ports.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/vpc_faq/vpc_faq_0036.html"
+        }
+      ]
+    },
+    {
+      "Id": "3.3",
+      "Description": "Ensure WAF is enabled",
+      "Checks": [
+        "waf_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "3 Network Security",
+          "Profile": "Level 2",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure Web Application Firewall (WAF) is enabled to protect web applications from common attacks.",
+          "RationaleStatement": "WAF protects web applications from common web exploits such as SQL injection, XSS, and CSRF attacks.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Web Application Firewall. 3. Create or configure a WAF policy. 4. Enable WAF for your web applications.",
+          "AuditProcedure": "Run prowler to check if WAF is enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-waf/waf_01_0001.html"
+        }
+      ]
+    },
+    {
+      "Id": "4.1",
+      "Description": "Ensure ECS instances do not have public IP addresses",
+      "Checks": [
+        "ecs_instance_public_ip"
+      ],
+      "Attributes": [
+        {
+          "Section": "4 Compute",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure ECS instances do not have public IP addresses unless required.",
+          "RationaleStatement": "Public IP addresses expose instances to the internet, increasing the attack surface. Use a bastion host or VPN for access instead.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Elastic Cloud Server. 3. For each instance with a public IP, release the EIP if not required. 4. Use a bastion host or VPN for access.",
+          "AuditProcedure": "Run prowler to check if any ECS instances have public IP addresses.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0304.html"
+        }
+      ]
+    },
+    {
+      "Id": "5.1",
+      "Description": "Ensure RDS instances have backup enabled",
+      "Checks": [
+        "rds_backup_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 Database",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure all RDS instances have automated backup enabled.",
+          "RationaleStatement": "Automated backups ensure data can be recovered in case of data loss, corruption, or disaster.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Relational Database Service. 3. For each instance, enable automated backup. 4. Configure backup retention period.",
+          "AuditProcedure": "Run prowler to check if all RDS instances have backup enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_05_0037.html"
+        }
+      ]
+    },
+    {
+      "Id": "5.2",
+      "Description": "Ensure RDS instances are not publicly accessible",
+      "Checks": [
+        "rds_public_access"
+      ],
+      "Attributes": [
+        {
+          "Section": "5 Database",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure RDS instances are not publicly accessible.",
+          "RationaleStatement": "Publicly accessible databases expose data to anyone on the internet, significantly increasing the risk of unauthorized access and data breaches.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Relational Database Service. 3. For each instance, remove the public IP address. 4. Configure VPC-only access.",
+          "AuditProcedure": "Run prowler to check if any RDS instances are publicly accessible.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_03_0077.html"
+        }
+      ]
+    },
+    {
+      "Id": "6.1",
+      "Description": "Ensure ELB load balancers are not publicly exposed",
+      "Checks": [
+        "elb_public_exposure"
+      ],
+      "Attributes": [
+        {
+          "Section": "6 Load Balancing",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure ELB load balancers are not publicly exposed unless required.",
+          "RationaleStatement": "Publicly exposed load balancers can be targeted by DDoS attacks and unauthorized access attempts.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Elastic Load Balance. 3. Review each load balancer. 4. For internal-facing services, switch to internal load balancer.",
+          "AuditProcedure": "Run prowler to check if any ELB load balancers are publicly exposed.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_01_0001.html"
+        }
+      ]
+    },
+    {
+      "Id": "7.1",
+      "Description": "Ensure CTS tracking is enabled",
+      "Checks": [
+        "cts_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "7 Logging and Monitoring",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure Cloud Trace Service (CTS) tracking is enabled for auditing and compliance.",
+          "RationaleStatement": "CTS tracking records all API calls and configuration changes, providing an audit trail for security analysis and compliance.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Cloud Trace Service. 3. Create or enable a tracker. 4. Configure the tracker to record all management and data events.",
+          "AuditProcedure": "Run prowler to check if CTS tracking is enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-cts/cts_01_0003.html"
+        }
+      ]
+    },
+    {
+      "Id": "8.1",
+      "Description": "Ensure KMS keys have rotation enabled",
+      "Checks": [
+        "kms_key_rotation_enabled"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Key Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure all KMS keys have automatic key rotation enabled.",
+          "RationaleStatement": "Key rotation regularly replaces cryptographic material, reducing the risk of key compromise over time.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Key Management Service. 3. Select each key. 4. Click the Rotation tab. 5. Enable rotation and set the rotation period.",
+          "AuditProcedure": "Run prowler to check if all KMS keys have rotation enabled.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-kms/kms_01_0019.html"
+        }
+      ]
+    },
+    {
+      "Id": "8.2",
+      "Description": "Ensure KMS keys are not in pending deletion state",
+      "Checks": [
+        "kms_key_not_pending_deletion"
+      ],
+      "Attributes": [
+        {
+          "Section": "8 Key Management",
+          "Profile": "Level 1",
+          "AssessmentStatus": "Automated",
+          "Description": "Ensure KMS keys are not in pending deletion state, which could lead to data loss.",
+          "RationaleStatement": "Keys pending deletion will be permanently deleted after the waiting period, making all data encrypted with those keys unrecoverable.",
+          "ImpactStatement": "",
+          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Key Management Service. 3. Review keys in pending deletion state. 4. Cancel deletion for keys that are still needed.",
+          "AuditProcedure": "Run prowler to check if any KMS keys are in pending deletion state.",
+          "AdditionalInformation": "",
+          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-kms/kms_01_0018.html"
+        }
+      ]
+    }
+  ]
+}
