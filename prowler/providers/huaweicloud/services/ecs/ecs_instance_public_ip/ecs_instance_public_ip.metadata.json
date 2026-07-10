@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_public_ip",
+  "CheckTitle": "ECS instances should not have public IP addresses",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances do not have public IP addresses assigned, reducing exposure to the internet.",
+  "Risk": "ECS instances with public IP addresses are directly accessible from the internet, which increases the attack surface and risk of unauthorized access, data exfiltration, or exploitation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0310.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hwcloud ecs public-ip-unbind --server-id <instance_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance with a public IP\n4. Unbind the EIP from the instance\n5. Use a NAT gateway or VPN for outbound connectivity if needed",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove public IP addresses from ECS instances. Use NAT Gateways or VPN connections for instances that require outbound internet access, and Load Balancers for inbound access.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_public_ip"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

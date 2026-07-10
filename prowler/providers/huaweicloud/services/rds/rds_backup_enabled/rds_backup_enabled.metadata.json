@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_backup_enabled",
+  "CheckTitle": "RDS instances have automated backup enabled",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that RDS instances have automated backup enabled to protect against data loss.",
+  "Risk": "Without automated backups, data loss from accidental deletion, corruption, or hardware failure cannot be recovered, potentially leading to permanent data loss.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_03_0047.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click the Backup and Restoration tab.\n5. Configure the automated backup policy with a retention period.\n6. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable automated backup for all RDS instances with an appropriate retention period.",
+      "Url": "https://hub.prowler.com/check/rds_backup_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

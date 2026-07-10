@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "rds_public_access",
+  "CheckTitle": "RDS instances are not publicly accessible",
+  "CheckType": [],
+  "ServiceName": "rds",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceGroup": "database",
+  "Description": "Ensure that RDS instances do not have public IP addresses to prevent direct internet access to databases.",
+  "Risk": "RDS instances with public IP addresses are accessible from the internet, exposing databases to potential brute-force attacks, SQL injection, and unauthorized data access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_03_0026.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Unbind EIP.\n5. Confirm the unbinding.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove public IP addresses from RDS instances and use VPC peering or VPN for access.",
+      "Url": "https://hub.prowler.com/check/rds_public_access"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
