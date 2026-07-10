@@ -126,6 +126,17 @@ class Test_iter_zip_text_payloads:
 
         assert payloads == {"safe.py": "safe"}
 
+    def test_skips_absolute_members_that_escape_the_extraction_directory(self):
+        with _zip_file(
+            {
+                "/etc/passwd": "unsafe",
+                "safe.py": "safe",
+            }
+        ) as archive:
+            payloads = dict(iter_zip_text_payloads(archive))
+
+        assert payloads == {"safe.py": "safe"}
+
     def test_skips_directory_entries(self):
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "w") as archive:
