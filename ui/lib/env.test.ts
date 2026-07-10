@@ -62,6 +62,7 @@ describe("lib/env gated integration validation", () => {
     "POSTHOG_KEY",
     "UI_POSTHOG_HOST",
     "POSTHOG_HOST",
+    "CLOUD_BILLING_ENABLED",
   ] as const;
 
   beforeEach(() => {
@@ -140,5 +141,31 @@ describe("lib/env gated integration validation", () => {
     vi.stubEnv("POSTHOG_KEY", "phc_key");
 
     await expect(import("@/lib/env")).rejects.toThrow("POSTHOG_HOST");
+  });
+
+  it("throws when CLOUD_BILLING_ENABLED is metronome but PostHog is not enabled", async () => {
+    // metronome billing routes per tenant via the BILLING_SYSTEM_METRONOME
+    // PostHog flag, so PostHog must be enabled.
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
+
+    await expect(import("@/lib/env")).rejects.toThrow(
+      "PostHog is required for per-tenant billing routing",
+    );
+  });
+
+  it("resolves when CLOUD_BILLING_ENABLED is metronome and PostHog is enabled", async () => {
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
+    vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
+  });
+
+  it("resolves when CLOUD_BILLING_ENABLED is legacy without PostHog", async () => {
+    // legacy billing forces V1 and never touches PostHog.
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "legacy");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
   });
 });
