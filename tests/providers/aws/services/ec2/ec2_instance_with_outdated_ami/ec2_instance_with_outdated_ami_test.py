@@ -1,11 +1,11 @@
 from unittest import mock
 
 import botocore
-from moto import mock_aws
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 make_api_call = botocore.client.BaseClient._make_api_call
+describe_images_calls = []
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -27,13 +27,21 @@ def mock_make_api_call(self, operation_name, kwarg):
             ]
         }
     elif operation_name == "DescribeImages":
-        if "Owners" in kwarg and kwarg["Owners"] == ["amazon"]:
+        describe_images_calls.append(kwarg)
+        if kwarg.get("Owners") == ["self"]:
+            return {"Images": []}
+        if kwarg.get("Owners") == ["amazon"]:
+            raise AssertionError(
+                "Amazon AMIs must not be fetched with a broad owner lookup"
+            )
+        if kwarg.get("ImageIds") == ["ami-12345678"]:
             return {
                 "Images": [
                     {
                         "ImageId": "ami-12345678",
                         "DeprecationTime": "2050-01-01T00:00:00.000Z",
                         "Public": True,
+                        "ImageOwnerAlias": "amazon",
                     }
                 ]
             }
@@ -59,6 +67,13 @@ def mock_make_api_call_private(self, operation_name, kwarg):
             ]
         }
     elif operation_name == "DescribeImages":
+        describe_images_calls.append(kwarg)
+        if kwarg.get("Owners") == ["amazon"]:
+            raise AssertionError(
+                "Amazon AMIs must not be fetched with a broad owner lookup"
+            )
+        if kwarg.get("Owners") == ["self"]:
+            return {"Images": []}
         return {
             "Images": [
                 {
@@ -90,13 +105,21 @@ def mock_make_api_call_outdated_ami(self, operation_name, kwarg):
             ]
         }
     elif operation_name == "DescribeImages":
-        if "Owners" in kwarg and kwarg["Owners"] == ["amazon"]:
+        describe_images_calls.append(kwarg)
+        if kwarg.get("Owners") == ["self"]:
+            return {"Images": []}
+        if kwarg.get("Owners") == ["amazon"]:
+            raise AssertionError(
+                "Amazon AMIs must not be fetched with a broad owner lookup"
+            )
+        if kwarg.get("ImageIds") == ["ami-87654321"]:
             return {
                 "Images": [
                     {
                         "ImageId": "ami-87654321",
                         "DeprecationTime": "2022-01-01T00:00:00.000Z",
                         "Public": True,
+                        "ImageOwnerAlias": "amazon",
                     }
                 ]
             }
@@ -122,15 +145,36 @@ def mock_make_api_call_missing_ami(self, operation_name, kwarg):
             ]
         }
     elif operation_name == "DescribeImages":
+        describe_images_calls.append(kwarg)
+        if kwarg.get("Owners") == ["amazon"]:
+            raise AssertionError(
+                "Amazon AMIs must not be fetched with a broad owner lookup"
+            )
+        return {"Images": []}
+    return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_no_instances(self, operation_name, kwarg):
+    if operation_name == "DescribeInstances":
+        return {"Reservations": []}
+    elif operation_name == "DescribeImages":
+        describe_images_calls.append(kwarg)
+        if kwarg.get("Owners") == ["amazon"]:
+            raise AssertionError(
+                "Amazon AMIs must not be fetched with a broad owner lookup"
+            )
         return {"Images": []}
     return make_api_call(self, operation_name, kwarg)
 
 
 class Test_ec2_instance_with_outdated_ami:
-    @mock_aws
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_no_instances
+    )
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
+        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -151,6 +195,7 @@ class Test_ec2_instance_with_outdated_ami:
             result = check.execute()
 
             assert len(result) == 0
+            assert not any("ImageIds" in call for call in describe_images_calls)
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_private
@@ -158,6 +203,7 @@ class Test_ec2_instance_with_outdated_ami:
     def test_ec2_no_public_images(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
+        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -178,11 +224,19 @@ class Test_ec2_instance_with_outdated_ami:
             result = check.execute()
 
             assert len(result) == 0
+            assert not any(
+                call.get("Owners") == ["amazon"] for call in describe_images_calls
+            )
+            assert any(
+                call.get("ImageIds") == ["ami-12345678"]
+                for call in describe_images_calls
+            )
 
     @mock.patch("botocore.client.BaseClient._make_api_call", new=mock_make_api_call)
     def test_instance_ami_not_outdated(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
+        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -209,6 +263,13 @@ class Test_ec2_instance_with_outdated_ami:
                 result[0].status_extended
                 == "EC2 Instance i-0123456789abcdef0 is not using an outdated AMI."
             )
+            assert not any(
+                call.get("Owners") == ["amazon"] for call in describe_images_calls
+            )
+            assert any(
+                call.get("ImageIds") == ["ami-12345678"]
+                for call in describe_images_calls
+            )
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_outdated_ami
@@ -216,6 +277,7 @@ class Test_ec2_instance_with_outdated_ami:
     def test_instance_ami_outdated(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
+        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -242,6 +304,13 @@ class Test_ec2_instance_with_outdated_ami:
                 result[0].status_extended
                 == "EC2 Instance i-0123456789abcdef0 is using outdated AMI ami-87654321."
             )
+            assert not any(
+                call.get("Owners") == ["amazon"] for call in describe_images_calls
+            )
+            assert any(
+                call.get("ImageIds") == ["ami-87654321"]
+                for call in describe_images_calls
+            )
 
     @mock.patch(
         "botocore.client.BaseClient._make_api_call", new=mock_make_api_call_missing_ami
@@ -249,6 +318,7 @@ class Test_ec2_instance_with_outdated_ami:
     def test_instance_missing_ami_details(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
+        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -269,3 +339,10 @@ class Test_ec2_instance_with_outdated_ami:
             result = check.execute()
 
             assert result == []
+            assert not any(
+                call.get("Owners") == ["amazon"] for call in describe_images_calls
+            )
+            assert any(
+                call.get("ImageIds") == ["ami-missing"]
+                for call in describe_images_calls
+            )
