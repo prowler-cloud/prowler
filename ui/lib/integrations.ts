@@ -1,7 +1,7 @@
 import { readBoolEnv, readEnv } from "@/lib/runtime-env";
 
 // Single source of truth for the third-party integrations gated behind a
-// UI_*_ENABLE flag. The same map drives boot validation (lib/env.ts) and the
+// UI_*_ENABLED flag. The same map drives boot validation (lib/env.ts) and the
 // runtime-config gating (lib/runtime-config.ts) so the two cannot drift.
 //
 // Two activation paths, applied uniformly to every integration:
@@ -27,7 +27,7 @@ interface GatedIntegration {
 export const GATED_INTEGRATIONS: Record<string, GatedIntegration> = {
   sentry: {
     name: "Sentry",
-    enableKey: "UI_SENTRY_ENABLE",
+    enableKey: "UI_SENTRY_ENABLED",
     required: [{ key: "UI_SENTRY_DSN", legacy: "NEXT_PUBLIC_SENTRY_DSN" }],
     optional: [
       {
@@ -38,7 +38,7 @@ export const GATED_INTEGRATIONS: Record<string, GatedIntegration> = {
   },
   googleTagManager: {
     name: "Google Tag Manager",
-    enableKey: "UI_GOOGLE_TAG_MANAGER_ENABLE",
+    enableKey: "UI_GOOGLE_TAG_MANAGER_ENABLED",
     required: [
       {
         key: "UI_GOOGLE_TAG_MANAGER_ID",
@@ -49,7 +49,7 @@ export const GATED_INTEGRATIONS: Record<string, GatedIntegration> = {
   },
   posthog: {
     name: "PostHog",
-    enableKey: "UI_POSTHOG_ENABLE",
+    enableKey: "UI_POSTHOG_ENABLED",
     required: [
       { key: "UI_POSTHOG_KEY", legacy: "POSTHOG_KEY" },
       { key: "UI_POSTHOG_HOST", legacy: "POSTHOG_HOST" },

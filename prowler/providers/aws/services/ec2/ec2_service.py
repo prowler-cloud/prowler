@@ -52,6 +52,8 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_ec2_addresses)
         self.ebs_block_public_access_snapshots_states = []
         self.__threading_call__(self._get_snapshot_block_public_access_state)
+        self.ami_block_public_access_states = []
+        self.__threading_call__(self._get_ami_block_public_access_state)
         self.instance_metadata_defaults = []
         self.__threading_call__(self._get_instance_metadata_defaults)
         self.launch_templates = []
@@ -498,6 +500,21 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_ami_block_public_access_state(self, regional_client):
+        try:
+            self.ami_block_public_access_states.append(
+                AmiBlockPublicAccess(
+                    status=regional_client.get_image_block_public_access_state()[
+                        "ImageBlockPublicAccessState"
+                    ],
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _get_instance_metadata_defaults(self, regional_client):
         try:
             instances_in_region = self.attributes_for_regions.get(
@@ -795,6 +812,11 @@ class EbsEncryptionByDefault(BaseModel):
 class EbsSnapshotBlockPublicAccess(BaseModel):
     status: str
     snapshots: bool
+    region: str
+
+
+class AmiBlockPublicAccess(BaseModel):
+    status: str
     region: str
 
 

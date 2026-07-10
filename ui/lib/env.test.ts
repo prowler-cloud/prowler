@@ -49,19 +49,20 @@ describe("lib/env gated integration validation", () => {
   // Clear every gated flag/config so ambient shell env cannot affect assertions,
   // then satisfy the unconditional REQUIRED vars (they are checked first).
   const GATED_ENV_VARS = [
-    "UI_SENTRY_ENABLE",
+    "UI_SENTRY_ENABLED",
     "UI_SENTRY_DSN",
     "NEXT_PUBLIC_SENTRY_DSN",
     "UI_SENTRY_ENVIRONMENT",
     "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
-    "UI_GOOGLE_TAG_MANAGER_ENABLE",
+    "UI_GOOGLE_TAG_MANAGER_ENABLED",
     "UI_GOOGLE_TAG_MANAGER_ID",
     "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
-    "UI_POSTHOG_ENABLE",
+    "UI_POSTHOG_ENABLED",
     "UI_POSTHOG_KEY",
     "POSTHOG_KEY",
     "UI_POSTHOG_HOST",
     "POSTHOG_HOST",
+    "CLOUD_BILLING_ENABLED",
   ] as const;
 
   beforeEach(() => {
@@ -80,14 +81,14 @@ describe("lib/env gated integration validation", () => {
     vi.restoreAllMocks();
   });
 
-  it("throws when UI_SENTRY_ENABLE is true but the DSN is unset", async () => {
-    vi.stubEnv("UI_SENTRY_ENABLE", "true");
+  it("throws when UI_SENTRY_ENABLED is true but the DSN is unset", async () => {
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
 
     await expect(import("@/lib/env")).rejects.toThrow("UI_SENTRY_DSN");
   });
 
-  it("resolves when UI_SENTRY_ENABLE is true and the DSN is present", async () => {
-    vi.stubEnv("UI_SENTRY_ENABLE", "true");
+  it("resolves when UI_SENTRY_ENABLED is true and the DSN is present", async () => {
+    vi.stubEnv("UI_SENTRY_ENABLED", "true");
     vi.stubEnv("UI_SENTRY_DSN", "https://key@o0.ingest.sentry.io/1");
 
     await expect(import("@/lib/env")).resolves.toBeDefined();
@@ -99,8 +100,8 @@ describe("lib/env gated integration validation", () => {
     await expect(import("@/lib/env")).resolves.toBeDefined();
   });
 
-  it("throws when UI_GOOGLE_TAG_MANAGER_ENABLE is true without an id", async () => {
-    vi.stubEnv("UI_GOOGLE_TAG_MANAGER_ENABLE", "true");
+  it("throws when UI_GOOGLE_TAG_MANAGER_ENABLED is true without an id", async () => {
+    vi.stubEnv("UI_GOOGLE_TAG_MANAGER_ENABLED", "true");
 
     await expect(import("@/lib/env")).rejects.toThrow(
       "UI_GOOGLE_TAG_MANAGER_ID",
@@ -108,14 +109,14 @@ describe("lib/env gated integration validation", () => {
   });
 
   it("throws on UI_POSTHOG_HOST when PostHog is enabled with only the key", async () => {
-    vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
     vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
 
     await expect(import("@/lib/env")).rejects.toThrow("UI_POSTHOG_HOST");
   });
 
   it("resolves when PostHog is enabled with both key and host", async () => {
-    vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
     vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
     vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
 
@@ -140,5 +141,31 @@ describe("lib/env gated integration validation", () => {
     vi.stubEnv("POSTHOG_KEY", "phc_key");
 
     await expect(import("@/lib/env")).rejects.toThrow("POSTHOG_HOST");
+  });
+
+  it("throws when CLOUD_BILLING_ENABLED is metronome but PostHog is not enabled", async () => {
+    // metronome billing routes per tenant via the BILLING_SYSTEM_METRONOME
+    // PostHog flag, so PostHog must be enabled.
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
+
+    await expect(import("@/lib/env")).rejects.toThrow(
+      "PostHog is required for per-tenant billing routing",
+    );
+  });
+
+  it("resolves when CLOUD_BILLING_ENABLED is metronome and PostHog is enabled", async () => {
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
+    vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
+    vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
+  });
+
+  it("resolves when CLOUD_BILLING_ENABLED is legacy without PostHog", async () => {
+    // legacy billing forces V1 and never touches PostHog.
+    vi.stubEnv("CLOUD_BILLING_ENABLED", "legacy");
+
+    await expect(import("@/lib/env")).resolves.toBeDefined();
   });
 });
