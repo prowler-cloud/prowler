@@ -1811,6 +1811,7 @@ class TestCheckLighthouseProviderConnectionTask:
         assert result == {"connected": True, "error": None}
         http_client = mock_openai.call_args.kwargs["http_client"]
         assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
 
     def test_openai_compatible_connection_masks_remote_http_error(
         self, tenants_fixture
@@ -2083,6 +2084,7 @@ class TestRefreshLighthouseProviderModelsTask:
         assert result["deleted"] == 0
         http_client = mock_openai.call_args.kwargs["http_client"]
         assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
 
     def test_refresh_models_masks_remote_http_error(self, tenants_fixture):
         provider_cfg = LighthouseProviderConfiguration(

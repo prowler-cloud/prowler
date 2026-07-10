@@ -116,6 +116,7 @@ def _create_openai_compatible_http_client() -> httpx.Client:
     """Create the restricted HTTP client used for OpenAI-compatible providers."""
     return httpx.Client(
         follow_redirects=False,
+        trust_env=False,
         transport=_LighthouseOpenAICompatibleHTTPTransport(),
     )
 
