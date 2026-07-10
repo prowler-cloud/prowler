@@ -117,7 +117,18 @@ dependencies = [
   "alibabacloud_cs20151215==6.1.0",
   "alibabacloud-rds20140815==12.0.0",
   "alibabacloud-sls20201230==5.9.0",
-  "scaleway==2.10.3"
+  "scaleway==2.10.3",
+  "huaweicloudsdkcore==3.1.181",
+  "huaweicloudsdkcts==3.1.181",
+  "huaweicloudsdkecs==3.1.181",
+  "huaweicloudsdkelb==3.1.181",
+  "huaweicloudsdkevs==3.1.181",
+  "huaweicloudsdkiam==3.1.181",
+  "huaweicloudsdkkms==3.1.181",
+  "huaweicloudsdkobs==3.1.181",
+  "huaweicloudsdkrds==3.1.181",
+  "huaweicloudsdkvpc==3.1.181",
+  "huaweicloudsdkwaf==3.1.181"
 ]
 description = "Prowler is an Open Source security tool to perform AWS, GCP and Azure security best practices assessments, audits, incident response, continuous monitoring, hardening and forensics readiness. It contains hundreds of controls covering CIS, NIST 800, NIST CSF, CISA, RBI, FedRAMP, PCI-DSS, GDPR, HIPAA, FFIEC, SOC2, GXP, AWS Well-Architected Framework Security Pillar, AWS Foundational Technical Review (FTR), ENS (Spanish National Security Scheme) and your custom security frameworks."
 license = "Apache-2.0"
@@ -244,6 +255,17 @@ constraint-dependencies = [
   "httpcore==1.0.9",
   "httplib2==0.31.2",
   "httpx==0.28.1",
+  "huaweicloudsdkcore==3.1.181",
+  "huaweicloudsdkcts==3.1.181",
+  "huaweicloudsdkecs==3.1.181",
+  "huaweicloudsdkelb==3.1.181",
+  "huaweicloudsdkevs==3.1.181",
+  "huaweicloudsdkiam==3.1.181",
+  "huaweicloudsdkkms==3.1.181",
+  "huaweicloudsdkobs==3.1.181",
+  "huaweicloudsdkrds==3.1.181",
+  "huaweicloudsdkvpc==3.1.181",
+  "huaweicloudsdkwaf==3.1.181",
   "hyperframe==6.1.0",
   "iamdata==0.1.202605131",
   "idna==3.15",
