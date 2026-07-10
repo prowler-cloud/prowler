@@ -20,7 +20,7 @@ Please add a detailed description of how to review this PR.
 
 - [ ] This feature/issue is listed in the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or roadmap.prowler.com
 - [ ] Is it assigned to me, if not, request it via the [open issues](https://github.com/prowler-cloud/prowler/issues?q=sort%3Aupdated-desc+is%3Aissue+is%3Aopen) or [Prowler Community Slack](https://goto.prowler.com/slack)
-- [ ] I have reviewed the open pull requests and confirmed there is no existing PR that implements the same change
+- [ ] I have reviewed the [open pull requests](https://github.com/prowler-cloud/prowler/pulls?q=sort%3Aupdated-desc+is%3Apr+is%3Aopen) and confirmed there is no existing PR that implements the same outcome
 
 </details>
 
