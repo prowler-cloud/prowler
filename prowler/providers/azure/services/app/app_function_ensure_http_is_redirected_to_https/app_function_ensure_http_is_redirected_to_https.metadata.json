@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "az webapp update --resource-group <RESOURCE_GROUP_NAME> --name <FUNCTION_APP_NAME> --set httpsOnly=true",
+      "CLI": "az functionapp update --resource-group <RESOURCE_GROUP_NAME> --name <FUNCTION_APP_NAME> --https-only true",
       "NativeIaC": "```bicep\n// Enable HTTPS-only redirect on an existing Function App\nresource functionApp 'Microsoft.Web/sites@2022-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    httpsOnly: true  // Critical: forces redirect from HTTP to HTTPS\n  }\n}\n```",
       "Other": "1. Sign in to the Azure portal and go to Function Apps\n2. Select your Function app\n3. Go to TLS/SSL settings and set HTTPS Only to On\n4. Click Save",
       "Terraform": "```hcl\n# Enforce HTTPS-only on a Function App\nresource \"azurerm_linux_function_app\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  service_plan_id     = \"<example_resource_id>\"\n  storage_account_name = \"<example_resource_name>\"\n  storage_account_access_key = \"<example_secret_value>\"\n\n  https_only = true # Critical: redirects HTTP to HTTPS\n}\n```"
