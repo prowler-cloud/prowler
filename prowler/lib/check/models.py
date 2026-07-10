@@ -904,6 +904,31 @@ class CheckReportAlibabaCloud(Check_Report):
 
 
 @dataclass
+class CheckReportHuaweiCloud(Check_Report):
+    """Contains the Huawei Cloud Check's finding information."""
+
+    resource_id: str
+    resource_arn: str
+    region: str
+    resource_name: str
+
+    def __init__(self, metadata: Dict, resource: Any) -> None:
+        """Initialize the Huawei Cloud Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+        """
+        super().__init__(metadata, resource)
+        self.resource_id = (
+            getattr(resource, "id", None) or getattr(resource, "name", None) or ""
+        )
+        self.resource_arn = getattr(resource, "arn", "")
+        self.region = getattr(resource, "region", "")
+        self.resource_name = getattr(resource, "name", "") or self.resource_id
+
+
+@dataclass
 class Check_Report_Kubernetes(Check_Report):
     # TODO change class name to CheckReportKubernetes
     """Contains the Kubernetes Check's finding information."""
