@@ -29,10 +29,10 @@ assertGatedIntegrations();
 // wrong billing system. Fail fast instead of degrading silently.
 if (
   readEnv("CLOUD_BILLING_ENABLED") === "metronome" &&
-  !readBoolEnv("UI_POSTHOG_ENABLE")
+  !readBoolEnv("UI_POSTHOG_ENABLED")
 ) {
   throw new Error(
-    'CLOUD_BILLING_ENABLED is "metronome" but UI_POSTHOG_ENABLE is not "true"; PostHog is required for per-tenant billing routing.',
+    'CLOUD_BILLING_ENABLED is "metronome" but UI_POSTHOG_ENABLED is not "true"; PostHog is required for per-tenant billing routing.',
   );
 }
 
