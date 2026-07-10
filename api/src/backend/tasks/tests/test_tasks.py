@@ -1769,11 +1769,15 @@ class TestCheckLighthouseProviderConnectionTask:
         provider_cfg.save()
 
         with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
-            result = check_lighthouse_provider_connection_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result["connected"] is False
         assert "base url" in result["error"].lower()
         mock_openai.assert_not_called()
@@ -1795,11 +1799,15 @@ class TestCheckLighthouseProviderConnectionTask:
             mock_client.models.list.return_value = MagicMock()
             mock_openai.return_value = mock_client
 
-            result = check_lighthouse_provider_connection_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result == {"connected": True, "error": None}
         http_client = mock_openai.call_args.kwargs["http_client"]
         assert http_client.follow_redirects is False
@@ -1830,11 +1838,15 @@ class TestCheckLighthouseProviderConnectionTask:
             )
             mock_openai.return_value = mock_client
 
-            result = check_lighthouse_provider_connection_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result == {"connected": False, "error": "Provider connection failed"}
         assert remote_body not in result["error"]
         provider_cfg.refresh_from_db()
@@ -1866,11 +1878,15 @@ class TestCheckLighthouseProviderConnectionTask:
             )
             mock_openai.return_value = mock_client
 
-            result = check_lighthouse_provider_connection_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result == {"connected": False, "error": "API key is invalid or missing"}
         assert "remote auth detail" not in result["error"]
         provider_cfg.refresh_from_db()
@@ -2023,11 +2039,15 @@ class TestRefreshLighthouseProviderModelsTask:
         with patch(
             "tasks.jobs.lighthouse_providers._fetch_openai_compatible_models"
         ) as mock_fetch:
-            result = refresh_lighthouse_provider_models_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result["created"] == 0
         assert result["updated"] == 0
         assert result["deleted"] == 0
@@ -2049,11 +2069,15 @@ class TestRefreshLighthouseProviderModelsTask:
             mock_client.models.list.return_value = MagicMock(data=[])
             mock_openai.return_value = mock_client
 
-            result = refresh_lighthouse_provider_models_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result["created"] == 0
         assert result["updated"] == 0
         assert result["deleted"] == 0
@@ -2084,11 +2108,15 @@ class TestRefreshLighthouseProviderModelsTask:
             )
             mock_openai.return_value = mock_client
 
-            result = refresh_lighthouse_provider_models_task(
-                provider_config_id=str(provider_cfg.id),
-                tenant_id=str(tenants_fixture[0].id),
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
             )
 
+        assert eager_result.successful()
+        result = eager_result.result
         assert result["created"] == 0
         assert result["updated"] == 0
         assert result["deleted"] == 0
