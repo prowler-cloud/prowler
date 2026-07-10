@@ -155,7 +155,7 @@ describe("lib/env gated integration validation", () => {
 
   it("resolves when CLOUD_BILLING_ENABLED is metronome and PostHog is enabled", async () => {
     vi.stubEnv("CLOUD_BILLING_ENABLED", "metronome");
-    vi.stubEnv("UI_POSTHOG_ENABLE", "true");
+    vi.stubEnv("UI_POSTHOG_ENABLED", "true");
     vi.stubEnv("UI_POSTHOG_KEY", "phc_key");
     vi.stubEnv("UI_POSTHOG_HOST", "https://eu.i.posthog.com");
 
