@@ -72,7 +72,12 @@ describe("CompliancePageTabs", () => {
     const crossProviderTab = screen.getByRole("tab", {
       name: /cross-provider/i,
     });
+    const tabLabel = screen.getByText("Cross-Provider", { exact: true });
+    const cloudBadge = screen.getByText("Available in Prowler Cloud");
+
     expect(crossProviderTab).toBeDisabled();
-    expect(screen.getByText("Available in Prowler Cloud")).toBeInTheDocument();
+    expect(crossProviderTab).not.toHaveClass("disabled:opacity-50");
+    expect(tabLabel).toHaveClass("opacity-50");
+    expect(cloudBadge.parentElement).toHaveClass("gap-2");
   });
 });

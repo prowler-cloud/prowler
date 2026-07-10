@@ -53,10 +53,9 @@ export const CompliancePageTabs = ({
         <TabsTrigger
           value={COMPLIANCE_TAB.CROSS_PROVIDER}
           disabled={!crossProviderEnabled}
+          adornment={!crossProviderEnabled ? <CloudFeatureBadge /> : undefined}
         >
           Cross-Provider
-          {/* Inline badge: disabled Radix triggers don't fire tooltips. */}
-          {!crossProviderEnabled && <CloudFeatureBadge />}
         </TabsTrigger>
       </TabsList>
 
