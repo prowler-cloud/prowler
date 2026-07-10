@@ -1,6 +1,5 @@
 "use client";
 
-import { Divider } from "@heroui/divider";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
@@ -13,17 +12,18 @@ import {
   ProviderTypeIcon,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { AWSRoleCredentialsForm } from "@/components/providers/workflow/forms/select-credentials-type/aws/credentials-type/aws-role-credentials-form";
-import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { Separator } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
-} from "@/components/ui/form";
-import { FormButtons } from "@/components/ui/form/form-buttons";
+} from "@/components/shadcn/form";
+import { FormButtons } from "@/components/shadcn/form/form-buttons";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
 import { AWSCredentialsRole } from "@/types";
 import {
@@ -321,7 +321,7 @@ export const S3IntegrationForm = ({
             />
           </div>
 
-          <Divider />
+          <Separator />
 
           {/* S3 Configuration */}
           <div className="flex flex-col gap-4">
@@ -421,7 +421,7 @@ export const S3IntegrationForm = ({
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="text-default-500 flex items-center gap-2 text-sm">
+            <p className="text-text-neutral-tertiary flex items-center gap-2 text-sm">
               Need help configuring your Amazon S3 integration?
             </p>
             <CustomLink

@@ -8,17 +8,10 @@ import {
   DefaultValues,
   useForm,
   UseFormReturn,
+  useWatch,
 } from "react-hook-form";
 
 import { Checkbox } from "@/components/shadcn/checkbox/checkbox";
-import { Input } from "@/components/shadcn/input/input";
-import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
-import { Separator } from "@/components/shadcn/separator/separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 import {
   Form,
   FormButtons,
@@ -27,7 +20,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/shadcn/form";
+import { Input } from "@/components/shadcn/input/input";
+import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
+import { Separator } from "@/components/shadcn/separator/separator";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
 import { useFormServerErrors } from "@/hooks/use-form-server-errors";
 import { useManageProvidersUnlimitedVisibility } from "@/hooks/use-manage-providers-unlimited-visibility";
 import {
@@ -84,7 +85,10 @@ export const RoleForm = ({
     "/data/attributes/name": "name",
   });
 
-  const unlimitedVisibility = !!form.watch("unlimited_visibility");
+  // useWatch instead of form.watch: React Compiler can keep memoized JSX stale
+  // when getter reads happen during render.
+  const formValues = useWatch({ control: form.control });
+  const unlimitedVisibility = !!formValues.unlimited_visibility;
   const isLoading = form.formState.isSubmitting;
 
   const onSelectAllChange = (checked: boolean) => {
@@ -132,7 +136,7 @@ export const RoleForm = ({
               id="select-all"
               size="sm"
               checked={visiblePermissionFormFields.every((perm) =>
-                form.watch(perm.field as keyof RoleFormValues),
+                Boolean(formValues[perm.field as keyof RoleFormValues]),
               )}
               onCheckedChange={(checked) => onSelectAllChange(Boolean(checked))}
             />
@@ -149,7 +153,7 @@ export const RoleForm = ({
                   <Checkbox
                     id={field}
                     size="sm"
-                    checked={!!form.watch(field as keyof RoleFormValues)}
+                    checked={!!formValues[field as keyof RoleFormValues]}
                     onCheckedChange={(checked) =>
                       setPermissionValue(field, Boolean(checked))
                     }

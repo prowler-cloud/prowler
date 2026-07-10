@@ -98,7 +98,7 @@ describe("getRuntimeConfigClient", () => {
       [
         "apiBaseUrl",
         "apiDocsUrl",
-        "billingCloudEnable",
+        "cloudBillingEnabled",
         "googleTagManagerId",
         "posthogHost",
         "posthogKey",
@@ -108,9 +108,9 @@ describe("getRuntimeConfigClient", () => {
       ].sort(),
     );
     expect(config.apiBaseUrl).toBe("https://api.example.com/api/v1");
-    // billingCloudEnable is a boolean flag, so it defaults to false (not null)
+    // cloudBillingEnabled is a boolean flag, so it defaults to false (not null)
     // when absent from the island.
-    expect(config.billingCloudEnable).toBe(false);
+    expect(config.cloudBillingEnabled).toBe(false);
     expect(
       (config as unknown as Record<string, unknown>).notAllowlisted,
     ).toBeUndefined();

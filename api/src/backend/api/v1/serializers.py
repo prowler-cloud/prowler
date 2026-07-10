@@ -38,6 +38,7 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.rls import Tenant
+from api.v1.serializer_utils.authentication import blacklist_user_refresh_tokens
 from api.v1.serializer_utils.integrations import (
     AWSCredentialSerializer,
     IntegrationConfigField,
@@ -61,7 +62,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from drf_spectacular.utils import extend_schema_field
 from jwt.exceptions import InvalidKeyError
 from prowler.lib.mutelist.mutelist import Mutelist
@@ -72,7 +73,9 @@ from rest_framework_json_api.relations import SerializerMethodResourceRelatedFie
 from rest_framework_json_api.serializers import ValidationError
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
 # Base
 
@@ -232,6 +235,18 @@ class TokenRefreshSerializer(BaseSerializerV1):
         try:
             # Validate the refresh token
             refresh = RefreshToken(refresh_token)
+            if api_settings.CHECK_REVOKE_TOKEN:
+                user_id = refresh.payload.get(api_settings.USER_ID_CLAIM)
+                try:
+                    user = User.objects.using(MainRouter.admin_db).get(
+                        **{api_settings.USER_ID_FIELD: user_id}
+                    )
+                except User.DoesNotExist:
+                    raise TokenError("User not found.") from None
+                if refresh.get(api_settings.REVOKE_TOKEN_CLAIM) != (
+                    get_md5_hash_password(user.password)
+                ):
+                    raise TokenError("The user's password has been changed.")
             # Generate new access token
             access_token = refresh.access_token
 
@@ -405,7 +420,13 @@ class UserUpdateSerializer(BaseWriteSerializer):
         password = validated_data.pop("password", None)
         if password:
             validate_password(password, user=instance)
-            instance.set_password(password)
+            with transaction.atomic(using=MainRouter.admin_db):
+                instance.set_password(password)
+                for attr, value in validated_data.items():
+                    setattr(instance, attr, value)
+                blacklist_user_refresh_tokens(instance.id)
+                instance.save(using=MainRouter.admin_db)
+                return instance
         return super().update(instance, validated_data)
 
 
@@ -444,8 +465,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def create(self, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         new_relationships = [
             UserRoleRelationship(
@@ -459,8 +480,8 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
 
     def update(self, instance, validated_data):
         role_ids = [item["id"] for item in validated_data["roles"]]
-        roles = Role.objects.filter(id__in=role_ids)
         tenant_id = self.context.get("tenant_id")
+        roles = Role.objects.filter(id__in=role_ids, tenant_id=tenant_id)
 
         # Safeguard: A tenant must always have at least one user with MANAGE_ACCOUNT.
         # If the target roles do NOT include MANAGE_ACCOUNT, and the current user is
@@ -490,7 +511,7 @@ class UserRoleRelationshipSerializer(RLSSerializer, BaseWriteSerializer):
                     }
                 )
 
-        instance.roles.clear()
+        UserRoleRelationship.objects.filter(user=instance, tenant_id=tenant_id).delete()
         new_relationships = [
             UserRoleRelationship(user=instance, role=r, tenant_id=tenant_id)
             for r in roles

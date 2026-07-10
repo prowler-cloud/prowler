@@ -27,7 +27,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
 }));
 

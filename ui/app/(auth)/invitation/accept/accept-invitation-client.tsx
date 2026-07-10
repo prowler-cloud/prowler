@@ -74,11 +74,11 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="solar:danger-triangle-bold"
-              className="text-warning"
+              className="text-text-warning-primary"
               width={48}
             />
             <h1 className="text-xl font-semibold">Invalid Invitation Link</h1>
-            <p className="text-default-500">
+            <p className="text-text-neutral-tertiary">
               No invitation token was provided. Please check the link you
               received.
             </p>
@@ -93,11 +93,11 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="eos-icons:loading"
-              className="text-default-500"
+              className="text-text-neutral-tertiary"
               width={48}
             />
             <h1 className="text-xl font-semibold">Accepting Invitation...</h1>
-            <p className="text-default-500">
+            <p className="text-text-neutral-tertiary">
               Please wait while we process your invitation.
             </p>
           </div>
@@ -108,13 +108,13 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="solar:danger-triangle-bold"
-              className="text-danger"
+              className="text-text-error-primary"
               width={48}
             />
             <h1 className="text-xl font-semibold">
               Could Not Accept Invitation
             </h1>
-            <p className="text-default-500">{state.message}</p>
+            <p className="text-text-neutral-tertiary">{state.message}</p>
             <div className="flex gap-3">
               {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
               <Button asChild variant="outline">
@@ -129,14 +129,14 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-6">
             <Icon
               icon="solar:letter-bold"
-              className="text-primary"
+              className="text-button-primary"
               width={48}
             />
             <div>
               <h1 className="text-xl font-semibold">
                 You&apos;ve Been Invited
               </h1>
-              <p className="text-default-500 mt-2">
+              <p className="text-text-neutral-tertiary mt-2">
                 You&apos;ve been invited to join a tenant on Prowler. How would
                 you like to continue?
               </p>

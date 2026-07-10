@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/shadcn";
-import { Accordion, AccordionItemProps } from "@/components/ui";
+import { Accordion, AccordionItemProps } from "@/components/shadcn";
 
 export const ClientAccordionWrapper = ({
   items,
@@ -71,7 +71,7 @@ export const ClientAccordionWrapper = ({
     lastScrolledKeyRef.current = scrollToKey;
     // Two nested rAFs: the first lets the accordion children commit to
     // the DOM, the second lands after the browser has run a layout pass
-    // so HeroUI's framer-motion expand has settled enough for
+    // so the Collapsible CSS expand animation has settled enough for
     // scrollIntoView to read a stable offset.
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {

@@ -6,16 +6,16 @@ import { ReactNode, Suspense } from "react";
 
 import { getProviders } from "@/actions/providers";
 import { getScansByState } from "@/actions/scans/scans";
+import MainLayout from "@/components/layout/main-layout/main-layout";
 import {
   OnboardingCheckpointWatcher,
   OnboardingGate,
   OnboardingSequenceBanner,
 } from "@/components/onboarding";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
-import MainLayout from "@/components/ui/main-layout/main-layout";
-import { NavigationProgress } from "@/components/ui/navigation-progress";
-import { Toaster } from "@/components/ui/toast";
-import { fontSans } from "@/config/fonts";
+import { NavigationProgress } from "@/components/shadcn/navigation-progress";
+import { Toaster } from "@/components/shadcn/toast";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
@@ -83,8 +83,9 @@ export default async function RootLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>

@@ -8,8 +8,8 @@ import * as z from "zod";
 
 import { deleteLighthouseProviderByType } from "@/actions/lighthouse-v1/lighthouse";
 import { DeleteIcon } from "@/components/icons";
-import { useToast } from "@/components/ui";
-import { Form, FormButtons } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 const formSchema = z.object({

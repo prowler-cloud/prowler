@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { setScanConfigurationProviders } from "@/actions/scan-configurations";
 import { Button } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Select,
@@ -12,8 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
@@ -158,7 +158,7 @@ function ManageScanConfigForm({
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-default-500 text-tiny">
+      <p className="text-text-neutral-tertiary text-xs">
         Choose the scan configuration to apply to{" "}
         <strong>{providerLabel}</strong> on its next scan, or leave default. To
         create or edit configurations, go to{" "}
@@ -184,7 +184,7 @@ function ManageScanConfigForm({
             ))}
           </SelectContent>
         </Select>
-        <p className="text-default-500 text-tiny">
+        <p className="text-text-neutral-tertiary text-xs">
           <strong>Default</strong>
           {
             " uses Prowler's scan configuration baseline. Read more about it in the "

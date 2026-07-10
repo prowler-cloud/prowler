@@ -6,10 +6,6 @@ packages: []
 # Refuse to install on Node/pnpm outside the `engines` block in package.json.
 engineStrict: true
 
-# Hoist the HeroUI family so its legacy peer-dep pattern resolves.
-publicHoistPattern:
-  - "*@heroui/*"
-
 # Default `pnpm add` to exact versions — matches package.json convention.
 saveExact: true
 
@@ -71,8 +67,6 @@ allowBuilds:
   "@sentry/cli": true
   # esbuild: Go binary. Downloads the pre-compiled binary matching the current platform/architecture.
   esbuild: true
-  # @heroui/shared-utils: Demi pattern — detects React/Next.js version at install time and copies the compatible bundle (React 18 vs 19).
-  "@heroui/shared-utils": true
   # unrs-resolver: Rust module resolver (NAPI-RS). Verifies the correct native binding is available for the platform.
   unrs-resolver: true
   # msw: Copies mockServiceWorker.js into the directories listed in package.json's `msw.workerDirectory` (here: `public/`) so the runtime worker stays in sync with the installed msw version. Pure file copy — no native binary, no network access. Required for vitest browser tests to intercept fetches via the service worker.

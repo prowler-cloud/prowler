@@ -7,7 +7,7 @@ import {
   LighthouseSettings,
   LLMProvidersTable,
 } from "@/components/lighthouse-v1";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { isCloud } from "@/lib/shared/env";
 
 export const dynamic = "force-dynamic";

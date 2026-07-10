@@ -1,9 +1,9 @@
 "use client";
 
-import { RadioGroup } from "@heroui/radio";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import { CustomRadio } from "@/components/ui/custom";
+import { CustomRadio } from "@/components/shadcn/custom";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 
 const BEDROCK_AUTH_METHODS = {
   API_KEY: "api_key",
@@ -37,7 +37,7 @@ export const SelectBedrockAuthMethod = () => {
 
       <div className="flex flex-col gap-3">
         <RadioGroup
-          className="flex flex-col gap-3"
+          className="gap-3"
           value={currentAuth || ""}
           onValueChange={handleSelectionChange}
         >

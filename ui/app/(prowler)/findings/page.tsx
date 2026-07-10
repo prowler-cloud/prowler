@@ -15,7 +15,7 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   applyDefaultMutedFilter,
@@ -166,7 +166,7 @@ const SSRDataTable = async ({
   return (
     <>
       {findingGroupsData?.errors?.length > 0 && (
-        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-sm text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingGroupsData.errors[0].detail}</p>
         </div>

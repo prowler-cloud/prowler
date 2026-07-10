@@ -26,13 +26,13 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";

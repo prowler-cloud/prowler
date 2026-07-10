@@ -18,11 +18,11 @@ vi.mock("@/components/shadcn/checkbox/checkbox", () => ({
   Checkbox: () => null,
 }));
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({ value }: { value: string }) => <code>{value}</code>,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string | null }) => (
     <time>{dateTime}</time>
   ),
@@ -35,15 +35,15 @@ vi.mock("@/components/ui/entities", () => ({
   }) => <span>{entityAlias ?? entityId}</span>,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
-vi.mock("@/components/ui/table/data-table-expand-all-toggle", () => ({
+vi.mock("@/components/shadcn/table/data-table-expand-all-toggle", () => ({
   DataTableExpandAllToggle: () => null,
 }));
 
-vi.mock("@/components/ui/table/data-table-expandable-cell", () => ({
+vi.mock("@/components/shadcn/table/data-table-expandable-cell", () => ({
   DataTableExpandableCell: ({ children }: { children: ReactNode }) => (
     <div>{children}</div>
   ),

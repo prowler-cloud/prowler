@@ -8,13 +8,14 @@ import type {
 import { describe, expect, it, vi } from "vitest";
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
   ),
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -131,7 +132,7 @@ vi.mock("@/components/shadcn/tooltip", () => ({
   TooltipTrigger: ({ children }: { children: ReactNode }) => <>{children}</>,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: ({
     dateTime,
     inline,
@@ -141,7 +142,7 @@ vi.mock("@/components/ui/entities", () => ({
   }) => <time data-inline={inline ? "true" : "false"}>{dateTime ?? "-"}</time>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -156,17 +157,17 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/data-table-column-header", () => ({
+vi.mock("@/components/shadcn/table/data-table-column-header", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 

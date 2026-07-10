@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "recharts";
 
-import { ChartConfig, ChartContainer } from "@/components/ui/chart/Chart";
+import { ChartConfig, ChartContainer } from "@/components/shadcn/chart/Chart";
 
 import { ChartLegend } from "./shared/chart-legend";
 import { DonutDataPoint } from "./types";
