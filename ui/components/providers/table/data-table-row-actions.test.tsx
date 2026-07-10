@@ -524,6 +524,37 @@ describe("DataTableRowActions", () => {
     expect(item).toHaveAttribute("aria-disabled", "true");
   });
 
+  it("hides Edit Scan Configuration for dynamic providers in Prowler Cloud", async () => {
+    // Given a dynamic provider in a Cloud tenant with scan configs available.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createDynamicRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        scanConfigs={[]}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then — dynamic providers can't use a Scan Configuration, so the action is
+    // absent entirely, not merely shown as "unavailable".
+    expect(
+      screen.queryByText("Edit Scan Configuration"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Scan Configuration unavailable"),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders Update Credentials for provider rows with credentials", async () => {
     // Given
     const user = userEvent.setup();
