@@ -1,6 +1,8 @@
+import io
 import os
 import subprocess
 import tempfile
+import zipfile
 from datetime import datetime
 from time import mktime
 
@@ -13,6 +15,7 @@ from prowler.lib.utils.utils import (
     file_exists,
     get_file_permissions,
     hash_sha512,
+    iter_zip_text_payloads,
     is_owned_by_root,
     open_file,
     outputs_unix_timestamp,
@@ -70,6 +73,70 @@ def _fake_kingfisher_run_with_findings(findings):
 
 
 _OMIT = object()
+
+
+def _zip_file(entries):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w") as archive:
+        for name, content in entries.items():
+            archive.writestr(name, content)
+    zip_buffer.seek(0)
+    return zipfile.ZipFile(zip_buffer)
+
+
+class Test_iter_zip_text_payloads:
+    def test_yields_package_relative_file_payloads(self):
+        with _zip_file(
+            {
+                "app/config.py": "API_KEY = 'secret'",
+                "README.md": b"hello\xff",
+            }
+        ) as archive:
+            payloads = dict(iter_zip_text_payloads(archive))
+
+        assert payloads == {
+            "app/config.py": "API_KEY = 'secret'",
+            "README.md": "helloÿ",
+        }
+
+    def test_ignores_configured_file_patterns(self):
+        with _zip_file(
+            {
+                "app/config.py": "scan me",
+                "app/package-lock.json": "skip me",
+                "vendor/module.deps.json": "skip me too",
+            }
+        ) as archive:
+            payloads = dict(
+                iter_zip_text_payloads(
+                    archive, ["*.deps.json", "app/package-lock.json"]
+                )
+            )
+
+        assert payloads == {"app/config.py": "scan me"}
+
+    def test_skips_members_that_escape_the_extraction_directory(self):
+        with _zip_file(
+            {
+                "../outside.py": "unsafe",
+                "safe.py": "safe",
+            }
+        ) as archive:
+            payloads = dict(iter_zip_text_payloads(archive))
+
+        assert payloads == {"safe.py": "safe"}
+
+    def test_skips_directory_entries(self):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w") as archive:
+            archive.writestr("pkg/", "")
+            archive.writestr("pkg/module.py", "safe")
+        zip_buffer.seek(0)
+
+        with zipfile.ZipFile(zip_buffer) as archive:
+            payloads = dict(iter_zip_text_payloads(archive))
+
+        assert payloads == {"pkg/module.py": "safe"}
 
 
 class Test_detect_secrets_scan_batch_invalid_line:
