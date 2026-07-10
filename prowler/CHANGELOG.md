@@ -4,7 +4,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
-
 ## [5.33.1] (Prowler v5.33.1)
 
 ### 🐞 Fixed
@@ -17,6 +16,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - Azure Function App optional permission failures now log as warnings, and Function App environment variable fields use the correct spelling internally [(#11926)](https://github.com/prowler-cloud/prowler/pull/11926)
 
 ---
+
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed
