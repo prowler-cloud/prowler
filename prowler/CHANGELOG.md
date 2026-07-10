@@ -8,7 +8,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `ske_cluster_no_public_endpoint` check for STACKIT provider, verifying that the Kubernetes API endpoint of an SKE cluster is not reachable from the whole internet, either because the ACL extension restricts it to a set of source CIDRs that excludes `0.0.0.0/0` and `::/0`, or because the control plane runs inside a STACKIT Network Area [(#11941)](https://github.com/prowler-cloud/prowler/pull/11941)
+- `ske_cluster_no_public_endpoint` check for STACKIT provider, verifying that the Kubernetes API endpoint of an SKE cluster is not reachable from the whole internet, either because the ACL extension restricts it to a set of source CIDRs that excludes `0.0.0.0/0` and `::/0`, or because the control plane runs inside a STACKIT Network Area [(#11943)](https://github.com/prowler-cloud/prowler/pull/11943)
 
 ### 🐞 Fixed
 
