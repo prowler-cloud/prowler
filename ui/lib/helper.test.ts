@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { downloadScanZip, getErrorMessage } from "./helper";
+import {
+  downloadScanZip,
+  getErrorMessage,
+  permissionFormFields,
+} from "./helper";
 
 vi.mock("@/actions/scans", () => ({
   getComplianceCsv: vi.fn(),
@@ -133,5 +137,21 @@ describe("getErrorMessage", () => {
     expect(message).toBe(
       "Server is temporarily unavailable. Please try again in a few minutes.",
     );
+  });
+});
+
+describe("permissionFormFields", () => {
+  it("describes Unlimited Visibility as organization-wide", () => {
+    // Given
+    const field = permissionFormFields.find(
+      ({ field }) => field === "unlimited_visibility",
+    );
+
+    // When
+    const description = field?.description;
+
+    // Then
+    expect(description).toContain("organization-wide visibility");
+    expect(description).not.toContain("tenant-wide");
   });
 });
