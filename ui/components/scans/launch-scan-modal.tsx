@@ -12,14 +12,15 @@ import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
+import { toast, ToastAction } from "@/components/shadcn/toast";
 import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { FormButtons } from "@/components/ui/form";
-import { toast, ToastAction } from "@/components/ui/toast";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleAttributesFromProvider,
@@ -328,21 +329,6 @@ function LaunchScanForm({
         </Field>
       )}
 
-      {isBlocked && (
-        <p className="text-text-error-primary text-sm">
-          You have exceeded the usage limit of one provider. You can add more
-          providers and run unlimited scans by adding a subscription.{" "}
-          <Link
-            href="https://cloud.prowler.com/billing"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline"
-          >
-            Manage Billing
-          </Link>
-        </p>
-      )}
-
       {!isScheduleMode && (
         <Field>
           <FieldLabel htmlFor="launch-scan-alias">Alias (optional)</FieldLabel>
@@ -354,6 +340,8 @@ function LaunchScanForm({
           {aliasError && <FieldError>{aliasError}</FieldError>}
         </Field>
       )}
+
+      {isBlocked && <UsageLimitMessage />}
 
       {isScheduleMode && isScheduleLoading && (
         <div className="flex items-center gap-3 py-2">

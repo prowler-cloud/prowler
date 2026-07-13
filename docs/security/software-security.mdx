@@ -158,7 +158,7 @@ The MCP Server has a small direct-dependency surface and does not yet declare a 
 The UI uses [pnpm](https://pnpm.io) with supply-chain controls configured in [`ui/pnpm-workspace.yaml`](https://github.com/prowler-cloud/prowler/blob/master/ui/pnpm-workspace.yaml).
 
 - **Minimum release age** (`minimumReleaseAge: 1440`): packages must publish at least 24 hours before install. This reduces exposure during the window when a compromised release has not yet been detected and yanked.
-- **Lifecycle script allow-list** (`strictDepBuilds: true` + `allowBuilds`): only explicitly approved packages may run `install` or `postinstall` scripts (currently `sharp`, `esbuild`, `@sentry/cli`, `@heroui/shared-utils`, `unrs-resolver`, `msw`). Any unlisted package with lifecycle scripts fails the install.
+- **Lifecycle script allow-list** (`strictDepBuilds: true` + `allowBuilds`): only explicitly approved packages may run `install` or `postinstall` scripts (currently `sharp`, `esbuild`, `@sentry/cli`, `unrs-resolver`, `msw`). Any unlisted package with lifecycle scripts fails the install.
 - **Trust policy** (`trustPolicy: no-downgrade`): the install fails when a package's trust evidence drops, for example after a new publisher takes over.
 - **Block exotic subdeps** (`blockExoticSubdeps: true`): transitive dependencies cannot ship as git URLs or tarballs. Every package in the tree resolves from the configured registry.
 - **Transitive overrides** in [`ui/package.json`](https://github.com/prowler-cloud/prowler/blob/master/ui/package.json) force specific versions for transitive packages (`lodash`, `serialize-javascript`, `qs`, `rollup`, `minimatch`, `ajv`, and others).

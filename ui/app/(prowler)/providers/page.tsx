@@ -1,12 +1,17 @@
 import { Suspense } from "react";
 
+import { listScanConfigurations } from "@/actions/scan-configurations";
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { CliImportBanner } from "@/components/scans";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  type ScanConfigurationListState,
+} from "@/types/scan-configurations";
 
 import { ProviderGroupsContent } from "./provider-groups-content";
 import { ProviderPageTabs } from "./provider-page-tabs";
@@ -103,24 +108,45 @@ const ProviderGroupsFallback = () => {
   );
 };
 
+const loadScanConfigs = async (
+  isCloud: boolean,
+): Promise<ScanConfigurationListState> => {
+  if (!isCloud) {
+    return { status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE, data: [] };
+  }
+
+  try {
+    return {
+      status: SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      data: await listScanConfigurations(),
+    };
+  } catch (error) {
+    console.error("Error loading provider scan configurations:", error);
+    return { status: SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE, data: [] };
+  }
+};
+
 const ProvidersTabContent = async ({
   searchParams,
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const providersView = await loadProvidersAccountsViewData({
-    searchParams,
-    isCloud: process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true",
-  });
+  const isCloud = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const [providersView, scanConfigsState] = await Promise.all([
+    loadProvidersAccountsViewData({ searchParams, isCloud }),
+    loadScanConfigs(isCloud),
+  ]);
 
   return (
     <ProvidersAccountsView
-      isCloud={process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"}
+      isCloud={isCloud}
       filters={providersView.filters}
       providers={providersView.providers}
       providerGroups={providersView.providerGroups}
       metadata={providersView.metadata}
       rows={providersView.rows}
+      scanConfigs={scanConfigsState.data}
+      scanConfigStatus={scanConfigsState.status}
     />
   );
 };

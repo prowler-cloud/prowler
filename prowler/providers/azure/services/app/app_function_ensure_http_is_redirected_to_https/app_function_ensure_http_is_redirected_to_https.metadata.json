@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "app_function_ensure_http_is_redirected_to_https",
+  "CheckTitle": "Function app redirects HTTP to HTTPS",
+  "CheckType": [],
+  "ServiceName": "app",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.web/sites",
+  "ResourceGroup": "serverless",
+  "Description": "**Azure Function apps** redirect `HTTP` traffic to `HTTPS` when the `HTTPS Only` setting is enabled. This evaluation identifies Function apps that do not force secure transport by checking whether plaintext requests are automatically redirected to encrypted endpoints.",
+  "Risk": "Leaving **HTTP accessible** on a Function app enables **man-in-the-middle** interception, credential and token theft, and response tampering. This undermines **confidentiality** and **integrity**, and can lead to session hijacking or downgrade attacks that bypass TLS.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/app-service/configure-ssl-bindings#enforce-https",
+    "https://learn.microsoft.com/en-us/security/benchmark/azure/security-controls-v3-data-protection#dp-3-encrypt-sensitive-data-in-transit"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az functionapp update --resource-group <RESOURCE_GROUP_NAME> --name <FUNCTION_APP_NAME> --https-only true",
+      "NativeIaC": "```bicep\n// Enable HTTPS-only redirect on an existing Function App\nresource functionApp 'Microsoft.Web/sites@2022-09-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    httpsOnly: true  // Critical: forces redirect from HTTP to HTTPS\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and go to Function Apps\n2. Select your Function app\n3. Go to TLS/SSL settings and set HTTPS Only to On\n4. Click Save",
+      "Terraform": "```hcl\n# Enforce HTTPS-only on a Function App\nresource \"azurerm_linux_function_app\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<example_location>\"\n  service_plan_id     = \"<example_resource_id>\"\n  storage_account_name = \"<example_resource_name>\"\n  storage_account_access_key = \"<example_secret_value>\"\n\n  https_only = true # Critical: redirects HTTP to HTTPS\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Enforce **HTTPS-only** for all Function apps.\n- Use trusted certificates and require `TLS 1.2` or later\n- Enable **HSTS** to prevent downgrade/mixed-content\n- Redirect legacy `http` links to `https`\n- Minimize HTTP exposure via WAF/CDN or private access\nApply **defense in depth** to protect data in transit.",
+      "Url": "https://hub.prowler.com/check/app_function_ensure_http_is_redirected_to_https"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check mirrors app_ensure_http_is_redirected_to_https but evaluates Function apps (Microsoft.Web/sites with kind starting with 'functionapp') via app_client.functions. When HTTPS Only is enabled, every incoming HTTP request is redirected to the HTTPS port."
+}

@@ -14,7 +14,7 @@ thresholds) and avoids ints that obviously break downstream maths
 
 from typing import Annotated, Literal, Optional
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, BeforeValidator, Field
 
 from prowler.config.schema.base import ProviderConfigBase
 from prowler.config.schema.validators import (
@@ -101,10 +101,65 @@ def _validate_account_ids(v: Optional[list[str]]) -> Optional[list[str]]:
     return v
 
 
+def _reject_bool_resource_limit(v):
+    if isinstance(v, bool):
+        raise ValueError("resource scan limits must be integers, not booleans")
+    return v
+
+
+ResourceScanLimit = Annotated[
+    Optional[int], BeforeValidator(_reject_bool_resource_limit)
+]
+
+
 # ---- Main schema ------------------------------------------------------------
 
 
 class AWSProviderConfig(ProviderConfigBase):
+    # --- Resource scan limits ---------------------------------------------
+    max_scanned_resources_per_service: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Global resource scan limit for high-volume AWS services. Use 0 or -1 to disable.",
+    )
+    max_ebs_snapshots: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for EBS snapshots. Use 0 or -1 to disable.",
+    )
+    max_backup_recovery_points: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for AWS Backup recovery points. Use 0 or -1 to disable.",
+    )
+    max_cloudwatch_log_groups: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CloudWatch log groups. Use 0 or -1 to disable.",
+    )
+    max_lambda_functions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for Lambda functions. Use 0 or -1 to disable.",
+    )
+    max_ecs_task_definitions: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for ECS task definitions. Use 0 or -1 to disable.",
+    )
+    max_codeartifact_packages: ResourceScanLimit = Field(
+        default=None,
+        ge=-1,
+        le=1_000_000,
+        description="Resource scan limit for CodeArtifact packages. Use 0 or -1 to disable.",
+    )
+
     # --- IAM ---------------------------------------------------------------
     mute_non_default_regions: Optional[bool] = None
     disallowed_regions: Optional[list[str]] = None
@@ -371,6 +426,7 @@ class AWSProviderConfig(ProviderConfigBase):
 
     # --- Secrets ---------------------------------------------------------
     secrets_ignore_patterns: Optional[list[str]] = None
+    secrets_ignore_files: Optional[list[str]] = None
     secrets_validate: Optional[bool] = Field(
         default=None,
         description=(
@@ -401,4 +457,32 @@ class AWSProviderConfig(ProviderConfigBase):
         ge=24,
         le=8760,
         description="Hours of Kinesis stream retention. Range: 24..8760 (1 day .. 1 year).",
+    )
+
+    # --- S3 --------------------------------------------------------------
+    s3_bucket_object_public_enabled: Optional[bool] = Field(
+        default=None,
+        description=(
+            "Enable the s3_bucket_object_public spot-check, which samples object "
+            "ACLs per bucket. Disabled by default because it lists and reads object "
+            "ACLs, which is expensive on large buckets."
+        ),
+    )
+    s3_bucket_object_public_max_objects: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description=(
+            "Max objects to list per bucket as the sampling pool. Range: 1..1000 "
+            "(ListObjectsV2 returns at most 1000 keys per page)."
+        ),
+    )
+    s3_bucket_object_public_sample_size: Optional[int] = Field(
+        default=None,
+        ge=1,
+        le=1000,
+        description=(
+            "Number of objects sampled from the listed pool for ACL inspection. "
+            "Range: 1..1000. Must be positive to avoid a no-op or invalid sample."
+        ),
     )

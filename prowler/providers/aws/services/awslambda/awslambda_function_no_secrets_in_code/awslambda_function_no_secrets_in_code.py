@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import tempfile
 from collections import defaultdict
@@ -20,14 +21,20 @@ class awslambda_function_no_secrets_in_code(Check):
         secrets_ignore_patterns = awslambda_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
+        # Glob patterns of file names inside the deployment package to skip
+        # when scanning for secrets (e.g. "*.deps.json" for .NET Lambdas).
+        secrets_ignore_files = (
+            awslambda_client.audit_config.get("secrets_ignore_files", []) or []
+        )
         validate = awslambda_client.audit_config.get("secrets_validate", False)
 
-        # Scan the top-level files of every function's package in batched
+        # Scan files of every function's package in batched
         # Kingfisher invocations instead of one subprocess per file per function.
-        # Each package is extracted one at a time and its top-level files are
+        # Each package is extracted one at a time and its files are
         # read (byte-faithfully via latin-1) before the extraction is released,
         # so only a single package is on disk at a time. Findings are keyed by
-        # (function index, file name) so they can be grouped back per function.
+        # (function index, package-relative file name) so they can be grouped
+        # back per function.
         functions_with_code = []
 
         def code_payloads():
@@ -38,15 +45,23 @@ class awslambda_function_no_secrets_in_code(Check):
                 functions_with_code.append(function)
                 with tempfile.TemporaryDirectory() as tmp_dir_name:
                     function_code.code_zip.extractall(tmp_dir_name)
-                    for file_name in next(os.walk(tmp_dir_name))[2]:
-                        try:
-                            with open(
-                                os.path.join(tmp_dir_name, file_name), "rb"
-                            ) as code_file:
-                                content = code_file.read().decode("latin-1")
-                        except Exception:
-                            continue
-                        yield (index, file_name), content
+                    for root, _, files in os.walk(tmp_dir_name):
+                        for file_name in files:
+                            file_path = os.path.join(root, file_name)
+                            relative_file_path = os.path.relpath(
+                                file_path, tmp_dir_name
+                            )
+                            if any(
+                                fnmatch.fnmatch(relative_file_path, pattern)
+                                for pattern in secrets_ignore_files
+                            ):
+                                continue
+                            try:
+                                with open(file_path, "rb") as code_file:
+                                    content = code_file.read().decode("latin-1")
+                            except Exception:
+                                continue
+                            yield (index, relative_file_path), content
 
         scan_error = None
         try:

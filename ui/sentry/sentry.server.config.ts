@@ -1,9 +1,14 @@
 import * as Sentry from "@sentry/nextjs";
 
-import { readEnv } from "@/lib/runtime-env";
+import { readGatedEnv } from "@/lib/integrations";
 
-const sentryDsn = readEnv("UI_SENTRY_DSN", "NEXT_PUBLIC_SENTRY_DSN");
-const sentryEnvironment = readEnv(
+const sentryDsn = readGatedEnv(
+  "UI_SENTRY_ENABLED",
+  "UI_SENTRY_DSN",
+  "NEXT_PUBLIC_SENTRY_DSN",
+);
+const sentryEnvironment = readGatedEnv(
+  "UI_SENTRY_ENABLED",
   "UI_SENTRY_ENVIRONMENT",
   "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
 );

@@ -1,15 +1,21 @@
 "use client";
 
-import { CheckIcon, Trash2Icon } from "lucide-react";
+import { Trash2Icon } from "lucide-react";
 import { useState } from "react";
 
 import { deleteSamlConfig } from "@/actions/integrations";
-import { Button } from "@/components/shadcn";
+import {
+  Badge,
+  Button,
+  Card,
+  CardAction,
+  CardContent,
+  CardHeader,
+  useToast,
+} from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 
-import { Card, CardContent, CardHeader } from "../../shadcn";
 import { SamlConfigForm } from "./saml-config-form";
 
 export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
@@ -18,6 +24,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const id = samlConfig?.id;
+  const statusLabel = id ? "Enabled" : "Disabled";
 
   const handleRemoveSaml = async () => {
     if (!id) return;
@@ -72,7 +79,7 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to remove the SAML SSO configuration? Users
             will no longer be able to sign in using SAML.
           </p>
@@ -100,13 +107,10 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
         </div>
       </Modal>
 
-      <Card variant="base" padding="lg">
+      <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
         <CardHeader>
           <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <h4 className="text-lg font-bold">SAML SSO Integration</h4>
-              {id && <CheckIcon className="text-button-primary" size={20} />}
-            </div>
+            <h4 className="text-lg font-bold">SAML SSO Integration</h4>
             <p className="text-xs text-gray-500">
               {id ? (
                 "SAML Single Sign-On is enabled for this organization"
@@ -120,30 +124,25 @@ export const SamlIntegrationCard = ({ samlConfig }: { samlConfig?: any }) => {
               )}
             </p>
           </div>
+          <CardAction className="pt-2">
+            <Badge variant={id ? "success" : "outline"}>{statusLabel}</Badge>
+          </CardAction>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div className="text-sm">
-              <span className="font-medium">Status: </span>
-              <span className={id ? "text-button-primary" : "text-gray-500"}>
-                {id ? "Enabled" : "Disabled"}
-              </span>
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" onClick={() => setIsSamlModalOpen(true)}>
-                {id ? "Update" : "Enable"}
+          <div className="flex justify-end gap-2">
+            <Button size="sm" onClick={() => setIsSamlModalOpen(true)}>
+              {id ? "Update" : "Enable"}
+            </Button>
+            {id && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => setIsDeleteModalOpen(true)}
+              >
+                <Trash2Icon size={16} />
+                Remove
               </Button>
-              {id && (
-                <Button
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => setIsDeleteModalOpen(true)}
-                >
-                  <Trash2Icon size={16} />
-                  Remove
-                </Button>
-              )}
-            </div>
+            )}
           </div>
         </CardContent>
       </Card>

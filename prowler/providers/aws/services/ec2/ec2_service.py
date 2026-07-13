@@ -6,6 +6,10 @@ from botocore.client import ClientError
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
+from prowler.lib.resource_limit import (
+    get_resource_scan_limit,
+    limit_resources,
+)
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
@@ -26,8 +30,12 @@ class EC2(AWSService):
         self.snapshots = []
         self.volumes_with_snapshots = {}
         self.regions_with_snapshots = {}
+        # Snapshots are listed first, then limited after per-region snapshot
+        # presence is derived and before public status is hydrated.
+        self.snapshot_limit = get_resource_scan_limit(
+            self.audit_config, "max_ebs_snapshots"
+        )
         self.__threading_call__(self._describe_snapshots)
-        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
@@ -36,12 +44,16 @@ class EC2(AWSService):
         self.__threading_call__(self._describe_volumes)
         self.attributes_for_regions = {}
         self.__threading_call__(self._get_resources_for_regions)
+        self._select_snapshots_for_analysis()
+        self.__threading_call__(self._determine_public_snapshots, self.snapshots)
         self.ebs_encryption_by_default = []
         self.__threading_call__(self._get_ebs_encryption_settings)
         self.elastic_ips = []
         self.__threading_call__(self._describe_ec2_addresses)
         self.ebs_block_public_access_snapshots_states = []
         self.__threading_call__(self._get_snapshot_block_public_access_state)
+        self.ami_block_public_access_states = []
+        self.__threading_call__(self._get_ami_block_public_access_state)
         self.instance_metadata_defaults = []
         self.__threading_call__(self._get_instance_metadata_defaults)
         self.launch_templates = []
@@ -207,6 +219,7 @@ class EC2(AWSService):
                                 arn=arn,
                                 region=regional_client.region,
                                 encrypted=snapshot.get("Encrypted", False),
+                                start_time=snapshot.get("StartTime"),
                                 tags=snapshot.get("Tags"),
                                 volume=snapshot["VolumeId"],
                             )
@@ -242,6 +255,18 @@ class EC2(AWSService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _select_snapshots_for_analysis(self):
+        self.snapshots = list(
+            limit_resources(
+                sorted(
+                    self.snapshots,
+                    key=lambda s: (s.start_time.timestamp() if s.start_time else 0.0),
+                    reverse=True,
+                ),
+                self.snapshot_limit,
+            )
+        )
 
     def _describe_network_interfaces(self, regional_client):
         try:
@@ -475,6 +500,21 @@ class EC2(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_ami_block_public_access_state(self, regional_client):
+        try:
+            self.ami_block_public_access_states.append(
+                AmiBlockPublicAccess(
+                    status=regional_client.get_image_block_public_access_state()[
+                        "ImageBlockPublicAccessState"
+                    ],
+                    region=regional_client.region,
+                )
+            )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _get_instance_metadata_defaults(self, regional_client):
         try:
             instances_in_region = self.attributes_for_regions.get(
@@ -686,6 +726,7 @@ class Snapshot(BaseModel):
     region: str
     encrypted: bool
     public: bool = False
+    start_time: Optional[datetime] = None
     tags: Optional[list] = []
     volume: Optional[str]
 
@@ -771,6 +812,11 @@ class EbsEncryptionByDefault(BaseModel):
 class EbsSnapshotBlockPublicAccess(BaseModel):
     status: str
     snapshots: bool
+    region: str
+
+
+class AmiBlockPublicAccess(BaseModel):
+    status: str
     region: str
 
 

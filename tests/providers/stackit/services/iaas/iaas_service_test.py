@@ -1,4 +1,5 @@
 from unittest.mock import MagicMock, patch
+from uuid import UUID
 
 import pytest
 
@@ -32,6 +33,9 @@ class Test_IaaS_Service:
         assert isinstance(iaas_service.server_nics, list)
         assert isinstance(iaas_service.in_use_sg_ids, set)
         assert iaas_service.scan_unused_services is False
+        assert isinstance(iaas_service.servers, list)
+        assert isinstance(iaas_service._nic_device_index, dict)
+        assert isinstance(iaas_service._public_ip_server_ids, set)
 
     def test_service_project_id(self):
         """Test that the service correctly extracts project_id from provider."""
@@ -63,6 +67,8 @@ class Test_IaaS_Service:
             ("_list_server_nics", "list_project_nics"),
             ("_list_security_groups", "list_security_groups"),
             ("_list_security_group_rules", "list_security_group_rules"),
+            ("_list_public_ips", "list_public_ips"),
+            ("_list_servers", "list_servers"),
         ],
     )
     def test_list_methods_propagate_api_errors(self, method_name, client_method_name):
@@ -432,6 +438,9 @@ class Test_IaaS_Service_Fetch_All_Regions:
         service.security_groups = []
         service.server_nics = []
         service.in_use_sg_ids = set()
+        service.servers = []
+        service._nic_device_index = {}
+        service._public_ip_server_ids = set()
         return service
 
     def _good_client(self, sg_id="sg-eu01"):
@@ -439,6 +448,8 @@ class Test_IaaS_Service_Fetch_All_Regions:
         client.list_project_nics.return_value = {"items": []}
         client.list_security_groups.return_value = {"items": [{"id": sg_id}]}
         client.list_security_group_rules.return_value = {"items": []}
+        client.list_public_ips.return_value = {"items": []}
+        client.list_servers.return_value = {"items": []}
         return client
 
     def _missing_region_client(self):
@@ -513,3 +524,336 @@ class Test_IaaS_Service_Log_Skipped_Security_Groups:
         with caplog.at_level(logging.INFO):
             service._log_skipped_security_groups()
         assert "scan-unused-services" not in caplog.text
+
+
+class Test_IaaS_Service_NIC_Device_Index:
+    """NIC device index is built during _list_server_nics to enable
+    public IP → server cross-reference.
+    """
+
+    def _service(self):
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+        service._nic_device_index = {}
+        return service
+
+    def test_nic_with_id_and_device_is_indexed(self):
+        service = self._service()
+        nic_id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        device_id = UUID("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb")
+        nic = MagicMock()
+        nic.id = nic_id
+        nic.device = device_id
+        nic.security_groups = []
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": [nic]}
+
+        service._list_server_nics(client, "eu01")
+
+        assert str(nic_id) in service._nic_device_index
+        assert service._nic_device_index[str(nic_id)] == str(device_id)
+
+    def test_nic_without_device_is_not_indexed(self):
+        service = self._service()
+        nic = MagicMock()
+        nic.id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        nic.device = None
+        nic.security_groups = []
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": [nic]}
+
+        service._list_server_nics(client, "eu01")
+
+        assert service._nic_device_index == {}
+
+    def test_nic_indexing_error_is_skipped(self):
+        """A NIC that raises while reading its id is skipped, not fatal."""
+
+        class MalformedNIC:
+            @property
+            def id(self):
+                raise ValueError("malformed nic")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": [MalformedNIC()]}
+
+        service._list_server_nics(client, "eu01")
+
+        assert service._nic_device_index == {}
+
+    def test_dict_shaped_nic_is_indexed(self):
+        """Raw dict NICs are indexed the same as SDK model NICs."""
+        service = self._service()
+        client = MagicMock()
+        client.list_project_nics.return_value = {
+            "items": [{"id": "nic-1", "device": "server-1", "security_groups": []}]
+        }
+
+        service._list_server_nics(client, "eu01")
+
+        assert service._nic_device_index == {"nic-1": "server-1"}
+
+
+class Test_IaaS_Service_PublicIps:
+    """Tests for _list_public_ips."""
+
+    def _service(self):
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service._nic_device_index = {}
+        service._public_ip_server_ids = set()
+        return service
+
+    def test_unattached_ip_is_ignored(self):
+        service = self._service()
+        ip = MagicMock()
+        ip.network_interface = None
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [ip]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_attached_ip_with_known_nic_marks_server(self):
+        nic_id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        server_id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+        service = self._service()
+        service._nic_device_index = {str(nic_id): server_id}
+        ip = MagicMock()
+        ip.network_interface = nic_id
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [ip]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert server_id in service._public_ip_server_ids
+
+    def test_attached_ip_with_unknown_nic_is_ignored(self):
+        service = self._service()
+        service._nic_device_index = {}
+        ip = MagicMock()
+        ip.network_interface = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [ip]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_list_public_ips_without_client_is_noop(self):
+        """A missing regional client is logged and skipped, not fatal."""
+        service = self._service()
+
+        service._list_public_ips(None, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_public_ip_processing_error_is_skipped(self):
+        """A public IP that raises while being read is skipped, not fatal."""
+
+        class MalformedIP:
+            @property
+            def network_interface(self):
+                raise ValueError("malformed public ip")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [MalformedIP()]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert service._public_ip_server_ids == set()
+
+    def test_dict_shaped_public_ip_marks_server(self):
+        """Raw dict public IPs (camelCase networkInterface) mark the server."""
+        service = self._service()
+        service._nic_device_index = {"nic-1": "server-1"}
+        client = MagicMock()
+        client.list_public_ips.return_value = {"items": [{"networkInterface": "nic-1"}]}
+
+        service._list_public_ips(client, "eu01")
+
+        assert "server-1" in service._public_ip_server_ids
+
+
+class Test_IaaS_Service_Servers:
+    """Tests for _list_servers."""
+
+    def _service(self):
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.servers = []
+        service._public_ip_server_ids = set()
+        return service
+
+    def test_server_without_public_ip(self):
+        server_id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        service = self._service()
+        server_data = MagicMock()
+        server_data.id = server_id
+        server_data.name = "my-server"
+        client = MagicMock()
+        client.list_servers.return_value = {"items": [server_data]}
+
+        service._list_servers(client, "eu01")
+
+        assert len(service.servers) == 1
+        assert service.servers[0].has_public_ip is False
+
+    def test_server_with_public_ip(self):
+        server_id = UUID("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+        service = self._service()
+        service._public_ip_server_ids = {str(server_id)}
+        server_data = MagicMock()
+        server_data.id = server_id
+        server_data.name = "my-server"
+        client = MagicMock()
+        client.list_servers.return_value = {"items": [server_data]}
+
+        service._list_servers(client, "eu01")
+
+        assert len(service.servers) == 1
+        assert service.servers[0].has_public_ip is True
+
+    def test_empty_response(self):
+        service = self._service()
+        client = MagicMock()
+        client.list_servers.return_value = {"items": []}
+
+        service._list_servers(client, "eu01")
+
+        assert service.servers == []
+
+    def test_server_public_ip_detected_end_to_end(self):
+        """Full cross-reference: NIC → public IP → server flagged has_public_ip."""
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        nic_id = UUID("cccccccc-cccc-cccc-cccc-cccccccccccc")
+        server_id = UUID("dddddddd-dddd-dddd-dddd-dddddddddddd")
+
+        nic = MagicMock()
+        nic.id = nic_id
+        nic.device = server_id
+        nic.security_groups = []
+
+        ip = MagicMock()
+        ip.network_interface = nic_id
+
+        server_data = MagicMock()
+        server_data.id = server_id
+        server_data.name = "internet-server"
+
+        client = MagicMock()
+        client.list_project_nics.return_value = {"items": [nic]}
+        client.list_security_groups.return_value = {"items": []}
+        client.list_public_ips.return_value = {"items": [ip]}
+        client.list_servers.return_value = {"items": [server_data]}
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.scan_unused_services = False
+        service.regional_clients = {"eu01": client}
+        service.security_groups = []
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+        service.servers = []
+        service._nic_device_index = {}
+        service._public_ip_server_ids = set()
+
+        service._fetch_all_regions()
+
+        assert len(service.servers) == 1
+        assert service.servers[0].has_public_ip is True
+
+    def test_list_servers_without_client_is_noop(self):
+        """A missing regional client is logged and skipped, not fatal."""
+        service = self._service()
+
+        service._list_servers(None, "eu01")
+
+        assert service.servers == []
+
+    def test_server_processing_error_is_skipped(self):
+        """A server that raises while being read is skipped, not fatal."""
+
+        class MalformedServer:
+            @property
+            def id(self):
+                raise ValueError("malformed server")
+
+        service = self._service()
+        client = MagicMock()
+        client.list_servers.return_value = {"items": [MalformedServer()]}
+
+        service._list_servers(client, "eu01")
+
+        assert service.servers == []
+
+    def test_dict_shaped_server_is_created(self):
+        """Raw dict servers are created and flagged from _public_ip_server_ids."""
+        service = self._service()
+        service._public_ip_server_ids = {"server-1"}
+        client = MagicMock()
+        client.list_servers.return_value = {
+            "items": [{"id": "server-1", "name": "dict-server"}]
+        }
+
+        service._list_servers(client, "eu01")
+
+        assert len(service.servers) == 1
+        assert service.servers[0].name == "dict-server"
+        assert service.servers[0].has_public_ip is True
+
+    def test_dict_shaped_public_ip_detected_end_to_end(self):
+        """Dict-shaped NIC/IP/server still correlate to has_public_ip=True.
+
+        Regression for the getattr-only correlation path: a dict-shaped
+        response must not silently report a PASS for an exposed server.
+        """
+        from prowler.providers.stackit.stackit_provider import StackitProvider
+
+        client = MagicMock()
+        client.list_project_nics.return_value = {
+            "items": [{"id": "nic-1", "device": "server-1", "security_groups": []}]
+        }
+        client.list_security_groups.return_value = {"items": []}
+        client.list_public_ips.return_value = {"items": [{"networkInterface": "nic-1"}]}
+        client.list_servers.return_value = {
+            "items": [{"id": "server-1", "name": "dict-server"}]
+        }
+
+        service = object.__new__(IaaSService)
+        service.provider = MagicMock()
+        service.provider.handle_api_error = StackitProvider.handle_api_error
+        service.project_id = STACKIT_PROJECT_ID
+        service.scan_unused_services = False
+        service.regional_clients = {"eu01": client}
+        service.security_groups = []
+        service.server_nics = []
+        service.in_use_sg_ids = set()
+        service.servers = []
+        service._nic_device_index = {}
+        service._public_ip_server_ids = set()
+
+        service._fetch_all_regions()
+
+        assert len(service.servers) == 1
+        assert service.servers[0].has_public_ip is True

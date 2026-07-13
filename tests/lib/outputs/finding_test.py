@@ -1627,6 +1627,40 @@ class TestFinding:
         assert finding_output.status == Status.PASS
         assert finding_output.muted is False
 
+    @patch(
+        "prowler.lib.outputs.finding.get_check_compliance",
+        new=mock_get_check_compliance,
+    )
+    def test_generate_output_e2enetworks(self):
+        provider = MagicMock()
+        provider.type = "e2enetworks"
+        provider.identity.project_id = 12345
+
+        check_output = MagicMock()
+        check_output.resource_id = "test_resource_id"
+        check_output.resource_name = "test_resource_name"
+        check_output.resource_details = ""
+        check_output.location = "Delhi"
+        check_output.status = Status.PASS
+        check_output.status_extended = "mock_status_extended"
+        check_output.muted = False
+        check_output.check_metadata = mock_check_metadata(provider="e2enetworks")
+        check_output.resource = {}
+        check_output.compliance = {}
+
+        output_options = MagicMock()
+        output_options.unix_timestamp = True
+
+        finding_output = Finding.generate_output(provider, check_output, output_options)
+
+        assert isinstance(finding_output, Finding)
+        assert finding_output.auth_method == "api_key_and_bearer_token"
+        assert finding_output.account_uid == "12345"
+        assert finding_output.account_name == "12345"
+        assert finding_output.resource_name == "test_resource_name"
+        assert finding_output.resource_uid == "test_resource_id"
+        assert finding_output.region == "Delhi"
+
     def test_transform_api_finding_stackit(self):
         provider = MagicMock()
         provider.type = "stackit"

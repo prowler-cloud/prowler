@@ -25,7 +25,8 @@ vi.mock("next/navigation", () => ({
   useRouter: () => routerMocks,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({
     asChild,
     children,

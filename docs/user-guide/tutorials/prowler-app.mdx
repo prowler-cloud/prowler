@@ -2,6 +2,8 @@
 title: 'Prowler Cloud'
 ---
 
+import { ProviderCards } from "/snippets/provider-cards.mdx"
+
 **Prowler Cloud** is a web application that simplifies running Prowler. This tutorial will guide you through setting up and using it.
 
 We refer to **Prowler App** as the self-hosted version of **Prowler Cloud**.
@@ -18,17 +20,14 @@ After [installing](/getting-started/installation/prowler-app) **Prowler App**, a
 To view the auto-generated **Prowler API** documentation, navigate to [http://localhost:8080/api/v1/docs](http://localhost:8080/api/v1/docs). This documentation provides details on available endpoints, parameters, and responses.
 </Note>
 
-## **Step 1: Sign Up**
-
-### **Sign Up with Email**
-
+## Step 1: Sign Up
+### Sign Up with Email
 To get started, sign up using your email and password:
 
 <img src="/images/sign-up-button.png" alt="Sign Up Button" width="320" />
 <img src="/images/sign-up.png" alt="Sign Up" width="285" />
 
-### **Sign Up with Social Login**
-
+### Sign Up with Social Login
 If Social Login is enabled, you can sign up using your preferred provider (e.g., Google, GitHub).
 
 <Note>
@@ -44,16 +43,14 @@ If your email is not registered, a new account will be created using your social
 See [how to configure Social Login for Prowler](/user-guide/tutorials/prowler-app-social-login) to enable this feature in your own deployments.
 
 </Note>
-## **Step 2: Log In**
-
+## Step 2: Log In
 Once registered, log in with your email and password to access Prowler App.
 
 <img src="/images/log-in.png" alt="Log In" width="350" />
 
 Upon logging in, the Overview page will display. At this stage, no data is present: add a provider to begin scanning your cloud environment.
 
-## **Step 3: Add a Provider**
-
+## Step 3: Add a Provider
 To perform security scans, link a cloud provider account. Prowler supports the following providers and more:
 
 - **AWS**
@@ -77,48 +74,21 @@ Steps to add a provider:
 
 <img src="/images/add-provider.png" alt="Add Provider" width="700" />
 
-## **Step 4: Configure the Provider**
-
+## Step 4: Configure the Provider
 Select the cloud provider to scan and configure authentication credentials. Each provider has specific requirements and authentication methods.
 
 <img src="/images/select-provider.png" alt="Select a Provider" width="700" />
 
 For detailed instructions on configuring credentials for each provider, refer to the provider-specific getting started guides:
 
-<Columns cols={3}>
-  <Card title="AWS" icon="aws" href="/user-guide/providers/aws/getting-started-aws">
-    Configure AWS authentication using IAM Access Keys or Assumed Role credentials.
-  </Card>
-  <Card title="Azure" icon="microsoft" href="/user-guide/providers/azure/getting-started-azure">
-    Set up Azure authentication using Service Principal credentials.
-  </Card>
-  <Card title="Google Cloud" icon="google" href="/user-guide/providers/gcp/getting-started-gcp">
-    Configure GCP authentication with Service Account or Application Default Credentials.
-  </Card>
-  <Card title="Oracle Cloud Infrastructure" icon="cloud" href="/user-guide/providers/oci/getting-started-oci">
-    Connect OCI with API key credentials to scan compartments and regions.
-  </Card>
-  <Card title="Kubernetes" icon="cloud" href="/user-guide/providers/kubernetes/getting-started-k8s">
-    Set up Kubernetes authentication using kubeconfig files for cluster access.
-  </Card>
-  <Card title="Microsoft 365" icon="microsoft" href="/user-guide/providers/microsoft365/getting-started-m365">
-    Configure M365 authentication with Application Certificate or Client Secret.
-  </Card>
-  <Card title="GitHub" icon="github" href="/user-guide/providers/github/getting-started-github">
-    Set up GitHub authentication using Personal Access Token, OAuth App, or GitHub App.
-  </Card>
-  <Card title="Infrastructure as Code" icon="code" href="/user-guide/providers/iac/getting-started-iac">
-    Scan IaC public or private repositories for security issues.
-  </Card>
-</Columns>
-## **Step 5: Test Connection**
+<ProviderCards />
 
+## Step 5: Test Connection
 After adding your credentials of your cloud account, click the `Launch` button to verify that Prowler App can successfully connect to your provider:
 
 <img src="/images/test-connection-button.png" alt="Test Connection" width="700" />
 
-## **Step 6: Scan started**
-
+## Step 6: Scan Started
 After successfully adding and testing your credentials, Prowler will start scanning your cloud environment, click the `Go to Scans` button to see the progress:
 
 <img src="/images/provider-added.png" alt="Start Now" width="700" />
@@ -127,8 +97,7 @@ After successfully adding and testing your credentials, Prowler will start scann
 Prowler will automatically scan all configured providers every **24 hours**, ensuring your cloud environment stays continuously monitored.
 
 </Note>
-## **Step 7: Monitor Scan Progress**
-
+## Step 7: Monitor Scan Progress
 Track the progress of your scan in the `Scans` section:
 
 <img src="/images/scan-progress.png" alt="Scan Progress" width="700" />
@@ -146,8 +115,7 @@ Each dashboard handles scan data differently:
 When a new scan completes or a new data ingestion is processed, the dashboards automatically reflect the updated results.
 </Note>
 
-## **Step 8: Analyze the Findings**
-
+## Step 8: Analyze the Findings
 While the scan is running, start exploring the findings in these sections:
 
 - **Overview**: High-level summary of the scans.
@@ -168,8 +136,7 @@ While the scan is running, start exploring the findings in these sections:
 
 To view all `new` findings that have not been seen prior to this scan, click the `Delta` filter and select `new`. To view all `changed` findings that have had a status change (from `PASS` to `FAIL` for example), click the `Delta` filter and select `changed`.
 
-## **Step 9: Download the Outputs**
-
+## Step 9: Download the Outputs
 Once a scan is complete, navigate to the Scan Jobs section to download the output files generated by Prowler:
 
 <img src="/images/scan_jobs_section.png" alt="Scan Jobs section" width="700" />
@@ -190,8 +157,7 @@ The `zip` file unpacks into a folder named like `prowler-output-<provider_id>-<t
 For more information about the API endpoint used by the UI to download the ZIP archive, refer to: [Prowler API Reference - Download Scan Output](https://api.prowler.com/api/v1/docs#tag/Scan/operation/scans_report_retrieve)
 
 </Note>
-## **Step 10: Download specified compliance report**
-
+## Step 10: Download Specified Compliance Report
 Once your scan has finished, you don’t need to grab the entire ZIP—just pull down the specific compliance report you want:
 
 - Navigate to the **Compliance** section of the UI.

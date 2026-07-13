@@ -39,6 +39,24 @@ The former build-time variables map to the new runtime variables as follows:
 
 The build-time-only Sentry variables used for source-map upload — `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, and `SENTRY_RELEASE` — keep their names, as they are not part of the App's runtime configuration.
 
+## Enabling Third-Party Integrations
+
+Prowler App gates each optional third-party integration behind an explicit enable flag. When an integration is configured through its new `UI_*` variables, it loads only when its flag is set to the exact string `"true"`; any other value, including unset, leaves it off. This default-off behavior keeps a deployment free of third-party egress unless it opts in. Deployments still using the deprecated legacy variable names keep loading without the flag, for backward compatibility (see [Deprecated Names](#deprecated-names)).
+
+| Integration | Enable flag | Required configuration when enabled |
+|-------------|-------------|-------------------------------------|
+| Sentry (error monitoring) | `UI_SENTRY_ENABLED` | `UI_SENTRY_DSN` |
+| Google Tag Manager | `UI_GOOGLE_TAG_MANAGER_ENABLED` | `UI_GOOGLE_TAG_MANAGER_ID` |
+| PostHog (product analytics) | `UI_POSTHOG_ENABLED` | `UI_POSTHOG_KEY` and `UI_POSTHOG_HOST` |
+
+When an integration is enabled but its required configuration is missing, Prowler App fails fast at server startup with a clear error, so a misconfigured container never starts silently. A new `UI_*` value set while its enable flag is not `"true"` is ignored, and the server logs a one-time startup warning noting that the integration will not load. Legacy names follow the backward-compatible rule described in [Deprecated Names](#deprecated-names).
+
+PostHog support is currently limited to configuration validation: Prowler App reads and validates the PostHog variables but does not yet load a PostHog client.
+
+<Warning>
+Configuring an integration through the new `UI_*` variables now requires its enable flag. A deployment that adopted `UI_SENTRY_DSN` or `UI_GOOGLE_TAG_MANAGER_ID` must also set `UI_SENTRY_ENABLED=true` or `UI_GOOGLE_TAG_MANAGER_ENABLED=true` to keep the integration active. Deployments still using the legacy names (`NEXT_PUBLIC_*`, or `POSTHOG_KEY` and `POSTHOG_HOST`) keep working without the flag.
+</Warning>
+
 ## Upcoming Breaking Change
 
 <Warning>
@@ -49,5 +67,5 @@ Prowler API, Prowler SDK, and Prowler MCP Server have not yet adopted the conven
 
 ## Deprecated Names
 
-- **Prowler App:** The bare server-side `SENTRY_DSN` and `SENTRY_ENVIRONMENT` are no longer read; the server and edge runtimes now read `UI_SENTRY_DSN` and `UI_SENTRY_ENVIRONMENT`. The former `NEXT_PUBLIC_*` build-time variables are deprecated but still read at runtime as a fallback when the matching `UI_*` variable is unset. This fallback will be removed in a future release, so set the `UI_*` runtime variables on the running container.
+- **Prowler App:** The bare server-side `SENTRY_DSN` and `SENTRY_ENVIRONMENT` are no longer read; the server and edge runtimes now read `UI_SENTRY_DSN` and `UI_SENTRY_ENVIRONMENT`. The former `NEXT_PUBLIC_*` names — and, for PostHog, the unprefixed `POSTHOG_KEY` and `POSTHOG_HOST` — are deprecated but stay backward compatible: they are read at runtime regardless of the enable flag, so an existing deployment keeps its integration active without opting in. The new `UI_*` names, by contrast, load only when the matching enable flag is set to `"true"`. These legacy names will be removed in a future release, so migrate to the `UI_*` runtime variables — and set the enable flag — on the running container.
 - **Prowler API, Prowler SDK, and Prowler MCP Server:** The current, unprefixed variable names are deprecated. They continue to work today and will be removed once the prefixed convention is adopted for each component, as described in [Upcoming Breaking Change](#upcoming-breaking-change).

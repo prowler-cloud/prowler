@@ -6,9 +6,13 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app#step-8:-analyze-the-findings",
   FINDINGS_INGESTION:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
+  FINDINGS_TRIAGE:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-findings-triage",
   AWS_ORGANIZATIONS:
     "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
   ALERTS: "https://docs.prowler.com/user-guide/tutorials/prowler-app-alerts",
+  SCAN_CONFIGURATION:
+    "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
 } as const;
@@ -18,6 +22,9 @@ export const DOCS_URLS = {
 // and cloudformationOrgQuickLink below — keep both in sync.
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
+
+// Prowler Cloud billing/subscription management page.
+export const BILLING_URL = "https://cloud.prowler.com/billing";
 
 // AWS Console URL for creating a new StackSet.
 // Hardcoded to us-east-1 — StackSets are typically managed from this region.
