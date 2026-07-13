@@ -9,6 +9,7 @@ import json
 from importlib import import_module
 from unittest.mock import MagicMock, patch
 
+import neo4j
 import pytest
 
 # Prime patch-target resolution. `api.attack_paths.sink/__init__.py` doesn't
@@ -190,6 +191,29 @@ def _count_result(key: str, count: int) -> MagicMock:
     return MagicMock(single=MagicMock(return_value={key: count}))
 
 
+def _run_managed_write(session: MagicMock) -> MagicMock:
+    transaction = MagicMock()
+    session.execute_write.call_args.args[0](transaction)
+    return transaction
+
+
+def _managed_write_session(
+    results: list[MagicMock],
+) -> tuple[MagicMock, list[MagicMock]]:
+    session = MagicMock()
+    transactions: list[MagicMock] = []
+    result_iter = iter(results)
+
+    def execute_write(work):
+        transaction = MagicMock()
+        transaction.run.return_value = next(result_iter)
+        transactions.append(transaction)
+        return work(transaction)
+
+    session.execute_write.side_effect = execute_write
+    return session, transactions
+
+
 def _directed_drop_results(
     outgoing_rels: int,
     incoming_rels: int,
@@ -211,15 +235,16 @@ class TestNeo4jSinkSyncWrites:
 
         sink = Neo4jSink()
         session = MagicMock()
-        session.run.return_value = MagicMock()
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
             sink.ensure_sync_indexes("db-tenant-x")
 
-        query = session.run.call_args.args[0]
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
         assert "CREATE INDEX" in query
         assert "IF NOT EXISTS" in query
         assert "`_ProviderResource`" in query
         assert "`_provider_element_id`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_nodes_skips_empty_batch(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
@@ -241,11 +266,13 @@ class TestNeo4jSinkSyncWrites:
                 [{"provider_element_id": "p:e", "props": {"k": "v"}}],
             )
 
-        query, params = session.run.call_args.args
+        transaction = _run_managed_write(session)
+        query, params = transaction.run.call_args.args
         assert "MERGE (n:`_ProviderResource`" in query
         assert "`_provider_element_id`: row.provider_element_id" in query
         assert "SET n:`AWSUser`:`_ProviderResource`" in query
         assert params == {"rows": [{"provider_element_id": "p:e", "props": {"k": "v"}}]}
+        transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_relationships_scopes_endpoints_by_provider_label(self):
         from api.attack_paths.sink.neo4j import Neo4jSink
@@ -268,10 +295,12 @@ class TestNeo4jSinkSyncWrites:
                 ],
             )
 
-        query = session.run.call_args.args[0]
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
         assert ":`_Provider_00000000000000000000000000000abc`" in query
         assert ":RESOURCE" in query.replace("`", "")
         assert "MERGE (s)-[r:`RESOURCE`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
 
 
 class TestNeptuneSinkSyncWrites:
@@ -295,12 +324,14 @@ class TestNeptuneSinkSyncWrites:
                 [{"provider_element_id": "p:e", "props": {"k": "v"}}],
             )
 
-        query = session.run.call_args.args[0]
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
         # Neptune assigns a default `vertex` label to any unlabeled node,
         # so the MERGE must pin a real label at creation time.
         assert "MERGE (n:`_ProviderResource` {`~id`: row.provider_element_id})" in query
         assert "SET n:`AWSUser`" in query
         assert "SET n.`_provider_element_id` = row.provider_element_id" in query
+        transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_relationships_matches_endpoints_by_id(self):
         from api.attack_paths.sink.neptune import NeptuneSink
@@ -322,10 +353,81 @@ class TestNeptuneSinkSyncWrites:
                 ],
             )
 
-        query = session.run.call_args.args[0]
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
         assert "MATCH (s) WHERE id(s) = row.start_element_id" in query
         assert "MATCH (e) WHERE id(e) = row.end_element_id" in query
         assert "MERGE (s)-[r:`RESOURCE`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
+
+
+class TestNeptuneRetryPolicy:
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Operation failed due to conflicting concurrent operations "
+            "(please retry), 0 transactions are currently rolling back.",
+            "Operation terminated (deadline exceeded)",
+        ],
+    )
+    def test_observed_transient_write_errors_are_retryable(self, message):
+        from api.attack_paths.sink.neptune import _is_retryable_write_error
+
+        error = MagicMock(spec=neo4j.exceptions.Neo4jError)
+        error.message = message
+
+        assert _is_retryable_write_error(error) is True
+
+    def test_unrelated_database_error_is_not_retryable(self):
+        from api.attack_paths.sink.neptune import _is_retryable_write_error
+
+        error = MagicMock(spec=neo4j.exceptions.Neo4jError)
+        error.message = "Operation terminated (out of memory)"
+
+        assert _is_retryable_write_error(error) is False
+
+    def test_non_neo4j_error_is_not_retryable(self):
+        from api.attack_paths.sink.neptune import _is_retryable_write_error
+
+        error = RuntimeError(
+            "Operation failed due to conflicting concurrent operations"
+        )
+
+        assert _is_retryable_write_error(error) is False
+
+    @patch("api.attack_paths.sink.neptune.RetryableSession")
+    def test_writer_session_enables_neptune_retry_policy(self, retryable_session):
+        from api.attack_paths.sink.neptune import (
+            NEPTUNE_WRITE_RETRY_DELAY_SECONDS,
+            NeptuneSink,
+            _is_retryable_write_error,
+        )
+
+        sink = NeptuneSink()
+        driver = MagicMock()
+        with patch.object(sink, "_get_writer", return_value=driver):
+            with sink.get_session():
+                pass
+
+        kwargs = retryable_session.call_args.kwargs
+        assert kwargs["retry_if"] is _is_retryable_write_error
+        assert (
+            kwargs["initial_retry_delay_seconds"] == NEPTUNE_WRITE_RETRY_DELAY_SECONDS
+        )
+
+    @patch("api.attack_paths.sink.neptune.RetryableSession")
+    def test_reader_session_does_not_enable_write_retry_policy(self, retryable_session):
+        from api.attack_paths.sink.neptune import NeptuneSink
+
+        sink = NeptuneSink()
+        driver = MagicMock()
+        with patch.object(sink, "_get_reader", return_value=driver):
+            with sink.get_session(default_access_mode=neo4j.READ_ACCESS):
+                pass
+
+        kwargs = retryable_session.call_args.kwargs
+        assert kwargs["retry_if"] is None
+        assert kwargs["initial_retry_delay_seconds"] == 0
 
 
 class TestNeptuneSinkDropSubgraph:
@@ -333,19 +435,20 @@ class TestNeptuneSinkDropSubgraph:
         from api.attack_paths.sink.neptune import NeptuneSink
 
         sink = NeptuneSink()
-        session = MagicMock()
-        session.run.side_effect = _directed_drop_results(
-            outgoing_rels=50,
-            incoming_rels=30,
-            nodes=10,
+        session, transactions = _managed_write_session(
+            _directed_drop_results(
+                outgoing_rels=50,
+                incoming_rels=30,
+                nodes=10,
+            )
         )
 
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
             deleted = sink.drop_subgraph("ignored", "provider-1")
 
         assert deleted == 10
-        assert session.run.call_count == 6
-        queries = [call.args[0] for call in session.run.call_args_list]
+        assert session.execute_write.call_count == 6
+        queries = [transaction.run.call_args.args[0] for transaction in transactions]
 
         assert ")-[r]->()" in queries[0]
         assert ")<-[r]-()" in queries[2]
@@ -365,11 +468,12 @@ class TestNeo4jSinkDropSubgraph:
         from api.attack_paths.sink.neo4j import Neo4jSink
 
         sink = Neo4jSink()
-        session = MagicMock()
-        session.run.side_effect = _directed_drop_results(
-            outgoing_rels=50,
-            incoming_rels=30,
-            nodes=10,
+        session, transactions = _managed_write_session(
+            _directed_drop_results(
+                outgoing_rels=50,
+                incoming_rels=30,
+                nodes=10,
+            )
         )
 
         provider_id = "00000000-0000-0000-0000-000000000abc"
@@ -378,9 +482,9 @@ class TestNeo4jSinkDropSubgraph:
 
         # Only phase-2 node counts contribute to the return value.
         assert deleted == 10
-        assert session.run.call_count == 6
+        assert session.execute_write.call_count == 6
 
-        queries = [call.args[0] for call in session.run.call_args_list]
+        queries = [transaction.run.call_args.args[0] for transaction in transactions]
         # Regression guard: the memory blow-up was caused by DETACH DELETE.
         assert all("DETACH DELETE" not in query for query in queries)
         assert all("DISTINCT r" not in query for query in queries)
@@ -404,7 +508,7 @@ class TestNeo4jSinkDropSubgraph:
 
         sink = Neo4jSink()
         session = MagicMock()
-        session.run.side_effect = GraphDatabaseQueryException(
+        session.execute_write.side_effect = GraphDatabaseQueryException(
             message="db missing", code=DATABASE_NOT_FOUND_CODE
         )
 
