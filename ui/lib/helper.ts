@@ -438,7 +438,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Grants tenant-wide visibility across all providers, accounts, resources, findings, scans, and compliance results without granting admin actions.",
+      "Grants organization-wide visibility across all providers, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",
