@@ -12,17 +12,17 @@ Cross-Provider Compliance consolidates a single **universal compliance framework
 
 <SubscriptionBanner />
 
-<Note>
-Cross-Provider Compliance aggregates results across multiple provider scans, so it lives in the Compliance section of Prowler Cloud and Prowler Enterprise. It is not part of Prowler CLI. In the free tier the **Cross-provider** tab is visible but disabled, while the per-scan [Compliance](/user-guide/compliance/tutorials/compliance) view remains fully available.
-</Note>
+## What Is a Universal Compliance Framework
+
+Most Prowler compliance frameworks target a single provider (for example, CIS AWS or CIS Azure). A **universal** framework declares its requirements once in a single JSON and maps each requirement to checks for many providers at the same time, so the same CSA CCM control maps to both AWS and Azure checks. Universal frameworks live at the top of the compliance catalog (`prowler/compliance/<framework>.json`), as opposed to the legacy per-provider frameworks under `prowler/compliance/<provider>/`. For real definitions, see [`csa_ccm_4.0.json`](https://github.com/prowler-cloud/prowler/blob/master/prowler/compliance/csa_ccm_4.0.json), [`cis_controls_8.1.json`](https://github.com/prowler-cloud/prowler/blob/master/prowler/compliance/cis_controls_8.1.json), and [`dora_2022_2554.json`](https://github.com/prowler-cloud/prowler/blob/master/prowler/compliance/dora_2022_2554.json) in the Prowler repository.
+
+Prowler currently ships three universal frameworks: [CSA CCM](https://hub.prowler.com/compliance/csa_ccm_4.0), [CIS Controls](https://hub.prowler.com/compliance/cis_controls_8.1), and [DORA](https://hub.prowler.com/compliance/dora_2022_2554). Each framework page on Prowler Hub lists the full requirement-to-check mapping per provider.
 
 ## How Cross-Provider Compliance Works
 
-Some Prowler frameworks are **universal**: a single JSON that declares its requirements once and maps each requirement to checks for many providers at the same time (for example, the same CSA CCM control mapped to both AWS and Azure checks). These frameworks live at the top of the compliance catalog (`prowler/compliance/<framework>.json`), as opposed to the legacy per-provider frameworks under `prowler/compliance/<provider>/`.
+Cross-Provider Compliance uses this structure to answer a single question: **"How compliant is my whole estate against this framework, regardless of provider?"** For a chosen universal framework, Prowler Cloud:
 
-Cross-Provider Compliance leverages this structure to answer a single question: **"How compliant is my whole estate against this framework, regardless of provider?"** For a chosen universal framework, Prowler Cloud:
-
-1. Selects **one scan per compatible provider** — by default, the latest completed scan of each provider the framework supports and that you are allowed to see.
+1. Selects **one scan per compatible provider**: by default, the latest completed scan of each provider the framework supports and that you are allowed to see.
 2. Aggregates the requirement results across those scans, folding multiple accounts of the same provider type together.
 3. Computes a **roll-up status** for each requirement and an overall pass / fail / manual summary for the framework.
 4. Exposes a **per-provider breakdown** so you can see exactly which provider is failing a given control.
@@ -37,13 +37,11 @@ The Cross-Provider Compliance view currently supports the following universal fr
 
 | Framework | Version | Compatible providers |
 |-----------|---------|----------------------|
-| **CSA CCM** (Cloud Controls Matrix) | 4.0 | AWS, Azure, Google Cloud, Alibaba Cloud, Oracle Cloud |
-| **CIS Controls** | 8.1 | AWS, Azure, Google Cloud, Microsoft 365, Kubernetes, GitHub, Google Workspace, Okta, Oracle Cloud, Alibaba Cloud, Cloudflare, MongoDB Atlas, OpenStack, Vercel |
-| **DORA** (Digital Operational Resilience Act) | 2022/2554 | AWS, Azure, Google Cloud, Alibaba Cloud, Cloudflare |
+| [**CSA CCM**](https://hub.prowler.com/compliance/csa_ccm_4.0) (Cloud Controls Matrix) | 4.0 | AWS, Azure, Google Cloud, Alibaba Cloud, Oracle Cloud |
+| [**CIS Controls**](https://hub.prowler.com/compliance/cis_controls_8.1) | 8.1 | AWS, Azure, Google Cloud, Microsoft 365, Kubernetes, GitHub, Google Workspace, Okta, Oracle Cloud, Alibaba Cloud, Cloudflare, MongoDB Atlas, OpenStack, Vercel |
+| [**DORA**](https://hub.prowler.com/compliance/dora_2022_2554) (Digital Operational Resilience Act) | 2022/2554 | AWS, Azure, Google Cloud, Alibaba Cloud, Cloudflare |
 
-<Note>
 The catalog grows as new universal frameworks ship in Prowler. Browse the full compliance catalog at [Prowler Hub](https://hub.prowler.com/compliance).
-</Note>
 
 ## Accessing the Cross-Provider View
 
@@ -71,7 +69,7 @@ The overview presents one card per supported universal framework, each summarizi
 Each **framework card** includes:
 
 * **Framework logo, name, and version:** Identifies the universal standard (CSA CCM, CIS Controls, DORA).
-* **Score:** The percentage of passing requirements over the total evaluated, aggregated across every contributing provider. Color coding follows three thresholds — red for severely low compliance, amber for partial compliance, and green for healthy posture.
+* **Score:** The percentage of passing requirements over the total evaluated, aggregated across every contributing provider. Color coding follows three thresholds: red for severely low compliance, amber for partial compliance, and green for healthy posture.
 * **Passing Requirements:** A `passed / total` counter with the aggregated roll-up.
 * **Provider chips:** One icon per compatible provider. Providers with a completed scan appear active with their passing percentage; providers without a scan appear dimmed with a "no completed scan yet" tooltip so coverage gaps are obvious at a glance.
 * **Failed and manual counts:** The number of failing and manual requirements in the roll-up.
@@ -89,7 +87,7 @@ The filters bar controls which providers and accounts feed every card and detail
 Select **Clear filters** to reset all filters. Filters applied on the overview are carried through into the detail page and the PDF report so the view stays consistent end to end.
 
 <Note>
-Filters narrow **which providers contribute** to the aggregation. They do not change how a requirement rolls up — only providers that actually contributed a result for a requirement are counted toward its status.
+Filters narrow **which providers contribute** to the aggregation. They do not change how a requirement rolls up (see [Understanding the Roll-Up Status](#understanding-the-roll-up-status)).
 </Note>
 
 ## Working With the Framework Detail Page
@@ -107,7 +105,7 @@ The header shows the framework name and version, a link to the framework page on
 Below the header, three summary cards condense the framework state:
 
 * **Requirements Status:** Donut chart with `Pass`, `Fail`, and `Manual` counts plus the total number of requirements, reflecting the consolidated roll-up.
-* **Provider Coverage:** Shows which compatible providers contributed a scan and their individual posture, making coverage gaps and per-provider weak spots visible at a glance.
+* **Provider Coverage:** Shows which compatible providers contributed a scan and their individual posture, so coverage gaps and per-provider weak spots are visible at a glance.
 * **Top Failed Sections:** Ranks the framework sections with the highest number of failing requirements, with deep links into the requirements accordion.
 
 ### Requirements Accordion
@@ -125,7 +123,7 @@ Expand a requirement to review the failing checks per provider, the affected res
 
 ## Understanding the Roll-Up Status
 
-Cross-Provider Compliance rolls up results in two stages, following a strict **FAIL > PASS > MANUAL** precedence.
+Cross-Provider Compliance rolls up results in two stages, with a strict **FAIL > PASS > MANUAL** precedence.
 
 **Per provider, per requirement:**
 
@@ -155,19 +153,19 @@ By default, Cross-Provider Compliance auto-selects the **latest completed scan**
 
 ## Downloading the Combined PDF Report
 
-The **Report** button on the detail page generates a single PDF that combines every contributing provider's latest scan for the framework into one executive document — a cover page listing all providers and accounts, an executive summary with the consolidated roll-up, charts, a requirements index, and detailed findings grouped by requirement, provider, and account.
+The **Report** button on the detail page generates a single PDF that combines every contributing provider's latest scan for the framework into one executive document: a cover page listing all providers and accounts, an executive summary with the consolidated roll-up, charts, a requirements index, and detailed findings grouped by requirement, provider, and account.
 
 ### The Report Follows Your Filters
 
-A report is not generated for the whole framework in the abstract: it is generated for the **exact set of scans your current filters resolve to**. The provider type, provider / account, and provider group filters applied on the detail page determine which providers contribute, and the auto-select rule pins each contributing provider's latest completed scan. That resolved scan set — together with the framework — is what the PDF is built from.
+A report covers the exact set of scans your current filters resolve to. The provider type, provider / account, and provider group filters applied on the detail page determine which providers contribute, and the auto-select rule pins each contributing provider's latest completed scan. The PDF is built from that resolved scan set together with the framework.
 
-As a result, **each filter combination produces its own report**. For example:
+As a result, each filter combination produces its own report. For example:
 
 * No filters → a report covering every compatible provider that has a completed scan.
 * `Provider type = AWS, Azure` → a report covering only your AWS and Azure scans.
 * `Provider group = Production` → a report covering only the accounts in that group.
 
-Changing the filters and generating again produces a **different, independent** report. Each combination is tracked on its own, so switching filters back and forth never overwrites a previously generated report.
+Changing the filters and generating again produces a different, independent report. Each combination is tracked on its own, so switching filters back and forth never overwrites a previously generated report.
 
 <Note>
 Region filtering is **not** supported for the combined PDF report. The report recomputes status live across every region of the contributing scans, so a region-scoped request is rejected rather than producing a report that contradicts a region-filtered view.
@@ -182,7 +180,7 @@ Because the report aggregates many scans, it is generated **asynchronously**:
     Select **Report → Generate new report…**, optionally give it a name, and confirm. Prowler starts a background job and shows a "Report generation started" confirmation.
   </Step>
   <Step title="Wait for completion">
-    The button shows a "Generating report…" state while the job runs. Generation continues in the background — you can navigate away, and a toast notification appears when the report is ready, even after a page reload.
+    The button shows a "Generating report…" state while the job runs. Generation continues in the background: you can navigate away, and a toast notification appears when the report is ready, even after a page reload.
   </Step>
   <Step title="Download">
     When the report is ready, select **Download** from the notification, or use **Report → Download latest** at any time to fetch the most recent report for the current filters.
@@ -191,33 +189,16 @@ Because the report aggregates many scans, it is generated **asynchronously**:
 
 <img src="/images/compliance/prowler-app-cross-provider-report.png" alt="Report dropdown on the Cross-Provider Compliance detail page showing the Generate new report option" width="420" />
 
-**A report already generated for a given set of filters does not need to be generated again.** When you open the detail page with a filter combination that was reported before, Prowler detects the existing report and surfaces **Report → Download latest** so you can download it immediately, without launching a new job. You only need to generate a fresh report when:
+A report already generated for a given set of filters does not need to be generated again. When you open the detail page with a filter combination that was reported before, Prowler detects the existing report and surfaces **Report → Download latest** so you can download it immediately, without launching a new job. You only need to generate a fresh report when:
 
-* You apply a **filter combination that has never been reported** before, or
-* A contributing provider has run a **new scan** since the report was generated. The report is tied to the specific scans it was built from, so a newer scan makes the previous report **stale**; Prowler recognizes it no longer matches the current selection and offers to generate an up-to-date one.
+* You apply a filter combination that has never been reported before, or
+* A contributing provider has run a new scan since the report was generated. The report is tied to the specific scans it was built from, so a newer scan makes the previous report stale; Prowler recognizes it no longer matches the current selection and offers to generate an up-to-date one.
 
-<Note>
-"Download latest" reuses an existing report only when it matches the framework, the exact resolved scan set for the current filters, and the same report options. This guarantees the PDF you download always reflects the posture you are looking at — never a report generated for a different filter or an older scan.
-</Note>
+"Download latest" reuses an existing report only when it matches the framework, the exact resolved scan set for the current filters, and the same report options. This guarantees the PDF you download reflects the posture you are looking at, rather than a report generated for a different filter or an older scan.
 
 <Note>
-The PDF detail section renders only **failed** requirements by default, keeping the report focused as an executive/auditor document. As with every Prowler PDF, the detail section is capped at the first 100 failed findings per check; use the per-scan CSV or JSON-OCSF exports for the complete, untruncated list. See [Downloading Compliance Reports](/user-guide/compliance/tutorials/compliance#downloading-compliance-reports) for the full PDF behavior and the `DJANGO_PDF_MAX_FINDINGS_PER_CHECK` setting.
+The PDF detail section renders only **failed** requirements by default so the report stays focused as an executive/auditor document. As with every Prowler PDF, the detail section is capped at the first 100 failed findings per check; use the per-scan CSV or JSON-OCSF exports for the complete, untruncated list. See [Downloading Compliance Reports](/user-guide/compliance/tutorials/compliance#downloading-compliance-reports) for the full PDF behavior and the `DJANGO_PDF_MAX_FINDINGS_PER_CHECK` setting.
 </Note>
-
-<Note>
-Region filtering is **not** supported for the combined PDF report. The report recomputes status live across every region of the contributing scans, so a region-scoped request is rejected rather than producing a report that contradicts a region-filtered view.
-</Note>
-
-## API Access
-
-The Cross-Provider Compliance view is backed by dedicated Prowler API endpoints. The roll-up and PDF actions are reachable programmatically to integrate cross-provider evidence into dashboards, ticketing systems, or downstream pipelines:
-
-* **Retrieve the cross-provider roll-up:** `GET /api/v1/cross-provider-compliance-overviews?filter[compliance_id]=<framework_id>`
-* **Generate the combined PDF report:** `POST /api/v1/cross-provider-compliance-overviews/pdf?filter[compliance_id]=<framework_id>` — returns a task; poll `GET /api/v1/tasks/{id}` until it completes.
-* **Download the generated PDF:** `GET /api/v1/cross-provider-compliance-overviews/pdf/{task_id}`
-* **Check for an existing report:** `GET /api/v1/cross-provider-compliance-overviews/pdf/latest?filter[compliance_id]=<framework_id>`
-
-All endpoints accept the same `filter[provider_type__in]`, `filter[provider_id__in]`, and `filter[provider_groups__in]` filters as the UI, and resolve the contributing scans with the same auto-select rule and role-based visibility. Read-only actions require no additional permission beyond provider visibility; generating a report requires the `MANAGE_SCANS` permission. See the [Prowler API reference](https://api.prowler.com/api/v1/docs) for the full schema.
 
 ## Related Documentation
 
