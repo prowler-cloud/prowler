@@ -389,7 +389,9 @@ class EC2(AWSService):
                 {
                     instance.image_id
                     for instance in self.instances
-                    if instance.region == regional_client.region and instance.image_id
+                    if instance.region == regional_client.region
+                    and instance.image_id
+                    and instance.image_id not in self.images_by_id
                 }
             )
 

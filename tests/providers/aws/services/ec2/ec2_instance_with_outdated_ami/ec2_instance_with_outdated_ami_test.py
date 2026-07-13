@@ -1,11 +1,17 @@
 from unittest import mock
 
 import botocore
+import pytest
 
 from tests.providers.aws.utils import AWS_REGION_US_EAST_1, set_mocked_aws_provider
 
 make_api_call = botocore.client.BaseClient._make_api_call
 describe_images_calls = []
+
+
+@pytest.fixture(autouse=True)
+def clear_describe_images_calls():
+    describe_images_calls.clear()
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -45,6 +51,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                     }
                 ]
             }
+        return {"Images": []}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -123,6 +130,7 @@ def mock_make_api_call_outdated_ami(self, operation_name, kwarg):
                     }
                 ]
             }
+        return {"Images": []}
     return make_api_call(self, operation_name, kwarg)
 
 
@@ -174,7 +182,6 @@ class Test_ec2_instance_with_outdated_ami:
     def test_ec2_no_instances(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -203,7 +210,6 @@ class Test_ec2_instance_with_outdated_ami:
     def test_ec2_no_public_images(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -236,7 +242,6 @@ class Test_ec2_instance_with_outdated_ami:
     def test_instance_ami_not_outdated(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -277,7 +282,6 @@ class Test_ec2_instance_with_outdated_ami:
     def test_instance_ami_outdated(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
@@ -318,7 +322,6 @@ class Test_ec2_instance_with_outdated_ami:
     def test_instance_missing_ami_details(self):
         from prowler.providers.aws.services.ec2.ec2_service import EC2
 
-        describe_images_calls.clear()
         aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
 
         with (
