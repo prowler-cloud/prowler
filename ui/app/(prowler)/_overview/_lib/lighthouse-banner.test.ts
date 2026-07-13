@@ -7,8 +7,13 @@ import type {
 
 import {
   getLighthouseOverviewBannerHref,
+  LIGHTHOUSE_OVERVIEW_PROMPT,
   resolveLighthouseOverviewBannerHref,
 } from "./lighthouse-banner";
+
+const LIGHTHOUSE_OVERVIEW_CHAT_HREF = `/lighthouse?prompt=${encodeURIComponent(
+  LIGHTHOUSE_OVERVIEW_PROMPT,
+)}`;
 
 describe("resolveLighthouseOverviewBannerHref", () => {
   it("routes to Lighthouse chat when any v2 configuration is connected", () => {
@@ -19,7 +24,7 @@ describe("resolveLighthouseOverviewBannerHref", () => {
     ]);
 
     // Then
-    expect(href).toBe("/lighthouse");
+    expect(href).toBe(LIGHTHOUSE_OVERVIEW_CHAT_HREF);
   });
 
   it("routes to Lighthouse settings when no v2 configuration is connected", () => {
@@ -82,7 +87,7 @@ describe("getLighthouseOverviewBannerHref", () => {
     );
 
     // Then
-    expect(href).toBe("/lighthouse");
+    expect(href).toBe(LIGHTHOUSE_OVERVIEW_CHAT_HREF);
   });
 });
 
