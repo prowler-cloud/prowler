@@ -13,6 +13,8 @@ from prowler.lib.resource_limit import (
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.aws.lib.service.service import AWSService
 
+DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE = 200
+
 
 class EC2(AWSService):
     def __init__(self, provider):
@@ -39,6 +41,7 @@ class EC2(AWSService):
         self.network_interfaces = {}
         self.__threading_call__(self._describe_network_interfaces)
         self.images = []
+        self.images_by_id = {}
         self.__threading_call__(self._describe_images)
         self.volumes = []
         self.__threading_call__(self._describe_volumes)
@@ -372,35 +375,89 @@ class EC2(AWSService):
 
     def _describe_images(self, regional_client):
         try:
-            for owner in ["self", "amazon"]:
-                try:
-                    for image in regional_client.describe_images(
-                        Owners=[owner], IncludeDeprecated=True
-                    )["Images"]:
-                        arn = f"arn:{self.audited_partition}:ec2:{regional_client.region}:{self.audited_account}:image/{image['ImageId']}"
-                        if not self.audit_resources or (
-                            is_resource_filtered(arn, self.audit_resources)
-                        ):
-                            self.images.append(
-                                Image(
-                                    id=image["ImageId"],
-                                    arn=arn,
-                                    name=image.get("Name", ""),
-                                    public=image.get("Public", False),
-                                    region=regional_client.region,
-                                    tags=image.get("Tags"),
-                                    deprecation_time=image.get("DeprecationTime"),
-                                    owner=owner,
-                                )
-                            )
-                except Exception as error:
-                    logger.error(
-                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                    )
+            try:
+                for image in regional_client.describe_images(
+                    Owners=["self"], IncludeDeprecated=True
+                )["Images"]:
+                    self._add_image(image, regional_client.region, "self")
+            except Exception as error:
+                logger.error(
+                    f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+
+            amazon_image_ids = sorted(
+                {
+                    instance.image_id
+                    for instance in self.instances
+                    if instance.region == regional_client.region
+                    and instance.image_id
+                    and instance.image_id not in self.images_by_id
+                }
+            )
+
+            for image_batch in self._get_image_id_batches(amazon_image_ids):
+                for image in self._describe_images_by_id(regional_client, image_batch):
+                    if self._is_amazon_image(image):
+                        self._add_image(image, regional_client.region, "amazon")
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _add_image(self, image, region, owner):
+        arn = f"arn:{self.audited_partition}:ec2:{region}:{self.audited_account}:image/{image['ImageId']}"
+        if not self.audit_resources or (
+            is_resource_filtered(arn, self.audit_resources)
+        ):
+            ec2_image = Image(
+                id=image["ImageId"],
+                arn=arn,
+                name=image.get("Name", ""),
+                public=image.get("Public", False),
+                region=region,
+                tags=image.get("Tags"),
+                deprecation_time=image.get("DeprecationTime"),
+                owner=owner,
+            )
+            self.images.append(ec2_image)
+            self.images_by_id[ec2_image.id] = ec2_image
+
+    def _describe_images_by_id(self, regional_client, image_ids):
+        try:
+            return regional_client.describe_images(
+                ImageIds=image_ids, IncludeDeprecated=True
+            )["Images"]
+        except ClientError as error:
+            if error.response["Error"]["Code"] == "InvalidAMIID.NotFound":
+                if len(image_ids) == 1:
+                    logger.warning(
+                        f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                    return []
+
+                midpoint = len(image_ids) // 2
+                return self._describe_images_by_id(
+                    regional_client, image_ids[:midpoint]
+                ) + self._describe_images_by_id(regional_client, image_ids[midpoint:])
+
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
+
+    @staticmethod
+    def _get_image_id_batches(image_ids):
+        for index in range(0, len(image_ids), DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE):
+            yield image_ids[index : index + DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE]
+
+    @staticmethod
+    def _is_amazon_image(image):
+        return image.get("ImageOwnerAlias") == "amazon"
 
     def _describe_volumes(self, regional_client):
         try:
