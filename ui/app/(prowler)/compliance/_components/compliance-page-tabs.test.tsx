@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { COMPLIANCE_TAB } from "../_types";
+
 import { CompliancePageTabs } from "./compliance-page-tabs";
 import { getComplianceTab } from "./compliance-page-tabs.shared";
 
