@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "iam_user_disabled",
+  "CheckTitle": "IAM disabled users are reviewed and removed if stale",
+  "CheckType": [],
+  "ServiceName": "iam",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::IAM::User",
+  "ResourceGroup": "IAM",
+  "Description": "Disabled IAM user accounts that are no longer needed should be removed to reduce the attack surface. Stale disabled accounts may still have associated resources, permissions, or access keys that could be exploited if re-enabled.",
+  "Risk": "Disabled IAM users may retain permissions and access keys that could be re-enabled by an attacker with sufficient privileges. Keeping stale accounts increases the attack surface and complicates access management audits.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_02_0004.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud IAM DeleteUser --user_id <user_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Choose IAM & Security.\n3. Click Users.\n4. Review disabled users.\n5. Delete users that are no longer needed.\n6. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review disabled IAM users and remove accounts that are no longer needed.",
+      "Url": "https://hub.prowler.com/check/iam_user_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

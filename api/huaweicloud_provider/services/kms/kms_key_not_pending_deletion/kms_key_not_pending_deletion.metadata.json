@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "kms_key_not_pending_deletion",
+  "CheckTitle": "KMS keys are not in pending deletion state",
+  "CheckType": [],
+  "ServiceName": "kms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::KMS::Key",
+  "ResourceGroup": "security",
+  "Description": "KMS keys that are in pending deletion state should be reviewed. Keys scheduled for deletion may cause decryption failures for dependent resources, leading to data unavailability. Ensure deletion is intentional and all dependent resources have been migrated.",
+  "Risk": "KMS keys in pending deletion will become permanently unavailable after the waiting period expires. Any data encrypted with these keys will become permanently inaccessible, potentially causing data loss and service outages.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-dew/dew_01_0179.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud KMS CancelKeyDeletion --key_id <key_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Choose KMS.\n3. Click Keys.\n4. Find the key in pending deletion state.\n5. If deletion was not intended, click Cancel Deletion.\n6. Confirm the action.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review KMS keys in pending deletion state and cancel deletion if the key is still needed.",
+      "Url": "https://hub.prowler.com/check/kms_key_not_pending_deletion"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "KMS key state '4' indicates PendingDeletion in Huawei Cloud."
+}

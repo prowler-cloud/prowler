@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_security_groups_attached",
+  "CheckTitle": "ECS instances should have security groups attached",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances have at least one security group attached to control network traffic.",
+  "Risk": "ECS instances without security groups have no network-level access control, potentially allowing unrestricted inbound or outbound traffic.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0306.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hwcloud ecs server-update --server-id <instance_id> --security-groups <sg_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Security Group\n5. Attach an appropriate security group",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach at least one properly configured security group to every ECS instance.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_security_groups_attached"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

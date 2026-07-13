@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "evs_volume_encryption",
+  "CheckTitle": "EVS volumes are encrypted",
+  "CheckType": [],
+  "ServiceName": "evs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::EVS::Volume",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that all Elastic Volume Service (EVS) disks are encrypted to protect data at rest.",
+  "Risk": "Unencrypted EVS volumes expose sensitive data at rest. If a volume is compromised or improperly accessed, the data can be read without any additional protection.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-evs/evs_01_0018.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic Volume Service.\n3. Select the unencrypted volume.\n4. Create an encrypted volume from a snapshot of the unencrypted volume.\n5. Replace the old volume with the new encrypted volume.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable encryption for all EVS volumes using a KMS key.",
+      "Url": "https://hub.prowler.com/check/evs_volume_encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
