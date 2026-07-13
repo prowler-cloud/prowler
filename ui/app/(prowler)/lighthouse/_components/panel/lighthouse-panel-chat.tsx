@@ -20,6 +20,7 @@ import {
 import {
   notifyLighthouseV2SessionArchived,
   onLighthouseV2ConfigurationsChanged,
+  onLighthouseV2NewChat,
   onLighthouseV2SessionArchived,
   onLighthouseV2SessionsChanged,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
@@ -80,9 +81,9 @@ export function resetPanelChatConfigCacheForTests(): void {
   cachedReadyState = null;
 }
 
-// Config CRUD happens on the settings route, where the global panel (and this
-// component) is unmounted — invalidate at module scope so the next open
-// rebuilds cache and store against the new configuration.
+// Config CRUD happens on the settings route while the global panel can remain
+// mounted. Invalidate at module scope so the open panel reloads in place and a
+// later open rebuilds cache and store against the new configuration.
 if (typeof window !== "undefined") {
   onLighthouseV2ConfigurationsChanged(() => {
     cachedReadyState = null;
@@ -157,6 +158,9 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
     const unsubscribeSessionsChanged = onLighthouseV2SessionsChanged(() => {
       void refreshSessions();
     });
+    const unsubscribeNewChat = onLighthouseV2NewChat(() =>
+      store.getState().resetToNewChat(),
+    );
     // Archiving from any surface (sidebar, popover) must reset the panel chat
     // when its open session is the archived one, and drop the archived chat
     // from the "Recent chats" list.
@@ -168,6 +172,7 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
     );
     return () => {
       unsubscribeSessionsChanged();
+      unsubscribeNewChat();
       unsubscribeSessionArchived();
     };
   });

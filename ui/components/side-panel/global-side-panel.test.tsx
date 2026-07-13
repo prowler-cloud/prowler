@@ -139,6 +139,21 @@ describe("GlobalSidePanel", () => {
     expect(useSidePanelStore.getState().isOpen).toBe(false);
   });
 
+  it("places the new-chat action beside close in the existing header", async () => {
+    // Given
+    render(<GlobalSidePanel />);
+
+    // When
+    act(() => useSidePanelStore.getState().openPanel());
+
+    // Then: no extra toolbar; both actions are adjacent in the panel header
+    const newChat = await screen.findByRole("button", { name: "New chat" });
+    const close = screen.getByRole("button", { name: "Close side panel" });
+    expect(newChat.parentElement).toBe(close.parentElement);
+    expect(newChat).toHaveClass("ml-auto");
+    expect(newChat.nextElementSibling).toBe(close);
+  });
+
   it("renders nothing in OSS while no detail view is registered", () => {
     // Given
     isCloudMock.mockReturnValue(false);

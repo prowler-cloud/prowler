@@ -3,6 +3,7 @@
 import { type ComponentType, lazy, type LazyExoticComponent } from "react";
 
 import { LighthousePanelChatSkeleton } from "@/app/(prowler)/lighthouse/_components/panel/lighthouse-panel-chat-skeleton";
+import { LighthousePanelHeaderActions } from "@/app/(prowler)/lighthouse/_components/panel/lighthouse-panel-header-actions";
 import { LighthouseIcon } from "@/components/icons";
 import { isCloud } from "@/lib/shared/env";
 import { SIDE_PANEL_TAB, type SidePanelTabId } from "@/store/side-panel";
@@ -23,6 +24,7 @@ interface SidePanelTabDefinition {
   Content: LazyExoticComponent<ComponentType>;
   // Eager (lightweight) 1:1 skeleton shown while Content's bundle downloads.
   Fallback: ComponentType;
+  HeaderActions?: ComponentType;
   isAvailable: () => boolean;
 }
 
@@ -40,6 +42,7 @@ export const SIDE_PANEL_TABS: Record<
       ).then((module) => ({ default: module.LighthousePanelChat })),
     ),
     Fallback: LighthousePanelChatSkeleton,
+    HeaderActions: LighthousePanelHeaderActions,
     isAvailable: () => isCloud(),
   },
 };

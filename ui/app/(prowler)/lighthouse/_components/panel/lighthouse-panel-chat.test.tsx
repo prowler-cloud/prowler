@@ -16,6 +16,7 @@ import {
   LighthousePanelChat,
   resetPanelChatConfigCacheForTests,
 } from "./lighthouse-panel-chat";
+import { LighthousePanelHeaderActions } from "./lighthouse-panel-header-actions";
 
 const {
   getConfigurationsMock,
@@ -222,6 +223,58 @@ describe("LighthousePanelChat", () => {
     ).toBeInTheDocument();
     expect(replaceStateSpy).not.toHaveBeenCalled();
     replaceStateSpy.mockRestore();
+  });
+
+  it("starts a new chat from the panel header", async () => {
+    // Given: an existing conversation is open in the panel
+    const user = userEvent.setup();
+    getSessionsMock.mockResolvedValue({
+      data: [session("session-1", "Counting critical findings")],
+    });
+    getMessagesMock.mockResolvedValue({
+      data: [
+        {
+          id: "message-1",
+          role: "assistant",
+          model: null,
+          tokenUsage: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          parts: [
+            {
+              id: "message-1-part",
+              type: "text",
+              content: "There are 3 critical findings.",
+              toolCallOutcome: null,
+              insertedAt: "2026-06-25T10:00:00Z",
+              updatedAt: "2026-06-25T10:00:00Z",
+            },
+          ],
+        },
+      ],
+    });
+    render(
+      <>
+        <LighthousePanelHeaderActions />
+        <LighthousePanelChat />
+      </>,
+    );
+    await user.click(
+      await screen.findByRole("button", {
+        name: /^Counting critical findings/,
+      }),
+    );
+    expect(
+      await screen.findByText("There are 3 critical findings."),
+    ).toBeInTheDocument();
+
+    // When
+    await user.click(screen.getByRole("button", { name: "New chat" }));
+
+    // Then
+    expect(
+      screen.queryByText("There are 3 critical findings."),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
   });
 
   it("caches the loaded config so a remount skips the skeleton", async () => {

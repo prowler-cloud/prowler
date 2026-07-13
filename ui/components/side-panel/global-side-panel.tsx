@@ -154,12 +154,18 @@ export function GlobalSidePanel() {
             registryTab={activeRegistryTab}
           />
         )}
+        {!isContextSelected && activeRegistryTab?.HeaderActions ? (
+          <activeRegistryTab.HeaderActions />
+        ) : null}
         <Button
           type="button"
           variant="ghost"
           size="icon-sm"
           aria-label="Close side panel"
-          className="ml-auto"
+          className={cn(
+            (isContextSelected || !activeRegistryTab?.HeaderActions) &&
+              "ml-auto",
+          )}
           onClick={() => closePanel()}
         >
           <X />
