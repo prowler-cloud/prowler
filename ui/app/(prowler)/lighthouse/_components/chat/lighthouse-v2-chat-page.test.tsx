@@ -248,6 +248,24 @@ describe("LighthouseV2ChatPage", () => {
     );
   });
 
+  it("starts a new conversation with the overview remediation prompt", async () => {
+    // Given
+    const initialPrompt =
+      "Find and guide me to remediate which actually matters. What do I have to do today to be secure?";
+
+    // When
+    renderPage({ initialPrompt });
+
+    // Then
+    await waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
+    expect(sendMessageMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      text: initialPrompt,
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+  });
+
   it("shows model names in the selector while keeping model ids for persistence", async () => {
     // Given
     const user = userEvent.setup();
