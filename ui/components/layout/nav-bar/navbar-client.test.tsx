@@ -255,6 +255,16 @@ describe("NavbarClient", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the desktop sidebar toggle based on the viewport", () => {
+    // Given / When
+    render(<NavbarClient title="Findings" />);
+
+    // Then: narrowing main with the right panel must not switch shell controls
+    expect(
+      screen.getByRole("button", { name: "Toggle sidebar" }).parentElement,
+    ).toHaveClass("hidden", "min-[64rem]:block");
+  });
+
   it("hides the Lighthouse AI trigger while the AI chat panel is already open", () => {
     // Given
     useSidePanelStore.setState({

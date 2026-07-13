@@ -71,7 +71,9 @@ export default function MainLayout({
           !sidePanelResizing &&
             "transition-[margin-left,margin-right] duration-300 ease-in-out",
           !settings.disabled &&
-            (!getOpenState() ? "lg:ml-[90px]" : "lg:ml-[248px]"),
+            (!getOpenState()
+              ? "min-[64rem]:ml-[90px]"
+              : "min-[64rem]:ml-[248px]"),
         )}
         style={{ marginRight: pushWidth }}
       >

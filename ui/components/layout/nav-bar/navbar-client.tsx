@@ -87,7 +87,7 @@ export function NavbarClient({
       <div className="flex h-14 items-center pr-6">
         <div className="flex items-center gap-2">
           <SheetMenu />
-          <div className="hidden lg:block">
+          <div className="hidden min-[64rem]:block">
             <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />
           </div>
           {/* Suspense contains the useSearchParams() CSR bailout in BreadcrumbNavigation

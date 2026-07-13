@@ -34,4 +34,18 @@ describe("MainLayout", () => {
     expect(topGlow).toHaveClass("h-[120%]", "w-[160%]", "opacity-[7%]");
     expect(bottomGlow).toHaveClass("h-[50%]", "w-[50%]", "opacity-[7%]");
   });
+
+  it("keeps the desktop sidebar offset based on the viewport", () => {
+    // Given / When
+    render(
+      <MainLayout>
+        <div>Page content</div>
+      </MainLayout>,
+    );
+
+    // Then: a right panel may narrow main, but the desktop sidebar stays open
+    expect(screen.getByText("Page content").parentElement).toHaveClass(
+      "min-[64rem]:ml-[248px]",
+    );
+  });
 });
