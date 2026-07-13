@@ -75,11 +75,11 @@ class ECS(HuaweiCloudService):
                                 id=server_data.id,
                                 name=getattr(server_data, "name", server_data.id),
                                 region=region,
-                                status=getattr(server_data, "status", ""),
+                                status=getattr(server_data, "status", None) or "",
                                 flavor=getattr(server_data, "flavor", None),
                                 public_ip=public_ip,
                                 vpc_id=self._extract_vpc_id(server_data),
-                                enterprise_project_id=getattr(server_data, "enterprise_project_id", ""),
+                                enterprise_project_id=getattr(server_data, "enterprise_project_id", None) or "",
                                 created_at=getattr(server_data, "created", None),
                             )
 

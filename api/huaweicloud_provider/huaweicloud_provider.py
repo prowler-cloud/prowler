@@ -561,6 +561,76 @@ class HuaweicloudProvider(Provider):
         )
         print_boxes(report_lines, report_title)
 
+    def get_html_assessment_summary(self) -> str:
+        """
+        get_html_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider.
+
+        Returns:
+            str: the HTML assessment summary
+        """
+        try:
+            profile = (
+                self.identity.profile
+                if self.identity.profile is not None
+                else "default"
+            )
+            if isinstance(self.identity.regions, set):
+                audited_regions = ", ".join(sorted(self.identity.regions))
+            elif not self.identity.regions:
+                audited_regions = "All Regions"
+            else:
+                audited_regions = ", ".join(self.identity.regions)
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Huawei Cloud Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Account ID:</b> {self.identity.account_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Account Name:</b> {self.identity.account_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Profile:</b> {profile}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Audited Regions:</b> {audited_regions}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        Huawei Cloud Credentials
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+                            <b>Domain ID:</b> {self.identity.domain_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User ID:</b> {self.identity.user_id}
+                        </li>
+                        <li class="list-group-item">
+                            <b>User Name:</b> {self.identity.user_name}
+                        </li>
+                        <li class="list-group-item">
+                            <b>Identity Type:</b> {self.identity.identity_type}
+                        </li>
+                    </ul>
+                </div>
+                </div>"""
+        except Exception as error:
+            from loguru import logger
+
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
     @staticmethod
     def test_connection(
         access_key_id: str = None,
