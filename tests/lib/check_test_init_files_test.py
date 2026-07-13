@@ -16,13 +16,15 @@ def load_guard_module():
     return module
 
 
-def test_find_test_init_files_detects_only_test_directories(tmp_path):
+def test_find_test_init_files_detects_only_root_test_directories(tmp_path):
     guard = load_guard_module()
 
     (tmp_path / "tests" / "providers" / "aws").mkdir(parents=True)
     (tmp_path / "tests" / "providers" / "aws" / "__init__.py").write_text("")
     (tmp_path / "api" / "tests" / "performance").mkdir(parents=True)
     (tmp_path / "api" / "tests" / "performance" / "__init__.py").write_text("")
+    (tmp_path / "mcp_server" / "tests").mkdir(parents=True)
+    (tmp_path / "mcp_server" / "tests" / "__init__.py").write_text("")
     (tmp_path / "prowler" / "providers" / "aws").mkdir(parents=True)
     (tmp_path / "prowler" / "providers" / "aws" / "__init__.py").write_text("")
     (
@@ -42,7 +44,6 @@ def test_find_test_init_files_detects_only_test_directories(tmp_path):
     matches = guard.find_test_init_files(tmp_path)
 
     assert [path.relative_to(tmp_path) for path in matches] == [
-        Path("api/tests/performance/__init__.py"),
         Path("tests/providers/aws/__init__.py"),
     ]
 

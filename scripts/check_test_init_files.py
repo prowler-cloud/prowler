@@ -26,8 +26,8 @@ IGNORED_DIRECTORY_NAMES = {
 
 
 def is_test_init_file(path: Path) -> bool:
-    """Return True when the file is a test __init__.py."""
-    return path.name == "__init__.py" and "tests" in path.parts
+    """Return True when the file is a root tests __init__.py."""
+    return path.name == "__init__.py" and path.parts[0] == "tests"
 
 
 def is_excluded_test_init_file(path: Path, root: Path) -> bool:
@@ -53,7 +53,10 @@ def find_test_init_files(root: Path) -> list[Path]:
         else:
             continue
 
-        if is_test_init_file(path) and not is_excluded_test_init_file(path, root):
+        relative_path = path.relative_to(root)
+        if is_test_init_file(relative_path) and not is_excluded_test_init_file(
+            path, root
+        ):
             matches.append(path)
 
     return sorted(matches)
