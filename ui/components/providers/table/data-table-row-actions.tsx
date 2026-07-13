@@ -310,8 +310,10 @@ export function DataTableRowActions({
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
   const providerType = provider?.attributes.provider ?? "";
-  // Only predefined providers can be managed from the UI
-  const canManageProvider = isConfigurableProvider(providerType);
+  // Credentials are gated to the hardcoded provider set: only those types have a
+  // bespoke credential wizard. Alias-edit and delete are backend-generic, so they
+  // stay available for every provider, including dynamic ones.
+  const canManageCredentials = isConfigurableProvider(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
@@ -590,13 +592,11 @@ export function DataTableRowActions({
       )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
-          {canManageProvider && (
-            <ActionDropdownItem
-              icon={<Pencil />}
-              label="Edit Provider Alias"
-              onSelect={() => setIsEditOpen(true)}
-            />
-          )}
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit Provider Alias"
+            onSelect={() => setIsEditOpen(true)}
+          />
           <ActionDropdownItem
             icon={<Timer />}
             label="View Scan Jobs"
@@ -634,7 +634,7 @@ export function DataTableRowActions({
                 disabled
               />
             )}
-          {canManageProvider && (
+          {canManageCredentials && (
             <ActionDropdownItem
               icon={<KeyRound />}
               label={hasSecret ? "Update Credentials" : "Add Credentials"}
@@ -661,16 +661,14 @@ export function DataTableRowActions({
             }}
             disabled={!hasSecret || loading}
           />
-          {canManageProvider && (
-            <ActionDropdownDangerZone>
-              <ActionDropdownItem
-                icon={<Trash2 />}
-                label="Delete Provider"
-                destructive
-                onSelect={() => setIsDeleteOpen(true)}
-              />
-            </ActionDropdownDangerZone>
-          )}
+          <ActionDropdownDangerZone>
+            <ActionDropdownItem
+              icon={<Trash2 />}
+              label="Delete Provider"
+              destructive
+              onSelect={() => setIsDeleteOpen(true)}
+            />
+          </ActionDropdownDangerZone>
         </ActionDropdown>
       </div>
     </>
