@@ -18,4 +18,4 @@ class ec2_ami_public(Check):
 
                 findings.append(report)
 
-            return findings
+        return findings
