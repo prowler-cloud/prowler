@@ -105,6 +105,11 @@ const SSRDataUser = async ({
       className="w-full gap-4 p-4 md:p-5"
     >
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
+      {hasManageAccount && (
+        <div id="api-keys" className="scroll-mt-6">
+          <ApiKeysCard searchParams={searchParams} />
+        </div>
+      )}
       <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
       {hasManageIntegrations && (
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
@@ -115,7 +120,6 @@ const SSRDataUser = async ({
         hasManageAccount={hasManageAccount}
         sessionTenantId={session?.tenantId}
       />
-      {hasManageAccount && <ApiKeysCard searchParams={searchParams} />}
     </Card>
   );
 };

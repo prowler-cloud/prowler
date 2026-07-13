@@ -9,18 +9,20 @@ describe("profile page layout", () => {
   const pagePath = path.join(currentDir, "page.tsx");
   const source = readFileSync(pagePath, "utf8");
 
-  it("uses one large card with profile sections stacked vertically", () => {
+  it("places API Keys near the top of the profile and exposes its deep-link target", () => {
     expect(source).toContain('aria-label="User profile settings"');
     expect(source).toContain('className="w-full gap-4 p-4 md:p-5"');
+    expect(source).toContain('id="api-keys"');
     expect(source).not.toContain("xl:grid-cols");
     expect(source).not.toContain('className="flex w-full flex-col gap-6"');
 
     const sectionOrder = [
       "<UserBasicInfoCard",
+      'id="api-keys"',
+      "<ApiKeysCard",
       "<RolesCard",
       "<SamlIntegrationCard",
       "<MembershipsCard",
-      "<ApiKeysCard",
     ];
 
     const sectionIndexes = sectionOrder.map((section) =>
