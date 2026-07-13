@@ -45,11 +45,11 @@ class OBS(HuaweiCloudService):
 
     def _list_buckets(self):
         """List all OBS buckets."""
-        if not self.regional_clients:
+        if not self.client:
             return
 
-        region = list(self.regional_clients.keys())[0]
-        client = self.regional_clients[region]
+        region = self.region
+        client = self.client
         logger.info(f"OBS - Listing Buckets in {region}...")
 
         try:
