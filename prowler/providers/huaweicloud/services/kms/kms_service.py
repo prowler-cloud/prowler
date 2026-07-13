@@ -52,34 +52,37 @@ class KMS(HuaweiCloudService):
             logger.info(f"KMS - Listing Keys in {region}...")
 
             try:
-                from huaweicloudsdkkms.v2 import ListKmsRequest
+                from huaweicloudsdkkms.v2 import ListKeysRequest, ListKeysRequestBody
 
-                request = ListKmsRequest(limit="100")
+                request = ListKeysRequest(body=ListKeysRequestBody(limit="100"))
                 response = self._call_with_retries(
-                    client.list_kms, request
+                    client.list_keys, request
                 )
 
-                if response and response.keys:
-                    for key_data in response.keys:
+                if response and response.key_details:
+                    for key_data in response.key_details:
                         key_id = getattr(key_data, "key_id", "")
                         is_rotation_enabled = False
                         rotation_period = ""
 
                         try:
                             from huaweicloudsdkkms.v2 import (
-                                ShowKeyRotationConfigRequest,
+                                ShowKeyRotationStatusRequest,
+                                OperateKeyRequestBody,
                             )
 
-                            rotation_request = ShowKeyRotationConfigRequest(key_id=key_id)
+                            rotation_request = ShowKeyRotationStatusRequest(
+                                body=OperateKeyRequestBody(key_id=key_id)
+                            )
                             rotation_response = self._call_with_retries(
-                                client.show_key_rotation_config, rotation_request
+                                client.show_key_rotation_status, rotation_request
                             )
                             if rotation_response:
                                 is_rotation_enabled = getattr(
-                                    rotation_response, "enable_rotation", False
+                                    rotation_response, "key_rotation_enabled", False
                                 )
                                 rotation_period = getattr(
-                                    rotation_response, "rotation_period", ""
+                                    rotation_response, "rotation_interval", ""
                                 )
                         except Exception as rotation_error:
                             logger.error(
