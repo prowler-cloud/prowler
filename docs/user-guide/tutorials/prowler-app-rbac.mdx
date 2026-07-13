@@ -124,7 +124,7 @@ To resend the invitation to the user, it is necessary to explicitly **delete the
 
 ## Managing Groups and Roles
 
-The Roles section in Prowler is designed to facilitate the assignment of custom user privileges. This section allows administrators to define roles with specific permissions for Prowler administrative tasks and Account visibility.
+Roles combine administrative permissions with provider visibility. Administrative permissions control the actions a role can perform. Provider Groups and Unlimited Visibility control the providers, resources, findings, scans, and compliance results the role can access.
 
 <Note>
 **Only users that have the _Manage Account_ or _admin_ permission can access this section.**
@@ -132,47 +132,45 @@ The Roles section in Prowler is designed to facilitate the assignment of custom 
 </Note>
 ### Provider Groups
 
-Provider Groups control visibility across specific providers. When creating a new role, you can assign specific groups to define their Provider visibility. This ensures that users with that role have access only to the Providers that are required.
+Provider Groups limit visibility to selected providers. Assigning one or more Provider Groups to a role grants access to the providers in those groups and their resources, findings, scans, and compliance results.
 
-By default, a new user role does not have visibility into any group.
+New roles have no provider visibility by default. Assign at least one Provider Group or enable **Unlimited Visibility** before assigning the role to users who need access to provider data.
 
-Alternatively, to grant the role unlimited visibility across all providers, check the Grant Unlimited Visibility checkbox.
+**Unlimited Visibility** grants organization-wide visibility across every provider, regardless of the Provider Groups assigned to the role. It does not grant administrative permissions.
 
 #### Creating a Provider Group
 
 Follow these steps to create a provider group in your account:
 
-1. Navigate to **Provider Groups** from the side menu..
+1. Click **Providers** in the side menu.
 
-2. In this view you can select the provider groups you want to assign to one or more roles.
+2. Select the **Provider Groups** tab.
 
-3. Click the **Create Group** button on the center of the screen.
+3. Enter a group name in the **Create a new provider group** form.
 
-    <img src="/images/prowler-app/rbac/provider_group.png" alt="Create Provider Group" width="700" />
+4. Select the providers that the group controls. Optionally, select the roles that should use the group.
+
+5. Click **Create Group**.
 
 #### Editing a Provider Group
 
 Follow these steps to edit a provider group on your account:
 
-1. Navigate to **Provider Groups** from the side menu.
+1. Click **Providers** in the side menu and select the **Provider Groups** tab.
 
-2. Click the edit button of the provider group you want to modify.
+2. Open the actions menu for the Provider Group and click **Edit Provider Group**.
 
-    <img src="/images/prowler-app/rbac/provider_group_edit.png" alt="Edit Provider Group" width="700" />
-
-3. Change the provider group parameters you need and save the changes.
-
-    <img src="/images/prowler-app/rbac/provider_group_edit_1.png" alt="Edit Provider Group Details" width="700" />
+3. Update the group name, providers, or roles, and save the changes.
 
 #### Removing a Provider Group
 
 Follow these steps to remove a provider group of your account:
 
-1. Navigate to **Provider Groups** from the side menu.
+1. Click **Providers** in the side menu and select the **Provider Groups** tab.
 
-2. Click the delete button of the provider group you want to remove.
+2. Open the actions menu for the Provider Group and click **Delete Provider Group**.
 
-    <img src="/images/prowler-app/rbac/provider_group_remove.png" alt="Remove Provider Group" width="700" />
+3. Confirm the deletion.
 
 ### Roles
 
@@ -182,19 +180,20 @@ Follow these steps to create a role for your account:
 
 1. Navigate to **Roles** from the side menu.
 
-2. Click the **Add Role** button on the top right-hand corner of the screen.
+2. Click **Add Role**.
 
-    <img src="/images/prowler-app/rbac/role_create.png" alt="Create Role" width="700" />
+3. Enter the role name and select the required administrative permissions.
 
-3. In the Add Role screen, enter the role name, the administration permissions and the groups of providers to which the Role will have access to.
-
-4. In the Groups and Account Visibility section, you will see a list of available groups with checkboxes next to them. To assign a group to the user role, simply click the checkbox next to the group name. If you need to assign multiple groups, repeat the process for each group you wish to add.
+4. Configure **Visibility**:
+   - To grant organization-wide visibility, select **Enable Unlimited Visibility for this role**.
+   - To limit visibility, leave Unlimited Visibility cleared and select one or more Provider Groups.
 
     <img src="/images/prowler-app/rbac/role_create_1.png" alt="Role parameters" width="700" />
 
+5. Click **Add Role**.
 
 <Note>
-To assign read-only access, select only the `Unlimited Visibility` permission when creating the role. Then, go to the Users page and assign this role to the appropriate user.
+To grant read-only access across the organization, enable **Unlimited Visibility** without selecting administrative permissions. Then, assign the role from the **Users** page.
 
 </Note>
 #### Editing a Role
@@ -203,14 +202,11 @@ Follow these steps to edit a role on your account:
 
 1. Navigate to **Roles** from the side menu.
 
-2. Click the edit button of the role you want to modify.
+2. Open the actions menu for the role and click **Edit Role**.
 
-    <img src="/images/prowler-app/rbac/role_edit.png" alt="Edit Role" width="700" />
+3. Update the role name, administrative permissions, Unlimited Visibility setting, or Provider Groups.
 
-3. Adjust the settings as needed and save the changes.
-
-    <img src="/images/prowler-app/rbac/role_edit_details.png" alt="Edit Role Details" width="700" />
-
+4. Save the changes.
 
 #### Removing a Role
 
@@ -218,10 +214,9 @@ Follow these steps to remove a role of your account:
 
 1. Navigate to **Roles** from the side menu.
 
-2. Click the delete button of the role you want to remove.
+2. Open the actions menu for the role and click **Delete Role**.
 
-    <img src="/images/prowler-app/rbac/role_remove.png" alt="Remove Role" width="700" />
-
+3. Confirm the deletion.
 
 ## RBAC Administrative Permissions
 
