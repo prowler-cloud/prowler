@@ -4,7 +4,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
-
 ## [1.34.1] (Prowler v5.33.1)
 
 ### 🐞 Fixed
@@ -19,6 +18,7 @@ All notable changes to the **Prowler API** are documented in this file.
 - `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS` environment variable to allow internal hosts as OpenAI-compatible Lighthouse AI base URLs [(#11942)](https://github.com/prowler-cloud/prowler/pull/11942)
 
 ---
+
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added
