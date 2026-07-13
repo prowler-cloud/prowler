@@ -80,7 +80,6 @@ export function LighthouseV2ChatPage({
   initialError,
 }: LighthouseV2ChatPageProps) {
   const eventSourceRef = useRef<EventSource | null>(null);
-  const initialPromptSentRef = useRef(false);
   const connectedConfigurations = configurations.filter(
     (configuration) => configuration.connected === true,
   );
@@ -98,7 +97,7 @@ export function LighthouseV2ChatPage({
   // otherwise keep the first render's activeSessionId.
   const activeSessionIdRef = useRef<string | null>(initialSessionId ?? null);
   const [messages, setMessages] = useState(initialMessages);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialPrompt ?? "");
   const [feedback, setFeedback] = useState<string | null>(initialError ?? null);
   const [blockedByConflict, setBlockedByConflict] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -358,13 +357,6 @@ export function LighthouseV2ChatPage({
   // Close any open EventSource when the chat unmounts (e.g. route/session change).
   useMountEffect(() => {
     return () => closeStream();
-  });
-
-  useMountEffect(() => {
-    if (initialPrompt && !initialPromptSentRef.current) {
-      initialPromptSentRef.current = true;
-      void submitMessage(initialPrompt);
-    }
   });
 
   const resetToNewChat = () => {

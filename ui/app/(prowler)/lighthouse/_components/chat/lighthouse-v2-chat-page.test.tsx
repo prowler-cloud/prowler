@@ -248,7 +248,7 @@ describe("LighthouseV2ChatPage", () => {
     );
   });
 
-  it("starts a new conversation with the overview remediation prompt", async () => {
+  it("prefills the overview remediation prompt without starting a conversation", () => {
     // Given
     const initialPrompt =
       "Find and guide me to remediate which actually matters. What do I have to do today to be secure?";
@@ -257,13 +257,11 @@ describe("LighthouseV2ChatPage", () => {
     renderPage({ initialPrompt });
 
     // Then
-    await waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
-    expect(sendMessageMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      text: initialPrompt,
-      provider: "openai",
-      model: "gpt-5.1",
-    });
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue(
+      initialPrompt,
+    );
+    expect(createSessionMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
   });
 
   it("shows model names in the selector while keeping model ids for persistence", async () => {
