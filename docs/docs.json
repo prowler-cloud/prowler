@@ -129,6 +129,7 @@
               "user-guide/tutorials/prowler-alerts",
               "user-guide/tutorials/prowler-app-scan-configuration",
               "user-guide/tutorials/prowler-app-findings-triage",
+              "user-guide/compliance/tutorials/cross-provider-compliance",
               {
                 "group": "Mutelist",
                 "expanded": true,
