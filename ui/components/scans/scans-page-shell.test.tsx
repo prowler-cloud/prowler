@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useScansStore } from "@/store";
+import { ProviderProps } from "@/types";
 
 import { ScansPageShell } from "./scans-page-shell";
 
@@ -102,12 +103,13 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
 
-const providers = [
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production",
       status: "completed" as const,
@@ -302,9 +304,10 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
   });
 
-  it("strips the launchScan URL param when closing the URL-opened modal", async () => {
+  it("strips the launchScan URL param via the History API when closing the URL-opened modal", async () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
     const user = userEvent.setup();
 
     render(
@@ -316,11 +319,17 @@ describe("ScansPageShell", () => {
     await user.click(screen.getByRole("button", { name: /close/i }));
 
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(replaceMock).toHaveBeenCalledWith(
+    // History API (not router.replace) so Next.js does not refetch and reload the page;
+    // scanOnDemand's revalidatePath already refreshes the list when a scan launches.
+    expect(replaceStateSpy).toHaveBeenCalledWith(
+      null,
+      "",
       "/scans?tab=completed",
-      expect.objectContaining({ scroll: false }),
     );
+    expect(replaceMock).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
+
+    replaceStateSpy.mockRestore();
   });
 
   it("opens and closes the launch scan modal from client state without navigation", async () => {

@@ -1,7 +1,9 @@
 "use client";
 
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
+import { SCAN_JOBS_TAB } from "@/types";
+import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { AutoRefresh } from "../auto-refresh";
 import { NoScansEmptyState } from "../no-scans-empty-state";
@@ -12,6 +14,7 @@ interface ScanJobsTableProps {
   meta?: MetaDataProps;
   tab: ScanJobsTab;
   hasFilters?: boolean;
+  scanScheduleCapability?: ScanScheduleCapability;
 }
 
 const REFRESHING_STATES = ["available", "executing"] as const;
@@ -21,13 +24,17 @@ export function ScanJobsTable({
   meta,
   tab,
   hasFilters = false,
+  scanScheduleCapability,
 }: ScanJobsTableProps) {
   const hasRefreshingScan = data.some((scan) =>
     REFRESHING_STATES.includes(
       scan.attributes.state as (typeof REFRESHING_STATES)[number],
     ),
   );
-  const columns = getScanJobsColumns({ tab });
+  const columns = getScanJobsColumns({
+    tab,
+    capability: scanScheduleCapability,
+  });
   const showEmptyState = data.length === 0 && !hasFilters;
 
   return (
@@ -41,6 +48,14 @@ export function ScanJobsTable({
           columns={columns}
           data={data}
           metadata={meta}
+          // Anchor the view-first-scan tour's "in-progress" step to the first row of
+          // the active (In Progress) tab; absent on other tabs so the tour only points
+          // at a running scan.
+          getRowAttributes={(row) =>
+            row.index === 0 && tab === SCAN_JOBS_TAB.ACTIVE
+              ? { "data-tour-id": "view-first-scan-in-progress" }
+              : {}
+          }
         />
       )}
     </>

@@ -108,6 +108,39 @@ uv sync
 source .venv/bin/activate
 ```
 
+### Running the Local API Development Stack
+
+For API development, Prowler provides a Makefile-based local stack in addition to the manual and Docker Compose workflows documented in the API README. PostgreSQL, Valkey, and Neo4j run with Docker Compose, while Django and the Celery worker run natively through `uv`.
+
+Before using this method, ensure `docker compose`, `tmux`, and `uv` are installed.
+
+This workflow is designed for macOS and should also work on Linux when Docker, `tmux`, and `uv` are available. Windows requires script changes before it can be supported.
+
+To start the local API stack, run:
+
+```shell
+make dev
+```
+
+This command starts the required services, creates a `tmux` session with panes for the API, worker, and PostgreSQL logs, waits until the API responds, and prints the API URL and log file paths. The API is available at:
+
+```text
+http://localhost:8080/api/v1
+```
+
+Use these commands to manage the stack:
+
+```shell
+make dev-setup   # Bootstrap dependencies, migrations, and fixtures
+make dev-attach  # Attach to the tmux session
+make dev-launch  # Start the stack on fixed ports and attach
+make dev-stop    # Stop the tmux session and containers
+make dev-clean   # Remove stopped development containers
+make dev-wipe    # Stop everything and delete local development data
+make dev-status  # Show development container status
+```
+
+The UI is not started by this workflow. Start it separately by following the UI development instructions in the `ui/` directory.
 
 ### Pre-Commit Hooks
 

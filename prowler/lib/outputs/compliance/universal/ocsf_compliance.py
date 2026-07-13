@@ -19,6 +19,10 @@ from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
 from prowler.lib.outputs.utils import unroll_dict_to_list
@@ -79,30 +83,43 @@ def _to_snake_case(name: str) -> str:
     return s.lower()
 
 
-def _build_requirement_attrs(requirement, framework) -> dict:
-    """Build a dict with requirement attributes for the unmapped section.
+def _build_requirement_attrs(requirement, framework):
+    """Build the requirement attributes payload for the unmapped section.
 
-    Keys are normalized to snake_case for OCSF consistency.
-    Only includes attributes whose AttributeMetadata has output_formats.ocsf=True.
-    When no metadata is declared, all attributes are included.
+    Keys are snake_cased and filtered by ``AttributeMetadata.output_formats.ocsf``
+    when declared. MITRE-style attrs (``{"_raw_attributes": [...]}``) are
+    unwrapped into a list of per-entry dicts.
     """
-    attrs = requirement.attributes
-    if not attrs:
+    requirement_attributes = requirement.attributes
+    if not requirement_attributes:
         return {}
 
-    # Build set of keys allowed for OCSF output
     metadata = framework.attributes_metadata
-    if metadata:
-        ocsf_keys = {m.key for m in metadata if m.output_formats.ocsf}
-    else:
-        ocsf_keys = None  # No metadata → include all
+    allowed_keys = (
+        {entry.key for entry in metadata if entry.output_formats.ocsf}
+        if metadata
+        else None
+    )
 
-    result = {}
-    for key, value in attrs.items():
-        if ocsf_keys is not None and key not in ocsf_keys:
-            continue
-        result[_to_snake_case(key)] = value
-    return result
+    def _to_snake_case_dict(entry: dict) -> dict:
+        return {
+            _to_snake_case(key): value
+            for key, value in entry.items()
+            if allowed_keys is None or key in allowed_keys
+        }
+
+    if (
+        isinstance(requirement_attributes, dict)
+        and "_raw_attributes" in requirement_attributes
+    ):
+        raw_entries = requirement_attributes.get("_raw_attributes") or []
+        return [
+            _to_snake_case_dict(entry)
+            for entry in raw_entries
+            if isinstance(entry, dict)
+        ]
+
+    return _to_snake_case_dict(requirement_attributes)
 
 
 class OCSFComplianceOutput:
@@ -147,7 +164,14 @@ class OCSFComplianceOutput:
         findings: List["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
+        include_manual: bool = True,
     ) -> None:
+        """Transform findings into OCSF ComplianceFinding events.
+
+        Manual requirements are emitted only when ``include_manual=True``. The
+        caller must pass ``False`` for subsequent streaming batches so manual
+        events are not duplicated.
+        """
         # Build check -> requirements map
         check_req_map = {}
         for req in framework.requirements:
@@ -161,14 +185,27 @@ class OCSFComplianceOutput:
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
+        # Scope constraints to this output's provider (e.g. an Azure constraint
+        # must not affect an AWS output).
+        requirement_config_status = build_requirement_config_status(
+            framework.requirements, provider_type=self._provider
+        )
+
         for finding in findings:
             if finding.check_id in check_req_map:
                 for req in check_req_map[finding.check_id]:
                     cf = self._build_compliance_finding(
-                        finding, framework, req, compliance_name
+                        finding,
+                        framework,
+                        req,
+                        compliance_name,
+                        requirement_config_status.get(req.id, (True, "")),
                     )
                     if cf:
                         self._data.append(cf)
+
+        if not include_manual:
+            return
 
         # Manual requirements (no checks or empty for current provider)
         for req in framework.requirements:
@@ -217,10 +254,14 @@ class OCSFComplianceOutput:
         framework: ComplianceFramework,
         requirement,
         compliance_name: str,
+        config_status: tuple = (True, ""),
     ) -> ComplianceFinding:
         try:
+            effective_status, message = apply_config_status(
+                finding.status, finding.status_extended, config_status
+            )
             compliance_status = PROWLER_TO_COMPLIANCE_STATUS.get(
-                finding.status, ComplianceStatusID.Unknown
+                effective_status, ComplianceStatusID.Unknown
             )
             check_status = PROWLER_TO_COMPLIANCE_STATUS.get(
                 finding.status, ComplianceStatusID.Unknown
@@ -249,6 +290,7 @@ class OCSFComplianceOutput:
                     requirements=[requirement.id],
                     control=requirement.description,
                     status_id=compliance_status,
+                    # Nested Check preserves the raw check result.
                     checks=[
                         Check(
                             uid=finding.check_id,
@@ -270,7 +312,7 @@ class OCSFComplianceOutput:
                         else None
                     ),
                 ),
-                message=finding.status_extended,
+                message=message,
                 metadata=Metadata(
                     event_code=finding.check_id,
                     product=Product(
@@ -316,8 +358,10 @@ class OCSFComplianceOutput:
                 severity=finding_severity.name,
                 status_id=event_status.value,
                 status=event_status.name,
-                status_code=finding.status,
-                status_detail=finding.status_extended,
+                # Effective status, so the top-level never contradicts the
+                # nested compliance status.
+                status_code=effective_status,
+                status_detail=message,
                 time=time_value,
                 time_dt=(
                     finding.timestamp

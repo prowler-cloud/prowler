@@ -230,10 +230,12 @@ class Defender(AzureService):
         iot_security_solutions = {}
         for subscription_id, client in self.clients.items():
             try:
-                iot_security_solutions_list = (
-                    client.iot_security_solution.list_by_subscription()
-                )
                 iot_security_solutions.update({subscription_id: {}})
+                iot_security_solutions_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.iot_security_solution.list_by_subscription,
+                    client.iot_security_solution.list_by_resource_group,
+                )
                 for iot_security_solution in iot_security_solutions_list:
                     iot_security_solutions[subscription_id].update(
                         {
@@ -267,8 +269,13 @@ class Defender(AzureService):
         for subscription_id, client in self.clients.items():
             try:
                 jit_policies[subscription_id] = {}
-                policies = client.jit_network_access_policies.list()
-                for policy in policies:
+                policies_list = self.list_with_rg_scope(
+                    subscription_id,
+                    client.jit_network_access_policies.list,
+                    client.jit_network_access_policies.list_by_resource_group,
+                )
+
+                for policy in policies_list:
                     vm_ids = set()
                     for vm in getattr(policy, "virtual_machines", []):
                         vm_ids.add(vm.id)

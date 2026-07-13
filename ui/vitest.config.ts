@@ -5,8 +5,7 @@ import type { TestProjectConfiguration } from "vitest/config";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig(() => {
-  const apiBaseUrl =
-    process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost/api/v1";
+  const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
     plugins: [react()],
@@ -75,7 +74,7 @@ export default defineConfig(() => {
       ] as TestProjectConfiguration[],
     },
     define: {
-      "process.env.NEXT_PUBLIC_API_BASE_URL": JSON.stringify(apiBaseUrl),
+      "process.env.UI_API_BASE_URL": JSON.stringify(apiBaseUrl),
       // `next/dist/server/web/spec-extension/user-agent.js` references
       // `__dirname` directly and is pulled in transitively via `next-auth`.
       // Vite serves it to the browser where that global doesn't exist, so we
@@ -106,17 +105,6 @@ export default defineConfig(() => {
         "next-themes",
 
         // App component lib
-        "@heroui/react",
-        "@heroui/accordion",
-        "@heroui/breadcrumbs",
-        "@heroui/card",
-        "@heroui/chip",
-        "@heroui/divider",
-        "@heroui/input",
-        "@heroui/switch",
-        "@heroui/theme",
-        "@heroui/tooltip",
-        "@heroui/use-clipboard",
         "@iconify/react",
 
         // Radix
@@ -133,6 +121,7 @@ export default defineConfig(() => {
         "@radix-ui/react-scroll-area",
         "@radix-ui/react-select",
         "@radix-ui/react-separator",
+        "@radix-ui/react-switch",
         "@radix-ui/react-tabs",
         "@radix-ui/react-toast",
         "@radix-ui/react-tooltip",
@@ -154,7 +143,6 @@ export default defineConfig(() => {
         "clsx",
         "tailwind-merge",
         "class-variance-authority",
-        "tailwind-variants",
 
         // App-level deps the page (or its children) pull in
         "@tanstack/react-table",

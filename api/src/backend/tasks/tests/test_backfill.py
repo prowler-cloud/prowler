@@ -1,16 +1,8 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from tasks.jobs.backfill import (
-    backfill_compliance_summaries,
-    backfill_provider_compliance_scores,
-    backfill_resource_scan_summaries,
-    aggregate_scan_category_summaries,
-    aggregate_scan_resource_group_summaries,
-)
-
 from api.models import (
     ComplianceOverviewSummary,
     Finding,
@@ -24,6 +16,13 @@ from api.models import (
 )
 from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
+from tasks.jobs.backfill import (
+    aggregate_scan_category_summaries,
+    aggregate_scan_resource_group_summaries,
+    backfill_compliance_summaries,
+    backfill_provider_compliance_scores,
+    backfill_resource_scan_summaries,
+)
 
 
 @pytest.fixture(scope="function")
@@ -40,9 +39,9 @@ def resource_scan_summary_data(scans_fixture):
 
 
 @pytest.fixture(scope="function")
-def get_not_completed_scans(providers_fixture):
-    provider_id = providers_fixture[0].id
-    tenant_id = providers_fixture[0].tenant_id
+def get_not_completed_scans(aws_provider):
+    provider_id = aws_provider.id
+    tenant_id = aws_provider.tenant_id
     scan_1 = Scan.objects.create(
         tenant_id=tenant_id,
         trigger=Scan.TriggerChoices.MANUAL,
@@ -536,7 +535,7 @@ class TestBackfillProviderComplianceScores:
         scan2 = scans_fixture[1]
 
         # Set completed_at to make the scan eligible for backfill
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
         scan2.state = StateChoices.AVAILABLE
         scan2.completed_at = None

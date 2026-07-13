@@ -6,6 +6,7 @@ import {
   getLatestFindingGroups,
 } from "@/actions/finding-groups";
 import { getLatestMetadataInfo, getMetadataInfo } from "@/actions/findings";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getScan, getScans } from "@/actions/scans";
 import { SeedFromFindingsButton } from "@/app/(prowler)/alerts/_components";
@@ -14,7 +15,7 @@ import {
   FindingsGroupTable,
   SkeletonTableFindings,
 } from "@/components/findings/table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   applyDefaultMutedFilter,
@@ -36,8 +37,9 @@ export default async function Findings({
   const { encodedSort } = extractSortAndKey(resolvedSearchParams);
   const { filters, query } = extractFiltersAndQuery(resolvedSearchParams);
 
-  const [providersData, scansData] = await Promise.all([
+  const [providersData, providerGroupsData, scansData] = await Promise.all([
     getAllProviders(),
+    getAllProviderGroups(),
     getScans({ pageSize: 50 }),
   ]);
 
@@ -59,7 +61,6 @@ export default async function Findings({
     filters: resolvedFilters,
   });
 
-  // Extract unique regions, services, categories, groups from the new endpoint
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
   const uniqueServices = metadataInfoData?.data?.attributes?.services || [];
   const uniqueResourceTypes =
@@ -67,7 +68,6 @@ export default async function Findings({
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
 
-  // Extract scan UUIDs with "completed" state and more than one resource
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
       scan.attributes.state === "completed" &&
@@ -76,6 +76,14 @@ export default async function Findings({
 
   const completedScanIds =
     completedScans?.map((scan: ScanProps) => scan.id) || [];
+  const onboardingAction =
+    completedScanIds.length > 0
+      ? { flowId: "explore-findings" }
+      : {
+          flowId: "explore-findings",
+          fallbackFlowId: "view-first-scan",
+          useFallback: true,
+        };
 
   const scanDetails = createScanDetailsMapping(
     completedScans || [],
@@ -84,11 +92,16 @@ export default async function Findings({
   const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return (
-    <ContentLayout title="Findings" icon="lucide:tag">
+    <ContentLayout
+      title="Findings"
+      icon="lucide:tag"
+      onboardingAction={onboardingAction}
+    >
       <FilterTransitionWrapper>
         <div className="mb-6">
           <FindingsFilters
             providers={providersData?.data || []}
+            providerGroups={providerGroupsData?.data || []}
             completedScanIds={completedScanIds}
             scanDetails={scanDetails}
             uniqueRegions={uniqueRegions}
@@ -146,15 +159,14 @@ const SSRDataTable = async ({
     pageSize,
   });
 
-  // Transform API response to FindingGroupRow[]
   const groups = adaptFindingGroupsResponse(findingGroupsData);
-  // Key resets all client state (selection, drill-down) when data changes
+  // Key resets client state (selection, drill-down) when data changes.
   const groupKey = groups.map((g) => g.id).join(",");
 
   return (
     <>
       {findingGroupsData?.errors?.length > 0 && (
-        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-sm text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{findingGroupsData.errors[0].detail}</p>
         </div>

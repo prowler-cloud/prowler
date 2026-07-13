@@ -4,6 +4,7 @@ from os.path import isdir
 
 from pydantic.v1 import BaseModel
 
+from prowler.config.config import output_file_timestamp
 from prowler.providers.common.provider import Provider
 
 
@@ -48,6 +49,16 @@ class ProviderOutputOptions:
             if updated_audit_config:
                 provider._audit_config = updated_audit_config
 
+        # Secrets validation: --scan-secrets-validate opts into live validation
+        # of discovered secrets. Set the audit_config key directly so it applies
+        # even for providers whose default config does not declare it.
+        self.scan_secrets_validate = getattr(arguments, "scan_secrets_validate", False)
+        if self.scan_secrets_validate:
+            provider = Provider.get_global_provider()
+            audit_config = provider.audit_config or {}
+            audit_config["secrets_validate"] = True
+            provider._audit_config = audit_config
+
         # Check output directory, if it is not created -> create it
         if self.output_directory and not self.fixer:
             if not isdir(self.output_directory):
@@ -69,3 +80,15 @@ class Connection:
 
     is_connected: bool = False
     error: Exception = None
+
+
+def default_output_options(provider, arguments, bulk_checks_metadata):
+    """Generic OutputOptions fallback for external providers that do not
+    implement get_output_options, so the run still produces output instead of
+    aborting. Honors arguments.output_filename and otherwise derives a name
+    from the provider type."""
+    output_options = ProviderOutputOptions(arguments, bulk_checks_metadata)
+    output_options.output_filename = getattr(arguments, "output_filename", None) or (
+        f"prowler-output-{provider.type}-{output_file_timestamp}"
+    )
+    return output_options

@@ -5,6 +5,10 @@ from typing import TYPE_CHECKING, Optional
 from pydantic.v1 import create_model
 
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import open_file
@@ -22,6 +26,7 @@ PROVIDER_HEADER_MAP = {
     "oraclecloud": ("TenancyId", "account_uid", "Region", "region"),
     "alibabacloud": ("AccountId", "account_uid", "Region", "region"),
     "nhn": ("AccountId", "account_uid", "Region", "region"),
+    "e2enetworks": ("ProjectId", "account_uid", "Location", "region"),
 }
 _DEFAULT_HEADERS = ("AccountId", "account_uid", "Region", "region")
 
@@ -134,7 +139,9 @@ class UniversalComplianceOutput:
             return " | ".join(str(v) for v in value)
         return value
 
-    def _build_row(self, finding, framework, requirement, is_manual=False):
+    def _build_row(
+        self, finding, framework, requirement, is_manual=False, config_status=None
+    ):
         """Build a single row dict for a finding + requirement combination."""
         row = {
             "Provider": (
@@ -180,10 +187,14 @@ class UniversalComplianceOutput:
             )
             row["Requirements_TechniqueURL"] = requirement.technique_url
 
-        row["Status"] = finding.status if not is_manual else "MANUAL"
-        row["StatusExtended"] = (
-            finding.status_extended if not is_manual else "Manual check"
-        )
+        if is_manual:
+            row["Status"] = "MANUAL"
+            row["StatusExtended"] = "Manual check"
+        else:
+            # Config-invalid PASS reports as FAIL, matching OCSF/table outputs.
+            row["Status"], row["StatusExtended"] = apply_config_status(
+                finding.status, finding.status_extended, config_status
+            )
         row["ResourceId"] = finding.resource_uid if not is_manual else "manual_check"
         row["ResourceName"] = finding.resource_name if not is_manual else "Manual check"
         row["CheckId"] = finding.check_id if not is_manual else "manual"
@@ -198,8 +209,15 @@ class UniversalComplianceOutput:
         findings: list["Finding"],
         framework: ComplianceFramework,
         compliance_name: str,
+        include_manual: bool = True,
     ) -> None:
-        """Transform findings into universal compliance CSV rows."""
+        """Transform findings into universal compliance CSV rows.
+
+        Manual requirements (no checks or empty for current provider) are
+        emitted only when ``include_manual=True``. When the writer is reused
+        across streaming batches, the caller should pass ``False`` after the
+        first batch so manual rows are not duplicated.
+        """
         # Build check -> requirements map (filtered by provider for dict checks)
         check_req_map = {}
         for req in framework.requirements:
@@ -215,6 +233,12 @@ class UniversalComplianceOutput:
                     check_req_map[check_id] = []
                 check_req_map[check_id].append(req)
 
+        # Scope constraints to this output's provider (e.g. an Azure constraint
+        # must not affect an AWS output).
+        requirement_config_status = build_requirement_config_status(
+            framework.requirements, provider_type=self._provider
+        )
+
         # Process findings using the provider-filtered check_req_map.
         # This ensures that for multi-provider dict checks, only the checks
         # belonging to the current provider produce output rows.
@@ -222,11 +246,19 @@ class UniversalComplianceOutput:
             check_id = finding.check_id
             if check_id in check_req_map:
                 for req in check_req_map[check_id]:
-                    row = self._build_row(finding, framework, req)
+                    row = self._build_row(
+                        finding,
+                        framework,
+                        req,
+                        config_status=requirement_config_status.get(req.id),
+                    )
                     try:
                         self._data.append(self._row_model(**row))
                     except Exception as e:
                         logger.debug(f"Skipping row for {req.id}: {e}")
+
+        if not include_manual:
+            return
 
         # Manual requirements (no checks or empty dict)
         for req in framework.requirements:

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  CalendarClock,
   Download,
   Eye,
   Pencil,
@@ -10,6 +11,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { getSchedule } from "@/actions/schedules";
 import { getTask } from "@/actions/task";
 import { getScanErrorDetails } from "@/actions/task/task.adapter";
 import { EditAliasModal } from "@/components/scans/edit-alias-modal";
@@ -18,22 +20,57 @@ import {
   type ScanErrorDetailsState,
 } from "@/components/scans/scan-error-details-modal";
 import {
+  EDIT_SCAN_SCHEDULE_STATE,
+  EditScanScheduleModal,
+  type EditScanScheduleState,
+} from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
+import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
-import type { ScanProps } from "@/types";
+import { getScanScheduleCapability } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
+import {
+  type ProviderType,
+  SCAN_JOBS_TAB,
+  type ScanJobsTab,
+  type ScanProps,
+  type ScheduleApiResponse,
+} from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+  type ScanScheduleProvider,
+} from "@/types/schedules";
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
+  /** The scan jobs tab this row is rendered in. */
+  tab: ScanJobsTab;
+  /**
+   * Schedule capability override. Only for Prowler Cloud.
+   */
+  capability?: ScanScheduleCapability;
 }
 
-export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
+export function ScanJobsRowActions({
+  scan,
+  tab,
+  capability,
+}: ScanJobsRowActionsProps) {
   const router = useRouter();
+  const canEditSchedule =
+    (capability ?? getScanScheduleCapability(isCloud())) ===
+    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
   const { toast } = useToast();
   const [editOpen, setEditOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
+    kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
+  });
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorState, setErrorState] = useState<ScanErrorDetailsState>({
     kind: "idle",
@@ -43,6 +80,15 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
   const isFailed = scanState === "failed";
   const taskId = scan.relationships.task.data?.id;
   const scanDate = toLocalDateString(scan.attributes.completed_at);
+  const providerId = scan.relationships.provider.data?.id;
+  const scheduleProvider: ScanScheduleProvider | undefined = providerId
+    ? {
+        providerId,
+        providerType: (scan.providerInfo?.provider ?? "aws") as ProviderType,
+        providerUid: scan.providerInfo?.uid ?? providerId,
+        providerAlias: scan.providerInfo?.alias ?? null,
+      }
+    : undefined;
 
   const openFindings = () => {
     if (!isCompleted || !scanDate) return;
@@ -96,9 +142,59 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
     setErrorState({ kind: "loaded", details });
   };
 
+  const openScheduleEditor = async () => {
+    if (!providerId) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message: "Provider ID is not available for this scan.",
+      });
+      setScheduleOpen(true);
+      return;
+    }
+
+    setScheduleState({ kind: EDIT_SCAN_SCHEDULE_STATE.LOADING });
+    setScheduleOpen(true);
+
+    const response = (await getSchedule(providerId)) as
+      | ScheduleApiResponse
+      | { error?: string };
+
+    if (!response || ("error" in response && response.error)) {
+      setScheduleState({
+        kind: EDIT_SCAN_SCHEDULE_STATE.ERROR,
+        message:
+          response && "error" in response && response.error
+            ? response.error
+            : "Failed to load scan schedule.",
+      });
+      return;
+    }
+
+    setScheduleState({
+      kind: EDIT_SCAN_SCHEDULE_STATE.LOADED,
+      schedule: "data" in response ? response.data : null,
+    });
+  };
+
   return (
     <div className="flex items-center justify-end">
       <ActionDropdown>
+        {/* Schedule editing belongs only to the Scheduled tab. */}
+        {tab === SCAN_JOBS_TAB.SCHEDULED && canEditSchedule && (
+          <ActionDropdownItem
+            icon={<CalendarClock />}
+            label="Edit Scan Schedule"
+            onSelect={() => void openScheduleEditor()}
+          />
+        )}
+        {/* Synthetic pending rows have no Scan to alias. */}
+        {!scan.pendingSchedule && (
+          <ActionDropdownItem
+            icon={<Pencil />}
+            label="Edit Scan Alias"
+            onSelect={() => setEditOpen(true)}
+          />
+        )}
         {isCompleted && (
           <>
             <ActionDropdownItem
@@ -126,12 +222,6 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
             onSelect={() => void openErrorDetails()}
           />
         )}
-        {/* TODO: Expand Edit to also cover schedule once the backend exposes a schedule update endpoint. */}
-        <ActionDropdownItem
-          icon={<Pencil />}
-          label="Edit"
-          onSelect={() => setEditOpen(true)}
-        />
         {/* TODO: Restore Cancel Scan once the backend exposes a public scan cancellation endpoint. */}
       </ActionDropdown>
 
@@ -146,6 +236,13 @@ export function ScanJobsRowActions({ scan }: ScanJobsRowActionsProps) {
         open={errorOpen}
         onOpenChange={setErrorOpen}
         state={errorState}
+      />
+
+      <EditScanScheduleModal
+        open={scheduleOpen}
+        onOpenChange={setScheduleOpen}
+        provider={scheduleProvider}
+        state={scheduleState}
       />
     </div>
   );

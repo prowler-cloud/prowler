@@ -1,5 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+
+import { ProviderProps } from "@/types";
 
 import { ProviderTypeSelector } from "./provider-type-selector";
 
@@ -39,7 +41,7 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     <div>{children}</div>
   ),
   MultiSelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="trigger">{children}</div>
   ),
   MultiSelectValue: ({ placeholder }: { placeholder: string }) => (
     <span>{placeholder}</span>
@@ -69,12 +71,13 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   ),
 }));
 
-const providers = [
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed" as const,
@@ -144,5 +147,27 @@ describe("ProviderTypeSelector", () => {
       screen.getByRole("option", { name: /select all Provider Types/i }),
     ).toHaveAttribute("aria-disabled", "true");
     expect(screen.getByText("All selected")).toBeInTheDocument();
+  });
+
+  it("shows one icon per selected type and a count in the trigger", async () => {
+    const azure = {
+      ...providers[0],
+      id: "provider-2",
+      attributes: { ...providers[0].attributes, provider: "azure" as const },
+    };
+
+    render(
+      <ProviderTypeSelector
+        providers={[providers[0], azure]}
+        onBatchChange={vi.fn()}
+        selectedValues={["aws", "azure"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    expect(await within(trigger).findByText("AWS")).toBeInTheDocument();
+    expect(
+      within(trigger).getByText("2 Provider Types selected"),
+    ).toBeInTheDocument();
   });
 });

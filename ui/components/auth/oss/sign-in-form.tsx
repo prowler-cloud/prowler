@@ -13,9 +13,11 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
 import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form } from "@/components/ui/form";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form } from "@/components/shadcn/form";
+import { getSafeCallbackPath } from "@/lib/auth-callback-url";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { SignInFormData, signInSchema } from "@/types";
 
 export const SignInForm = ({
@@ -32,7 +34,7 @@ export const SignInForm = ({
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const callbackUrl = searchParams.get("callbackUrl") || "/";
+  const callbackUrl = getSafeCallbackPath(searchParams, "callbackUrl");
 
   useEffect(() => {
     const samlError = searchParams.get("sso_saml_failed");
@@ -102,7 +104,7 @@ export const SignInForm = ({
         form.setValue("password", "");
       }
 
-      const result = await initiateSamlAuth(email);
+      const result = await initiateSamlAuth(email, callbackUrl);
 
       if (result.success && result.redirectUrl) {
         window.location.href = result.redirectUrl;
@@ -146,6 +148,7 @@ export const SignInForm = ({
     <AuthLayout title={title}>
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -181,6 +184,7 @@ export const SignInForm = ({
           <SocialButtons
             googleAuthUrl={googleAuthUrl}
             githubAuthUrl={githubAuthUrl}
+            callbackUrl={callbackUrl}
             isGoogleOAuthEnabled={isGoogleOAuthEnabled}
             isGithubOAuthEnabled={isGithubOAuthEnabled}
           />
@@ -194,7 +198,7 @@ export const SignInForm = ({
         >
           {!isSamlMode && (
             <Icon
-              className="text-default-500"
+              className="text-text-neutral-tertiary"
               icon="mdi:shield-key"
               width={24}
             />

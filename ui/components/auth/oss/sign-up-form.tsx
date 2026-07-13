@@ -1,6 +1,5 @@
 "use client";
 
-import { Checkbox } from "@heroui/checkbox";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useForm, useWatch } from "react-hook-form";
@@ -16,16 +15,17 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { Button, Checkbox } from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
   Form,
   FormControl,
   FormField,
   FormMessage,
-} from "@/components/ui/form";
+} from "@/components/shadcn/form";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -41,12 +41,14 @@ const FORM_ERROR_TYPE = {
 
 export const SignUpForm = ({
   invitationToken,
+  isCloudEnv,
   googleAuthUrl,
   githubAuthUrl,
   isGoogleOAuthEnabled,
   isGithubOAuthEnabled,
 }: {
   invitationToken?: string | null;
+  isCloudEnv?: boolean;
   googleAuthUrl?: string;
   githubAuthUrl?: string;
   isGoogleOAuthEnabled?: boolean;
@@ -54,6 +56,9 @@ export const SignUpForm = ({
 }) => {
   const router = useRouter();
   const { toast } = useToast();
+  const callbackUrl = invitationToken
+    ? `/invitation/accept?invitation_token=${encodeURIComponent(invitationToken)}`
+    : "/";
 
   const form = useForm<SignUpFormData>({
     resolver: zodResolver(signUpSchema),
@@ -75,8 +80,14 @@ export const SignUpForm = ({
     name: "password",
     defaultValue: "",
   });
+  const termsAccepted = useWatch({
+    control: form.control,
+    name: "termsAndConditions",
+    defaultValue: false,
+  });
 
   const isLoading = form.formState.isSubmitting;
+  const isSocialAuthDisabled = Boolean(isCloudEnv && !termsAccepted);
 
   const onSubmit = async (data: SignUpFormData) => {
     const newUser = await createNewUser(data);
@@ -88,7 +99,7 @@ export const SignUpForm = ({
       });
       form.reset();
 
-      if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+      if (isCloudEnv) {
         router.push("/email-verification");
       } else {
         router.push("/sign-in");
@@ -153,6 +164,7 @@ export const SignUpForm = ({
     <AuthLayout title="Sign up">
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -200,20 +212,24 @@ export const SignUpForm = ({
             />
           )}
 
-          {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+          {isCloudEnv && (
             <FormField
               control={form.control}
               name="termsAndConditions"
               render={({ field }) => (
                 <>
-                  <FormControl>
-                    <Checkbox
-                      isRequired
-                      className="py-4"
-                      size="sm"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      color="default"
+                  <div className="flex items-center gap-2 py-4">
+                    <FormControl>
+                      <Checkbox
+                        id="termsAndConditions"
+                        size="sm"
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <label
+                      htmlFor="termsAndConditions"
+                      className="cursor-pointer text-sm"
                     >
                       I agree with the&nbsp;
                       <CustomLink
@@ -223,8 +239,9 @@ export const SignUpForm = ({
                         Terms of Service
                       </CustomLink>
                       &nbsp;of Prowler
-                    </Checkbox>
-                  </FormControl>
+                      <span className="text-text-error-primary">*</span>
+                    </label>
+                  </div>
                   <FormMessage className="text-text-error" />
                 </>
               )}
@@ -243,15 +260,18 @@ export const SignUpForm = ({
         </form>
       </Form>
 
-      {!invitationToken && (
+      {(!invitationToken || isCloudEnv) && (
         <>
           <AuthDivider />
           <div className="flex flex-col gap-2">
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
+              callbackUrl={callbackUrl}
               isGoogleOAuthEnabled={isGoogleOAuthEnabled}
               isGithubOAuthEnabled={isGithubOAuthEnabled}
+              isDisabled={isSocialAuthDisabled}
+              disabledTooltipContent="Accept the Terms of Service to continue."
             />
           </div>
         </>

@@ -4,14 +4,15 @@ description: 'Onboard all AWS accounts in your Organization through a single gui
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.19.0" />
 
 Prowler Cloud enables you to onboard all AWS accounts in your Organization through a single guided wizard. Instead of connecting accounts one by one, you can discover every account in your AWS Organization, select the ones you want to monitor, test connectivity, and launch scans — all from the Prowler Cloud UI.
 
-<Note>
-This feature is **exclusively available in Prowler Cloud**. For CLI-based multi-account scanning, see [AWS Organizations in Prowler CLI](/user-guide/providers/aws/organizations).
-</Note>
+<SubscriptionBanner>
+For CLI-based multi-account scanning, see [AWS Organizations in Prowler CLI](/user-guide/providers/aws/organizations).
+</SubscriptionBanner>
 
 ## Overview
 
@@ -22,9 +23,9 @@ This feature is **exclusively available in Prowler Cloud**. For CLI-based multi-
 | **Individual accounts** | A few AWS accounts | Connect each account one by one with its own IAM role. |
 | **AWS Organizations** | 10+ accounts, or any org-managed environment | Connect once to your management account, discover all member accounts automatically, and scan them in bulk. |
 
-### How it works
+### How It Works
 
-Before using the AWS Organizations wizard, you need to deploy **two IAM roles** in your AWS environment. The onboarding follows this sequence:
+Before using the AWS Organizations wizard, you need to deploy **two Identity and Access Management (IAM) roles** in your AWS environment. The onboarding follows this sequence:
 
 <Frame>
   <img src="/images/organizations/onboarding-flow.svg" alt="Onboarding flow: 1. Create Management Account Role (Quick Create or Manual), 2. Deploy StackSet, 3. Run the Wizard, 4. Launch Scans" />
@@ -32,7 +33,7 @@ Before using the AWS Organizations wizard, you need to deploy **two IAM roles** 
 
 ## Key Concepts
 
-### What is an External ID?
+### What Is an External ID?
 
 An **External ID** is a security token that Prowler generates unique to your tenant. When Prowler assumes the IAM role in your AWS account, it presents this External ID to prove its identity.
 
@@ -57,7 +58,7 @@ Prowler requires **two separate IAM roles** deployed in different places, each w
 **Same name, different permissions.** Both roles are named `ProwlerScan` — Prowler expects a consistent role name across all accounts. The management account role has the same scanning permissions as member accounts, plus additional Organizations discovery permissions (see [Step 1](#step-1-create-the-management-account-role) for the full list).
 </Note>
 
-### What is a CloudFormation StackSet?
+### What Is a CloudFormation StackSet?
 
 A [CloudFormation StackSet](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/what-is-cfnstacksets.html) lets you deploy the same CloudFormation template across multiple AWS accounts in a single operation. Prowler uses a StackSet to deploy the **ProwlerScan** IAM role into every member account of your organization, so you don't have to create the role manually in each account.
 
@@ -437,14 +438,11 @@ If connection tests fail, here's how to fix common issues:
 
 ### Choose Scan Schedule
 
-| Schedule Option | Description |
-|-----------------|-------------|
-| **Scan Daily (every 24 hours)** | Creates a recurring daily scan for all connected accounts (default). |
-| **Run a single scan (no recurring schedule)** | Launches a one-time scan. |
+The Organizations wizard uses the same schedule controls described in [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling#schedule-options).
 
 ### Launch
 
-Click **Launch scan**. A toast notification confirms: *"Scan Launched — Daily scan scheduled for X accounts"* with a link to the Scans page. You will be redirected to the **Providers** page.
+Click **Save**, **Save and launch scan**, or **Launch scan**, depending on the selected schedule option. A toast notification confirms whether the schedule was saved, scans were launched, or both. The toast includes a link to the **Scans** page. Prowler redirects to the **Providers** page.
 
 Scans are only launched for accounts that are accessible (passed connection testing) and were selected.
 

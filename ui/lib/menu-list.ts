@@ -8,6 +8,7 @@ import {
   Puzzle,
   Settings,
   ShieldCheck,
+  SlidersHorizontal,
   SquareChartGantt,
   Tag,
   Timer,
@@ -30,9 +31,15 @@ import { GroupProps } from "@/types";
 
 interface MenuListOptions {
   pathname: string;
+  // Passed in (not read here) so the island isn't read during SSR — that would
+  // cause a hydration mismatch. See useRuntimeConfig.
+  apiDocsUrl?: string | null;
 }
 
-export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
+export const getMenuList = ({
+  pathname,
+  apiDocsUrl = null,
+}: MenuListOptions): GroupProps[] => {
   const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 
   return [
@@ -58,17 +65,21 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
-          active: pathname === "/lighthouse",
-        },
-      ],
-    },
+    ...(isCloudEnv
+      ? []
+      : [
+          {
+            groupLabel: "",
+            menus: [
+              {
+                href: "/lighthouse",
+                label: "Lighthouse AI",
+                icon: LighthouseIcon,
+                active: pathname === "/lighthouse",
+              },
+            ],
+          },
+        ]),
     {
       groupLabel: "",
       menus: [
@@ -88,6 +99,19 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           href: "/findings?filter[muted]=false&filter[status__in]=FAIL",
           label: "Findings",
           icon: Tag,
+        },
+      ],
+    },
+    {
+      groupLabel: "",
+      menus: [
+        {
+          href: "/scans",
+          label: "Scans",
+          icon: Timer,
+          // Exact match so it isn't also marked active on the `/scans/config`
+          // sub-route (mirrors the top-level Lighthouse entry).
+          active: pathname === "/scans",
         },
       ],
     },
@@ -125,10 +149,17 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            { href: "/scans", label: "Scan Jobs", icon: Timer },
+            {
+              href: "/scans/config",
+              label: "Scan",
+              icon: SlidersHorizontal,
+              active: isCloudEnv && pathname.startsWith("/scans/config"),
+              highlight: true,
+              disabled: !isCloudEnv,
+              cloudOnly: !isCloudEnv,
+            },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/roles", label: "Roles", icon: UserCog },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },
@@ -144,6 +175,7 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
           submenus: [
             { href: "/users", label: "Users", icon: User },
             { href: "/invitations", label: "Invitations", icon: Mail },
+            { href: "/roles", label: "Roles", icon: UserCog },
           ],
           defaultOpen: false,
         },
@@ -164,26 +196,30 @@ export const getMenuList = ({ pathname }: MenuListOptions): GroupProps[] => {
               icon: DocIcon,
             },
             {
-              href:
-                process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-                  ? "https://api.prowler.com/api/v1/docs"
-                  : `${process.env.NEXT_PUBLIC_API_DOCS_URL}`,
+              href: isCloudEnv
+                ? "https://api.prowler.com/api/v1/docs"
+                : (apiDocsUrl ?? ""),
               target: "_blank",
               label: "API reference",
               icon: APIdocIcon,
             },
-            {
-              href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
-              target: "_blank",
-              label: "Customer Support",
-              icon: MessageCircleQuestion,
-            },
-            {
-              href: "https://github.com/prowler-cloud/prowler/issues",
-              target: "_blank",
-              label: "Community Support",
-              icon: GithubIcon,
-            },
+            ...(isCloudEnv
+              ? [
+                  {
+                    href: "https://customer.support.prowler.com/servicedesk/customer/portal/9/create/102",
+                    target: "_blank",
+                    label: "Support Desk",
+                    icon: MessageCircleQuestion,
+                  },
+                ]
+              : [
+                  {
+                    href: "https://github.com/prowler-cloud/prowler/issues",
+                    target: "_blank",
+                    label: "Community Support",
+                    icon: GithubIcon,
+                  },
+                ]),
           ],
           defaultOpen: false,
         },

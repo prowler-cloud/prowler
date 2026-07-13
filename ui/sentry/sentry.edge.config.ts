@@ -1,10 +1,25 @@
 import * as Sentry from "@sentry/nextjs";
 
-const SENTRY_DSN = process.env.SENTRY_DSN;
+import { readGatedEnv } from "@/lib/integrations";
+
+const sentryDsn = readGatedEnv(
+  "UI_SENTRY_ENABLED",
+  "UI_SENTRY_DSN",
+  "NEXT_PUBLIC_SENTRY_DSN",
+);
+const sentryEnvironment = readGatedEnv(
+  "UI_SENTRY_ENABLED",
+  "UI_SENTRY_ENVIRONMENT",
+  "NEXT_PUBLIC_SENTRY_ENVIRONMENT",
+);
 
 // Only initialize Sentry if DSN is configured
-if (SENTRY_DSN) {
-  const isProduction = process.env.SENTRY_ENVIRONMENT === "pro";
+if (sentryDsn) {
+  // Default to a non-dev environment so an unset UI_SENTRY_ENVIRONMENT never
+  // runs in dev mode; only an explicit "local" enables it. Mirrors the browser
+  // SDK (instrumentation-client.ts) so all runtimes resolve the env identically.
+  const environment = sentryEnvironment ?? "production";
+  const isDevelopment = environment === "local";
 
   /**
    * Edge runtime Sentry configuration
@@ -17,17 +32,17 @@ if (SENTRY_DSN) {
    */
   Sentry.init({
     // 📍 DSN - Data Source Name (identifies your Sentry project)
-    dsn: SENTRY_DSN,
+    dsn: sentryDsn,
 
     // 🌍 Environment configuration
-    environment: process.env.SENTRY_ENVIRONMENT || "local",
+    environment,
 
     // 📦 Release tracking
     release: process.env.SENTRY_RELEASE,
 
     // 📊 Sample Rates - Reduced for edge runtime constraints
     // 50% in dev, 25% in production (edge has lower overhead limits than server)
-    tracesSampleRate: isProduction ? 0.25 : 0.5,
+    tracesSampleRate: isDevelopment ? 0.5 : 0.25,
 
     // 🔌 Integrations - Edge runtime doesn't support all integrations
     integrations: [],

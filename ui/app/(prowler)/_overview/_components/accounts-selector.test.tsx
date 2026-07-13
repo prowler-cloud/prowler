@@ -1,6 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
+
+import { ProviderProps } from "@/types";
+import { FILTER_FIELD } from "@/types/filters";
 
 import { AccountsSelector } from "./accounts-selector";
 
@@ -57,7 +60,7 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
     );
   },
   MultiSelectTrigger: ({ children }: { children: React.ReactNode }) => (
-    <div>{children}</div>
+    <div data-testid="trigger">{children}</div>
   ),
   MultiSelectValue: ({ placeholder }: { placeholder: string }) => (
     <span>{placeholder}</span>
@@ -97,12 +100,13 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   ),
 }));
 
-const providers = [
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed" as const,
@@ -145,7 +149,22 @@ describe("AccountsSelector", () => {
       placeholder: "Search Providers...",
       emptyMessage: "No Providers found.",
     });
+    expect(screen.getByText("All Providers")).toBeInTheDocument();
     expect(screen.getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("supports contextual placeholder and empty-selection copy", () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        placeholder="Select a Provider"
+        emptySelectionLabel="No provider selected"
+        clearSelectionLabel="Clear provider selection"
+      />,
+    );
+
+    expect(screen.getByText("Select a Provider")).toBeInTheDocument();
+    expect(screen.getByText("No provider selected")).toBeInTheDocument();
   });
 
   it("allows disabling search explicitly", () => {
@@ -170,7 +189,10 @@ describe("AccountsSelector", () => {
 
   it("can use provider UID values for pages whose API filters by provider_uid__in", () => {
     render(
-      <AccountsSelector providers={providers} filterKey="provider_uid__in" />,
+      <AccountsSelector
+        providers={providers}
+        filterKey={FILTER_FIELD.PROVIDER_UID}
+      />,
     );
 
     expect(
@@ -219,5 +241,46 @@ describe("AccountsSelector", () => {
     await user.click(screen.getByRole("button", { name: /production aws/i }));
 
     expect(multiSelectSpy).toHaveBeenLastCalledWith({ open: false });
+  });
+
+  it("shows the provider icon next to the name in the trigger for a single selection", async () => {
+    render(
+      <AccountsSelector
+        providers={providers}
+        onBatchChange={vi.fn()}
+        selectedValues={["provider-1"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    expect(await within(trigger).findByText("AWS")).toBeInTheDocument();
+    expect(within(trigger).getByText("Production AWS")).toBeInTheDocument();
+  });
+
+  it("renders one icon per selected account without deduping by provider type", async () => {
+    const secondAws = {
+      ...providers[0],
+      id: "provider-2",
+      attributes: {
+        ...providers[0].attributes,
+        uid: "999999999999",
+        alias: "Staging AWS",
+      },
+    };
+
+    render(
+      <AccountsSelector
+        providers={[providers[0], secondAws]}
+        onBatchChange={vi.fn()}
+        selectedValues={["provider-1", "provider-2"]}
+      />,
+    );
+
+    const trigger = screen.getByTestId("trigger");
+    // Two AWS accounts -> two AWS icons in the trigger (no dedupe).
+    expect(await within(trigger).findAllByText("AWS")).toHaveLength(2);
+    expect(
+      within(trigger).getByText("2 Providers selected"),
+    ).toBeInTheDocument();
   });
 });

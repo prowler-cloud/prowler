@@ -143,6 +143,52 @@ export const emptyScans = (): PageFixture => ({
   queryResult: null,
 });
 
+export const scanPending = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "scheduled",
+      progress: 0,
+      graph_data_ready: false,
+      completed_at: null,
+      duration: null,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
+export const graphBuilding = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "executing",
+      progress: 45,
+      graph_data_ready: false,
+      completed_at: null,
+      duration: null,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
+export const noGraphData = (): PageFixture => ({
+  scans: [
+    buildScan(TYPICAL_SCAN_ID, {
+      state: "completed",
+      progress: 100,
+      graph_data_ready: false,
+    }),
+  ],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [],
+  queryId: DEFAULT_QUERY_ID,
+  queryResult: null,
+});
+
 export const emptyGraph = (): PageFixture => ({
   scans: [buildScan(TYPICAL_SCAN_ID)],
   scanId: TYPICAL_SCAN_ID,
@@ -193,6 +239,40 @@ export const resourcesOnly = (): PageFixture => ({
       buildRel("r1", "ec2-1", "s3-1", "CAN_ACCESS"),
       buildRel("r2", "ec2-2", "s3-1", "CAN_ACCESS"),
     ],
+  },
+});
+
+export const parameterizedQuery = (): PageFixture => ({
+  scans: [buildScan(TYPICAL_SCAN_ID)],
+  scanId: TYPICAL_SCAN_ID,
+  queries: [
+    buildQuery(
+      "aws-internet-exposed-ec2-sensitive-s3-access",
+      "Internet-Exposed EC2 with Sensitive S3 Access",
+      {
+        parameters: [
+          {
+            name: "tag_key",
+            label: "Tag key",
+            data_type: "string",
+            description: "Tag key to filter the S3 bucket.",
+            placeholder: "DataClassification",
+          },
+          {
+            name: "tag_value",
+            label: "Tag value",
+            data_type: "string",
+            description: "Tag value to filter the S3 bucket.",
+            placeholder: "Sensitive",
+          },
+        ],
+      },
+    ),
+  ],
+  queryId: "aws-internet-exposed-ec2-sensitive-s3-access",
+  queryResult: {
+    nodes: [buildResourceNode("s3-1", "S3Bucket", "sensitive-data")],
+    relationships: [],
   },
 });
 
@@ -269,10 +349,14 @@ export const edgeCases = (): PageFixture => {
 export const fixtures = {
   typical,
   emptyScans,
+  scanPending,
+  graphBuilding,
+  noGraphData,
   emptyGraph,
   singleNode,
   findingsOnly,
   resourcesOnly,
+  parameterizedQuery,
   disconnected,
   large,
   edgeCases,

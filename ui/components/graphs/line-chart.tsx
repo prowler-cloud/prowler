@@ -15,7 +15,7 @@ import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-} from "@/components/ui/chart/Chart";
+} from "@/components/shadcn/chart/Chart";
 
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";

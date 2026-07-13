@@ -72,6 +72,34 @@ class TestDisplaySummaryTable:
         assert "Project" in captured.out
         assert "my-prod-env" in captured.out
 
+    def test_e2enetworks_summary(self, capsys):
+        provider = SimpleNamespace(
+            type="e2enetworks",
+            identity=SimpleNamespace(project_id=12345),
+        )
+        output_options = SimpleNamespace(
+            output_directory="out",
+            output_filename="report",
+            output_modes=[],
+        )
+        findings = [
+            SimpleNamespace(
+                status="PASS",
+                muted=False,
+                check_metadata=SimpleNamespace(
+                    ServiceName="node",
+                    Provider="e2enetworks",
+                    Severity="high",
+                ),
+            )
+        ]
+
+        display_summary_table(findings, provider, output_options)
+
+        captured = capsys.readouterr()
+        assert "Project" in captured.out
+        assert "12345" in captured.out
+
     def test_stackit_summary_with_project_id_only(self, capsys):
         provider = SimpleNamespace(
             type="stackit",

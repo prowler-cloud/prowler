@@ -109,6 +109,9 @@ Resources:
                   - "codebuild:BatchGet*"
                   - "codebuild:ListReportGroups"
                   - "cognito-idp:GetUserPoolMfaConfig"
+                  - "datapipeline:DescribePipelines"
+                  - "datapipeline:GetPipelineDefinition"
+                  - "datapipeline:ListPipelines"
                   - "dlm:Get*"
                   - "drs:Describe*"
                   - "ds:Get*"
@@ -129,6 +132,8 @@ Resources:
                   - "lightsail:GetRelationalDatabases"
                   - "macie2:GetMacieSession"
                   - "macie2:GetAutomatedDiscoveryConfiguration"
+                  - "rolesanywhere:ListTagsForResource"
+                  - "rolesanywhere:ListTrustAnchors"
                   - "s3:GetAccountPublicAccessBlock"
                   - "shield:DescribeProtection"
                   - "shield:GetSubscriptionState"
@@ -150,6 +155,8 @@ Resources:
                 Resource:
                   - "arn:*:apigateway:*::/restapis/*"
                   - "arn:*:apigateway:*::/apis/*"
+                  - "arn:*:apigateway:*::/domainnames"
+                  - "arn:*:apigateway:*::/domainnames/*"
         - !If
           - OrganizationsEnabled
           - PolicyName: ProwlerOrganizations

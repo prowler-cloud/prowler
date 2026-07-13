@@ -1,12 +1,12 @@
-import pytest
-from django.conf import settings
-from django.db.migrations.recorder import MigrationRecorder
-from django.db.utils import ConnectionRouter
+from unittest.mock import patch
 
+import pytest
 from api.db_router import MainRouter
 from api.rls import Tenant
 from config.django.base import DATABASE_ROUTERS as PROD_DATABASE_ROUTERS
-from unittest.mock import patch
+from django.conf import settings
+from django.db.migrations.recorder import MigrationRecorder
+from django.db.utils import ConnectionRouter
 
 
 @patch("api.db_router.MainRouter.admin_db", new="admin")

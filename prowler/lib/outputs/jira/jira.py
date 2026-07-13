@@ -51,6 +51,39 @@ class JiraConnection(Connection):
     issue_types: dict = None
 
 
+def _format_jira_issue_creation_error(response_json: object, status_code: int) -> str:
+    """Build a safe Jira issue creation error message from structured fields.
+
+    Args:
+        response_json: Parsed Jira response body.
+        status_code: HTTP status code returned by Jira.
+
+    Returns:
+        Safe issue creation error message for user-facing propagation.
+    """
+    message_parts = []
+
+    if not isinstance(response_json, dict):
+        return f"Failed to create Jira issue: Jira returned status code {status_code}."
+
+    errors = response_json.get("errors")
+    if isinstance(errors, dict):
+        message_parts.extend(
+            f"'{field}': '{message}'" for field, message in errors.items() if message
+        )
+
+    error_messages = response_json.get("errorMessages")
+    if isinstance(error_messages, list):
+        message_parts.extend(str(message) for message in error_messages if message)
+    elif isinstance(error_messages, str) and error_messages:
+        message_parts.append(error_messages)
+
+    if message_parts:
+        return f"Failed to create Jira issue: {'; '.join(message_parts)}"
+
+    return f"Failed to create Jira issue: Jira returned status code {status_code}."
+
+
 class MarkdownToADFConverter:
     """Helper to convert Markdown strings into Atlassian Document Format blocks."""
 
@@ -229,7 +262,9 @@ class MarkdownToADFConverter:
         return node
 
     def _paragraph_with_text(self, text: str) -> Dict:
-        return {"type": "paragraph", "content": [self._create_text_node(text, None)]}
+        # ADF forbids empty text nodes; emit an empty paragraph instead.
+        content = [self._create_text_node(text, None)] if text else []
+        return {"type": "paragraph", "content": content}
 
     @staticmethod
     def _pop_mark(marks_stack: List[Dict], mark_type: str) -> None:
@@ -339,6 +374,7 @@ class Jira:
     }
     TOKEN_URL = "https://auth.atlassian.com/oauth/token"
     API_TOKEN_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
+    REQUEST_TIMEOUT = 90
     HEADER_TEMPLATE = {
         "Content-Type": "application/json",
         "X-Force-Accept-Language": "true",
@@ -576,7 +612,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(self.TOKEN_URL, json=body, headers=headers)
+            response = requests.post(
+                self.TOKEN_URL,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -628,12 +669,17 @@ class Jira:
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
                 response = response.json()
                 return response.get("cloudId")
             else:
                 headers = self.get_headers(access_token)
-                response = requests.get(self.API_TOKEN_URL, headers=headers)
+                response = requests.get(
+                    self.API_TOKEN_URL,
+                    headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
+                )
 
             if response.status_code == 200:
                 resources = response.json()
@@ -715,7 +761,12 @@ class Jira:
             }
 
             headers = self.get_headers(content_type_json=True)
-            response = requests.post(url, json=body, headers=headers)
+            response = requests.post(
+                url,
+                json=body,
+                headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
+            )
 
             if response.status_code == 200:
                 tokens = response.json()
@@ -872,6 +923,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -939,6 +991,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project_key}&expand=projects.issuetypes.fields",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code == 200:
@@ -984,6 +1037,7 @@ class Jira:
             response = requests.get(
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/project",
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
             if response.status_code == 200:
                 projects_data = {}
@@ -999,6 +1053,7 @@ class Jira:
                         project_response = requests.get(
                             f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue/createmeta?projectKeys={project['key']}&expand=projects.issuetypes.fields",
                             headers=headers,
+                            timeout=self.REQUEST_TIMEOUT,
                         )
                         if project_response.status_code == 200:
                             project_metadata = project_response.json()
@@ -1117,6 +1172,18 @@ class Jira:
         finding_url: str = "",
         tenant_info: str = "",
     ) -> dict:
+
+        # ADF forbids empty text nodes, so Jira rejects them with 400 INVALID_INPUT.
+        def _safe(value: str) -> str:
+            return value if (value and value.strip()) else "-"
+
+        check_id = _safe(check_id)
+        check_title = _safe(check_title)
+        status_extended = _safe(status_extended)
+        provider = _safe(provider)
+        region = _safe(region)
+        resource_uid = _safe(resource_uid)
+        resource_name = _safe(resource_name)
 
         table_rows = [
             {
@@ -1909,6 +1976,7 @@ class Jira:
                     f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                     json=payload,
                     headers=headers,
+                    timeout=self.REQUEST_TIMEOUT,
                 )
 
                 if response.status_code != 201:
@@ -2025,6 +2093,7 @@ class Jira:
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
             - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraNoTokenError: Failed to get an access token
             - JiraCreateIssueError: Failed to create an issue in Jira
             - JiraSendFindingsResponseError: Failed to send the finding to Jira
             - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
@@ -2113,37 +2182,52 @@ class Jira:
                 f"https://api.atlassian.com/ex/jira/{self.cloud_id}/rest/api/3/issue",
                 json=payload,
                 headers=headers,
+                timeout=self.REQUEST_TIMEOUT,
             )
 
             if response.status_code != 201:
                 try:
                     response_json = response.json()
                 except (ValueError, requests.exceptions.JSONDecodeError):
-                    response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                    response_error = _format_jira_issue_creation_error(
+                        {}, response.status_code
+                    )
                     logger.error(response_error)
-                    return False
+                    raise JiraSendFindingsResponseError(
+                        message=response_error, file=os.path.basename(__file__)
+                    )
 
                 # Check if the error is due to required custom fields
-                if response.status_code == 400 and "errors" in response_json:
+                if (
+                    response.status_code == 400
+                    and isinstance(response_json, dict)
+                    and "errors" in response_json
+                ):
                     errors = response_json.get("errors", {})
                     # Look for custom field errors (fields starting with "customfield_")
-                    custom_field_errors = {
-                        k: v for k, v in errors.items() if k.startswith("customfield_")
-                    }
+                    custom_field_errors = {}
+                    if isinstance(errors, dict):
+                        custom_field_errors = {
+                            k: v
+                            for k, v in errors.items()
+                            if k.startswith("customfield_")
+                        }
                     if custom_field_errors:
                         custom_fields_formatted = ", ".join(
                             [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
                         )
-                        logger.error(
-                            f"Jira project requires custom fields that are not supported: {custom_fields_formatted}"
+                        raise JiraRequiredCustomFieldsError(
+                            message=f"Jira project requires custom fields that are not supported: {custom_fields_formatted}",
+                            file=os.path.basename(__file__),
                         )
-                        return False
 
-                response_error = (
-                    f"Failed to send finding: {response.status_code} - {response_json}"
+                response_error = _format_jira_issue_creation_error(
+                    response_json, response.status_code
                 )
                 logger.error(response_error)
-                return False
+                raise JiraSendFindingsResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
             else:
                 try:
                     response_json = response.json()
@@ -2155,13 +2239,17 @@ class Jira:
                 return True
         except JiraRequiredCustomFieldsError as custom_fields_error:
             logger.error(f"Custom fields error: {custom_fields_error}")
-            return False
+            raise custom_fields_error
+        except JiraSendFindingsResponseError as response_error:
+            logger.error(f"Jira response error: {response_error}")
+            raise response_error
         except JiraRefreshTokenError as refresh_error:
             logger.error(f"Token refresh error: {refresh_error}")
-            return False
+            raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
-            logger.error(f"Token response error: {response_error}")
-            return False
+            raise response_error
+        except JiraNoTokenError as no_token_error:
+            raise no_token_error
         except Exception as e:
             logger.error(f"Failed to send finding: {e}")
             return False

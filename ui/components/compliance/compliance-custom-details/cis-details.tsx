@@ -1,6 +1,6 @@
 import ReactMarkdown from "react-markdown";
 
-import { CustomLink } from "@/components/ui/custom/custom-link";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Requirement } from "@/types/compliance";
 
 import {
@@ -41,7 +41,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
           <ComplianceBadge
             label="Profile"
             value={requirement.profile as string}
-            color="purple"
+            variant="secondary"
           />
         )}
 
@@ -49,7 +49,7 @@ export const CISCustomDetails = ({ requirement }: CISDetailsProps) => {
           <ComplianceBadge
             label="Assessment"
             value={requirement.assessment_status as string}
-            color="blue"
+            variant="info"
           />
         )}
       </ComplianceBadgeContainer>
