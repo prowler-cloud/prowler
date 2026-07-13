@@ -6,19 +6,20 @@ builds dual writer/reader Bolt drivers.
 """
 
 import json
-from importlib import import_module
 from unittest.mock import MagicMock, patch
 
 import neo4j
 import pytest
-
-# Prime patch-target resolution. `api.attack_paths.sink/__init__.py` doesn't
-# eagerly import these submodules (they're loaded on demand inside the
-# factory), so `mock.patch("api.attack_paths.sink.<sub>.…")` would fail with
-# AttributeError on first call. Importing here registers them as attributes
-# of the package before any decorator runs.
-import_module("api.attack_paths.sink.neo4j")
-import_module("api.attack_paths.sink.neptune")
+from api.attack_paths import sink as sink_module
+from api.attack_paths.database import GraphDatabaseQueryException
+from api.attack_paths.sink import factory
+from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
+from api.attack_paths.sink.neptune import (
+    NEPTUNE_WRITE_RETRY_DELAY_SECONDS,
+    NeptuneSink,
+    _is_retryable_write_error,
+    _NeptuneAuthToken,
+)
 
 
 @pytest.fixture(autouse=True)
@@ -27,8 +28,6 @@ def reset_sink_state():
 
     The cache lives in `api.attack_paths.sink.factory`, not on the package.
     """
-    from api.attack_paths.sink import factory
-
     original_backend = factory._backend
     original_secondary = dict(factory._secondary_backends)
     factory._backend = None
@@ -41,29 +40,20 @@ def reset_sink_state():
 
 class TestSinkFactory:
     def test_default_resolves_to_neo4j(self, settings):
-        from api.attack_paths.sink import factory
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
         assert factory._resolve_setting() == "neo4j"
 
     def test_neptune_resolves_correctly(self, settings):
-        from api.attack_paths.sink import factory
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
         assert factory._resolve_setting() == "neptune"
 
     def test_invalid_value_raises(self, settings):
-        from api.attack_paths.sink import factory
-
         settings.ATTACK_PATHS_SINK_DATABASE = "foo"
         with pytest.raises(RuntimeError, match="ATTACK_PATHS_SINK_DATABASE"):
             factory._resolve_setting()
 
     @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
     def test_init_builds_neo4j_backend_by_default(self, mock_driver, settings):
-        from api.attack_paths import sink as sink_module
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
         settings.DATABASES = {
             **settings.DATABASES,
@@ -86,9 +76,6 @@ class TestSinkFactory:
     def test_init_builds_neptune_backend(
         self, mock_driver, mock_auth_provider, settings
     ):
-        from api.attack_paths import sink as sink_module
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
         settings.DATABASES = {
             **settings.DATABASES,
@@ -117,8 +104,6 @@ class TestSinkFactory:
     def test_neptune_reader_falls_back_to_writer(
         self, mock_driver, mock_auth_provider, settings
     ):
-        from api.attack_paths import sink as sink_module
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
         settings.DATABASES = {
             **settings.DATABASES,
@@ -145,8 +130,6 @@ class TestGetBackendForScan:
     def test_legacy_scan_in_neo4j_process_uses_active_backend(
         self, mock_driver, settings
     ):
-        from api.attack_paths import sink as sink_module
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
         settings.DATABASES = {
             **settings.DATABASES,
@@ -165,8 +148,6 @@ class TestGetBackendForScan:
         assert backend is sink_module.get_backend()
 
     def test_neptune_scan_on_neo4j_process_uses_neptune_secondary(self, settings):
-        from api.attack_paths.sink import factory
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
         active_neo4j = MagicMock(name="neo4j-active")
         factory._backend = active_neo4j
@@ -231,8 +212,6 @@ def _directed_drop_results(
 
 class TestNeo4jSinkSyncWrites:
     def test_ensure_sync_indexes_runs_create_index_idempotent(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
@@ -247,16 +226,12 @@ class TestNeo4jSinkSyncWrites:
         transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_nodes_skips_empty_batch(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         with patch.object(sink, "get_session") as get_session:
             sink.write_nodes("db-tenant-x", "`AWSUser`", [])
             get_session.assert_not_called()
 
     def test_write_nodes_merges_on_provider_resource_label(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
@@ -275,8 +250,6 @@ class TestNeo4jSinkSyncWrites:
         transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_relationships_scopes_endpoints_by_provider_label(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         provider_id = "00000000-0000-0000-0000-000000000abc"
@@ -305,16 +278,12 @@ class TestNeo4jSinkSyncWrites:
 
 class TestNeptuneSinkSyncWrites:
     def test_ensure_sync_indexes_is_noop(self):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         with patch.object(sink, "get_session") as get_session:
             sink.ensure_sync_indexes("ignored")
             get_session.assert_not_called()
 
     def test_write_nodes_merges_on_neptune_id_with_provider_resource_label(self):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         session = MagicMock()
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
@@ -334,8 +303,6 @@ class TestNeptuneSinkSyncWrites:
         transaction.run.return_value.consume.assert_called_once_with()
 
     def test_write_relationships_matches_endpoints_by_id(self):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         session = MagicMock()
         with patch.object(sink, "get_session", return_value=_session_ctx(session)):
@@ -371,24 +338,18 @@ class TestNeptuneRetryPolicy:
         ],
     )
     def test_observed_transient_write_errors_are_retryable(self, message):
-        from api.attack_paths.sink.neptune import _is_retryable_write_error
-
         error = MagicMock(spec=neo4j.exceptions.Neo4jError)
         error.message = message
 
         assert _is_retryable_write_error(error) is True
 
     def test_unrelated_database_error_is_not_retryable(self):
-        from api.attack_paths.sink.neptune import _is_retryable_write_error
-
         error = MagicMock(spec=neo4j.exceptions.Neo4jError)
         error.message = "Operation terminated (out of memory)"
 
         assert _is_retryable_write_error(error) is False
 
     def test_non_neo4j_error_is_not_retryable(self):
-        from api.attack_paths.sink.neptune import _is_retryable_write_error
-
         error = RuntimeError(
             "Operation failed due to conflicting concurrent operations"
         )
@@ -397,12 +358,6 @@ class TestNeptuneRetryPolicy:
 
     @patch("api.attack_paths.sink.neptune.RetryableSession")
     def test_writer_session_enables_neptune_retry_policy(self, retryable_session):
-        from api.attack_paths.sink.neptune import (
-            NEPTUNE_WRITE_RETRY_DELAY_SECONDS,
-            NeptuneSink,
-            _is_retryable_write_error,
-        )
-
         sink = NeptuneSink()
         driver = MagicMock()
         with patch.object(sink, "_get_writer", return_value=driver):
@@ -417,8 +372,6 @@ class TestNeptuneRetryPolicy:
 
     @patch("api.attack_paths.sink.neptune.RetryableSession")
     def test_reader_session_does_not_enable_write_retry_policy(self, retryable_session):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         driver = MagicMock()
         with patch.object(sink, "_get_reader", return_value=driver):
@@ -432,8 +385,6 @@ class TestNeptuneRetryPolicy:
 
 class TestNeptuneSinkDropSubgraph:
     def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         session, transactions = _managed_write_session(
             _directed_drop_results(
@@ -465,8 +416,6 @@ class TestNeo4jSinkDropSubgraph:
     """Neo4j drop deletes relationships then nodes in batches (no ``DETACH DELETE``)."""
 
     def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         session, transactions = _managed_write_session(
             _directed_drop_results(
@@ -503,9 +452,6 @@ class TestNeo4jSinkDropSubgraph:
         assert last_rel < first_node
 
     def test_drop_subgraph_returns_zero_when_database_does_not_exist(self):
-        from api.attack_paths.database import GraphDatabaseQueryException
-        from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         session.execute_write.side_effect = GraphDatabaseQueryException(
@@ -522,8 +468,6 @@ class TestSinkHasProviderData:
     """``has_provider_data`` is the read-path probe used by API views."""
 
     def test_neo4j_returns_true_when_provider_node_exists(self):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         session.run.return_value.single.return_value = MagicMock()
@@ -537,9 +481,6 @@ class TestSinkHasProviderData:
         assert ":`_Provider_00000000000000000000000000000abc`" in query
 
     def test_neo4j_returns_false_when_database_does_not_exist(self):
-        from api.attack_paths.database import GraphDatabaseQueryException
-        from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
-
         sink = Neo4jSink()
         session = MagicMock()
         session.run.side_effect = GraphDatabaseQueryException(
@@ -552,8 +493,6 @@ class TestSinkHasProviderData:
         assert present is False
 
     def test_neptune_returns_true_when_provider_node_exists(self):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         session = MagicMock()
         session.run.return_value.single.return_value = MagicMock()
@@ -567,8 +506,6 @@ class TestGetBackendForScanCutover:
     """``get_backend_for_scan`` keeps old-sink scans queryable after cutover."""
 
     def test_legacy_scan_on_neptune_process_uses_neo4j_secondary(self, settings):
-        from api.attack_paths.sink import factory
-
         settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
         active_neptune = MagicMock(name="neptune-active")
         factory._backend = active_neptune
@@ -591,8 +528,6 @@ class TestSinkVerifyConnectivity:
 
     @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
     def test_neo4j_verifies_its_driver(self, mock_driver, settings):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         settings.DATABASES = {
             **settings.DATABASES,
             "neo4j": {
@@ -617,8 +552,6 @@ class TestSinkVerifyConnectivity:
     def test_neptune_verifies_reader_not_writer(
         self, mock_driver, mock_auth_provider, settings
     ):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         settings.DATABASES = {
             **settings.DATABASES,
             "neptune": {
@@ -652,8 +585,6 @@ class TestSinkInitToleratesUnreachableSink:
 
     @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
     def test_neo4j_init_continues_when_verify_fails(self, mock_driver, settings):
-        from api.attack_paths.sink.neo4j import Neo4jSink
-
         settings.DATABASES = {
             **settings.DATABASES,
             "neo4j": {
@@ -677,8 +608,6 @@ class TestSinkInitToleratesUnreachableSink:
     def test_neptune_init_continues_when_verify_fails(
         self, mock_driver, mock_auth_provider, settings
     ):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         settings.DATABASES = {
             **settings.DATABASES,
             "neptune": {
@@ -705,8 +634,6 @@ class TestNeptuneAdminNoOps:
 
     @pytest.mark.parametrize("method", ["create_database", "drop_database"])
     def test_admin_ops_return_none_without_touching_a_session(self, method):
-        from api.attack_paths.sink.neptune import NeptuneSink
-
         sink = NeptuneSink()
         with patch.object(sink, "get_session") as get_session:
             assert getattr(sink, method)("ignored") is None
@@ -721,8 +648,6 @@ class TestNeptuneAuthToken:
     def test_host_header_includes_non_default_port(self, mock_boto, mock_sigv4):
         # Neptune runs on 8182; the SigV4 canonical Host must keep the port or
         # the signature is rejected.
-        from api.attack_paths.sink.neptune import _NeptuneAuthToken
-
         credentials = MagicMock()
         credentials.get_frozen_credentials.return_value = MagicMock()
         mock_boto.return_value.get_credentials.return_value = credentials
