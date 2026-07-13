@@ -105,12 +105,12 @@ const SSRDataUser = async ({
       className="w-full gap-4 p-4 md:p-5"
     >
       <UserBasicInfoCard user={userData} tenantId={userTenantId || ""} />
+      <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
       {hasManageAccount && (
         <div id="api-keys" className="scroll-mt-6">
           <ApiKeysCard searchParams={searchParams} />
         </div>
       )}
-      <RolesCard roles={roleDetails} roleDetails={roleDetailsMap} />
       {hasManageIntegrations && (
         <SamlIntegrationCard samlConfig={samlConfig?.data?.[0]} />
       )}

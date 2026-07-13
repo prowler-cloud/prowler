@@ -9,7 +9,7 @@ describe("profile page layout", () => {
   const pagePath = path.join(currentDir, "page.tsx");
   const source = readFileSync(pagePath, "utf8");
 
-  it("places API Keys near the top of the profile and exposes its deep-link target", () => {
+  it("places roles before API Keys and exposes its deep-link target", () => {
     expect(source).toContain('aria-label="User profile settings"');
     expect(source).toContain('className="w-full gap-4 p-4 md:p-5"');
     expect(source).toContain('id="api-keys"');
@@ -18,9 +18,9 @@ describe("profile page layout", () => {
 
     const sectionOrder = [
       "<UserBasicInfoCard",
+      "<RolesCard",
       'id="api-keys"',
       "<ApiKeysCard",
-      "<RolesCard",
       "<SamlIntegrationCard",
       "<MembershipsCard",
     ];
