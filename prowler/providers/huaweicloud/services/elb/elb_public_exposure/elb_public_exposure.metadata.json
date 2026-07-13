@@ -13,7 +13,7 @@
   "Risk": "ELB load balancers with public IP addresses are accessible from the internet, increasing the attack surface and potentially exposing internal services to unauthorized access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_ug_0002.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-elb/elb_ug_jt_0009.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,7 @@
   "Risk": "Unencrypted EVS volumes expose sensitive data at rest. If a volume is compromised or improperly accessed, the data can be read without any additional protection.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-evs/evs_01_0055.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-evs/evs_01_0018.html"
   ],
   "Remediation": {
     "Code": {

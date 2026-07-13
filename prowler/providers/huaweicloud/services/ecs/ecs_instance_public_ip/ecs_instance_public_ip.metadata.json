@@ -13,7 +13,7 @@
   "Risk": "ECS instances with public IP addresses are directly accessible from the internet, which increases the attack surface and risk of unauthorized access, data exfiltration, or exploitation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0310.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0701.html"
   ],
   "Remediation": {
     "Code": {

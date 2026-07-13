@@ -13,7 +13,7 @@
   "Risk": "Without server-side encryption, objects stored in OBS buckets are not encrypted at rest, exposing sensitive data if the underlying storage is compromised.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0114.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0088.html"
   ],
   "Remediation": {
     "Code": {

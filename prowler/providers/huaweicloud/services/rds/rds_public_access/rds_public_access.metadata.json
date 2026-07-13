@@ -13,7 +13,7 @@
   "Risk": "RDS instances with public IP addresses are accessible from the internet, exposing databases to potential brute-force attacks, SQL injection, and unauthorized data access.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_03_0026.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_public_accessibility.html"
   ],
   "Remediation": {
     "Code": {

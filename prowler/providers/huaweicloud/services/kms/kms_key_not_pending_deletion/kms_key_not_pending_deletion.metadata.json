@@ -13,7 +13,7 @@
   "Risk": "KMS keys in pending deletion will become permanently unavailable after the waiting period expires. Any data encrypted with these keys will become permanently inaccessible, potentially causing data loss and service outages.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-kms/kms_01_0103.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-dew/dew_01_0179.html"
   ],
   "Remediation": {
     "Code": {

@@ -13,7 +13,7 @@
   "Risk": "Without automated backups, data loss from accidental deletion, corruption, or hardware failure cannot be recovered, potentially leading to permanent data loss.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_03_0047.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_08_0047.html"
   ],
   "Remediation": {
     "Code": {

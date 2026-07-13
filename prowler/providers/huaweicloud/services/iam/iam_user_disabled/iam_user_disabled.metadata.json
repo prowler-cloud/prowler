@@ -13,7 +13,7 @@
   "Risk": "Disabled IAM users may retain permissions and access keys that could be re-enabled by an attacker with sufficient privileges. Keeping stale accounts increases the attack surface and complicates access management audits.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0036.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_02_0004.html"
   ],
   "Remediation": {
     "Code": {

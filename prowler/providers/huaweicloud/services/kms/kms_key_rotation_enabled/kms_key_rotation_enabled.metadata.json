@@ -13,7 +13,7 @@
   "Risk": "Without key rotation, the same cryptographic material is used indefinitely, increasing the risk of key compromise over time. If a key is compromised, all data encrypted with that key version is at risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-kms/kms_01_0019.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-dew/dew_01_0139.html"
   ],
   "Remediation": {
     "Code": {
