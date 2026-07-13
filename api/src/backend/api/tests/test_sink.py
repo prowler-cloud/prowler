@@ -366,7 +366,7 @@ class TestNeptuneRetryPolicy:
         "message",
         [
             "Operation failed due to conflicting concurrent operations "
-            "(please retry), 0 transactions are currently rolling back.",
+            + "(please retry), 0 transactions are currently rolling back.",
             "Operation terminated (deadline exceeded)",
         ],
     )
