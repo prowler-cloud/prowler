@@ -295,4 +295,18 @@ describe("GlobalSidePanel", () => {
     // Then: no panel DOM at all — the chat lives in the page there
     expect(container).toBeEmptyDOMElement();
   });
+
+  it("remains available on Lighthouse settings", () => {
+    // Given: settings must coexist with the panel, unlike the chat page
+    navigationMocks.pathname = "/lighthouse/settings";
+    useSidePanelStore.setState({ isOpen: true, hasBeenOpened: true });
+
+    // When
+    render(<GlobalSidePanel />);
+
+    // Then
+    expect(screen.getByTestId("global-side-panel")).toHaveClass(
+      "translate-x-0",
+    );
+  });
 });

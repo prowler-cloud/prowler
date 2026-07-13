@@ -8,13 +8,8 @@ export const LIGHTHOUSE_ROUTE = {
 export type LighthouseRoute =
   (typeof LIGHTHOUSE_ROUTE)[keyof typeof LIGHTHOUSE_ROUTE];
 
-// The full-page chat route (and its subpaths) owns the Lighthouse chat: the
-// global side panel does not exist there. Segment-aware so sibling routes
-// (e.g. a future /lighthouse-foo) never match.
+// Only the full-page chat owns the Lighthouse chat. Settings must coexist
+// with the side panel so users can configure it without losing the panel.
 export function isLighthouseChatRoute(pathname: string | null): boolean {
-  if (!pathname) return false;
-  return (
-    pathname === LIGHTHOUSE_ROUTE.CHAT ||
-    pathname.startsWith(`${LIGHTHOUSE_ROUTE.CHAT}/`)
-  );
+  return pathname === LIGHTHOUSE_ROUTE.CHAT;
 }
