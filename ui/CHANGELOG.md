@@ -4,7 +4,11 @@ All notable changes to the **Prowler UI** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+<<<<<<< HEAD
 ## [1.34.0] (Prowler v5.33.1)
+=======
+## [1.33.1] (Prowler v5.33.1)
+>>>>>>> 3c78a0df4 (fix(changelog): correct fragments for the UI (#11952))
 
 ### 🔄 Changed
 
