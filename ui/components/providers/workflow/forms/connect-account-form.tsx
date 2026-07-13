@@ -13,7 +13,12 @@ import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
 import { Button, useToast } from "@/components/shadcn";
 import { Form } from "@/components/shadcn/form";
-import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
+import {
+  addProviderFormSchema,
+  ApiError,
+  KnownProviderType,
+  ProviderType,
+} from "@/types";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -155,7 +160,7 @@ function applyBackStep({
 
   setPrevStep((prev) => prev - 1);
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType, {
+    form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
     setAwsMethod(null);

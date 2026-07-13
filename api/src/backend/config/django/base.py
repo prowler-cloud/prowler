@@ -317,6 +317,15 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
 # Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).
 ATTACK_PATHS_SINK_DATABASE = env.str("ATTACK_PATHS_SINK_DATABASE", default="neo4j")
 
+# Lighthouse AI
+# Comma-separated hostnames (or IP literals) that bypass the SSRF validation
+# applied to OpenAI-compatible provider base URLs, so self-hosted deployments
+# can point Lighthouse AI at internal endpoints. Empty by default: every base
+# URL must resolve to a public endpoint.
+LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS = env.list(
+    "LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS", default=[]
+)
+
 # Orphan task recovery feature flags. The master switch is OFF by default, so task
 # recovery is opt-in; enable it with DJANGO_TASK_RECOVERY_ENABLED=true. The per-group
 # toggles default to enabled, so once the master is on every group recovers unless a

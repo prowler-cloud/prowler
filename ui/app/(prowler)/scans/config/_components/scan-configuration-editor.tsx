@@ -31,6 +31,8 @@ import { scanConfigurationFormSchema } from "@/types/formSchemas";
 import { ProviderProps } from "@/types/providers";
 import { ScanConfigurationData } from "@/types/scan-configurations";
 
+import { getSelectableProviders } from "./scan-configuration-providers";
+
 interface ScanConfigurationEditorProps {
   open: boolean;
   onClose: (saved: boolean) => void;
@@ -90,21 +92,12 @@ function ScanConfigurationForm({
     ? validateYaml(configText)
     : { isValid: true as const };
 
-  // A provider can only be attached to one config at a time. We exclude
-  // providers that are owned by *other* configs from the selector so the user
-  // can't double-attach them. (AccountsSelector doesn't expose a per-option
-  // disabled state, so filtering out is the cleanest contract here.)
-  const ownerByProvider = new Map<string, string>();
-  for (const c of existingConfigs) {
-    if (config && c.id === config.id) continue;
-    for (const pid of c.attributes.providers || []) {
-      ownerByProvider.set(pid, c.attributes.name);
-    }
-  }
-  const selectableProviders = richProviders.filter(
-    (p) => !ownerByProvider.has(p.id),
-  );
-  const lockedCount = richProviders.length - selectableProviders.length;
+  // Dynamic providers can't use a Scan Configuration, and a provider can only be
+  // attached to one config at a time, so both are excluded from the selector.
+  // (AccountsSelector doesn't expose a per-option disabled state, so filtering
+  // out is the cleanest contract here.)
+  const { selectableProviders, configurableCount, lockedCount } =
+    getSelectableProviders(richProviders, existingConfigs, config?.id ?? null);
 
   const onSubmit = form.handleSubmit(async (values) => {
     // Block on a YAML syntax error (the inline message already explains it); the
@@ -252,7 +245,9 @@ function ScanConfigurationForm({
           <p className="text-text-neutral-tertiary text-xs italic">
             {richProviders.length === 0
               ? "No providers available in this tenant."
-              : "All providers are already attached to other Scan Configurations."}
+              : configurableCount === 0
+                ? "Dynamic providers can't use custom Scan Configurations, so there are none to attach."
+                : "All providers are already attached to other Scan Configurations."}
           </p>
         ) : (
           <AccountsSelector

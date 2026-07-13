@@ -14,6 +14,11 @@
       "repo": "github/gh-aw/actions/setup",
       "version": "v0.43.23",
       "sha": "9382be3ca9ac18917e111a99d4e6bbff58d0dccc"
+    },
+    "step-security/harden-runner@v2.20.0": {
+      "repo": "step-security/harden-runner",
+      "version": "v2.20.0",
+      "sha": "bf7454d06d71f1098171f2acdf0cd4708d7b5920"
     }
   }
 }

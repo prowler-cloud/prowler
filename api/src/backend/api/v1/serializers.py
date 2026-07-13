@@ -57,6 +57,7 @@ from api.v1.serializer_utils.lighthouse import (
 )
 from api.v1.serializer_utils.processors import ProcessorConfigField
 from api.v1.serializer_utils.providers import ProviderSecretField
+from api.validators import validate_lighthouse_openai_compatible_base_url
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import update_last_login
@@ -78,6 +79,21 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
 
 # Base
+
+
+def _validate_lighthouse_base_url_without_dns(base_url: str) -> None:
+    try:
+        validate_lighthouse_openai_compatible_base_url(base_url, resolve_dns=False)
+    except DjangoValidationError as error:
+        raise ValidationError({"base_url": error.messages[0]}) from error
+
+
+def _reraise_lighthouse_credentials_errors(error: ValidationError) -> None:
+    details = error.detail.copy()
+    for key, value in details.items():
+        error.detail[f"credentials/{key}"] = value
+        del error.detail[key]
+    raise error
 
 
 class BaseModelSerializerV1(serializers.ModelSerializer):
@@ -3645,11 +3661,7 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type == LighthouseProviderConfiguration.LLMProviderChoices.BEDROCK
         ):
@@ -3658,27 +3670,20 @@ class LighthouseProviderConfigCreateSerializer(RLSSerializer, BaseWriteSerialize
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
         ):
             if not base_url:
                 raise ValidationError({"base_url": "Base URL is required."})
+            _validate_lighthouse_base_url_without_dns(base_url)
             try:
                 OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 
@@ -3741,11 +3746,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
         elif (
             credentials is not None
             and provider_type
@@ -3769,11 +3770,7 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     raise_exception=True
                 )
             except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+                _reraise_lighthouse_credentials_errors(e)
 
             # Then enforce invariants about not changing the auth method
             # If the existing config uses an API key, forbid introducing access keys.
@@ -3800,24 +3797,23 @@ class LighthouseProviderConfigUpdateSerializer(BaseWriteSerializer):
                     }
                 )
         elif (
-            credentials is not None
-            and provider_type
+            provider_type
             == LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE
         ):
-            if base_url is None:
-                pass
-            elif not base_url:
+            effective_base_url = (
+                base_url if "base_url" in attrs else getattr(self.instance, "base_url")
+            )
+            if not effective_base_url:
                 raise ValidationError({"base_url": "Base URL cannot be empty."})
-            try:
-                OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
-                    raise_exception=True
-                )
-            except ValidationError as e:
-                details = e.detail.copy()
-                for key, value in details.items():
-                    e.detail[f"credentials/{key}"] = value
-                    del e.detail[key]
-                raise e
+            if "base_url" in attrs:
+                _validate_lighthouse_base_url_without_dns(effective_base_url)
+            if credentials is not None:
+                try:
+                    OpenAICompatibleCredentialsSerializer(data=credentials).is_valid(
+                        raise_exception=True
+                    )
+                except ValidationError as e:
+                    _reraise_lighthouse_credentials_errors(e)
 
         return super().validate(attrs)
 

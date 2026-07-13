@@ -9,7 +9,7 @@ export interface RuntimePublicConfig {
   posthogKey: string | null; // reserved
   posthogHost: string | null; // reserved
   reoDevClientId: string | null; // reserved
-  billingCloudEnable: boolean;
+  cloudBillingEnabled: boolean;
 }
 
 export const RUNTIME_CONFIG_SCRIPT_ID = "__PROWLER_RUNTIME_CONFIG__";
@@ -24,5 +24,5 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   posthogKey: null,
   posthogHost: null,
   reoDevClientId: null,
-  billingCloudEnable: false,
+  cloudBillingEnabled: false,
 };

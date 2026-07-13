@@ -188,9 +188,14 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported so feature-local wrappers (e.g. the cross-provider PDF download in
+ * app/(prowler)/compliance/_lib) reuse the base64→blob handling instead of
+ * duplicating it; those wrappers cannot live here because their server
+ * actions import the @/lib barrel, which would create a cycle.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
