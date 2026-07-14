@@ -70,22 +70,30 @@ export const CloudUpgradeModal = () => {
         </ul>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild className="flex-1">
+          <Button asChild className="w-full min-w-0 shrink sm:flex-1">
             <a
               href={getCloudUpgradePrimaryUrl(feature)}
               target="_blank"
               rel="noopener noreferrer"
+              title={content.primaryCta}
             >
-              {content.primaryCta}
+              <span className="max-w-full truncate">{content.primaryCta}</span>
             </a>
           </Button>
-          <Button asChild variant="outline" className="flex-1">
+          <Button
+            asChild
+            variant="outline"
+            className="w-full min-w-0 shrink sm:flex-1"
+          >
             <a
               href={getCloudUpgradeCompareUrl(feature)}
               target="_blank"
               rel="noopener noreferrer"
+              title={CLOUD_UPGRADE_SECONDARY_CTA}
             >
-              {CLOUD_UPGRADE_SECONDARY_CTA}
+              <span className="max-w-full truncate">
+                {CLOUD_UPGRADE_SECONDARY_CTA}
+              </span>
             </a>
           </Button>
         </div>

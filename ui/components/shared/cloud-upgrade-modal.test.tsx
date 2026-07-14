@@ -60,14 +60,33 @@ describe("CloudUpgradeModal", () => {
     // Then
     expect(dialog).toHaveClass("max-w-[calc(100%-2rem)]", "sm:max-w-xl");
     expect(dialog).not.toHaveClass("sm:max-w-lg");
-    expect(
-      screen.getByRole("link", {
-        name: "Set Up AWS Organizations in Prowler Cloud",
-      }),
-    ).toBeVisible();
-    expect(
-      screen.getByRole("link", { name: "View Plans & Pricing" }),
-    ).toBeVisible();
+    const primaryCta = screen.getByRole("link", {
+      name: "Set Up AWS Organizations in Prowler Cloud",
+    });
+    const secondaryCta = screen.getByRole("link", {
+      name: "View Plans & Pricing",
+    });
+    const ctaGroup = primaryCta.parentElement;
+
+    const primaryLabel = screen.getByText(
+      "Set Up AWS Organizations in Prowler Cloud",
+    );
+    const secondaryLabel = screen.getByText("View Plans & Pricing");
+
+    expect(ctaGroup).toHaveClass("flex-col", "sm:flex-row");
+    expect(primaryCta).toHaveClass("w-full", "min-w-0", "shrink", "sm:flex-1");
+    expect(secondaryCta).toHaveClass(
+      "w-full",
+      "min-w-0",
+      "shrink",
+      "sm:flex-1",
+    );
+    expect(primaryLabel).toHaveClass("max-w-full", "truncate");
+    expect(secondaryLabel).toHaveClass("max-w-full", "truncate");
+    expect(primaryCta).toHaveAttribute(
+      "title",
+      "Set Up AWS Organizations in Prowler Cloud",
+    );
   });
 
   it("closes the active upgrade and returns focus to its trigger", async () => {
