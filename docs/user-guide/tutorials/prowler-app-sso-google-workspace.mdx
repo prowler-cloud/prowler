@@ -66,7 +66,7 @@ Enter the following values obtained from the SAML SSO configuration dialog in Pr
 
 | Google Workspace Field | Value |
 |------------------------|-------|
-| **ACS URL** | The Assertion Consumer Service (ACS) URL displayed in Prowler Cloud (e.g., `https://api.prowler.com/api/v1/accounts/saml/your-domain.com/acs/`). Self-hosted deployments use a different base URL. |
+| **ACS URL** | The Assertion Consumer Service (ACS) URL displayed in Prowler Cloud (e.g., `https://api.prowler.com/api/v1/accounts/saml/your-domain.com/acs/`). Prowler Local Server deployments use a different base URL. |
 | **Entity ID** | The Audience URI displayed in Prowler Cloud (e.g., `urn:prowler.com:sp`). |
 | **Name ID format** | Select `EMAIL` from the dropdown. |
 | **Name ID** | Select `Basic Information > Primary email` from the dropdown. |
@@ -158,7 +158,7 @@ If attempting to use the "Test SAML login" option in Google Admin Console and re
 
 1. Navigate to the profile settings page:
    - **Prowler Cloud**: `https://cloud.prowler.com/profile`
-   - **Self-hosted**: `http://{your-domain}/profile`
+   - **Prowler Local Server**: `http://{your-domain}/profile`
 2. Find the "SAML SSO Integration" card and click "Enable" (or "Update" if already configured).
 3. The "Configure SAML SSO" dialog opens, displaying:
    - **ACS URL**: The Assertion Consumer Service URL (copy this value for Part A, Step 4). This URL updates dynamically when the email domain is entered.

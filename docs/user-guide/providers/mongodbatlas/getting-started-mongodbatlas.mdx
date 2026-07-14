@@ -15,12 +15,12 @@ Before you begin, make sure you have:
 3. An **API Key pair** (public and private keys) with appropriate permissions:
    - **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization. This permission is sufficient for most security checks.
    - **Organization Owner**: Required to audit the [Auditing configuration](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing) for projects. Database auditing tracks database operations and security events, including authentication attempts, data definition language (DDL) changes, user and role modifications, and privilege grants. This configuration is essential for security monitoring, forensics, and compliance. Without **Organization Owner** permission, the `projects_auditing_enabled` check cannot retrieve the audit configuration status.
-4. Access to Prowler Cloud or Prowler Local Server, or the Prowler CLI (`pip install prowler`).
+4. Access to Prowler Cloud or Prowler Local Server, or Prowler CLI (`pip install prowler`).
 
 For detailed instructions on creating API keys, see the [MongoDB Atlas authentication guide](./authentication.mdx).
 
 <Warning>
-If **Require IP Access List for the Atlas Administration API** is enabled in your organization settings, you **must** add the IP address of the host running Prowler (or the public IP of Prowler Cloud) to the organization IP Access List or Atlas will reject every API call. You can manage this under **Settings → Organization Settings → Security**. See step 7 of the [authentication guide](./authentication.mdx) for detailed instructions, and refer to the [Prowler Cloud egress IPs](/security/networking) when using Prowler Cloud.
+If **Require IP Access List for the Atlas Administration API** is enabled in the organization settings, add the IP address of the host running Prowler (or the public IP of Prowler Cloud) to the organization IP Access List or Atlas will reject every API call. Manage this under **Settings → Organization Settings → Security**. See step 7 of the [authentication guide](./authentication.mdx) for detailed instructions, and refer to the [Prowler Cloud egress IPs](/security/networking) when using Prowler Cloud.
 </Warning>
 
 <CardGroup cols={2}>

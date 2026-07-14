@@ -78,7 +78,7 @@ b. National security is of the utmost concern nowadays.
 
 Prowler Features are considered proper nouns. They are to be referenced without articles in all pieces of writing.
 
-Prowler ships two product families. Use these names exactly; the former names Prowler App (now Prowler Local Server) and Prowler Enterprise (now Prowler Private Cloud) must not appear in new writing.
+Prowler ships two product families. Use these names exactly; the former names Prowler App (now Prowler Local Server) and Prowler Enterprise (now Prowler Private Cloud) must not appear in new writing. The only allowed former-name notes are on the Prowler Product Families page (`getting-started/products/index.mdx`) and in the site-wide banner, which document the mapping.
 
 Prowler Products:
 
@@ -579,7 +579,7 @@ Place it on its own line below the Version Badge when one is present, otherwise 
 
 The cloud icon marks content that requires a Prowler Cloud or Prowler Private Cloud subscription:
 
-* Pages: add `icon: "cloud"` to the frontmatter of every page carrying the SubscriptionBanner.
+* Pages: add `icon: "cloud"` to the frontmatter of every page whose content is subscription-gated. Pages where only one section is gated (for example the Support page, where only the Support Desk carries the SubscriptionBanner) do not get the icon.
 * Navigation groups: add `"icon": "cloud"` to a group in `docs.json` only when every page in the group is subscription-gated.
 
 The icon meaning is explained on the Prowler Product Families page at `getting-started/products/index.mdx`: keep that note in place.

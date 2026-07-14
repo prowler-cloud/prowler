@@ -56,7 +56,7 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 
 ## Prowler Cloud & Prowler Local Server
 
-[Prowler Cloud](https://cloud.prowler.com/) and Prowler Local Server, its self-hosted open-source version formerly known as Prowler App, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
+[Prowler Cloud](https://cloud.prowler.com/) and Prowler Local Server, its self-hosted open-source version, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler Cloud](docs/images/products/overview.png)
 ![Risk Pipeline](docs/images/products/risk-pipeline.png)
