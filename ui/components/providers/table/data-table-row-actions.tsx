@@ -310,9 +310,7 @@ export function DataTableRowActions({
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
   const providerType = provider?.attributes.provider ?? "";
-  // Credentials are gated to the hardcoded provider set: only those types have a
-  // bespoke credential wizard. Alias-edit and delete are backend-generic, so they
-  // stay available for every provider, including dynamic ones.
+  // Only predefined providers can manage credentials from the UI
   const canManageCredentials = isConfigurableProvider(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
