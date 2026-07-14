@@ -1,7 +1,7 @@
 import { MenuIcon } from "lucide-react";
 import Link from "next/link";
 
-import { ProwlerExtended } from "@/components/icons";
+import { ProwlerBrand } from "@/components/icons";
 import { Menu } from "@/components/layout/sidebar/menu";
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -12,7 +12,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/shadcn/sheet";
-import { isCloud } from "@/lib/shared/env";
 
 export function SheetMenu() {
   return (
@@ -31,13 +30,8 @@ export function SheetMenu() {
             variant="link"
             asChild
           >
-            <Link href="/" className="flex flex-col items-center gap-1">
-              <ProwlerExtended />
-              {!isCloud() && (
-                <span className="text-text-neutral-secondary text-xs font-medium">
-                  Local Server
-                </span>
-              )}
+            <Link href="/" className="flex items-center justify-center">
+              <ProwlerBrand />
             </Link>
           </Button>
         </SheetHeader>

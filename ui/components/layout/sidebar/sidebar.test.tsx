@@ -22,7 +22,7 @@ describe("Sidebar", () => {
     vi.unstubAllEnvs();
   });
 
-  it("labels the expanded open-source product as Local Server", () => {
+  it("renders the Local Server lockup outside Cloud", () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 
@@ -30,10 +30,12 @@ describe("Sidebar", () => {
     render(<Sidebar />);
 
     // Then
-    expect(screen.getByText("Local Server")).toBeVisible();
+    expect(
+      screen.getByRole("img", { name: "Prowler Local Server" }),
+    ).toBeVisible();
   });
 
-  it("does not render the Local Server label in Prowler Cloud", () => {
+  it("renders the Prowler Cloud lockup in Cloud", () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
 
@@ -41,6 +43,6 @@ describe("Sidebar", () => {
     render(<Sidebar />);
 
     // Then
-    expect(screen.queryByText("Local Server")).not.toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Prowler Cloud" })).toBeVisible();
   });
 });
