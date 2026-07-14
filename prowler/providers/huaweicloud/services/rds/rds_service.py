@@ -77,19 +77,22 @@ class RDS(HuaweiCloudService):
                             if keep_days and keep_days > 0:
                                 backup_enabled = True
 
+                        datastore = getattr(inst_data, "datastore", None)
+                        engine = getattr(datastore, "type", "") if datastore else ""
+                        engine_version = getattr(datastore, "version", "") if datastore else ""
+
                         self.instances.append(
                             RDSInstance(
                                 id=getattr(inst_data, "id", ""),
                                 name=getattr(inst_data, "name", ""),
                                 status=getattr(inst_data, "status", ""),
-                                engine=getattr(inst_data, "datastore", None)
-                                and getattr(inst_data.datastore, "type", ""),
-                                engine_version=getattr(inst_data, "datastore", None)
-                                and getattr(inst_data.datastore, "version", ""),
+                                engine=engine,
+                                engine_version=engine_version,
                                 public_ip=public_ip,
                                 is_public=is_public,
                                 backup_enabled=backup_enabled,
                                 region=region,
+                                disk_encryption_id=getattr(inst_data, "disk_encryption_id", ""),
                             )
                         )
 
@@ -111,3 +114,4 @@ class RDSInstance(BaseModel):
     is_public: bool = False
     backup_enabled: bool = False
     region: str = ""
+    disk_encryption_id: str = ""

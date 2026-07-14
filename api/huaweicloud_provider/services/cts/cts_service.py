@@ -58,14 +58,15 @@ class CTS(HuaweiCloudService):
 
             if response and response.trackers:
                 for tracker_data in response.trackers:
+                    obs_info = getattr(tracker_data, "obs_info", None)
                     self.trackers.append(
                         Tracker(
                             id=getattr(tracker_data, "id", ""),
                             name=getattr(tracker_data, "tracker_name", ""),
                             tracker_type=getattr(tracker_data, "tracker_type", ""),
-                            is_enabled=getattr(tracker_data, "is_support_validation", False),
-                            bucket_name=getattr(tracker_data, "bucket_name", ""),
-                            file_prefix_name=getattr(tracker_data, "file_prefix_name", ""),
+                            is_enabled=getattr(tracker_data, "status", "") == "enabled",
+                            bucket_name=getattr(obs_info, "bucket_name", "") if obs_info else "",
+                            file_prefix_name=getattr(obs_info, "file_prefix_name", "") if obs_info else "",
                             region=region,
                         )
                     )
