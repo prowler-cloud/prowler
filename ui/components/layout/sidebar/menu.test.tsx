@@ -205,6 +205,28 @@ describe("SidebarNavigationModeToggle", () => {
     pushMock.mockClear();
   });
 
+  it("keeps the Chat affordance visible for the Local Server upgrade", () => {
+    // Given / When
+    render(
+      <SidebarNavigationModeToggleComponent
+        isOpen
+        value={SIDEBAR_NAVIGATION_MODE.BROWSE}
+        onChange={vi.fn()}
+        chatEnabled={false}
+      />,
+    );
+
+    const chatButton = screen.getByRole("button", { name: "Chat" });
+    const chatLabel = screen.getByText("Chat");
+
+    // Then
+    expect(chatButton.querySelector('svg[viewBox="0 0 19 18"]')).toBeVisible();
+    expect(chatButton).toHaveClass("flex-[3]");
+    expect(chatLabel).toHaveClass("shrink-0");
+    expect(chatLabel).not.toHaveClass("truncate");
+    expect(screen.getByText("Cloud")).toBeVisible();
+  });
+
   it("navigates to Lighthouse when Chat mode is selected", async () => {
     // Given
     const user = userEvent.setup();

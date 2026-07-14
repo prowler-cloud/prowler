@@ -76,20 +76,31 @@ export function SidebarNavigationModeToggle({
               type="button"
               aria-label={mode.label}
               className={cn(
-                "flex h-8 items-center justify-center rounded-[6px] border px-2 text-sm transition-all duration-200 ease-out",
-                isOpen ? "min-w-0 gap-2" : "w-8",
-                // The active segment grows (~55%) and gains a bordered, shadowed
-                // "thumb"; the inactive one shrinks (~45%) and stays flat.
+                "flex h-8 items-center justify-center rounded-[6px] border text-sm transition-all duration-200 ease-out",
+                isOpen
+                  ? disabled
+                    ? "min-w-0 gap-1 px-1.5"
+                    : "min-w-0 gap-2 px-2"
+                  : "w-8 px-2",
                 active
                   ? "border-border-input-primary bg-bg-neutral-primary text-text-neutral-primary shadow-md"
                   : "text-text-neutral-secondary hover:text-text-neutral-primary border-transparent",
-                isOpen && (active ? "flex-[11]" : "flex-[9]"),
+                // Local Server gives the Chat upsell enough room to keep both
+                // the feature name and its Cloud badge visible.
+                isOpen &&
+                  (!chatEnabled
+                    ? mode.value === SIDEBAR_NAVIGATION_MODE.CHAT
+                      ? "flex-[3]"
+                      : "flex-[2]"
+                    : active
+                      ? "flex-[11]"
+                      : "flex-[9]"),
                 disabled && "text-text-neutral-secondary",
               )}
               onClick={() => handleModeChange(mode.value, disabled)}
             >
-              <Icon className="size-4 shrink-0" />
-              {isOpen && <span className="truncate">{mode.label}</span>}
+              <Icon aria-hidden="true" className="size-4 shrink-0" />
+              {isOpen && <span className="shrink-0">{mode.label}</span>}
               {isOpen && disabled && (
                 <CloudFeatureBadge label="Cloud" size="sm" />
               )}
