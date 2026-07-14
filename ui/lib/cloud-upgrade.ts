@@ -16,7 +16,7 @@ export type CloudUpgradeFeature =
 export interface CloudUpgradeContent {
   title: string;
   description: string;
-  benefits: readonly [string, string, string];
+  benefits: readonly [string, string, string, ...string[]];
   primaryCta: string;
 }
 
@@ -111,8 +111,9 @@ export const CLOUD_UPGRADE_CONTENT = {
     description:
       "Add managed automation and collaboration while Prowler operates the platform.",
     benefits: [
-      "Onboard AWS Organizations from the UI",
-      "Automate scans, alerts, and compliance reporting",
+      "Onboard AWS Organizations and automate scans and alerts",
+      "Triage findings and consolidate compliance across providers",
+      "Investigate and remediate with Lighthouse AI and Agentic View",
       "Use managed infrastructure, support, and backups",
     ],
     primaryCta: "Start a Prowler Cloud Trial",
