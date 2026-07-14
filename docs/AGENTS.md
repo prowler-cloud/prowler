@@ -575,6 +575,15 @@ The default covers Prowler Cloud, Prowler Private Cloud, and Prowler Local Serve
 
 Place it on its own line below the Version Badge when one is present, otherwise directly after the imports.
 
+### Cloud Icon for Subscription Content
+
+The cloud icon marks content that requires a Prowler Cloud or Prowler Private Cloud subscription:
+
+* Pages: add `icon: "cloud"` to the frontmatter of every page carrying the SubscriptionBanner.
+* Navigation groups: add `"icon": "cloud"` to a group in `docs.json` only when every page in the group is subscription-gated.
+
+The icon meaning is explained on the Prowler Product Families page at `getting-started/products/index.mdx`: keep that note in place.
+
 ---
 
 ## Avoid Assumptions Regarding Audience’s Expertise
