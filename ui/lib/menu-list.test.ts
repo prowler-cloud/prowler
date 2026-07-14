@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "./cloud-upgrade";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { SUBMENU_KIND } from "@/types/components";
+
 import { getMenuList } from "./menu-list";
 
 const findMenu = (label: string) =>
@@ -84,12 +86,11 @@ describe("getMenuList", () => {
     // Then
     expect(alerts).toEqual(
       expect.objectContaining({
-        href: "/alerts",
-        cloudOnly: true,
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
-        active: false,
       }),
     );
+    expect(alerts).not.toHaveProperty("href");
   });
 
   it("should show Alerts as new under Configuration when Cloud is enabled", () => {
@@ -116,12 +117,11 @@ describe("getMenuList", () => {
     // Then
     expect(scanConfig).toEqual(
       expect.objectContaining({
-        href: "/scans/config",
-        cloudOnly: true,
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
-        active: false,
       }),
     );
+    expect(scanConfig).not.toHaveProperty("href");
   });
 
   it("should expose CLI Import as a contextual Cloud upgrade in Local Server", () => {
@@ -131,12 +131,11 @@ describe("getMenuList", () => {
     // Then
     expect(cliImport).toEqual(
       expect.objectContaining({
-        href: "/scans/import",
-        cloudOnly: true,
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
-        active: false,
       }),
     );
+    expect(cliImport).not.toHaveProperty("href");
   });
 
   it("should show Scan as new under Configuration when Cloud is enabled", () => {

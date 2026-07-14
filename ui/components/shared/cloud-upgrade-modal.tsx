@@ -6,7 +6,6 @@ import { Button } from "@/components/shadcn/button/button";
 import { Modal } from "@/components/shadcn/modal";
 import {
   CLOUD_UPGRADE_CONTENT,
-  CLOUD_UPGRADE_FEATURE,
   CLOUD_UPGRADE_FOOTER_NOTE,
   CLOUD_UPGRADE_SECONDARY_CTA,
   getCloudUpgradeCompareUrl,
@@ -14,6 +13,7 @@ import {
 } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { CloudFeatureBadge } from "./cloud-feature-badge";
 
@@ -44,7 +44,7 @@ export const CloudUpgradeModal = () => {
       }}
       title={content.title}
       description={content.description}
-      size="xl"
+      size="2xl"
     >
       <div className="min-w-0 space-y-6">
         <div className="flex items-center gap-3">
@@ -69,21 +69,24 @@ export const CloudUpgradeModal = () => {
           ))}
         </ul>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild className="w-full min-w-0 shrink sm:flex-1">
+        <div className="flex flex-col gap-3 md:flex-row">
+          <Button
+            asChild
+            className="h-auto min-h-9 w-full min-w-0 shrink whitespace-normal md:flex-1"
+          >
             <a
               href={getCloudUpgradePrimaryUrl(feature)}
               target="_blank"
               rel="noopener noreferrer"
               title={content.primaryCta}
             >
-              <span className="max-w-full truncate">{content.primaryCta}</span>
+              {content.primaryCta}
             </a>
           </Button>
           <Button
             asChild
             variant="outline"
-            className="w-full min-w-0 shrink sm:flex-1"
+            className="h-auto min-h-9 w-full min-w-0 shrink whitespace-normal md:flex-1"
           >
             <a
               href={getCloudUpgradeCompareUrl(feature)}
@@ -91,9 +94,7 @@ export const CloudUpgradeModal = () => {
               rel="noopener noreferrer"
               title={CLOUD_UPGRADE_SECONDARY_CTA}
             >
-              <span className="max-w-full truncate">
-                {CLOUD_UPGRADE_SECONDARY_CTA}
-              </span>
+              {CLOUD_UPGRADE_SECONDARY_CTA}
             </a>
           </Button>
         </div>

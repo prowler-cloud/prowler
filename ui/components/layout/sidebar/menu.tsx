@@ -20,13 +20,13 @@ import { SidebarNavigationModeToggle } from "@/components/sidebar/navigation-mod
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore, useScansStore } from "@/store";
-import { GroupProps } from "@/types";
+import { GroupProps, type MenuSelectionHandler } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { RolePermissionAttributes } from "@/types/users";
 
 interface MenuHideRule {
@@ -61,7 +61,12 @@ const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
     .filter((group) => group.menus.length > 0);
 };
 
-export const Menu = ({ isOpen }: { isOpen: boolean }) => {
+interface SidebarMenuProps {
+  isOpen: boolean;
+  onSelect?: MenuSelectionHandler;
+}
+
+export const Menu = ({ isOpen, onSelect }: SidebarMenuProps) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
   const openLaunchScanModal = useScansStore(
@@ -101,7 +106,10 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
                 variant="default"
                 size="default"
-                onClick={openLaunchScanModal}
+                onClick={() => {
+                  openLaunchScanModal();
+                  onSelect?.();
+                }}
               >
                 <LaunchScanButtonContent isOpen={isOpen} />
               </Button>
@@ -112,7 +120,11 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 variant="default"
                 size="default"
               >
-                <Link href={LAUNCH_SCAN_HREF} aria-label="Launch Scan">
+                <Link
+                  href={LAUNCH_SCAN_HREF}
+                  aria-label="Launch Scan"
+                  onClick={onSelect}
+                >
                   <LaunchScanButtonContent isOpen={isOpen} />
                 </Link>
               </Button>
@@ -127,6 +139,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         value={navigationMode}
         onChange={setNavigationMode}
         chatEnabled={isCloudEnv}
+        onSelect={onSelect}
       />
 
       {/* Menu Items */}
@@ -148,6 +161,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                             submenus={menu.submenus}
                             defaultOpen={menu.defaultOpen}
                             isOpen={isOpen}
+                            onSelect={onSelect}
                           />
                         ) : (
                           <MenuItem
@@ -159,6 +173,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                             tooltip={menu.tooltip}
                             isOpen={isOpen}
                             highlight={menu.highlight}
+                            onSelect={onSelect}
                           />
                         )}
                       </div>
@@ -172,7 +187,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
       </div>
 
       {!isCloudEnv && (
-        <div className="shrink-0 px-2 pb-3">
+        <div className="shrink-0 px-2 pt-4 pb-3">
           <Tooltip delayDuration={100}>
             <TooltipTrigger asChild>
               <Button
@@ -180,7 +195,12 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 variant="outline"
                 aria-label="Explore Prowler Cloud"
                 className={cn("w-full", isOpen ? "justify-center" : "px-0")}
-                onClick={() => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.GENERAL)}
+                onClick={() => {
+                  openCloudUpgrade(
+                    CLOUD_UPGRADE_FEATURE.GENERAL,
+                    onSelect?.() ?? undefined,
+                  );
+                }}
               >
                 <Cloud aria-hidden="true" className="size-4" />
                 {isOpen && <span>Explore Prowler Cloud</span>}
@@ -208,6 +228,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1"
+                  onClick={onSelect}
                 >
                   <InfoIcon size={16} />
                   <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
@@ -226,6 +247,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center"
+                  onClick={onSelect}
                 >
                   <InfoIcon size={16} />
                 </Link>

@@ -87,6 +87,10 @@ vi.mock("@/hooks/use-sidebar", async (importActual) => {
 let MenuComponent: typeof import("./menu").Menu;
 let SidebarNavigationModeToggleComponent: typeof import("@/components/sidebar/navigation-mode-toggle").SidebarNavigationModeToggle;
 
+const expectLastCloudUpgrade = (feature: string) => {
+  expect(openCloudUpgradeMock.mock.calls.at(-1)?.[0]).toBe(feature);
+};
+
 beforeAll(async () => {
   MenuComponent = (await import("./menu")).Menu;
   SidebarNavigationModeToggleComponent = (
@@ -183,7 +187,7 @@ describe("Menu", () => {
 
     await userEvent.click(chatButton);
 
-    expect(openCloudUpgradeMock).toHaveBeenCalledWith("lighthouse_ai");
+    expectLastCloudUpgrade("lighthouse_ai");
   });
 
   it("shows a persistent Cloud upgrade action only in Local Server", async () => {
@@ -196,35 +200,28 @@ describe("Menu", () => {
       screen.getByRole("button", { name: "Explore Prowler Cloud" }),
     );
 
-    expect(openCloudUpgradeMock).toHaveBeenCalledWith("general");
+    expectLastCloudUpgrade("general");
+  });
+
+  it("separates the persistent Cloud upgrade action from the navigation", () => {
+    // Given
+    pathnameValue.current = "/findings";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    // When
+    render(<MenuComponent isOpen />);
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Explore Prowler Cloud" })
+        .parentElement,
+    ).toHaveClass("pt-4");
   });
 });
 
 describe("SidebarNavigationModeToggle", () => {
   beforeEach(() => {
     pushMock.mockClear();
-  });
-
-  it("keeps the Chat affordance visible for the Local Server upgrade", () => {
-    // Given / When
-    render(
-      <SidebarNavigationModeToggleComponent
-        isOpen
-        value={SIDEBAR_NAVIGATION_MODE.BROWSE}
-        onChange={vi.fn()}
-        chatEnabled={false}
-      />,
-    );
-
-    const chatButton = screen.getByRole("button", { name: "Chat" });
-    const chatLabel = screen.getByText("Chat");
-
-    // Then
-    expect(chatButton.querySelector('svg[viewBox="0 0 19 18"]')).toBeVisible();
-    expect(chatButton).toHaveClass("flex-[3]");
-    expect(chatLabel).toHaveClass("shrink-0");
-    expect(chatLabel).not.toHaveClass("truncate");
-    expect(screen.getByText("Cloud")).toBeVisible();
   });
 
   it("navigates to Lighthouse when Chat mode is selected", async () => {
@@ -297,6 +294,6 @@ describe("SidebarNavigationModeToggle", () => {
     // Then
     expect(onChange).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
-    expect(openCloudUpgradeMock).toHaveBeenCalledWith("lighthouse_ai");
+    expectLastCloudUpgrade("lighthouse_ai");
   });
 });

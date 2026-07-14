@@ -10,8 +10,8 @@ import {
   CardTitle,
 } from "@/components/shadcn/card/card";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 export const ManagedLighthouseCallout = () => {
   const openCloudUpgrade = useCloudUpgradeStore(

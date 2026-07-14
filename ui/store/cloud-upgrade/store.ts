@@ -1,11 +1,14 @@
 import { create } from "zustand";
 
-import type { CloudUpgradeFeature } from "@/lib/cloud-upgrade";
+import type { CloudUpgradeFeature } from "@/types/cloud-upgrade";
 
 interface CloudUpgradeStoreState {
   activeFeature: CloudUpgradeFeature | null;
   returnFocusElement: HTMLElement | null;
-  openCloudUpgrade: (feature: CloudUpgradeFeature) => void;
+  openCloudUpgrade: (
+    feature: CloudUpgradeFeature,
+    returnFocusElement?: HTMLElement,
+  ) => void;
   closeCloudUpgrade: () => void;
 }
 
@@ -13,13 +16,14 @@ interface CloudUpgradeStoreState {
 export const useCloudUpgradeStore = create<CloudUpgradeStoreState>((set) => ({
   activeFeature: null,
   returnFocusElement: null,
-  openCloudUpgrade: (activeFeature) =>
+  openCloudUpgrade: (activeFeature, requestedReturnFocusElement) =>
     set({
       activeFeature,
       returnFocusElement:
-        document.activeElement instanceof HTMLElement
+        requestedReturnFocusElement ??
+        (document.activeElement instanceof HTMLElement
           ? document.activeElement
-          : null,
+          : null),
     }),
   closeCloudUpgrade: () => set({ activeFeature: null }),
 }));

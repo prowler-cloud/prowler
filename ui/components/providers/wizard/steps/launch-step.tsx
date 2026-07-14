@@ -330,13 +330,9 @@ export function LaunchStep({
               disabled={!canUseScheduleMode}
             />
             On a schedule
-            {!canUseScheduleMode &&
-              !isBlocked &&
-              (isManualOnly ? (
-                <CloudFeatureBadge label="Requires subscription" size="sm" />
-              ) : (
-                <CloudFeatureBadge label="Cloud" size="sm" />
-              ))}
+            {isManualOnly && !isBlocked && (
+              <CloudFeatureBadge label="Requires subscription" size="sm" />
+            )}
           </label>
         </RadioGroup>
       </Field>

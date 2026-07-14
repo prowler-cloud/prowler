@@ -2,8 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { CloudUpgradeModal } from "./cloud-upgrade-modal";
 
@@ -43,7 +43,7 @@ describe("CloudUpgradeModal", () => {
     );
   });
 
-  it("constrains long contextual content within the responsive dialog", async () => {
+  it("uses the standard equal-width CTA layout", async () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     useCloudUpgradeStore
@@ -53,42 +53,32 @@ describe("CloudUpgradeModal", () => {
     // When
     render(<CloudUpgradeModal />);
 
+    // Then
     const dialog = await screen.findByRole("dialog", {
       name: "Add your entire AWS Organization",
     });
-
-    // Then
-    expect(dialog).toHaveClass("max-w-[calc(100%-2rem)]", "sm:max-w-xl");
-    expect(dialog).not.toHaveClass("sm:max-w-lg");
     const primaryCta = screen.getByRole("link", {
       name: "Set Up AWS Organizations in Prowler Cloud",
     });
     const secondaryCta = screen.getByRole("link", {
       name: "View Plans & Pricing",
     });
-    const ctaGroup = primaryCta.parentElement;
-    const content = ctaGroup?.parentElement;
 
-    const primaryLabel = screen.getByText(
-      "Set Up AWS Organizations in Prowler Cloud",
+    expect(dialog).toHaveClass("sm:max-w-2xl");
+    expect(primaryCta.parentElement).toHaveClass("gap-3", "md:flex-row");
+    expect(primaryCta).toHaveClass(
+      "h-auto",
+      "min-h-9",
+      "whitespace-normal",
+      "md:flex-1",
     );
-    const secondaryLabel = screen.getByText("View Plans & Pricing");
-
-    expect(ctaGroup).toHaveClass("flex-col", "sm:flex-row");
-    expect(content).toHaveClass("min-w-0");
-    expect(primaryCta).toHaveClass("w-full", "min-w-0", "shrink", "sm:flex-1");
     expect(secondaryCta).toHaveClass(
-      "w-full",
-      "min-w-0",
-      "shrink",
-      "sm:flex-1",
+      "h-auto",
+      "min-h-9",
+      "whitespace-normal",
+      "md:flex-1",
     );
-    expect(primaryLabel).toHaveClass("max-w-full", "truncate");
-    expect(secondaryLabel).toHaveClass("max-w-full", "truncate");
-    expect(primaryCta).toHaveAttribute(
-      "title",
-      "Set Up AWS Organizations in Prowler Cloud",
-    );
+    expect(primaryCta.querySelector(".truncate")).not.toBeInTheDocument();
   });
 
   it("closes the active upgrade and returns focus to its trigger", async () => {

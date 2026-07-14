@@ -141,7 +141,7 @@ export function ScansPageShell({
         </Button>
       </div>
 
-      {isCloudEnvironment && <CliImportBanner href="/scans/import" />}
+      {isCloudEnvironment && <CliImportBanner />}
 
       <Tabs
         value={filters.activeTab}

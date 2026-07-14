@@ -14,20 +14,23 @@ import {
   SIDEBAR_NAVIGATION_MODE,
   type SidebarNavigationMode,
 } from "@/hooks/use-sidebar";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import type { MenuSelectionHandler } from "@/types/components";
 
 export function SidebarNavigationModeToggle({
   isOpen,
   value,
   onChange,
   chatEnabled = true,
+  onSelect,
 }: {
   isOpen: boolean;
   value: SidebarNavigationMode;
   onChange: (value: SidebarNavigationMode) => void;
   chatEnabled?: boolean;
+  onSelect?: MenuSelectionHandler;
 }) {
   const router = useRouter();
   const openCloudUpgrade = useCloudUpgradeStore(
@@ -48,10 +51,14 @@ export function SidebarNavigationModeToggle({
 
   const handleModeChange = (mode: SidebarNavigationMode, disabled: boolean) => {
     if (disabled) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI);
+      openCloudUpgrade(
+        CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
+        onSelect?.() ?? undefined,
+      );
       return;
     }
     onChange(mode);
+    onSelect?.();
     if (mode === SIDEBAR_NAVIGATION_MODE.CHAT) {
       router.push("/lighthouse");
     }

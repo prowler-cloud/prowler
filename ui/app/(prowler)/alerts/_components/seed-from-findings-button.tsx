@@ -30,9 +30,9 @@ import {
 } from "@/components/shadcn";
 import { ToastAction, useToast } from "@/components/shadcn";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
@@ -245,7 +245,7 @@ export const SeedFromFindingsButton = ({
 
   if (!isCloudEnabled) {
     return (
-      <span className="relative inline-flex" tabIndex={0}>
+      <span className="relative inline-flex">
         {button}
         <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
           <CloudFeatureBadge label="Cloud" />

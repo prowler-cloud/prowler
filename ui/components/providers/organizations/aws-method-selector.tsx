@@ -4,9 +4,9 @@ import { Box, Boxes } from "lucide-react";
 
 import { RadioCard } from "@/components/providers/radio-card";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 interface AwsMethodSelectorProps {
   onSelectSingle: () => void;

@@ -68,8 +68,8 @@ beforeAll(() => {
   });
 });
 
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,

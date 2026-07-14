@@ -8,8 +8,8 @@ import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "@/app/(prowler)/alerts/_types/alert-form";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 const routerMocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -383,5 +383,22 @@ describe("SeedFromFindingsButton", () => {
       CLOUD_UPGRADE_FEATURE.ALERTS,
     );
     expect(actionMocks.seedAlertRule).not.toHaveBeenCalled();
+  });
+
+  it("should expose a single keyboard stop for the Local Server upgrade", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <SeedFromFindingsButton
+        filterBag={{ "filter[severity__in]": "critical" }}
+        isCloudEnabled={false}
+      />,
+    );
+
+    // When
+    await user.tab();
+
+    // Then
+    expect(screen.getByRole("button", { name: /Create Alert/i })).toHaveFocus();
   });
 });

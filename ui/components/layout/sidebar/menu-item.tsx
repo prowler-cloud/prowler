@@ -11,7 +11,7 @@ import {
 } from "@/components/shadcn/tooltip";
 import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { cn } from "@/lib/utils";
-import { IconComponent } from "@/types";
+import { IconComponent, type MenuSelectionHandler } from "@/types";
 
 interface MenuItemProps {
   href: string;
@@ -22,6 +22,7 @@ interface MenuItemProps {
   tooltip?: string;
   isOpen: boolean;
   highlight?: boolean;
+  onSelect?: MenuSelectionHandler;
 }
 
 export const MenuItem = ({
@@ -33,6 +34,7 @@ export const MenuItem = ({
   tooltip,
   isOpen,
   highlight,
+  onSelect,
 }: MenuItemProps) => {
   const pathname = usePathname();
   // Extract only the pathname from href (without query parameters) for comparison
@@ -53,7 +55,7 @@ export const MenuItem = ({
           )}
           asChild
         >
-          <Link href={href} target={target}>
+          <Link href={href} target={target} onClick={onSelect}>
             <div className="flex items-center">
               <span className={cn(isOpen ? "mr-4" : "")}>
                 <Icon size={18} />

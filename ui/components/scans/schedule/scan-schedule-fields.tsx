@@ -15,8 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { CloudFeatureBadgeButton } from "@/components/shared/cloud-feature-badge";
 import {
   formatDayOfMonth,
   formatScheduleHour,
@@ -24,6 +23,7 @@ import {
   getNextScheduledRun,
 } from "@/lib/schedules";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -154,16 +154,12 @@ export function ScanScheduleFields({
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
   const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <button
-      type="button"
+    <CloudFeatureBadgeButton
       aria-label="Explore advanced scheduling in Prowler Cloud"
-      className="shrink-0 transition-opacity hover:opacity-90"
       onClick={() =>
         openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
       }
-    >
-      <CloudFeatureBadge label="Cloud" size="sm" />
-    </button>
+    />
   ) : null;
 
   return (

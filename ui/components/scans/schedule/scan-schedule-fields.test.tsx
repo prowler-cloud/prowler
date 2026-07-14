@@ -3,9 +3,9 @@ import userEvent from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { getScheduleFormDefaults } from "@/lib/schedules";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ScheduleFormValues } from "@/types/schedules";
 
 import { ScanScheduleFields } from "./scan-schedule-fields";

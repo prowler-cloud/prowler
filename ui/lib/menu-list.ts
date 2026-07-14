@@ -28,9 +28,15 @@ import {
   LighthouseIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
-import { GroupProps } from "@/types";
+import {
+  type CloudUpgradeFeature,
+  type GroupProps,
+  type IconComponent,
+  SUBMENU_KIND,
+  type SubmenuProps,
+} from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 interface MenuListOptions {
   pathname: string;
@@ -38,6 +44,42 @@ interface MenuListOptions {
   // cause a hydration mismatch. See useRuntimeConfig.
   apiDocsUrl?: string | null;
 }
+
+interface CloudFeatureSubmenuOptions {
+  isCloudEnvironment: boolean;
+  href: string;
+  label: string;
+  icon: IconComponent;
+  active: boolean;
+  feature: CloudUpgradeFeature;
+}
+
+const getCloudFeatureSubmenu = ({
+  isCloudEnvironment,
+  href,
+  label,
+  icon,
+  active,
+  feature,
+}: CloudFeatureSubmenuOptions): SubmenuProps => {
+  if (!isCloudEnvironment) {
+    return {
+      kind: SUBMENU_KIND.CLOUD_UPGRADE,
+      label,
+      icon,
+      cloudUpgradeFeature: feature,
+    };
+  }
+
+  return {
+    kind: SUBMENU_KIND.LINK,
+    href,
+    label,
+    icon,
+    active,
+    highlight: true,
+  };
+};
 
 export const getMenuList = ({
   pathname,
@@ -137,45 +179,36 @@ export const getMenuList = ({
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Providers", icon: CloudCog },
-            {
+            getCloudFeatureSubmenu({
+              isCloudEnvironment: isCloudEnv,
               href: "/alerts",
               label: "Alerts",
               icon: BellRing,
-              active: isCloudEnv && pathname.startsWith("/alerts"),
-              highlight: isCloudEnv,
-              cloudOnly: !isCloudEnv,
-              cloudUpgradeFeature: isCloudEnv
-                ? undefined
-                : CLOUD_UPGRADE_FEATURE.ALERTS,
-            },
+              active: pathname.startsWith("/alerts"),
+              feature: CLOUD_UPGRADE_FEATURE.ALERTS,
+            }),
             {
               href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            {
+            getCloudFeatureSubmenu({
+              isCloudEnvironment: isCloudEnv,
               href: "/scans/config",
               label: "Scan",
               icon: SlidersHorizontal,
-              active: isCloudEnv && pathname.startsWith("/scans/config"),
-              highlight: isCloudEnv,
-              cloudOnly: !isCloudEnv,
-              cloudUpgradeFeature: isCloudEnv
-                ? undefined
-                : CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
-            },
-            {
+              active: pathname.startsWith("/scans/config"),
+              feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+            }),
+            getCloudFeatureSubmenu({
+              isCloudEnvironment: isCloudEnv,
               href: "/scans/import",
               label: "CLI Import",
               icon: Upload,
-              active: isCloudEnv && pathname.startsWith("/scans/import"),
-              highlight: isCloudEnv,
-              cloudOnly: !isCloudEnv,
-              cloudUpgradeFeature: isCloudEnv
-                ? undefined
-                : CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
-            },
+              active: pathname.startsWith("/scans/import"),
+              feature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+            }),
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],

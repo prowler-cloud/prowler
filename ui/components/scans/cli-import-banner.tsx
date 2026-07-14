@@ -6,22 +6,16 @@ import { useState } from "react";
 
 import { Alert, AlertTitle } from "@/components/shadcn";
 import { useMountEffect } from "@/hooks/use-mount-effect";
-import { DOCS_URLS } from "@/lib/external-urls";
 import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "prowler:cli-import-banner-dismissed";
 
 interface CliImportBannerProps {
   className?: string;
-  href?: string;
 }
 
-export const CliImportBanner = ({
-  className,
-  href = DOCS_URLS.FINDINGS_INGESTION,
-}: CliImportBannerProps) => {
+export const CliImportBanner = ({ className }: CliImportBannerProps) => {
   const [isVisible, setIsVisible] = useState<boolean | null>(null);
-  const opensInNewTab = href.startsWith("http");
 
   useMountEffect(() => {
     const isDismissed = localStorage.getItem(STORAGE_KEY) === "true";
@@ -45,9 +39,7 @@ export const CliImportBanner = ({
       <AlertTitle>
         Import findings from Prowler CLI -{" "}
         <Link
-          href={href}
-          target={opensInNewTab ? "_blank" : undefined}
-          rel={opensInNewTab ? "noopener noreferrer" : undefined}
+          href="/scans/import"
           className="font-normal underline underline-offset-2"
         >
           Learn more

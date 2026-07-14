@@ -1,5 +1,6 @@
-import type { CSSProperties } from "react";
+import type { ComponentProps, CSSProperties } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
 interface MenuFeatureBadgeProps {
@@ -68,23 +69,22 @@ export const CloudFeatureBadge = ({
   />
 );
 
-interface CloudFeatureBadgeLinkProps
-  extends Omit<MenuFeatureBadgeProps, "variant"> {
-  href?: string;
+interface CloudFeatureBadgeButtonProps
+  extends Omit<
+    ComponentProps<typeof Button>,
+    "children" | "className" | "size" | "variant"
+  > {
+  badgeLabel?: string;
+  badgeSize?: MenuFeatureBadgeProps["size"];
 }
 
-export const CloudFeatureBadgeLink = ({
-  href = "https://prowler.com/pricing",
-  label,
-  size,
-  className,
-}: CloudFeatureBadgeLinkProps) => (
-  <a
-    href={href}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="shrink-0 whitespace-nowrap transition-opacity hover:opacity-90"
-  >
-    <CloudFeatureBadge label={label} size={size} className={className} />
-  </a>
+export const CloudFeatureBadgeButton = ({
+  badgeLabel = "Cloud",
+  badgeSize = "sm",
+  type = "button",
+  ...props
+}: CloudFeatureBadgeButtonProps) => (
+  <Button {...props} type={type} variant="bare" size="link-xs">
+    <CloudFeatureBadge label={badgeLabel} size={badgeSize} />
+  </Button>
 );

@@ -5,8 +5,8 @@ import { ReactNode } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { COMPLIANCE_TAB, type ComplianceTab } from "../_types";
 

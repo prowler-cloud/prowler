@@ -1,9 +1,9 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { SVGProps } from "react";
 
-import type { CloudUpgradeFeature } from "@/lib/cloud-upgrade";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
+import type { CloudUpgradeFeature } from "./cloud-upgrade";
 import type { FindingTriageSummary } from "./findings-triage";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -17,18 +17,41 @@ export type IconProps = {
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
 
-export type SubmenuProps = {
+export const SUBMENU_KIND = {
+  LINK: "link",
+  CLOUD_UPGRADE: "cloud_upgrade",
+} as const;
+
+interface SubmenuBaseProps {
+  label: string;
+  icon: IconComponent;
+}
+
+export interface SubmenuLinkProps extends SubmenuBaseProps {
+  kind?: typeof SUBMENU_KIND.LINK;
   href: string;
   target?: string;
-  label: string;
   active?: boolean;
-  icon: IconComponent;
   disabled?: boolean;
   highlight?: boolean;
   cloudOnly?: boolean;
-  cloudUpgradeFeature?: CloudUpgradeFeature;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-};
+  cloudUpgradeFeature?: never;
+}
+
+export interface SubmenuCloudUpgradeProps extends SubmenuBaseProps {
+  kind: typeof SUBMENU_KIND.CLOUD_UPGRADE;
+  cloudUpgradeFeature: CloudUpgradeFeature;
+  href?: never;
+  target?: never;
+  active?: never;
+  disabled?: never;
+  highlight?: never;
+  cloudOnly?: never;
+}
+
+export type SubmenuProps = SubmenuLinkProps | SubmenuCloudUpgradeProps;
+
+export type MenuSelectionHandler = () => HTMLElement | null;
 
 export type MenuProps = {
   href: string;

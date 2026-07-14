@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type MouseEvent } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -11,48 +10,34 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
-import type { CloudUpgradeFeature } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
-import { IconComponent } from "@/types";
+import {
+  type MenuSelectionHandler,
+  SUBMENU_KIND,
+  type SubmenuProps,
+} from "@/types";
 
-interface SubmenuItemProps {
-  href: string;
-  label: string;
-  icon: IconComponent;
-  active?: boolean;
-  target?: string;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  cloudUpgradeFeature?: CloudUpgradeFeature;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-}
+type SubmenuItemProps = SubmenuProps & {
+  onSelect?: MenuSelectionHandler;
+};
 
-export const SubmenuItem = ({
-  href,
-  label,
-  icon: Icon,
-  active,
-  target,
-  disabled,
-  highlight,
-  cloudOnly,
-  cloudUpgradeFeature,
-  onClick,
-}: SubmenuItemProps) => {
+export const SubmenuItem = (props: SubmenuItemProps) => {
   const pathname = usePathname();
   const openCloudUpgrade = useCloudUpgradeStore(
     (state) => state.openCloudUpgrade,
   );
-  const isActive = active !== undefined ? active : pathname === href;
 
-  if (cloudUpgradeFeature) {
+  if (props.kind === SUBMENU_KIND.CLOUD_UPGRADE) {
+    const { cloudUpgradeFeature, icon: Icon, label, onSelect } = props;
+
     return (
       <Button
         type="button"
         variant="menu-inactive"
         className="mt-1 w-[calc(100%-12px)] justify-start px-2 py-1"
-        onClick={() => openCloudUpgrade(cloudUpgradeFeature)}
+        onClick={() => {
+          openCloudUpgrade(cloudUpgradeFeature, onSelect?.() ?? undefined);
+        }}
       >
         <span className="mr-2">
           <Icon size={16} />
@@ -64,6 +49,19 @@ export const SubmenuItem = ({
       </Button>
     );
   }
+
+  const {
+    active,
+    cloudOnly,
+    disabled,
+    highlight,
+    href,
+    icon: Icon,
+    label,
+    onSelect,
+    target,
+  } = props;
+  const isActive = active !== undefined ? active : pathname === href;
 
   // Special case: Mutelist with tooltip when disabled
   if (disabled && label === "Mutelist") {
@@ -134,7 +132,7 @@ export const SubmenuItem = ({
         href={href}
         target={target}
         className="flex items-center"
-        onClick={onClick}
+        onClick={onSelect}
       >
         <span className="mr-2">
           <Icon size={16} />

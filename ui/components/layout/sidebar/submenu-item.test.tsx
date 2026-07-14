@@ -2,8 +2,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { SUBMENU_KIND } from "@/types/components";
 
 import { SubmenuItem } from "./submenu-item";
 
@@ -23,13 +24,15 @@ describe("SubmenuItem", () => {
   it("should open the Alerts upgrade modal from a Local Server menu item", async () => {
     // Given
     const user = userEvent.setup();
+    const returnFocusElement = document.createElement("button");
+    const onSelect = vi.fn(() => returnFocusElement);
     render(
       <SubmenuItem
-        href="/alerts"
+        kind={SUBMENU_KIND.CLOUD_UPGRADE}
         label="Alerts"
         icon={TestIcon}
-        cloudOnly
         cloudUpgradeFeature={CLOUD_UPGRADE_FEATURE.ALERTS}
+        onSelect={onSelect}
       />,
     );
 
@@ -39,35 +42,16 @@ describe("SubmenuItem", () => {
 
     // Then
     expect(button).not.toHaveAttribute("aria-disabled");
-    expect(screen.getByText("Cloud")).toHaveClass("h-5", "text-[10px]");
+    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(
+      screen.queryByRole("link", { name: /alerts/i }),
+    ).not.toBeInTheDocument();
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.ALERTS,
     );
-  });
-
-  it("should open the scan configuration upgrade without rendering a link", async () => {
-    // Given
-    const user = userEvent.setup();
-    render(
-      <SubmenuItem
-        href="/scans/config"
-        label="Scan"
-        icon={TestIcon}
-        cloudOnly
-        cloudUpgradeFeature={CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION}
-      />,
-    );
-
-    // When
-    const button = screen.getByRole("button", { name: /scan/i });
-    await user.click(button);
-
-    // Then
-    expect(
-      screen.queryByRole("link", { name: /scan/i }),
-    ).not.toBeInTheDocument();
-    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
-      CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+    expect(onSelect).toHaveBeenCalledOnce();
+    expect(useCloudUpgradeStore.getState().returnFocusElement).toBe(
+      returnFocusElement,
     );
   });
 });
