@@ -1,3 +1,5 @@
+from kubernetes import client
+from prowler.providers.kubernetes.services.core.core_service import Core
 from tests.providers.kubernetes.services.core.conftest import (
     make_core_client,
     make_pod,
@@ -12,6 +14,26 @@ CLASS = "core_minimize_hostpath_volume_mounts"
 
 
 class TestCoreMinimizeHostpathVolumeMounts:
+    def test_build_volumes_maps_kubernetes_hostpath_volume(self):
+        volumes = Core._build_volumes(
+            [
+                client.V1Volume(
+                    name="host-logs",
+                    host_path=client.V1HostPathVolumeSource(
+                        path="/var/log",
+                        type="Directory",
+                    ),
+                )
+            ]
+        )
+
+        assert volumes == [
+            {
+                "name": "host-logs",
+                "host_path": {"path": "/var/log", "type": "Directory"},
+            }
+        ]
+
     def test_no_resources(self):
         result = run_check(MODULE, CLASS, make_core_client({}))
 
