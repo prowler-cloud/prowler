@@ -33,5 +33,5 @@
   ],
   "DependsOn": [],
   "RelatedTo": [],
-  "Notes": "Only regular containers are evaluated; init and ephemeral containers are excluded. Workloads that genuinely require root filesystem writes should mount writable volumes at specific paths and may be exempted via Prowler's mutelist."
+  "Notes": "Regular, init, and ephemeral containers are evaluated. Workloads that genuinely require root filesystem writes should mount writable volumes at specific paths and may be exempted via Prowler's mutelist."
 }

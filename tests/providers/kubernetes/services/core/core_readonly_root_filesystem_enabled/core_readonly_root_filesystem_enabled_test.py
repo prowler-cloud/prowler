@@ -85,7 +85,7 @@ class TestCoreReadonlyRootFilesystemEnabled:
             == "Pod test-pod container sidecar does not have readOnlyRootFilesystem set to true."
         )
 
-    def test_init_containers_ignored(self):
+    def test_init_container_missing_readonly_root_filesystem_fails(self):
         pod = make_pod(
             containers={
                 "app": make_container(
@@ -99,4 +99,28 @@ class TestCoreReadonlyRootFilesystemEnabled:
 
         result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
 
-        assert result[0].status == "PASS"
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Pod test-pod container init does not have readOnlyRootFilesystem set to true."
+        )
+
+    def test_ephemeral_container_missing_readonly_root_filesystem_fails(self):
+        pod = make_pod(
+            containers={
+                "app": make_container(
+                    security_context={"read_only_root_filesystem": True}
+                )
+            },
+            ephemeral_containers={
+                "debug": make_container(name="debug", security_context={})
+            },
+        )
+
+        result = run_check(MODULE, CLASS, make_core_client({pod.uid: pod}))
+
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Pod test-pod container debug does not have readOnlyRootFilesystem set to true."
+        )

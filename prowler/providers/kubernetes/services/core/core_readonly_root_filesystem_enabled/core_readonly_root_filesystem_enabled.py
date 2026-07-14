@@ -17,13 +17,20 @@ class core_readonly_root_filesystem_enabled(Check):
             report.status = "PASS"
             report.status_extended = f"Pod {pod.name} has read-only root filesystem enabled for all containers."
 
-            for container in pod.containers.values():
-                if (
-                    container.security_context.get("read_only_root_filesystem")
-                    is not True
-                ):
-                    report.status = "FAIL"
-                    report.status_extended = f"Pod {pod.name} container {container.name} does not have readOnlyRootFilesystem set to true."
+            for containers in (
+                pod.containers,
+                pod.init_containers,
+                pod.ephemeral_containers,
+            ):
+                for container in (containers or {}).values():
+                    if (
+                        container.security_context.get("read_only_root_filesystem")
+                        is not True
+                    ):
+                        report.status = "FAIL"
+                        report.status_extended = f"Pod {pod.name} container {container.name} does not have readOnlyRootFilesystem set to true."
+                        break
+                if report.status == "FAIL":
                     break
 
             findings.append(report)
