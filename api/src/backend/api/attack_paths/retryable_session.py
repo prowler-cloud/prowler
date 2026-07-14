@@ -1,4 +1,6 @@
 import logging
+import random
+import time
 from collections.abc import Callable
 from typing import Any
 
@@ -9,17 +11,19 @@ logger = logging.getLogger(__name__)
 
 
 class RetryableSession:
-    """
-    Wrapper around `neo4j.Session` that retries `neo4j.exceptions.ServiceUnavailable` errors.
-    """
+    """Wrapper around ``neo4j.Session`` with a refreshable retry policy."""
 
     def __init__(
         self,
         session_factory: Callable[[], neo4j.Session],
         max_retries: int,
+        retry_if: Callable[[Exception], bool] | None = None,
+        initial_retry_delay_seconds: float = 0,
     ) -> None:
         self._session_factory = session_factory
         self._max_retries = max(0, max_retries)
+        self._retry_if = retry_if
+        self._initial_retry_delay_seconds = max(0.0, initial_retry_delay_seconds)
         self._session = self._session_factory()
 
     def close(self) -> None:
@@ -56,23 +60,46 @@ class RetryableSession:
                 method = getattr(self._session, method_name)
                 return method(*args, **kwargs)
 
-            except (
-                BrokenPipeError,
-                ConnectionResetError,
-                neo4j.exceptions.ServiceUnavailable,
-            ) as exc:  # pragma: no cover - depends on infra
+            except Exception as exc:
+                if not self._should_retry(exc):
+                    raise
+
                 last_exc = exc
                 attempt += 1
 
                 if attempt > self._max_retries:
                     raise
 
+                delay = self._retry_delay(attempt)
                 logger.warning(
-                    f"Neo4j session {method_name} failed with {type(exc).__name__} ({attempt}/{self._max_retries} attempts). Retrying..."
+                    "Graph session %s failed with %s; retry %s/%s in %.3fs",
+                    method_name,
+                    type(exc).__name__,
+                    attempt,
+                    self._max_retries,
+                    delay,
                 )
                 self._refresh_session()
+                if delay:
+                    time.sleep(delay)
 
         raise last_exc if last_exc else RuntimeError("Unexpected retry loop exit")
+
+    def _should_retry(self, exc: Exception) -> bool:
+        if isinstance(
+            exc,
+            (
+                BrokenPipeError,
+                ConnectionResetError,
+                neo4j.exceptions.ServiceUnavailable,
+            ),
+        ):
+            return True
+        return self._retry_if(exc) if self._retry_if else False
+
+    def _retry_delay(self, attempt: int) -> float:
+        max_delay = self._initial_retry_delay_seconds * (2**attempt)
+        return random.uniform(max_delay / 2, max_delay) if max_delay else 0
 
     def _refresh_session(self) -> None:
         if self._session is not None:
