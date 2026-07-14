@@ -32,6 +32,7 @@ def make_pod(
     containers=None,
     init_containers=None,
     ephemeral_containers=None,
+    volumes=None,
     name="test-pod",
     uid="test-pod-uid",
 ):
@@ -53,6 +54,7 @@ def make_pod(
         containers=containers or {},
         init_containers=init_containers or {},
         ephemeral_containers=ephemeral_containers or {},
+        volumes=volumes,
     )
 
 
