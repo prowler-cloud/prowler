@@ -18,7 +18,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "kubectl patch deployment/<workload-name> -n <namespace> --type='json' -p='[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/securityContext/readOnlyRootFilesystem\",\"value\":true}]'",
       "NativeIaC": "",
       "Other": "1. Open your Kubernetes Dashboard (or your cloud provider's Kubernetes console) and locate the workload managing the failing Pod (Deployment/StatefulSet/DaemonSet)\n2. Click Edit to modify the manifest (YAML)\n3. For each container missing `securityContext.readOnlyRootFilesystem: true`, add or set it to `true`\n4. If the container needs write access, mount a writable `emptyDir` or `persistentVolumeClaim` at the specific paths that require writes instead of making the entire root filesystem writable\n5. Save/Apply the changes to trigger a rollout\n6. Verify new Pods have `securityContext.readOnlyRootFilesystem` set to `true`",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"main\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n      security_context {\n        read_only_root_filesystem = true # Critical: enforce a read-only root filesystem\n      }\n    }\n  }\n}\n```"
