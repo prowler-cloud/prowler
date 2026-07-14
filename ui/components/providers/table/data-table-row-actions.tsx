@@ -27,6 +27,7 @@ import {
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
 import { useToast } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
@@ -35,7 +36,10 @@ import {
 import { Modal } from "@/components/shadcn/modal";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
-import { getScanScheduleCapability } from "@/lib/schedules";
+import {
+  canEditProviderAlias,
+  getScanScheduleCapability,
+} from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
@@ -291,9 +295,11 @@ export function DataTableRowActions({
   currentScanConfigId = null,
   capability,
 }: DataTableRowActionsProps) {
+  const resolvedCapability = capability ?? getScanScheduleCapability(isCloud());
   const canEditSchedule =
-    (capability ?? getScanScheduleCapability(isCloud())) ===
-    SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+    resolvedCapability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  // Editing a provider alias requires a Prowler Cloud subscription
+  const canEditAlias = canEditProviderAlias(resolvedCapability);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const [scheduleState, setScheduleState] = useState<EditScanScheduleState>({
@@ -590,11 +596,26 @@ export function DataTableRowActions({
       )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
-          <ActionDropdownItem
-            icon={<Pencil />}
-            label="Edit Provider Alias"
-            onSelect={() => setIsEditOpen(true)}
-          />
+          {canEditAlias ? (
+            <ActionDropdownItem
+              icon={<Pencil />}
+              label="Edit Provider Alias"
+              onSelect={() => setIsEditOpen(true)}
+            />
+          ) : (
+            <ActionDropdownItem
+              icon={<Pencil />}
+              label={
+                <span className="flex flex-col items-start gap-1">
+                  Edit Provider Alias
+                  <Badge variant="warning" size="sm">
+                    Requires subscription
+                  </Badge>
+                </span>
+              }
+              disabled
+            />
+          )}
           <ActionDropdownItem
             icon={<Timer />}
             label="View Scan Jobs"

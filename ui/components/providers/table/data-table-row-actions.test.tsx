@@ -468,6 +468,92 @@ describe("DataTableRowActions", () => {
     expect(screen.queryByText("Edit Scan Schedule")).not.toBeInTheDocument();
   });
 
+  it("disables Edit Provider Alias with a subscription badge for manual-only Cloud provider rows", async () => {
+    // Given a Prowler Cloud account without a subscription (trial/onboarding):
+    // editing the alias would be rejected by the API, so the UI must not offer it.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then the action is still discoverable but disabled with an upsell badge.
+    expect(screen.getByText("Requires subscription")).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /edit provider alias/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("disables Edit Provider Alias for blocked Cloud provider rows", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then
+    expect(screen.getByText("Requires subscription")).toBeInTheDocument();
+    expect(
+      screen.getByRole("menuitem", { name: /edit provider alias/i }),
+    ).toHaveAttribute("aria-disabled", "true");
+  });
+
+  it("opens Edit Provider Alias for subscribed Cloud provider rows", async () => {
+    // Given a subscribed Cloud account (ADVANCED): the alias edit works.
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const user = userEvent.setup();
+
+    render(
+      <DataTableRowActions
+        row={createRow(true)}
+        hasSelection={false}
+        isRowSelected={false}
+        testableProviderIds={[]}
+        onClearSelection={vi.fn()}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+        capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button"));
+
+    // Then the item is enabled (no upsell badge) and opens the alias modal.
+    expect(screen.queryByText("Requires subscription")).not.toBeInTheDocument();
+    await user.click(screen.getByText("Edit Provider Alias"));
+    expect(
+      screen.getByRole("dialog", { name: /edit provider alias/i }),
+    ).toBeInTheDocument();
+  });
+
   it("opens scan config management with the precomputed current config id", async () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");

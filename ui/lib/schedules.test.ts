@@ -5,6 +5,7 @@ import {
   buildScheduleAttributesFromProvider,
   buildSchedulesByProviderId,
   buildScheduleUpdatePayload,
+  canEditProviderAlias,
   formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
@@ -437,6 +438,28 @@ describe("scan schedule capability", () => {
     expect(getScanScheduleCapability(true)).toBe(
       SCAN_SCHEDULE_CAPABILITY.ADVANCED,
     );
+  });
+});
+
+describe("canEditProviderAlias", () => {
+  it("allows subscribed Cloud accounts (ADVANCED)", () => {
+    expect(canEditProviderAlias(SCAN_SCHEDULE_CAPABILITY.ADVANCED)).toBe(true);
+  });
+
+  it("allows OSS / self-hosted (DAILY_LEGACY, no billing)", () => {
+    expect(canEditProviderAlias(SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY)).toBe(
+      true,
+    );
+  });
+
+  it("blocks Cloud trial/onboarding without a subscription (MANUAL_ONLY)", () => {
+    expect(canEditProviderAlias(SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY)).toBe(
+      false,
+    );
+  });
+
+  it("blocks over-limit Cloud accounts (BLOCKED)", () => {
+    expect(canEditProviderAlias(SCAN_SCHEDULE_CAPABILITY.BLOCKED)).toBe(false);
   });
 });
 

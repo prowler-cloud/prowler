@@ -65,6 +65,19 @@ export function getScanScheduleCapability(
     : SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
 }
 
+/**
+ * Whether the current account may edit a provider alias. Alias edits require a
+ * Prowler Cloud subscription
+ */
+export function canEditProviderAlias(
+  capability: ScanScheduleCapability,
+): boolean {
+  return (
+    capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED ||
+    capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY
+  );
+}
+
 export function formatScheduleHour(hour: number): string {
   const normalizedHour = ((hour % 24) + 24) % 24;
   const period = normalizedHour >= 12 ? "pm" : "am";
