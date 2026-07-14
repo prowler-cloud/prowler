@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 import {
   createLighthouseChatStore,
@@ -55,7 +55,10 @@ export function LighthouseV2ChatPage({
   // streamed output and the open EventSource continue without a snapshot gap.
   // Direct/session-mismatched navigation builds the normal page-owned store.
   const [store] = useState<LighthouseChatStore>(() => {
-    const panelStore = getPanelChatStoreForSession(initialSessionId);
+    const panelStore =
+      initialPrompt === undefined
+        ? getPanelChatStoreForSession(initialSessionId)
+        : null;
     return (
       panelStore ??
       createLighthouseChatStore({
@@ -63,12 +66,12 @@ export function LighthouseV2ChatPage({
         syncUrlToSession: true,
         initialSessionId,
         initialMessages,
+        initialInput: initialPrompt,
         initialError,
       })
     );
   });
   const reusesPanelStore = isPanelChatStore(store);
-  const initialPromptSentRef = useRef(false);
 
   // A reused panel store returns to panel URL semantics when the page leaves;
   // a page-owned store closes its EventSource as before.
@@ -83,13 +86,6 @@ export function LighthouseV2ChatPage({
       }
       store.getState().destroy();
     };
-  });
-
-  useMountEffect(() => {
-    if (initialPrompt && !initialPromptSentRef.current) {
-      initialPromptSentRef.current = true;
-      void store.getState().submitMessage(initialPrompt);
-    }
   });
 
   // The sidebar "+" can't rely on routing to reset the latest conversation (its

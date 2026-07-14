@@ -46,6 +46,7 @@ export interface CreateLighthouseChatStoreOptions {
   syncUrlToSession: boolean;
   initialSessionId?: string;
   initialMessages?: LighthouseV2Message[];
+  initialInput?: string;
   initialError?: string;
 }
 
@@ -251,7 +252,7 @@ export function createLighthouseChatStore(
       activeSessionId: options.initialSessionId ?? null,
       messages: options.initialMessages ?? [],
       streamState: createInitialLighthouseV2StreamState(),
-      input: "",
+      input: options.initialInput ?? "",
       feedback: options.initialError ?? null,
       blockedByConflict: false,
       isSubmitting: false,

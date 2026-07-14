@@ -266,6 +266,22 @@ describe("LighthouseV2ChatPage", () => {
     );
   });
 
+  it("prefills the overview remediation prompt without starting a conversation", () => {
+    // Given
+    const initialPrompt =
+      "Find and guide me to remediate what actually matters. What do I have to do today to be secure?";
+
+    // When
+    renderPage({ initialPrompt });
+
+    // Then
+    expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue(
+      initialPrompt,
+    );
+    expect(createSessionMock).not.toHaveBeenCalled();
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
   it("shows model names in the selector while keeping model ids for persistence", async () => {
     // Given
     const user = userEvent.setup();

@@ -5,7 +5,7 @@ import { LIGHTHOUSE_OVERVIEW_BANNER_HREF } from "../_lib/lighthouse-banner";
 import { LighthouseOverviewBanner } from "./lighthouse-overview-banner";
 
 describe("LighthouseOverviewBanner", () => {
-  it("renders Toni copy and starts a prompted conversation when connected", () => {
+  it("renders Toni copy and opens a prompted chat when connected", () => {
     // Given / When
     render(
       <LighthouseOverviewBanner href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT} />,

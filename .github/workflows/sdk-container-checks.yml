@@ -94,6 +94,8 @@ jobs:
             _http._tcp.deb.debian.org:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             get.trivy.dev:443
+            raw.githubusercontent.com:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

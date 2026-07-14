@@ -2,13 +2,12 @@ import type { LighthouseV2Configuration } from "@/app/(prowler)/lighthouse/_type
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { ServerActionResult } from "@/types/server-actions";
 
-// Auto-submitted as the first message of a new conversation: /lighthouse reads
-// ?prompt= and sends it once on mount (see LighthouseV2ChatPage).
-export const LIGHTHOUSE_OVERVIEW_BANNER_PROMPT =
+// Prefilled in the composer when the overview banner opens Lighthouse.
+export const LIGHTHOUSE_OVERVIEW_PROMPT =
   "Find and guide me to remediate what actually matters. What do I have to do today to be secure?";
 
 export const LIGHTHOUSE_OVERVIEW_BANNER_HREF = {
-  CHAT: `${LIGHTHOUSE_ROUTE.CHAT}?prompt=${encodeURIComponent(LIGHTHOUSE_OVERVIEW_BANNER_PROMPT)}`,
+  CHAT: `${LIGHTHOUSE_ROUTE.CHAT}?prompt=${encodeURIComponent(LIGHTHOUSE_OVERVIEW_PROMPT)}`,
   SETTINGS: LIGHTHOUSE_ROUTE.SETTINGS,
 } as const;
 

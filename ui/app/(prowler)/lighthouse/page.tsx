@@ -6,7 +6,6 @@ import {
 } from "@/actions/lighthouse-v1/lighthouse";
 import { getLighthouseV2Messages } from "@/app/(prowler)/lighthouse/_actions";
 import { LighthouseV2ChatPage } from "@/app/(prowler)/lighthouse/_components/chat";
-import { LighthouseV2NavigationModeSync } from "@/app/(prowler)/lighthouse/_components/navigation";
 import {
   LIGHTHOUSE_CHAT_CONFIG_STATUS,
   loadLighthouseChatConfig,
@@ -14,6 +13,8 @@ import {
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Chat } from "@/components/lighthouse-v1";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { SidebarNavigationModeSync } from "@/components/sidebar/navigation-mode-sync";
+import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import { isCloud } from "@/lib/shared/env";
 
@@ -54,7 +55,10 @@ export default async function AIChatbot({
 
     return (
       <ContentLayout title="Lighthouse AI" icon={<LighthouseIcon />}>
-        <LighthouseV2NavigationModeSync />
+        <SidebarNavigationModeSync
+          mode={SIDEBAR_NAVIGATION_MODE.CHAT}
+          closeSidePanel
+        />
         {/* [contain:layout] traps streamdown's fixed fullscreen overlay inside
             the chat area so it never covers the sidebar or navbar. */}
         <div className="h-[calc(100dvh-6.5rem)] min-h-0 [contain:layout]">
