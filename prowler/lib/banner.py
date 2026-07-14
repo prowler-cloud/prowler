@@ -66,5 +66,5 @@ def print_prowler_cloud_banner(provider: str = None):
 {bar} {check} {Style.BRIGHT}Bulk Provisioning{Style.RESET_ALL} - add your entire AWS Organization in seconds.
 {bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Anything with our MCP + Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC.
 {bar}
-{bar} {Fore.BLUE}Start free at 👉 cloud.prowler.com{Style.RESET_ALL}
+{bar} {banner_color}Start free at 👉 cloud.prowler.com{Style.RESET_ALL}
 """)
