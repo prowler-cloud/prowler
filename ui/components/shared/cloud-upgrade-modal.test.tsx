@@ -26,7 +26,7 @@ describe("CloudUpgradeModal", () => {
 
     // Then
     expect(
-      await screen.findByRole("dialog", { name: "Turn findings into alerts" }),
+      await screen.findByRole("dialog", { name: "Turn Findings into Alerts" }),
     ).toBeVisible();
     expect(screen.getByText("Available in Prowler Cloud")).toBeVisible();
     expect(
@@ -55,7 +55,7 @@ describe("CloudUpgradeModal", () => {
 
     // Then
     const dialog = await screen.findByRole("dialog", {
-      name: "Add your entire AWS Organization",
+      name: "Add Your Entire AWS Organization",
     });
     const primaryCta = screen.getByRole("link", {
       name: "Set Up AWS Organizations in Prowler Cloud",

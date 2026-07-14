@@ -20,7 +20,7 @@ const LOCAL_SERVER_SOURCE = "prowler_local_server";
 
 export const CLOUD_UPGRADE_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: {
-    title: "Keep every provider checked automatically",
+    title: "Keep Every Provider Checked Automatically",
     description:
       "Run scans on the cadence you choose without maintaining scheduling infrastructure.",
     benefits: [
@@ -31,7 +31,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Schedule Scans in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.ALERTS]: {
-    title: "Turn findings into alerts",
+    title: "Turn Findings into Alerts",
     description:
       "Get notified when the findings you care about appear in a scan.",
     benefits: [
@@ -42,7 +42,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Create Alerts in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: {
-    title: "Add your entire AWS Organization",
+    title: "Add Your Entire AWS Organization",
     description:
       "Discover accounts and organizational units, then manage them from one place.",
     benefits: [
@@ -53,7 +53,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Set Up AWS Organizations in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
-    title: "Bring CLI findings into one Cloud view",
+    title: "Bring CLI Findings into One Cloud View",
     description:
       "Send Prowler CLI scan results to Prowler Cloud for centralized analysis and collaboration.",
     benefits: [
@@ -64,7 +64,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Import CLI Findings in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]: {
-    title: "See compliance across every provider",
+    title: "See Compliance Across Every Provider",
     description:
       "Replace separate scan reports with a consolidated compliance view.",
     benefits: [
@@ -75,7 +75,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Consolidate Compliance in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: {
-    title: "Coordinate finding remediation",
+    title: "Coordinate Finding Remediation",
     description:
       "Add investigation notes and move findings through a shared remediation workflow.",
     benefits: [
@@ -86,7 +86,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Triage Findings in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
-    title: "Use a managed security assistant",
+    title: "Use a Managed Security Assistant",
     description:
       "Investigate and act on your security posture without operating an AI stack.",
     benefits: [
@@ -97,7 +97,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Open Lighthouse in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.GENERAL]: {
-    title: "Scale Prowler without operating it",
+    title: "Scale Prowler Without Operating It",
     description:
       "Add managed automation and collaboration while Prowler operates the platform.",
     benefits: [
@@ -109,7 +109,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Start a Prowler Cloud Trial",
   },
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
-    title: "Configure every scan once",
+    title: "Configure Every Scan Once",
     description:
       "Create reusable scan configurations instead of rebuilding options for each run.",
     benefits: [
