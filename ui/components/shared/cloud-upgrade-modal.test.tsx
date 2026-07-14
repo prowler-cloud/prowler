@@ -43,7 +43,7 @@ describe("CloudUpgradeModal", () => {
     );
   });
 
-  it("uses a wider responsive dialog for long contextual CTAs", async () => {
+  it("constrains long contextual content within the responsive dialog", async () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     useCloudUpgradeStore
@@ -67,6 +67,7 @@ describe("CloudUpgradeModal", () => {
       name: "View Plans & Pricing",
     });
     const ctaGroup = primaryCta.parentElement;
+    const content = ctaGroup?.parentElement;
 
     const primaryLabel = screen.getByText(
       "Set Up AWS Organizations in Prowler Cloud",
@@ -74,6 +75,7 @@ describe("CloudUpgradeModal", () => {
     const secondaryLabel = screen.getByText("View Plans & Pricing");
 
     expect(ctaGroup).toHaveClass("flex-col", "sm:flex-row");
+    expect(content).toHaveClass("min-w-0");
     expect(primaryCta).toHaveClass("w-full", "min-w-0", "shrink", "sm:flex-1");
     expect(secondaryCta).toHaveClass(
       "w-full",

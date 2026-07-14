@@ -46,7 +46,7 @@ export const CloudUpgradeModal = () => {
       description={content.description}
       size="xl"
     >
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <div className="flex items-center gap-3">
           <div className="bg-bg-neutral-tertiary text-text-neutral-primary flex size-10 items-center justify-center rounded-xl">
             <Cloud aria-hidden="true" className="size-5" />
