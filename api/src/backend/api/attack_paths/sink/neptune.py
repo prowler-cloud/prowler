@@ -59,15 +59,26 @@ CONNECTION_TIMEOUT = env.int("NEPTUNE_CONNECTION_TIMEOUT", default=10)
 # Roll connections hourly so SigV4 rotations and cert refreshes don't strand long-lived pool entries
 MAX_CONNECTION_LIFETIME = env.int("NEPTUNE_MAX_CONNECTION_LIFETIME", default=3600)
 MAX_CONNECTION_POOL_SIZE = env.int("NEPTUNE_MAX_CONNECTION_POOL_SIZE", default=50)
+NEPTUNE_WRITE_RETRY_DELAY_SECONDS = 2
 
 READ_EXCEPTION_CODES = [
     "Neo.ClientError.Statement.AccessMode",
     "Neo.ClientError.Procedure.ProcedureNotFound",
 ]
 CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
+RETRYABLE_WRITE_ERROR_PREFIXES = (
+    "Operation failed due to conflicting concurrent operations",
+    "Operation terminated (deadline exceeded)",
+)
 
 # Refresh 60s before the 5-minute SigV4 window closes
 SIGV4_TOKEN_LIFETIME_MINUTES = 4
+
+
+def _is_retryable_write_error(exc: Exception) -> bool:
+    if not isinstance(exc, neo4j.exceptions.Neo4jError):
+        return False
+    return bool(exc.message and exc.message.startswith(RETRYABLE_WRITE_ERROR_PREFIXES))
 
 
 class NeptuneSink(SinkDatabase):
@@ -205,11 +216,16 @@ class NeptuneSink(SinkDatabase):
 
         session_wrapper: RetryableSession | None = None
         try:
+            is_write_session = default_access_mode != neo4j.READ_ACCESS
             session_wrapper = RetryableSession(
                 session_factory=lambda: driver.session(
                     default_access_mode=default_access_mode
                 ),
                 max_retries=SERVICE_UNAVAILABLE_MAX_RETRIES,
+                retry_if=_is_retryable_write_error if is_write_session else None,
+                initial_retry_delay_seconds=(
+                    NEPTUNE_WRITE_RETRY_DELAY_SECONDS if is_write_session else 0
+                ),
             )
             yield session_wrapper
 
@@ -405,7 +421,7 @@ class NeptuneSink(SinkDatabase):
             SET n.`{PROVIDER_ELEMENT_ID_PROPERTY}` = row.provider_element_id
         """
         with self.get_session() as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     def write_relationships(
         self,
@@ -429,7 +445,7 @@ class NeptuneSink(SinkDatabase):
             SET r += row.props
         """
         with self.get_session() as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     # Test helpers
 
