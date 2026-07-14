@@ -7,6 +7,7 @@ from celery import states
 from django.test import override_settings
 from django_celery_results.models import TaskResult
 from tasks.jobs.orphan_recovery import (
+    _SKIP_RECOVERY,
     _decode_celery_field,
     _reconcile_task_results,
     _recovery_attempt_count,
@@ -14,6 +15,7 @@ from tasks.jobs.orphan_recovery import (
     is_worker_alive,
     reconcile_orphans,
     reenqueueable_tasks,
+    revoke_task,
 )
 
 
@@ -180,10 +182,18 @@ class TestReconcileTaskResults:
         assert tr.task_id in result["failed"]
         mock_count.assert_not_called()
 
-    def test_scan_task_is_skipped_entirely(self, tenants_fixture):
+    @pytest.mark.parametrize(
+        "task_name",
+        [
+            "scan-perform",
+            "attack-paths-scan-perform",
+            "attack-paths-cleanup-stale-scans",
+        ],
+    )
+    def test_scan_task_is_skipped_entirely(self, tenants_fixture, task_name):
         """Scan tasks are excluded from recovery: the watchdog never touches them."""
         tr = _orphan_result(
-            name="scan-perform",
+            name=task_name,
             kwargs={
                 "tenant_id": str(tenants_fixture[0].id),
                 "scan_id": str(uuid4()),
@@ -339,6 +349,15 @@ class TestOrphanRecoveryHelpers:
         ):
             assert is_worker_alive("w@h") is False
 
+    def test_revoke_task_terminates_with_sigterm_by_default(self):
+        task_result = MagicMock(task_id="task-id")
+        with patch(
+            "tasks.jobs.orphan_recovery.current_app.control.revoke"
+        ) as mock_revoke:
+            revoke_task(task_result)
+
+        mock_revoke.assert_called_once_with("task-id", terminate=True, signal="SIGTERM")
+
     def test_recovery_attempt_count_increments(self):
         # Unique signature so the Valkey counter starts fresh for this test.
         kwargs_repr = repr({"probe": str(uuid4())})
@@ -350,6 +369,12 @@ class TestOrphanRecoveryHelpers:
 
 
 class TestRecoveryFeatureFlags:
+    def test_attack_paths_tasks_are_excluded_from_generic_recovery(self):
+        assert {
+            "attack-paths-scan-perform",
+            "attack-paths-cleanup-stale-scans",
+        } <= _SKIP_RECOVERY
+
     def test_all_groups_enabled_by_default(self):
         tasks = reenqueueable_tasks()
         assert "scan-summary" in tasks
@@ -381,13 +406,15 @@ class TestRecoveryMasterFlag:
             patch(
                 "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
                 return_value={},
-            ),
+            ) as mock_attack_paths_cleanup,
         ):
             result = reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
 
         mock_reconcile.assert_not_called()
+        mock_attack_paths_cleanup.assert_not_called()
         assert result["acquired"] is True
         assert result["enabled"] is False
+        assert "attack_paths" not in result
 
     @override_settings(TASK_RECOVERY_ENABLED=True)
     def test_master_flag_enabled_runs_task_recovery(self):
@@ -399,8 +426,9 @@ class TestRecoveryMasterFlag:
             patch(
                 "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
                 return_value={},
-            ),
+            ) as mock_attack_paths_cleanup,
         ):
             reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
 
         mock_reconcile.assert_called_once()
+        mock_attack_paths_cleanup.assert_not_called()
