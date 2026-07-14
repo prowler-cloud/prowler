@@ -18,13 +18,13 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "kubectl patch deployment/<workload-name> -n <namespace> --type='json' -p='[{\"op\":\"add\",\"path\":\"/spec/template/spec/containers/0/securityContext/readOnlyRootFilesystem\",\"value\":true}]'",
+      "CLI": "kubectl patch deployment/<workload-name> -n <namespace> -p '{\"spec\":{\"template\":{\"spec\":{\"containers\":[{\"name\":\"<container-name>\",\"securityContext\":{\"readOnlyRootFilesystem\":true}}]}}}}'\n# Deployment template example for regular containers. For init containers, use initContainers instead of containers. Ephemeral containers are added through the ephemeralcontainers subresource; remove or recreate debug containers with a compliant securityContext.",
       "NativeIaC": "",
       "Other": "1. Open your Kubernetes Dashboard (or your cloud provider's Kubernetes console) and locate the workload managing the failing Pod (Deployment/StatefulSet/DaemonSet)\n2. Click Edit to modify the manifest (YAML)\n3. For each container missing `securityContext.readOnlyRootFilesystem: true`, add or set it to `true`\n4. If the container needs write access, mount a writable `emptyDir` or `persistentVolumeClaim` at the specific paths that require writes instead of making the entire root filesystem writable\n5. Save/Apply the changes to trigger a rollout\n6. Verify new Pods have `securityContext.readOnlyRootFilesystem` set to `true`",
       "Terraform": "```hcl\nresource \"kubernetes_pod\" \"main\" {\n  metadata {\n    name = \"<example_resource_name>\"\n  }\n  spec {\n    container {\n      name  = \"app\"\n      image = \"nginx\"\n      security_context {\n        read_only_root_filesystem = true # Critical: enforce a read-only root filesystem\n      }\n    }\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Set `readOnlyRootFilesystem: true` for every container. Mount writable `emptyDir` volumes only at the specific paths that genuinely need write access (e.g., `/tmp`, `/var/cache`). Enforce this at admission time via Pod Security Admission or OPA/Gatekeeper policies.",
+      "Text": "Set `readOnlyRootFilesystem: true` for every container. Mount writable `emptyDir` volumes only at the specific paths that genuinely need write access (e.g., `/tmp`, `/var/cache`). Enforce this at admission time with custom admission policies such as ValidatingAdmissionPolicy or OPA/Gatekeeper.",
       "Url": "https://hub.prowler.com/check/core_readonly_root_filesystem_enabled"
     }
   },
