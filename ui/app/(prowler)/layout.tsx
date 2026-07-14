@@ -84,12 +84,8 @@ export default async function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        // @container: fallback query container for everything outside <main>
-        // (sidebar, portaled modals/drawers, the side panel). The body spans
-        // the viewport, so their container-query breakpoints keep classic
-        // viewport semantics; content inside <main> queries <main> instead.
         className={cn(
-          "bg-bg-neutral-primary @container min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
           fontMono.variable,
         )}

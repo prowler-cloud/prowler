@@ -58,6 +58,7 @@ export function SidePanelBody({ className, ...props }: ComponentProps<"div">) {
     <div
       // @container: content hosted in the panel (detail tables, the chat)
       // resolves its breakpoints against the panel's width, not the viewport.
+      data-responsive-container
       className={cn("@container relative min-h-0 flex-1", className)}
       {...props}
     />

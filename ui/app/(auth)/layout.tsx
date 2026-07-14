@@ -55,11 +55,8 @@ export default async function AuthLayout({
       </head>
       <body
         suppressHydrationWarning
-        // @container: breakpoints are container queries app-wide; the body is
-        // the query container on auth pages (spans the viewport, so they keep
-        // classic viewport behavior).
         className={cn(
-          "bg-bg-neutral-primary @container min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
           fontMono.variable,
         )}

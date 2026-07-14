@@ -64,6 +64,7 @@ export default function MainLayout({
       <main
         // @container: <main> is the reference for the app's (container-query)
         // breakpoints, so pushing it with the side panel re-evaluates them.
+        data-responsive-container
         className={cn(
           "no-scrollbar @container relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto",
           // Margin animates on open/close, but tracks the pointer 1:1 during

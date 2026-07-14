@@ -48,4 +48,18 @@ describe("MainLayout", () => {
       "min-[64rem]:ml-[248px]",
     );
   });
+
+  it("marks main as the responsive container for pushed page content", () => {
+    // Given / When
+    render(
+      <MainLayout>
+        <div>Page content</div>
+      </MainLayout>,
+    );
+
+    // Then
+    expect(screen.getByText("Page content").parentElement).toHaveAttribute(
+      "data-responsive-container",
+    );
+  });
 });
