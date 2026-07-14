@@ -33,13 +33,13 @@ describe("CloudUpgradeModal", () => {
       screen.getByRole("link", { name: "Create Alerts in Prowler Cloud" }),
     ).toHaveAttribute(
       "href",
-      "https://cloud.prowler.com/sign-up?source=prowler_local_server&feature=alerts",
+      "https://cloud.prowler.com/sign-up?utm_source=local-server&utm_content=alerts",
     );
     expect(
       screen.getByRole("link", { name: "View Plans & Pricing" }),
     ).toHaveAttribute(
       "href",
-      "https://prowler.com/pricing?source=prowler_local_server&feature=alerts",
+      "https://prowler.com/pricing?utm_source=local-server&utm_content=alerts",
     );
   });
 
@@ -79,6 +79,10 @@ describe("CloudUpgradeModal", () => {
       "md:flex-1",
     );
     expect(primaryCta.querySelector(".truncate")).not.toBeInTheDocument();
+    expect(primaryCta).toHaveAttribute(
+      "href",
+      "https://cloud.prowler.com/sign-up?utm_source=local-server&utm_content=organization",
+    );
   });
 
   it("closes the active upgrade and returns focus to its trigger", async () => {

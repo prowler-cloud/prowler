@@ -3,6 +3,9 @@ import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
 
+const guestOnlyRoutes = ["/sign-in", "/sign-up"];
+const CLOUD_ATTRIBUTION_PARAMS = ["utm_source", "utm_content"] as const;
+
 const publicRoutes = [
   "/sign-in",
   "/sign-up",
@@ -17,8 +20,11 @@ const isPublicRoute = (pathname: string): boolean => {
   return publicRoutes.some((route) => pathname.startsWith(route));
 };
 
+const isGuestOnlyRoute = (pathname: string): boolean =>
+  guestOnlyRoutes.includes(pathname);
+
 // NextAuth's auth() wrapper - renamed from middleware to proxy
-export default auth((req: NextAuthRequest) => {
+const handleProxyRequest = (req: NextAuthRequest) => {
   const { pathname } = req.nextUrl;
 
   const user = req.auth?.user;
@@ -38,6 +44,19 @@ export default auth((req: NextAuthRequest) => {
     return NextResponse.redirect(signInUrl);
   }
 
+  if (user && isGuestOnlyRoute(pathname)) {
+    const dashboardUrl = new URL("/", req.url);
+
+    CLOUD_ATTRIBUTION_PARAMS.forEach((param) => {
+      const value = req.nextUrl.searchParams.get(param);
+      if (value !== null) {
+        dashboardUrl.searchParams.set(param, value);
+      }
+    });
+
+    return NextResponse.redirect(dashboardUrl);
+  }
+
   if (user?.permissions) {
     const permissions = user.permissions;
 
@@ -54,7 +73,9 @@ export default auth((req: NextAuthRequest) => {
   }
 
   return NextResponse.next();
-});
+};
+
+export default auth(handleProxyRequest);
 
 export const config = {
   matcher: [

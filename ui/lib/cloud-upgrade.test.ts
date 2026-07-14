@@ -45,7 +45,7 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url).toBe(
-      "https://cloud.prowler.com/sign-up?source=prowler_local_server&feature=alerts",
+      "https://cloud.prowler.com/sign-up?utm_source=local-server&utm_content=alerts",
     );
   });
 
@@ -57,7 +57,28 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url).toBe(
-      "https://prowler.com/pricing?source=prowler_local_server&feature=cross_provider_compliance",
+      "https://prowler.com/pricing?utm_source=local-server&utm_content=cross-provider-compliance",
     );
+  });
+
+  it.each([
+    [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING, "advanced-scheduling"],
+    [CLOUD_UPGRADE_FEATURE.ALERTS, "alerts"],
+    [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS, "organization"],
+    [CLOUD_UPGRADE_FEATURE.CLI_IMPORT, "cli-import"],
+    [
+      CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
+      "cross-provider-compliance",
+    ],
+    [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE, "findings"],
+    [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI, "lighthouse-ai"],
+    [CLOUD_UPGRADE_FEATURE.GENERAL, "general"],
+    [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION, "scan-configuration"],
+  ])("should use the canonical content slug for %s", (feature, contentSlug) => {
+    // Given / When
+    const url = new URL(getCloudUpgradePrimaryUrl(feature));
+
+    // Then
+    expect(url.searchParams.get("utm_content")).toBe(contentSlug);
   });
 });

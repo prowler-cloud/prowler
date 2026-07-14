@@ -16,7 +16,20 @@ export const CLOUD_UPGRADE_FOOTER_NOTE =
 
 const CLOUD_SIGN_UP_URL = "https://cloud.prowler.com/sign-up";
 const PRICING_URL = "https://prowler.com/pricing";
-const LOCAL_SERVER_SOURCE = "prowler_local_server";
+const LOCAL_SERVER_UTM_SOURCE = "local-server";
+
+const CLOUD_UPGRADE_UTM_CONTENT = {
+  [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",
+  [CLOUD_UPGRADE_FEATURE.ALERTS]: "alerts",
+  [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: "organization",
+  [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: "cli-import",
+  [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
+    "cross-provider-compliance",
+  [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
+  [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
+  [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
+} as const satisfies Record<CloudUpgradeFeature, string>;
 
 export const CLOUD_UPGRADE_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: {
@@ -126,8 +139,8 @@ const buildCloudUpgradeUrl = (
   feature: CloudUpgradeFeature,
 ) => {
   const url = new URL(baseUrl);
-  url.searchParams.set("source", LOCAL_SERVER_SOURCE);
-  url.searchParams.set("feature", feature);
+  url.searchParams.set("utm_source", LOCAL_SERVER_UTM_SOURCE);
+  url.searchParams.set("utm_content", CLOUD_UPGRADE_UTM_CONTENT[feature]);
 
   return url.toString();
 };
