@@ -3655,6 +3655,95 @@ class TestAggregateFindings:
     @patch("tasks.jobs.scan.Finding.objects.filter")
     @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_orders_upserts_by_conflict_key(
+        self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
+    ):
+        """Scan summaries must use a stable lock order for concurrent upserts."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        counts = {
+            "fail": 1,
+            "_pass": 0,
+            "muted_count": 0,
+            "total": 1,
+            "new": 1,
+            "changed": 0,
+            "unchanged": 0,
+            "fail_new": 1,
+            "fail_changed": 0,
+            "pass_new": 0,
+            "pass_changed": 0,
+            "muted_new": 0,
+            "muted_changed": 0,
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {
+                "check_id": "check-b",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "sqs",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "medium",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-west-2",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_findings(tenant_id, scan_id)
+
+        summaries = mock_bulk_create.call_args.args[0]
+        assert isinstance(summaries, list)
+        conflict_keys = [
+            (
+                str(summary.tenant_id),
+                str(summary.scan_id),
+                summary.check_id,
+                summary.service,
+                summary.severity,
+                summary.region,
+            )
+            for summary in summaries
+        ]
+        assert len(conflict_keys) == 5
+        assert conflict_keys == sorted(conflict_keys)
+
+    @patch("tasks.jobs.scan.Finding.objects.filter")
+    @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
     def test_aggregate_findings_skips_rows_with_null_service_or_region(
         self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
     ):
