@@ -6,7 +6,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 ### 🚀 Added
 
-- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#11835)](https://github.com/prowler-cloud/prowler/pull/11835)
 - `exchange_application_access_policy_restricts_mailbox_apps` check for M365 provider, verifying every service principal with Microsoft Graph application-level Exchange mailbox permissions is restricted by an Exchange Online Application Access Policy, preventing tenant-wide mailbox access by unscoped applications [(#11247)](https://github.com/prowler-cloud/prowler/pull/11247)
 - Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
 - `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
@@ -29,6 +28,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `apigateway_restapi_no_secrets_in_stage_variables` check for AWS provider, scanning API Gateway REST API stage variables for hardcoded secrets such as passwords, API keys, and tokens [(#11188)](https://github.com/prowler-cloud/prowler/pull/11188)
 - `s3_bucket_object_public` check for AWS provider, spot-checking a configurable sample of object ACLs in each bucket and flagging objects granted to the AllUsers or AuthenticatedUsers groups; disabled by default and opted into via the `s3_bucket_object_public_enabled` configuration option [(#9517)](https://github.com/prowler-cloud/prowler/pull/9517)
 - Azure provider now supports `--azure-resource-group` to scope resource-level checks to specific resource groups across all accessible subscriptions [(#10657)](https://github.com/prowler-cloud/prowler/pull/10657)
+- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#11835)](https://github.com/prowler-cloud/prowler/pull/11835)
 
 ### 🔄 Changed
 
