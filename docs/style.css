@@ -66,3 +66,59 @@
         color: #000000;
         border: none;
 }
+
+/* Cloud marker: subscription-gated sections and pages (Prowler Cloud / Prowler Private Cloud).
+   Rendered as a trailing ::after glyph so sidebar labels stay left-aligned.
+   Nested groups render as li[data-title] with a button toggle; top-level groups
+   render as h3 headings. Every ungated group that shares a name with a gated one
+   (Providers, Compliance, Prowler Cloud, Prowler Lighthouse AI) is top-level,
+   so plain li[data-title] selectors match only the gated nested groups, folded
+   or unfolded. The Security tab group is top-level (h3) and always expanded,
+   so it is selected through its sibling list content with :has().
+   Pages are selected by their li id, which equals the page URL. The strict
+   > div > div > span:first-child path targets the title span only, never the
+   nested spans of a tag pill such as Coming Soon.
+   Icon source: /images/icons/cloud-bold.svg. See AGENTS.md "Cloud Marker" convention. */
+li[data-title="Prowler Cloud"] > button span:first-child::after,
+li[data-title="Prowler Lighthouse AI"] > button span:first-child::after,
+li[data-title="Providers"] > button span:first-child::after,
+li[data-title="Compliance"] > button span:first-child::after,
+li[data-title="Scans"] > button span:first-child::after,
+div:has(+ ul a[href="/security/encryption"]) h3 span::after,
+li[id="/user-guide/compliance/tutorials/cross-provider-compliance"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-alerts"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-app-findings-triage"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-app-scan-configuration"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-cloud-aws-organizations"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-cloud-azure-management-groups"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-cloud-gcp-organizations"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-import-findings"] a > div > div > span:first-child::after,
+li[id="/user-guide/tutorials/prowler-scan-scheduling"] a > div > div > span:first-child::after {
+    content: "";
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    margin-left: 0.375rem;
+    vertical-align: -0.125rem;
+    background: url("/images/icons/cloud-bold.svg") no-repeat center / contain;
+}
+/* Wider sidebar: +2rem over the theme default (18rem) so gated labels with the
+   cloud marker fit on one line. The content column offsets are coupled to the
+   sidebar width and must shift by the same amount, hence the two companion
+   overrides selected by their Tailwind arbitrary-value class substrings. */
+@media (min-width: 1024px) {
+    #sidebar {
+        width: 20rem !important;
+    }
+
+    div[class*="pl-[23.7rem]"] {
+        padding-left: 25.7rem !important;
+    }
+}
+
+@media (min-width: 1280px) {
+    div[class*="(100%-28rem)"] {
+        width: calc(100% - 30rem) !important;
+    }
+}

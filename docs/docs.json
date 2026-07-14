@@ -47,7 +47,6 @@
             "pages": [
               {
                 "group": "Prowler Cloud",
-                "icon": "cloud",
                 "pages": [
                   "getting-started/products/prowler-cloud",
                   "getting-started/products/prowler-cloud-pricing",
@@ -58,7 +57,6 @@
               },
               {
                 "group": "Prowler Lighthouse AI",
-                "icon": "cloud",
                 "pages": [
                   "getting-started/products/prowler-cloud-lighthouse"
                 ]
@@ -140,7 +138,6 @@
               },
               {
                 "group": "Compliance",
-                "icon": "cloud",
                 "pages": [
                   "user-guide/compliance/tutorials/cross-provider-compliance"
                 ]
@@ -171,7 +168,6 @@
               },
               {
                 "group": "Providers",
-                "icon": "cloud",
                 "pages": [
                   "user-guide/tutorials/prowler-cloud-aws-organizations",
                   "user-guide/tutorials/prowler-cloud-azure-management-groups",
@@ -180,7 +176,6 @@
               },
               {
                 "group": "Scans",
-                "icon": "cloud",
                 "pages": [
                   "user-guide/tutorials/prowler-app-scan-configuration",
                   "user-guide/tutorials/prowler-import-findings",
@@ -203,7 +198,6 @@
             "pages": [
               {
                 "group": "Prowler Cloud",
-                "icon": "cloud",
                 "pages": [
                   "user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"
                 ]
@@ -266,6 +260,13 @@
             "group": "Providers",
             "pages": [
               {
+                "group": "Alibaba Cloud",
+                "pages": [
+                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
+                  "user-guide/providers/alibabacloud/authentication"
+                ]
+              },
+              {
                 "group": "AWS",
                 "pages": [
                   "user-guide/providers/aws/getting-started-aws",
@@ -293,6 +294,27 @@
                 ]
               },
               {
+                "group": "Cloudflare",
+                "pages": [
+                  "user-guide/providers/cloudflare/getting-started-cloudflare",
+                  "user-guide/providers/cloudflare/authentication"
+                ]
+              },
+              {
+                "group": "E2E Networks",
+                "pages": [
+                  "user-guide/providers/e2enetworks/getting-started-e2enetworks",
+                  "user-guide/providers/e2enetworks/authentication"
+                ]
+              },
+              {
+                "group": "GitHub",
+                "pages": [
+                  "user-guide/providers/github/getting-started-github",
+                  "user-guide/providers/github/authentication"
+                ]
+              },
+              {
                 "group": "Google Cloud",
                 "pages": [
                   "user-guide/providers/gcp/getting-started-gcp",
@@ -303,10 +325,24 @@
                 ]
               },
               {
-                "group": "Alibaba Cloud",
+                "group": "Google Workspace",
                 "pages": [
-                  "user-guide/providers/alibabacloud/getting-started-alibabacloud",
-                  "user-guide/providers/alibabacloud/authentication"
+                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
+                  "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
+                "group": "IaC",
+                "pages": [
+                  "user-guide/providers/iac/getting-started-iac",
+                  "user-guide/providers/iac/authentication"
+                ]
+              },
+              {
+                "group": "Image",
+                "pages": [
+                  "user-guide/providers/image/getting-started-image",
+                  "user-guide/providers/image/authentication"
                 ]
               },
               {
@@ -314,6 +350,19 @@
                 "pages": [
                   "user-guide/providers/kubernetes/getting-started-k8s",
                   "user-guide/providers/kubernetes/misc"
+                ]
+              },
+              {
+                "group": "Linode",
+                "pages": [
+                  "user-guide/providers/linode/getting-started-linode",
+                  "user-guide/providers/linode/authentication"
+                ]
+              },
+              {
+                "group": "LLM",
+                "pages": [
+                  "user-guide/providers/llm/getting-started-llm"
                 ]
               },
               {
@@ -325,27 +374,6 @@
                 ]
               },
               {
-                "group": "Google Workspace",
-                "pages": [
-                  "user-guide/providers/googleworkspace/getting-started-googleworkspace",
-                  "user-guide/providers/googleworkspace/authentication"
-                ]
-              },
-              {
-                "group": "GitHub",
-                "pages": [
-                  "user-guide/providers/github/getting-started-github",
-                  "user-guide/providers/github/authentication"
-                ]
-              },
-              {
-                "group": "IaC",
-                "pages": [
-                  "user-guide/providers/iac/getting-started-iac",
-                  "user-guide/providers/iac/authentication"
-                ]
-              },
-              {
                 "group": "MongoDB Atlas",
                 "pages": [
                   "user-guide/providers/mongodbatlas/getting-started-mongodbatlas",
@@ -353,30 +381,11 @@
                 ]
               },
               {
-                "group": "Cloudflare",
+                "group": "Okta",
                 "pages": [
-                  "user-guide/providers/cloudflare/getting-started-cloudflare",
-                  "user-guide/providers/cloudflare/authentication"
-                ]
-              },
-              {
-                "group": "Image",
-                "pages": [
-                  "user-guide/providers/image/getting-started-image",
-                  "user-guide/providers/image/authentication"
-                ]
-              },
-              {
-                "group": "LLM",
-                "pages": [
-                  "user-guide/providers/llm/getting-started-llm"
-                ]
-              },
-              {
-                "group": "Oracle Cloud Infrastructure",
-                "pages": [
-                  "user-guide/providers/oci/getting-started-oci",
-                  "user-guide/providers/oci/authentication"
+                  "user-guide/providers/okta/getting-started-okta",
+                  "user-guide/providers/okta/authentication",
+                  "user-guide/providers/okta/retry-configuration"
                 ]
               },
               {
@@ -384,6 +393,13 @@
                 "pages": [
                   "user-guide/providers/openstack/getting-started-openstack",
                   "user-guide/providers/openstack/authentication"
+                ]
+              },
+              {
+                "group": "Oracle Cloud Infrastructure",
+                "pages": [
+                  "user-guide/providers/oci/getting-started-oci",
+                  "user-guide/providers/oci/authentication"
                 ]
               },
               {
@@ -405,28 +421,6 @@
                 "pages": [
                   "user-guide/providers/vercel/getting-started-vercel",
                   "user-guide/providers/vercel/authentication"
-                ]
-              },
-              {
-                "group": "Okta",
-                "pages": [
-                  "user-guide/providers/okta/getting-started-okta",
-                  "user-guide/providers/okta/authentication",
-                  "user-guide/providers/okta/retry-configuration"
-                ]
-              },
-              {
-                "group": "Linode",
-                "pages": [
-                  "user-guide/providers/linode/getting-started-linode",
-                  "user-guide/providers/linode/authentication"
-                ]
-              },
-              {
-                "group": "E2E Networks",
-                "pages": [
-                  "user-guide/providers/e2enetworks/getting-started-e2enetworks",
-                  "user-guide/providers/e2enetworks/authentication"
                 ]
               }
             ]
@@ -516,7 +510,6 @@
           },
           {
             "group": "Prowler Cloud",
-            "icon": "cloud",
             "pages": [
               "security/encryption",
               "security/data-regions",
