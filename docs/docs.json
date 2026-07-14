@@ -105,7 +105,8 @@
                   "getting-started/installation/prowler-app",
                   "getting-started/basic-usage/prowler-app"
                 ]
-              }
+              },
+              "getting-started/products/prowler-sdk"
             ]
           },
           {
@@ -215,6 +216,12 @@
                   "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Prowler for AI Agents",
+            "pages": [
+              "getting-started/products/prowler-claude-code-plugin"
             ]
           },
           {

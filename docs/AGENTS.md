@@ -80,13 +80,6 @@ Prowler Features are considered proper nouns. They are to be referenced without 
 
 Prowler ships two product families. Use these names exactly; the former names Prowler App (now Prowler Local Server) and Prowler Enterprise (now Prowler Private Cloud) must not appear in new writing.
 
-Open Source projects:
-
-* **Prowler CLI**
-* **Prowler Local Server** (formerly Prowler App)
-* **Prowler Local Dashboard** (the Prowler CLI dashboard)
-* **Prowler SDK**
-
 Prowler Products:
 
 * **Prowler Cloud**
@@ -94,6 +87,13 @@ Prowler Products:
 * **Prowler Hub**
 * **Prowler Lighthouse AI**
 * **Prowler MCP**
+
+Open Source projects:
+
+* **Prowler CLI**
+* **Prowler Local Server** (formerly Prowler App)
+* **Prowler Local Dashboard** (the Prowler CLI dashboard)
+* **Prowler SDK**
 
 Other Prowler Features:
 
