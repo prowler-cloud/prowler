@@ -4,6 +4,16 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.34.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- Attack Paths graph mutations now retry transient Neptune concurrency and deadline failures, while Neo4j mutations use managed transaction retries [(#11968)](https://github.com/prowler-cloud/prowler/pull/11968)
+- Attack Paths scans now use bounded child node identifiers for normalized list values in Neo4j and Neptune, preventing Neo4j RANGE index key size failures [(#11969)](https://github.com/prowler-cloud/prowler/pull/11969)
+- `scan-summary` aggregation now upserts summaries in deterministic conflict-key order, preventing PostgreSQL deadlocks during concurrent reaggregation [(#11971)](https://github.com/prowler-cloud/prowler/pull/11971)
+
+---
+
 ## [1.34.1] (Prowler v5.33.1)
 
 ### 🐞 Fixed
