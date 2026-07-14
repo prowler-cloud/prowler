@@ -129,6 +129,25 @@ it("should open finding triage upgrade from a Cloud-only status cell", async () 
   );
 });
 
+it("should render the Cloud-only triage action with the shared button", () => {
+  // Given / When
+  render(
+    <FindingTriageStatusCell
+      triage={makeTriageSummary({
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+      })}
+    />,
+  );
+
+  // Then
+  expect(
+    screen.getByRole("button", {
+      name: "Change triage status - available in Prowler Cloud",
+    }),
+  ).toHaveAttribute("data-slot", "button");
+});
+
 describe("finding triage cells", () => {
   it("should open the Note modal from the note action with the current status preselected", async () => {
     // Given

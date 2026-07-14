@@ -4,14 +4,19 @@ import { ExternalLink, Info } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Textarea,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -254,7 +259,7 @@ export function FindingNoteModal({
           <span className="relative inline-flex">
             {isCloudOnly && (
               <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                <CloudFeatureBadge label="Cloud" />
+                <Badge variant="cloud">Cloud</Badge>
               </span>
             )}
             <Button

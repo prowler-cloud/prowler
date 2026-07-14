@@ -4,12 +4,12 @@ import { Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
+import { Badge } from "@/components/shadcn/badge/badge";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import {
   SIDEBAR_NAVIGATION_MODE,
   type SidebarNavigationMode,
@@ -109,7 +109,9 @@ export function SidebarNavigationModeToggle({
               <Icon aria-hidden="true" className="size-4 shrink-0" />
               {isOpen && <span className="shrink-0">{mode.label}</span>}
               {isOpen && disabled && (
-                <CloudFeatureBadge label="Cloud" size="sm" />
+                <Badge variant="cloud" size="sm">
+                  Cloud
+                </Badge>
               )}
             </button>
           );

@@ -374,6 +374,31 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
+    it("uses a warning badge for the subscription requirement", () => {
+      // Given
+      seedConnectedProvider();
+
+      // When
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={vi.fn()}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      // Then
+      expect(screen.getByText("Requires subscription")).toHaveClass(
+        "bg-bg-warning-secondary/20",
+        "text-text-warning-primary",
+      );
+      expect(screen.getByText("Requires subscription")).toHaveAttribute(
+        "data-slot",
+        "badge",
+      );
+    });
+
     it("defaults to run now, locks schedule mode, and only launches a manual scan", async () => {
       // Given
       const onClose = vi.fn();

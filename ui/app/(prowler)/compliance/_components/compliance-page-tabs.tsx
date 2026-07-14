@@ -3,8 +3,13 @@
 import { useRouter } from "next/navigation";
 import { ReactNode } from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import {
+  Badge,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shadcn";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
@@ -64,7 +69,7 @@ export const CompliancePageTabs = ({
           value={COMPLIANCE_TAB.CROSS_PROVIDER}
           adornment={
             !crossProviderEnabled ? (
-              <CloudFeatureBadge label="Cloud" />
+              <Badge variant="cloud">Cloud</Badge>
             ) : undefined
           }
         >

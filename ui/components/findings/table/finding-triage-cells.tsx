@@ -3,6 +3,7 @@
 import { MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
 import {
   Tooltip,
@@ -177,10 +178,12 @@ export function FindingTriageStatusCell({
         <TooltipTrigger asChild>
           <span className="relative flex">
             {control}
-            <button
+            <Button
               type="button"
+              variant="bare"
+              size="link-xs"
               aria-label="Change triage status - available in Prowler Cloud"
-              className="focus-visible:ring-button-primary absolute inset-0 cursor-pointer rounded-lg outline-none focus-visible:ring-2"
+              className="absolute inset-0 h-auto w-auto rounded-lg"
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();

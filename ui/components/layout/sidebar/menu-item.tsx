@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { cn } from "@/lib/utils";
 import { IconComponent, type MenuSelectionHandler } from "@/types";
 
@@ -64,12 +64,9 @@ export const MenuItem = ({
                 <p className="flex max-w-[200px] items-center truncate">
                   <span>{label}</span>
                   {highlight && (
-                    <MenuFeatureBadge
-                      label="New"
-                      variant="new"
-                      size="sm"
-                      className="ml-2"
-                    />
+                    <Badge variant="new" size="sm" className="ml-2">
+                      New
+                    </Badge>
                   )}
                 </p>
               )}

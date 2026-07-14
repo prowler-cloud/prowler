@@ -11,7 +11,13 @@ import { z } from "zod";
 import { scanOnDemand } from "@/actions/scans";
 import { getSchedule } from "@/actions/schedules";
 import { AccountsSelector } from "@/app/(prowler)/_overview/_components/accounts-selector";
-import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import {
+  Badge,
+  Field,
+  FieldError,
+  FieldLabel,
+  Input,
+} from "@/components/shadcn";
 import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
 import {
@@ -19,7 +25,6 @@ import {
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
 import { toast, ToastAction } from "@/components/shadcn/toast";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
@@ -328,7 +333,11 @@ function LaunchScanForm({
                 disabled={!canUseScheduleMode}
               />
               On a schedule
-              {isDailyLegacy && <CloudFeatureBadge label="Cloud" size="sm" />}
+              {isDailyLegacy && (
+                <Badge variant="cloud" size="sm">
+                  Cloud
+                </Badge>
+              )}
             </label>
           </RadioGroup>
         </Field>

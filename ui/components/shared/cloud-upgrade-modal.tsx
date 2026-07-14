@@ -2,6 +2,7 @@
 
 import { Check, Cloud } from "lucide-react";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import { Modal } from "@/components/shadcn/modal";
 import {
@@ -14,8 +15,6 @@ import {
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-
-import { CloudFeatureBadge } from "./cloud-feature-badge";
 
 const allowInitialAutoFocus = () => {};
 
@@ -51,7 +50,7 @@ export const CloudUpgradeModal = () => {
           <div className="bg-bg-neutral-tertiary text-text-neutral-primary flex size-10 items-center justify-center rounded-xl">
             <Cloud aria-hidden="true" className="size-5" />
           </div>
-          <CloudFeatureBadge />
+          <Badge variant="cloud">Available in Prowler Cloud</Badge>
         </div>
 
         <ul className="space-y-3">

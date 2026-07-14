@@ -25,10 +25,18 @@ const badgeVariants = cva(
         error:
           "border-transparent bg-bg-fail-secondary text-text-error-primary",
         info: "border-transparent bg-bg-data-info/15 text-bg-data-info",
+        cloud:
+          "bg-feature-cloud h-6 rounded-lg border-0 px-2 py-0 text-xs leading-5 font-bold text-black",
+        new: "bg-bg-feature-new text-text-feature-new border-0 font-bold",
+      },
+      size: {
+        default: "",
+        sm: "h-5 rounded-md px-1.5 py-0 text-[10px] leading-4",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   },
 );
@@ -36,6 +44,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant,
+  size,
   asChild = false,
   ...props
 }: ComponentProps<"span"> &
@@ -45,7 +54,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   );

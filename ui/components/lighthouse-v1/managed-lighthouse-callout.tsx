@@ -2,6 +2,7 @@
 
 import { Sparkles } from "lucide-react";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Card,
@@ -9,7 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card/card";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
@@ -27,7 +27,9 @@ export const ManagedLighthouseCallout = () => {
             className="text-text-neutral-primary size-5"
           />
           <CardTitle>Skip the setup with Prowler Cloud</CardTitle>
-          <CloudFeatureBadge label="Cloud" size="sm" />
+          <Badge variant="cloud" size="sm">
+            Cloud
+          </Badge>
         </div>
       </CardHeader>
       <CardContent className="flex flex-col items-start gap-4">

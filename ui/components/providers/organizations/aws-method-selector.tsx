@@ -3,7 +3,7 @@
 import { Box, Boxes } from "lucide-react";
 
 import { RadioCard } from "@/components/providers/radio-card";
-import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
@@ -43,7 +43,7 @@ export function AwsMethodSelector({
             : openCloudUpgrade(CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS)
         }
       >
-        {!isCloudEnv && <CloudFeatureBadge label="Cloud" />}
+        {!isCloudEnv && <Badge variant="cloud">Cloud</Badge>}
       </RadioCard>
     </div>
   );

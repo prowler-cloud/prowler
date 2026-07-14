@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
+  Badge,
+  Button,
   Checkbox,
   Field,
   FieldLabel,
@@ -15,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { CloudFeatureBadgeButton } from "@/components/shared/cloud-feature-badge";
 import {
   formatDayOfMonth,
   formatScheduleHour,
@@ -154,12 +155,19 @@ export function ScanScheduleFields({
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
   const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <CloudFeatureBadgeButton
+    <Button
+      type="button"
+      variant="bare"
+      size="link-xs"
       aria-label="Explore advanced scheduling in Prowler Cloud"
       onClick={() =>
         openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
       }
-    />
+    >
+      <Badge variant="cloud" size="sm">
+        Cloud
+      </Badge>
+    </Button>
   ) : null;
 
   return (

@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card/card";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
@@ -57,9 +58,12 @@ export default function CliImportPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <pre className="border-border-neutral-secondary bg-bg-neutral-primary overflow-x-auto rounded-lg border p-4 text-sm">
-              <code>{CLI_COMMANDS.join("\n\n")}</code>
-            </pre>
+            <CodeSnippet
+              value={CLI_COMMANDS.join("\n\n")}
+              multiline
+              ariaLabel="Copy CLI commands"
+              className="w-full"
+            />
             <p className="text-text-neutral-secondary text-sm">
               Replace aws with the provider you want to scan. The
               --push-to-cloud flag uploads the results after the scan completes.

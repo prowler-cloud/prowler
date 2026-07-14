@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { useCloudUpgradeStore } from "@/store";
 import {
   type MenuSelectionHandler,
@@ -44,7 +44,9 @@ export const SubmenuItem = (props: SubmenuItemProps) => {
         </span>
         <span className="flex min-w-0 items-center gap-2">
           <span className="truncate">{label}</span>
-          <MenuFeatureBadge label="Cloud" size="sm" />
+          <Badge variant="cloud" size="sm">
+            Cloud
+          </Badge>
         </span>
       </Button>
     );
@@ -110,7 +112,9 @@ export const SubmenuItem = (props: SubmenuItemProps) => {
               <p className="flex min-w-0 items-center gap-2">
                 <span className="truncate">{label}</span>
                 {highlight && (
-                  <MenuFeatureBadge label="New" variant="new" size="sm" />
+                  <Badge variant="new" size="sm">
+                    New
+                  </Badge>
                 )}
               </p>
             </Button>
@@ -140,12 +144,9 @@ export const SubmenuItem = (props: SubmenuItemProps) => {
         <p className="flex min-w-0 items-center">
           <span className="truncate">{label}</span>
           {highlight && (
-            <MenuFeatureBadge
-              label="New"
-              variant="new"
-              size="sm"
-              className="ml-2"
-            />
+            <Badge variant="new" size="sm" className="ml-2">
+              New
+            </Badge>
           )}
         </p>
       </Link>
