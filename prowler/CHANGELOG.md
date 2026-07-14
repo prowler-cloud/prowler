@@ -4,6 +4,15 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.33.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- EC2 AMI loading now targets Amazon-owned AMIs used by audited instances, reducing AWS API calls during EC2 scans [(#11958)](https://github.com/prowler-cloud/prowler/pull/11958)
+- `ec2_instance_account_imdsv2_enabled` findings now use regional resource ARNs, preventing findings from different AWS Regions from collapsing into one resource [(#11966)](https://github.com/prowler-cloud/prowler/pull/11966)
+
+---
+
 ## [5.33.1] (Prowler v5.33.1)
 
 ### 🐞 Fixed
