@@ -7,6 +7,7 @@ import { ProwlerShort } from "@/components/icons";
 import { ProwlerExtended } from "@/components/icons";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 
 import { Menu } from "./menu";
@@ -50,6 +51,11 @@ export function Sidebar() {
             })}
           >
             <ProwlerExtended />
+            {!isCloud() && (
+              <span className="text-text-neutral-secondary mt-1 block text-center text-xs font-medium">
+                Local Server
+              </span>
+            )}
           </div>
         </Link>
 

@@ -20,10 +20,7 @@ import {
 } from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import {
-  CloudFeatureBadge,
-  CloudFeatureBadgeLink,
-} from "@/components/shared/cloud-feature-badge";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
@@ -338,7 +335,7 @@ export function LaunchStep({
               (isManualOnly ? (
                 <CloudFeatureBadge label="Requires subscription" size="sm" />
               ) : (
-                <CloudFeatureBadgeLink size="sm" />
+                <CloudFeatureBadge label="Cloud" size="sm" />
               ))}
           </label>
         </RadioGroup>

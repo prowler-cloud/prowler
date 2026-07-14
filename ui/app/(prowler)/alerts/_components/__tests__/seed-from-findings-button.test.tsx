@@ -8,6 +8,8 @@ import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "@/app/(prowler)/alerts/_types/alert-form";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { useCloudUpgradeStore } from "@/store";
 
 const routerMocks = vi.hoisted(() => ({
   push: vi.fn(),
@@ -99,6 +101,7 @@ import { SeedFromFindingsButton } from "../seed-from-findings-button";
 describe("SeedFromFindingsButton", () => {
   afterEach(() => {
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("should explain why creating an alert is disabled when no real filters are applied", async () => {
@@ -356,8 +359,9 @@ describe("SeedFromFindingsButton", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("should render disabled as a Cloud-only feature in OSS", () => {
+  it("should open the Alerts upgrade in Local Server", async () => {
     // Given
+    const user = userEvent.setup();
     render(
       <SeedFromFindingsButton
         filterBag={{ "filter[severity__in]": "critical" }}
@@ -367,19 +371,17 @@ describe("SeedFromFindingsButton", () => {
 
     // When
     const button = screen.getByRole("button", { name: /Create Alert/i });
+    await user.click(button);
 
     // Then
-    expect(button).toBeDisabled();
+    expect(button).not.toBeDisabled();
     expect(button.className).not.toContain("min-w");
     expect(button).not.toHaveClass("justify-start");
-    const pricingLink = screen.getByRole("link", {
-      name: /available in prowler cloud/i,
-    });
-    expect(pricingLink).toHaveAttribute("href", "https://prowler.com/pricing");
-    expect(pricingLink).toHaveClass("whitespace-nowrap");
-    expect(pricingLink).toHaveTextContent("Available in Prowler Cloud");
-    expect(pricingLink.closest("button")).toBeNull();
-    expect(screen.queryByRole("tooltip")).not.toBeInTheDocument();
+    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(screen.queryByRole("link")).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.ALERTS,
+    );
     expect(actionMocks.seedAlertRule).not.toHaveBeenCalled();
   });
 });

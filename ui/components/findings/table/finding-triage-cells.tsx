@@ -9,7 +9,9 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { cn } from "@/lib/utils";
+import { useCloudUpgradeStore } from "@/store";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
@@ -79,6 +81,9 @@ export function FindingTriageStatusCell({
   triage?: FindingTriageSummary;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const [optimisticStatus, setOptimisticStatus] = useState<{
     token: string;
     findingId: string;
@@ -164,6 +169,29 @@ export function FindingTriageStatusCell({
   });
   if (!disabledCopy) {
     return control;
+  }
+
+  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="relative flex">
+            {control}
+            <button
+              type="button"
+              aria-label="Change triage status - available in Prowler Cloud"
+              className="focus-visible:ring-button-primary absolute inset-0 cursor-pointer rounded-lg outline-none focus-visible:ring-2"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE);
+              }}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{disabledCopy}</TooltipContent>
+      </Tooltip>
+    );
   }
 
   return (

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import { CLOUD_UPGRADE_FEATURE } from "./cloud-upgrade";
 import { getMenuList } from "./menu-list";
 
 const findMenu = (label: string) =>
@@ -76,7 +77,7 @@ describe("getMenuList", () => {
     });
   });
 
-  it("should show Alerts as disabled Cloud-only in OSS when Cloud is disabled", () => {
+  it("should show Alerts as a contextual Cloud upgrade in Local Server", () => {
     // Given / When
     const alerts = findSubmenu("Alerts");
 
@@ -84,9 +85,8 @@ describe("getMenuList", () => {
     expect(alerts).toEqual(
       expect.objectContaining({
         href: "/alerts",
-        disabled: true,
         cloudOnly: true,
-        highlight: true,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
         active: false,
       }),
     );
@@ -109,7 +109,7 @@ describe("getMenuList", () => {
     );
   });
 
-  it("should show Scan as disabled Cloud-only in OSS when Cloud is disabled", () => {
+  it("should show Scan as a contextual Cloud upgrade in Local Server", () => {
     // Given / When
     const scanConfig = findSubmenu("Scan");
 
@@ -117,9 +117,23 @@ describe("getMenuList", () => {
     expect(scanConfig).toEqual(
       expect.objectContaining({
         href: "/scans/config",
-        disabled: true,
         cloudOnly: true,
-        highlight: true,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+        active: false,
+      }),
+    );
+  });
+
+  it("should expose CLI Import as a contextual Cloud upgrade in Local Server", () => {
+    // Given / When
+    const cliImport = findSubmenu("CLI Import");
+
+    // Then
+    expect(cliImport).toEqual(
+      expect.objectContaining({
+        href: "/scans/import",
+        cloudOnly: true,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
         active: false,
       }),
     );

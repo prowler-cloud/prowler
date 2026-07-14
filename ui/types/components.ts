@@ -1,6 +1,7 @@
 import { LucideIcon } from "lucide-react";
 import { MouseEvent, SVGProps } from "react";
 
+import type { CloudUpgradeFeature } from "@/lib/cloud-upgrade";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
 import type { FindingTriageSummary } from "./findings-triage";
@@ -25,6 +26,7 @@ export type SubmenuProps = {
   disabled?: boolean;
   highlight?: boolean;
   cloudOnly?: boolean;
+  cloudUpgradeFeature?: CloudUpgradeFeature;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 };
 

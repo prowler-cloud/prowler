@@ -11,8 +11,17 @@ import { cn } from "@/lib/utils";
 
 const STORAGE_KEY = "prowler:cli-import-banner-dismissed";
 
-export const CliImportBanner = ({ className }: { className?: string }) => {
+interface CliImportBannerProps {
+  className?: string;
+  href?: string;
+}
+
+export const CliImportBanner = ({
+  className,
+  href = DOCS_URLS.FINDINGS_INGESTION,
+}: CliImportBannerProps) => {
   const [isVisible, setIsVisible] = useState<boolean | null>(null);
+  const opensInNewTab = href.startsWith("http");
 
   useMountEffect(() => {
     const isDismissed = localStorage.getItem(STORAGE_KEY) === "true";
@@ -34,11 +43,11 @@ export const CliImportBanner = ({ className }: { className?: string }) => {
     >
       <Upload />
       <AlertTitle>
-        Import findings from Prowler CLI —{" "}
+        Import findings from Prowler CLI -{" "}
         <Link
-          href={DOCS_URLS.FINDINGS_INGESTION}
-          target="_blank"
-          rel="noopener noreferrer"
+          href={href}
+          target={opensInNewTab ? "_blank" : undefined}
+          rel={opensInNewTab ? "noopener noreferrer" : undefined}
           className="font-normal underline underline-offset-2"
         >
           Learn more

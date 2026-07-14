@@ -12,6 +12,7 @@ import {
   SquareChartGantt,
   Tag,
   Timer,
+  Upload,
   User,
   UserCog,
   Users,
@@ -27,6 +28,8 @@ import {
   LighthouseIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { isCloud } from "@/lib/shared/env";
 import { GroupProps } from "@/types";
 
 interface MenuListOptions {
@@ -40,7 +43,7 @@ export const getMenuList = ({
   pathname,
   apiDocsUrl = null,
 }: MenuListOptions): GroupProps[] => {
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
 
   return [
     {
@@ -139,9 +142,11 @@ export const getMenuList = ({
               label: "Alerts",
               icon: BellRing,
               active: isCloudEnv && pathname.startsWith("/alerts"),
-              highlight: true,
-              disabled: !isCloudEnv,
+              highlight: isCloudEnv,
               cloudOnly: !isCloudEnv,
+              cloudUpgradeFeature: isCloudEnv
+                ? undefined
+                : CLOUD_UPGRADE_FEATURE.ALERTS,
             },
             {
               href: "/mutelist",
@@ -154,9 +159,22 @@ export const getMenuList = ({
               label: "Scan",
               icon: SlidersHorizontal,
               active: isCloudEnv && pathname.startsWith("/scans/config"),
-              highlight: true,
-              disabled: !isCloudEnv,
+              highlight: isCloudEnv,
               cloudOnly: !isCloudEnv,
+              cloudUpgradeFeature: isCloudEnv
+                ? undefined
+                : CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+            },
+            {
+              href: "/scans/import",
+              label: "CLI Import",
+              icon: Upload,
+              active: isCloudEnv && pathname.startsWith("/scans/import"),
+              highlight: isCloudEnv,
+              cloudOnly: !isCloudEnv,
+              cloudUpgradeFeature: isCloudEnv
+                ? undefined
+                : CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
             },
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },

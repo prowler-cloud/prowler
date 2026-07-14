@@ -7,6 +7,7 @@ import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { createScanDetailsMapping } from "@/lib";
+import { isCloud } from "@/lib/shared/env";
 import type { MetaDataProps, ScanEntity, ScanProps } from "@/types";
 
 interface AlertsPageProps {
@@ -49,7 +50,7 @@ const toAlertsSearchParams = (
 };
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
-  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true") {
+  if (!isCloud()) {
     redirect("/");
   }
 

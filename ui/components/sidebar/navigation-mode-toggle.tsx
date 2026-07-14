@@ -9,11 +9,14 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
 import {
   SIDEBAR_NAVIGATION_MODE,
   type SidebarNavigationMode,
 } from "@/hooks/use-sidebar";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { cn } from "@/lib/utils";
+import { useCloudUpgradeStore } from "@/store";
 
 export function SidebarNavigationModeToggle({
   isOpen,
@@ -27,6 +30,9 @@ export function SidebarNavigationModeToggle({
   chatEnabled?: boolean;
 }) {
   const router = useRouter();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const modes = [
     {
       value: SIDEBAR_NAVIGATION_MODE.BROWSE,
@@ -41,7 +47,10 @@ export function SidebarNavigationModeToggle({
   ] as const;
 
   const handleModeChange = (mode: SidebarNavigationMode, disabled: boolean) => {
-    if (disabled) return;
+    if (disabled) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI);
+      return;
+    }
     onChange(mode);
     if (mode === SIDEBAR_NAVIGATION_MODE.CHAT) {
       router.push("/lighthouse");
@@ -66,9 +75,6 @@ export function SidebarNavigationModeToggle({
               key={mode.value}
               type="button"
               aria-label={mode.label}
-              // aria-disabled (not disabled) keeps the button hoverable and
-              // focusable so the availability tooltip can fire.
-              aria-disabled={disabled || undefined}
               className={cn(
                 "flex h-8 items-center justify-center rounded-[6px] border px-2 text-sm transition-all duration-200 ease-out",
                 isOpen ? "min-w-0 gap-2" : "w-8",
@@ -78,13 +84,15 @@ export function SidebarNavigationModeToggle({
                   ? "border-border-input-primary bg-bg-neutral-primary text-text-neutral-primary shadow-md"
                   : "text-text-neutral-secondary hover:text-text-neutral-primary border-transparent",
                 isOpen && (active ? "flex-[11]" : "flex-[9]"),
-                disabled &&
-                  "hover:text-text-neutral-secondary cursor-not-allowed opacity-50",
+                disabled && "text-text-neutral-secondary",
               )}
               onClick={() => handleModeChange(mode.value, disabled)}
             >
               <Icon className="size-4 shrink-0" />
               {isOpen && <span className="truncate">{mode.label}</span>}
+              {isOpen && disabled && (
+                <CloudFeatureBadge label="Cloud" size="sm" />
+              )}
             </button>
           );
 

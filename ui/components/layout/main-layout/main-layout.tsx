@@ -1,5 +1,6 @@
 "use client";
 
+import { CloudUpgradeModal } from "@/components/shared/cloud-upgrade-modal";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
@@ -34,6 +35,7 @@ export default function MainLayout({
       />
 
       <Sidebar />
+      <CloudUpgradeModal />
       <main
         className={cn(
           "no-scrollbar relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto transition-[margin-left] duration-300 ease-in-out",

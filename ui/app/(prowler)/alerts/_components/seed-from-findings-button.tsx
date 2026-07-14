@@ -29,7 +29,9 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn";
 import { ToastAction, useToast } from "@/components/shadcn";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
@@ -138,6 +140,9 @@ export const SeedFromFindingsButton = ({
 }: SeedFromFindingsButtonProps) => {
   const router = useRouter();
   const { toast } = useToast();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [seededCondition, setSeededCondition] = useState<AlertCondition | null>(
@@ -154,7 +159,11 @@ export const SeedFromFindingsButton = ({
   const canSeedFromFilters = hasFindingFilterValue(filterBag);
 
   const handleClick = async () => {
-    if (!isCloudEnabled || !canSeedFromFilters) return;
+    if (!isCloudEnabled) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
+      return;
+    }
+    if (!canSeedFromFilters) return;
     setSeeding(true);
     const result = await seedAlertRule(withDefaultAlertSeedFilters(filterBag));
     setSeeding(false);
@@ -201,7 +210,7 @@ export const SeedFromFindingsButton = ({
       size={size}
       variant="default"
       onClick={handleClick}
-      disabled={!isCloudEnabled || !canSeedFromFilters || seeding}
+      disabled={(isCloudEnabled && !canSeedFromFilters) || seeding}
       className={className}
     >
       <BellPlusIcon size={14} />
@@ -238,8 +247,8 @@ export const SeedFromFindingsButton = ({
     return (
       <span className="relative inline-flex" tabIndex={0}>
         {button}
-        <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-          <CloudFeatureBadgeLink />
+        <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+          <CloudFeatureBadge label="Cloud" />
         </span>
       </span>
     );

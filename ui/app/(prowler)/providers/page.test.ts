@@ -40,7 +40,7 @@ describe("providers page", () => {
     const pagePath = path.join(currentDir, "page.tsx");
     const source = readFileSync(pagePath, "utf8");
 
-    expect(source).toContain("NEXT_PUBLIC_IS_CLOUD_ENV");
+    expect(source).toContain("isCloud()");
     expect(source).toContain("{isCloudEnvironment && <CliImportBanner");
   });
 

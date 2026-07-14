@@ -15,13 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import {
   formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
   getNextScheduledRun,
 } from "@/lib/schedules";
+import { useCloudUpgradeStore } from "@/store";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -130,6 +132,9 @@ export function ScanScheduleFields({
   canUseAdvancedSchedule = true,
   showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const control = form.control;
   const [frequency, hour, dayOfWeek, dayOfMonth, intervalHours] = useWatch({
@@ -149,7 +154,16 @@ export function ScanScheduleFields({
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
   const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <CloudFeatureBadgeLink size="sm" />
+    <button
+      type="button"
+      aria-label="Explore advanced scheduling in Prowler Cloud"
+      className="shrink-0 transition-opacity hover:opacity-90"
+      onClick={() =>
+        openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
+      }
+    >
+      <CloudFeatureBadge label="Cloud" size="sm" />
+    </button>
   ) : null;
 
   return (

@@ -11,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { MenuFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import type { CloudUpgradeFeature } from "@/lib/cloud-upgrade";
+import { useCloudUpgradeStore } from "@/store";
 import { IconComponent } from "@/types";
 
 interface SubmenuItemProps {
@@ -22,6 +24,7 @@ interface SubmenuItemProps {
   disabled?: boolean;
   highlight?: boolean;
   cloudOnly?: boolean;
+  cloudUpgradeFeature?: CloudUpgradeFeature;
   onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
 }
 
@@ -34,10 +37,33 @@ export const SubmenuItem = ({
   disabled,
   highlight,
   cloudOnly,
+  cloudUpgradeFeature,
   onClick,
 }: SubmenuItemProps) => {
   const pathname = usePathname();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const isActive = active !== undefined ? active : pathname === href;
+
+  if (cloudUpgradeFeature) {
+    return (
+      <Button
+        type="button"
+        variant="menu-inactive"
+        className="mt-1 w-[calc(100%-12px)] justify-start px-2 py-1"
+        onClick={() => openCloudUpgrade(cloudUpgradeFeature)}
+      >
+        <span className="mr-2">
+          <Icon size={16} />
+        </span>
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="truncate">{label}</span>
+          <MenuFeatureBadge label="Cloud" size="sm" />
+        </span>
+      </Button>
+    );
+  }
 
   // Special case: Mutelist with tooltip when disabled
   if (disabled && label === "Mutelist") {

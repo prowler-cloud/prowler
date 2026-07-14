@@ -5,6 +5,8 @@ import { ReactNode } from "react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn";
 import { CloudFeatureBadge } from "@/components/shared/cloud-feature-badge";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { useCloudUpgradeStore } from "@/store";
 
 import { COMPLIANCE_TAB, type ComplianceTab } from "../_types";
 
@@ -24,9 +26,17 @@ export const CompliancePageTabs = ({
   crossProviderContent,
 }: CompliancePageTabsProps) => {
   const router = useRouter();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
 
   const handleTabChange = (tab: string) => {
     const typedTab = tab as ComplianceTab;
+
+    if (typedTab === COMPLIANCE_TAB.CROSS_PROVIDER && !crossProviderEnabled) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE);
+      return;
+    }
 
     if (typedTab === activeTab) {
       return;
@@ -52,8 +62,11 @@ export const CompliancePageTabs = ({
         <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Per Scan</TabsTrigger>
         <TabsTrigger
           value={COMPLIANCE_TAB.CROSS_PROVIDER}
-          disabled={!crossProviderEnabled}
-          adornment={!crossProviderEnabled ? <CloudFeatureBadge /> : undefined}
+          adornment={
+            !crossProviderEnabled ? (
+              <CloudFeatureBadge label="Cloud" />
+            ) : undefined
+          }
         >
           Cross-Provider
         </TabsTrigger>

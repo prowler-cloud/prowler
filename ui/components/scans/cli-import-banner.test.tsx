@@ -58,6 +58,16 @@ describe("CliImportBanner", () => {
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
+  it("supports an internal CLI Import guide destination", () => {
+    render(<CliImportBanner href="/scans/import" />);
+
+    const link = screen.getByRole("link", { name: "Learn more" });
+
+    expect(link).toHaveAttribute("href", "/scans/import");
+    expect(link).not.toHaveAttribute("target");
+    expect(screen.getByText(/Prowler CLI -/)).toBeInTheDocument();
+  });
+
   it("does not render when previously dismissed", () => {
     localStorageMock.setItem(STORAGE_KEY, "true");
 

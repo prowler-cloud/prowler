@@ -12,6 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/shadcn/sheet";
+import { isCloud } from "@/lib/shared/env";
 
 export function SheetMenu() {
   return (
@@ -30,8 +31,13 @@ export function SheetMenu() {
             variant="link"
             asChild
           >
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/" className="flex flex-col items-center gap-1">
               <ProwlerExtended />
+              {!isCloud() && (
+                <span className="text-text-neutral-secondary text-xs font-medium">
+                  Local Server
+                </span>
+              )}
             </Link>
           </Button>
         </SheetHeader>

@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ProviderTypeIcon: ({ type }: { type: string }) => (
@@ -49,7 +49,9 @@ beforeAll(() => {
   });
 });
 
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { DOCS_URLS } from "@/lib/external-urls";
+import { useCloudUpgradeStore } from "@/store";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
@@ -82,6 +84,10 @@ function makeTriageDetail(
     ...overrides,
   };
 }
+
+afterEach(() => {
+  useCloudUpgradeStore.getState().closeCloudUpgrade();
+});
 
 function renderNoteModal({
   triage = makeTriageDetail(),
@@ -325,8 +331,9 @@ describe("FindingNoteModal", () => {
     expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
   });
 
-  it("should disable controls and show the Cloud upsell badge for non-paying users", () => {
+  it("should keep controls read-only and open the finding triage upgrade", async () => {
     // Given
+    const user = userEvent.setup();
     renderNoteModal({
       triage: makeTriageDetail({
         canEdit: false,
@@ -339,10 +346,16 @@ describe("FindingNoteModal", () => {
       screen.getByRole("combobox", { name: "Triage status" }),
     ).toHaveAttribute("data-disabled", "");
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save" })).toBeDisabled();
-    expect(
-      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
-    ).toHaveAttribute("href", "https://prowler.com/pricing");
+    const saveUpgrade = screen.getByRole("button", {
+      name: "Save - available in Prowler Cloud",
+    });
+    expect(saveUpgrade).not.toBeDisabled();
+
+    await user.click(saveUpgrade);
+
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+    );
     expect(screen.queryByText(/will be muted/i)).not.toBeInTheDocument();
   });
 

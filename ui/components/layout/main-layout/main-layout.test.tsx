@@ -18,6 +18,10 @@ vi.mock("../sidebar/sidebar", () => ({
   Sidebar: () => <aside data-testid="sidebar" />,
 }));
 
+vi.mock("@/components/shared/cloud-upgrade-modal", () => ({
+  CloudUpgradeModal: () => <div data-testid="cloud-upgrade-modal" />,
+}));
+
 describe("MainLayout", () => {
   it("renders subdued background glows for side-nav contrast", () => {
     render(
@@ -33,5 +37,6 @@ describe("MainLayout", () => {
 
     expect(topGlow).toHaveClass("h-[120%]", "w-[160%]", "opacity-[7%]");
     expect(bottomGlow).toHaveClass("h-[50%]", "w-[50%]", "opacity-[7%]");
+    expect(screen.getByTestId("cloud-upgrade-modal")).toBeInTheDocument();
   });
 });

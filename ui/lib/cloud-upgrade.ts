@@ -1,0 +1,148 @@
+export const CLOUD_UPGRADE_FEATURE = {
+  ADVANCED_SCHEDULING: "advanced_scheduling",
+  ALERTS: "alerts",
+  AWS_ORGANIZATIONS: "aws_organizations",
+  CLI_IMPORT: "cli_import",
+  CROSS_PROVIDER_COMPLIANCE: "cross_provider_compliance",
+  FINDING_TRIAGE: "finding_triage",
+  LIGHTHOUSE_AI: "lighthouse_ai",
+  GENERAL: "general",
+  SCAN_CONFIGURATION: "scan_configuration",
+} as const;
+
+export type CloudUpgradeFeature =
+  (typeof CLOUD_UPGRADE_FEATURE)[keyof typeof CLOUD_UPGRADE_FEATURE];
+
+export interface CloudUpgradeContent {
+  title: string;
+  description: string;
+  benefits: readonly [string, string, string];
+  primaryCta: string;
+}
+
+export const CLOUD_UPGRADE_SECONDARY_CTA = "Compare editions";
+export const CLOUD_UPGRADE_FOOTER_NOTE =
+  "Prowler Cloud opens in a new tab. Your self-hosted deployment remains unchanged.";
+
+const CLOUD_URL = "https://cloud.prowler.com/";
+const PRICING_URL = "https://prowler.com/pricing";
+const LOCAL_SERVER_SOURCE = "prowler_local_server";
+
+export const CLOUD_UPGRADE_CONTENT = {
+  [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: {
+    title: "Keep every provider checked automatically",
+    description:
+      "Run scans on the cadence you choose without maintaining scheduling infrastructure.",
+    benefits: [
+      "Choose daily, interval, weekly, or monthly scans",
+      "Set scan times in your preferred timezone",
+      "Manage schedules alongside scan history",
+    ],
+    primaryCta: "Schedule scans in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.ALERTS]: {
+    title: "Turn findings into alerts",
+    description:
+      "Get notified when the findings you care about appear in a scan.",
+    benefits: [
+      "Get alerted on what matters most",
+      "Notify the right people after every scan",
+      "Manage alert rules from one place",
+    ],
+    primaryCta: "Create alerts in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: {
+    title: "Add your entire AWS Organization",
+    description:
+      "Discover accounts and organizational units, then manage them from one place.",
+    benefits: [
+      "Discover accounts and organizational units automatically",
+      "Choose exactly which accounts to onboard",
+      "Apply schedules across the selected accounts",
+    ],
+    primaryCta: "Set up AWS Organizations in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
+    title: "Bring CLI findings into one Cloud view",
+    description:
+      "Send Prowler CLI scan results to Prowler Cloud for centralized analysis and collaboration.",
+    benefits: [
+      "Push results directly with --push-to-cloud",
+      "Track CLI and managed scans in one place",
+      "Automate findings ingestion from CI/CD pipelines",
+    ],
+    primaryCta: "Import CLI findings in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]: {
+    title: "See compliance across every provider",
+    description:
+      "Replace separate scan reports with a consolidated compliance view.",
+    benefits: [
+      "Compare framework posture across providers",
+      "Find coverage gaps without switching scans",
+      "Generate a consolidated compliance report",
+    ],
+    primaryCta: "Consolidate compliance in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: {
+    title: "Coordinate finding remediation",
+    description:
+      "Add investigation notes and move findings through a shared remediation workflow.",
+    benefits: [
+      "Preserve investigation context on each finding",
+      "Track review and remediation status",
+      "Keep triage history with future scans",
+    ],
+    primaryCta: "Triage findings in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
+    title: "Use a managed security assistant",
+    description:
+      "Investigate and act on your security posture without operating an AI stack.",
+    benefits: [
+      "Start without provisioning or managing OpenAI API keys",
+      "Automate security workflows through the hosted remote MCP server",
+      "Keep Lighthouse actions grounded in your Prowler Cloud data",
+    ],
+    primaryCta: "Open Lighthouse in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.GENERAL]: {
+    title: "Scale Prowler without operating it",
+    description:
+      "Add managed automation and collaboration while Prowler operates the platform.",
+    benefits: [
+      "Onboard AWS Organizations from the UI",
+      "Automate scans, alerts, and compliance reporting",
+      "Use managed infrastructure, support, and backups",
+    ],
+    primaryCta: "Start a Prowler Cloud trial",
+  },
+  [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
+    title: "Configure every scan once",
+    description:
+      "Create reusable scan configurations instead of rebuilding options for each run.",
+    benefits: [
+      "Reduce noise by fine-tuning scan configurations",
+      "Apply consistent configurations to providers",
+      "Manage scan behavior from one place",
+    ],
+    primaryCta: "Configure scans in Prowler Cloud",
+  },
+} as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
+
+const buildCloudUpgradeUrl = (
+  baseUrl: string,
+  feature: CloudUpgradeFeature,
+) => {
+  const url = new URL(baseUrl);
+  url.searchParams.set("source", LOCAL_SERVER_SOURCE);
+  url.searchParams.set("feature", feature);
+
+  return url.toString();
+};
+
+export const getCloudUpgradePrimaryUrl = (feature: CloudUpgradeFeature) =>
+  buildCloudUpgradeUrl(CLOUD_URL, feature);
+
+export const getCloudUpgradeCompareUrl = (feature: CloudUpgradeFeature) =>
+  buildCloudUpgradeUrl(PRICING_URL, feature);

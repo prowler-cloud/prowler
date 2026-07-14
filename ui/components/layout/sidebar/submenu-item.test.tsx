@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
+import { useCloudUpgradeStore } from "@/store";
 
 import { SubmenuItem } from "./submenu-item";
 
@@ -13,7 +16,11 @@ const TestIcon = ({ size = 16 }: { size?: number }) => (
 );
 
 describe("SubmenuItem", () => {
-  it("should show the cloud-only tooltip for disabled cloud menu items", async () => {
+  afterEach(() => {
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
+  });
+
+  it("should open the Alerts upgrade modal from a Local Server menu item", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -21,30 +28,24 @@ describe("SubmenuItem", () => {
         href="/alerts"
         label="Alerts"
         icon={TestIcon}
-        disabled
-        highlight
         cloudOnly
+        cloudUpgradeFeature={CLOUD_UPGRADE_FEATURE.ALERTS}
       />,
     );
 
     // When
     const button = screen.getByRole("button", { name: /alerts/i });
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveClass(
-      "cursor-not-allowed",
-      "text-text-neutral-tertiary",
-    );
-    await user.hover(button.parentElement as HTMLElement);
+    await user.click(button);
 
     // Then
-    expect(screen.getByText("New")).toHaveClass("h-5", "text-[10px]");
-    expect(screen.queryByText("Cloud")).not.toBeInTheDocument();
-    expect(
-      await screen.findAllByText("Available in Prowler Cloud"),
-    ).not.toHaveLength(0);
+    expect(button).not.toHaveAttribute("aria-disabled");
+    expect(screen.getByText("Cloud")).toHaveClass("h-5", "text-[10px]");
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.ALERTS,
+    );
   });
 
-  it("should render disabled Scan config menu items like disabled Alerts", async () => {
+  it("should open the scan configuration upgrade without rendering a link", async () => {
     // Given
     const user = userEvent.setup();
     render(
@@ -52,25 +53,21 @@ describe("SubmenuItem", () => {
         href="/scans/config"
         label="Scan"
         icon={TestIcon}
-        disabled
-        highlight
         cloudOnly
+        cloudUpgradeFeature={CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION}
       />,
     );
 
     // When
     const button = screen.getByRole("button", { name: /scan/i });
-    await user.hover(button.parentElement as HTMLElement);
+    await user.click(button);
 
     // Then
-    expect(button).toHaveAttribute("aria-disabled", "true");
-    expect(button).toHaveClass(
-      "cursor-not-allowed",
-      "text-text-neutral-tertiary",
-    );
-    expect(screen.getByText("New")).toHaveClass("h-5", "text-[10px]");
     expect(
-      await screen.findAllByText("Available in Prowler Cloud"),
-    ).not.toHaveLength(0);
+      screen.queryByRole("link", { name: /scan/i }),
+    ).not.toBeInTheDocument();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+    );
   });
 });

@@ -1,5 +1,6 @@
 "use client";
 
+import { Cloud } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -19,10 +20,12 @@ import { SidebarNavigationModeToggle } from "@/components/sidebar/navigation-mod
 import { useAuth } from "@/hooks";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";
+import { CLOUD_UPGRADE_FEATURE } from "@/lib/cloud-upgrade";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
-import { useScansStore } from "@/store";
+import { useCloudUpgradeStore, useScansStore } from "@/store";
 import { GroupProps } from "@/types";
 import { RolePermissionAttributes } from "@/types/users";
 
@@ -66,7 +69,10 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   );
   const isScansPage = pathname.startsWith("/scans");
   const { apiDocsUrl } = useRuntimeConfig();
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const navigationMode = useSidebar((state) => state.navigationMode);
   const setNavigationMode = useSidebar((state) => state.setNavigationMode);
 
@@ -165,12 +171,36 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         )}
       </div>
 
+      {!isCloudEnv && (
+        <div className="shrink-0 px-2 pb-3">
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                aria-label="Explore Prowler Cloud"
+                className={cn("w-full", isOpen ? "justify-center" : "px-0")}
+                onClick={() => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.GENERAL)}
+              >
+                <Cloud aria-hidden="true" className="size-4" />
+                {isOpen && <span>Explore Prowler Cloud</span>}
+              </Button>
+            </TooltipTrigger>
+            {!isOpen && (
+              <TooltipContent side="right">
+                Explore Prowler Cloud
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="text-muted-foreground border-border-neutral-secondary flex shrink-0 items-center justify-center gap-2 border-t pt-4 pb-2 text-center text-xs">
         {isOpen ? (
           <>
             <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
-            {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+            {isCloudEnv && (
               <>
                 <Separator orientation="vertical" />
                 <Link
@@ -188,7 +218,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
             )}
           </>
         ) : (
-          process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+          isCloudEnv && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
