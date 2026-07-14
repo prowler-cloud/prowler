@@ -69,7 +69,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `apigateway_restapi_no_secrets_in_stage_variables` check for AWS provider, scanning API Gateway REST API stage variables for hardcoded secrets such as passwords, API keys, and tokens [(#11188)](https://github.com/prowler-cloud/prowler/pull/11188)
 - `s3_bucket_object_public` check for AWS provider, spot-checking a configurable sample of object ACLs in each bucket and flagging objects granted to the AllUsers or AuthenticatedUsers groups; disabled by default and opted into via the `s3_bucket_object_public_enabled` configuration option [(#9517)](https://github.com/prowler-cloud/prowler/pull/9517)
 - Azure provider now supports `--azure-resource-group` to scope resource-level checks to specific resource groups across all accessible subscriptions [(#10657)](https://github.com/prowler-cloud/prowler/pull/10657)
-- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#11835)](https://github.com/prowler-cloud/prowler/pull/11835)
 
 ### 🔄 Changed
 
