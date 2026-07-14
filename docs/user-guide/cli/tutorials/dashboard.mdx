@@ -1,8 +1,8 @@
 ---
-title: "Dashboard"
+title: "Prowler Local Dashboard"
 ---
 
-Prowler allows you to run your own local dashboards using the csv outputs provided by Prowler
+Prowler Local Dashboard is a local web dashboard built from the CSV outputs produced by Prowler CLI. Launch it with:
 
 ```sh
 prowler dashboard
@@ -12,7 +12,7 @@ prowler dashboard
 You can expose the `dashboard` server in another address using the `HOST` environment variable.
 
 </Note>
-To run Prowler local dashboard with Docker, use:
+To run Prowler Local Dashboard with Docker, use:
 
 ```sh
 docker run -v /your/local/dir/prowler-output:/home/prowler/output --env HOST=0.0.0.0 --publish 127.0.0.1:11666:11666 toniblyx/prowler:latest dashboard

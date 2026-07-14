@@ -1,21 +1,36 @@
 # What is Prowler?
 
-**Prowler** is the world’s most widely used open-source cloud security platform that **automates security and compliance** across any cloud environment. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler delivers AI-driven, customizable, and easy-to-use monitoring and integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+**Prowler** is the world’s most widely used open-source cloud security platform that **automates security and compliance** across any cloud environment. With thousands of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler delivers AI-driven, customizable, and easy-to-use monitoring and integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 
 ![](/images/products/overview.png)
 
+Prowler ships two product families: Open Source projects you run yourself, and Prowler Products operated or licensed by the Prowler team. See [Prowler product families](/getting-started/products) for every official name, including former names.
+
+### Prowler Products
+
 <Columns cols={2}>
-  <Card title="Prowler CLI" icon="terminal" href="/getting-started/products/prowler-cli">
-    Command Line Interface
-  </Card>
-  <Card title="Prowler App" icon="pen-to-square" href="/getting-started/products/prowler-app">
-    Web Application
-  </Card>
-  <Card title="Prowler Cloud" icon="pen-to-square" href="/getting-started/products/prowler-cloud">
-    A managed service built on top of Prowler App.
+  <Card title="Prowler Cloud" icon="cloud" href="/getting-started/products/prowler-cloud">
+    Managed cloud security platform operated by the Prowler team.
   </Card>
   <Card title="Prowler Hub" icon="map" href="/getting-started/products/prowler-hub">
-    A public library of versioned checks, cloud service artifacts, and compliance frameworks.
+    Free public library of versioned checks, cloud service artifacts, and compliance frameworks.
+  </Card>
+  <Card title="Prowler MCP" icon="plug" href="/getting-started/products/prowler-mcp">
+    MCP server that connects AI assistants and agents to Prowler.
+  </Card>
+  <Card title="All Prowler Products" icon="list" href="/getting-started/products">
+    Prowler Private Cloud, Prowler Lighthouse AI, and more.
+  </Card>
+</Columns>
+
+### Open Source
+
+<Columns cols={2}>
+  <Card title="Prowler CLI" icon="terminal" href="/getting-started/products/prowler-cli">
+    Command line tool to run security scans across all supported providers.
+  </Card>
+  <Card title="Prowler Local Server" icon="server" href="/getting-started/products/prowler-app">
+    Self-hosted web application and API. Formerly Prowler App.
   </Card>
 </Columns>
 
@@ -70,7 +85,7 @@ Prowler supports a wide range of providers organized by category:
 | ------------------------------------------------------------------- | -------- | -------------------- | --------- |
 | [Image](/user-guide/providers/image/getting-started-image)          | Official | Container Images / Registries | CLI, API  |
 
-### Custom Providers (Prowler Cloud Enterprise Only)
+### Custom Providers (Prowler Private Cloud Only)
 
 | Provider             | Support  | Audit Scope/Entities | Interface |
 | -------------------- | -------- | -------------------- | --------- |

@@ -2,10 +2,13 @@
 title: 'Advanced Mutelist (YAML)'
 ---
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.9.0" />
 
-Prowler App allows users to mute specific findings to focus on the most critical security issues. This guide demonstrates how to use the Advanced Mutelist feature with YAML configuration for complex, pattern-based muting rules.
+<AppliesTo />
+
+Prowler Cloud allows users to mute specific findings to focus on the most critical security issues. This guide demonstrates how to use the Advanced Mutelist feature with YAML configuration for complex, pattern-based muting rules.
 
 <Note>
 For muting individual findings without YAML configuration, use [Simple Mutelist](/user-guide/tutorials/prowler-app-simple-mutelist) to mute findings directly from the Findings table.
@@ -31,8 +34,8 @@ Advanced Mutelist requires the **Manage Account** permission. See [RBAC Administ
 
 Before muting findings, ensure:
 
-- Valid access to Prowler App with appropriate permissions
-- A provider added to the Prowler App
+- Valid access to Prowler Cloud with appropriate permissions
+- A provider added to Prowler Cloud
 - Understanding of the security implications of muting specific findings
 
 <Warning>
@@ -43,7 +46,7 @@ Muting findings does not resolve underlying security issues. Review each finding
 
 To configure Advanced Mutelist:
 
-1. Log into Prowler App
+1. Log into Prowler Cloud
 2. Navigate to the Providers page
 ![Add provider](/images/mutelist-ui-1.png)
 3. Connect a provider to enable Mutelist configuration
@@ -436,7 +439,7 @@ When both Advanced Mutelist (YAML) and [Simple Mutelist](/user-guide/tutorials/p
 
 ### Validation
 
-Prowler App validates your mutelist configuration and will display errors for:
+Prowler Cloud validates your mutelist configuration and will display errors for:
 
 - Invalid YAML syntax
 - Missing required fields

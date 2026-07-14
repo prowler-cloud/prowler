@@ -2,16 +2,16 @@
 title: 'Overview'
 ---
 
-Prowler App is a web application that simplifies running Prowler. It provides:
+Prowler Local Server, formerly known as Prowler App, is a self-hosted web application that simplifies running Prowler. It provides:
 
 - **User-friendly interface** for configuring and executing scans
 - Dashboard to **view results** and manage **security findings**
 
-![Prowler App](/images/products/overview.png)
+![Prowler Local Server](/images/products/overview.png)
 
 ## Components
 
-Prowler App consists of four main components:
+Prowler Local Server consists of four main components:
 
 - **Prowler UI**: User-friendly web interface for running Prowler and viewing results, powered by Next.js
 - **Prowler API**: Backend API that executes Prowler scans and stores results, built with Django REST Framework
@@ -26,4 +26,42 @@ Supporting infrastructure includes:
 - **Valkey**: In-memory database serving as message broker for Celery workers
 - **Neo4j**: Graph database used by the Attack Paths feature to combine cloud inventory with Prowler findings (currently populated by AWS scans)
 
-![Prowler App Architecture](/images/products/prowler-app-architecture.png)
+```mermaid
+flowchart TB
+    user([User / Security Team])
+    cli([Prowler CLI])
+
+    subgraph APP["Prowler Local Server"]
+        ui["Prowler UI<br/>(Next.js)"]
+        api["Prowler API<br/>(Django REST Framework)"]
+        worker["API Worker<br/>(Celery)"]
+        beat["API Scheduler<br/>(Celery Beat)"]
+        mcp["Prowler MCP Server<br/>(Lighthouse AI tools)"]
+    end
+
+    sdk["Prowler SDK<br/>(Python)"]
+
+    subgraph DATA["Data Layer"]
+        pg[("PostgreSQL")]
+        valkey[("Valkey / Redis")]
+        neo4j[("Neo4j")]
+    end
+
+    providers["Providers"]
+
+    user --> ui
+    user --> cli
+    ui -->|REST| api
+    ui -->|MCP HTTP| mcp
+    mcp -->|REST| api
+    api --> pg
+    api --> valkey
+    beat -->|enqueue jobs| valkey
+    valkey -->|dispatch| worker
+    worker --> pg
+    worker -->|Attack Paths| neo4j
+    worker -->|invokes| sdk
+    cli --> sdk
+
+    sdk --> providers
+```

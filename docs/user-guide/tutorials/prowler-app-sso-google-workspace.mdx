@@ -2,20 +2,24 @@
 title: 'SAML SSO: Google Workspace'
 ---
 
-This page explains how to configure SAML-based Single Sign-On (SSO) in Prowler App using **Google Workspace** as the Identity Provider (IdP). The setup is divided into two parts: create a custom SAML app in Google Admin Console, then complete the configuration in Prowler App.
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
+<AppliesTo />
+
+This page explains how to configure SAML-based Single Sign-On (SSO) in Prowler Cloud using **Google Workspace** as the Identity Provider (IdP). The setup is divided into two parts: create a custom SAML app in Google Admin Console, then complete the configuration in Prowler Cloud.
 
 <Info>
 **Parallel Setup Required**
 
-Google Admin Console requires the ACS URL and Entity ID from Prowler App, while Prowler App displays these values only after opening the SAML configuration dialog. To work around this, open Prowler App in a separate browser tab, navigate to the profile page, open the "Configure SAML SSO" dialog, and copy the ACS URL and Entity ID before proceeding with the Google configuration.
+Google Admin Console requires the ACS URL and Entity ID from Prowler Cloud, while Prowler Cloud displays these values only after opening the SAML configuration dialog. To work around this, open Prowler Cloud in a separate browser tab, navigate to the profile page, open the "Configure SAML SSO" dialog, and copy the ACS URL and Entity ID before proceeding with the Google configuration.
 
 </Info>
 
 ## Prerequisites
 
 - **Google Workspace**: Super Admin access (or delegated admin with app management permissions).
-- **Prowler App**: Administrator access to the organization (role with "Manage Account" permission).
-- Prowler App version **5.9.0** or later.
+- **Prowler Cloud**: Administrator access to the organization (role with "Manage Account" permission).
+- Prowler version **5.9.0** or later.
 
 ---
 
@@ -44,7 +48,7 @@ On the **Google Identity Provider details** screen:
 1. Google displays two options:
    - **Option 1**: Click "Download Metadata" to save the XML file directly. This is the recommended approach.
    - **Option 2**: Manually copy the **SSO URL**, **Entity ID**, and **Certificate**.
-2. Download the metadata. This file is required to complete the Prowler App configuration in Part B.
+2. Download the metadata. This file is required to complete the configuration in Prowler Cloud (Part B).
 3. Click "Continue".
 
 ![Google Identity Provider details - Download metadata](/images/prowler-app/saml/saml-sso-gw-3.png)
@@ -52,18 +56,18 @@ On the **Google Identity Provider details** screen:
 <Warning>
 **Save the Metadata File**
 
-Download and save the IdP metadata XML file before proceeding. This file cannot be easily retrieved later and is required to complete the SAML configuration in Prowler App.
+Download and save the IdP metadata XML file before proceeding. This file cannot be easily retrieved later and is required to complete the SAML configuration in Prowler Cloud.
 
 </Warning>
 
 ### Step 4: Configure the Service Provider Details
 
-Enter the following values obtained from the SAML SSO configuration dialog in Prowler App (see [Part B, Step 1](#step-1-open-the-saml-configuration-dialog) for details on where to find them):
+Enter the following values obtained from the SAML SSO configuration dialog in Prowler Cloud (see [Part B, Step 1](#step-1-open-the-saml-configuration-dialog) for details on where to find them):
 
 | Google Workspace Field | Value |
 |------------------------|-------|
-| **ACS URL** | The Assertion Consumer Service (ACS) URL displayed in Prowler App (e.g., `https://api.prowler.com/api/v1/accounts/saml/your-domain.com/acs/`). Self-hosted deployments use a different base URL. |
-| **Entity ID** | The Audience URI displayed in Prowler App (e.g., `urn:prowler.com:sp`). |
+| **ACS URL** | The Assertion Consumer Service (ACS) URL displayed in Prowler Cloud (e.g., `https://api.prowler.com/api/v1/accounts/saml/your-domain.com/acs/`). Self-hosted deployments use a different base URL. |
+| **Entity ID** | The Audience URI displayed in Prowler Cloud (e.g., `urn:prowler.com:sp`). |
 | **Name ID format** | Select `EMAIL` from the dropdown. |
 | **Name ID** | Select `Basic Information > Primary email` from the dropdown. |
 
@@ -82,7 +86,7 @@ Click "Add mapping" for each entry:
 | `Basic Information > First name` | `firstName` | Yes | |
 | `Basic Information > Last name` | `lastName` | Yes | |
 | `Employee Details > Department` | `userType` | No | Determines the Prowler role. **Case-sensitive.** |
-| `Employee Details > Organization` | `organization` | No | Company name displayed in Prowler App profile. |
+| `Employee Details > Organization` | `organization` | No | Company name displayed in the user profile in Prowler Cloud. |
 
 <Info>
 **Remember the Mapped Fields**
@@ -98,7 +102,7 @@ Click "Finish" to create the SAML app.
 <Info>
 **Dynamic Updates**
 
-Prowler App updates user attributes each time a user logs in. Any changes made in Google Workspace are reflected on the next login.
+Prowler Cloud updates user attributes each time a user logs in. Any changes made in Google Workspace are reflected on the next login.
 
 </Info>
 
@@ -108,7 +112,7 @@ Prowler App updates user attributes each time a user logs in. Any changes made i
 The `userType` attribute controls which Prowler role is assigned to the user:
 
 - If `userType` matches an existing Prowler role name, the user receives that role automatically.
-- If `userType` does not match any existing role, Prowler App creates a new role with that name **with read-only access** (visibility over all providers, no management permissions). A Prowler administrator can adjust its permissions afterward through the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab.
+- If `userType` does not match any existing role, Prowler Cloud creates a new role with that name **with read-only access** (visibility over all providers, no management permissions). A Prowler administrator can adjust its permissions afterward through the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab.
 - If `userType` is not set, the user's existing roles are left unchanged.
 
 The `userType` value is **case-sensitive** - for example, `Backend` and `backend` are treated as different roles.
@@ -148,7 +152,7 @@ If attempting to use the "Test SAML login" option in Google Admin Console and re
 
 ---
 
-## Part B - Prowler App Configuration
+## Part B - Prowler Cloud Configuration
 
 ### Step 1: Open the SAML Configuration Dialog
 
@@ -162,21 +166,21 @@ If attempting to use the "Test SAML login" option in Google Admin Console and re
    - **Name ID Format**: The expected format (`urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress`).
    - **Supported Assertion Attributes**: The list of accepted attributes (`firstName`, `lastName`, `userType`, `organization`).
 
-![Prowler App - Configure SAML SSO dialog (initial state)](/images/prowler-app/saml/saml-sso-gw-prowler-1.png)
+![Prowler Cloud - Configure SAML SSO dialog (initial state)](/images/prowler-app/saml/saml-sso-gw-prowler-1.png)
 
 ### Step 2: Enter the Email Domain and Upload Metadata
 
-1. Enter the **email domain** for the organization (e.g., `prowler.cloud`). Prowler App uses this domain to identify users who should authenticate via SAML. The ACS URL updates automatically to reflect the configured domain.
+1. Enter the **email domain** for the organization (e.g., `prowler.cloud`). Prowler Cloud uses this domain to identify users who should authenticate via SAML. The ACS URL updates automatically to reflect the configured domain.
 2. Upload the **metadata XML file** downloaded in Part A, Step 3.
 3. Click "Save".
 
-![Prowler App - Configure SAML SSO dialog (domain entered and ready to save)](/images/prowler-app/saml/saml-sso-gw-prowler-2.png)
+![Prowler Cloud - Configure SAML SSO dialog (domain entered and ready to save)](/images/prowler-app/saml/saml-sso-gw-prowler-2.png)
 
 ### Step 3: Verify the Enabled Status
 
 The "SAML SSO Integration" card should now display a **"Status: Enabled"** indicator with a checkmark, confirming that the configuration is complete.
 
-![Prowler App - SAML SSO Integration status showing "Enabled"](/images/prowler-app/saml/saml-sso-gw-prowler-3.png)
+![Prowler Cloud - SAML SSO Integration status showing "Enabled"](/images/prowler-app/saml/saml-sso-gw-prowler-3.png)
 
 ---
 
@@ -214,13 +218,13 @@ To test the `userType` → role mapping, set the **Department** attribute in the
 1. Navigate to the Prowler login page.
 2. Click "Continue with SAML SSO".
 3. Enter an email from the configured domain (e.g., `adrian@prowler.cloud`).
-4. Click "Log in". The browser redirects to Google for authentication and returns to Prowler App upon success.
+4. Click "Log in". The browser redirects to Google for authentication and returns to Prowler Cloud upon success.
 
-![Prowler App - Sign in with SAML SSO](/images/prowler-app/saml/saml-sso-gw-prowler-4.png)
+![Prowler Cloud - Sign in with SAML SSO](/images/prowler-app/saml/saml-sso-gw-prowler-4.png)
 
 ### Verify User Profile and Role Mapping
 
-After a successful SSO login, the user profile in Prowler App reflects the attributes sent by Google Workspace:
+After a successful SSO login, the user profile in Prowler Cloud reflects the attributes sent by Google Workspace:
 
 - **Name**: Populated from the `firstName` and `lastName` attributes.
 - **Role**: Created automatically from the `userType` attribute (e.g., `Backend`). If the role did not exist previously, it is created with read-only access by default.
@@ -230,14 +234,14 @@ After a successful SSO login, the user profile in Prowler App reflects the attri
 
 For more details on role assignment behavior and attribute mapping, refer to the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso#configure-attribute-mapping-in-the-idp) page.
 
-![Prowler App - User profile showing role "Backend" created from userType mapping](/images/prowler-app/saml/saml-sso-gw-prowler-5.png)
+![Prowler Cloud - User profile showing role "Backend" created from userType mapping](/images/prowler-app/saml/saml-sso-gw-prowler-5.png)
 
 ### IdP-Initiated SSO (from Google)
 
 1. Sign in to Google Workspace with an account that has access to the Prowler SAML app.
 2. Open the Google Workspace app launcher (the grid icon in the top-right corner of any Google page).
 3. Click the Prowler app tile.
-4. The browser redirects directly to Prowler App, authenticated.
+4. The browser redirects directly to Prowler Cloud, authenticated.
 
 For more information on the SSO login flows, refer to the [SAML SSO Configuration](/user-guide/tutorials/prowler-app-sso#idp-initiated-sso) page.
 
@@ -270,7 +274,7 @@ Prowler does not allow two tenants to share the same email domain. If the domain
 <Info>
 **Just-in-Time Provisioning**
 
-Users who authenticate via SAML for the first time are automatically created in Prowler App. No prior invitation is needed. User attributes (`firstName`, `lastName`, `userType`) are updated on every login from the Google directory.
+Users who authenticate via SAML for the first time are automatically created in Prowler Cloud. No prior invitation is needed. User attributes (`firstName`, `lastName`, `userType`) are updated on every login from the Google directory.
 
 </Info>
 
@@ -278,10 +282,10 @@ Users who authenticate via SAML for the first time are automatically created in 
 
 ## Quick Summary
 
-1. In **Google Admin Console**, create a custom SAML app using the ACS URL and Entity ID from Prowler App.
+1. In **Google Admin Console**, create a custom SAML app using the ACS URL and Entity ID from Prowler Cloud.
 2. Configure **attribute mapping**: `firstName`, `lastName`, and optionally `userType` and `organization`.
 3. **Download the metadata XML** from Google.
 4. **Enable the app** in Google Workspace for the relevant users or groups.
-5. In **Prowler App**, enter the email domain, upload the metadata XML, and save.
+5. In **Prowler Cloud**, enter the email domain, upload the metadata XML, and save.
 6. Verify the SAML SSO Integration shows **"Status: Enabled"**.
 7. Test login via "Continue with SAML SSO" on the Prowler login page.

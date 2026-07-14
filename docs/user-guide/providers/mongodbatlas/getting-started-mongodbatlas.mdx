@@ -15,12 +15,12 @@ Before you begin, make sure you have:
 3. An **API Key pair** (public and private keys) with appropriate permissions:
    - **Organization Read Only**: Provides read-only access to everything in the organization, including all projects in the organization. This permission is sufficient for most security checks.
    - **Organization Owner**: Required to audit the [Auditing configuration](https://www.mongodb.com/docs/api/doc/atlas-admin-api-v2/group/endpoint-auditing) for projects. Database auditing tracks database operations and security events, including authentication attempts, data definition language (DDL) changes, user and role modifications, and privilege grants. This configuration is essential for security monitoring, forensics, and compliance. Without **Organization Owner** permission, the `projects_auditing_enabled` check cannot retrieve the audit configuration status.
-4. Prowler App access (cloud or self-hosted) or the Prowler CLI (`pip install prowler`).
+4. Access to Prowler Cloud or Prowler Local Server, or the Prowler CLI (`pip install prowler`).
 
 For detailed instructions on creating API keys, see the [MongoDB Atlas authentication guide](./authentication.mdx).
 
 <Warning>
-If **Require IP Access List for the Atlas Administration API** is enabled in your organization settings, you **must** add the IP address of the host running Prowler (or the public IP of Prowler Cloud) to the organization IP Access List or Atlas will reject every API call. You can manage this under **Settings → Organization Settings → Security**. See step 7 of the [authentication guide](./authentication.mdx) for detailed instructions, and refer to the [Prowler Cloud public IP list](../../tutorials/prowler-cloud-public-ips) when using Prowler Cloud.
+If **Require IP Access List for the Atlas Administration API** is enabled in your organization settings, you **must** add the IP address of the host running Prowler (or the public IP of Prowler Cloud) to the organization IP Access List or Atlas will reject every API call. You can manage this under **Settings → Organization Settings → Security**. See step 7 of the [authentication guide](./authentication.mdx) for detailed instructions, and refer to the [Prowler Cloud egress IPs](/security/networking) when using Prowler Cloud.
 </Warning>
 
 <CardGroup cols={2}>
@@ -53,7 +53,7 @@ If **Require IP Access List for the Atlas Administration API** is enabled in you
 
 ### Step 3: Test the connection and start scanning
 
-1. Click **Test connection** to ensure Prowler App can reach the Atlas API.
+1. Click **Test connection** to ensure Prowler Cloud can reach the Atlas API.
 2. Save the credentials. The provider will appear in the list with its current connection status.
 3. Launch a scan from the provider row or from the **Scans** page.
    ![Launch scan](./img/launch-scan.png)
@@ -108,6 +108,6 @@ prowler mongodbatlas --atlas-project-id <project-id>
 
 - Combine flags (for example, `--checks` or `--services`) just like with other providers.
 - Use `--output-modes` to export findings in JSON, CSV, ASFF, etc.
-- Rotate API keys regularly and update the stored credentials in Prowler App to maintain connectivity.
+- Rotate API keys regularly and update the stored credentials in Prowler Cloud to maintain connectivity.
 
 For more examples (filters, outputs, scheduling), refer back to the [MongoDB Atlas documentation hub](./authentication.mdx) and the main Prowler CLI usage guide.

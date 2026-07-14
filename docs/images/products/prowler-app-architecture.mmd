@@ -1,8 +1,10 @@
+%% Source of truth for the root README PNG (re-render at https://mermaid.live).
+%% The docs page getting-started/products/prowler-app.mdx inlines this diagram as a native mermaid block: keep both in sync.
 flowchart TB
     user([User / Security Team])
     cli([Prowler CLI])
 
-    subgraph APP["Prowler App"]
+    subgraph APP["Prowler Local Server"]
         ui["Prowler UI<br/>(Next.js)"]
         api["Prowler API<br/>(Django REST Framework)"]
         worker["API Worker<br/>(Celery)"]

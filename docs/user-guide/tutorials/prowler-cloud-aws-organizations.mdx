@@ -1,6 +1,8 @@
 ---
 title: 'AWS Organizations in Prowler Cloud'
+sidebarTitle: 'AWS Organizations'
 description: 'Onboard all AWS accounts in your Organization through a single guided wizard'
+icon: "cloud"
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -464,7 +466,7 @@ Each AWS account you connect through the Organizations wizard counts as one **pr
 - **Large organizations**: connecting a 500-account organization will result in up to 500 providers on your subscription. Review your plan limits before proceeding.
 - **Deleted providers**: if you later remove an account, the deleted provider no longer counts toward your subscription.
 
-For pricing details, see [Prowler Cloud Pricing](/getting-started/products/prowler-cloud-pricing).
+For pricing details, see [Prowler Cloud Pricing](https://prowler.com/pricing).
 
 ## Troubleshooting
 
@@ -505,7 +507,7 @@ No accounts pass the connection test.
 
 - Verify the CloudFormation StackSet was deployed — complete [Step 2](#step-2-deploy-the-cloudformation-stackset) and wait for stack instances to reach **CREATE_COMPLETE**
 - Check that the **ExternalId** parameter in the StackSet matches the External ID shown in the Prowler wizard
-- If your accounts use IP-based IAM policies, allow [Prowler Cloud public IPs](/user-guide/tutorials/prowler-cloud-public-ips)
+- If your accounts use IP-based IAM policies, allow [Prowler Cloud egress IPs](/security/networking)
 
 ### Connection Test Fails for Some Accounts
 

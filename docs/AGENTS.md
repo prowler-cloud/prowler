@@ -78,11 +78,25 @@ b. National security is of the utmost concern nowadays.
 
 Prowler Features are considered proper nouns. They are to be referenced without articles in all pieces of writing.
 
-This is a list of Prowler Features:
+Prowler ships two product families. Use these names exactly; the former names Prowler App (now Prowler Local Server) and Prowler Enterprise (now Prowler Private Cloud) must not appear in new writing.
 
-* **Prowler App**
+Open Source projects:
+
 * **Prowler CLI**
+* **Prowler Local Server** (formerly Prowler App)
+* **Prowler Local Dashboard** (the Prowler CLI dashboard)
 * **Prowler SDK**
+
+Prowler Products:
+
+* **Prowler Cloud**
+* **Prowler Private Cloud** (formerly Prowler Enterprise)
+* **Prowler Hub**
+* **Prowler Lighthouse AI**
+* **Prowler MCP**
+
+Other Prowler Features:
+
 * **Built-in Compliance Checks**
 * **Multi-cloud Security Scanning**
 * **Autonomous Cloud Security Analyst (AI)**
@@ -97,8 +111,6 @@ This is a list of Prowler Features:
 * **AI-Generated Detections & Remediations**
 * **Prowler Studio**
 * **Custom Security Policies**
-* **Prowler Cloud**
-* **Prowler Registry**
 * **Open Source & Full APIs**
 
 ---
@@ -137,10 +149,10 @@ Explicit use of second-person pronouns (you) and possessives (your) should be mi
 ### Example of Improvement Through Avoiding Second Person Pronouns
 
 **Original:**
-Prowler App can be installed in different ways, depending on your environment:
+Prowler Local Server can be installed in different ways, depending on your environment:
 
 **Improved Version:**
-Prowler App offers flexible installation methods tailored to various environments:
+Prowler Local Server offers flexible installation methods tailored to various environments:
 
 ---
 
@@ -262,7 +274,7 @@ There are several options for punctuating bullet points. Regardless of the style
 
 * **No punctuation (minimalistic):** This strategy is suitable when no verbs are involved and is best used to highlight products or features in isolation. For example:
 
-    Prowler App is composed of three key components:
+    Prowler Local Server is composed of three key components:
     * Prowler UI
     * Prowler API
     * Prowler SDK
@@ -271,7 +283,7 @@ There are several options for punctuating bullet points. Regardless of the style
 
 * **Periods for full sentences:** This approach works best when each bullet point forms a full sentence or includes verbs. For example:
 
-    Prowler App is composed of three key components:
+    Prowler Local Server is composed of three key components:
     * Prowler UI, a web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
     * Prowler API, a backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
     * Prowler SDK, a Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
@@ -536,6 +548,32 @@ import { VersionBadge } from "/snippets/version-badge.mdx"
 
 Tag-Based Scanning allows filtering resources by AWS tags during security assessments...
 ```
+
+---
+
+## AppliesTo Banner for Product Scope
+
+The AppliesTo component states which products a guide covers and links to the product families page. It is located at `docs/snippets/applies-to.mdx`.
+
+### When to Use the AppliesTo Banner
+
+Use it on web UI tutorial pages that apply to more than one product (for example, a guide written for Prowler Cloud whose steps also work on Prowler Local Server). Do not combine it with the SubscriptionBanner: pages carrying the SubscriptionBanner already state their availability.
+
+### How to Use the AppliesTo Banner
+
+```mdx
+import { AppliesTo } from "/snippets/applies-to.mdx"
+
+<AppliesTo />
+```
+
+The default covers Prowler Cloud, Prowler Private Cloud, and Prowler Local Server. Pass the `products` prop to narrow the scope:
+
+```mdx
+<AppliesTo products={["Prowler Cloud", "Prowler Private Cloud"]} />
+```
+
+Place it on its own line below the Version Badge when one is present, otherwise directly after the imports.
 
 ---
 

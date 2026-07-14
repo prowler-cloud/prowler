@@ -2,7 +2,7 @@
 """Generate docs/snippets/provider-cards.mdx from provider getting-started pages.
 
 Scans docs/user-guide/providers/<name>/getting-started-*.mdx, keeps only the
-providers that Prowler App/Cloud actually supports (source of truth: the
+providers that Prowler Cloud and Prowler Local Server actually support (source of truth: the
 `ProviderChoices` enum in api/src/backend/api/models.py — CLI-only providers
 such as Linode/LLM/Scaleway/StackIT are excluded), reads the frontmatter
 `title`, derives a display name, and emits a snippet exporting a

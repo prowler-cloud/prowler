@@ -16,9 +16,9 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 
 The Prowler MCP Server provides three main integration points:
 
-### 1. Prowler Cloud and Prowler App (Self-Managed)
+### 1. Prowler Cloud and Prowler Local Server
 
-Full access to Prowler Cloud platform and self-managed Prowler App for:
+Full access to Prowler Cloud platform and Prowler Local Server for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
@@ -29,7 +29,7 @@ Full access to Prowler Cloud platform and self-managed Prowler App for:
 ### 2. Prowler Hub
 
 Access to Prowler's comprehensive security knowledge base:
-- **Security Checks Catalog**: Browse and search **over 1000 security checks** across multiple cloud providers.
+- **Security Checks Catalog**: Browse and search **over 2,000 security checks** across multiple cloud providers.
 - **Check Implementation**: View the Python code that powers each security check.
 - **Automated Fixers**: Access remediation scripts for common security issues.
 - **Compliance Frameworks**: Explore mappings to **over 70 compliance standards and frameworks**.
@@ -49,7 +49,7 @@ The following diagram illustrates the Prowler MCP Server architecture and its in
 ![Prowler MCP Server Schema](/images/prowler_mcp_schema.png)
 
 The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components:
-- Prowler Cloud/App for security operations
+- Prowler Cloud and Prowler Local Server for security operations
 - Prowler Hub for security knowledge
 - Prowler Documentation for guidance and reference.
 
@@ -136,15 +136,15 @@ Prowler MCP Server can be used in three ways:
 
 - No installation required.
 - Managed and maintained by Prowler team.
-- Authentication to Prowler Cloud or Prowler App (self-managed) via API key or JWT token.
+- Authentication to Prowler Cloud or Prowler Local Server via API key or JWT token.
 
 ### 2. Local STDIO Mode
 
 **Run the server locally on your machine**
 
 - Runs as a subprocess of your MCP client.
-- Possibility to connect to a self-hosted Prowler App (e.g. self-hosted Prowler App).
-- Authentication to Prowler Cloud or Prowler App (self-managed) via environment variables.
+- Possibility to connect to Prowler Local Server.
+- Authentication to Prowler Cloud or Prowler Local Server via environment variables.
 - Requires Python 3.12+ or Docker.
 
 ### 3. Self-Hosted HTTP Mode
@@ -152,8 +152,8 @@ Prowler MCP Server can be used in three ways:
 **Deploy your own remote MCP server**
 
 - Full control over deployment.
-- Possibility to connect to a self-hosted Prowler App (e.g. self-hosted Prowler App).
-- Authentication to Prowler App (self-managed) via API key or JWT token.
+- Possibility to connect to Prowler Local Server.
+- Authentication to Prowler Local Server via API key or JWT token.
 - Requires Python 3.12+ or Docker.
 
 ## Requirements
@@ -161,17 +161,17 @@ Prowler MCP Server can be used in three ways:
 Requirements vary based on deployment option:
 
 **For Prowler Cloud MCP Server:**
-- Prowler Cloud account and API key (only for Prowler Cloud/App features)
+- Prowler Cloud account and API key (only for Prowler Cloud and Prowler Local Server features)
 
 **For self-hosted STDIO/HTTP Mode:**
 - Python 3.12+ or Docker
 - Network access to:
   - `https://hub.prowler.com` (for Prowler Hub)
   - `https://docs.prowler.com` (for Prowler Documentation)
-  - Prowler Cloud API or self-hosted Prowler App API (for Prowler Cloud/App features)
+  - Prowler Cloud API or Prowler Local Server API (for Prowler Cloud and Prowler Local Server features)
 
 <Note>
-**No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication in both deployment options. A Prowler API key is only required to access Prowler Cloud or Prowler App (Self-Managed) features.
+**No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication in both deployment options. A Prowler API key is only required to access Prowler Cloud or Prowler Local Server features.
 </Note>
 
 ## Next Steps

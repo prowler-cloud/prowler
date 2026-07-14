@@ -38,61 +38,74 @@
           {
             "group": "Welcome",
             "pages": [
-              "introduction"
+              "introduction",
+              "getting-started/products/index"
             ]
           },
           {
-            "group": "Prowler Cloud",
+            "group": "Prowler Products",
             "pages": [
-              "getting-started/products/prowler-cloud",
-              "getting-started/products/prowler-cloud-pricing",
-              "getting-started/products/prowler-cloud-aws-marketplace",
-              "getting-started/goto/prowler-cloud",
-              "getting-started/goto/prowler-api-reference"
+              {
+                "group": "Prowler Cloud",
+                "icon": "cloud",
+                "pages": [
+                  "getting-started/products/prowler-cloud",
+                  "getting-started/products/prowler-cloud-pricing",
+                  "getting-started/products/prowler-cloud-aws-marketplace",
+                  "getting-started/goto/prowler-cloud",
+                  "getting-started/goto/prowler-api-reference"
+                ]
+              },
+              {
+                "group": "Prowler Hub",
+                "pages": [
+                  "getting-started/products/prowler-hub",
+                  "getting-started/goto/prowler-hub"
+                ]
+              },
+              {
+                "group": "Prowler MCP",
+                "pages": [
+                  "getting-started/products/prowler-mcp",
+                  "getting-started/installation/prowler-mcp",
+                  "getting-started/basic-usage/prowler-mcp",
+                  "getting-started/basic-usage/prowler-mcp-tools"
+                ]
+              },
+              {
+                "group": "Prowler for AI Agents",
+                "pages": [
+                  "getting-started/products/prowler-claude-code-plugin"
+                ]
+              },
+              {
+                "group": "Prowler Lighthouse AI",
+                "icon": "cloud",
+                "pages": [
+                  "getting-started/products/prowler-cloud-lighthouse"
+                ]
+              }
             ]
           },
           {
-            "group": "Prowler CLI",
+            "group": "Open Source",
             "pages": [
-              "getting-started/products/prowler-cli",
-              "getting-started/installation/prowler-cli",
-              "getting-started/basic-usage/prowler-cli"
-            ]
-          },
-          {
-            "group": "Prowler App",
-            "pages": [
-              "getting-started/products/prowler-app",
-              "getting-started/installation/prowler-app",
-              "getting-started/basic-usage/prowler-app"
-            ]
-          },
-          {
-            "group": "Prowler Lighthouse AI",
-            "pages": [
-              "getting-started/products/prowler-cloud-lighthouse"
-            ]
-          },
-          {
-            "group": "Prowler for Claude Code",
-            "pages": [
-              "getting-started/products/prowler-claude-code-plugin"
-            ]
-          },
-          {
-            "group": "Prowler MCP Server",
-            "pages": [
-              "getting-started/products/prowler-mcp",
-              "getting-started/installation/prowler-mcp",
-              "getting-started/basic-usage/prowler-mcp",
-              "getting-started/basic-usage/prowler-mcp-tools"
-            ]
-          },
-          {
-            "group": "Prowler Hub",
-            "pages": [
-              "getting-started/products/prowler-hub",
-              "getting-started/goto/prowler-hub"
+              {
+                "group": "Prowler CLI",
+                "pages": [
+                  "getting-started/products/prowler-cli",
+                  "getting-started/installation/prowler-cli",
+                  "getting-started/basic-usage/prowler-cli"
+                ]
+              },
+              {
+                "group": "Prowler Local Server",
+                "pages": [
+                  "getting-started/products/prowler-app",
+                  "getting-started/installation/prowler-app",
+                  "getting-started/basic-usage/prowler-app"
+                ]
+              }
             ]
           },
           {
@@ -111,36 +124,62 @@
         "tab": "Guides",
         "groups": [
           {
-            "group": "Prowler Cloud/App",
+            "group": "Prowler Cloud",
             "pages": [
               "user-guide/tutorials/prowler-app",
               {
-                "group": "Authentication",
+                "group": "Authentication & Access",
                 "pages": [
                   "user-guide/tutorials/prowler-app-social-login",
-                  "user-guide/tutorials/prowler-app-sso"
+                  "user-guide/tutorials/prowler-app-sso",
+                  "user-guide/tutorials/prowler-app-rbac",
+                  "user-guide/tutorials/prowler-app-multi-tenant",
+                  "user-guide/tutorials/prowler-app-api-keys"
                 ]
               },
-              "user-guide/tutorials/prowler-app-rbac",
-              "user-guide/tutorials/prowler-app-multi-tenant",
-              "user-guide/tutorials/prowler-app-api-keys",
-              "user-guide/tutorials/prowler-import-findings",
-              "user-guide/tutorials/prowler-scan-scheduling",
-              "user-guide/tutorials/prowler-alerts",
-              "user-guide/tutorials/prowler-app-scan-configuration",
-              "user-guide/tutorials/prowler-app-findings-triage",
-              "user-guide/compliance/tutorials/cross-provider-compliance",
+              {
+                "group": "Providers",
+                "icon": "cloud",
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-aws-organizations",
+                  "user-guide/tutorials/prowler-cloud-gcp-organizations",
+                  "user-guide/tutorials/prowler-cloud-azure-management-groups"
+                ]
+              },
+              {
+                "group": "Scans",
+                "icon": "cloud",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-scan-configuration",
+                  "user-guide/tutorials/prowler-scan-scheduling",
+                  "user-guide/tutorials/prowler-import-findings"
+                ]
+              },
+              {
+                "group": "Findings",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-finding-groups",
+                  "user-guide/tutorials/prowler-app-attack-paths",
+                  "user-guide/tutorials/prowler-app-findings-triage",
+                  "user-guide/tutorials/prowler-alerts"
+                ]
+              },
               {
                 "group": "Mutelist",
-                "expanded": true,
                 "pages": [
                   "user-guide/tutorials/prowler-app-simple-mutelist",
                   "user-guide/tutorials/prowler-app-mute-findings"
                 ]
               },
               {
+                "group": "Compliance",
+                "icon": "cloud",
+                "pages": [
+                  "user-guide/compliance/tutorials/cross-provider-compliance"
+                ]
+              },
+              {
                 "group": "Integrations",
-                "expanded": true,
                 "pages": [
                   "user-guide/tutorials/prowler-app-s3-integration",
                   "user-guide/tutorials/prowler-app-security-hub-integration",
@@ -148,36 +187,32 @@
                 ]
               },
               {
-                "group": "AWS Organizations",
-                "expanded": true,
-                "pages": [
-                  "user-guide/tutorials/prowler-cloud-aws-organizations"
-                ]
-              },
-              {
-                "group": "Lighthouse AI (Prowler Cloud)",
-                "pages": [
-                  "user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"
-                ]
-              },
-              {
-                "group": "Lighthouse AI (Open Source)",
-                "pages": [
-                  "getting-started/products/prowler-lighthouse-ai",
-                  "user-guide/tutorials/prowler-app-lighthouse",
-                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
-                ]
-              },
-              "user-guide/tutorials/prowler-app-attack-paths",
-              "user-guide/tutorials/prowler-app-finding-groups",
-              "user-guide/tutorials/prowler-cloud-public-ips",
-              {
                 "group": "Tutorials",
                 "pages": [
                   "user-guide/tutorials/prowler-app-sso-entra",
                   "user-guide/tutorials/prowler-app-sso-google-workspace",
                   "user-guide/tutorials/bulk-provider-provisioning",
                   "user-guide/tutorials/aws-organizations-bulk-provisioning"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Lighthouse AI",
+            "pages": [
+              {
+                "group": "Prowler Cloud",
+                "icon": "cloud",
+                "pages": [
+                  "user-guide/tutorials/prowler-cloud-lighthouse-multi-llm"
+                ]
+              },
+              {
+                "group": "Prowler Local Server",
+                "pages": [
+                  "getting-started/products/prowler-lighthouse-ai",
+                  "user-guide/tutorials/prowler-app-lighthouse",
+                  "user-guide/tutorials/prowler-app-lighthouse-multi-llm"
                 ]
               }
             ]
@@ -474,6 +509,7 @@
           },
           {
             "group": "Prowler Cloud",
+            "icon": "cloud",
             "pages": [
               "security/encryption",
               "security/data-regions",
@@ -503,10 +539,6 @@
         "tab": "Changelog",
         "icon": "github",
         "href": "https://github.com/prowler-cloud/prowler/releases"
-      },
-      {
-        "tab": "Public Roadmap",
-        "href": "https://roadmap.prowler.com/"
       }
     ],
     "global": {
@@ -541,6 +573,13 @@
         "style": "primary"
       }
     ]
+  },
+  "banner": {
+    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products).",
+    "dismissible": true
+  },
+  "markdown": {
+    "instructions": "Prowler product naming: Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. Always use the current names when answering. The full product reference is at /getting-started/products: Open Source projects are Prowler CLI, Prowler Local Server, Prowler Local Dashboard, and Prowler SDK; Prowler Products are Prowler Cloud, Prowler Private Cloud, Prowler Hub, Prowler Lighthouse AI, and Prowler MCP."
   },
   "analytics": {
     "ga4": {
@@ -622,6 +661,10 @@
     {
       "source": "/user-guide/tutorials/prowler-app-alerts",
       "destination": "/user-guide/tutorials/prowler-alerts"
+    },
+    {
+      "source": "/user-guide/tutorials/prowler-cloud-public-ips",
+      "destination": "/security/networking"
     }
   ]
 }
