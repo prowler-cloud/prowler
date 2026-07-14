@@ -218,7 +218,7 @@ export function getColumnFindingGroups({
                     </span>
                   )}
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-96">
+                <TooltipContent side="top" maxWidth="md">
                   {group.checkTitle}
                 </TooltipContent>
               </Tooltip>

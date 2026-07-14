@@ -79,7 +79,7 @@ function FindingTitleCell({
               {finding.attributes.check_metadata.checktitle}
             </p>
           </TooltipTrigger>
-          <TooltipContent side="top" className="max-w-96">
+          <TooltipContent side="top" maxWidth="md">
             {finding.attributes.check_metadata.checktitle}
           </TooltipContent>
         </Tooltip>

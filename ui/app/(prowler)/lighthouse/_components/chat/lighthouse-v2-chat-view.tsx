@@ -154,7 +154,7 @@ export function LighthouseV2ChatView({
           placeholder="Select model"
           searchPlaceholder="Search models..."
           emptyMessage="No models found."
-          triggerClassName="h-8 text-sm"
+          size="sm"
         />
       </div>
     ),
