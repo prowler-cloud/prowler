@@ -30,13 +30,13 @@ describe("CloudUpgradeModal", () => {
     ).toBeVisible();
     expect(screen.getByText("Available in Prowler Cloud")).toBeVisible();
     expect(
-      screen.getByRole("link", { name: "Create alerts in Prowler Cloud" }),
+      screen.getByRole("link", { name: "Create Alerts in Prowler Cloud" }),
     ).toHaveAttribute(
       "href",
       "https://cloud.prowler.com/sign-up?source=prowler_local_server&feature=alerts",
     );
     expect(
-      screen.getByRole("link", { name: "Compare editions" }),
+      screen.getByRole("link", { name: "View Plans & Pricing" }),
     ).toHaveAttribute(
       "href",
       "https://prowler.com/pricing?source=prowler_local_server&feature=alerts",

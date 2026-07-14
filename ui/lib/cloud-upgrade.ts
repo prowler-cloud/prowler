@@ -20,7 +20,7 @@ export interface CloudUpgradeContent {
   primaryCta: string;
 }
 
-export const CLOUD_UPGRADE_SECONDARY_CTA = "Compare editions";
+export const CLOUD_UPGRADE_SECONDARY_CTA = "View Plans & Pricing";
 export const CLOUD_UPGRADE_FOOTER_NOTE =
   "Prowler Cloud opens in a new tab. Your self-hosted deployment remains unchanged.";
 
@@ -38,7 +38,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Set scan times in your preferred timezone",
       "Manage schedules alongside scan history",
     ],
-    primaryCta: "Schedule scans in Prowler Cloud",
+    primaryCta: "Schedule Scans in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.ALERTS]: {
     title: "Turn findings into alerts",
@@ -49,7 +49,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Notify the right people after every scan",
       "Manage alert rules from one place",
     ],
-    primaryCta: "Create alerts in Prowler Cloud",
+    primaryCta: "Create Alerts in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS]: {
     title: "Add your entire AWS Organization",
@@ -60,7 +60,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Choose exactly which accounts to onboard",
       "Apply schedules across the selected accounts",
     ],
-    primaryCta: "Set up AWS Organizations in Prowler Cloud",
+    primaryCta: "Set Up AWS Organizations in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CLI_IMPORT]: {
     title: "Bring CLI findings into one Cloud view",
@@ -71,7 +71,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Track CLI and managed scans in one place",
       "Automate findings ingestion from CI/CD pipelines",
     ],
-    primaryCta: "Import CLI findings in Prowler Cloud",
+    primaryCta: "Import CLI Findings in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]: {
     title: "See compliance across every provider",
@@ -82,7 +82,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Find coverage gaps without switching scans",
       "Generate a consolidated compliance report",
     ],
-    primaryCta: "Consolidate compliance in Prowler Cloud",
+    primaryCta: "Consolidate Compliance in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: {
     title: "Coordinate finding remediation",
@@ -93,7 +93,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Track review and remediation status",
       "Keep triage history with future scans",
     ],
-    primaryCta: "Triage findings in Prowler Cloud",
+    primaryCta: "Triage Findings in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
     title: "Use a managed security assistant",
@@ -115,7 +115,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Automate scans, alerts, and compliance reporting",
       "Use managed infrastructure, support, and backups",
     ],
-    primaryCta: "Start a Prowler Cloud trial",
+    primaryCta: "Start a Prowler Cloud Trial",
   },
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: {
     title: "Configure every scan once",
@@ -126,7 +126,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Apply consistent configurations to providers",
       "Manage scan behavior from one place",
     ],
-    primaryCta: "Configure scans in Prowler Cloud",
+    primaryCta: "Configure Scans in Prowler Cloud",
   },
 } as const satisfies Record<CloudUpgradeFeature, CloudUpgradeContent>;
 
