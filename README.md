@@ -3,7 +3,7 @@
   <img align="center" alt="Prowler logo" src="https://github.com/prowler-cloud/prowler/blob/master/docs/img/prowler-logo-white.png#gh-dark-mode-only" width="50%" height="50%">
 </p>
 <p align="center">
-  <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With hundreds of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
+  <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With thousands of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
 <b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
@@ -41,7 +41,7 @@
 
 # Description
 
-**Prowler** is the world’s most widely used _Open-Source Cloud Security Platform_ that automates security and compliance across **any cloud environment**. With hundreds of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY Cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
+**Prowler** is the world’s most widely used _Open-Source Cloud Security Platform_ that automates security and compliance across **any cloud environment**. With thousands of ready-to-use security checks, remediation guidance, and compliance frameworks, Prowler is built to _“Secure ANY Cloud at AI Speed”_. Prowler delivers **AI-driven**, **customizable**, and **easy-to-use** assessments, dashboards, reports, and integrations, making cloud security **simple**, **scalable**, and **cost-effective** for organizations of any size.
 
 Prowler includes hundreds of built-in controls to ensure compliance with standards and frameworks, including:
 
@@ -54,16 +54,16 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 - **National Security Standards:** ENS (Spanish National Security Scheme) and KISA ISMS-P (Korean)
 - **Custom Security Frameworks:** Tailored to your needs
 
-## Prowler App / Prowler Cloud
+## Prowler Cloud & Prowler Local Server
 
-Prowler App / [Prowler Cloud](https://cloud.prowler.com/) is a web-based application that simplifies running Prowler across your cloud provider accounts. It provides a user-friendly interface to visualize the results and streamline your security assessments.
+[Prowler Cloud](https://cloud.prowler.com/) and Prowler Local Server, its self-hosted open-source version formerly known as Prowler App, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
 
-![Prowler App](docs/images/products/overview.png)
+![Prowler Cloud](docs/images/products/overview.png)
 ![Risk Pipeline](docs/images/products/risk-pipeline.png)
 ![Threat Map](docs/images/products/threat-map.png)
 
 
->For more details, refer to the [Prowler App Documentation](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-app-installation)
+>For more details, refer to the [Prowler Local Server documentation](https://docs.prowler.com/getting-started/installation/prowler-app)
 
 ## Prowler CLI
 
@@ -73,12 +73,12 @@ prowler <provider>
 ![Prowler CLI Execution](docs/img/short-display.png)
 
 
-## Prowler Dashboard
+## Prowler Local Dashboard
 
 ```console
 prowler dashboard
 ```
-![Prowler Dashboard](docs/images/products/dashboard.png)
+![Prowler Local Dashboard](docs/images/products/dashboard.png)
 
 
 ## Attack Paths
@@ -121,7 +121,7 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 > For the most accurate and up-to-date information about checks, services, frameworks, and categories, visit [**Prowler Hub**](https://hub.prowler.com).
 
 
-| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/compliance/) | [Categories](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/misc/#categories) | Support | Interface |
+| Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
 | AWS | 615 | 86 | 47 | 19 | Official | UI, API, CLI |
 | Azure | 190 | 22 | 21 | 16 | Official | UI, API, CLI |
@@ -160,11 +160,11 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 
 # 💻 Installation
 
-## Prowler App
+## Prowler Local Server
 
-Prowler App offers flexible installation methods tailored to various environments:
+Prowler Local Server offers flexible installation methods tailored to various environments:
 
-> For detailed instructions on using Prowler App, refer to the [Prowler App Usage Guide](https://docs.prowler.com/projects/prowler-open-source/en/latest/tutorials/prowler-app/).
+> For detailed instructions on using Prowler Local Server, refer to the [usage guide](https://docs.prowler.com/user-guide/tutorials/prowler-app).
 
 ### Docker Compose
 
@@ -197,7 +197,7 @@ docker compose up -d
 > [!WARNING]
 > 🔒 For a secure setup, the API auto-generates a unique key pair, `DJANGO_TOKEN_SIGNING_KEY` and `DJANGO_TOKEN_VERIFYING_KEY`, and stores it in `~/.config/prowler-api` (non-container) or the bound Docker volume in `_data/api` (container). Never commit or reuse static/default keys. To rotate keys, delete the stored key files and restart the API.
 
-Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+Once configured, access Prowler Local Server at http://localhost:3000. Sign up using your email and password to get started.
 
 ### Common Issues with Docker Pull Installation
 
@@ -269,7 +269,7 @@ pnpm run build
 pnpm start
 ```
 
-> Once configured, access the Prowler App at http://localhost:3000. Sign up using your email and password to get started.
+> Once configured, access Prowler Local Server at http://localhost:3000. Sign up using your email and password to get started.
 
 #### Pre-commit Hooks Setup
 
@@ -287,7 +287,7 @@ Prowler CLI is available as a project in [PyPI](https://pypi.org/project/prowler
 pip install prowler
 prowler -v
 ```
->For further guidance, refer to [https://docs.prowler.com](https://docs.prowler.com/projects/prowler-open-source/en/latest/#prowler-cli-installation)
+>For further guidance, refer to [https://docs.prowler.com](https://docs.prowler.com/getting-started/installation/prowler-cli)
 
 ### Containers
 
@@ -307,7 +307,7 @@ The container images are available here:
 - Prowler CLI:
     - [DockerHub](https://hub.docker.com/r/prowlercloud/prowler/tags)
     - [AWS Public ECR](https://gallery.ecr.aws/prowler-cloud/prowler)
-- Prowler App:
+- Prowler Local Server:
     - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
     - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)
 
@@ -357,17 +357,55 @@ Full configuration, per-provider authentication, and SARIF examples: [Prowler Gi
 
 # ✏️ High level architecture
 
-## Prowler App
-**Prowler App** is composed of four key components:
+## Prowler Local Server
+**Prowler Local Server** is composed of four key components:
 
 - **Prowler UI**: A web-based interface, built with Next.js, providing a user-friendly experience for executing Prowler scans and visualizing results.
 - **Prowler API**: A backend service, developed with Django REST Framework, responsible for running Prowler scans and storing the generated results.
 - **Prowler SDK**: A Python SDK designed to extend the functionality of the Prowler CLI for advanced capabilities.
 - **Prowler MCP Server**: A Model Context Protocol server that provides AI tools for Lighthouse, the AI-powered security assistant. This is a critical dependency for Lighthouse functionality.
 
-![Prowler App Architecture](docs/images/products/prowler-app-architecture.png)
+```mermaid
+flowchart TB
+    user([User / Security Team])
+    cli([Prowler CLI])
 
-<!-- Diagram source: docs/images/products/prowler-app-architecture.mmd — edit there, re-render at https://mermaid.live, and replace the PNG. -->
+    subgraph APP["Prowler Local Server"]
+        ui["Prowler UI<br/>(Next.js)"]
+        api["Prowler API<br/>(Django REST Framework)"]
+        worker["API Worker<br/>(Celery)"]
+        beat["API Scheduler<br/>(Celery Beat)"]
+        mcp["Prowler MCP Server<br/>(Lighthouse AI tools)"]
+    end
+
+    sdk["Prowler SDK<br/>(Python)"]
+
+    subgraph DATA["Data Layer"]
+        pg[("PostgreSQL")]
+        valkey[("Valkey / Redis")]
+        neo4j[("Neo4j")]
+    end
+
+    providers["Providers"]
+
+    user --> ui
+    user --> cli
+    ui -->|REST| api
+    ui -->|MCP HTTP| mcp
+    mcp -->|REST| api
+    api --> pg
+    api --> valkey
+    beat -->|enqueue jobs| valkey
+    valkey -->|dispatch| worker
+    worker --> pg
+    worker -->|Attack Paths| neo4j
+    worker -->|invokes| sdk
+    cli --> sdk
+
+    sdk --> providers
+```
+
+<!-- Diagram source: docs/images/products/prowler-app-architecture.mmd — keep this inline block, the docs page getting-started/products/prowler-app.mdx, and the .mmd file in sync. -->
 
 
 ## Prowler CLI
