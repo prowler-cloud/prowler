@@ -1464,7 +1464,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
         )
 
     with rls_transaction(tenant_id):
-        scan_aggregations = {
+        scan_aggregations = [
             ScanSummary(
                 tenant_id=tenant_id,
                 scan_id=scan_id,
@@ -1489,9 +1489,18 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             for agg in aggregation
             if agg["resources__service"] is not None
             and agg["resources__region"] is not None
-        }
-        # Upsert so re-runs (post-mute reaggregation) don't trip
-        # `unique_scan_summary`; race-safe under concurrent writers.
+        ]
+        # Needed sort so concurrent upserts acquire locks consistently
+        scan_aggregations.sort(
+            key=lambda summary: (
+                summary.tenant_id,
+                summary.scan_id,
+                summary.check_id,
+                summary.service,
+                summary.severity,
+                summary.region,
+            )
+        )
         ScanSummary.objects.bulk_create(
             scan_aggregations,
             batch_size=3000,
