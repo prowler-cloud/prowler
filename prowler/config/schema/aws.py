@@ -415,6 +415,10 @@ class AWSProviderConfig(ProviderConfigBase):
         le=6,
         description="Min AZs an Application/Network LB must span. Range: 1..6.",
     )
+    elbv2_listener_pqc_tls_allowed_policies: Optional[list[str]] = Field(
+        default=None,
+        description="ELBv2 SSL policies that satisfy the PQ TLS listener check.",
+    )
 
     # --- ElastiCache -----------------------------------------------------
     minimum_snapshot_retention_period: Optional[int] = Field(

@@ -74,6 +74,7 @@ class ELBv2(AWSService):
             ):
                 for listener in page["Listeners"]:
                     load_balancer[1].listeners[listener["ListenerArn"]] = Listenerv2(
+                        arn=listener["ListenerArn"],
                         region=regional_client.region,
                         port=listener.get("Port", 0),
                         ssl_policy=listener.get("SslPolicy", ""),
@@ -86,10 +87,14 @@ class ELBv2(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
+                load_balancer[1].listener_discovery_failed = True
+                load_balancer[1].listener_discovery_error = str(error)
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            load_balancer[1].listener_discovery_failed = True
+            load_balancer[1].listener_discovery_error = str(error)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -190,6 +195,7 @@ class ListenerRule(BaseModel):
 
 
 class Listenerv2(BaseModel):
+    arn: str
     region: str
     port: int
     protocol: str
@@ -209,6 +215,8 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     cross_zone_load_balancing: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
+    listener_discovery_failed: bool = False
+    listener_discovery_error: Optional[str] = None
     scheme: Optional[str]
     security_groups: list[str] = []
     # Key: ZoneName, Value: SubnetId
