@@ -137,13 +137,19 @@ describe("AddRoleForm", () => {
     // Then
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(
-      screen.getByText(/tenant-wide visibility setting/i),
-    ).toHaveTextContent(
-      /grants visibility into every provider, account, resource, finding, scan, and compliance result.*required to use the Jira integration/i,
-    );
+      screen.getByText(
+        "Checking the box below grants visibility into every provider: resources, findings, scans, and compliance results, regardless of the provider groups selected.",
+      ),
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/required to use the Jira integration/i),
     ).toHaveProperty("tagName", "STRONG");
+    expect(
+      screen.getByRole("link", { name: /learn more about provider groups/i }),
+    ).toHaveAttribute(
+      "href",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-rbac#provider-groups",
+    );
     expect(
       screen.queryByRole("heading", { name: "Unlimited Visibility" }),
     ).not.toBeInTheDocument();
@@ -154,12 +160,12 @@ describe("AddRoleForm", () => {
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText(
-        /enable it only for roles that need tenant-wide security visibility/i,
+        /enable it only for roles that need organization-wide security visibility/i,
       ),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByText(
-        /manage providers enables unlimited visibility in this form because provider administration needs tenant-wide provider-group context/i,
+        /manage providers enables unlimited visibility in this form because provider administration needs organization-wide provider-group context/i,
       ),
     ).not.toBeInTheDocument();
 
@@ -194,7 +200,7 @@ describe("AddRoleForm", () => {
       }),
     ).toBeChecked();
     expect(
-      screen.getByText(/tenant-wide visibility setting/i),
+      screen.getByText(/checking the box below grants visibility/i),
     ).toBeInTheDocument();
     expect(screen.queryByTestId("group-select")).not.toBeInTheDocument();
     expect(
