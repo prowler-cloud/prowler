@@ -44,7 +44,7 @@ export const CloudUpgradeModal = () => {
       }}
       title={content.title}
       description={content.description}
-      size="lg"
+      size="xl"
     >
       <div className="space-y-6">
         <div className="flex items-center gap-3">

@@ -43,6 +43,33 @@ describe("CloudUpgradeModal", () => {
     );
   });
 
+  it("uses a wider responsive dialog for long contextual CTAs", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS);
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    const dialog = await screen.findByRole("dialog", {
+      name: "Add your entire AWS Organization",
+    });
+
+    // Then
+    expect(dialog).toHaveClass("max-w-[calc(100%-2rem)]", "sm:max-w-xl");
+    expect(dialog).not.toHaveClass("sm:max-w-lg");
+    expect(
+      screen.getByRole("link", {
+        name: "Set Up AWS Organizations in Prowler Cloud",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "View Plans & Pricing" }),
+    ).toBeVisible();
+  });
+
   it("closes the active upgrade and returns focus to its trigger", async () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");

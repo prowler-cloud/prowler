@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { Dialog, DialogContent, DialogTitle } from "./dialog";
 
 describe("DialogContent", () => {
-  it("should only show the close focus ring for keyboard navigation", () => {
+  it("should highlight keyboard focus without drawing a close ring", () => {
     // Given / When
     render(
       <Dialog open>
@@ -17,7 +17,12 @@ describe("DialogContent", () => {
     const closeButton = screen.getByRole("button", { name: "Close" });
 
     // Then
-    expect(closeButton).toHaveClass("focus-visible:ring-2");
+    expect(closeButton).toHaveClass(
+      "focus-visible:bg-bg-neutral-tertiary",
+      "focus-visible:opacity-100",
+    );
+    expect(closeButton).not.toHaveClass("focus-visible:ring-2");
+    expect(closeButton).not.toHaveClass("focus-visible:ring-offset-2");
     expect(closeButton).not.toHaveClass("focus:ring-2");
   });
 });
