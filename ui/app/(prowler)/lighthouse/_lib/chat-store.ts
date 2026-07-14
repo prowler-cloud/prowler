@@ -62,6 +62,7 @@ export interface LighthouseChatState {
   lastSubmittedText: string | null;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
+  setSessionUrlSyncEnabled: (enabled: boolean) => void;
   setInput: (value: string) => void;
   dismissFeedback: () => void;
   selectModel: (selection: LighthouseV2ModelSelection) => Promise<void>;
@@ -94,7 +95,7 @@ export function selectLighthouseChatCanSend(
 export function createLighthouseChatStore(
   options: CreateLighthouseChatStoreOptions,
 ): LighthouseChatStore {
-  const { config, syncUrlToSession } = options;
+  const { config } = options;
   const connectedConfigurations = config.configurations.filter(
     (configuration) => configuration.connected === true,
   );
@@ -105,6 +106,11 @@ export function createLighthouseChatStore(
   // Set by destroy(): async flows check it after each await so a torn-down
   // store never rewrites the URL of another page or opens an orphan stream.
   let destroyed = false;
+  // User-driven session changes invalidate async session creation. Comparing
+  // only activeSessionId is insufficient because both the initial chat and a
+  // later reset intentionally use null.
+  let sessionIntentVersion = 0;
+  let syncUrlToSession = options.syncUrlToSession;
 
   const syncSessionUrl = (sessionId: string | null) => {
     if (!syncUrlToSession) return;
@@ -222,9 +228,10 @@ export function createLighthouseChatStore(
         return existingSessionId;
       }
 
+      const intentVersion = sessionIntentVersion;
       const title = buildSessionTitle(text);
       const result = await createLighthouseV2Session(title);
-      if (destroyed) return null;
+      if (destroyed || intentVersion !== sessionIntentVersion) return null;
       if ("error" in result) {
         set({ feedback: result.error });
         return null;
@@ -255,6 +262,10 @@ export function createLighthouseChatStore(
         config.modelsByProvider,
       ),
       modelPreferenceSaving: false,
+
+      setSessionUrlSyncEnabled: (enabled) => {
+        syncUrlToSession = enabled;
+      },
 
       setInput: (value) => set({ input: value }),
 
@@ -361,6 +372,7 @@ export function createLighthouseChatStore(
 
       openSession: async (sessionId) => {
         if (get().activeSessionId === sessionId) return;
+        sessionIntentVersion += 1;
         closeStream();
         set({
           activeSessionId: sessionId,
@@ -386,6 +398,7 @@ export function createLighthouseChatStore(
       },
 
       resetToNewChat: () => {
+        sessionIntentVersion += 1;
         closeStream();
         set({
           activeSessionId: null,

@@ -7,6 +7,10 @@ import {
   type LighthouseChatStore,
 } from "@/app/(prowler)/lighthouse/_lib/chat-store";
 import {
+  getPanelChatStoreForSession,
+  isPanelChatStore,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
   onLighthouseV2NewChat,
   onLighthouseV2SessionArchived,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
@@ -47,23 +51,38 @@ export function LighthouseV2ChatPage({
   initialPrompt,
   initialError,
 }: LighthouseV2ChatPageProps) {
-  // Per-mount store instance: page.tsx keys this component by session/prompt,
-  // so a route-level session change builds a fresh store (matching the old
-  // useState-based behavior), while the URL keeps syncing via replaceState.
-  const [store] = useState<LighthouseChatStore>(() =>
-    createLighthouseChatStore({
-      config: { configurations, modelsByProvider, supportedProviders },
-      syncUrlToSession: true,
-      initialSessionId,
-      initialMessages,
-      initialError,
-    }),
-  );
+  // Navigation from the side panel transfers its live store so drafts,
+  // streamed output and the open EventSource continue without a snapshot gap.
+  // Direct/session-mismatched navigation builds the normal page-owned store.
+  const [store] = useState<LighthouseChatStore>(() => {
+    const panelStore = getPanelChatStoreForSession(initialSessionId);
+    return (
+      panelStore ??
+      createLighthouseChatStore({
+        config: { configurations, modelsByProvider, supportedProviders },
+        syncUrlToSession: true,
+        initialSessionId,
+        initialMessages,
+        initialError,
+      })
+    );
+  });
+  const reusesPanelStore = isPanelChatStore(store);
   const initialPromptSentRef = useRef(false);
 
-  // Close any open EventSource when the chat unmounts (e.g. route/session change).
+  // A reused panel store returns to panel URL semantics when the page leaves;
+  // a page-owned store closes its EventSource as before.
   useMountEffect(() => {
-    return () => store.getState().destroy();
+    if (reusesPanelStore) {
+      store.getState().setSessionUrlSyncEnabled(true);
+    }
+    return () => {
+      if (reusesPanelStore) {
+        store.getState().setSessionUrlSyncEnabled(false);
+        return;
+      }
+      store.getState().destroy();
+    };
   });
 
   useMountEffect(() => {

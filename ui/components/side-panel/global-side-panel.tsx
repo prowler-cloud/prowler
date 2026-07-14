@@ -2,7 +2,6 @@
 
 import { X } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { Suspense } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -11,6 +10,12 @@ import {
   SidePanelHeader,
   SidePanelResizeHandle,
 } from "@/components/shadcn/side-panel/side-panel";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/shadcn/tabs/tabs";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
@@ -23,7 +28,7 @@ import {
 import { cn } from "@/lib/utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
-import { SidePanelErrorBoundary } from "./side-panel-error-boundary";
+import { RetryableLazyContent } from "./retryable-lazy-content";
 import { getVisibleSidePanelTabs } from "./side-panel-tabs";
 
 // Non-modal push panel (PostHog-style): no backdrop, MainLayout shifts the
@@ -86,6 +91,18 @@ export function GlobalSidePanel() {
     Boolean(contextTab) &&
     (selectedTab === SIDE_PANEL_TAB.CONTEXT || !activeRegistryTab);
   const tabCount = registryTabs.length + (contextTab ? 1 : 0);
+  const activeTabId = isContextSelected
+    ? SIDE_PANEL_TAB.CONTEXT
+    : activeRegistryTab?.id;
+
+  const handleTabChange = (tabId: string) => {
+    if (tabId === SIDE_PANEL_TAB.CONTEXT) {
+      openPanel(SIDE_PANEL_TAB.CONTEXT);
+      return;
+    }
+    const registryTab = registryTabs.find((tab) => tab.id === tabId);
+    if (registryTab) openPanel(registryTab.id);
+  };
 
   const handleResize = (clientX: number) => {
     // Right-anchored panel: dragging the left edge sets width to the distance
@@ -113,95 +130,94 @@ export function GlobalSidePanel() {
           onResizeEnd={() => useSidePanelStore.getState().setIsResizing(false)}
         />
       ) : null}
-      <SidePanelHeader>
-        {tabCount > 1 ? (
-          <div role="tablist" className="flex items-center gap-1">
-            {contextTab ? (
-              <Button
-                type="button"
-                role="tab"
-                aria-selected={isContextSelected}
-                variant={isContextSelected ? "outline" : "ghost"}
-                size="sm"
-                onClick={() => openPanel(SIDE_PANEL_TAB.CONTEXT)}
-              >
-                {contextTab.label}
-              </Button>
-            ) : null}
-            {registryTabs.map((tab) => {
-              const TabIcon = tab.Icon;
-              const isSelected =
-                !isContextSelected && tab.id === activeRegistryTab?.id;
-              return (
-                <Button
-                  key={tab.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={isSelected}
-                  variant={isSelected ? "outline" : "ghost"}
-                  size="sm"
-                  onClick={() => openPanel(tab.id)}
-                >
-                  <TabIcon className="size-4" />
-                  {tab.label}
-                </Button>
-              );
-            })}
-          </div>
-        ) : (
-          <SinglePanelLabel
-            contextLabel={contextTab?.label}
-            registryTab={activeRegistryTab}
-          />
-        )}
-        {!isContextSelected && activeRegistryTab?.HeaderActions ? (
-          <activeRegistryTab.HeaderActions />
-        ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          aria-label="Close side panel"
-          className={cn(
-            (isContextSelected || !activeRegistryTab?.HeaderActions) &&
-              "ml-auto",
-          )}
-          onClick={() => closePanel()}
-        >
-          <X />
-        </Button>
-      </SidePanelHeader>
-      {/* Portal target for the registered detail view. Always rendered while
-          the panel exists so the owner can portal in as soon as it registers;
-          the native hidden attribute keeps it out of the way otherwise. */}
-      <SidePanelBody
-        ref={(element) =>
-          useSidePanelStore.getState().setContextOutlet(element)
-        }
-        hidden={!isContextSelected}
-        data-testid="side-panel-context-outlet"
-        className="overflow-hidden p-6 pt-4"
-      />
-      {/* Registry (AI) content stays mounted after the first open so scroll
-          position and composer drafts survive closes. [contain:layout] traps
-          streamdown's fixed fullscreen overlay inside the panel. */}
-      <SidePanelBody
-        hidden={isContextSelected || !activeRegistryTab}
-        className="[contain:layout]"
+      <Tabs
+        value={activeTabId}
+        onValueChange={handleTabChange}
+        className="flex min-h-0 flex-1 flex-col"
       >
-        {hasBeenOpened && activeRegistryTab ? (
-          // The boundary keeps a chunk-load rejection inside the panel: this
-          // layout-level component sits above every segment error.tsx, so an
-          // uncaught error here would replace the whole app via global-error.
-          <SidePanelErrorBoundary>
-            {/* The fallback is the tab's own 1:1 skeleton, so the moment the
-                lazy bundle downloads nothing visually jumps. */}
-            <Suspense fallback={<activeRegistryTab.Fallback />}>
-              <activeRegistryTab.Content />
-            </Suspense>
-          </SidePanelErrorBoundary>
+        <SidePanelHeader>
+          {tabCount > 1 ? (
+            <TabsList>
+              {contextTab ? (
+                <TabsTrigger value={SIDE_PANEL_TAB.CONTEXT}>
+                  {contextTab.label}
+                </TabsTrigger>
+              ) : null}
+              {registryTabs.map((tab) => {
+                const TabIcon = tab.Icon;
+                return (
+                  <TabsTrigger key={tab.id} value={tab.id}>
+                    <span className="flex items-center gap-2">
+                      <TabIcon />
+                      {tab.label}
+                    </span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          ) : (
+            <SinglePanelLabel
+              contextLabel={contextTab?.label}
+              registryTab={activeRegistryTab}
+            />
+          )}
+          <div className="ml-auto flex items-center gap-1">
+            {!isContextSelected && activeRegistryTab?.HeaderActions ? (
+              <activeRegistryTab.HeaderActions />
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Close side panel"
+              onClick={() => closePanel()}
+            >
+              <X />
+            </Button>
+          </div>
+        </SidePanelHeader>
+        {/* Portal target for the registered detail view. Always rendered while
+            the panel exists so the owner can portal in as soon as it registers;
+            Radix keeps the inactive panel mounted but hidden. */}
+        <TabsContent
+          value={SIDE_PANEL_TAB.CONTEXT}
+          className="relative mt-0 min-h-0 flex-1 data-[state=inactive]:hidden"
+          forceMount
+          asChild
+        >
+          <SidePanelBody
+            ref={(element) =>
+              useSidePanelStore.getState().setContextOutlet(element)
+            }
+            hidden={!isContextSelected}
+            data-testid="side-panel-context-outlet"
+            className="overflow-hidden p-6 pt-4"
+          />
+        </TabsContent>
+        {/* Registry (AI) content stays mounted after the first open so scroll
+            position and composer drafts survive closes. [contain:layout] traps
+            streamdown's fixed fullscreen overlay inside the panel. */}
+        {activeRegistryTab ? (
+          <TabsContent
+            value={activeRegistryTab.id}
+            className="relative mt-0 min-h-0 flex-1 data-[state=inactive]:hidden"
+            forceMount
+            asChild
+          >
+            <SidePanelBody
+              hidden={isContextSelected}
+              className="[contain:layout]"
+            >
+              {hasBeenOpened ? (
+                <RetryableLazyContent
+                  load={activeRegistryTab.loadContent}
+                  fallback={<activeRegistryTab.Fallback />}
+                />
+              ) : null}
+            </SidePanelBody>
+          </TabsContent>
         ) : null}
-      </SidePanelBody>
+      </Tabs>
     </SidePanel>
   );
 }

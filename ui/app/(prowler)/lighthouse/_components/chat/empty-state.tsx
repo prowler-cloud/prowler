@@ -70,10 +70,10 @@ export function ChatEmptyState({
             )}
           >
             {compact ? (
-              "Find and remediate which actually matters."
+              "Find and remediate what actually matters."
             ) : (
               <DecryptedText
-                text="Find and remediate which actually matters."
+                text="Find and remediate what actually matters."
                 animateOn="view"
                 sequential
                 speed={15}

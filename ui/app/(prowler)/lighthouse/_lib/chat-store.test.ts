@@ -301,6 +301,66 @@ describe("createLighthouseChatStore", () => {
     expect(eventSources).toHaveLength(0);
   });
 
+  it("does not replace a session opened while a new session is being created", async () => {
+    // Given: creating the first session is still in flight
+    const store = makeStore();
+    let resolveCreate: (value: unknown) => void = () => {};
+    createSessionMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalled());
+
+    // When: the user opens another conversation before creation resolves
+    await store.getState().openSession("session-9");
+    resolveCreate({
+      data: {
+        id: "session-1",
+        title: "Summarize findings",
+        isArchived: false,
+        insertedAt: "2026-06-24T10:00:00Z",
+        updatedAt: "2026-06-24T10:00:00Z",
+      },
+    });
+    await submitting;
+
+    // Then: the stale creation cannot replace or submit into the open chat
+    expect(store.getState().activeSessionId).toBe("session-9");
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("does not revive a session creation cancelled by a new-chat reset", async () => {
+    // Given: creating the first session is still in flight
+    const store = makeStore();
+    let resolveCreate: (value: unknown) => void = () => {};
+    createSessionMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalled());
+
+    // When: the user resets to a new chat before creation resolves
+    store.getState().resetToNewChat();
+    resolveCreate({
+      data: {
+        id: "session-1",
+        title: "Summarize findings",
+        isArchived: false,
+        insertedAt: "2026-06-24T10:00:00Z",
+        updatedAt: "2026-06-24T10:00:00Z",
+      },
+    });
+    await submitting;
+
+    // Then
+    expect(store.getState().activeSessionId).toBeNull();
+    expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
   it("opens an existing session client-side without navigation", async () => {
     // Given
     const store = makeStore({ syncUrlToSession: false });

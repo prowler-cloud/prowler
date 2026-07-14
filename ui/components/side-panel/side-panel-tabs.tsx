@@ -1,6 +1,6 @@
 "use client";
 
-import { type ComponentType, lazy, type LazyExoticComponent } from "react";
+import type { ComponentType } from "react";
 
 import { LighthousePanelChatSkeleton } from "@/app/(prowler)/lighthouse/_components/panel/lighthouse-panel-chat-skeleton";
 import { LighthousePanelHeaderActions } from "@/app/(prowler)/lighthouse/_components/panel/lighthouse-panel-header-actions";
@@ -19,9 +19,9 @@ interface SidePanelTabDefinition {
   id: RegistrySidePanelTabId;
   label: string;
   Icon: ComponentType<{ className?: string }>;
-  // Lazy so a tab's bundle (the chat is a heavy one) loads on first open, not
-  // on every page.
-  Content: LazyExoticComponent<ComponentType>;
+  // Kept as a loader so Retry can create a fresh React.lazy instance after a
+  // rejected chunk request instead of reusing React's cached rejection.
+  loadContent: () => Promise<{ default: ComponentType }>;
   // Eager (lightweight) 1:1 skeleton shown while Content's bundle downloads.
   Fallback: ComponentType;
   HeaderActions?: ComponentType;
@@ -36,11 +36,10 @@ export const SIDE_PANEL_TABS: Record<
     id: SIDE_PANEL_TAB.AI_CHAT,
     label: "Lighthouse AI",
     Icon: LighthouseIcon,
-    Content: lazy(() =>
+    loadContent: () =>
       import(
         "@/app/(prowler)/lighthouse/_components/panel/lighthouse-panel-chat"
       ).then((module) => ({ default: module.LighthousePanelChat })),
-    ),
     Fallback: LighthousePanelChatSkeleton,
     HeaderActions: LighthousePanelHeaderActions,
     isAvailable: () => isCloud(),

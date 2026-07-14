@@ -14,6 +14,10 @@ import {
   loadLighthouseChatConfig,
 } from "@/app/(prowler)/lighthouse/_lib/load-chat-config";
 import {
+  resetPanelChatMessageState,
+  setPanelChatMessageState,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-message-state";
+import {
   getOrCreatePanelChatStore,
   resetPanelChatStore,
 } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
@@ -79,6 +83,7 @@ let cachedReadyState: PanelChatReadyState | null = null;
 
 export function resetPanelChatConfigCacheForTests(): void {
   cachedReadyState = null;
+  resetPanelChatMessageState();
 }
 
 // Config CRUD happens on the settings route while the global panel can remain
@@ -87,6 +92,7 @@ export function resetPanelChatConfigCacheForTests(): void {
 if (typeof window !== "undefined") {
   onLighthouseV2ConfigurationsChanged(() => {
     cachedReadyState = null;
+    resetPanelChatMessageState();
     resetPanelChatStore();
   });
 }
@@ -99,8 +105,13 @@ export function LighthousePanelChat() {
   const load = async () => {
     setState({ status: PANEL_CHAT_STATUS.LOADING });
     const next = await loadPanelChatState();
-    if (next.status === PANEL_CHAT_STATUS.READY) {
+    if (
+      next.status === PANEL_CHAT_STATUS.READY &&
+      next.modelsError === undefined
+    ) {
       cachedReadyState = next;
+    } else {
+      cachedReadyState = null;
     }
     setState(next);
   };
@@ -155,6 +166,15 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
 
   useMountEffect(() => {
     void refreshSessions();
+    const syncPanelChatState = () => {
+      const chatState = store.getState();
+      setPanelChatMessageState({
+        hasMessages: chatState.messages.length > 0,
+        activeSessionId: chatState.activeSessionId,
+      });
+    };
+    syncPanelChatState();
+    const unsubscribeChatStore = store.subscribe(syncPanelChatState);
     const unsubscribeSessionsChanged = onLighthouseV2SessionsChanged(() => {
       void refreshSessions();
     });
@@ -171,9 +191,13 @@ function PanelChatReady({ config, modelsError }: PanelChatReadyProps) {
       },
     );
     return () => {
+      unsubscribeChatStore();
       unsubscribeSessionsChanged();
       unsubscribeNewChat();
       unsubscribeSessionArchived();
+      // A partial config cannot be reused after the model endpoint recovers:
+      // this store captured the incomplete model list at creation time.
+      if (modelsError) resetPanelChatStore();
     };
   });
 

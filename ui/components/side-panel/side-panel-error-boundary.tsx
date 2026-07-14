@@ -6,6 +6,7 @@ import { Button } from "@/components/shadcn/button/button";
 
 interface SidePanelErrorBoundaryProps {
   children: ReactNode;
+  onRetry: () => void;
 }
 
 interface SidePanelErrorBoundaryState {
@@ -26,6 +27,11 @@ export class SidePanelErrorBoundary extends Component<
     return { hasError: true };
   }
 
+  private handleRetry = () => {
+    this.props.onRetry();
+    this.setState({ hasError: false });
+  };
+
   render() {
     if (this.state.hasError) {
       return (
@@ -37,8 +43,7 @@ export class SidePanelErrorBoundary extends Component<
             type="button"
             variant="outline"
             size="sm"
-            // Resetting remounts the children, re-attempting the render.
-            onClick={() => this.setState({ hasError: false })}
+            onClick={this.handleRetry}
           >
             Retry
           </Button>

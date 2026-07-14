@@ -139,7 +139,7 @@ describe("GlobalSidePanel", () => {
     expect(useSidePanelStore.getState().isOpen).toBe(false);
   });
 
-  it("places the new-chat action beside close in the existing header", async () => {
+  it("groups the chat actions beside close in the existing header", async () => {
     // Given
     render(<GlobalSidePanel />);
 
@@ -148,10 +148,16 @@ describe("GlobalSidePanel", () => {
 
     // Then: no extra toolbar; both actions are adjacent in the panel header
     const newChat = await screen.findByRole("button", { name: "New chat" });
+    const fullPage = screen.getByRole("link", {
+      name: "Open Lighthouse AI full page",
+    });
     const close = screen.getByRole("button", { name: "Close side panel" });
-    expect(newChat.parentElement).toBe(close.parentElement);
-    expect(newChat).toHaveClass("ml-auto");
-    expect(newChat.nextElementSibling).toBe(close);
+    const actionGroup = close.parentElement;
+    expect(actionGroup).toContainElement(newChat);
+    expect(actionGroup).toContainElement(fullPage);
+    expect(actionGroup).toHaveClass("ml-auto");
+    expect(newChat).not.toHaveClass("ml-auto");
+    expect(close).not.toHaveClass("ml-auto");
   });
 
   it("renders nothing in OSS while no detail view is registered", () => {
@@ -201,10 +207,17 @@ describe("GlobalSidePanel", () => {
     // Then: the context tab opens selected, beside the AI tab
     const detailsTab = screen.getByRole("tab", { name: "Details" });
     expect(detailsTab).toHaveAttribute("aria-selected", "true");
+    expect(detailsTab).toHaveClass("aria-selected:after:scale-x-100");
+    expect(detailsTab).not.toHaveClass("rounded-[8px]");
     expect(screen.getByTestId("side-panel-context-outlet")).toBeVisible();
 
+    const lighthouseTab = screen.getByRole("tab", { name: "Lighthouse AI" });
+    expect(lighthouseTab.querySelector("svg")?.parentElement).toHaveClass(
+      "flex",
+    );
+
     // When: switching to the AI tab
-    await user.click(screen.getByRole("tab", { name: "Lighthouse AI" }));
+    await user.click(lighthouseTab);
 
     // Then: the chat mounts and the detail outlet stays mounted, hidden
     expect(await screen.findByTestId("panel-chat-content")).toBeInTheDocument();

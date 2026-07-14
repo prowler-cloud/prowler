@@ -225,6 +225,55 @@ describe("LighthousePanelChat", () => {
     replaceStateSpy.mockRestore();
   });
 
+  it("explains why a new chat is unavailable before the first message", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<LighthousePanelHeaderActions />);
+    const newChatButton = screen.getByRole("button", { name: "New chat" });
+
+    // When
+    const disabledTrigger = newChatButton.parentElement;
+
+    // Then
+    expect(newChatButton).toBeDisabled();
+    expect(disabledTrigger).toHaveClass("cursor-not-allowed");
+    await user.hover(disabledTrigger!);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Send a message before starting a new chat",
+    );
+  });
+
+  it("opens the active panel conversation on the full-page chat route", async () => {
+    // Given: the panel starts on a new chat and exposes the full-page action
+    const user = userEvent.setup();
+    getSessionsMock.mockResolvedValue({
+      data: [session("session-1", "Counting critical findings")],
+    });
+    render(
+      <>
+        <LighthousePanelHeaderActions />
+        <LighthousePanelChat />
+      </>,
+    );
+    const fullPageLink = await screen.findByRole("link", {
+      name: "Open Lighthouse AI full page",
+    });
+    expect(fullPageLink).toHaveAttribute("href", "/lighthouse");
+
+    // When: an existing conversation becomes active in the panel
+    await user.click(
+      await screen.findByRole("button", {
+        name: /^Counting critical findings/,
+      }),
+    );
+
+    // Then: full-page navigation carries the active session in the URL
+    expect(fullPageLink).toHaveAttribute(
+      "href",
+      "/lighthouse?session=session-1",
+    );
+  });
+
   it("starts a new chat from the panel header", async () => {
     // Given: an existing conversation is open in the panel
     const user = userEvent.setup();
@@ -254,10 +303,19 @@ describe("LighthousePanelChat", () => {
     });
     render(
       <>
-        <LighthousePanelHeaderActions />
+        <div aria-label="Panel header actions">
+          <LighthousePanelHeaderActions />
+        </div>
         <LighthousePanelChat />
       </>,
     );
+    await screen.findByRole("textbox", { name: "Message" });
+    const panelHeader = screen.getByLabelText("Panel header actions");
+    const newChatButton = within(panelHeader).getByRole("button", {
+      name: "New chat",
+    });
+    expect(newChatButton).toBeDisabled();
+
     await user.click(
       await screen.findByRole("button", {
         name: /^Counting critical findings/,
@@ -266,15 +324,17 @@ describe("LighthousePanelChat", () => {
     expect(
       await screen.findByText("There are 3 critical findings."),
     ).toBeInTheDocument();
+    expect(newChatButton).toBeEnabled();
 
     // When
-    await user.click(screen.getByRole("button", { name: "New chat" }));
+    await user.click(newChatButton);
 
     // Then
     expect(
       screen.queryByText("There are 3 critical findings."),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("textbox", { name: "Message" })).toHaveValue("");
+    expect(newChatButton).toBeDisabled();
   });
 
   it("caches the loaded config so a remount skips the skeleton", async () => {
@@ -294,6 +354,24 @@ describe("LighthousePanelChat", () => {
       ).toBeInTheDocument(),
     );
     expect(getConfigurationsMock).not.toHaveBeenCalled();
+  });
+
+  it("reloads models after a transient model-loading failure", async () => {
+    // Given: configuration loads, but the first model request fails
+    getSupportedModelsMock.mockResolvedValueOnce({
+      error: "Models are temporarily unavailable.",
+      status: 500,
+    });
+    const { unmount } = render(<LighthousePanelChat />);
+    await screen.findByRole("textbox", { name: "Message" });
+    unmount();
+    getSupportedModelsMock.mockClear();
+
+    // When: the panel reopens after the model endpoint recovers
+    render(<LighthousePanelChat />);
+
+    // Then: the partial ready state is not reused as a successful cache entry
+    await waitFor(() => expect(getSupportedModelsMock).toHaveBeenCalled());
   });
 
   it("removes an archived chat from the recent chats list", async () => {

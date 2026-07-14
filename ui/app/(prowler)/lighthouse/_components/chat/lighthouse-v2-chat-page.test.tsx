@@ -4,6 +4,10 @@ import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  getOrCreatePanelChatStore,
+  resetPanelChatStoreForTests,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
   LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
   notifyLighthouseV2SessionArchived,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
@@ -103,6 +107,7 @@ describe("LighthouseV2ChatPage", () => {
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
     updateConfigurationMock.mockReset();
+    resetPanelChatStoreForTests();
     eventSources = stubEventSource();
 
     createSessionMock.mockResolvedValue({
@@ -140,6 +145,62 @@ describe("LighthouseV2ChatPage", () => {
     expect(
       screen.getByRole("link", { name: "Lighthouse AI settings" }),
     ).toHaveAttribute("href", "/lighthouse/settings");
+  });
+
+  it("renders the empty-state headline with correct wording", () => {
+    // Given / When
+    renderPage();
+
+    // Then
+    expect(
+      screen.getByText("Find and remediate what actually matters."),
+    ).toBeInTheDocument();
+  });
+
+  it("continues using the panel chat store on the full-page surface", () => {
+    // Given: the panel owns an in-progress new chat with a draft
+    const panelStore = getOrCreatePanelChatStore({
+      configurations,
+      modelsByProvider,
+      supportedProviders,
+    });
+    panelStore.getState().setInput("Draft from the side panel");
+
+    // When
+    renderPage();
+
+    // Then: the page owns the same live store, not a stale server snapshot
+    const input = screen.getByRole("textbox", { name: "Message" });
+    expect(input).toHaveValue("Draft from the side panel");
+    act(() => panelStore.getState().setInput("Updated after navigation"));
+    expect(input).toHaveValue("Updated after navigation");
+  });
+
+  it("enables session URL sync after claiming a new panel chat", async () => {
+    // Given: the panel owns a new chat before full-page navigation
+    const user = userEvent.setup();
+    getOrCreatePanelChatStore({
+      configurations,
+      modelsByProvider,
+      supportedProviders,
+    });
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    renderPage();
+
+    // When: the first page message creates its session
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+
+    // Then: the claimed panel store now follows the full-page URL contract
+    await waitFor(() =>
+      expect(replaceStateSpy).toHaveBeenCalledWith(
+        window.history.state,
+        "",
+        "/lighthouse?session=session-1",
+      ),
+    );
   });
 
   it("shows the current OpenAI model without a selector when OpenAI is the only connected provider", () => {
