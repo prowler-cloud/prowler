@@ -72,7 +72,7 @@ CLOUD_FEATURES = [
         "benefits": [
             "Search and filter findings across all connected accounts",
             "Track status, severity, ownership, and remediation context",
-            "Share a consistent source of truth with your security team",
+            "Triage findings and share a consistent source of truth with your security team",
         ],
         "utm_content": "findings",
         "icon": "/assets/images/icons/cloud/findings.svg",
