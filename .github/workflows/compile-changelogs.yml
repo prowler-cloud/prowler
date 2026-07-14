@@ -14,19 +14,19 @@ on:
         required: true
         type: string
       sdk_version:
-        description: 'SDK version override (empty = auto-derive from prowler/CHANGELOG.md + pending fragment types; "skip" = hold this component back)'
+        description: 'SDK version override (empty = mirrors prowler_version; "skip" = hold this component back)'
         required: false
         type: string
       api_version:
-        description: 'API version override (empty = auto-derive; "skip" = hold back)'
+        description: 'API version override (empty = auto-derive 1.<prowler_minor + 1>.<prowler_patch>; "skip" = hold back)'
         required: false
         type: string
       ui_version:
-        description: 'UI version override (empty = auto-derive; "skip" = hold back)'
+        description: 'UI version override (empty = auto-derive 1.<prowler_minor>.<prowler_patch>; "skip" = hold back)'
         required: false
         type: string
       mcp_version:
-        description: 'MCP Server version override (empty = auto-derive; "skip" = hold back)'
+        description: 'MCP Server version override (empty = auto-derive from pending fragment types; "skip" = hold back)'
         required: false
         type: string
 
@@ -209,17 +209,48 @@ jobs:
                 errors=1
                 continue
               fi
-              IFS=. read -r major minor patch <<< "$current"
-              major=$((10#$major))
-              minor=$((10#$minor))
-              patch=$((10#$patch))
-              if echo "$fragments" | grep -qE '\.(added|changed|deprecated)(\.[0-9]+)?\.md$'; then
-                effective="${major}.$((minor + 1)).0"
-              else
-                effective="${major}.${minor}.$((patch + 1))"
+              # SDK, UI, and API versions are deterministic mirrors of the
+              # Prowler version (the scheme bump-version.yml codifies): the SDK
+              # mirrors it directly, the UI tracks 1.<minor>.<patch>, and the
+              # API is the independent 1.<minor + 1>.<patch> stream. Only the
+              # MCP Server has its own cadence, derived from fragment types.
+              IFS=. read -r _ prowler_minor prowler_patch <<< "$PROWLER_VERSION"
+              prowler_minor=$((10#$prowler_minor))
+              prowler_patch=$((10#$prowler_patch))
+              case "$component" in
+                prowler) effective="$PROWLER_VERSION" ;;
+                ui) effective="1.${prowler_minor}.${prowler_patch}" ;;
+                api) effective="1.$((prowler_minor + 1)).${prowler_patch}" ;;
+                mcp_server)
+                  IFS=. read -r major minor patch <<< "$current"
+                  major=$((10#$major))
+                  minor=$((10#$minor))
+                  patch=$((10#$patch))
+                  # Prowler patch releases (vN.N target) are maintenance
+                  # releases, so the MCP Server bumps patch regardless of
+                  # fragment types; a deliberate exception needs the explicit
+                  # version input.
+                  if [ "$TARGET_BRANCH" != "master" ]; then
+                    effective="${major}.${minor}.$((patch + 1))"
+                    if echo "$fragments" | grep -qE '\.(added|deprecated)(\.[0-9]+)?\.md$'; then
+                      echo "::warning::${component}: 'added'/'deprecated' fragments are shipping in a Prowler patch; auto-derived a patch bump (${current} -> ${effective}), pass the version input to override"
+                    fi
+                  elif echo "$fragments" | grep -qE '\.(added|changed|deprecated)(\.[0-9]+)?\.md$'; then
+                    effective="${major}.$((minor + 1)).0"
+                  else
+                    effective="${major}.${minor}.$((patch + 1))"
+                  fi
+                  ;;
+              esac
+              current_key=$(version_key "$current")
+              effective_key=$(version_key "$effective")
+              if [[ "$effective_key" < "$current_key" || "$effective_key" == "$current_key" ]]; then
+                echo "::error::${component}: auto-derived version '${effective}' is not greater than the latest released version (${current}); check prowler_version or pass the version input explicitly"
+                errors=1
+                continue
               fi
               mode="auto"
-              echo "::notice::${component}: version auto-derived ${current} -> ${effective} from the pending fragment types"
+              echo "::notice::${component}: version auto-derived ${current} -> ${effective}"
             fi
 
             if [ "$removed_fragments" = "true" ]; then
@@ -336,6 +367,7 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           labels: |
             no-changelog
+            skip-sync
 
       # Patch compiles (target_branch = v5.X) leave master holding the consumed
       # fragments and missing the new version block. This applies the equivalent
@@ -366,7 +398,7 @@ jobs:
             local block_file="$2"
             local changelog="${component}/CHANGELOG.md"
             local incoming_heading incoming_release incoming_key
-            local marker_line insertion_line duplicate_line
+            local marker_line insertion_line duplicate_line total_lines
             local line heading existing_release existing_key
 
             marker_line=$(grep -n -m1 '^<!-- changelog: release notes start -->$' "$changelog" | cut -d: -f1)
@@ -405,9 +437,25 @@ jobs:
               insertion_line=$((marker_line + 1))
             fi
 
+            # The captured block window can be off by one blank line on either
+            # end (towncrier re-emits the blank after the marker), so strip the
+            # outer blank lines and pad exactly one on each side: the block
+            # must never glue to the marker above or the next heading below.
+            awk '
+              /[^[:space:]]/ { for (i = 0; i < pending; i++) print ""; pending = 0; print; started = 1; next }
+              started { pending++ }
+            ' "$block_file" > "${RUNNER_TEMP}/block-normalized.md"
+
+            total_lines=$(wc -l < "$changelog")
             {
               head -n "$((insertion_line - 1))" "$changelog"
-              cat "$block_file"
+              if [ "$insertion_line" -gt 1 ] && [ -n "$(sed -n "$((insertion_line - 1))p" "$changelog")" ]; then
+                echo ""
+              fi
+              cat "${RUNNER_TEMP}/block-normalized.md"
+              if [ "$insertion_line" -le "$total_lines" ]; then
+                echo ""
+              fi
               tail -n +"$insertion_line" "$changelog"
             } > "${RUNNER_TEMP}/changelog.tmp"
             mv "${RUNNER_TEMP}/changelog.tmp" "$changelog"
@@ -476,3 +524,4 @@ jobs:
           author: prowler-bot <179230569+prowler-bot@users.noreply.github.com>
           labels: |
             no-changelog
+            skip-sync
