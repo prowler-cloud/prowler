@@ -2858,6 +2858,14 @@ class TestAttackPathsDbUtilsActivity:
 
 @pytest.mark.django_db
 class TestCleanupStaleAttackPathsScans:
+    @pytest.fixture(autouse=True)
+    def execute_on_commit_callbacks(self):
+        with patch(
+            "tasks.jobs.attack_paths.cleanup.on_commit",
+            side_effect=lambda callback, **kwargs: callback(),
+        ):
+            yield
+
     def _create_executing_scan(
         self,
         tenant,
@@ -2897,6 +2905,48 @@ class TestCleanupStaleAttackPathsScans:
             ap_scan.updated_at = updated_at
 
         return ap_scan, task_result
+
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    def test_defers_revoke_until_scan_failure_is_persisted(
+        self,
+        mock_revoke,
+        tenants_fixture,
+        aws_provider,
+    ):
+        from tasks.jobs.attack_paths.cleanup import _finalize_failed_scan
+
+        ap_scan, task_result = self._create_executing_scan(
+            tenants_fixture[0],
+            aws_provider,
+            worker="unresponsive-worker@host",
+        )
+
+        with patch("tasks.jobs.attack_paths.cleanup.on_commit") as mock_on_commit:
+            finalized_scan = _finalize_failed_scan(
+                ap_scan,
+                StateChoices.EXECUTING,
+                "Cleanup reason",
+                task_result=task_result,
+                revoke=True,
+            )
+
+        assert finalized_scan is not None
+        ap_scan.refresh_from_db()
+        task_result.refresh_from_db()
+        assert ap_scan.state == StateChoices.FAILED
+        assert task_result.status == "FAILURE"
+        mock_revoke.assert_not_called()
+        mock_on_commit.assert_called_once()
+        assert mock_on_commit.call_args.kwargs == {"using": DEFAULT_DB_ALIAS}
+
+        callback = mock_on_commit.call_args.args[0]
+        callback()
+
+        mock_revoke.assert_called_once_with(task_result, terminate=True)
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
@@ -2945,8 +2995,8 @@ class TestCleanupStaleAttackPathsScans:
         assert result["cleaned_up_count"] == 1
         assert str(ap_scan.id) in result["scan_ids"]
         assert [entry[0] for entry in call_order.mock_calls] == [
-            "revoke",
             "mark_failed",
+            "revoke",
             "drop_database",
         ]
         mock_revoke.assert_called_once_with(task_result, terminate=True)
@@ -3256,14 +3306,18 @@ class TestCleanupStaleAttackPathsScans:
     @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
     @patch("tasks.jobs.attack_paths.cleanup._ping_workers")
     @patch(
-        "tasks.jobs.attack_paths.cleanup._finalize_failed_scan",
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.mark_scan_finished",
         side_effect=DatabaseError("PostgreSQL unavailable"),
     )
     @patch("tasks.jobs.attack_paths.cleanup.logger")
     def test_postgresql_failure_prevents_revoke_and_neo4j_deletion(
         self,
         mock_logger,
-        mock_finalize,
+        mock_mark_failed,
         mock_ping,
         mock_revoke,
         mock_drop_db,
@@ -3284,7 +3338,7 @@ class TestCleanupStaleAttackPathsScans:
         result = cleanup_stale_attack_paths_scans()
 
         assert result["cleaned_up_count"] == 0
-        mock_finalize.assert_called_once()
+        mock_mark_failed.assert_called_once()
         mock_logger.exception.assert_called_once()
         mock_revoke.assert_not_called()
         mock_drop_db.assert_not_called()

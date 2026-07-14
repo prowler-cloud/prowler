@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from functools import partial
 
 from api.attack_paths import database as graph_database
 from api.db_router import MainRouter
@@ -11,6 +12,7 @@ from config.django.base import (
     ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES,
 )
 from django.db import DatabaseError
+from django.db.transaction import on_commit
 from tasks.jobs.attack_paths.db_utils import (
     mark_scan_finished,
     recover_graph_data_ready,
@@ -186,10 +188,9 @@ def _cleanup_stale_scheduled_scans(cutoff: datetime) -> list[str]:
       avoids cleaning up rows whose parent Prowler scan is legitimately still
       running.
 
-    For each match: lock and recheck the row, revoke the queued task
-    (best-effort; harmless if already consumed), flip to `FAILED`, and mark the
-    `TaskResult`. The temp Neo4j database is never created while `SCHEDULED`,
-    so no drop is needed.
+    For each match: lock and recheck the row, mark the scan and `TaskResult` as
+    failed, then revoke the queued task after the transaction commits. The temp
+    Neo4j database is never created while `SCHEDULED`, so no drop is needed.
     """
     scheduled_scans = list(
         AttackPathsScan.all_objects.using(MainRouter.admin_db)
@@ -232,7 +233,7 @@ def _cleanup_scan(
 ) -> bool:
     """
     Clean up a single stale `AttackPathsScan`:
-    lock and recheck, revoke the task, mark `FAILED`, drop the temp DB, and
+    lock and recheck, mark `FAILED`, revoke after commit, drop the temp DB, and
     recover graph readiness.
 
     Returns `True` if the scan was actually cleaned up, `False` if skipped.
@@ -313,9 +314,9 @@ def _finalize_failed_scan(
     inactivity_cutoff: datetime | None = None,
 ):
     """
-    Atomically lock the row, verify it's still eligible, revoke if requested,
-    and mark it `FAILED`. Returns the locked row on success, `None` if the row
-    is gone or has already moved on.
+    Atomically lock the row, verify it's still eligible, and mark it `FAILED`.
+    If requested, register revocation after commit. Returns the locked row on
+    success, `None` if the row is gone or has already moved on.
     """
     scan_id_str = str(scan.id)
     with rls_transaction(str(scan.tenant_id)):
@@ -335,17 +336,17 @@ def _finalize_failed_scan(
             )
             return None
 
-        if revoke and task_result:
-            if terminate:
-                _revoke_task(task_result, terminate=True)
-            else:
-                _revoke_task(task_result, terminate=False)
-
         mark_scan_finished(fresh_scan, StateChoices.FAILED, {"global_error": reason})
 
         if task_result:
             task_result.status = states.FAILURE
             task_result.date_done = datetime.now(tz=UTC)
             task_result.save(update_fields=["status", "date_done"])
+
+        if revoke and task_result:
+            on_commit(
+                partial(_revoke_task, task_result, terminate=terminate),
+                using=fresh_scan._state.db,
+            )
 
     return fresh_scan

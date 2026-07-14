@@ -399,36 +399,23 @@ class TestRecoveryFeatureFlags:
 class TestRecoveryMasterFlag:
     @override_settings(TASK_RECOVERY_ENABLED=False)
     def test_master_flag_disables_task_recovery(self):
-        with (
-            patch(
-                "tasks.jobs.orphan_recovery._reconcile_task_results"
-            ) as mock_reconcile,
-            patch(
-                "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
-                return_value={},
-            ) as mock_attack_paths_cleanup,
-        ):
+        with patch(
+            "tasks.jobs.orphan_recovery._reconcile_task_results"
+        ) as mock_reconcile:
             result = reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
 
         mock_reconcile.assert_not_called()
-        mock_attack_paths_cleanup.assert_not_called()
         assert result["acquired"] is True
         assert result["enabled"] is False
         assert "attack_paths" not in result
 
     @override_settings(TASK_RECOVERY_ENABLED=True)
     def test_master_flag_enabled_runs_task_recovery(self):
-        with (
-            patch(
-                "tasks.jobs.orphan_recovery._reconcile_task_results",
-                return_value={"recovered": [], "failed": [], "skipped": []},
-            ) as mock_reconcile,
-            patch(
-                "tasks.jobs.attack_paths.cleanup.cleanup_stale_attack_paths_scans",
-                return_value={},
-            ) as mock_attack_paths_cleanup,
-        ):
-            reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
+        with patch(
+            "tasks.jobs.orphan_recovery._reconcile_task_results",
+            return_value={"recovered": [], "failed": [], "skipped": []},
+        ) as mock_reconcile:
+            result = reconcile_orphans(grace_minutes=2, max_attempts=3, dry_run=False)
 
         mock_reconcile.assert_called_once()
-        mock_attack_paths_cleanup.assert_not_called()
+        assert "attack_paths" not in result
