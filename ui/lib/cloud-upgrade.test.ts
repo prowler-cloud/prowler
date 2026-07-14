@@ -149,7 +149,7 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url).toBe(
-      "https://cloud.prowler.com/?source=prowler_local_server&feature=alerts",
+      "https://cloud.prowler.com/sign-up?source=prowler_local_server&feature=alerts",
     );
   });
 

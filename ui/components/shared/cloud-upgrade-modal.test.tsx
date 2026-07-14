@@ -33,7 +33,7 @@ describe("CloudUpgradeModal", () => {
       screen.getByRole("link", { name: "Create alerts in Prowler Cloud" }),
     ).toHaveAttribute(
       "href",
-      "https://cloud.prowler.com/?source=prowler_local_server&feature=alerts",
+      "https://cloud.prowler.com/sign-up?source=prowler_local_server&feature=alerts",
     );
     expect(
       screen.getByRole("link", { name: "Compare editions" }),

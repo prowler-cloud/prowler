@@ -24,7 +24,7 @@ export const CLOUD_UPGRADE_SECONDARY_CTA = "Compare editions";
 export const CLOUD_UPGRADE_FOOTER_NOTE =
   "Prowler Cloud opens in a new tab. Your self-hosted deployment remains unchanged.";
 
-const CLOUD_URL = "https://cloud.prowler.com/";
+const CLOUD_SIGN_UP_URL = "https://cloud.prowler.com/sign-up";
 const PRICING_URL = "https://prowler.com/pricing";
 const LOCAL_SERVER_SOURCE = "prowler_local_server";
 
@@ -142,7 +142,7 @@ const buildCloudUpgradeUrl = (
 };
 
 export const getCloudUpgradePrimaryUrl = (feature: CloudUpgradeFeature) =>
-  buildCloudUpgradeUrl(CLOUD_URL, feature);
+  buildCloudUpgradeUrl(CLOUD_SIGN_UP_URL, feature);
 
 export const getCloudUpgradeCompareUrl = (feature: CloudUpgradeFeature) =>
   buildCloudUpgradeUrl(PRICING_URL, feature);

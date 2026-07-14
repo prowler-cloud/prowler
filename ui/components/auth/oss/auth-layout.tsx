@@ -1,6 +1,5 @@
 import { ReactNode } from "react";
 
-import { ProwlerBrand } from "@/components/icons";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
 interface AuthLayoutProps {
@@ -20,11 +19,6 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
               "radial-gradient(var(--bg-button-primary) 1px, transparent 1px)",
           }}
         ></div>
-
-        {/* Prowler Logo */}
-        <div className="relative z-10 mb-8 flex w-full max-w-[300px]">
-          <ProwlerBrand className="w-full" />
-        </div>
 
         {/* Auth Form Container */}
         <div className="border-border-neutral-secondary dark:bg-bg-neutral-primary/85 relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-[14px] border bg-white/90 px-8 py-10 shadow-sm md:max-w-md">
