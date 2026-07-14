@@ -9378,20 +9378,22 @@ class TestUserRoleRelationshipViewSet:
         assert added_role_ids.issubset(relationship_role_ids)
 
     def test_create_relationship_already_exists(
-        self, authenticated_client, roles_fixture, create_test_user
+        self, authenticated_client, roles_fixture, create_test_user_rbac_no_roles
     ):
-        # Only add Role One (which has manage_account=True) to ensure
-        # the second request has permission to add roles
         data = {
             "data": [
-                {"type": "roles", "id": str(roles_fixture[0].id)},
+                {"type": "roles", "id": str(role.id)} for role in roles_fixture[:2]
             ]
         }
-        authenticated_client.post(
-            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+        setup_response = authenticated_client.post(
+            reverse(
+                "user-roles-relationship",
+                kwargs={"pk": create_test_user_rbac_no_roles.id},
+            ),
             data=data,
             content_type="application/vnd.api+json",
         )
+        assert setup_response.status_code == status.HTTP_204_NO_CONTENT
 
         data = {
             "data": [
@@ -9399,7 +9401,10 @@ class TestUserRoleRelationshipViewSet:
             ]
         }
         response = authenticated_client.post(
-            reverse("user-roles-relationship", kwargs={"pk": create_test_user.id}),
+            reverse(
+                "user-roles-relationship",
+                kwargs={"pk": create_test_user_rbac_no_roles.id},
+            ),
             data=data,
             content_type="application/vnd.api+json",
         )

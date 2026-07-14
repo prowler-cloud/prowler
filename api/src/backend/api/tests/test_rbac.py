@@ -11,6 +11,7 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.rbac.permissions import HasPermissions, Permissions
 from api.v1.serializers import TokenSerializer
 from conftest import TEST_PASSWORD, TODAY
 from django.urls import reverse
@@ -822,6 +823,48 @@ class TestRolePermissions:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestHasPermissions:
+    def test_permissions_are_combined_across_roles(
+        self, create_test_user_rbac_no_roles
+    ):
+        user = create_test_user_rbac_no_roles
+        tenant = Membership.objects.get(user=user).tenant
+        manage_users_role = Role.objects.create(
+            name="manage_users_only",
+            tenant=tenant,
+            manage_users=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=manage_users_role,
+            tenant=tenant,
+        )
+        request = Mock(user=user, tenant_id=tenant.id)
+        view = Mock(
+            required_permissions=[
+                Permissions.MANAGE_USERS,
+                Permissions.MANAGE_ACCOUNT,
+            ]
+        )
+        permission = HasPermissions()
+
+        assert not permission.has_permission(request, view)
+
+        manage_account_role = Role.objects.create(
+            name="manage_account_only",
+            tenant=tenant,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=manage_account_role,
+            tenant=tenant,
+        )
+
+        assert permission.has_permission(request, view)
 
 
 @pytest.mark.django_db
