@@ -18,8 +18,8 @@ def print_banner(legend: bool = False, provider: str = None):
  _ __  _ __ _____      _| | ___ _ __
 | '_ \| '__/ _ \ \ /\ / / |/ _ \ '__|
 | |_) | | | (_) \ V  V /| |  __/ |
-| .__/|_|  \___/ \_/\_/ |_|\___|_|v{prowler_version}
-|_|{Fore.BLUE} Get the most at https://cloud.prowler.com {Style.RESET_ALL}
+| .__/|_|  \___/ \_/\_/ |_|\___|_| CLI - v{prowler_version}
+|_|
 
 {Fore.YELLOW}Date: {timestamp.strftime("%Y-%m-%d %H:%M:%S")}{Style.RESET_ALL}
 """
@@ -43,8 +43,9 @@ def print_prowler_cloud_banner(provider: str = None):
     the open-source CLI.
 
     Shown at the start and end of a scan to let users know about the managed
-    platform capabilities they are missing (attack paths, AI, organizations,
-    continuous scanning, integrations and live compliance dashboards).
+    platform capabilities they are missing (CLI findings upload, attack paths,
+    AI, triage, organizations, continuous scanning with custom scheduling and
+    scan configuration, integrations and live compliance dashboards).
 
     Parameters:
     - provider (str): The provider that was scanned, used to tailor the message.
@@ -57,7 +58,9 @@ def print_prowler_cloud_banner(provider: str = None):
     print(f"""
 {bar} {Style.BRIGHT}You're getting a snapshot 📸. Prowler Cloud gives you the full picture:{Style.RESET_ALL}
 {bar}
-{bar} {check} {Style.BRIGHT}Continuous Security Monitoring{Style.RESET_ALL} - scheduled scans with history, trends and alerts.
+{bar} {check} {Style.BRIGHT}Send your findings{Style.RESET_ALL} - directly from the Prowler CLI to Prowler Cloud.
+{bar} {check} {Style.BRIGHT}Continuous Security Monitoring{Style.RESET_ALL} - custom scheduling and scan configuration with history, trends and alerts.
+{bar} {check} {Style.BRIGHT}Triage{Style.RESET_ALL} - review findings, flag false positives and track accepted risk with your team.
 {bar} {check} {Style.BRIGHT}Lighthouse AI + MCP{Style.RESET_ALL} - autonomous triage, custom dashboards, prioritization with prevention and remediation.
 {bar} {check} {Style.BRIGHT}Alerts{Style.RESET_ALL} - get notified when anything you want is happening.
 {bar} {check} {Style.BRIGHT}Live Compliance{Style.RESET_ALL} - dashboards for 50+ frameworks, always up to date.
@@ -66,5 +69,5 @@ def print_prowler_cloud_banner(provider: str = None):
 {bar} {check} {Style.BRIGHT}Bulk Provisioning{Style.RESET_ALL} - add your entire AWS Organization in seconds.
 {bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Anything with our MCP + Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC.
 {bar}
-{bar} {Fore.BLUE}Start free at 👉 cloud.prowler.com{Style.RESET_ALL}
+{bar} {banner_color}Start free at 👉 cloud.prowler.com{Style.RESET_ALL}
 """)

@@ -5,7 +5,7 @@ import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
-import { DataTableSearch } from "@/components/ui/table/data-table-search";
+import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
 import { getFlowById } from "@/lib/onboarding";
 import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";

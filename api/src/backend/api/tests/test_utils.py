@@ -188,10 +188,10 @@ class TestProwlerProviderConnectionTest:
     @pytest.mark.django_db
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_without_secret(
-        self, mock_return_prowler_provider, providers_fixture
+        self, mock_return_prowler_provider, aws_provider
     ):
         mock_return_prowler_provider.return_value = MagicMock()
-        connection = prowler_provider_connection_test(providers_fixture[0])
+        connection = prowler_provider_connection_test(aws_provider)
 
         assert connection.is_connected is False
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)

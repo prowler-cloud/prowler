@@ -4,8 +4,8 @@ import { listScanConfigurations } from "@/actions/scan-configurations";
 import { ProvidersAccountsView } from "@/components/providers";
 import { SkeletonTableProviders } from "@/components/providers/table";
 import { CliImportBanner } from "@/components/scans";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { ContentLayout } from "@/components/ui";
 import { FilterTransitionWrapper } from "@/contexts";
 import { SearchParamsProps } from "@/types";
 import {

@@ -801,3 +801,8 @@ openstack:
   # Regex patterns whose matches are excluded from secret scanning of
   # resource metadata.
   secrets_ignore_patterns: []
+
+# E2E Networks Configuration
+e2enetworks:
+  # load_balancer_bitninja_enabled
+  require_bitninja_on_load_balancers: false

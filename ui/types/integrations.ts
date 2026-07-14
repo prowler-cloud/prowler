@@ -64,6 +64,8 @@ export interface JiraDispatchResponse {
         message?: string;
         issue_url?: string;
         issue_key?: string;
+        created_count?: number;
+        failed_count?: number;
       } | null;
       task_args: Record<string, unknown> | null;
       metadata: Record<string, unknown> | null;

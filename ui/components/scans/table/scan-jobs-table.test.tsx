@@ -10,7 +10,7 @@ const { getScanJobsColumnsMock } = vi.hoisted(() => ({
   getScanJobsColumnsMock: vi.fn((_options: unknown) => []),
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTable: ({ data }: { data: ScanProps[] }) => (
     <div data-testid="scan-jobs-data-table">{data.length}</div>
   ),

@@ -210,7 +210,7 @@ export function adaptFindingGroupResourcesResponse(
     rowType: FINDINGS_ROW_TYPE.RESOURCE,
     findingId: item.attributes.finding_id || item.id,
     checkId,
-    providerType: (item.attributes.provider?.type || "aws") as ProviderType,
+    providerType: (item.attributes.provider?.type ?? "") as ProviderType,
     providerAlias: item.attributes.provider?.alias || "",
     providerUid: item.attributes.provider?.uid || "",
     resourceName: item.attributes.resource?.name || "-",

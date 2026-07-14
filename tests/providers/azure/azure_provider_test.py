@@ -647,6 +647,32 @@ class TestAzureProviderValidateResourceGroups:
 
         assert result[sub_name] == ["rg-prod"]
 
+    @patch("prowler.providers.azure.azure_provider.ResourceManagementClient")
+    def test_validate_resource_groups_skips_subscription_when_listing_fails(
+        self, mock_rm_client
+    ):
+        accessible_subscription = str(uuid4())
+        failing_subscription = str(uuid4())
+        provider = self._make_provider(
+            subscriptions={
+                accessible_subscription: "Accessible Sub",
+                failing_subscription: "Failing Sub",
+            }
+        )
+
+        mock_rg = MagicMock()
+        mock_rg.name = "rg-prod"
+        accessible_client = MagicMock()
+        accessible_client.resource_groups.list.return_value = [mock_rg]
+        failing_client = MagicMock()
+        failing_client.resource_groups.list.side_effect = Exception("Forbidden")
+        mock_rm_client.side_effect = [accessible_client, failing_client]
+
+        result = provider.validate_resource_groups(["rg-prod"])
+
+        assert result[accessible_subscription] == ["rg-prod"]
+        assert result[failing_subscription] == []
+
 
 class TestAzureProviderSetupIdentitySubscriptions:
     """Regression tests ensuring identity.subscriptions preserves every

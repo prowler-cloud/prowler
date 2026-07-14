@@ -15,6 +15,7 @@ const roleDetail = {
   type: "roles",
   attributes: {
     name: "Cloud admin",
+    permission_state: "unlimited",
     manage_users: false,
     manage_account: false,
     manage_providers: false,
@@ -51,5 +52,32 @@ describe("RoleItem", () => {
 
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
+  });
+
+  it("displays the permission state as a badge", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(screen.getByText("unlimited")).toHaveClass("bg-bg-tag");
+  });
+
+  it("does not render the details toggle", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /hide details/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /show details/i }),
+    ).not.toBeInTheDocument();
   });
 });

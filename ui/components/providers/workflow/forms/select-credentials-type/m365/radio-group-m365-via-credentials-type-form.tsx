@@ -3,8 +3,8 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
-import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupM365ViaCredentialsFormProps = {
   control: Control<any>;
@@ -33,7 +33,7 @@ export const RadioGroupM365ViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">
+            <span className="text-text-neutral-tertiary text-sm">
               Select Authentication Method
             </span>
             <WizardRadioCard value="app_client_secret" isInvalid={isInvalid}>

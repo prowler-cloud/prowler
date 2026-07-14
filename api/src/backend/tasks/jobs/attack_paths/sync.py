@@ -19,6 +19,7 @@ import json
 import time
 from collections import defaultdict
 from collections.abc import Iterator
+from hashlib import sha256
 from typing import Any
 
 import neo4j
@@ -392,11 +393,11 @@ def _build_child_props(
 def _build_child_id(provider_id: str, child_label: str, value_key: str) -> str:
     """Deterministic `_provider_element_id` for a list-item child node.
 
-    Dedupes within (tenant, provider): multiple parents referencing the same
-    value share one child node via the existing MERGE-on-_provider_element_id
-    index in both sinks.
+    Hashing the value keeps the ID bounded while preserving deduplication within
+    each provider and child label.
     """
-    return f"{provider_id}::{child_label}::{value_key}"
+    value_digest = sha256(value_key.encode("utf-8")).hexdigest()
+    return f"{provider_id}::{child_label}::{value_digest}"
 
 
 def _build_catalog_index(

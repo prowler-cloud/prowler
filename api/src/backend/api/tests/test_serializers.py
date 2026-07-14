@@ -1,6 +1,6 @@
 import pytest
 from api.v1.serializer_utils.integrations import S3ConfigSerializer
-from api.v1.serializers import ImageProviderSecret
+from api.v1.serializers import ImageProviderSecret, KubernetesProviderSecret
 from rest_framework.exceptions import ValidationError
 
 
@@ -132,3 +132,74 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestKubernetesProviderSecret:
+    def test_valid_static_kubeconfig_is_accepted(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      token: test-token
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert serializer.is_valid()
+
+    def test_kubeconfig_with_exec_authentication_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1
+        command: kubectl
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors
+
+    def test_malformed_kubeconfig_is_rejected(self):
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": "apiVersion: ["}
+        )
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors
+
+    def test_non_mapping_kubeconfig_is_rejected(self):
+        serializer = KubernetesProviderSecret(data={"kubeconfig_content": "[]"})
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors

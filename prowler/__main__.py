@@ -140,6 +140,7 @@ from prowler.providers.azure.models import AzureOutputOptions
 from prowler.providers.cloudflare.models import CloudflareOutputOptions
 from prowler.providers.common.provider import Provider
 from prowler.providers.common.quick_inventory import run_provider_quick_inventory
+from prowler.providers.e2enetworks.models import E2eNetworksOutputOptions
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
@@ -430,6 +431,10 @@ def prowler():
         )
     elif provider == "vercel":
         output_options = VercelOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "e2enetworks":
+        output_options = E2eNetworksOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "okta":
