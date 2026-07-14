@@ -1490,7 +1490,7 @@ def aggregate_findings(tenant_id: str, scan_id: str):
             if agg["resources__service"] is not None
             and agg["resources__region"] is not None
         ]
-        # Sort by the conflict key so concurrent upserts acquire locks consistently.
+        # Needed sort so concurrent upserts acquire locks consistently
         scan_aggregations.sort(
             key=lambda summary: (
                 summary.tenant_id,
