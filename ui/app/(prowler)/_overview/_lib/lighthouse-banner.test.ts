@@ -11,7 +11,7 @@ import {
 } from "./lighthouse-banner";
 
 const NEW_CONVERSATION_CHAT_HREF =
-  "/lighthouse?prompt=Find%20and%20guide%20me%20to%20remediate%20which%20actually%20matters.%20What%20do%20I%20have%20to%20do%20today%20to%20be%20secure%3F";
+  "/lighthouse?prompt=Find%20and%20guide%20me%20to%20remediate%20what%20actually%20matters.%20What%20do%20I%20have%20to%20do%20today%20to%20be%20secure%3F";
 
 describe("resolveLighthouseOverviewBannerHref", () => {
   it("starts a new conversation with the remediation prompt when any v2 configuration is connected", () => {

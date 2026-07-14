@@ -116,7 +116,7 @@ export function LighthouseOverviewBanner({
                 Lighthouse AI
               </p>
               <p className="text-text-neutral-secondary text-sm">
-                Find and remediate which actually matters.
+                Find and remediate what actually matters.
               </p>
             </div>
           </div>

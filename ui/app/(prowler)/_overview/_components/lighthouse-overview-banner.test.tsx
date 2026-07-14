@@ -13,13 +13,11 @@ describe("LighthouseOverviewBanner", () => {
 
     // Then
     const link = screen.getByRole("link", {
-      name: /Find and remediate which actually matters\./,
+      name: /Find and remediate what actually matters\./,
     });
     expect(link).toHaveAttribute("href", LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT);
     expect(link).toHaveTextContent("Lighthouse AI");
-    expect(link).toHaveTextContent(
-      "Find and remediate which actually matters.",
-    );
+    expect(link).toHaveTextContent("Find and remediate what actually matters.");
   });
 
   it("links to Lighthouse settings when no connected configuration exists", () => {
@@ -33,7 +31,7 @@ describe("LighthouseOverviewBanner", () => {
     // Then
     expect(
       screen.getByRole("link", {
-        name: /Find and remediate which actually matters\./,
+        name: /Find and remediate what actually matters\./,
       }),
     ).toHaveAttribute("href", "/lighthouse/settings");
   });
