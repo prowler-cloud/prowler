@@ -12,7 +12,7 @@ interface CloudUpgradeContent {
 
 export const CLOUD_UPGRADE_SECONDARY_CTA = "View Plans & Pricing";
 export const CLOUD_UPGRADE_FOOTER_NOTE =
-  "Prowler Cloud opens in a new tab. Your self-hosted deployment remains unchanged.";
+  "Prowler Cloud opens in a new tab. Your Prowler Local Server remains unchanged.";
 
 const CLOUD_SIGN_UP_URL = "https://cloud.prowler.com/sign-up";
 const PRICING_URL = "https://prowler.com/pricing";
@@ -86,7 +86,7 @@ export const CLOUD_UPGRADE_CONTENT = {
     primaryCta: "Triage Findings in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
-    title: "Use a Managed Security Assistant",
+    title: "Use The Agent Cloud Defender",
     description:
       "Investigate and act on your security posture without operating an AI stack.",
     benefits: [

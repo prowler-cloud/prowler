@@ -17,14 +17,15 @@ describe("ManagedLighthouseCallout", () => {
     const user = userEvent.setup();
     render(<ManagedLighthouseCallout />);
 
+    const upgradeButton = screen.getByRole("button", {
+      name: "Explore The Agentic Cloud Defender",
+    });
+
     // When
-    await user.click(
-      screen.getByRole("button", {
-        name: "Explore the fully Managed Lighthouse AI",
-      }),
-    );
+    await user.click(upgradeButton);
 
     // Then
+    expect(upgradeButton).toHaveClass("bg-button-primary");
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(
       CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI,
     );

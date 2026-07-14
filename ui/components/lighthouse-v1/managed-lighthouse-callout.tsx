@@ -40,10 +40,10 @@ export const ManagedLighthouseCallout = () => {
         </p>
         <Button
           type="button"
-          variant="outline"
+          variant="default"
           onClick={() => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI)}
         >
-          Explore the fully Managed Lighthouse AI
+          Explore The Agentic Cloud Defender
         </Button>
       </CardContent>
     </Card>

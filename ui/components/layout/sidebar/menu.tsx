@@ -192,7 +192,7 @@ export const Menu = ({ isOpen, onSelect }: SidebarMenuProps) => {
             <TooltipTrigger asChild>
               <Button
                 type="button"
-                variant="outline"
+                variant="default"
                 aria-label="Explore Prowler Cloud"
                 className={cn("w-full", isOpen ? "justify-center" : "px-0")}
                 onClick={() => {

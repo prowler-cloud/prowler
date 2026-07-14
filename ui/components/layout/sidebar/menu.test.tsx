@@ -196,9 +196,12 @@ describe("Menu", () => {
 
     render(<MenuComponent isOpen />);
 
-    await userEvent.click(
-      screen.getByRole("button", { name: "Explore Prowler Cloud" }),
-    );
+    const upgradeButton = screen.getByRole("button", {
+      name: "Explore Prowler Cloud",
+    });
+    expect(upgradeButton).toHaveClass("bg-button-primary");
+
+    await userEvent.click(upgradeButton);
 
     expectLastCloudUpgrade("general");
   });

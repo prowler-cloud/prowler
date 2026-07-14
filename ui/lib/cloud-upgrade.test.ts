@@ -4,6 +4,7 @@ import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import {
   CLOUD_UPGRADE_CONTENT,
+  CLOUD_UPGRADE_FOOTER_NOTE,
   getCloudUpgradeCompareUrl,
   getCloudUpgradePrimaryUrl,
 } from "./cloud-upgrade";
@@ -23,10 +24,17 @@ describe("cloud upgrade content", () => {
       "Bring CLI Findings into One Cloud View",
       "See Compliance Across Every Provider",
       "Coordinate Finding Remediation",
-      "Use a Managed Security Assistant",
+      "Use The Agent Cloud Defender",
       "Scale Prowler Without Operating It",
       "Configure Every Scan Once",
     ]);
+  });
+
+  it("should explain that Prowler Local Server remains unchanged", () => {
+    // Given / When / Then
+    expect(CLOUD_UPGRADE_FOOTER_NOTE).toBe(
+      "Prowler Cloud opens in a new tab. Your Prowler Local Server remains unchanged.",
+    );
   });
 });
 
