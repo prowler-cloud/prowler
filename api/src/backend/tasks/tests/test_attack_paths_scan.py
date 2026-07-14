@@ -1902,6 +1902,55 @@ def _make_session_ctx(session, call_order=None, name=None):
     return ctx
 
 
+class TestBuildChildId:
+    def test_large_value_is_hashed_and_preserved_as_child_data(self):
+        value = "x" * 22_796
+        spec = sync_module.NormalizedList(
+            "SomeLabel",
+            "values",
+            "SomeLabelValuesItem",
+            "HAS_VALUES",
+        )
+        record = {
+            "element_id": "elem-1",
+            "labels": ["SomeLabel"],
+            "props": {"values": [value]},
+        }
+
+        _, parent, children, relationships = sync_module._node_to_sync_dict(
+            record,
+            "prov-1",
+            sync_module._build_catalog_index([spec]),
+        )
+
+        child = children[0]["row"]
+        child_id = child["provider_element_id"]
+        prefix = "prov-1::SomeLabelValuesItem::"
+        assert parent["provider_element_id"] == "prov-1:elem-1"
+        assert child["props"]["value"] == value
+        assert len(child_id) == len(prefix) + 64
+        assert value not in child_id
+        assert relationships[0]["row"]["end_element_id"] == child_id
+
+    @pytest.mark.parametrize(
+        ("provider_id", "child_label", "value_key"),
+        [
+            ("prov-2", "ChildLabel", "value"),
+            ("prov-1", "OtherChildLabel", "value"),
+            ("prov-1", "ChildLabel", "other-value"),
+        ],
+    )
+    def test_each_identity_component_changes_id(
+        self, provider_id, child_label, value_key
+    ):
+        child_id = sync_module._build_child_id("prov-1", "ChildLabel", "value")
+
+        assert sync_module._build_child_id("prov-1", "ChildLabel", "value") == child_id
+        assert (
+            sync_module._build_child_id(provider_id, child_label, value_key) != child_id
+        )
+
+
 class TestSyncNodes:
     def test_iter_sink_batches_rejects_zero_batch_size(self):
         with pytest.raises(
