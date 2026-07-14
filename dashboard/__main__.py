@@ -40,7 +40,17 @@ from dashboard.pages.cloud import CLOUD_FEATURES_BY_SLUG  # noqa: E402
 
 ICON_DIR = "/assets/images/icons/cloud"
 
-# Brand mark shown to the left of the "Prowler / Local Dashboard" lockup.
+# Official marketing "PROWLER / LOCAL DASHBOARD" lockup (white wordmark + teal
+# gradient sublabel) shown in the expanded sidebar. Vector SVG so it stays crisp
+# at any DPI. The sublabel is right-anchored (text-anchor="end"), so a font
+# fallback widens it leftward rather than clipping at the edge.
+prowler_lockup = html.Img(
+    src=f"{ICON_DIR}/prowler-lockup.svg",
+    alt="Prowler Local Dashboard",
+    className="pc-brand-lockup",
+)
+
+# Compact brand mark shown only when the sidebar collapses to its icon rail.
 prowler_mark = html.Img(
     src=f"{ICON_DIR}/prowler-mark.svg",
     alt="Prowler",
@@ -111,18 +121,9 @@ def _section_label(title):
 
 def generate_sidebar(current_path):
     children = [
-        # Brand lockup: mark + "Prowler / Local Dashboard".
+        # Brand lockup: full wordmark when expanded, compact mark when collapsed.
         html.Div(
-            [
-                prowler_mark,
-                html.Div(
-                    [
-                        html.Span("Prowler", className="pc-brand-title"),
-                        html.Span("Local Dashboard", className="pc-brand-sub"),
-                    ],
-                    className="pc-brand-text",
-                ),
-            ],
+            [prowler_lockup, prowler_mark],
             className="pc-brand",
         ),
         # Dashboards section — the only locally functional destinations.
@@ -181,7 +182,6 @@ def generate_sidebar(current_path):
 # Layout
 dashboard.layout = html.Div(
     [
-        dcc.Location(id="url", refresh=False),
         html.Link(rel="icon", href="assets/favicon.ico"),
         html.Div(
             [
@@ -204,7 +204,16 @@ dashboard.layout = html.Div(
 )
 
 
-# Callback to update navigation bar
-@dashboard.callback(Output("navigation-bar", "children"), [Input("url", "pathname")])
+# Callback to update navigation bar.
+#
+# Triggered off Dash Pages' own location (``_pages_location``) rather than a
+# separate ``dcc.Location``. A standalone ``dcc.Location(id="url")`` stops
+# emitting ``pathname`` when navigating between two pages that render an
+# identical component tree — every ``/cloud/*`` gated page shares the same
+# ``build_cloud_layout`` structure — which left the active highlight stuck on
+# the first gated page visited. ``_pages_location`` fires on every route change.
+@dashboard.callback(
+    Output("navigation-bar", "children"), [Input("_pages_location", "pathname")]
+)
 def update_nav_bar(pathname):
     return generate_sidebar(pathname)

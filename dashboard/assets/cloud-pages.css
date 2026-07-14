@@ -73,30 +73,18 @@
   margin-bottom: 22px;
 }
 
+.pc-brand-lockup {
+  width: 190px;
+  height: auto;
+  display: block;
+}
+
+/* Compact mark is only revealed on the collapsed icon rail (see media query). */
 .pc-brand-mark {
   width: 30px;
   height: 30px;
   flex: 0 0 auto;
-}
-
-.pc-brand-text {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.pc-brand-title {
-  color: #ffffff;
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.pc-brand-sub {
-  color: var(--pc-teal-accent);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  display: none;
 }
 
 .pc-section {
@@ -375,7 +363,14 @@
     padding: 0 8px;
   }
 
-  .pc-brand-text,
+  .pc-brand-lockup {
+    display: none;
+  }
+
+  .pc-brand-mark {
+    display: block;
+  }
+
   .pc-section,
   .pc-nav-label,
   .pc-pill {
