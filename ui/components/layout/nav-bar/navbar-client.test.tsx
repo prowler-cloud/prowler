@@ -30,10 +30,6 @@ vi.mock("@/store/onboarding-replay", () => {
   return { useOnboardingReplayStore: hook };
 });
 
-vi.mock("@/hooks/use-sidebar", () => ({
-  useSidebar: () => ({ isOpen: true, toggleOpen: vi.fn() }),
-}));
-
 vi.mock("@/components/ThemeSwitch", () => ({
   ThemeSwitch: () => <button type="button">Theme switch</button>,
 }));
@@ -54,12 +50,8 @@ vi.mock("@/components/shadcn", async (importOriginal) => ({
   ),
 }));
 
-vi.mock("../sidebar/sheet-menu", () => ({
-  SheetMenu: () => <button type="button">Open menu</button>,
-}));
-
-vi.mock("../sidebar/sidebar-toggle", () => ({
-  SidebarToggle: () => <button type="button">Toggle sidebar</button>,
+vi.mock("@/components/layout/app-sidebar", () => ({
+  MobileAppSidebar: () => <button type="button">Open menu</button>,
 }));
 
 vi.mock("../user-nav/user-nav", () => ({

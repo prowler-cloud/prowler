@@ -5,9 +5,11 @@ import { getAllProviders } from "@/actions/providers";
 import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
+import {
+  APP_SIDEBAR_MODE,
+  AppSidebarModeSync,
+} from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
-import { SidebarNavigationModeSync } from "@/components/sidebar/navigation-mode-sync";
-import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
@@ -55,7 +57,7 @@ export default async function Home({
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
-      <SidebarNavigationModeSync mode={SIDEBAR_NAVIGATION_MODE.BROWSE} />
+      <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
