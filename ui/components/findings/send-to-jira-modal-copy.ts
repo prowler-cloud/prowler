@@ -1,0 +1,38 @@
+interface JiraDispatchChoiceCopyParams {
+  selectedCount: number;
+  isSelectedFindingGroupFlow: boolean;
+}
+
+interface JiraDispatchChoiceCopy {
+  description: string;
+  groupedTitle: string;
+  groupedHelp: string;
+  individualHelp: string;
+}
+
+export const buildJiraDispatchChoiceCopy = ({
+  selectedCount,
+  isSelectedFindingGroupFlow,
+}: JiraDispatchChoiceCopyParams): JiraDispatchChoiceCopy => {
+  if (isSelectedFindingGroupFlow) {
+    return {
+      description: `Create Jira issue(s) for ${selectedCount} selected Findings from this Finding Group.`,
+      groupedTitle:
+        "Create one Jira issue for all selected Findings in this Finding Group",
+      groupedHelp:
+        "Recommended. The issue will include every selected Finding from this Finding Group.",
+      individualHelp:
+        "Use this when each selected Finding should be tracked independently.",
+    };
+  }
+
+  return {
+    description: `Create Jira issue(s) for ${selectedCount} selected affected failing resources.`,
+    groupedTitle:
+      "Create one Jira issue for all selected affected failing resources",
+    groupedHelp:
+      "Recommended. The issue will include every selected resource from this finding group.",
+    individualHelp:
+      "Use this when each selected resource should be tracked independently.",
+  };
+};

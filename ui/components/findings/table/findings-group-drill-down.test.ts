@@ -13,4 +13,14 @@ describe("findings group drill down", () => {
     expect(source).toContain("useFindingGroupResourceState");
     expect(source).not.toContain("useInfiniteResources");
   });
+
+  it("routes selected child findings through the Send to Jira modal with issue creation mode", () => {
+    expect(source).toContain("<SendToJiraModal");
+    expect(source).toContain('targetType="finding_id"');
+    expect(source).toContain(
+      "selectedFindingIds.length > 1 && groupedJiraDispatchEnabled",
+    );
+    expect(source).toContain("canSendSelectedFindingsToJira");
+    expect(source).toContain("JIRA_DISPATCH_MODE.GROUPED");
+  });
 });

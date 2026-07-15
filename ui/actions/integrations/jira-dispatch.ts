@@ -5,9 +5,28 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type {
   IntegrationProps,
+  JiraDispatchMode,
   JiraDispatchRequest,
   JiraDispatchResponse,
 } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE } from "@/types/integrations";
+
+const JIRA_DISPATCH_FILTER = {
+  CHECK_ID: "check_id",
+  FINDING_ID: "finding_id",
+} as const;
+
+type JiraDispatchFilter =
+  (typeof JIRA_DISPATCH_FILTER)[keyof typeof JIRA_DISPATCH_FILTER];
+
+interface JiraDispatchInput {
+  integrationId: string;
+  targetIds: string[];
+  filter: JiraDispatchFilter;
+  projectKey: string;
+  issueType: string;
+  dispatchMode?: JiraDispatchMode;
+}
 
 export const getJiraIssueTypes = async (
   integrationId: string,
@@ -88,13 +107,36 @@ export const sendFindingToJira = async (
   | { success: true; taskId: string; message: string }
   | { success: false; error: string }
 > => {
+  return sendJiraDispatch({
+    integrationId,
+    targetIds: [findingId],
+    filter: JIRA_DISPATCH_FILTER.FINDING_ID,
+    projectKey,
+    issueType,
+  });
+};
+
+export const sendJiraDispatch = async ({
+  integrationId,
+  targetIds,
+  filter,
+  projectKey,
+  issueType,
+  dispatchMode = JIRA_DISPATCH_MODE.INDIVIDUAL,
+}: JiraDispatchInput): Promise<
+  | { success: true; taskId: string; message: string }
+  | { success: false; error: string }
+> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(
     `${apiBaseUrl}/integrations/${integrationId}/jira/dispatches`,
   );
 
-  // Single finding: use direct filter without array notation
-  url.searchParams.append("filter[finding_id]", findingId);
+  if (targetIds.length === 1) {
+    url.searchParams.append(`filter[${filter}]`, targetIds[0]);
+  } else {
+    url.searchParams.append(`filter[${filter}__in]`, targetIds.join(","));
+  }
 
   const payload: JiraDispatchRequest = {
     data: {
@@ -102,6 +144,7 @@ export const sendFindingToJira = async (
       attributes: {
         project_key: projectKey,
         issue_type: issueType,
+        dispatch_mode: dispatchMode,
       },
     },
   };
@@ -159,18 +202,23 @@ export const pollJiraDispatchTask = async (
   const jiraResult = result as JiraTaskResult | undefined;
 
   if (state === "completed") {
-    const createdCount = jiraResult?.created_count ?? 0;
     const failedCount = jiraResult?.failed_count ?? 0;
-    if (!jiraResult?.error && failedCount === 0 && createdCount > 0) {
+    if (failedCount > 0) {
+      const createdCount = jiraResult?.created_count ?? 0;
+      return {
+        success: false,
+        error:
+          jiraResult?.error ||
+          `Jira dispatch completed with ${failedCount} failed and ${createdCount} created issue${createdCount === 1 ? "" : "s"}.`,
+      };
+    }
+
+    if (!jiraResult?.error) {
       return { success: true, message: "Finding successfully sent to Jira!" };
     }
     return {
       success: false,
-      error:
-        jiraResult?.error ||
-        (failedCount > 1
-          ? `Failed to create ${failedCount} Jira issues.`
-          : "Failed to create Jira issue."),
+      error: jiraResult?.error || "Failed to create Jira issue.",
     };
   }
 

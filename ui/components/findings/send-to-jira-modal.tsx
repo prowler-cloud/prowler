@@ -11,27 +11,63 @@ import {
   getJiraIssueTypes,
   pollJiraDispatchTask,
   sendFindingToJira,
+  sendJiraDispatch,
 } from "@/actions/integrations/jira-dispatch";
 import { useToast } from "@/components/shadcn";
 import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
 import { Form, FormField, FormMessage } from "@/components/shadcn/form";
 import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import { Modal } from "@/components/shadcn/modal";
+import {
+  RadioGroup,
+  RadioGroupItem,
+} from "@/components/shadcn/radio-group/radio-group";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { IntegrationProps } from "@/types/integrations";
+import {
+  IntegrationProps,
+  JIRA_DISPATCH_MODE,
+  type JiraDispatchMode,
+} from "@/types/integrations";
+
+import { buildJiraDispatchChoiceCopy } from "./send-to-jira-modal-copy";
+
+const JIRA_DISPATCH_TARGET = {
+  CHECK_ID: "check_id",
+  FINDING_ID: "finding_id",
+} as const;
+
+type JiraDispatchTarget =
+  (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
+
+interface JiraDispatchTargetBatch {
+  targetIds: string[];
+  targetType: JiraDispatchTarget;
+  dispatchMode?: JiraDispatchMode;
+}
 
 interface SendToJiraModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   findingId: string;
   findingTitle?: string;
+  targetIds?: string[];
+  targetType?: JiraDispatchTarget;
+  targetBatches?: JiraDispatchTargetBatch[];
+  defaultDispatchMode?: JiraDispatchMode;
+  canChooseGroupedDispatch?: boolean;
+  selectedResourceCount?: number;
+  description?: string;
 }
 
 const sendToJiraSchema = z.object({
   integration: z.string().min(1, "Please select a Jira integration"),
   project: z.string().min(1, "Please select a project"),
   issueType: z.string().min(1, "Please select an issue type"),
+  dispatchMode: z.enum([
+    JIRA_DISPATCH_MODE.GROUPED,
+    JIRA_DISPATCH_MODE.INDIVIDUAL,
+  ]),
 });
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
@@ -41,6 +77,13 @@ export const SendToJiraModal = ({
   onOpenChange,
   findingId,
   findingTitle,
+  targetIds,
+  targetType = JIRA_DISPATCH_TARGET.FINDING_ID,
+  targetBatches,
+  defaultDispatchMode = JIRA_DISPATCH_MODE.INDIVIDUAL,
+  canChooseGroupedDispatch = false,
+  selectedResourceCount,
+  description,
 }: SendToJiraModalProps) => {
   const { toast } = useToast();
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
@@ -56,7 +99,41 @@ export const SendToJiraModal = ({
       integration: "",
       project: "",
       issueType: "",
+      dispatchMode: defaultDispatchMode,
     },
+  });
+
+  const jiraTargetIds = targetIds?.length ? targetIds : [findingId];
+  const jiraTargetBatches = targetBatches?.length
+    ? targetBatches.filter((batch) => batch.targetIds.length > 0)
+    : [
+        {
+          targetIds: jiraTargetIds,
+          targetType,
+        },
+      ];
+  const multiFindingTargetCount =
+    jiraTargetBatches.find(
+      (batch) =>
+        batch.targetType === JIRA_DISPATCH_TARGET.FINDING_ID &&
+        batch.targetIds.length > 1,
+    )?.targetIds.length ?? 0;
+  const jiraSelectedResourceCount =
+    selectedResourceCount ?? jiraTargetIds.length;
+  const hasMultipleFindingTargets = multiFindingTargetCount > 1;
+  const shouldShowDispatchChoice =
+    (canChooseGroupedDispatch || hasMultipleFindingTargets) &&
+    (multiFindingTargetCount > 1 || jiraSelectedResourceCount > 1);
+  const isSelectedFindingGroupFlow =
+    shouldShowDispatchChoice &&
+    (targetType === JIRA_DISPATCH_TARGET.FINDING_ID ||
+      multiFindingTargetCount > 1);
+  const jiraDispatchChoiceCopy = buildJiraDispatchChoiceCopy({
+    selectedCount:
+      multiFindingTargetCount > 1
+        ? multiFindingTargetCount
+        : jiraSelectedResourceCount,
+    isSelectedFindingGroupFlow,
   });
 
   const selectedIntegration = form.watch("integration");
@@ -111,35 +188,65 @@ export const SendToJiraModal = ({
     }
   }, [isOpen, form, toast]);
 
+  useEffect(() => {
+    if (isOpen) {
+      form.setValue("dispatchMode", defaultDispatchMode);
+    }
+  }, [defaultDispatchMode, form, isOpen]);
+
   const handleSubmit = async (data: SendToJiraFormData) => {
     // Close modal immediately; continue processing in background
     onOpenChange(false);
 
     void (async () => {
       try {
-        // Send the finding to Jira
-        const result = await sendFindingToJira(
-          data.integration,
-          findingId,
-          data.project,
-          data.issueType,
-        );
+        const taskIds: string[] = [];
 
-        if (!result.success) {
-          throw new Error(result.error || "Failed to send to Jira");
+        for (const batch of jiraTargetBatches) {
+          const batchDispatchMode = batch.dispatchMode ?? data.dispatchMode;
+          const result =
+            batch.targetIds.length === 1 &&
+            batch.targetType === JIRA_DISPATCH_TARGET.FINDING_ID &&
+            batchDispatchMode === JIRA_DISPATCH_MODE.INDIVIDUAL
+              ? await sendFindingToJira(
+                  data.integration,
+                  batch.targetIds[0],
+                  data.project,
+                  data.issueType,
+                )
+              : await sendJiraDispatch({
+                  integrationId: data.integration,
+                  targetIds: batch.targetIds,
+                  filter: batch.targetType,
+                  projectKey: data.project,
+                  issueType: data.issueType,
+                  dispatchMode: batchDispatchMode,
+                });
+
+          if (!result.success) {
+            throw new Error(result.error || "Failed to send to Jira");
+          }
+
+          taskIds.push(result.taskId);
         }
 
         // Poll for task completion and notify once
-        const taskResult = await pollJiraDispatchTask(result.taskId);
+        const taskResults = await Promise.all(
+          taskIds.map((taskId) => pollJiraDispatchTask(taskId)),
+        );
+        const failedTask = taskResults.find(
+          (taskResult) => !taskResult.success,
+        );
 
-        if (!taskResult.success) {
-          throw new Error(taskResult.error || "Failed to create Jira issue");
+        if (failedTask && !failedTask.success) {
+          throw new Error(failedTask.error || "Failed to create Jira issue");
         }
 
         toast({
           title: "Success!",
           description:
-            taskResult.message || "Finding sent to Jira successfully",
+            taskResults.find((taskResult) => taskResult.success)?.message ||
+            "Finding sent to Jira successfully",
         });
       } catch (error) {
         const message =
@@ -252,9 +359,13 @@ export const SendToJiraModal = ({
       onOpenChange={onOpenChange}
       title="Send Finding to Jira"
       description={
-        findingTitle
-          ? `Create a Jira issue for: "${findingTitle}"`
-          : "Select integration, project and issue type to create a Jira issue"
+        shouldShowDispatchChoice
+          ? jiraDispatchChoiceCopy.description
+          : description
+            ? description
+            : findingTitle
+              ? `Create a Jira issue for: "${findingTitle}"`
+              : "Select integration, project and issue type to create a Jira issue"
       }
     >
       <Form {...form}>
@@ -383,6 +494,55 @@ export const SendToJiraModal = ({
                     closeOnSelect={true}
                     resetOnDefaultValueChange={true}
                   />
+                  <FormMessage className="text-text-error text-xs" />
+                </div>
+              )}
+            />
+          )}
+
+          {shouldShowDispatchChoice && (
+            <FormField
+              control={form.control}
+              name="dispatchMode"
+              render={({ field }) => (
+                <div className="flex flex-col gap-2">
+                  <span className="text-text-neutral-secondary text-xs font-light tracking-tight">
+                    Jira issue creation mode
+                  </span>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    className="gap-3"
+                  >
+                    <label className="border-border-neutral-secondary bg-bg-neutral-secondary flex cursor-pointer gap-3 rounded-md border p-3">
+                      <RadioGroupItem
+                        value={JIRA_DISPATCH_MODE.GROUPED}
+                        aria-label="Create one Jira issue"
+                      />
+                      <span className="flex flex-col gap-1">
+                        <span className="text-text-neutral-primary text-sm font-medium">
+                          {jiraDispatchChoiceCopy.groupedTitle}
+                        </span>
+                        <span className="text-text-neutral-secondary text-xs">
+                          {jiraDispatchChoiceCopy.groupedHelp}
+                        </span>
+                      </span>
+                    </label>
+                    <label className="border-border-neutral-secondary bg-bg-neutral-secondary flex cursor-pointer gap-3 rounded-md border p-3">
+                      <RadioGroupItem
+                        value={JIRA_DISPATCH_MODE.INDIVIDUAL}
+                        aria-label="Create separate Jira issues"
+                      />
+                      <span className="flex flex-col gap-1">
+                        <span className="text-text-neutral-primary text-sm font-medium">
+                          Create separate Jira issues
+                        </span>
+                        <span className="text-text-neutral-secondary text-xs">
+                          {jiraDispatchChoiceCopy.individualHelp}
+                        </span>
+                      </span>
+                    </label>
+                  </RadioGroup>
                   <FormMessage className="text-text-error text-xs" />
                 </div>
               )}

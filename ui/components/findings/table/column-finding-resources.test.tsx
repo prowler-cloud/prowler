@@ -5,7 +5,22 @@ import type {
   InputHTMLAttributes,
   ReactNode,
 } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { SendToJiraModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
+  () => ({
+    SendToJiraModalMock: vi.fn(
+      ({ findingId, isOpen }: { findingId: string; isOpen: boolean }) => (
+        <div
+          data-testid="jira-modal"
+          data-finding-id={findingId}
+          data-open={isOpen ? "true" : "false"}
+        />
+      ),
+    ),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+  }),
+);
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -14,8 +29,7 @@ vi.mock("@/components/shadcn/custom/custom-link", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
+vi.mock("@/components/shadcn", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -42,19 +56,7 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
 }));
 
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: ({
-    findingId,
-    isOpen,
-  }: {
-    findingId: string;
-    isOpen: boolean;
-  }) => (
-    <div
-      data-testid="jira-modal"
-      data-finding-id={findingId}
-      data-open={isOpen ? "true" : "false"}
-    />
-  ),
+  SendToJiraModal: SendToJiraModalMock,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -175,6 +177,10 @@ vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: () => "2d",
 }));
 
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+}));
+
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
@@ -196,6 +202,7 @@ import {
   CLOUD_ONLY_TOOLTIP_COPY,
   EDITING_UNAVAILABLE_COPY,
 } from "./finding-triage-cells";
+import { FindingsSelectionContext } from "./findings-selection-context";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,
@@ -284,6 +291,11 @@ function renderResourceActionsCell({
 }
 
 describe("column-finding-resources", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+  });
+
   it("should render actions as the last visible column after Triage without Notes", () => {
     // Given
     const columns = getColumnFindingResources({
@@ -296,6 +308,7 @@ describe("column-finding-resources", () => {
 
     // Then
     expect(columnIds.slice(-2)).toEqual(["triage", "actions"]);
+    expect(columnIds).not.toContain("status");
     expect(columnIds).not.toContain("notes");
     expect(
       (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
@@ -516,6 +529,102 @@ describe("column-finding-resources", () => {
     expect(screen.getByTestId("jira-modal")).toHaveAttribute(
       "data-open",
       "true",
+    );
+  });
+
+  it("should pass selected same-group affected failing resources as grouped Jira targets", async () => {
+    // Given
+    const user = userEvent.setup();
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 2,
+    });
+    const actionColumn = columns.find(
+      (col) => (col as { id?: string }).id === "actions",
+    );
+    if (!actionColumn?.cell) {
+      throw new Error("actions column not found");
+    }
+    const CellComponent = actionColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: ["finding-1", "finding-2"],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+        }}
+      >
+        {CellComponent({
+          row: {
+            original: makeResource({ findingId: "finding-1" }),
+          },
+        })}
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        targetIds: ["finding-1", "finding-2"],
+        targetType: "finding_id",
+        defaultDispatchMode: "grouped",
+        canChooseGroupedDispatch: true,
+      }),
+      undefined,
+    );
+  });
+
+  it("should disable selected multi-finding Jira dispatch outside cloud", async () => {
+    // Given
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
+    const user = userEvent.setup();
+    const columns = getColumnFindingResources({
+      rowSelection: {},
+      selectableRowCount: 2,
+    });
+    const actionColumn = columns.find(
+      (col) => (col as { id?: string }).id === "actions",
+    );
+    if (!actionColumn?.cell) {
+      throw new Error("actions column not found");
+    }
+    const CellComponent = actionColumn.cell as (props: {
+      row: { original: FindingResourceRow };
+    }) => ReactNode;
+
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: ["finding-1", "finding-2"],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+        }}
+      >
+        {CellComponent({
+          row: {
+            original: makeResource({ findingId: "finding-1" }),
+          },
+        })}
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    const jiraButton = screen.getByRole("button", { name: "Send to Jira" });
+    await user.click(jiraButton);
+
+    // Then
+    expect(jiraButton).toBeDisabled();
+    expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ isOpen: true }),
+      undefined,
     );
   });
 });

@@ -411,6 +411,9 @@ export const ResourceDetailContent = ({
                     <FloatingMuteButton
                       selectedCount={selectedFindingIds.length}
                       selectedFindingIds={selectedFindingIds}
+                      muteLabel={`Mute ${selectedFindingIds.length} ${
+                        selectedFindingIds.length === 1 ? "Finding" : "Findings"
+                      }`}
                       onComplete={handleMuteComplete}
                     />
                   )}

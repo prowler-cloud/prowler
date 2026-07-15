@@ -13,14 +13,17 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
+import { JIRA_DISPATCH_MODE } from "@/types/integrations";
 import type { ProviderType } from "@/types/providers";
 
+import { PROWLER_CLOUD_ONLY_TOOLTIP } from "../floating-mute-button";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import type { FindingTriageContext } from "./finding-note-modal";
 import { FindingNoteActionItem } from "./finding-triage-cells";
@@ -149,6 +152,9 @@ export function DataTableRowActions<T extends FindingRowData>({
   // Otherwise, just mute this single finding
   const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
+  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
+  const isJiraActionDisabled =
+    (isGroup || hasMultipleSelected) && !groupedJiraDispatchEnabled;
 
   const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
@@ -165,6 +171,36 @@ export function DataTableRowActions<T extends FindingRowData>({
     }
     return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
+
+  const getJiraTargetIds = (): string[] => {
+    if (isCurrentSelected && hasMultipleSelected) {
+      return selectedFindingIds;
+    }
+    return [muteKey];
+  };
+
+  const getJiraLabel = () => {
+    const ids = getJiraTargetIds();
+    if (ids.length > 1) {
+      return `Send ${ids.length} ${isGroup ? "Finding Groups" : "Findings"} to Jira`;
+    }
+    return isGroup ? "Send Finding Group to Jira" : "Send 1 Finding to Jira";
+  };
+
+  const jiraTargetIds = getJiraTargetIds();
+  const selectedJiraResourceCount = isGroup
+    ? (finding.resourcesFail ?? 0)
+    : undefined;
+  const hasMultipleSelectedFindings = !isGroup && jiraTargetIds.length > 1;
+  const jiraDefaultDispatchMode =
+    isGroup || hasMultipleSelectedFindings
+      ? JIRA_DISPATCH_MODE.GROUPED
+      : JIRA_DISPATCH_MODE.INDIVIDUAL;
+  const canChooseGroupedJiraDispatch = groupedJiraDispatchEnabled
+    ? isGroup
+      ? jiraTargetIds.length === 1 && (selectedJiraResourceCount ?? 0) > 1
+      : hasMultipleSelectedFindings
+    : false;
 
   const handleMuteModalOpenChange = (
     nextOpen: boolean | ((previousOpen: boolean) => boolean),
@@ -226,14 +262,25 @@ export function DataTableRowActions<T extends FindingRowData>({
     router.refresh();
   };
 
+  const handleJiraClick = () => {
+    if (isJiraActionDisabled) return;
+
+    setIsJiraModalOpen(true);
+  };
+
   return (
     <>
-      {!isGroup && (
+      {(!isGroup || groupedJiraDispatchEnabled) && (
         <SendToJiraModal
           isOpen={isJiraModalOpen}
           onOpenChange={setIsJiraModalOpen}
           findingId={finding.id}
           findingTitle={findingTitle}
+          targetIds={jiraTargetIds}
+          targetType={isGroup ? "check_id" : "finding_id"}
+          defaultDispatchMode={jiraDefaultDispatchMode}
+          canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
+          selectedResourceCount={selectedJiraResourceCount}
         />
       )}
 
@@ -274,13 +321,13 @@ export function DataTableRowActions<T extends FindingRowData>({
             disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
-          {!isGroup && (
-            <ActionDropdownItem
-              icon={<JiraIcon size={20} />}
-              label="Send to Jira"
-              onSelect={() => setIsJiraModalOpen(true)}
-            />
-          )}
+          <ActionDropdownItem
+            icon={<JiraIcon size={20} />}
+            label={getJiraLabel()}
+            disabled={isJiraActionDisabled}
+            disabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}
+            onSelect={handleJiraClick}
+          />
         </ActionDropdown>
       </div>
     </>

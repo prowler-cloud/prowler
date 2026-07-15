@@ -5,6 +5,7 @@ import { ComponentProps, ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,6 +105,8 @@ interface ActionDropdownItemProps
   description?: string;
   /** Whether the item is destructive (danger styling) */
   destructive?: boolean;
+  /** Tooltip shown when the item is disabled. */
+  disabledTooltip?: string;
 }
 
 export function ActionDropdownItem({
@@ -112,9 +115,10 @@ export function ActionDropdownItem({
   description,
   destructive = false,
   className,
+  disabledTooltip,
   ...props
 }: ActionDropdownItemProps) {
-  return (
+  const item = (
     <DropdownMenuItem
       className={cn(
         "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
@@ -149,6 +153,19 @@ export function ActionDropdownItem({
       </div>
     </DropdownMenuItem>
   );
+
+  if (props.disabled && disabledTooltip) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="block">{item}</span>
+        </TooltipTrigger>
+        <TooltipContent>{disabledTooltip}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return item;
 }
 
 export function ActionDropdownDangerZone({

@@ -4,6 +4,14 @@ import type { TaskState } from "@/types/tasks";
 
 export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
 
+export const JIRA_DISPATCH_MODE = {
+  INDIVIDUAL: "individual",
+  GROUPED: "grouped",
+} as const;
+
+export type JiraDispatchMode =
+  (typeof JIRA_DISPATCH_MODE)[keyof typeof JIRA_DISPATCH_MODE];
+
 export interface IntegrationProps {
   type: "integrations";
   id: string;
@@ -45,6 +53,7 @@ export interface JiraDispatchRequest {
     attributes: {
       project_key: string;
       issue_type: string;
+      dispatch_mode?: JiraDispatchMode;
     };
   };
 }
@@ -62,10 +71,10 @@ export interface JiraDispatchResponse {
         success?: boolean;
         error?: string;
         message?: string;
-        issue_url?: string;
-        issue_key?: string;
         created_count?: number;
         failed_count?: number;
+        issue_url?: string;
+        issue_key?: string;
       } | null;
       task_args: Record<string, unknown> | null;
       metadata: Record<string, unknown> | null;

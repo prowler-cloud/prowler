@@ -2,8 +2,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { MuteFindingsModalMock } = vi.hoisted(() => ({
-  MuteFindingsModalMock: vi.fn(() => null),
+const { MuteFindingsModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
+  () => ({
+    MuteFindingsModalMock: vi.fn(() => null),
+    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+  }),
+);
+
+const { SendToJiraModalMock } = vi.hoisted(() => ({
+  SendToJiraModalMock: vi.fn(() => null),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -15,7 +22,11 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
 }));
 
 vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: () => null,
+  SendToJiraModal: SendToJiraModalMock,
+}));
+
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -30,12 +41,14 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label,
     onSelect,
     disabled,
+    disabledTooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
+    disabledTooltip?: string;
   }) => (
-    <button onClick={onSelect} disabled={disabled}>
+    <button onClick={onSelect} disabled={disabled} title={disabledTooltip}>
       {label}
     </button>
   ),
@@ -134,6 +147,7 @@ function makeFindingRow(overrides?: Partial<FindingRowData>) {
 describe("DataTableRowActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
   });
 
   it("opens the mute modal immediately in preparing state for finding groups", async () => {
@@ -250,6 +264,236 @@ describe("DataTableRowActions", () => {
     expect(
       screen.getByRole("button", { name: "Mute Finding Group" }),
     ).toBeDisabled();
+  });
+
+  it("allows choosing Jira dispatch mode for a group with multiple failing resources", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: [],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "s3_bucket_public_access",
+                checkTitle: "S3 bucket public access",
+                mutedCount: 0,
+                resourcesFail: 2,
+                resourcesTotal: 2,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send Finding Group to Jira" }),
+    );
+
+    // Then
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        targetIds: ["s3_bucket_public_access"],
+        targetType: "check_id",
+        defaultDispatchMode: "grouped",
+        canChooseGroupedDispatch: true,
+        selectedResourceCount: 2,
+      }),
+      undefined,
+    );
+  });
+
+  it("shows disabled Cloud-only Jira action for finding groups outside cloud", async () => {
+    // Given
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: [],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "s3_bucket_public_access",
+                checkTitle: "S3 bucket public access",
+                mutedCount: 0,
+                resourcesFail: 2,
+                resourcesTotal: 2,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    const jiraButton = screen.getByRole("button", {
+      name: "Send Finding Group to Jira",
+    });
+    await user.click(jiraButton);
+
+    // Then
+    expect(jiraButton).toBeVisible();
+    expect(jiraButton).toBeDisabled();
+    expect(jiraButton).toHaveAttribute(
+      "title",
+      "Available only in Prowler Cloud",
+    );
+    expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ isOpen: true }),
+      undefined,
+    );
+  });
+
+  it("does not offer Jira dispatch mode choice for a group with one failing resource", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: [],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "s3_bucket_public_access",
+                checkTitle: "S3 bucket public access",
+                mutedCount: 0,
+                resourcesFail: 1,
+                resourcesTotal: 1,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send Finding Group to Jira" }),
+    );
+
+    // Then
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        targetIds: ["s3_bucket_public_access"],
+        targetType: "check_id",
+        defaultDispatchMode: "grouped",
+        canChooseGroupedDispatch: false,
+        selectedResourceCount: 1,
+      }),
+      undefined,
+    );
+  });
+
+  it("uses grouped Jira dispatch for mixed selected finding groups", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: ["check-a", "check-b"],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+          resolveMuteIds: vi.fn(),
+        }}
+      >
+        <DataTableRowActions
+          row={
+            {
+              original: {
+                id: "group-row-1",
+                rowType: "group",
+                checkId: "check-a",
+                checkTitle: "Check A",
+                mutedCount: 0,
+                resourcesFail: 2,
+                resourcesTotal: 2,
+              },
+            } as never
+          }
+        />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send 2 Finding Groups to Jira" }),
+    );
+
+    // Then
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        targetIds: ["check-a", "check-b"],
+        targetType: "check_id",
+        defaultDispatchMode: "grouped",
+        canChooseGroupedDispatch: false,
+      }),
+      undefined,
+    );
+  });
+
+  it("allows choosing Jira dispatch mode for multiple selected findings", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: ["finding-1", "finding-2"],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+        }}
+      >
+        <DataTableRowActions row={makeFindingRow()} />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send 2 Findings to Jira" }),
+    );
+
+    // Then
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        targetIds: ["finding-1", "finding-2"],
+        targetType: "finding_id",
+        defaultDispatchMode: "grouped",
+        canChooseGroupedDispatch: true,
+      }),
+      undefined,
+    );
   });
 
   it("shows Add Triage Note for editable findings without a note", () => {

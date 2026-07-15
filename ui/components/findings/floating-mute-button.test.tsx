@@ -61,6 +61,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When — click the button (triggers onBeforeOpen which rejects)
     await user.click(button);
+    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then — button should NOT be disabled (isResolving reset to false)
     await waitFor(() => {
@@ -83,6 +84,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then
     await waitFor(() => {
@@ -122,6 +124,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then — modal opened (MuteFindingsModal called with isOpen=true)
     await waitFor(() => {
@@ -156,6 +159,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then
     const preparingCall = (
@@ -198,5 +202,108 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
         findingIds: ["id-1", "id-2"],
       });
     });
+  });
+
+  it("should route Send to Jira through the action chooser without opening mute", async () => {
+    // Given
+    const onSendToJira = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={1}
+        selectedFindingIds={["finding-1"]}
+        canSendToJira
+        onSendToJira={onSendToJira}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Mute (1)" }));
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    expect(onSendToJira).toHaveBeenCalledTimes(1);
+    const modalCalls = MuteFindingsModalMock.mock.calls as unknown as Array<
+      [{ isOpen?: boolean }]
+    >;
+    expect(modalCalls.some(([props]) => props.isOpen === true)).toBe(false);
+  });
+
+  it("should render custom mixed-selection action labels", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={2}
+        selectedFindingIds={["group-1", "finding-1"]}
+        label="1 Group and 1 Finding selected"
+        muteLabel="Mute 1 Group and 1 Finding"
+        sendToJiraLabel="Send 1 Group and 1 Finding to Jira"
+        showSendToJira
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "1 Group and 1 Finding selected",
+      }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", {
+        name: "Mute 1 Group and 1 Finding",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", {
+        name: "Send to Jira",
+      }),
+    ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
+  });
+
+  it("should show disabled Cloud-only Jira action in the chooser", async () => {
+    // Given
+    const onSendToJira = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={1}
+        selectedFindingIds={["finding-1"]}
+        showSendToJira
+        canSendToJira={false}
+        onSendToJira={onSendToJira}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Mute (1)" }));
+    const jiraButton = screen.getByRole("button", { name: "Send to Jira" });
+
+    // Then
+    expect(jiraButton).toBeVisible();
+    expect(jiraButton).toBeDisabled();
+    const cloudBadgeLink = screen.getByRole("link", {
+      name: "Available in Prowler Cloud",
+    });
+    expect(cloudBadgeLink).toHaveAttribute(
+      "href",
+      "https://prowler.com/pricing",
+    );
+    expect(jiraButton).not.toContainElement(cloudBadgeLink);
+    expect(onSendToJira).not.toHaveBeenCalled();
+
+    // When
+    await user.hover(jiraButton.parentElement!);
+
+    // Then
+    const tooltipTexts = await screen.findAllByText(
+      "Available only in Prowler Cloud",
+    );
+    expect(tooltipTexts[0]).toBeVisible();
   });
 });
