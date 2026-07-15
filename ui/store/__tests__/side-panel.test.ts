@@ -1,13 +1,18 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   SIDE_PANEL_DEFAULT_WIDTH,
   SIDE_PANEL_DETAIL_MIN_WIDTH,
+  SIDE_PANEL_MAX_WIDTH,
   SIDE_PANEL_MIN_WIDTH,
 } from "@/lib/ui-layout";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 describe("useSidePanelStore", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     localStorage.clear();
     useSidePanelStore.setState({
@@ -225,6 +230,28 @@ describe("useSidePanelStore", () => {
     expect(useSidePanelStore.getState().width).toBe(
       Math.floor(window.innerWidth * 0.85),
     );
+  });
+
+  it("allows the panel to grow to half the viewport on ultra-wide screens", () => {
+    // Given: a viewport wider than the standard 1920px maximum threshold
+    vi.stubGlobal("innerWidth", 2560);
+
+    // When
+    useSidePanelStore.getState().setWidth(5000);
+
+    // Then
+    expect(useSidePanelStore.getState().width).toBe(1280);
+  });
+
+  it("keeps the standard maximum on screens up to 1920px wide", () => {
+    // Given
+    vi.stubGlobal("innerWidth", 1920);
+
+    // When
+    useSidePanelStore.getState().setWidth(5000);
+
+    // Then
+    expect(useSidePanelStore.getState().width).toBe(SIDE_PANEL_MAX_WIDTH);
   });
 
   it("widens to detail room when a context tab registers, keeping wider user choices", () => {

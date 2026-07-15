@@ -1,6 +1,6 @@
 import { act, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SIDE_PANEL_DEFAULT_WIDTH } from "@/lib/ui-layout";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
@@ -40,6 +40,10 @@ vi.mock(
 );
 
 describe("GlobalSidePanel", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
     isCloudMock.mockReturnValue(true);
     navigationMocks.pathname = "/findings";
@@ -295,6 +299,24 @@ describe("GlobalSidePanel", () => {
 
     await user.keyboard("{ArrowRight}");
     expect(useSidePanelStore.getState().width).toBe(SIDE_PANEL_DEFAULT_WIDTH);
+  });
+
+  it("exposes half the viewport as the resize maximum on ultra-wide screens", () => {
+    // Given
+    vi.stubGlobal("innerWidth", 2560);
+    mediaMocks.isPushViewport = true;
+    useSidePanelStore.setState({ width: 5000 });
+
+    // When
+    render(<GlobalSidePanel />);
+
+    // Then
+    expect(screen.getByTestId("global-side-panel")).toHaveStyle({
+      width: "1280px",
+    });
+    expect(
+      screen.getByRole("separator", { name: "Resize panel" }),
+    ).toHaveAttribute("aria-valuemax", "1280");
   });
 
   it("does not exist on the full-page chat route (one place or the other)", () => {

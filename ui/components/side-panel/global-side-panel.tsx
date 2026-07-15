@@ -21,7 +21,7 @@ import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isLighthouseChatRoute } from "@/lib/lighthouse-routes";
 import {
   clampSidePanelWidth,
-  SIDE_PANEL_MAX_WIDTH,
+  getSidePanelMaxWidth,
   SIDE_PANEL_MIN_WIDTH,
   SIDE_PANEL_PUSH_MEDIA_QUERY,
 } from "@/lib/ui-layout";
@@ -124,7 +124,7 @@ export function GlobalSidePanel() {
         <SidePanelResizeHandle
           value={width}
           min={SIDE_PANEL_MIN_WIDTH}
-          max={SIDE_PANEL_MAX_WIDTH}
+          max={getSidePanelMaxWidth()}
           onResize={handleResize}
           onResizeStart={() => useSidePanelStore.getState().setIsResizing(true)}
           onResizeEnd={() => useSidePanelStore.getState().setIsResizing(false)}
