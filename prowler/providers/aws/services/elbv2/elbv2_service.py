@@ -86,10 +86,14 @@ class ELBv2(AWSService):
                     f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
             else:
+                load_balancer[1].listener_discovery_failed = True
+                load_balancer[1].listener_discovery_error = str(error)
                 logger.error(
                     f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
         except Exception as error:
+            load_balancer[1].listener_discovery_failed = True
+            load_balancer[1].listener_discovery_error = str(error)
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
@@ -209,6 +213,8 @@ class LoadBalancerv2(BaseModel):
     drop_invalid_header_fields: Optional[str]
     cross_zone_load_balancing: Optional[str]
     listeners: Dict[str, Listenerv2] = {}
+    listener_discovery_failed: bool = False
+    listener_discovery_error: Optional[str] = None
     scheme: Optional[str]
     security_groups: list[str] = []
     # Key: ZoneName, Value: SubnetId

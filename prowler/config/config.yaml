@@ -424,6 +424,21 @@ aws:
     - "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09"
     - "SecurityPolicy_TLS13_1_2_PQ_2025_09"
 
+  # aws.elbv2_listener_pqc_tls_enabled
+  # Allowed post-quantum TLS security policies for ELBv2 HTTPS/TLS listeners
+  elbv2_listener_pqc_tls_allowed_policies:
+    - "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-PQ-2025-09"
+    - "ELBSecurityPolicy-TLS13-1-3-FIPS-PQ-2025-09"
+
   # aws.rolesanywhere_trust_anchor_pqc_pki
   # Allowed post-quantum key algorithms for AWS Private CAs backing IAM Roles Anywhere trust anchors
   rolesanywhere_pqc_pca_key_algorithms:
