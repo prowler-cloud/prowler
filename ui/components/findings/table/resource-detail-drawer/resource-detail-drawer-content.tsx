@@ -74,6 +74,7 @@ import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-pan
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -471,6 +472,16 @@ export function ResourceDetailDrawerContent({
   const overviewStatusExtended =
     currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
+  const findingAnalysisPrompt = buildFindingAnalysisPrompt({
+    findingId: currentResource?.findingId ?? f?.id,
+    providerUid,
+    resourceUid,
+    checkId: currentResource?.checkId ?? checkMeta.checkId,
+    severity: findingSeverity,
+    status: findingStatus,
+    detail: overviewStatusExtended,
+    risk: f?.risk || checkMeta.risk,
+  });
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
     await updateFindingTriage(input);
@@ -1379,7 +1390,7 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       {!isNavigating && (
         <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
+          href={`/lighthouse?${new URLSearchParams({ prompt: findingAnalysisPrompt }).toString()}`}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",
