@@ -40,11 +40,7 @@ export function MobileAppSidebar() {
           <MenuIcon aria-hidden="true" className="size-5" />
         </Button>
       </SheetTrigger>
-      <SheetContent
-        side="left"
-        showCloseButton={false}
-        className="bg-bg-neutral-primary w-[264px] max-w-[264px] gap-0 rounded-none p-0"
-      >
+      <SheetContent side="left" variant="navigation" showCloseButton={false}>
         <SheetHeader className="sr-only">
           <SheetTitle>App sidebar</SheetTitle>
           <SheetDescription>Primary application navigation</SheetDescription>

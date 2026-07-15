@@ -21,6 +21,7 @@ export * from "./headers";
 export * from "./info-field";
 export * from "./input/input";
 export * from "./label";
+export * from "./navigation-button";
 export * from "./navigation-progress";
 export * from "./progress";
 export * from "./search-input/search-input";

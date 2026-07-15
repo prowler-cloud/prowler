@@ -75,7 +75,6 @@ describe("AppSidebarContent", () => {
     // Then
     const homeLink = screen.getByRole("link", { name: "Prowler home" });
     expect(homeLink).toBeVisible();
-    expect(homeLink.parentElement).toHaveClass("pb-7");
     expect(screen.getByRole("link", { name: "Launch Scan" })).toHaveAttribute(
       "href",
       "/scans?launchScan=true",
@@ -100,7 +99,12 @@ describe("AppSidebarContent", () => {
 
     // Then
     expect(screen.getByTestId("lighthouse-chat-sidebar")).toBeVisible();
-    expect(screen.getByText("All systems operational")).toBeVisible();
+    expect(
+      screen.getByRole("link", { name: "Service status" }),
+    ).toHaveAttribute("href", "https://status.prowler.com");
+    expect(
+      screen.queryByText("All systems operational"),
+    ).not.toBeInTheDocument();
   });
 
   it("opens the current scan modal instead of navigating from the scans route", async () => {

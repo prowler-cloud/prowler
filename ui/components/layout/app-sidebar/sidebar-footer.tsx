@@ -50,14 +50,10 @@ export function SidebarFooter({
             href="https://status.prowler.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-text-neutral-primary flex min-w-0 flex-1 items-center gap-2 transition-colors"
+            className="hover:text-text-neutral-primary min-w-0 flex-1 transition-colors"
             onClick={onSelect}
           >
-            <span
-              aria-hidden="true"
-              className="bg-sidebar-status animate-sidebar-status-pulse shadow-sidebar-status size-2 shrink-0 rounded-full"
-            />
-            <span className="truncate">All systems operational</span>
+            <span className="truncate">Service status</span>
           </Link>
         )}
         <span className="ml-auto font-mono">{version}</span>

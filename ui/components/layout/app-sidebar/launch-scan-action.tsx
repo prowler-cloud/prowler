@@ -34,8 +34,7 @@ export function LaunchScanAction({ onSelect }: LaunchScanActionProps) {
     return (
       <Button
         type="button"
-        variant="primary-glow"
-        size="sidebar"
+        size="lg"
         className="w-full"
         aria-label="Launch Scan"
         onClick={() => {
@@ -49,7 +48,7 @@ export function LaunchScanAction({ onSelect }: LaunchScanActionProps) {
   }
 
   return (
-    <Button asChild variant="primary-glow" size="sidebar" className="w-full">
+    <Button asChild size="lg" className="w-full">
       <Link href={LAUNCH_SCAN_HREF} aria-label="Launch Scan" onClick={onSelect}>
         <LaunchScanContent />
       </Link>

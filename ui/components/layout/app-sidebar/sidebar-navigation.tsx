@@ -10,6 +10,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/shadcn/collapsible";
+import { NavigationButton } from "@/components/shadcn/navigation-button";
 import { ScrollArea } from "@/components/shadcn/scroll-area/scroll-area";
 import {
   Tooltip,
@@ -54,40 +55,36 @@ function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
   const Icon = item.icon;
   const isExternal = item.target === "_blank";
   const link = (
-    <Link
-      href={item.href}
-      target={item.target}
-      rel={isExternal ? "noopener noreferrer" : undefined}
-      aria-current={item.active ? "page" : undefined}
-      onClick={onSelect}
-      className={cn(
-        "group focus-visible:ring-button-primary/50 relative flex min-h-10 w-full items-center gap-3 rounded-lg border px-3 py-2 text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none",
-        item.active
-          ? "border-border-sidebar-active bg-bg-sidebar-active text-text-neutral-primary shadow-sidebar-active"
-          : "text-text-neutral-secondary hover:border-border-sidebar-hover hover:bg-bg-sidebar-hover hover:text-text-neutral-primary border-transparent",
-      )}
-    >
-      {item.active && (
-        <span
-          aria-hidden="true"
-          className="bg-sidebar-active-bar absolute top-2 bottom-2 -left-px w-0.5 rounded-full"
-        />
-      )}
-      <Icon
-        aria-hidden="true"
-        className={cn(
-          "size-[18px] shrink-0",
-          item.active && "text-sidebar-active-icon",
+    <NavigationButton asChild active={item.active}>
+      <Link
+        href={item.href}
+        target={item.target}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+        aria-current={item.active ? "page" : undefined}
+        onClick={onSelect}
+      >
+        {item.active && (
+          <span
+            aria-hidden="true"
+            className="bg-sidebar-active-bar absolute top-2 bottom-2 -left-px w-0.5 rounded-full"
+          />
         )}
-      />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {item.highlight && (
-        <Badge variant="new" size="sm">
-          New
-        </Badge>
-      )}
-      {isExternal && <ArrowUpRight aria-hidden="true" className="size-4" />}
-    </Link>
+        <Icon
+          aria-hidden="true"
+          className={cn(
+            "size-[18px] shrink-0",
+            item.active && "text-sidebar-active-icon",
+          )}
+        />
+        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+        {item.highlight && (
+          <Badge variant="new" size="sm">
+            New
+          </Badge>
+        )}
+        {isExternal && <ArrowUpRight aria-hidden="true" className="size-4" />}
+      </Link>
+    </NavigationButton>
   );
 
   if (!item.tooltip) return link;
@@ -112,9 +109,8 @@ function CloudUpgradeChild({
   );
 
   return (
-    <button
-      type="button"
-      className="text-text-neutral-secondary hover:bg-bg-sidebar-hover hover:text-text-neutral-primary focus-visible:ring-button-primary/50 flex min-h-8 w-full items-center gap-2 rounded-md px-3 py-1.5 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none"
+    <NavigationButton
+      variant="subitem"
       onClick={() => {
         openCloudUpgrade(item.cloudUpgradeFeature, onSelect?.() ?? undefined);
       }}
@@ -123,7 +119,7 @@ function CloudUpgradeChild({
       <Badge variant="cloud" size="sm">
         Cloud
       </Badge>
-    </button>
+    </NavigationButton>
   );
 }
 
@@ -138,34 +134,30 @@ function LinkChild({
 
   if (item.disabled) {
     return (
-      <span className="text-text-neutral-tertiary flex min-h-8 items-center rounded-md px-3 py-1.5 text-sm">
-        {item.label}
-      </span>
+      <NavigationButton asChild variant="subitem" disabledState>
+        <span aria-disabled="true">{item.label}</span>
+      </NavigationButton>
     );
   }
 
   return (
-    <Link
-      href={item.href}
-      target={item.target}
-      rel={isExternal ? "noopener noreferrer" : undefined}
-      aria-current={item.active ? "page" : undefined}
-      onClick={onSelect}
-      className={cn(
-        "focus-visible:ring-button-primary/50 flex min-h-8 items-center gap-2 rounded-md px-3 py-1.5 text-sm transition-colors focus-visible:ring-2 focus-visible:outline-none",
-        item.active
-          ? "bg-bg-sidebar-subitem-active text-text-neutral-primary font-medium"
-          : "text-text-neutral-secondary hover:bg-bg-sidebar-hover hover:text-text-neutral-primary",
-      )}
-    >
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {item.highlight && (
-        <Badge variant="new" size="sm">
-          New
-        </Badge>
-      )}
-      {isExternal && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
-    </Link>
+    <NavigationButton asChild variant="subitem" active={item.active}>
+      <Link
+        href={item.href}
+        target={item.target}
+        rel={isExternal ? "noopener noreferrer" : undefined}
+        aria-current={item.active ? "page" : undefined}
+        onClick={onSelect}
+      >
+        <span className="min-w-0 flex-1 truncate">{item.label}</span>
+        {item.highlight && (
+          <Badge variant="new" size="sm">
+            New
+          </Badge>
+        )}
+        {isExternal && <ArrowUpRight aria-hidden="true" className="size-3.5" />}
+      </Link>
+    </NavigationButton>
   );
 }
 
@@ -186,21 +178,13 @@ function CollapsibleNavigationItem({
       child.kind === NAVIGATION_ITEM_KIND.LINK && child.active === true,
   );
   const [expanded, setExpanded] = useState(item.defaultOpen || hasActiveChild);
-  const isOpen = hasActiveChild || expanded;
+  const isOpen = expanded;
   const Icon = item.icon;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setExpanded}>
       <CollapsibleTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "focus-visible:ring-button-primary/50 relative flex min-h-10 w-full items-center gap-3 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:outline-none",
-            hasActiveChild
-              ? "border-border-sidebar-active bg-bg-sidebar-active text-text-neutral-primary shadow-sidebar-active"
-              : "text-text-neutral-secondary hover:bg-bg-sidebar-hover hover:text-text-neutral-primary border-transparent",
-          )}
-        >
+        <NavigationButton active={hasActiveChild}>
           {hasActiveChild && (
             <span
               aria-hidden="true"
@@ -222,7 +206,7 @@ function CollapsibleNavigationItem({
               isOpen && "rotate-180",
             )}
           />
-        </button>
+        </NavigationButton>
       </CollapsibleTrigger>
       <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down overflow-hidden">
         <ul className="border-sidebar-guide mt-1 ml-[21px] space-y-0.5 border-l pl-3">

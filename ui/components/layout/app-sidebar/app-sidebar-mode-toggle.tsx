@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 
 import { LighthouseIcon } from "@/components/icons/Icons";
 import { Badge } from "@/components/shadcn/badge/badge";
+import { NavigationButton } from "@/components/shadcn/navigation-button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { cn } from "@/lib/utils";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
@@ -81,18 +81,12 @@ export function AppSidebarModeToggle({
         const isCloudUpsell =
           item.value === APP_SIDEBAR_MODE.CHAT && !chatEnabled;
         const button = (
-          <button
+          <NavigationButton
             key={item.value}
-            type="button"
+            variant="toggle"
+            active={isActive}
             aria-label={item.label}
             aria-pressed={isActive}
-            className={cn(
-              "focus-visible:ring-button-primary/50 flex h-8 min-w-0 items-center justify-center gap-1.5 rounded-lg border px-2 text-sm transition-all focus-visible:ring-2 focus-visible:outline-none",
-              isActive
-                ? "border-border-sidebar-active bg-bg-sidebar-active text-text-neutral-primary shadow-sidebar-active"
-                : "text-text-neutral-secondary hover:bg-bg-sidebar-hover hover:text-text-neutral-primary border-transparent",
-              isCloudUpsell && "px-1.5",
-            )}
             onClick={() => selectMode(item.value)}
           >
             <Icon aria-hidden="true" className="size-4 shrink-0" />
@@ -102,7 +96,7 @@ export function AppSidebarModeToggle({
                 Cloud
               </Badge>
             )}
-          </button>
+          </NavigationButton>
         );
 
         if (!isCloudUpsell) return button;

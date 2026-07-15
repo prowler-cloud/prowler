@@ -97,10 +97,21 @@ describe("SidebarNavigation", () => {
       name: "Configuration",
     });
     expect(activeParent).toHaveAttribute("aria-expanded", "true");
-    expect(activeParent).toHaveClass(
-      "border-border-sidebar-active",
-      "bg-bg-sidebar-active",
-    );
+  });
+
+  it("allows manually collapsing a section with an active destination", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(<SidebarNavigation sections={sections} />);
+    const activeParent = screen.getByRole("button", {
+      name: "Configuration",
+    });
+
+    // When
+    await user.click(activeParent);
+
+    // Then
+    expect(activeParent).toHaveAttribute("aria-expanded", "false");
   });
 
   it("marks external links and opens contextual Cloud upgrades", async () => {

@@ -101,17 +101,10 @@
   --border-sidebar-active: rgba(15, 23, 42, 0.09);
   --border-sidebar-hover: rgba(15, 23, 42, 0.06);
   --border-sidebar-guide: rgba(15, 23, 42, 0.12);
-  --border-sidebar-launch: rgba(16, 185, 129, 0.4);
   --border-sidebar-toggle: rgba(15, 23, 42, 0.08);
   --sidebar-active-bar: var(--color-emerald-400);
   --sidebar-active-icon: var(--color-emerald-600);
-  --sidebar-status: var(--color-emerald-500);
   --shadow-sidebar-active: 0 8px 24px rgba(15, 23, 42, 0.06);
-  --shadow-sidebar-launch:
-    0 0 0 1px rgba(46, 229, 155, 0.12), 0 8px 22px rgba(46, 229, 155, 0.18);
-  --shadow-sidebar-launch-hover:
-    0 0 0 1px rgba(46, 229, 155, 0.18), 0 10px 28px rgba(46, 229, 155, 0.26);
-  --shadow-sidebar-status: 0 0 8px rgba(16, 185, 129, 0.8);
   --gradient-sidebar-halo: radial-gradient(
     circle,
     rgba(46, 229, 155, 0.14) 0%,
@@ -217,17 +210,10 @@
   --border-sidebar-active: rgba(255, 255, 255, 0.11);
   --border-sidebar-hover: rgba(255, 255, 255, 0.07);
   --border-sidebar-guide: rgba(255, 255, 255, 0.1);
-  --border-sidebar-launch: rgba(46, 229, 155, 0.38);
   --border-sidebar-toggle: rgba(255, 255, 255, 0.08);
   --sidebar-active-bar: var(--color-emerald-300);
   --sidebar-active-icon: var(--color-emerald-300);
-  --sidebar-status: var(--color-emerald-400);
   --shadow-sidebar-active: 0 10px 28px rgba(0, 0, 0, 0.22);
-  --shadow-sidebar-launch:
-    0 0 0 1px rgba(46, 229, 155, 0.1), 0 8px 26px rgba(46, 229, 155, 0.2);
-  --shadow-sidebar-launch-hover:
-    0 0 0 1px rgba(46, 229, 155, 0.16), 0 11px 32px rgba(46, 229, 155, 0.3);
-  --shadow-sidebar-status: 0 0 9px rgba(52, 211, 153, 0.82);
   --gradient-sidebar-halo: radial-gradient(
     circle,
     rgba(46, 229, 155, 0.16) 0%,
@@ -314,18 +300,13 @@
   --color-border-sidebar-active: var(--border-sidebar-active);
   --color-border-sidebar-hover: var(--border-sidebar-hover);
   --color-border-sidebar-guide: var(--border-sidebar-guide);
-  --color-border-sidebar-launch: var(--border-sidebar-launch);
   --color-border-sidebar-toggle: var(--border-sidebar-toggle);
   --color-sidebar-active-bar: var(--sidebar-active-bar);
   --color-sidebar-active-icon: var(--sidebar-active-icon);
-  --color-sidebar-status: var(--sidebar-status);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
   --shadow-sidebar-active: var(--shadow-sidebar-active);
-  --shadow-sidebar-launch: var(--shadow-sidebar-launch);
-  --shadow-sidebar-launch-hover: var(--shadow-sidebar-launch-hover);
-  --shadow-sidebar-status: var(--shadow-sidebar-status);
 
   /* Background images */
   --background-image-feature-cloud: var(--gradient-feature-cloud);
@@ -337,7 +318,6 @@
   --animate-fade-in: fade-in 200ms ease-out forwards;
   --animate-collapsible-down: collapsible-down 0.2s ease-out;
   --animate-collapsible-up: collapsible-up 0.2s ease-out;
-  --animate-sidebar-status-pulse: sidebar-status-pulse 2.4s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -363,18 +343,6 @@
     }
     to {
       height: 0;
-    }
-  }
-
-  @keyframes sidebar-status-pulse {
-    0%,
-    100% {
-      opacity: 0.55;
-      transform: scale(0.85);
-    }
-    50% {
-      opacity: 1;
-      transform: scale(1);
     }
   }
 }

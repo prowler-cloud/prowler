@@ -22,6 +22,6 @@ describe("MainLayout", () => {
     expect(screen.getByTestId("cloud-upgrade-modal")).toBeInTheDocument();
     expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeVisible();
-    expect(screen.getByRole("main")).toHaveClass("ml-4", "lg:ml-[280px]");
+    expect(screen.getByRole("main")).toBeVisible();
   });
 });

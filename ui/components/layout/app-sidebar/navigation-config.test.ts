@@ -1,8 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import type { RolePermissionAttributes } from "@/types/users";
 
-import { getNavigationConfig } from "./navigation-config";
+import {
+  filterNavigationByPermissions,
+  getNavigationConfig,
+} from "./navigation-config";
 import { NAVIGATION_ITEM_KIND } from "./types";
 
 const getItem = (label: string) =>
@@ -77,7 +81,7 @@ describe("getNavigationConfig", () => {
       "Providers",
       "Alerts",
       "Mutelist",
-      "Scan Settings",
+      "Scans",
       "CLI Import",
       "Integrations",
       "Lighthouse AI",
@@ -88,7 +92,7 @@ describe("getNavigationConfig", () => {
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
       }),
     );
-    expect(children.find((item) => item.label === "Scan Settings")).toEqual(
+    expect(children.find((item) => item.label === "Scans")).toEqual(
       expect.objectContaining({
         kind: NAVIGATION_ITEM_KIND.CLOUD_UPGRADE,
         cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
@@ -129,7 +133,7 @@ describe("getNavigationConfig", () => {
       configuration.children.find((item) => item.label === "Alerts"),
     ).toEqual(expect.objectContaining({ highlight: true }));
     expect(
-      configuration.children.find((item) => item.label === "Scan Settings"),
+      configuration.children.find((item) => item.label === "Scans"),
     ).toEqual(expect.objectContaining({ active: true, highlight: true }));
     expect(items.find((item) => item.label === "Attack Paths")).not.toEqual(
       expect.objectContaining({ highlight: true }),
@@ -140,6 +144,57 @@ describe("getNavigationConfig", () => {
       "Support Desk",
       "Prowler Hub",
     ]);
+  });
+
+  it("keeps the Cloud Billing destination for users with billing permission", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const permissions = {
+      manage_billing: true,
+    } as RolePermissionAttributes;
+
+    // When
+    const billing = getNavigationConfig({
+      pathname: "/billing",
+      apiDocsUrl: null,
+      permissions,
+    })
+      .flatMap((section) => section.items)
+      .find((item) => item.label === "Billing");
+
+    // Then
+    expect(billing).toEqual(
+      expect.objectContaining({
+        href: "/billing",
+        active: true,
+        requiredPermission: "manage_billing",
+      }),
+    );
+  });
+
+  it("hides Billing without permission and in Local Server", () => {
+    // Given
+    const permissions = {
+      manage_billing: false,
+    } as RolePermissionAttributes;
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+
+    // When
+    const cloudItems = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+      permissions,
+    }).flatMap((section) => section.items);
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    const localItems = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+      permissions: { ...permissions, manage_billing: true },
+    }).flatMap((section) => section.items);
+
+    // Then
+    expect(cloudItems.find((item) => item.label === "Billing")).toBeUndefined();
+    expect(localItems.find((item) => item.label === "Billing")).toBeUndefined();
   });
 
   it("keeps environment-specific API documentation destinations", () => {
@@ -168,6 +223,86 @@ describe("getNavigationConfig", () => {
     );
     expect(cloudApiReference).toEqual(
       expect.objectContaining({ href: "https://api.prowler.com/api/v1/docs" }),
+    );
+  });
+
+  it("omits the Local Server API reference when no URL is configured", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    // When
+    const items = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+    }).flatMap((section) => section.items);
+
+    // Then
+    expect(
+      items.find((item) => item.label === "API Reference"),
+    ).toBeUndefined();
+  });
+
+  it("filters navigation by required permission after visible copy changes", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const sections = getNavigationConfig({
+      pathname: "/integrations",
+      apiDocsUrl: null,
+    }).map((section) => ({
+      ...section,
+      items: section.items.map((item) =>
+        item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+          ? {
+              ...item,
+              children: item.children.map((child) =>
+                child.label === "Integrations"
+                  ? { ...child, label: "Connected apps" }
+                  : child,
+              ),
+            }
+          : item,
+      ),
+    }));
+    const permissions = {
+      manage_integrations: false,
+    } as RolePermissionAttributes;
+
+    // When
+    const filtered = filterNavigationByPermissions(sections, permissions);
+
+    // Then
+    expect(
+      filtered
+        .flatMap((section) => section.items)
+        .filter((item) => item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE)
+        .flatMap((item) => item.children)
+        .find((item) => item.label === "Connected apps"),
+    ).toBeUndefined();
+  });
+
+  it("keeps navigation when the required permission is granted", () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    const permissions = {
+      manage_integrations: true,
+    } as RolePermissionAttributes;
+
+    // When
+    const configuration = getNavigationConfig({
+      pathname: "/integrations",
+      apiDocsUrl: null,
+      permissions,
+    })
+      .flatMap((section) => section.items)
+      .find((item) => item.label === "Configuration");
+
+    // Then
+    expect(configuration).toEqual(
+      expect.objectContaining({
+        children: expect.arrayContaining([
+          expect.objectContaining({ label: "Integrations" }),
+        ]),
+      }),
     );
   });
 

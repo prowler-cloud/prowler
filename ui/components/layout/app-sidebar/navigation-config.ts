@@ -1,5 +1,6 @@
 import {
   Code,
+  CreditCard,
   FileText,
   GitBranch,
   LayoutGrid,
@@ -21,7 +22,9 @@ import type { RolePermissionAttributes } from "@/types/users";
 
 import {
   NAVIGATION_ITEM_KIND,
+  NAVIGATION_PERMISSION,
   type NavigationChild,
+  type NavigationItem,
   type NavigationSection,
 } from "./types";
 
@@ -67,21 +70,31 @@ function isRouteActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function filterNavigation(
+function hasRequiredPermission(
+  item: NavigationItem | NavigationChild,
+  permissions?: RolePermissionAttributes,
+) {
+  return (
+    item.requiredPermission === undefined ||
+    permissions?.[item.requiredPermission] !== false
+  );
+}
+
+export function filterNavigationByPermissions(
   sections: NavigationSection[],
-  hiddenLabels: string[],
+  permissions?: RolePermissionAttributes,
 ) {
   return sections
     .map((section) => ({
       ...section,
       items: section.items
-        .filter((item) => !hiddenLabels.includes(item.label))
+        .filter((item) => hasRequiredPermission(item, permissions))
         .map((item) =>
           item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
             ? {
                 ...item,
-                children: item.children.filter(
-                  (child) => !hiddenLabels.includes(child.label),
+                children: item.children.filter((child) =>
+                  hasRequiredPermission(child, permissions),
                 ),
               }
             : item,
@@ -90,23 +103,15 @@ function filterNavigation(
     .filter((section) => section.items.length > 0);
 }
 
-function getHiddenLabels(permissions?: RolePermissionAttributes) {
-  const hiddenLabels: string[] = [];
-
-  if (permissions?.manage_billing === false) hiddenLabels.push("Billing");
-  if (permissions?.manage_integrations === false) {
-    hiddenLabels.push("Integrations");
-  }
-
-  return hiddenLabels;
-}
-
 export function getNavigationConfig({
   pathname,
   apiDocsUrl = null,
   permissions,
 }: NavigationConfigOptions): NavigationSection[] {
   const isCloudEnvironment = isCloud();
+  const apiReferenceUrl = isCloudEnvironment
+    ? "https://api.prowler.com/api/v1/docs"
+    : apiDocsUrl;
 
   const sections: NavigationSection[] = [
     {
@@ -206,7 +211,7 @@ export function getNavigationConfig({
             getCloudFeature({
               isCloudEnvironment,
               href: "/scans/config",
-              label: "Scan Settings",
+              label: "Scans",
               active: isRouteActive(pathname, "/scans/config"),
               feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
             }),
@@ -223,6 +228,7 @@ export function getNavigationConfig({
               kind: NAVIGATION_ITEM_KIND.LINK,
               href: "/integrations",
               label: "Integrations",
+              requiredPermission: NAVIGATION_PERMISSION.MANAGE_INTEGRATIONS,
               active: isRouteActive(pathname, "/integrations"),
             },
             {
@@ -259,6 +265,18 @@ export function getNavigationConfig({
             },
           ],
         },
+        ...(isCloudEnvironment
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: "/billing",
+                label: "Billing",
+                icon: CreditCard,
+                requiredPermission: NAVIGATION_PERMISSION.MANAGE_BILLING,
+                active: isRouteActive(pathname, "/billing"),
+              } as const,
+            ]
+          : []),
       ],
     },
     {
@@ -271,15 +289,17 @@ export function getNavigationConfig({
           icon: FileText,
           target: "_blank",
         },
-        {
-          kind: NAVIGATION_ITEM_KIND.LINK,
-          href: isCloudEnvironment
-            ? "https://api.prowler.com/api/v1/docs"
-            : (apiDocsUrl ?? ""),
-          label: "API Reference",
-          icon: Code,
-          target: "_blank",
-        },
+        ...(apiReferenceUrl
+          ? [
+              {
+                kind: NAVIGATION_ITEM_KIND.LINK,
+                href: apiReferenceUrl,
+                label: "API Reference",
+                icon: Code,
+                target: "_blank",
+              } as const,
+            ]
+          : []),
         {
           kind: NAVIGATION_ITEM_KIND.LINK,
           href: isCloudEnvironment
@@ -301,5 +321,5 @@ export function getNavigationConfig({
     },
   ];
 
-  return filterNavigation(sections, getHiddenLabels(permissions));
+  return filterNavigationByPermissions(sections, permissions);
 }

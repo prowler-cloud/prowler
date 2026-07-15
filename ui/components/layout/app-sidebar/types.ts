@@ -15,8 +15,17 @@ export const NAVIGATION_ITEM_KIND = {
   CLOUD_UPGRADE: "cloud_upgrade",
 } as const;
 
+export const NAVIGATION_PERMISSION = {
+  MANAGE_BILLING: "manage_billing",
+  MANAGE_INTEGRATIONS: "manage_integrations",
+} as const;
+
+export type NavigationPermission =
+  (typeof NAVIGATION_PERMISSION)[keyof typeof NAVIGATION_PERMISSION];
+
 interface NavigationLabel {
   label: string;
+  requiredPermission?: NavigationPermission;
 }
 
 export interface NavigationLink extends NavigationLabel {

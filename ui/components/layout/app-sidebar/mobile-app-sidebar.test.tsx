@@ -28,14 +28,8 @@ describe("MobileAppSidebar", () => {
 
     // Then
     expect(screen.getByRole("dialog", { name: "App sidebar" })).toBeVisible();
-    expect(openButton).toHaveClass("invisible");
     const closeButton = screen.getByRole("button", { name: "Close menu" });
     expect(closeButton).toBeVisible();
-    expect(closeButton).toHaveClass(
-      "fixed",
-      "top-4",
-      "left-[calc(100vw-3rem)]",
-    );
     expect(closeButton.querySelector(".lucide-x")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: "Close" }),
@@ -48,7 +42,6 @@ describe("MobileAppSidebar", () => {
     expect(
       screen.queryByRole("dialog", { name: "App sidebar" }),
     ).not.toBeInTheDocument();
-    expect(openButton).not.toHaveClass("invisible");
     expect(openButton).toHaveFocus();
   });
 

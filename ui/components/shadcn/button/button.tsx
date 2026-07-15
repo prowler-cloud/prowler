@@ -11,8 +11,6 @@ const buttonVariants = cva(
       variant: {
         default:
           "border border-transparent bg-button-primary text-black font-semibold hover:bg-button-primary-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
-        "primary-glow":
-          "border border-border-sidebar-launch bg-button-primary text-black font-semibold shadow-sidebar-launch hover:bg-button-primary-hover hover:shadow-sidebar-launch-hover active:bg-button-primary-press focus-visible:ring-button-primary/50",
         secondary:
           "border border-transparent bg-button-secondary text-white hover:bg-button-secondary/90 active:bg-button-secondary-press focus-visible:ring-button-secondary/50 dark:text-black",
         tertiary:
@@ -37,7 +35,6 @@ const buttonVariants = cva(
         "icon-xs": "size-7",
         "icon-sm": "size-8",
         "icon-lg": "size-10",
-        sidebar: "h-11 px-4 text-base has-[>svg]:px-3",
         "link-xs": "text-xs",
         "link-sm": "text-sm",
       },
