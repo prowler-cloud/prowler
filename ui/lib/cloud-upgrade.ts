@@ -16,7 +16,7 @@ export const CLOUD_UPGRADE_FOOTER_NOTE =
 
 const CLOUD_SIGN_UP_URL = "https://cloud.prowler.com/sign-up";
 const PRICING_URL = "https://prowler.com/pricing";
-const LOCAL_SERVER_UTM_SOURCE = "local-server";
+const LOCAL_SERVER_UTM_SOURCE = "prowler-local-server";
 
 const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING]: "advanced-scheduling",

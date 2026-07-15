@@ -45,7 +45,7 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url).toBe(
-      "https://cloud.prowler.com/sign-up?utm_source=local-server&utm_content=alerts",
+      "https://cloud.prowler.com/sign-up?utm_source=prowler-local-server&utm_content=alerts",
     );
   });
 
@@ -57,7 +57,7 @@ describe("cloud upgrade URLs", () => {
 
     // Then
     expect(url).toBe(
-      "https://prowler.com/pricing?utm_source=local-server&utm_content=cross-provider-compliance",
+      "https://prowler.com/pricing?utm_source=prowler-local-server&utm_content=cross-provider-compliance",
     );
   });
 
