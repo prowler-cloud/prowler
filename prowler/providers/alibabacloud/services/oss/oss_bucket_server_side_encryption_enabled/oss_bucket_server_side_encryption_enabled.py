@@ -6,6 +6,7 @@ class oss_bucket_server_side_encryption_enabled(Check):
     """Check if default server-side encryption is enabled for OSS buckets."""
 
     def execute(self) -> list[CheckReportAlibabaCloud]:
+        """Return PASS/FAIL findings for each OSS bucket's default server-side encryption."""
         findings = []
 
         for bucket in oss_client.buckets.values():
