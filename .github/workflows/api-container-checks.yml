@@ -33,7 +33,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -69,7 +69,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -92,6 +92,8 @@ jobs:
             _http._tcp.deb.debian.org:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             get.trivy.dev:443
+            raw.githubusercontent.com:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -108,6 +110,7 @@ jobs:
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/changelog.d/**
             api/AGENTS.md
 
       - name: Set up Docker Buildx

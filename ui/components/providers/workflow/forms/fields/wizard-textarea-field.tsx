@@ -2,8 +2,8 @@
 
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import { FormControl, FormField, FormMessage } from "@/components/shadcn/form";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 interface WizardTextareaFieldProps<T extends FieldValues> {

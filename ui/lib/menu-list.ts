@@ -12,6 +12,7 @@ import {
   SquareChartGantt,
   Tag,
   Timer,
+  Upload,
   User,
   UserCog,
   Users,
@@ -27,7 +28,15 @@ import {
   LighthouseIcon,
   SupportIcon,
 } from "@/components/icons/Icons";
-import { GroupProps } from "@/types";
+import { isCloud } from "@/lib/shared/env";
+import {
+  type CloudUpgradeFeature,
+  type GroupProps,
+  type IconComponent,
+  SUBMENU_KIND,
+  type SubmenuProps,
+} from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 interface MenuListOptions {
   pathname: string;
@@ -36,11 +45,47 @@ interface MenuListOptions {
   apiDocsUrl?: string | null;
 }
 
+interface CloudFeatureSubmenuOptions {
+  isCloudEnvironment: boolean;
+  href: string;
+  label: string;
+  icon: IconComponent;
+  active: boolean;
+  feature: CloudUpgradeFeature;
+}
+
+const getCloudFeatureSubmenu = ({
+  isCloudEnvironment,
+  href,
+  label,
+  icon,
+  active,
+  feature,
+}: CloudFeatureSubmenuOptions): SubmenuProps => {
+  if (!isCloudEnvironment) {
+    return {
+      kind: SUBMENU_KIND.CLOUD_UPGRADE,
+      label,
+      icon,
+      cloudUpgradeFeature: feature,
+    };
+  }
+
+  return {
+    kind: SUBMENU_KIND.LINK,
+    href,
+    label,
+    icon,
+    active,
+    highlight: true,
+  };
+};
+
 export const getMenuList = ({
   pathname,
   apiDocsUrl = null,
 }: MenuListOptions): GroupProps[] => {
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
 
   return [
     {
@@ -65,17 +110,21 @@ export const getMenuList = ({
         },
       ],
     },
-    {
-      groupLabel: "",
-      menus: [
-        {
-          href: "/lighthouse",
-          label: "Lighthouse AI",
-          icon: LighthouseIcon,
-          active: pathname === "/lighthouse",
-        },
-      ],
-    },
+    ...(isCloudEnv
+      ? []
+      : [
+          {
+            groupLabel: "",
+            menus: [
+              {
+                href: "/lighthouse",
+                label: "Lighthouse AI",
+                icon: LighthouseIcon,
+                active: pathname === "/lighthouse",
+              },
+            ],
+          },
+        ]),
     {
       groupLabel: "",
       menus: [
@@ -130,32 +179,40 @@ export const getMenuList = ({
           icon: Settings,
           submenus: [
             { href: "/providers", label: "Providers", icon: CloudCog },
-            {
+            getCloudFeatureSubmenu({
+              isCloudEnvironment: isCloudEnv,
               href: "/alerts",
               label: "Alerts",
               icon: BellRing,
-              active: isCloudEnv && pathname.startsWith("/alerts"),
-              highlight: true,
-              disabled: !isCloudEnv,
-              cloudOnly: !isCloudEnv,
-            },
+              active: pathname.startsWith("/alerts"),
+              feature: CLOUD_UPGRADE_FEATURE.ALERTS,
+            }),
             {
               href: "/mutelist",
               label: "Mutelist",
               icon: VolumeX,
               active: pathname === "/mutelist",
             },
-            {
+            getCloudFeatureSubmenu({
+              isCloudEnvironment: isCloudEnv,
               href: "/scans/config",
               label: "Scan",
               icon: SlidersHorizontal,
-              active: isCloudEnv && pathname.startsWith("/scans/config"),
-              highlight: true,
-              disabled: !isCloudEnv,
-              cloudOnly: !isCloudEnv,
-            },
+              active: pathname.startsWith("/scans/config"),
+              feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
+            }),
+            ...(!isCloudEnv
+              ? [
+                  {
+                    kind: SUBMENU_KIND.CLOUD_UPGRADE,
+                    label: "CLI Import",
+                    icon: Upload,
+                    cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+                  },
+                ]
+              : []),
             { href: "/integrations", label: "Integrations", icon: Puzzle },
-            { href: "/lighthouse/config", label: "Lighthouse AI", icon: Cog },
+            { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],
           defaultOpen: true,
         },

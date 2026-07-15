@@ -5,6 +5,9 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { updateInvite } from "@/actions/invitations/invitation";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { Form, FormButtons } from "@/components/shadcn/form";
 import {
   Select,
   SelectContent,
@@ -12,9 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn/select/select";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { Form, FormButtons } from "@/components/ui/form";
 import { editInviteFormSchema } from "@/types";
 
 import { Card, CardContent } from "../../shadcn";
@@ -103,14 +103,14 @@ export const EditForm = ({
       >
         <Card variant="inner">
           <CardContent className="flex flex-row justify-center gap-4">
-            <div className="text-small text-text-neutral-secondary flex items-center">
+            <div className="text-text-neutral-secondary flex items-center text-sm">
               <MailIcon className="text-text-neutral-secondary mr-2 h-4 w-4" />
               <span className="text-text-neutral-secondary">Email:</span>
               <span className="text-text-neutral-secondary ml-2 font-semibold">
                 {invitationEmail}
               </span>
             </div>
-            <div className="text-small flex items-center text-gray-600">
+            <div className="flex items-center text-sm text-gray-600">
               <ShieldIcon className="text-text-neutral-secondary mr-2 h-4 w-4" />
               <span className="text-text-neutral-secondary">Role:</span>
               <span className="text-text-neutral-secondary ml-2 font-semibold">

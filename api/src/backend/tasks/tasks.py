@@ -2,6 +2,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from shutil import rmtree
+from uuid import uuid4
 
 from api.compliance import (
     get_compliance_frameworks,
@@ -10,14 +11,24 @@ from api.compliance import (
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
-from api.models import Finding, Integration, Provider, Scan, ScanSummary, StateChoices
+from api.models import (
+    Finding,
+    Integration,
+    Provider,
+    Scan,
+    ScanSummary,
+    StateChoices,
+    Task,
+)
 from api.utils import initialize_prowler_provider
 from api.v1.serializers import ScanTaskSerializer
-from celery import chain, group, shared_task
+from celery import chain, group, shared_task, states
 from celery.utils.log import get_task_logger
 from config.celery import RLSTask
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE, DJANGO_TMP_OUTPUT_DIRECTORY
+from django.db import transaction
 from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance import (
     process_universal_compliance_frameworks,
@@ -85,6 +96,220 @@ from tasks.utils import (
 )
 
 logger = get_task_logger(__name__)
+QUEUED_SCAN_TASK_STATE = "QUEUED"
+DISPATCHED_SCAN_TASK_STATES = (states.PENDING, states.STARTED, "PROGRESS")
+
+
+def _get_dispatched_provider_scan(tenant_id: str, provider_id: str):
+    """Return a scan that has already been dispatched for a provider."""
+    executing_scan = (
+        Scan.objects.select_for_update()
+        .filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            state=StateChoices.EXECUTING,
+        )
+        .order_by("-inserted_at")
+        .first()
+    )
+    if executing_scan:
+        return executing_scan
+
+    return (
+        Scan.objects.select_for_update(of=("self",))
+        .select_related("task__task_runner_task")
+        .filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            state__in=(StateChoices.AVAILABLE, StateChoices.SCHEDULED),
+            task__isnull=False,
+            task__task_runner_task__status__in=DISPATCHED_SCAN_TASK_STATES,
+        )
+        .order_by("-inserted_at")
+        .first()
+    )
+
+
+def _get_queued_provider_scan(tenant_id: str, provider_id: str):
+    """Return the next DB-queued scan for a provider."""
+    return (
+        Scan.objects.select_for_update(of=("self",))
+        .select_related("task__task_runner_task")
+        .filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            state=StateChoices.AVAILABLE,
+            task__isnull=False,
+            task__task_runner_task__status=QUEUED_SCAN_TASK_STATE,
+        )
+        .order_by("inserted_at", "id")
+        .first()
+    )
+
+
+def get_active_provider_scan(tenant_id: str, provider_id: str):
+    """Return a dispatched or DB-queued scan for a provider."""
+    return _get_dispatched_provider_scan(
+        tenant_id, provider_id
+    ) or _get_queued_provider_scan(tenant_id, provider_id)
+
+
+def create_scan_task_record(
+    tenant_id: str,
+    task_id: str,
+    task_name: str = "scan-perform",
+    task_status: str | None = states.PENDING,
+) -> Task:
+    if task_status is None:
+        task_status = states.PENDING
+
+    task_result, _ = TaskResult.objects.update_or_create(
+        task_id=str(task_id),
+        defaults={"status": task_status, "task_name": task_name},
+    )
+    prowler_task, _ = Task.objects.update_or_create(
+        id=str(task_id),
+        tenant_id=tenant_id,
+        defaults={"task_runner_task": task_result},
+    )
+    return prowler_task
+
+
+def enqueue_scan_execution_on_commit(
+    tenant_id: str,
+    scan: Scan,
+    task_id: str,
+) -> None:
+    transaction.on_commit(
+        lambda: perform_scan_task.apply_async(
+            kwargs={
+                "tenant_id": str(tenant_id),
+                "scan_id": str(scan.id),
+                "provider_id": str(scan.provider_id),
+            },
+            task_id=str(task_id),
+        )
+    )
+
+
+def _get_queued_scheduled_scan(tenant_id: str, provider_id: str):
+    return (
+        Scan.objects.select_for_update(of=("self",))
+        .select_related("task__task_runner_task")
+        .filter(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            task__isnull=False,
+            task__task_runner_task__status=QUEUED_SCAN_TASK_STATE,
+        )
+        .order_by("inserted_at", "id")
+        .first()
+    )
+
+
+def _get_or_create_queued_scheduled_scan(
+    tenant_id: str,
+    provider_id: str,
+    periodic_task_instance: PeriodicTask,
+    scheduled_at: datetime,
+) -> Scan:
+    queued_scan = _get_queued_scheduled_scan(tenant_id, provider_id)
+    if queued_scan:
+        return queued_scan
+
+    task_id = str(uuid4())
+    queued_task = create_scan_task_record(
+        tenant_id=tenant_id,
+        task_id=task_id,
+        task_status=QUEUED_SCAN_TASK_STATE,
+    )
+    return Scan.objects.create(
+        tenant_id=tenant_id,
+        name="Daily scheduled scan",
+        provider_id=provider_id,
+        trigger=Scan.TriggerChoices.SCHEDULED,
+        state=StateChoices.AVAILABLE,
+        scheduled_at=scheduled_at,
+        scheduler_task_id=periodic_task_instance.id,
+        task=queued_task,
+    )
+
+
+def _dispatch_next_queued_provider_scan(tenant_id: str, provider_id: str):
+    with rls_transaction(tenant_id):
+        if not Provider.objects.select_for_update().filter(pk=provider_id).exists():
+            return None
+
+        if _get_dispatched_provider_scan(tenant_id, provider_id):
+            return None
+
+        queued_scan = _get_queued_provider_scan(tenant_id, provider_id)
+        if not queued_scan or not queued_scan.task:
+            return None
+
+        task_result = queued_scan.task.task_runner_task
+        task_result.status = states.PENDING
+        task_result.task_name = "scan-perform"
+        task_result.save(update_fields=["status", "task_name"])
+        enqueue_scan_execution_on_commit(
+            tenant_id=tenant_id,
+            scan=queued_scan,
+            task_id=str(queued_scan.task_id),
+        )
+        return queued_scan
+
+
+def _dispatch_next_queued_provider_scan_best_effort(
+    tenant_id: str, provider_id: str
+) -> None:
+    try:
+        _dispatch_next_queued_provider_scan(tenant_id, provider_id)
+    except Exception:
+        logger.exception(
+            "Failed to dispatch next queued scan for provider %s", provider_id
+        )
+
+
+def _get_or_create_next_scheduled_scan(
+    tenant_id: str,
+    provider_id: str,
+    periodic_task_instance: PeriodicTask,
+    next_scan_datetime: datetime,
+) -> Scan:
+    interval = periodic_task_instance.interval
+    now = datetime.now(UTC)
+    while next_scan_datetime <= now:
+        next_scan_datetime += timedelta(**{interval.period: interval.every})
+
+    return _get_or_create_scheduled_scan(
+        tenant_id=tenant_id,
+        provider_id=provider_id,
+        scheduler_task_id=periodic_task_instance.id,
+        scheduled_at=next_scan_datetime,
+        update_state=True,
+    )
+
+
+def _ensure_next_scheduled_scan_best_effort(
+    tenant_id: str,
+    provider_id: str,
+    periodic_task_instance: PeriodicTask,
+    next_scan_datetime: datetime,
+) -> None:
+    try:
+        with rls_transaction(tenant_id):
+            _get_or_create_next_scheduled_scan(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                periodic_task_instance=periodic_task_instance,
+                next_scan_datetime=next_scan_datetime,
+            )
+    except Exception:
+        logger.exception(
+            "Failed to ensure next scheduled scan for provider %s", provider_id
+        )
 
 
 def _cleanup_orphan_scheduled_scans(
@@ -117,6 +342,7 @@ def _cleanup_orphan_scheduled_scans(
         trigger=Scan.TriggerChoices.SCHEDULED,
         state=StateChoices.AVAILABLE,
         scheduler_task_id=scheduler_task_id,
+        task__isnull=True,
     )
 
     scheduled_scan_exists = Scan.objects.filter(
@@ -292,16 +518,17 @@ def perform_scan_task(
             )
             return None
 
-    result = perform_prowler_scan(
-        tenant_id=tenant_id,
-        scan_id=scan_id,
-        provider_id=provider_id,
-        checks_to_execute=checks_to_execute,
-    )
-
-    _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
-
-    return result
+    try:
+        result = perform_prowler_scan(
+            tenant_id=tenant_id,
+            scan_id=scan_id,
+            provider_id=provider_id,
+            checks_to_execute=checks_to_execute,
+        )
+        _perform_scan_complete_tasks(tenant_id, scan_id, provider_id)
+        return result
+    finally:
+        _dispatch_next_queued_provider_scan_best_effort(tenant_id, provider_id)
 
 
 # acks_late=False: like scan-perform; a dropped run is re-fired by Beat on the next tick.
@@ -335,7 +562,7 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
     task_id = self.request.id
 
     with rls_transaction(tenant_id):
-        if not Provider.objects.filter(pk=provider_id).exists():
+        if not Provider.objects.select_for_update().filter(pk=provider_id).exists():
             logger.warning(
                 "scheduled scan-perform skipped: provider %s no longer exists "
                 "(tenant=%s)",
@@ -348,22 +575,6 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
         periodic_task_instance = PeriodicTask.objects.get(
             name=f"scan-perform-scheduled-{provider_id}"
         )
-        executing_scan = (
-            Scan.objects.filter(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                trigger=Scan.TriggerChoices.SCHEDULED,
-                state=StateChoices.EXECUTING,
-            )
-            .order_by("-started_at")
-            .first()
-        )
-        if executing_scan:
-            logger.warning(
-                f"Scheduled scan already executing for provider {provider_id}. Skipping."
-            )
-            return ScanTaskSerializer(instance=executing_scan).data
-
         executed_scan = Scan.objects.filter(
             tenant_id=tenant_id,
             provider_id=provider_id,
@@ -388,6 +599,26 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scheduler_task_id=periodic_task_instance.id,
         )
 
+        active_scan = get_active_provider_scan(tenant_id, provider_id)
+        if active_scan:
+            logger.warning(
+                "Scan already queued or executing for provider %s. Queueing scheduled run.",
+                provider_id,
+            )
+            queued_scheduled_scan = _get_or_create_queued_scheduled_scan(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                periodic_task_instance=periodic_task_instance,
+                scheduled_at=current_scan_datetime,
+            )
+            _get_or_create_next_scheduled_scan(
+                tenant_id=tenant_id,
+                provider_id=provider_id,
+                periodic_task_instance=periodic_task_instance,
+                next_scan_datetime=next_scan_datetime,
+            )
+            return ScanTaskSerializer(instance=queued_scheduled_scan).data
+
         scan_instance = _get_or_create_scheduled_scan(
             tenant_id=tenant_id,
             provider_id=provider_id,
@@ -403,24 +634,16 @@ def perform_scheduled_scan_task(self, tenant_id: str, provider_id: str):
             scan_id=str(scan_instance.id),
             provider_id=provider_id,
         )
+        _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
+        return result
     finally:
-        with rls_transaction(tenant_id):
-            now = datetime.now(UTC)
-            if next_scan_datetime <= now:
-                interval_delta = timedelta(**{interval.period: interval.every})
-                while next_scan_datetime <= now:
-                    next_scan_datetime += interval_delta
-            _get_or_create_scheduled_scan(
-                tenant_id=tenant_id,
-                provider_id=provider_id,
-                scheduler_task_id=periodic_task_instance.id,
-                scheduled_at=next_scan_datetime,
-                update_state=True,
-            )
-
-    _perform_scan_complete_tasks(tenant_id, str(scan_instance.id), provider_id)
-
-    return result
+        _ensure_next_scheduled_scan_best_effort(
+            tenant_id=tenant_id,
+            provider_id=provider_id,
+            periodic_task_instance=periodic_task_instance,
+            next_scan_datetime=next_scan_datetime,
+        )
+        _dispatch_next_queued_provider_scan_best_effort(tenant_id, provider_id)
 
 
 @shared_task(name="scan-summary", queue="overview")

@@ -14,10 +14,7 @@ import {
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
-import {
-  appendSanitizedProviderTypeFilters,
-  sanitizeProviderTypesCsv,
-} from "@/lib/provider-filters";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { SCAN_STATES } from "@/types/attack-paths";
@@ -66,10 +63,6 @@ export const getScansByState = async () => {
   const url = new URL(`${apiBaseUrl}/scans`);
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
-  url.searchParams.append(
-    "filter[provider_type__in]",
-    sanitizeProviderTypesCsv(),
-  );
   // Only need to know whether at least one completed scan exists; filter server-side
   // and cap to a single row so the answer is correct regardless of total scan count.
   url.searchParams.append("filter[state]", SCAN_STATES.COMPLETED);

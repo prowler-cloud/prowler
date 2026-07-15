@@ -19,6 +19,7 @@ export const RUNTIME_CONFIG_KEYS = [
   "posthogKey",
   "posthogHost",
   "reoDevClientId",
+  "cloudBillingEnabled",
 ] as const satisfies ReadonlyArray<keyof RuntimePublicConfig>;
 
 /**

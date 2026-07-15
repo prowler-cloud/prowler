@@ -355,7 +355,7 @@ class Neo4jSink(SinkDatabase):
             f"ON (n.`{PROVIDER_ELEMENT_ID_PROPERTY}`)"
         )
         with self.get_session(database) as session:
-            session.run(query).consume()
+            session.execute_write(lambda tx: tx.run(query).consume())
 
     def write_nodes(
         self,
@@ -377,7 +377,7 @@ class Neo4jSink(SinkDatabase):
             SET n += row.props
         """
         with self.get_session(database) as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     def write_relationships(
         self,
@@ -403,7 +403,7 @@ class Neo4jSink(SinkDatabase):
             SET r += row.props
         """
         with self.get_session(database) as session:
-            session.run(query, {"rows": rows}).consume()
+            session.execute_write(lambda tx: tx.run(query, {"rows": rows}).consume())
 
     # For compatibility with test harnesses that patch the concrete driver
     def get_driver(self) -> neo4j.Driver:

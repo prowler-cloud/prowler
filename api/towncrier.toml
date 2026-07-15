@@ -1,0 +1,39 @@
+[tool.towncrier]
+directory = "changelog.d"
+filename = "CHANGELOG.md"
+start_string = "<!-- changelog: release notes start -->\n"
+title_format = "## [{version}] ({name})"
+issue_format = "[(#{issue})](https://github.com/prowler-cloud/prowler/pull/{issue})"
+template = "../.github/towncrier/template.md.jinja"
+underlines = ["", "", ""]
+ignore = [".gitkeep", "README.md"]
+
+[[tool.towncrier.type]]
+directory = "added"
+name = "🚀 Added"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "changed"
+name = "🔄 Changed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "deprecated"
+name = "⚠️ Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removed"
+name = "❌ Removed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fixed"
+name = "🐞 Fixed"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "security"
+name = "🔐 Security"
+showcontent = true

@@ -20,7 +20,7 @@ Prowler authenticates to Okta as a **service application** using **OAuth 2.0 wit
 
 | Method | Status | Use Case |
 |---|---|---|
-| **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler App. |
+| **OAuth 2.0 (private-key JWT)** | Supported | Production scans, CI/CD, Prowler Cloud. |
 
 The private-key JWT flow is the only supported authentication method in the initial release. The service application proves possession of a private key on every token request; Okta returns a short-lived access token, refreshed automatically by the SDK.
 

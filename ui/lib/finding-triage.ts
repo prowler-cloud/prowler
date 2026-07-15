@@ -5,6 +5,16 @@ import {
   type UpdateFindingTriageInput,
 } from "@/types/findings-triage";
 
+interface FindingTriageRowAttributes {
+  muted?: boolean;
+  muted_reason?: string;
+}
+
+export interface FindingTriageRow {
+  triage?: FindingTriageSummary;
+  attributes: FindingTriageRowAttributes;
+}
+
 export const shouldMarkFindingMutedForTriageUpdate = (
   input: UpdateFindingTriageInput,
 ): boolean => Boolean(input.status && isMutelistShortcutStatus(input.status));
@@ -45,3 +55,39 @@ export const applyOptimisticTriageSummaryUpdate = (
       : {}),
   };
 };
+
+export const applyOptimisticFindingTriageRowUpdate = <
+  TRow extends FindingTriageRow,
+>(
+  finding: TRow,
+  input: UpdateFindingTriageInput,
+): TRow => {
+  if (!finding.triage || finding.triage.findingId !== input.findingId) {
+    return finding;
+  }
+
+  const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+
+  return {
+    ...finding,
+    triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
+    attributes: {
+      ...finding.attributes,
+      muted: shouldMarkMuted ? true : finding.attributes.muted,
+      muted_reason:
+        shouldMarkMuted && input.isMuted !== true && input.status
+          ? getOptimisticTriageMutedReason(input.status)
+          : finding.attributes.muted_reason,
+    },
+  };
+};
+
+export const applyOptimisticFindingTriageRowsUpdate = <
+  TRow extends FindingTriageRow,
+>(
+  findings: TRow[],
+  input: UpdateFindingTriageInput,
+): TRow[] =>
+  findings.map((finding) =>
+    applyOptimisticFindingTriageRowUpdate(finding, input),
+  );

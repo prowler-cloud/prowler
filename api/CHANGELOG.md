@@ -2,6 +2,59 @@
 
 All notable changes to the **Prowler API** are documented in this file.
 
+<!-- changelog: release notes start -->
+
+## [1.34.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- Attack Paths graph mutations now retry transient Neptune concurrency and deadline failures, while Neo4j mutations use managed transaction retries [(#11968)](https://github.com/prowler-cloud/prowler/pull/11968)
+- Attack Paths scans now use bounded child node identifiers for normalized list values in Neo4j and Neptune, preventing Neo4j RANGE index key size failures [(#11969)](https://github.com/prowler-cloud/prowler/pull/11969)
+- `scan-summary` aggregation now upserts summaries in deterministic conflict-key order, preventing PostgreSQL deadlocks during concurrent reaggregation [(#11971)](https://github.com/prowler-cloud/prowler/pull/11971)
+
+---
+
+## [1.34.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- Session tokens are rejected after account password updates [(#11914)](https://github.com/prowler-cloud/prowler/pull/11914)
+- Jira dispatch task results now surface user-facing Jira failure messages [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- AWS Attack Paths privilege escalation queries no longer fail on Neo4j with `Aggregation column contains implicit grouping expressions` [(#11939)](https://github.com/prowler-cloud/prowler/pull/11939)
+
+### 🔐 Security
+
+- OpenAI-compatible Lighthouse provider base URLs are restricted before connection checks [(#11940)](https://github.com/prowler-cloud/prowler/pull/11940)
+- `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS` environment variable to allow internal hosts as OpenAI-compatible Lighthouse AI base URLs [(#11942)](https://github.com/prowler-cloud/prowler/pull/11942)
+
+---
+
+## [1.34.0] (Prowler v5.33.0)
+
+### 🚀 Added
+
+- Compliance PDF reports no longer require provider credentials: findings are enriched from the provider metadata stored in the database, so reports generate even after the provider secret is deleted or its credentials become invalid [(#11845)](https://github.com/prowler-cloud/prowler/pull/11845)
+
+### 🐞 Fixed
+
+- Provider scans now queue behind active provider scans instead of dispatching concurrently, and resource failed-finding counters retry database conflicts with stable row locking [(#11848)](https://github.com/prowler-cloud/prowler/pull/11848)
+
+---
+
+## [1.33.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Attack Paths: Scan rows now have database defaults for `is_migrated` and `sink_backend` so `scan-perform-scheduled` inserts survive deploy skew [(#11826)](https://github.com/prowler-cloud/prowler/pull/11826)
+- Invited users now keep their invitation context when completing authentication with Google, GitHub, or SAML, so the invitation is accepted during login [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
+### 🔐 Security
+
+- User profile updates now allow users to update their own account while requiring user-management permissions to update other users in the same tenant [(#11792)](https://github.com/prowler-cloud/prowler/pull/11792)
+- Kubernetes provider credentials now reject kubeconfigs using `exec` authentication in Prowler Cloud, preventing user-supplied commands from running on Cloud workers [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
+---
+
 ## [1.33.0] (Prowler v5.32.0)
 
 ### 🚀 Added
@@ -18,7 +71,6 @@ All notable changes to the **Prowler API** are documented in this file.
 
 - Attack Paths: Provider graph cleanup now deletes Neo4j and Neptune relationships in directed batches before deleting nodes [(#11755)](https://github.com/prowler-cloud/prowler/pull/11755)
 - `scan-perform` no longer reports an error when a provider is deleted during a running scan [(#11696)](https://github.com/prowler-cloud/prowler/pull/11696)
-
 
 ---
 

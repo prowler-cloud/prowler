@@ -56,7 +56,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - [ ] Review if code is being documented following https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings
 - [ ] Review if backport is needed.
 - [ ] Review if is needed to change the Readme.md
-- [ ] Ensure new entries are added to CHANGELOG.md, if applicable.
+- [ ] Ensure a changelog fragment is added under <component>/changelog.d/, if applicable.
 
 #### SDK/CLI
 - Are there new checks included in this PR? Yes / No
@@ -67,7 +67,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - [ ] Screenshots/Video - Mobile (X < 640px)
 - [ ] Screenshots/Video - Tablet (640px > X < 1024px)
 - [ ] Screenshots/Video - Desktop (X > 1024px)
-- [ ] Ensure new entries are added to ui/CHANGELOG.md
+- [ ] Ensure a changelog fragment is added under ui/changelog.d/
 
 #### API (if applicable)
 - [ ] All issue/task requirements work as expected on the API
@@ -77,7 +77,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 - [ ] Any other relevant evidence of the implementation (if applicable)
 - [ ] Verify if API specs need to be regenerated.
 - [ ] Check if version updates are required.
-- [ ] Ensure new entries are added to api/CHANGELOG.md
+- [ ] Ensure a changelog fragment is added under api/changelog.d/
 
 ### License
 
@@ -86,12 +86,12 @@ By submitting this pull request, I confirm that my contribution is made under th
 
 ## Component-Specific Rules
 
-| Component | CHANGELOG | Extra Checks |
-|-----------|-----------|--------------|
-| SDK | `prowler/CHANGELOG.md` | New checks → permissions update? |
-| API | `api/CHANGELOG.md` | API specs, version bump, endpoint output, EXPLAIN ANALYZE, performance |
-| UI | `ui/CHANGELOG.md` | Screenshots for Mobile/Tablet/Desktop |
-| MCP | `mcp_server/CHANGELOG.md` | N/A |
+| Component | Changelog fragment | Extra Checks |
+|-----------|--------------------|--------------|
+| SDK | `prowler/changelog.d/` | New checks → permissions update? |
+| API | `api/changelog.d/` | API specs, version bump, endpoint output, EXPLAIN ANALYZE, performance |
+| UI | `ui/changelog.d/` | Screenshots for Mobile/Tablet/Desktop |
+| MCP | `mcp_server/changelog.d/` | N/A |
 
 ## Commands
 
@@ -128,7 +128,7 @@ Follow conventional commits:
 
 1. ✅ All tests pass locally
 2. ✅ Linting passes (`make lint` or component-specific)
-3. ✅ CHANGELOG updated (if applicable)
+3. ✅ Changelog fragment added (if applicable)
 4. ✅ Branch is up to date with main
 5. ✅ Commits are clean and descriptive
 

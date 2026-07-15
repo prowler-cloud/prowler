@@ -266,7 +266,7 @@ Every legacy compliance file is a JSON document with the following top-level key
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `Framework` | string | Yes | Canonical framework identifier, for example `CIS`, `NIST-800-53-Revision-5`, `ENS`, `CCC`. |
-| `Name` | string | Yes | Human-readable framework name displayed by Prowler App. |
+| `Name` | string | Yes | Human-readable framework name displayed by Prowler Cloud and Prowler Local Server. |
 | `Version` | string | Yes (recommended) | Framework version, e.g. `2.0`. See [Version Handling](#version-handling). |
 | `Provider` | string | Yes | Upper-cased provider identifier: `AWS`, `AZURE`, `GCP`, `KUBERNETES`, `M365`, `GITHUB`, `GOOGLEWORKSPACE`, and so on. |
 | `Description` | string | Yes | Short description of the framework's scope and purpose. |
@@ -535,7 +535,7 @@ Each entry in the list is a single constraint with the following fields:
 
 ### How guardrails are evaluated
 
-All evaluation lives in one shared module, `prowler/lib/check/compliance_config_eval.py`, consumed by every compliance output (CSV, OCSF, and the CLI tables) and reused by the Prowler App backend so the rule is defined exactly once.
+All evaluation lives in one shared module, `prowler/lib/check/compliance_config_eval.py`, consumed by every compliance output (CSV, OCSF, and the CLI tables) and reused by the Prowler API backend so the rule is defined exactly once.
 
 1. The applied configuration is the scan-global `audit_config` (the same mapping for every resource and region), resolved via `get_scan_audit_config()`.
 2. For each requirement that declares constraints, `evaluate_config_constraints()` walks the list and returns `(is_compliant, reason)`. The requirement is compliant when **every** explicitly-set key satisfies its constraint.
@@ -736,9 +736,9 @@ Open the generated CSV and confirm:
 - Every requirement has at least one row per scanned resource (when there are findings).
 - Attribute values such as `Requirements_Attributes_Section` reflect the JSON content.
 
-### 5. Verify the framework in Prowler App
+### 5. Verify the Framework in Prowler Local Server
 
-Launch Prowler App locally (`docker compose up` from the repository root) and run a scan with the new compliance framework. Confirm the compliance page renders the requirements, sections, and status widgets correctly.
+Launch Prowler Local Server (`docker compose up` from the repository root) and run a scan with the new compliance framework. Confirm the compliance page renders the requirements, sections, and status widgets correctly.
 
 ## Testing
 
@@ -778,7 +778,7 @@ Before opening the pull request:
     uv run pre-commit run --all-files
     uv run pytest -n auto
     ```
-2. Add a changelog entry under the `### 🚀 Added` section of `prowler/CHANGELOG.md`, describing the new framework and the providers it covers.
+2. Add a changelog fragment `prowler/changelog.d/<slug>.added.md`, describing the new framework and the providers it covers (no PR link in the text; it is attached automatically at release time).
 3. Follow the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md) and set the PR title using Conventional Commits, e.g. `feat(compliance): add My Framework 1.0 for AWS`.
 4. Request review from the compliance codeowners listed in `.github/CODEOWNERS`.
 

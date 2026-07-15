@@ -2,11 +2,17 @@ import { Suspense } from "react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
+import { getLighthouseV2Configurations } from "@/app/(prowler)/lighthouse/_actions";
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
 import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
+import { SidebarNavigationModeSync } from "@/components/sidebar/navigation-mode-sync";
+import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
+import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
+import { LighthouseOverviewBanner } from "./_overview/_components/lighthouse-overview-banner";
+import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
@@ -40,17 +46,26 @@ export default async function Home({
   searchParams: Promise<SearchParamsProps>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const [providersData, providerGroupsData] = await Promise.all([
-    getAllProviders(),
-    getAllProviderGroups(),
-  ]);
+  const [providersData, providerGroupsData, lighthouseBannerHref] =
+    await Promise.all([
+      getAllProviders(),
+      getAllProviderGroups(),
+      getLighthouseOverviewBannerHref(isCloud(), getLighthouseV2Configurations),
+    ]);
 
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
+      <SidebarNavigationModeSync mode={SIDEBAR_NAVIGATION_MODE.BROWSE} />
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
+
+      {lighthouseBannerHref ? (
+        <div className="mb-6">
+          <LighthouseOverviewBanner href={lighthouseBannerHref} />
+        </div>
+      ) : null}
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>

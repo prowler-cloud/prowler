@@ -222,7 +222,7 @@ class Test_App_Service:
                 location="West Europe",
                 kind="functionapp",
                 function_keys=None,
-                enviroment_variables=None,
+                environment_variables=None,
                 identity=ManagedServiceIdentity(type="SystemAssigned"),
                 public_access=True,
                 vnet_subnet_id="",
@@ -246,6 +246,56 @@ class Test_App_Service:
                 ].name
                 == "functionapp-1"
             )
+
+    def test_get_function_host_keys_logs_warning_on_optional_failure(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_client.web_apps.list_host_keys.side_effect = Exception("Forbidden")
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with (
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.warning"
+            ) as mock_warning,
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.error"
+            ) as mock_error,
+        ):
+            result = app._get_function_host_keys(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
+            )
+
+        assert result is None
+        mock_warning.assert_called_once()
+        mock_error.assert_not_called()
+
+    def test_list_application_settings_logs_warning_on_optional_failure(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_client.web_apps.list_application_settings.side_effect = Exception(
+            "Forbidden"
+        )
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+
+        with (
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.warning"
+            ) as mock_warning,
+            patch(
+                "prowler.providers.azure.services.app.app_service.logger.error"
+            ) as mock_error,
+        ):
+            result = app._list_application_settings(
+                AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
+            )
+
+        assert result is None
+        mock_warning.assert_called_once()
+        mock_error.assert_not_called()
 
 
 class Test_App_get_apps:
@@ -331,6 +381,59 @@ class Test_App_get_apps:
         mock_client.web_apps.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
+    def test_get_apps_with_multiple_resource_groups(self):
+        mock_client = MagicMock()
+        mock_client.web_apps.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
+
+            app = App(set_mocked_azure_provider())
+
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
+
+        result = app._get_apps()
+
+        assert mock_client.web_apps.list_by_resource_group.call_count == 2
+        assert AZURE_SUBSCRIPTION_ID in result
+
+    def test_get_apps_with_mixed_case_resource_group(self):
+        mock_client = MagicMock()
+        mock_client.web_apps.list_by_resource_group.return_value = []
+
+        with (
+            patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_azure_provider(),
+            ),
+            patch(
+                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
+                new=MagicMock(),
+            ),
+        ):
+            from prowler.providers.azure.services.app.app_service import App
+
+            app = App(set_mocked_azure_provider())
+
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
+
+        app._get_apps()
+
+        mock_client.web_apps.list_by_resource_group.assert_called_once_with(
+            resource_group_name="RG"
+        )
+
 
 class Test_App_get_functions:
     def test_get_functions_no_resource_groups(self):
@@ -415,61 +518,6 @@ class Test_App_get_functions:
         mock_client.web_apps.list.assert_not_called()
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
-    def test_get_apps_with_multiple_resource_groups(self):
-        mock_client = MagicMock()
-        mock_client.web_apps.list_by_resource_group.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=MagicMock(),
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_service import App
-
-            app = App(set_mocked_azure_provider())
-
-        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        app.resource_groups = {AZURE_SUBSCRIPTION_ID: RESOURCE_GROUP_LIST}
-
-        result = app._get_apps()
-
-        assert mock_client.web_apps.list_by_resource_group.call_count == 2
-        assert AZURE_SUBSCRIPTION_ID in result
-
-    def test_get_apps_with_mixed_case_resource_group(self):
-        mock_client = MagicMock()
-        mock_client.web_apps.list_by_resource_group.return_value = []
-
-        with (
-            patch(
-                "prowler.providers.common.provider.Provider.get_global_provider",
-                return_value=set_mocked_azure_provider(),
-            ),
-            patch(
-                "prowler.providers.azure.services.monitor.monitor_service.Monitor",
-                new=MagicMock(),
-            ),
-        ):
-            from prowler.providers.azure.services.app.app_service import App
-
-            app = App(set_mocked_azure_provider())
-
-        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
-        app.resource_groups = {AZURE_SUBSCRIPTION_ID: ["RG"]}
-
-        app._get_apps()
-
-        mock_client.web_apps.list_by_resource_group.assert_called_once_with(
-            resource_group_name="RG"
-        )
-
-
-class Test_App_get_functions_extra:
     def test_get_functions_with_multiple_resource_groups(self):
         mock_client = MagicMock()
         mock_client.web_apps.list_by_resource_group.return_value = []
@@ -521,4 +569,39 @@ class Test_App_get_functions_extra:
 
         mock_client.web_apps.list_by_resource_group.assert_called_once_with(
             resource_group_name="RG"
+        )
+
+    def test_get_functions_sets_https_only(self):
+        from prowler.providers.azure.services.app.app_service import App
+
+        mock_client = MagicMock()
+        mock_function = MagicMock()
+        mock_function.id = "/subscriptions/resource_id"
+        mock_function.name = "functionapp-1"
+        mock_function.location = "West Europe"
+        mock_function.kind = "functionapp"
+        mock_function.resource_group = RESOURCE_GROUP
+        mock_function.identity = None
+        mock_function.public_network_access = "Enabled"
+        mock_function.virtual_network_subnet_id = ""
+        mock_function.https_only = True
+        mock_client.web_apps.list.return_value = [mock_function]
+
+        app = object.__new__(App)
+        app.clients = {AZURE_SUBSCRIPTION_ID: mock_client}
+        app.resource_groups = None
+        app._get_function_host_keys = MagicMock(return_value=None)
+        app._list_application_settings = MagicMock(
+            return_value=MagicMock(properties={})
+        )
+        app._get_function_config = MagicMock(
+            return_value=MagicMock(ftps_state="FtpsOnly")
+        )
+
+        result = app._get_functions()
+
+        function = result[AZURE_SUBSCRIPTION_ID][mock_function.id]
+        assert function.https_only is True
+        app._get_function_host_keys.assert_called_once_with(
+            AZURE_SUBSCRIPTION_ID, RESOURCE_GROUP, "functionapp-1"
         )

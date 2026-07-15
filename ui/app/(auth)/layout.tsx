@@ -5,12 +5,13 @@ import { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { ReactNode, Suspense } from "react";
 
+import { PublicAuthShell } from "@/components/auth/oss/public-auth-shell";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
-import { NavigationProgress, Toaster } from "@/components/ui";
-import { fontSans } from "@/config/fonts";
+import { NavigationProgress, Toaster } from "@/components/shadcn";
+import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { cn } from "@/lib";
-import { readEnv } from "@/lib/runtime-env";
+import { readGatedEnv } from "@/lib/integrations";
 
 import { Providers } from "../providers";
 
@@ -42,8 +43,8 @@ export default async function AuthLayout({
   // <RuntimePublicConfig/> island's own connection() call).
   await connection();
 
-  // Server-side runtime read. Empty/unset id ⇒ GoogleTagManager is not mounted
-  const gtmId = readEnv(
+  const gtmId = readGatedEnv(
+    "UI_GOOGLE_TAG_MANAGER_ENABLED",
     "UI_GOOGLE_TAG_MANAGER_ID",
     "NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID",
   );
@@ -56,15 +57,16 @@ export default async function AuthLayout({
       <body
         suppressHydrationWarning
         className={cn(
-          "bg-background min-h-screen font-sans antialiased",
+          "bg-bg-neutral-primary min-h-screen font-sans antialiased",
           fontSans.variable,
+          fontMono.variable,
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
           <Suspense>
             <NavigationProgress />
           </Suspense>
-          {children}
+          <PublicAuthShell>{children}</PublicAuthShell>
           <Toaster />
           {gtmId && <GoogleTagManager gtmId={gtmId} />}
         </Providers>

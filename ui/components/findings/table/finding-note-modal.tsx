@@ -1,18 +1,25 @@
 "use client";
 
+import { ExternalLink, Info } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Textarea,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { DOCS_URLS } from "@/lib/external-urls";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
@@ -57,6 +64,9 @@ export function FindingNoteModal({
   findingContext,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   // Local state needed: modal edits are buffered until the user chooses Update.
   const [selectedStatus, setSelectedStatus] = useState<FindingTriageStatus>(
     triage.status,
@@ -131,10 +141,25 @@ export function FindingNoteModal({
           unbreakable content (e.g. resource UIDs) widens the grid track past
           the modal instead of truncating. */}
       <form className="flex min-w-0 flex-col gap-5" onSubmit={handleSubmit}>
-        <div className="flex items-center gap-4">
-          <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center rounded-lg">
+        <div className="text-text-neutral-secondary flex flex-wrap items-center gap-2 text-sm">
+          <Info className="size-4 shrink-0" />
+          <span>Learn how triage states work in the</span>
+          <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
+            <a
+              href={DOCS_URLS.FINDINGS_TRIAGE}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="size-3.5 shrink-0" />
+              <span>Triage documentation</span>
+            </a>
+          </Button>
+        </div>
+
+        <div className="border-border-input-primary flex items-center gap-4 rounded-lg border p-3">
+          <div className="bg-bg-neutral-tertiary flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-lg">
             {findingContext.providerType ? (
-              <ProviderTypeIcon type={findingContext.providerType} size={22} />
+              <ProviderTypeIcon type={findingContext.providerType} size={36} />
             ) : (
               <span className="text-text-neutral-secondary text-xs font-semibold">
                 {findingContext.provider?.slice(0, 3).toUpperCase() ?? "—"}
@@ -192,12 +217,7 @@ export function FindingNoteModal({
 
         {shouldShowRemediatingInfo && (
           <Alert variant="info">
-            <AlertDescription>
-              {REMEDIATING_INFO_COPY}.{" "}
-              <CustomLink href={DOCS_URLS.FINDINGS_TRIAGE} size="sm">
-                Learn more
-              </CustomLink>
-            </AlertDescription>
+            <AlertDescription>{REMEDIATING_INFO_COPY}.</AlertDescription>
           </Alert>
         )}
 
@@ -225,10 +245,12 @@ export function FindingNoteModal({
           </div>
         </div>
 
-        <div className="flex w-full justify-end gap-3">
+        {/* mt-3 lifts the gap-5 form spacing to 32px so the distance to the
+            footer matches the launch scan and alert modals. */}
+        <div className="mt-3 flex w-full justify-between gap-4">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="lg"
             onClick={() => onOpenChange(false)}
           >
@@ -236,19 +258,27 @@ export function FindingNoteModal({
           </Button>
           <span className="relative inline-flex">
             {isCloudOnly && (
-              <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                <CloudFeatureBadgeLink href={triage.billingHref} />
+              <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+                <Badge variant="cloud">Cloud</Badge>
               </span>
             )}
             <Button
               type={canSubmit ? "submit" : "button"}
               size="lg"
-              disabled={!canSubmit}
+              aria-label={
+                isCloudOnly ? "Save - available in Prowler Cloud" : undefined
+              }
+              disabled={!canSubmit && !isCloudOnly}
+              onClick={
+                isCloudOnly
+                  ? () => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                  : undefined
+              }
             >
               {isSubmitting
                 ? "Saving..."
                 : canSubmit || isCloudOnly
-                  ? "Save changes"
+                  ? "Save"
                   : "Unavailable"}
             </Button>
           </span>
