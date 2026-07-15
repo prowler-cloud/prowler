@@ -70,6 +70,17 @@ class FakeFinding:
         return self.metadata
 
 
+class CacheMissAfterPreResolve(dict):
+    def __init__(self, missing_uid):
+        super().__init__()
+        self.missing_uid = missing_uid
+
+    def __contains__(self, key):
+        if key == self.missing_uid:
+            return True
+        return super().__contains__(key)
+
+
 @pytest.mark.django_db
 class TestPerformScan:
     def test_perform_prowler_scan_success(
@@ -1513,6 +1524,404 @@ class TestPerformScan:
 
 @pytest.mark.django_db
 class TestProcessFindingMicroBatch:
+    def test_process_finding_micro_batch_fallback_creates_resource_after_cache_miss(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:accessanalyzer:us-east-1:123456789012:analyzer/unknown"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-create",
+            status=StatusChoices.FAIL,
+            status_extended="missing analyzer",
+            severity=Severity.medium,
+            check_id="accessanalyzer_enabled",
+            resource_uid=resource_uid,
+            resource_name="analyzer/unknown",
+            region="us-east-1",
+            service_name="accessanalyzer",
+            resource_type="analyzer",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={"resourcegroup": "identity"},
+            muted=False,
+        )
+
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        resource = Resource.objects.get(uid=resource_uid)
+        created_finding = Finding.objects.get(uid=finding.uid)
+
+        assert created_finding.scan_id == scan.id
+        assert resource.provider_id == provider.id
+        assert resource.region == finding.region
+        assert resource.service == finding.service_name
+        assert resource.type == finding.resource_type
+        assert resource.name == finding.resource_name
+        assert resource.groups == ["identity"]
+        assert resource.findings.filter(uid=finding.uid).exists()
+        assert resource_cache[resource_uid].id == resource.id
+        assert resource_failed_findings_cache[resource_uid] == 1
+
+    def test_process_finding_micro_batch_fallback_recovers_existing_resource_after_cache_miss(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:guardduty:us-east-1:123456789012:detector/unknown"
+        existing_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid=resource_uid,
+            name="detector/unknown",
+            region="us-east-1",
+            service="guardduty",
+            type="detector",
+        )
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-existing",
+            status=StatusChoices.FAIL,
+            status_extended="missing detector",
+            severity=Severity.high,
+            check_id="guardduty_enabled",
+            resource_uid=resource_uid,
+            resource_name=existing_resource.name,
+            region=existing_resource.region,
+            service_name=existing_resource.service,
+            resource_type=existing_resource.type,
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        assert Resource.objects.filter(uid=resource_uid).count() == 1
+        created_finding = Finding.objects.get(uid=finding.uid)
+        existing_resource.refresh_from_db()
+
+        assert created_finding.scan_id == scan.id
+        assert existing_resource.findings.filter(uid=finding.uid).exists()
+        assert resource_cache[resource_uid].id == existing_resource.id
+        assert resource_failed_findings_cache[resource_uid] == 1
+
+    def test_process_finding_micro_batch_fallback_recovers_after_create_race(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/unknown"
+        raced_resource = Resource.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            uid=resource_uid,
+            name="hub/unknown",
+            region="us-east-1",
+            service="securityhub",
+            type="hub",
+        )
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-failure",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/unknown",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+        resource_filter_result = MagicMock()
+        resource_filter_result.first.side_effect = [None, raced_resource]
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+            patch.object(
+                Resource.objects,
+                "filter",
+                return_value=resource_filter_result,
+            ),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=IntegrityError("duplicate resource"),
+            ),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                resource_cache,
+                tag_cache,
+                last_status_cache,
+                resource_failed_findings_cache,
+                unique_resources,
+                scan_resource_cache,
+                mute_rules_cache,
+                scan_categories_cache,
+                scan_resource_groups_cache,
+                group_resources_cache,
+            )
+
+        assert Resource.objects.filter(uid=resource_uid).count() == 1
+        created_finding = Finding.objects.get(uid=finding.uid)
+        raced_resource.refresh_from_db()
+
+        assert created_finding.scan_id == scan.id
+        assert raced_resource.findings.filter(uid=finding.uid).exists()
+        assert resource_cache[resource_uid].id == raced_resource.id
+        assert resource_failed_findings_cache[resource_uid] == 1
+
+    def test_process_finding_micro_batch_propagates_retryable_cache_miss_db_errors(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/retryable"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-retryable-error",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/retryable",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+            patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=OperationalError("deadlock detected"),
+            ),
+        ):
+            with pytest.raises(OperationalError, match="deadlock detected"):
+                _process_finding_micro_batch(
+                    str(tenant.id),
+                    [finding],
+                    scan,
+                    provider,
+                    resource_cache,
+                    tag_cache,
+                    last_status_cache,
+                    resource_failed_findings_cache,
+                    unique_resources,
+                    scan_resource_cache,
+                    mute_rules_cache,
+                    scan_categories_cache,
+                    scan_resource_groups_cache,
+                    group_resources_cache,
+                )
+
+        assert not Finding.objects.filter(uid=finding.uid).exists()
+
+    def test_process_finding_micro_batch_propagates_unrecovered_cache_miss_integrity_error(
+        self, tenants_fixture, scans_fixture
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = scan.provider
+        resource_uid = "arn:aws:securityhub:us-east-1:123456789012:hub/unrecovered"
+
+        finding = FakeFinding(
+            uid="finding-cache-miss-unrecovered-integrity-error",
+            status=StatusChoices.FAIL,
+            status_extended="missing hub",
+            severity=Severity.high,
+            check_id="securityhub_enabled",
+            resource_uid=resource_uid,
+            resource_name="hub/unrecovered",
+            region="us-east-1",
+            service_name="securityhub",
+            resource_type="hub",
+            resource_tags={},
+            resource_metadata={},
+            resource_details={},
+            partition="aws",
+            raw={},
+            compliance={},
+            metadata={},
+            muted=False,
+        )
+
+        resource_cache = CacheMissAfterPreResolve(resource_uid)
+        tag_cache = {}
+        last_status_cache = {}
+        resource_failed_findings_cache = {}
+        unique_resources: set[tuple[str, str]] = set()
+        scan_resource_cache: set[tuple[str, str, str, str]] = set()
+        mute_rules_cache = {}
+        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
+        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
+        group_resources_cache: dict[str, set] = {}
+        original_resource_filter = Resource.objects.filter
+        resource_filter_result = MagicMock()
+        resource_filter_result.first.side_effect = [None, None]
+
+        def resource_filter_side_effect(*args, **kwargs):
+            if kwargs.get("uid") == resource_uid:
+                return resource_filter_result
+            return original_resource_filter(*args, **kwargs)
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+            patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
+            patch.object(
+                Resource.objects,
+                "filter",
+                side_effect=resource_filter_side_effect,
+            ),
+            patch.object(
+                Resource.objects,
+                "create",
+                side_effect=IntegrityError("constraint violation"),
+            ),
+        ):
+            with pytest.raises(IntegrityError, match="constraint violation"):
+                _process_finding_micro_batch(
+                    str(tenant.id),
+                    [finding],
+                    scan,
+                    provider,
+                    resource_cache,
+                    tag_cache,
+                    last_status_cache,
+                    resource_failed_findings_cache,
+                    unique_resources,
+                    scan_resource_cache,
+                    mute_rules_cache,
+                    scan_categories_cache,
+                    scan_resource_groups_cache,
+                    group_resources_cache,
+                )
+
+        assert not Finding.objects.filter(uid=finding.uid).exists()
+
     def test_process_finding_micro_batch_creates_records_and_updates_caches(
         self, tenants_fixture, scans_fixture
     ):

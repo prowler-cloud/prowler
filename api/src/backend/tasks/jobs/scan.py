@@ -605,6 +605,42 @@ def _process_finding_micro_batch(
         scan_resource_groups_cache: Dict tracking resource group counts {(resource_group, severity): {"total", "failed", "new_failed"}}.
         group_resources_cache: Dict tracking unique resources per group {resource_group: set(resource_uids)}.
     """
+
+    def recover_resource_after_cache_miss(finding: ProwlerFinding) -> Resource | None:
+        resource_uid = finding.resource_uid
+        resource_instance = Resource.objects.filter(
+            tenant_id=tenant_id,
+            provider_id=provider_instance.id,
+            uid=resource_uid,
+        ).first()
+        if resource_instance is None:
+            check_metadata = finding.get_metadata()
+            group = check_metadata.get("resourcegroup") or None
+            try:
+                with transaction.atomic():
+                    resource_instance = Resource.objects.create(
+                        tenant_id=tenant_id,
+                        provider=provider_instance,
+                        uid=resource_uid,
+                        region=finding.region,
+                        service=finding.service_name,
+                        type=finding.resource_type,
+                        name=finding.resource_name,
+                        groups=[group] if group else None,
+                    )
+            except IntegrityError:
+                resource_instance = Resource.objects.filter(
+                    tenant_id=tenant_id,
+                    provider_id=provider_instance.id,
+                    uid=resource_uid,
+                ).first()
+                if resource_instance is None:
+                    raise
+
+        resource_cache[resource_uid] = resource_instance
+        resource_failed_findings_cache.setdefault(resource_uid, 0)
+        return resource_instance
+
     # Accumulate objects for bulk operations
     findings_to_create = []
     dirty_resources = {}
@@ -758,12 +794,9 @@ def _process_finding_micro_batch(
                     resource_uid = finding.resource_uid
                     resource_instance = resource_cache.get(resource_uid)
                     if resource_instance is None:
-                        # Should be unreachable after the pre-resolve step. Defensive log.
-                        logger.error(
-                            f"Resource {resource_uid} missing from cache after pre-resolve "
-                            f"on scan {scan_instance.id}; skipping finding."
-                        )
-                        continue
+                        resource_instance = recover_resource_after_cache_miss(finding)
+                        if resource_instance is None:
+                            continue
 
                     # Detect resource field changes (defer save until end-of-batch bulk_update).
                     check_metadata = finding.get_metadata()
