@@ -223,6 +223,7 @@ FINDINGS_TABLE_PARTITION_MAX_AGE_MONTHS = env.int("...", None)  # Optional clean
 | `DJANGO_DELETION_BATCH_SIZE` | `5000` | Batch size for deletions |
 | `DJANGO_LOGGING_LEVEL` | `INFO` | Log level |
 | `DJANGO_LOGGING_FORMATTER` | `ndjson` | Log format (`ndjson` or `human_readable`) |
+| `DJANGO_MIGRATION_LOCK_TIMEOUT` | `5s` | `lock_timeout` for the `migrate` command only; `0` disables it |
 
 ---
 
