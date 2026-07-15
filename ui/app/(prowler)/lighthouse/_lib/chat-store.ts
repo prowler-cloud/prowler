@@ -443,7 +443,7 @@ const LIGHTHOUSE_V2_PROVIDER_PRIORITY = [
 const LIGHTHOUSE_V2_PREFERRED_DEFAULT_MODEL: Partial<
   Record<LighthouseV2ProviderType, string>
 > = {
-  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI]: "gpt-5.5",
+  [LIGHTHOUSE_V2_PROVIDER_TYPE.OPENAI]: "gpt-5.6-terra",
 };
 
 function resolveInitialModelSelection(
