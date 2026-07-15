@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import { SUBMENU_KIND } from "@/types/components";
+
 import { getMenuList } from "./menu-list";
 
 const findMenu = (label: string) =>
@@ -76,20 +79,18 @@ describe("getMenuList", () => {
     });
   });
 
-  it("should show Alerts as disabled Cloud-only in OSS when Cloud is disabled", () => {
+  it("should show Alerts as a contextual Cloud upgrade in Local Server", () => {
     // Given / When
     const alerts = findSubmenu("Alerts");
 
     // Then
     expect(alerts).toEqual(
       expect.objectContaining({
-        href: "/alerts",
-        disabled: true,
-        cloudOnly: true,
-        highlight: true,
-        active: false,
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.ALERTS,
       }),
     );
+    expect(alerts).not.toHaveProperty("href");
   });
 
   it("should show Alerts as new under Configuration when Cloud is enabled", () => {
@@ -109,20 +110,43 @@ describe("getMenuList", () => {
     );
   });
 
-  it("should show Scan as disabled Cloud-only in OSS when Cloud is disabled", () => {
+  it("should show Scan as a contextual Cloud upgrade in Local Server", () => {
     // Given / When
     const scanConfig = findSubmenu("Scan");
 
     // Then
     expect(scanConfig).toEqual(
       expect.objectContaining({
-        href: "/scans/config",
-        disabled: true,
-        cloudOnly: true,
-        highlight: true,
-        active: false,
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
       }),
     );
+    expect(scanConfig).not.toHaveProperty("href");
+  });
+
+  it("should expose CLI Import as a contextual Cloud upgrade in Local Server", () => {
+    // Given / When
+    const cliImport = findSubmenu("CLI Import");
+
+    // Then
+    expect(cliImport).toEqual(
+      expect.objectContaining({
+        kind: SUBMENU_KIND.CLOUD_UPGRADE,
+        cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+      }),
+    );
+    expect(cliImport).not.toHaveProperty("href");
+  });
+
+  it("should omit CLI Import from the Cloud menu", () => {
+    // Given
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
+
+    // When
+    const cliImport = findSubmenu("CLI Import");
+
+    // Then
+    expect(cliImport).toBeUndefined();
   });
 
   it("should show Scan as new under Configuration when Cloud is enabled", () => {

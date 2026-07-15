@@ -7,6 +7,7 @@ import { CliImportBanner } from "@/components/scans";
 import { ContentLayout } from "@/components/shadcn/content-layout";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { FilterTransitionWrapper } from "@/contexts";
+import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 import {
   SCAN_CONFIGURATION_LIST_STATUS,
@@ -25,7 +26,7 @@ export default async function Providers({
 }) {
   const resolvedSearchParams = await searchParams;
   const activeTab = getProviderTab(resolvedSearchParams.tab);
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   // Exclude `tab` and `onboarding` from the key: tab switches must not re-suspend,
   // and `onboarding` is ephemeral (stripped via history.replaceState) — keeping it
@@ -131,15 +132,18 @@ const ProvidersTabContent = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
-  const isCloud = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
   const [providersView, scanConfigsState] = await Promise.all([
-    loadProvidersAccountsViewData({ searchParams, isCloud }),
-    loadScanConfigs(isCloud),
+    loadProvidersAccountsViewData({
+      searchParams,
+      isCloud: isCloudEnvironment,
+    }),
+    loadScanConfigs(isCloudEnvironment),
   ]);
 
   return (
     <ProvidersAccountsView
-      isCloud={isCloud}
+      isCloud={isCloudEnvironment}
       filters={providersView.filters}
       providers={providersView.providers}
       providerGroups={providersView.providerGroups}

@@ -2,7 +2,7 @@
 
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { SubmenuItem } from "@/components/layout/sidebar/submenu-item";
 import { Button } from "@/components/shadcn/button/button";
@@ -17,7 +17,12 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-import { IconComponent, SubmenuProps } from "@/types";
+import {
+  IconComponent,
+  type MenuSelectionHandler,
+  SUBMENU_KIND,
+  SubmenuProps,
+} from "@/types";
 
 interface CollapsibleMenuProps {
   icon: IconComponent;
@@ -25,6 +30,7 @@ interface CollapsibleMenuProps {
   submenus: SubmenuProps[];
   defaultOpen?: boolean;
   isOpen: boolean;
+  onSelect?: MenuSelectionHandler;
 }
 
 export const CollapsibleMenu = ({
@@ -33,25 +39,24 @@ export const CollapsibleMenu = ({
   submenus,
   defaultOpen = false,
   isOpen: isSidebarOpen,
+  onSelect,
 }: CollapsibleMenuProps) => {
   const pathname = usePathname();
-  const isSubmenuActive = submenus.some((submenu) =>
-    submenu.active === undefined ? submenu.href === pathname : submenu.active,
+  const isSubmenuActive = submenus.some(
+    (submenu) =>
+      submenu.kind !== SUBMENU_KIND.CLOUD_UPGRADE &&
+      (submenu.active === undefined
+        ? submenu.href === pathname
+        : submenu.active),
   );
   const [isCollapsed, setIsCollapsed] = useState(
     isSubmenuActive || defaultOpen,
   );
-
-  // Collapse the menu when sidebar is closed
-  useEffect(() => {
-    if (!isSidebarOpen) {
-      setIsCollapsed(false);
-    }
-  }, [isSidebarOpen]);
+  const isOpen = isSidebarOpen && isCollapsed;
 
   return (
     <Collapsible
-      open={isCollapsed}
+      open={isOpen}
       onOpenChange={setIsCollapsed}
       defaultOpen={defaultOpen}
       className="group mb-1 w-full"
@@ -90,7 +95,7 @@ export const CollapsibleMenu = ({
       </Tooltip>
       <CollapsibleContent className="data-[state=closed]:animate-collapsible-up data-[state=open]:animate-collapsible-down flex flex-col items-end overflow-hidden">
         {submenus.map((submenu, index) => (
-          <SubmenuItem key={index} {...submenu} />
+          <SubmenuItem key={index} {...submenu} onSelect={onSelect} />
         ))}
       </CollapsibleContent>
     </Collapsible>

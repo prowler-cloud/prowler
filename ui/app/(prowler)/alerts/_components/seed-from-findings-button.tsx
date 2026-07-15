@@ -23,15 +23,16 @@ import type {
 } from "@/app/(prowler)/alerts/_types/alert-form";
 import { buildFindingsFilterChips } from "@/components/findings/findings-filters.utils";
 import {
+  Badge,
   Button,
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-  ToastAction,
-  useToast,
 } from "@/components/shadcn";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
+import { ToastAction, useToast } from "@/components/shadcn";
+import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type { ProviderProps } from "@/types/providers";
 
 const DISABLED_FILTER_TOOLTIP =
@@ -139,6 +140,9 @@ export const SeedFromFindingsButton = ({
 }: SeedFromFindingsButtonProps) => {
   const router = useRouter();
   const { toast } = useToast();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const [modalOpen, setModalOpen] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [seededCondition, setSeededCondition] = useState<AlertCondition | null>(
@@ -155,7 +159,11 @@ export const SeedFromFindingsButton = ({
   const canSeedFromFilters = hasFindingFilterValue(filterBag);
 
   const handleClick = async () => {
-    if (!isCloudEnabled || !canSeedFromFilters) return;
+    if (!isCloudEnabled) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
+      return;
+    }
+    if (!canSeedFromFilters) return;
     setSeeding(true);
     const result = await seedAlertRule(withDefaultAlertSeedFilters(filterBag));
     setSeeding(false);
@@ -202,7 +210,7 @@ export const SeedFromFindingsButton = ({
       size={size}
       variant="default"
       onClick={handleClick}
-      disabled={!isCloudEnabled || !canSeedFromFilters || seeding}
+      disabled={(isCloudEnabled && !canSeedFromFilters) || seeding}
       className={className}
     >
       <BellPlusIcon size={14} />
@@ -237,10 +245,10 @@ export const SeedFromFindingsButton = ({
 
   if (!isCloudEnabled) {
     return (
-      <span className="relative inline-flex" tabIndex={0}>
+      <span className="relative inline-flex">
         {button}
-        <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-          <CloudFeatureBadgeLink />
+        <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+          <Badge variant="cloud">Cloud</Badge>
         </span>
       </span>
     );

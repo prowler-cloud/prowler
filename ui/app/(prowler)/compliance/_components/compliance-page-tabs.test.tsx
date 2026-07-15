@@ -1,6 +1,9 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { COMPLIANCE_TAB } from "../_types";
 
@@ -33,6 +36,10 @@ describe("CompliancePageTabs", () => {
     pushMock.mockClear();
   });
 
+  afterEach(() => {
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
+  });
+
   it("navigates with ?tab=cross-provider and back to the bare route", async () => {
     const user = userEvent.setup();
     const { rerender } = render(
@@ -60,7 +67,8 @@ describe("CompliancePageTabs", () => {
     expect(pushMock).toHaveBeenCalledWith("/compliance");
   });
 
-  it("disables the cross-provider tab with the cloud upsell badge in OSS", () => {
+  it("opens the cross-provider upgrade without changing tabs in Local Server", async () => {
+    const user = userEvent.setup();
     render(
       <CompliancePageTabs
         activeTab={COMPLIANCE_TAB.PER_SCAN}
@@ -73,12 +81,14 @@ describe("CompliancePageTabs", () => {
     const crossProviderTab = screen.getByRole("tab", {
       name: /cross-provider/i,
     });
-    const tabLabel = screen.getByText("Cross-Provider", { exact: true });
-    const cloudBadge = screen.getByText("Available in Prowler Cloud");
+    await user.click(crossProviderTab);
 
-    expect(crossProviderTab).toBeDisabled();
-    expect(crossProviderTab).not.toHaveClass("disabled:opacity-50");
-    expect(tabLabel).toHaveClass("opacity-50");
-    expect(cloudBadge.parentElement).toHaveClass("gap-2");
+    expect(crossProviderTab).not.toBeDisabled();
+    expect(crossProviderTab).toHaveAttribute("aria-selected", "false");
+    expect(screen.getByText("Cloud")).toBeVisible();
+    expect(pushMock).not.toHaveBeenCalled();
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE,
+    );
   });
 });

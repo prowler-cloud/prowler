@@ -14,12 +14,14 @@ import { SIDEBAR_NAVIGATION_MODE } from "@/hooks/use-sidebar";
 
 const {
   openLaunchScanModalMock,
+  openCloudUpgradeMock,
   pathnameValue,
   pushMock,
   navigationModeValue,
   setNavigationModeMock,
 } = vi.hoisted(() => ({
   openLaunchScanModalMock: vi.fn(),
+  openCloudUpgradeMock: vi.fn(),
   pathnameValue: { current: "/findings" },
   pushMock: vi.fn(),
   navigationModeValue: { current: "browse" },
@@ -58,6 +60,11 @@ vi.mock("@/store", () => ({
   useScansStore: (
     selector: (state: { openLaunchScanModal: () => void }) => unknown,
   ) => selector({ openLaunchScanModal: openLaunchScanModalMock }),
+  useCloudUpgradeStore: (
+    selector: (state: {
+      openCloudUpgrade: (feature: string) => void;
+    }) => unknown,
+  ) => selector({ openCloudUpgrade: openCloudUpgradeMock }),
 }));
 
 vi.mock("@/hooks/use-sidebar", async (importActual) => {
@@ -80,6 +87,10 @@ vi.mock("@/hooks/use-sidebar", async (importActual) => {
 let MenuComponent: typeof import("./menu").Menu;
 let SidebarNavigationModeToggleComponent: typeof import("@/components/sidebar/navigation-mode-toggle").SidebarNavigationModeToggle;
 
+const expectLastCloudUpgrade = (feature: string) => {
+  expect(openCloudUpgradeMock.mock.calls.at(-1)?.[0]).toBe(feature);
+};
+
 beforeAll(async () => {
   MenuComponent = (await import("./menu")).Menu;
   SidebarNavigationModeToggleComponent = (
@@ -90,6 +101,7 @@ beforeAll(async () => {
 afterEach(() => {
   vi.unstubAllEnvs();
   navigationModeValue.current = "browse";
+  openCloudUpgradeMock.mockClear();
 });
 
 describe("Menu", () => {
@@ -163,17 +175,50 @@ describe("Menu", () => {
     expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
   });
 
-  it("shows the mode toggle with Chat disabled outside cloud", () => {
+  it("opens the managed Lighthouse upgrade from Chat in Local Server", async () => {
     pathnameValue.current = "/findings";
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 
     render(<MenuComponent isOpen />);
 
     expect(screen.getByRole("button", { name: "Home" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Chat" })).toHaveAttribute(
-      "aria-disabled",
-      "true",
-    );
+    const chatButton = screen.getByRole("button", { name: "Chat" });
+    expect(chatButton).not.toHaveAttribute("aria-disabled");
+
+    await userEvent.click(chatButton);
+
+    expectLastCloudUpgrade("lighthouse_ai");
+  });
+
+  it("shows a persistent Cloud upgrade action only in Local Server", async () => {
+    pathnameValue.current = "/findings";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(<MenuComponent isOpen />);
+
+    const upgradeButton = screen.getByRole("button", {
+      name: "Explore Prowler Cloud",
+    });
+    expect(upgradeButton).toHaveClass("bg-button-primary");
+
+    await userEvent.click(upgradeButton);
+
+    expectLastCloudUpgrade("general");
+  });
+
+  it("separates the persistent Cloud upgrade action from the navigation", () => {
+    // Given
+    pathnameValue.current = "/findings";
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    // When
+    render(<MenuComponent isOpen />);
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Explore Prowler Cloud" })
+        .parentElement,
+    ).toHaveClass("pt-4");
   });
 });
 
@@ -224,7 +269,7 @@ describe("SidebarNavigationModeToggle", () => {
     expect(pushMock).not.toHaveBeenCalled();
   });
 
-  it("blocks Chat and shows the cloud tooltip when chat is unavailable", async () => {
+  it("opens the Cloud upgrade and shows the cloud tooltip when chat is unavailable", async () => {
     // Given
     const user = userEvent.setup();
     const onChange = vi.fn();
@@ -252,5 +297,6 @@ describe("SidebarNavigationModeToggle", () => {
     // Then
     expect(onChange).not.toHaveBeenCalled();
     expect(pushMock).not.toHaveBeenCalled();
+    expectLastCloudUpgrade("lighthouse_ai");
   });
 });

@@ -11,7 +11,9 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
-import { Field, FieldLabel, ToastAction, useToast } from "@/components/shadcn";
+import { Field, FieldLabel } from "@/components/shadcn";
+import { ToastAction, useToast } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,
@@ -19,10 +21,6 @@ import {
 } from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import {
-  CloudFeatureBadge,
-  CloudFeatureBadgeLink,
-} from "@/components/shared/cloud-feature-badge";
 import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import {
   type ActionErrorResult,
@@ -332,13 +330,11 @@ export function LaunchStep({
               disabled={!canUseScheduleMode}
             />
             On a schedule
-            {!canUseScheduleMode &&
-              !isBlocked &&
-              (isManualOnly ? (
-                <CloudFeatureBadge label="Requires subscription" size="sm" />
-              ) : (
-                <CloudFeatureBadgeLink size="sm" />
-              ))}
+            {isManualOnly && !isBlocked && (
+              <Badge variant="warning" size="sm">
+                Requires subscription
+              </Badge>
+            )}
           </label>
         </RadioGroup>
       </Field>

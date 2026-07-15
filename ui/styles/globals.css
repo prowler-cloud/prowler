@@ -95,6 +95,15 @@
 
   /* Lighthouse AI */
   --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
+
+  /* Cloud feature badge */
+  --gradient-feature-cloud: linear-gradient(
+    112deg,
+    rgb(46, 229, 155) 3.5%,
+    rgb(98, 223, 240) 98.8%
+  );
+  --bg-feature-new: var(--color-emerald-500);
+  --text-feature-new: var(--color-white);
 }
 
 /* ===== DARK THEME =====
@@ -242,9 +251,14 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+  --color-bg-feature-new: var(--bg-feature-new);
+  --color-text-feature-new: var(--text-feature-new);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+
+  /* Background images */
+  --background-image-feature-cloud: var(--gradient-feature-cloud);
 
   /* Breakpoints */
   --breakpoint-3xl: 1920px;

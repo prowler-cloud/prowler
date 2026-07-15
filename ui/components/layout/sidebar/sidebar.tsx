@@ -1,9 +1,9 @@
 "use client";
 
-import { clsx } from "clsx";
+import clsx from "clsx";
 import Link from "next/link";
 
-import { ProwlerShort, ProwlerExtended } from "@/components/icons";
+import { ProwlerBrand, ProwlerShort } from "@/components/icons";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
 import { cn } from "@/lib/utils";
@@ -48,7 +48,7 @@ export function Sidebar() {
               "mt-0!": isOpen,
             })}
           >
-            <ProwlerExtended />
+            <ProwlerBrand />
           </div>
         </Link>
 
