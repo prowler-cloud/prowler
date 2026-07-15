@@ -107,7 +107,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Automate security workflows through the hosted remote MCP server",
       "Keep Lighthouse actions grounded in your Prowler Cloud data",
     ],
-    primaryCta: "Open Lighthouse in Prowler Cloud",
+    primaryCta: "Open Lighthouse AI in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.GENERAL]: {
     title: "Scale Prowler Without Operating It",
