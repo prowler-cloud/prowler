@@ -134,7 +134,6 @@ declare global {
       E2E_OCI_USER_ID?: string;
       E2E_OCI_FINGERPRINT?: string;
       E2E_OCI_KEY_CONTENT?: string;
-      E2E_OCI_REGION?: string;
 
       // E2E Alibaba Cloud
       E2E_ALIBABACLOUD_ACCOUNT_ID?: string;
