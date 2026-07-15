@@ -1,7 +1,7 @@
 {
   "Provider": "aws",
   "CheckID": "elbv2_listener_pqc_tls_enabled",
-  "CheckTitle": "ELBv2 post-quantum TLS policy reduces harvest-now-decrypt-later risk for HTTPS/TLS listeners",
+  "CheckTitle": "ELBv2 HTTPS/TLS listeners use a post-quantum TLS security policy",
   "CheckType": [
     "Software and Configuration Checks/AWS Security Best Practices"
   ],

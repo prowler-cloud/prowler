@@ -74,7 +74,6 @@ class ELBv2(AWSService):
             ):
                 for listener in page["Listeners"]:
                     load_balancer[1].listeners[listener["ListenerArn"]] = Listenerv2(
-                        arn=listener["ListenerArn"],
                         region=regional_client.region,
                         port=listener.get("Port", 0),
                         ssl_policy=listener.get("SslPolicy", ""),
@@ -195,7 +194,6 @@ class ListenerRule(BaseModel):
 
 
 class Listenerv2(BaseModel):
-    arn: str
     region: str
     port: int
     protocol: str

@@ -321,13 +321,11 @@ config_aws = {
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
     "elbv2_listener_pqc_tls_allowed_policies": [
-        "ELBSecurityPolicy-TLS13-1-0-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09",
-        "ELBSecurityPolicy-TLS13-1-0-FIPS-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09",
         "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09",

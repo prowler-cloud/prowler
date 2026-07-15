@@ -179,13 +179,11 @@ class Test_elbv2_listener_pqc_tls_enabled:
     @pytest.mark.parametrize(
         "ssl_policy",
         [
-            "ELBSecurityPolicy-TLS13-1-0-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09",
-            "ELBSecurityPolicy-TLS13-1-0-FIPS-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09",
             "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09",
@@ -301,6 +299,28 @@ class Test_elbv2_listener_pqc_tls_enabled:
         assert result[0].resource_id == "my-lb"
         assert result[0].resource_arn == lb["LoadBalancerArn"]
         assert result[0].region == AWS_REGION_EU_WEST_1
+
+    @mock_aws
+    def test_listener_with_tls_1_0_pq_policy_fails_by_default(self):
+        """Test FAIL when HTTPS listener uses a TLS 1.0-minimum PQ policy by default."""
+        conn, lb, target_group_arn = self._create_alb_infrastructure()
+        listener = conn.create_listener(
+            LoadBalancerArn=lb["LoadBalancerArn"],
+            Protocol="HTTPS",
+            Port=443,
+            SslPolicy="ELBSecurityPolicy-TLS13-1-0-PQ-2025-09",
+            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
+        )["Listeners"][0]
+
+        result = self._mock_and_execute()
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == f"ELBv2 my-lb has HTTPS/TLS listeners without post-quantum TLS policy: HTTPS:443 ({listener['ListenerArn']}) uses ELBSecurityPolicy-TLS13-1-0-PQ-2025-09."
+        )
+        assert result[0].resource_id == "my-lb"
 
     @mock_aws
     def test_listener_with_empty_ssl_policy_fail(self):
@@ -491,17 +511,36 @@ class Test_elbv2_listener_pqc_tls_enabled:
             == "ELBv2 my-lb has all HTTPS/TLS listeners using a post-quantum TLS policy."
         )
 
-    @pytest.mark.parametrize(
-        "configured_policies",
-        [
-            None,
-            [],
-            123,
-        ],
-    )
     @mock_aws
-    def test_malformed_audit_config_falls_back_to_defaults(self, configured_policies):
-        """Test malformed allowlist values fall back to the built-in PQ policies."""
+    def test_custom_audit_config_allows_tls_1_0_pq_policy(self):
+        """Test PASS when custom config explicitly allows a TLS 1.0-minimum PQ policy."""
+        conn, lb, target_group_arn = self._create_alb_infrastructure()
+        conn.create_listener(
+            LoadBalancerArn=lb["LoadBalancerArn"],
+            Protocol="HTTPS",
+            Port=443,
+            SslPolicy="ELBSecurityPolicy-TLS13-1-0-PQ-2025-09",
+            DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
+        )
+
+        result = self._mock_and_execute(
+            audit_config={
+                "elbv2_listener_pqc_tls_allowed_policies": [
+                    "ELBSecurityPolicy-TLS13-1-0-PQ-2025-09"
+                ]
+            }
+        )
+
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+        assert (
+            result[0].status_extended
+            == "ELBv2 my-lb has all HTTPS/TLS listeners using a post-quantum TLS policy."
+        )
+
+    @mock_aws
+    def test_empty_audit_config_allowlist_fails_tls_listener(self):
+        """Test an intentionally empty allowlist is honoured."""
         conn, lb, target_group_arn = self._create_alb_infrastructure()
         conn.create_listener(
             LoadBalancerArn=lb["LoadBalancerArn"],
@@ -511,22 +550,14 @@ class Test_elbv2_listener_pqc_tls_enabled:
             DefaultActions=[{"Type": "forward", "TargetGroupArn": target_group_arn}],
         )
 
-        with mock.patch(
-            "prowler.providers.aws.services.elbv2.elbv2_listener_pqc_tls_enabled.elbv2_listener_pqc_tls_enabled.logger.warning"
-        ) as logger_warning:
-            result = self._mock_and_execute(
-                audit_config={
-                    "elbv2_listener_pqc_tls_allowed_policies": configured_policies
-                }
-            )
+        result = self._mock_and_execute(
+            audit_config={"elbv2_listener_pqc_tls_allowed_policies": []}
+        )
 
         assert len(result) == 1
-        assert result[0].status == "PASS"
+        assert result[0].status == "FAIL"
         assert result[0].resource_id == "my-lb"
-        assert any(
-            "elbv2_listener_pqc_tls_allowed_policies" in call_args[0][0]
-            for call_args in logger_warning.call_args_list
-        )
+        assert "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09" in result[0].status_extended
 
     @mock_aws
     def test_tls_listener_with_pq_policy_pass(self):
@@ -591,8 +622,8 @@ class Test_elbv2_listener_pqc_tls_enabled:
         assert result[0].resource_arn == lb["LoadBalancerArn"]
 
     @mock_aws
-    def test_listener_discovery_failure_returns_fail(self):
-        """Test FAIL when listeners cannot be retrieved for a load balancer."""
+    def test_listener_discovery_failure_returns_no_findings(self):
+        """Test no findings when listeners cannot be retrieved for a load balancer."""
         conn, lb, _ = self._create_alb_infrastructure()
 
         from prowler.providers.aws.services.elbv2.elbv2_service import ELBv2
@@ -639,12 +670,4 @@ class Test_elbv2_listener_pqc_tls_enabled:
 
             result = elbv2_listener_pqc_tls_enabled().execute()
 
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
-        assert result[0].resource_id == "my-lb"
-        assert result[0].resource_arn == lb["LoadBalancerArn"]
-        assert "could not retrieve listeners" in result[0].status_extended
-        assert (
-            "post-quantum TLS policy compliance cannot be determined"
-            in result[0].status_extended
-        )
+        assert len(result) == 0
