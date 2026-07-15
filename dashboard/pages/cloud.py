@@ -10,13 +10,13 @@ capitalization or punctuation without Product approval.
 import dash
 from dash import html
 
+from prowler.lib.cloud_urls import (
+    PROWLER_LOCAL_DASHBOARD_UTM_SOURCE,
+    build_cloud_signup_url,
+)
+
 # Shared subtitle used across every gated page header.
 CLOUD_SUBTITLE = "Discover more ways to protect and operate your cloud."
-
-# Base Prowler Cloud URL; the UTM content value identifies the feature.
-CLOUD_CTA_BASE = (
-    "https://cloud.prowler.com/?utm_source=prowler-local-dashboard&utm_content="
-)
 
 # Path to the recolorable checkmark mask used for benefit bullets.
 CHECK_ICON = "/assets/images/icons/cloud/check.svg"
@@ -180,7 +180,9 @@ def _benefit_item(text):
 
 def build_cloud_layout(feature):
     """Build the reusable gated informational page for a single feature."""
-    cta_url = f"{CLOUD_CTA_BASE}{feature['utm_content']}"
+    cta_url = build_cloud_signup_url(
+        PROWLER_LOCAL_DASHBOARD_UTM_SOURCE, feature["utm_content"]
+    )
 
     return html.Div(
         html.Div(

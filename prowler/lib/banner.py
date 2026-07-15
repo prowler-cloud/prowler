@@ -1,12 +1,13 @@
 from colorama import Fore, Style
 
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
+from prowler.lib.cloud_urls import PROWLER_CLI_UTM_SOURCE, build_cloud_signup_url
 
 # Prowler Cloud landing URL used by the CLI banner. The visible text stays
 # "cloud.prowler.com" while the clickable target carries the UTM source so
 # terminals that support OSC 8 hyperlinks attribute the visit to the CLI.
 CLOUD_DISPLAY_TEXT = "cloud.prowler.com"
-CLOUD_BANNER_URL = "https://cloud.prowler.com/?utm_source=prowler-cli"
+CLOUD_BANNER_URL = build_cloud_signup_url(PROWLER_CLI_UTM_SOURCE)
 
 
 def _hyperlink(url: str, text: str) -> str:

@@ -45,6 +45,10 @@ from dashboard.lib.dropdowns import (
     create_table_row_dropdown,
 )
 from dashboard.lib.layouts import create_layout_overview
+from prowler.lib.cloud_urls import (
+    PROWLER_LOCAL_DASHBOARD_UTM_SOURCE,
+    build_cloud_signup_url,
+)
 from prowler.lib.logger import logger
 
 # Suppress warnings
@@ -1538,7 +1542,9 @@ def filter_data(
                     html.Img(src="assets/favicon.ico", className="w-5 mr-3"),
                     html.Span("Subscribe to Prowler Cloud"),
                 ],
-                href="https://cloud.prowler.com/?utm_source=prowler-local-dashboard&utm_content=overview",
+                href=build_cloud_signup_url(
+                    PROWLER_LOCAL_DASHBOARD_UTM_SOURCE, "overview"
+                ),
                 target="_blank",
                 className="text-prowler-stone-900 inline-flex px-4 py-2 text-xs font-bold uppercase transition-all rounded-lg text-gray-900 hover:bg-prowler-stone-900/10 border-solid border-1 hover:border-prowler-stone-900/10 hover:border-solid hover:border-1 border-prowler-stone-900/10",
             ),
