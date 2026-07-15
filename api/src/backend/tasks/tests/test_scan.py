@@ -1524,6 +1524,57 @@ class TestPerformScan:
 
 @pytest.mark.django_db
 class TestProcessFindingMicroBatch:
+    def _process_one_finding_micro_batch(
+        self,
+        tenant,
+        scan,
+        provider,
+        finding,
+        resource_cache=None,
+        resource_failed_findings_cache=None,
+    ):
+        resource_cache = resource_cache if resource_cache is not None else {}
+        resource_failed_findings_cache = (
+            resource_failed_findings_cache
+            if resource_failed_findings_cache is not None
+            else {}
+        )
+        caches = {
+            "resource_cache": resource_cache,
+            "tag_cache": {},
+            "last_status_cache": {},
+            "resource_failed_findings_cache": resource_failed_findings_cache,
+            "unique_resources": set(),
+            "scan_resource_cache": set(),
+            "mute_rules_cache": {},
+            "scan_categories_cache": {},
+            "scan_resource_groups_cache": {},
+            "group_resources_cache": {},
+        }
+
+        with (
+            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
+            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
+        ):
+            _process_finding_micro_batch(
+                str(tenant.id),
+                [finding],
+                scan,
+                provider,
+                caches["resource_cache"],
+                caches["tag_cache"],
+                caches["last_status_cache"],
+                caches["resource_failed_findings_cache"],
+                caches["unique_resources"],
+                caches["scan_resource_cache"],
+                caches["mute_rules_cache"],
+                caches["scan_categories_cache"],
+                caches["scan_resource_groups_cache"],
+                caches["group_resources_cache"],
+            )
+
+        return caches
+
     def test_process_finding_micro_batch_fallback_creates_resource_after_cache_miss(
         self, tenants_fixture, scans_fixture
     ):
@@ -1553,37 +1604,13 @@ class TestProcessFindingMicroBatch:
             muted=False,
         )
 
-        resource_cache = CacheMissAfterPreResolve(resource_uid)
-        tag_cache = {}
-        last_status_cache = {}
-        resource_failed_findings_cache = {}
-        unique_resources: set[tuple[str, str]] = set()
-        scan_resource_cache: set[tuple[str, str, str, str]] = set()
-        mute_rules_cache = {}
-        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
-        group_resources_cache: dict[str, set] = {}
-
-        with (
-            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
-            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
-        ):
-            _process_finding_micro_batch(
-                str(tenant.id),
-                [finding],
-                scan,
-                provider,
-                resource_cache,
-                tag_cache,
-                last_status_cache,
-                resource_failed_findings_cache,
-                unique_resources,
-                scan_resource_cache,
-                mute_rules_cache,
-                scan_categories_cache,
-                scan_resource_groups_cache,
-                group_resources_cache,
-            )
+        caches = self._process_one_finding_micro_batch(
+            tenant,
+            scan,
+            provider,
+            finding,
+            resource_cache=CacheMissAfterPreResolve(resource_uid),
+        )
 
         resource = Resource.objects.get(uid=resource_uid)
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1596,8 +1623,8 @@ class TestProcessFindingMicroBatch:
         assert resource.name == finding.resource_name
         assert resource.groups == ["identity"]
         assert resource.findings.filter(uid=finding.uid).exists()
-        assert resource_cache[resource_uid].id == resource.id
-        assert resource_failed_findings_cache[resource_uid] == 1
+        assert caches["resource_cache"][resource_uid].id == resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
 
     def test_process_finding_micro_batch_fallback_recovers_existing_resource_after_cache_miss(
         self, tenants_fixture, scans_fixture
@@ -1637,37 +1664,13 @@ class TestProcessFindingMicroBatch:
             muted=False,
         )
 
-        resource_cache = CacheMissAfterPreResolve(resource_uid)
-        tag_cache = {}
-        last_status_cache = {}
-        resource_failed_findings_cache = {}
-        unique_resources: set[tuple[str, str]] = set()
-        scan_resource_cache: set[tuple[str, str, str, str]] = set()
-        mute_rules_cache = {}
-        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
-        group_resources_cache: dict[str, set] = {}
-
-        with (
-            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
-            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
-        ):
-            _process_finding_micro_batch(
-                str(tenant.id),
-                [finding],
-                scan,
-                provider,
-                resource_cache,
-                tag_cache,
-                last_status_cache,
-                resource_failed_findings_cache,
-                unique_resources,
-                scan_resource_cache,
-                mute_rules_cache,
-                scan_categories_cache,
-                scan_resource_groups_cache,
-                group_resources_cache,
-            )
+        caches = self._process_one_finding_micro_batch(
+            tenant,
+            scan,
+            provider,
+            finding,
+            resource_cache=CacheMissAfterPreResolve(resource_uid),
+        )
 
         assert Resource.objects.filter(uid=resource_uid).count() == 1
         created_finding = Finding.objects.get(uid=finding.uid)
@@ -1675,8 +1678,8 @@ class TestProcessFindingMicroBatch:
 
         assert created_finding.scan_id == scan.id
         assert existing_resource.findings.filter(uid=finding.uid).exists()
-        assert resource_cache[resource_uid].id == existing_resource.id
-        assert resource_failed_findings_cache[resource_uid] == 1
+        assert caches["resource_cache"][resource_uid].id == existing_resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
 
     def test_process_finding_micro_batch_fallback_recovers_after_create_race(
         self, tenants_fixture, scans_fixture
@@ -1716,22 +1719,10 @@ class TestProcessFindingMicroBatch:
             muted=False,
         )
 
-        resource_cache = CacheMissAfterPreResolve(resource_uid)
-        tag_cache = {}
-        last_status_cache = {}
-        resource_failed_findings_cache = {}
-        unique_resources: set[tuple[str, str]] = set()
-        scan_resource_cache: set[tuple[str, str, str, str]] = set()
-        mute_rules_cache = {}
-        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
-        group_resources_cache: dict[str, set] = {}
         resource_filter_result = MagicMock()
         resource_filter_result.first.side_effect = [None, raced_resource]
 
         with (
-            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
-            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
             patch.object(
                 Resource.objects,
                 "filter",
@@ -1743,21 +1734,12 @@ class TestProcessFindingMicroBatch:
                 side_effect=IntegrityError("duplicate resource"),
             ),
         ):
-            _process_finding_micro_batch(
-                str(tenant.id),
-                [finding],
+            caches = self._process_one_finding_micro_batch(
+                tenant,
                 scan,
                 provider,
-                resource_cache,
-                tag_cache,
-                last_status_cache,
-                resource_failed_findings_cache,
-                unique_resources,
-                scan_resource_cache,
-                mute_rules_cache,
-                scan_categories_cache,
-                scan_resource_groups_cache,
-                group_resources_cache,
+                finding,
+                resource_cache=CacheMissAfterPreResolve(resource_uid),
             )
 
         assert Resource.objects.filter(uid=resource_uid).count() == 1
@@ -1766,8 +1748,8 @@ class TestProcessFindingMicroBatch:
 
         assert created_finding.scan_id == scan.id
         assert raced_resource.findings.filter(uid=finding.uid).exists()
-        assert resource_cache[resource_uid].id == raced_resource.id
-        assert resource_failed_findings_cache[resource_uid] == 1
+        assert caches["resource_cache"][resource_uid].id == raced_resource.id
+        assert caches["resource_failed_findings_cache"][resource_uid] == 1
 
     def test_process_finding_micro_batch_propagates_retryable_cache_miss_db_errors(
         self, tenants_fixture, scans_fixture
@@ -1798,20 +1780,7 @@ class TestProcessFindingMicroBatch:
             muted=False,
         )
 
-        resource_cache = CacheMissAfterPreResolve(resource_uid)
-        tag_cache = {}
-        last_status_cache = {}
-        resource_failed_findings_cache = {}
-        unique_resources: set[tuple[str, str]] = set()
-        scan_resource_cache: set[tuple[str, str, str, str]] = set()
-        mute_rules_cache = {}
-        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
-        group_resources_cache: dict[str, set] = {}
-
         with (
-            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
-            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
             patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
             patch.object(
                 Resource.objects,
@@ -1820,21 +1789,12 @@ class TestProcessFindingMicroBatch:
             ),
         ):
             with pytest.raises(OperationalError, match="deadlock detected"):
-                _process_finding_micro_batch(
-                    str(tenant.id),
-                    [finding],
+                self._process_one_finding_micro_batch(
+                    tenant,
                     scan,
                     provider,
-                    resource_cache,
-                    tag_cache,
-                    last_status_cache,
-                    resource_failed_findings_cache,
-                    unique_resources,
-                    scan_resource_cache,
-                    mute_rules_cache,
-                    scan_categories_cache,
-                    scan_resource_groups_cache,
-                    group_resources_cache,
+                    finding,
+                    resource_cache=CacheMissAfterPreResolve(resource_uid),
                 )
 
         assert not Finding.objects.filter(uid=finding.uid).exists()
@@ -1868,16 +1828,6 @@ class TestProcessFindingMicroBatch:
             muted=False,
         )
 
-        resource_cache = CacheMissAfterPreResolve(resource_uid)
-        tag_cache = {}
-        last_status_cache = {}
-        resource_failed_findings_cache = {}
-        unique_resources: set[tuple[str, str]] = set()
-        scan_resource_cache: set[tuple[str, str, str, str]] = set()
-        mute_rules_cache = {}
-        scan_categories_cache: dict[tuple[str, str], dict[str, int]] = {}
-        scan_resource_groups_cache: dict[tuple[str, str], dict[str, int]] = {}
-        group_resources_cache: dict[str, set] = {}
         original_resource_filter = Resource.objects.filter
         resource_filter_result = MagicMock()
         resource_filter_result.first.side_effect = [None, None]
@@ -1888,8 +1838,6 @@ class TestProcessFindingMicroBatch:
             return original_resource_filter(*args, **kwargs)
 
         with (
-            patch("tasks.jobs.scan.rls_transaction", new=noop_rls_transaction),
-            patch("api.db_utils.rls_transaction", new=noop_rls_transaction),
             patch("tasks.jobs.scan.CELERY_DEADLOCK_ATTEMPTS", 1),
             patch.object(
                 Resource.objects,
@@ -1903,21 +1851,12 @@ class TestProcessFindingMicroBatch:
             ),
         ):
             with pytest.raises(IntegrityError, match="constraint violation"):
-                _process_finding_micro_batch(
-                    str(tenant.id),
-                    [finding],
+                self._process_one_finding_micro_batch(
+                    tenant,
                     scan,
                     provider,
-                    resource_cache,
-                    tag_cache,
-                    last_status_cache,
-                    resource_failed_findings_cache,
-                    unique_resources,
-                    scan_resource_cache,
-                    mute_rules_cache,
-                    scan_categories_cache,
-                    scan_resource_groups_cache,
-                    group_resources_cache,
+                    finding,
+                    resource_cache=CacheMissAfterPreResolve(resource_uid),
                 )
 
         assert not Finding.objects.filter(uid=finding.uid).exists()

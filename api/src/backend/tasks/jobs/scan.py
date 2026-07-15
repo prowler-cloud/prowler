@@ -606,7 +606,21 @@ def _process_finding_micro_batch(
         group_resources_cache: Dict tracking unique resources per group {resource_group: set(resource_uids)}.
     """
 
-    def recover_resource_after_cache_miss(finding: ProwlerFinding) -> Resource | None:
+    def build_resource_defaults_from_finding(finding: ProwlerFinding) -> dict[str, Any]:
+        check_metadata = finding.get_metadata()
+        group = check_metadata.get("resourcegroup") or None
+        return {
+            "tenant_id": tenant_id,
+            "provider": provider_instance,
+            "uid": finding.resource_uid,
+            "region": finding.region,
+            "service": finding.service_name,
+            "type": finding.resource_type,
+            "name": finding.resource_name,
+            "groups": [group] if group else None,
+        }
+
+    def recover_resource_after_cache_miss(finding: ProwlerFinding) -> Resource:
         resource_uid = finding.resource_uid
         resource_instance = Resource.objects.filter(
             tenant_id=tenant_id,
@@ -614,19 +628,10 @@ def _process_finding_micro_batch(
             uid=resource_uid,
         ).first()
         if resource_instance is None:
-            check_metadata = finding.get_metadata()
-            group = check_metadata.get("resourcegroup") or None
             try:
                 with transaction.atomic():
                     resource_instance = Resource.objects.create(
-                        tenant_id=tenant_id,
-                        provider=provider_instance,
-                        uid=resource_uid,
-                        region=finding.region,
-                        service=finding.service_name,
-                        type=finding.resource_type,
-                        name=finding.resource_name,
-                        groups=[group] if group else None,
+                        **build_resource_defaults_from_finding(finding)
                     )
             except IntegrityError:
                 resource_instance = Resource.objects.filter(
@@ -714,19 +719,8 @@ def _process_finding_micro_batch(
                         resources_to_create = []
                         for uid in missing_uids:
                             f = first_finding_per_uid[uid]
-                            check_metadata = f.get_metadata()
-                            group = check_metadata.get("resourcegroup") or None
                             resources_to_create.append(
-                                Resource(
-                                    tenant_id=tenant_id,
-                                    provider=provider_instance,
-                                    uid=uid,
-                                    region=f.region,
-                                    service=f.service_name,
-                                    type=f.resource_type,
-                                    name=f.resource_name,
-                                    groups=[group] if group else None,
-                                )
+                                Resource(**build_resource_defaults_from_finding(f))
                             )
                         Resource.objects.bulk_create(
                             resources_to_create,
@@ -795,8 +789,6 @@ def _process_finding_micro_batch(
                     resource_instance = resource_cache.get(resource_uid)
                     if resource_instance is None:
                         resource_instance = recover_resource_after_cache_miss(finding)
-                        if resource_instance is None:
-                            continue
 
                     # Detect resource field changes (defer save until end-of-batch bulk_update).
                     check_metadata = finding.get_metadata()
