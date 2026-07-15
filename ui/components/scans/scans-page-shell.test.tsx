@@ -234,7 +234,7 @@ describe("ScansPageShell", () => {
     );
     expect(screen.getByRole("link", { name: /learn more/i })).toHaveAttribute(
       "href",
-      "/scans/import",
+      "https://docs.prowler.com/user-guide/tutorials/prowler-app-import-findings",
     );
   });
 

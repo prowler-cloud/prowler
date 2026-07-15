@@ -201,14 +201,16 @@ export const getMenuList = ({
               active: pathname.startsWith("/scans/config"),
               feature: CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION,
             }),
-            getCloudFeatureSubmenu({
-              isCloudEnvironment: isCloudEnv,
-              href: "/scans/import",
-              label: "CLI Import",
-              icon: Upload,
-              active: pathname.startsWith("/scans/import"),
-              feature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
-            }),
+            ...(!isCloudEnv
+              ? [
+                  {
+                    kind: SUBMENU_KIND.CLOUD_UPGRADE,
+                    label: "CLI Import",
+                    icon: Upload,
+                    cloudUpgradeFeature: CLOUD_UPGRADE_FEATURE.CLI_IMPORT,
+                  },
+                ]
+              : []),
             { href: "/integrations", label: "Integrations", icon: Puzzle },
             { href: "/lighthouse/settings", label: "Lighthouse AI", icon: Cog },
           ],

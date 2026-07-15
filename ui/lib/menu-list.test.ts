@@ -138,6 +138,17 @@ describe("getMenuList", () => {
     expect(cliImport).not.toHaveProperty("href");
   });
 
+  it("should omit CLI Import from the Cloud menu", () => {
+    // Given
+    process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";
+
+    // When
+    const cliImport = findSubmenu("CLI Import");
+
+    // Then
+    expect(cliImport).toBeUndefined();
+  });
+
   it("should show Scan as new under Configuration when Cloud is enabled", () => {
     // Given
     process.env.NEXT_PUBLIC_IS_CLOUD_ENV = "true";

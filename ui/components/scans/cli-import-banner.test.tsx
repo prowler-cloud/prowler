@@ -2,6 +2,8 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { DOCS_URLS } from "@/lib/external-urls";
+
 import { CliImportBanner } from "./cli-import-banner";
 
 const STORAGE_KEY = "prowler:cli-import-banner-dismissed";
@@ -46,14 +48,14 @@ describe("CliImportBanner", () => {
     ).toBeInTheDocument();
   });
 
-  it("links to the internal CLI Import guide", () => {
+  it("renders a link to the documentation", () => {
     render(<CliImportBanner />);
 
     const link = screen.getByRole("link", { name: "Learn more" });
 
-    expect(link).toHaveAttribute("href", "/scans/import");
-    expect(link).not.toHaveAttribute("target");
-    expect(link).not.toHaveAttribute("rel");
+    expect(link).toHaveAttribute("href", DOCS_URLS.FINDINGS_INGESTION);
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
 
   it("does not render when previously dismissed", () => {
