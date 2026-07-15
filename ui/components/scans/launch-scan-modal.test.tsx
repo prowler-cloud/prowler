@@ -548,15 +548,26 @@ describe("LaunchScanModal", () => {
       expect(getScheduleMock).not.toHaveBeenCalled();
     });
 
-    it("locks schedule mode outside ADVANCED (OSS default)", () => {
+    it("preserves legacy daily scheduling outside Cloud", async () => {
+      const user = userEvent.setup();
+      scheduleDailyMock.mockResolvedValue({ data: { id: provider.id } });
       render(
         <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
       );
 
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
-      ).toBeDisabled();
+      ).toBeEnabled();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      expect(screen.getByRole("combobox", { name: "Repeats" })).toBeDisabled();
+
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
       expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
 
     it("hides schedule mode but allows manual scans in MANUAL_ONLY", async () => {

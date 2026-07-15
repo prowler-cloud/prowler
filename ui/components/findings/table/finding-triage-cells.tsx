@@ -3,6 +3,7 @@
 import { MessageSquareText } from "lucide-react";
 import { useState } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import { ActionDropdownItem } from "@/components/shadcn/dropdown";
 import {
   Tooltip,
@@ -10,6 +11,8 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_NOTE_MAX_LENGTH,
@@ -79,6 +82,9 @@ export function FindingTriageStatusCell({
   triage?: FindingTriageSummary;
   onTriageUpdateAction?: FindingTriageUpdateHandler;
 }) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const [optimisticStatus, setOptimisticStatus] = useState<{
     token: string;
     findingId: string;
@@ -164,6 +170,31 @@ export function FindingTriageStatusCell({
   });
   if (!disabledCopy) {
     return control;
+  }
+
+  if (triage.disabledReason === FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="relative flex">
+            {control}
+            <Button
+              type="button"
+              variant="bare"
+              size="link-xs"
+              aria-label="Change triage status - available in Prowler Cloud"
+              className="absolute inset-0 h-auto w-auto rounded-lg"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE);
+              }}
+            />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{disabledCopy}</TooltipContent>
+      </Tooltip>
+    );
   }
 
   return (

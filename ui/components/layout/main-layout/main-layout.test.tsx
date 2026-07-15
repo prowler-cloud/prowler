@@ -18,20 +18,19 @@ vi.mock("../sidebar/sidebar", () => ({
   Sidebar: () => <aside data-testid="sidebar" />,
 }));
 
+vi.mock("@/components/shared/cloud-upgrade-modal", () => ({
+  CloudUpgradeModal: () => <div data-testid="cloud-upgrade-modal" />,
+}));
+
 describe("MainLayout", () => {
-  it("renders subdued background glows for side-nav contrast", () => {
+  it("mounts the shared Cloud upgrade modal with page content", () => {
     render(
       <MainLayout>
         <div>Page content</div>
       </MainLayout>,
     );
 
-    const topGlow =
-      screen.getByTestId("sidebar").previousElementSibling
-        ?.previousElementSibling;
-    const bottomGlow = screen.getByTestId("sidebar").previousElementSibling;
-
-    expect(topGlow).toHaveClass("h-[120%]", "w-[160%]", "opacity-[7%]");
-    expect(bottomGlow).toHaveClass("h-[50%]", "w-[50%]", "opacity-[7%]");
+    expect(screen.getByTestId("cloud-upgrade-modal")).toBeInTheDocument();
+    expect(screen.getByText("Page content")).toBeVisible();
   });
 });
