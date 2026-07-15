@@ -14,7 +14,9 @@ from dash import html
 CLOUD_SUBTITLE = "Discover more ways to protect and operate your cloud."
 
 # Base Prowler Cloud URL; the UTM content value identifies the feature.
-CLOUD_CTA_BASE = "https://cloud.prowler.com/?utm_source=local-dashboard&utm_content="
+CLOUD_CTA_BASE = (
+    "https://cloud.prowler.com/?utm_source=prowler-local-dashboard&utm_content="
+)
 
 # Path to the recolorable checkmark mask used for benefit bullets.
 CHECK_ICON = "/assets/images/icons/cloud/check.svg"
