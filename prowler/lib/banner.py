@@ -2,6 +2,21 @@ from colorama import Fore, Style
 
 from prowler.config.config import banner_color, orange_color, prowler_version, timestamp
 
+# Prowler Cloud landing URL used by the CLI banner. The visible text stays
+# "cloud.prowler.com" while the clickable target carries the UTM source so
+# terminals that support OSC 8 hyperlinks attribute the visit to the CLI.
+CLOUD_DISPLAY_TEXT = "cloud.prowler.com"
+CLOUD_BANNER_URL = "https://cloud.prowler.com/?utm_source=prowler-cli"
+
+
+def _hyperlink(url: str, text: str) -> str:
+    """Wrap ``text`` in an OSC 8 terminal hyperlink pointing to ``url``.
+
+    Terminals that support OSC 8 render ``text`` as a clickable link to ``url``;
+    those that do not simply display ``text`` unchanged.
+    """
+    return f"\033]8;;{url}\033\\{text}\033]8;;\033\\"
+
 
 def print_banner(legend: bool = False, provider: str = None):
     """
@@ -69,5 +84,5 @@ def print_prowler_cloud_banner(provider: str = None):
 {bar} {check} {Style.BRIGHT}Bulk Provisioning{Style.RESET_ALL} - add your entire AWS Organization in seconds.
 {bar} {check} {Style.BRIGHT}Integrations{Style.RESET_ALL} - Anything with our MCP + Jira, Slack, AWS Security Hub, Amazon S3, SSO and RBAC.
 {bar}
-{bar} {banner_color}Start free at 👉 cloud.prowler.com{Style.RESET_ALL}
+{bar} {banner_color}Start free at 👉 {_hyperlink(CLOUD_BANNER_URL, CLOUD_DISPLAY_TEXT)}{Style.RESET_ALL}
 """)
