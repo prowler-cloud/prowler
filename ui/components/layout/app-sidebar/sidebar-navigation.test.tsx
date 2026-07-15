@@ -71,6 +71,25 @@ const sections: NavigationSection[] = [
   },
 ];
 
+function setProviderActive(active: boolean): NavigationSection[] {
+  return sections.map((section) => ({
+    ...section,
+    items: section.items.map((item) =>
+      item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE
+        ? {
+            ...item,
+            children: item.children.map((child) =>
+              child.kind === NAVIGATION_ITEM_KIND.LINK &&
+              child.label === "Providers"
+                ? { ...child, active }
+                : child,
+            ),
+          }
+        : item,
+    ),
+  }));
+}
+
 describe("SidebarNavigation", () => {
   beforeEach(() => {
     openCloudUpgradeMock.mockClear();
@@ -112,6 +131,41 @@ describe("SidebarNavigation", () => {
 
     // Then
     expect(activeParent).toHaveAttribute("aria-expanded", "false");
+  });
+
+  it("expands a collapsed section when one of its destinations becomes active", async () => {
+    // Given
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <SidebarNavigation sections={setProviderActive(false)} />,
+    );
+    const configuration = screen.getByRole("button", {
+      name: "Configuration",
+    });
+    expect(configuration).toHaveAttribute("aria-expanded", "false");
+
+    // When
+    rerender(<SidebarNavigation sections={setProviderActive(true)} />);
+
+    // Then
+    const activeConfiguration = screen.getByRole("button", {
+      name: "Configuration",
+    });
+    expect(activeConfiguration).toHaveAttribute("aria-expanded", "true");
+
+    // When
+    await user.click(activeConfiguration);
+
+    // Then
+    expect(activeConfiguration).toHaveAttribute("aria-expanded", "false");
+
+    // When
+    rerender(<SidebarNavigation sections={setProviderActive(true)} />);
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Configuration" }),
+    ).toHaveAttribute("aria-expanded", "false");
   });
 
   it("marks external links and opens contextual Cloud upgrades", async () => {

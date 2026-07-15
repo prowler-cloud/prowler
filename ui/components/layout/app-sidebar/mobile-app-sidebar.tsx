@@ -51,7 +51,7 @@ export function MobileAppSidebar() {
             variant="outline"
             size="icon-sm"
             aria-label="Close menu"
-            className="fixed top-4 left-[calc(100vw-3rem)] z-[60]"
+            className="fixed top-4 right-4 z-[60]"
           >
             <X aria-hidden="true" className="size-5" />
           </Button>

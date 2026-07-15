@@ -51,6 +51,15 @@ interface NavigationChildProps {
   onSelect?: AppSidebarSelectionHandler;
 }
 
+function getCollapsibleActivationKey(item: NavigationCollapsible) {
+  const activeChild = item.children.find(
+    (child) =>
+      child.kind === NAVIGATION_ITEM_KIND.LINK && child.active === true,
+  );
+
+  return `${item.label}-${activeChild?.label ?? "inactive"}`;
+}
+
 function TopLevelLink({ item, onSelect }: NavigationLinkProps) {
   const Icon = item.icon;
   const isExternal = item.target === "_blank";
@@ -244,7 +253,11 @@ function NavigationSectionList({
         {section.items.map((item) => (
           <li key={item.label}>
             {item.kind === NAVIGATION_ITEM_KIND.COLLAPSIBLE ? (
-              <CollapsibleNavigationItem item={item} onSelect={onSelect} />
+              <CollapsibleNavigationItem
+                key={getCollapsibleActivationKey(item)}
+                item={item}
+                onSelect={onSelect}
+              />
             ) : (
               <TopLevelLink item={item} onSelect={onSelect} />
             )}
