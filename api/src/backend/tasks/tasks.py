@@ -738,7 +738,6 @@ class ScanReportRLSTask(RLSTask):
     name="scan-report",
     queue="scan-reports",
 )
-@set_tenant(keep_tenant=True)
 @handle_provider_deletion
 def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     """
@@ -750,6 +749,11 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     batch of transformed findings, and uses a flag to indicate when the final
     batch is being processed. Finally, the output files are compressed and
     uploaded to S3.
+
+    Rendering and uploading take tens of minutes, so every database access is
+    scoped to its own short `rls_transaction`. A task-wide transaction would hold
+    ACCESS SHARE on the tables it read for the whole run, and any DDL waiting on
+    one of those tables would queue every later reader behind itself.
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -769,15 +773,21 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
             error,
         )
 
-    # Check if the scan has findings
-    if not ScanSummary.objects.filter(scan_id=scan_id).exists():
-        logger.info(f"No findings found for scan {scan_id}")
-        return {"upload": False}
+    with rls_transaction(tenant_id):
+        # Check if the scan has findings
+        if not ScanSummary.objects.filter(scan_id=scan_id).exists():
+            logger.info(f"No findings found for scan {scan_id}")
+            return {"upload": False}
 
-    provider_obj = Provider.objects.get(id=provider_id)
+        # `secret` is selected eagerly because initialize_prowler_provider reads it
+        # but runs outside this transaction, where RLS would resolve it to nothing.
+        provider_obj = Provider.objects.select_related("secret").get(id=provider_id)
+        provider_uid = provider_obj.uid
+        provider_type = provider_obj.provider
+
+    # Kept outside the transaction: provider initialization authenticates against
+    # the cloud provider, and that network call must not hold the providers lock.
     prowler_provider = initialize_prowler_provider(provider_obj)
-    provider_uid = provider_obj.uid
-    provider_type = provider_obj.provider
 
     # Per-framework exporters in `COMPLIANCE_CLASS_MAP` consume the legacy bulk.
     frameworks_bulk = Compliance.get_bulk(provider_type)
@@ -818,19 +828,22 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     universal_base_dir = os.path.dirname(out_dir)
     universal_output_filename = os.path.basename(out_dir)
 
-    scan_summary = FindingOutput._transform_findings_stats(
-        ScanSummary.objects.filter(scan_id=scan_id)
-    )
-
-    # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
-    generate_asff = False
-    if provider_type == "aws":
-        security_hub_integrations = Integration.objects.filter(
-            integrationproviderrelationship__provider_id=provider_id,
-            integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
-            enabled=True,
+    with rls_transaction(tenant_id):
+        # `_transform_findings_stats` walks the queryset and follows its `scan`
+        # relation, so it has to run with the tenant context live.
+        scan_summary = FindingOutput._transform_findings_stats(
+            ScanSummary.objects.filter(scan_id=scan_id)
         )
-        generate_asff = security_hub_integrations.exists()
+
+        # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
+        generate_asff = False
+        if provider_type == "aws":
+            security_hub_integrations = Integration.objects.filter(
+                integrationproviderrelationship__provider_id=provider_id,
+                integration_type=Integration.IntegrationChoices.AWS_SECURITY_HUB,
+                enabled=True,
+            )
+            generate_asff = security_hub_integrations.exists()
 
     qs = (
         Finding.all_objects.filter(tenant_id=tenant_id, scan_id=scan_id)
@@ -943,10 +956,15 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
 
     # S3 integrations (need output_directory)
     with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-        s3_integrations = Integration.objects.filter(
-            integrationproviderrelationship__provider_id=provider_id,
-            integration_type=Integration.IntegrationChoices.AMAZON_S3,
-            enabled=True,
+        # Materialized inside the transaction: a lazy queryset would run its query
+        # on the next access, once the tenant context is gone and RLS filters
+        # everything out.
+        s3_integrations = list(
+            Integration.objects.filter(
+                integrationproviderrelationship__provider_id=provider_id,
+                integration_type=Integration.IntegrationChoices.AMAZON_S3,
+                enabled=True,
+            )
         )
 
     if s3_integrations:
@@ -977,7 +995,8 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     else:
         final_location, did_upload = compressed, False
 
-    Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
+    with rls_transaction(tenant_id):
+        Scan.all_objects.filter(id=scan_id).update(output_location=final_location)
     logger.info(f"Scan outputs at {final_location}")
 
     return {
