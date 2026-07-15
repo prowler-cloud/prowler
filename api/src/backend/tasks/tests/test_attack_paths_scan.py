@@ -2928,14 +2928,15 @@ class TestAttackPathsDbUtilsActivity:
         new=lambda *args, **kwargs: nullcontext(),
     )
     def test_starting_scan_refreshes_updated_at(
-        self, tenants_fixture, aws_provider, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import starting_attack_paths_scan
 
+        provider = providers_fixture[0]
         old_updated_at = datetime.now(tz=UTC) - timedelta(hours=1)
         attack_paths_scan = AttackPathsScan.objects.create(
             tenant_id=tenants_fixture[0].id,
-            provider=aws_provider,
+            provider=provider,
             scan=scans_fixture[0],
             state=StateChoices.SCHEDULED,
         )
@@ -2958,14 +2959,15 @@ class TestAttackPathsDbUtilsActivity:
         new=lambda *args, **kwargs: nullcontext(),
     )
     def test_progress_update_refreshes_updated_at(
-        self, tenants_fixture, aws_provider, scans_fixture
+        self, tenants_fixture, providers_fixture, scans_fixture
     ):
         from tasks.jobs.attack_paths.db_utils import update_attack_paths_scan_progress
 
+        provider = providers_fixture[0]
         old_updated_at = datetime.now(tz=UTC) - timedelta(hours=1)
         attack_paths_scan = AttackPathsScan.objects.create(
             tenant_id=tenants_fixture[0].id,
-            provider=aws_provider,
+            provider=provider,
             scan=scans_fixture[0],
             state=StateChoices.EXECUTING,
         )
@@ -3041,13 +3043,14 @@ class TestCleanupStaleAttackPathsScans:
         self,
         mock_revoke,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import _finalize_failed_scan
 
+        provider = providers_fixture[0]
         ap_scan, task_result = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             worker="unresponsive-worker@host",
         )
 
@@ -3233,14 +3236,15 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=datetime.now(tz=UTC) - timedelta(minutes=29),
             worker="unresponsive-worker@host",
         )
@@ -3268,14 +3272,15 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         ap_scan, _ = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=datetime.now(tz=UTC) - timedelta(hours=1),
             worker="unknown-worker@host",
         )
@@ -3311,15 +3316,16 @@ class TestCleanupStaleAttackPathsScans:
         inactive_seconds,
         should_clean,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         now = datetime.now(tz=UTC)
         ap_scan, task_result = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=now - timedelta(seconds=inactive_seconds),
             worker="unresponsive-worker@host",
         )
@@ -3458,14 +3464,15 @@ class TestCleanupStaleAttackPathsScans:
         mock_revoke,
         mock_drop_db,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=datetime.now(tz=UTC) - timedelta(minutes=31),
             worker="unresponsive-worker@host",
         )
@@ -3632,20 +3639,21 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         responsive_scan, _ = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             worker="responsive-worker@host",
         )
         AttackPathsScan.objects.filter(id=responsive_scan.id).update(started_at=None)
         no_worker_scan = AttackPathsScan.objects.create(
             tenant_id=tenants_fixture[0].id,
-            provider=aws_provider,
+            provider=provider,
             state=StateChoices.EXECUTING,
             started_at=None,
         )
@@ -3721,14 +3729,15 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         ap_scan, _ = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=datetime.now(tz=UTC) - timedelta(minutes=31),
             worker="unresponsive-worker@host",
         )
@@ -3765,14 +3774,15 @@ class TestCleanupStaleAttackPathsScans:
         mock_drop_db,
         mock_recover,
         tenants_fixture,
-        aws_provider,
+        providers_fixture,
         scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
+        provider = providers_fixture[0]
         ap_scan, _ = self._create_executing_scan(
             tenants_fixture[0],
-            aws_provider,
+            provider,
             updated_at=datetime.now(tz=UTC) - timedelta(minutes=31),
             worker="unresponsive-worker@host",
         )
