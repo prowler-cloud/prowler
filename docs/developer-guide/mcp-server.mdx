@@ -20,8 +20,8 @@ The server follows a modular architecture with three independent sub-servers:
 
 | Sub-Server | Auth Required | Description |
 |------------|---------------|-------------|
-| Prowler App | Yes | Full access to Prowler Cloud and Self-Managed features |
-| Prowler Hub | No | Security checks catalog with **over 1000 checks**, fixers, and **70+ compliance frameworks** |
+| `prowler_app` | Yes | Full access to Prowler Cloud and Prowler Local Server features |
+| Prowler Hub | No | Security checks catalog with **over 2,000 checks**, fixers, and **70+ compliance frameworks** |
 | Prowler Documentation | No | Full-text search and retrieval of official documentation |
 
 <Note>
@@ -53,9 +53,9 @@ mcp_server/prowler_mcp_server/
 The MCP Server uses two patterns for tool registration:
 
 1. **Direct Decorators** (Prowler Hub/Docs): Tools are registered using `@mcp.tool()` decorators
-2. **Auto-Discovery** (Prowler App): All public methods of `BaseTool` subclasses are auto-registered
+2. **Auto-Discovery** (`prowler_app`): All public methods of `BaseTool` subclasses are auto-registered
 
-## Adding Tools to Prowler App
+## Adding Tools to the `prowler_app` Sub-Server
 
 ### Step 1: Create the Tool Class
 

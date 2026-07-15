@@ -4,8 +4,11 @@ description: "Identify privilege escalation chains and security misconfiguration
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx";
+import { AppliesTo } from "/snippets/applies-to.mdx";
 
 <VersionBadge version="5.17.0" />
+
+<AppliesTo />
 
 Attack Paths analyzes relationships between cloud resources, permissions, and security findings to detect how privileges can be escalated and how misconfigurations can be exploited by threat actors.
 
@@ -20,7 +23,7 @@ By mapping these relationships as a graph, Attack Paths reveals risks that indiv
 
 The following prerequisites are required for Attack Paths:
 
-- **An AWS provider is configured** with valid credentials in Prowler App. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
+- **An AWS provider is configured** with valid credentials in Prowler Cloud. For setup instructions, see [Getting Started with AWS](/user-guide/providers/aws/getting-started-aws).
 - **At least one scan has completed** on the configured AWS provider and produced graph data. Attack Paths scans run automatically alongside regular security scans, no separate configuration is required.
 
 ## How Attack Paths Scans Work
