@@ -24,6 +24,17 @@ CVE-2026-8376 pkg:perl-base exp:2026-08-15
 CVE-2026-8376 pkg:perl-modules-5.36 exp:2026-08-15
 CVE-2026-8376 pkg:libperl5.36 exp:2026-08-15
 
+# CVE-2026-13221 - Perl regex trie overflow.
+# Packages: perl, perl-base, perl-modules-5.36, libperl5.36.
+# Why ignored: upstream confirms Perl 5.36.0 is not affected; the regression
+# was introduced after this version. Debian currently marks bookworm as
+# vulnerable, which causes Trivy to report a false positive.
+# Ref: https://github.com/Perl/perl5/issues/23388
+CVE-2026-13221 pkg:perl exp:2026-08-15
+CVE-2026-13221 pkg:perl-base exp:2026-08-15
+CVE-2026-13221 pkg:perl-modules-5.36 exp:2026-08-15
+CVE-2026-13221 pkg:libperl5.36 exp:2026-08-15
+
 # CVE-2025-7458 — SQLite integer overflow.
 # Package: libsqlite3-0.
 # Why ignored: transitive dependency of CPython's stdlib sqlite3 module. The
