@@ -6,7 +6,7 @@ from prowler.config.config import banner_color, orange_color, prowler_version, t
 # "cloud.prowler.com" while the clickable target carries the UTM source so
 # terminals that support OSC 8 hyperlinks attribute the visit to the CLI.
 CLOUD_DISPLAY_TEXT = "cloud.prowler.com"
-CLOUD_BANNER_URL = "https://cloud.prowler.com/?utm_source=prowler-cli"
+CLOUD_BANNER_URL = "https://cloud.prowler.com/sign-up?utm_source=prowler-cli"
 
 
 def _hyperlink(url: str, text: str) -> str:
