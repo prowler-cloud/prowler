@@ -4,15 +4,22 @@ import { ExternalLink, Info } from "lucide-react";
 import { type FormEvent, useRef, useState } from "react";
 
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
-import { Alert, AlertDescription, Button, Textarea } from "@/components/shadcn";
+import {
+  Alert,
+  AlertDescription,
+  Badge,
+  Button,
+  Textarea,
+} from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import { DOCS_URLS } from "@/lib/external-urls";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_ORIGIN,
@@ -57,6 +64,9 @@ export function FindingNoteModal({
   findingContext,
   onTriageUpdateAction,
 }: FindingNoteModalProps) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   // Local state needed: modal edits are buffered until the user chooses Update.
   const [selectedStatus, setSelectedStatus] = useState<FindingTriageStatus>(
     triage.status,
@@ -248,14 +258,22 @@ export function FindingNoteModal({
           </Button>
           <span className="relative inline-flex">
             {isCloudOnly && (
-              <span className="absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
-                <CloudFeatureBadgeLink href={triage.billingHref} />
+              <span className="pointer-events-none absolute top-0 right-0 z-10 translate-x-1/3 -translate-y-1/2">
+                <Badge variant="cloud">Cloud</Badge>
               </span>
             )}
             <Button
               type={canSubmit ? "submit" : "button"}
               size="lg"
-              disabled={!canSubmit}
+              aria-label={
+                isCloudOnly ? "Save - available in Prowler Cloud" : undefined
+              }
+              disabled={!canSubmit && !isCloudOnly}
+              onClick={
+                isCloudOnly
+                  ? () => openCloudUpgrade(CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE)
+                  : undefined
+              }
             >
               {isSubmitting
                 ? "Saving..."

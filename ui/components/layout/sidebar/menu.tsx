@@ -1,5 +1,6 @@
 "use client";
 
+import { Cloud } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,9 +22,11 @@ import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { SIDEBAR_NAVIGATION_MODE, useSidebar } from "@/hooks/use-sidebar";
 import { getMenuList } from "@/lib/menu-list";
 import { LAUNCH_SCAN_HREF } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
-import { useScansStore } from "@/store";
-import { GroupProps } from "@/types";
+import { useCloudUpgradeStore, useScansStore } from "@/store";
+import { GroupProps, type MenuSelectionHandler } from "@/types";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import { RolePermissionAttributes } from "@/types/users";
 
 interface MenuHideRule {
@@ -58,7 +61,12 @@ const filterMenus = (menuGroups: GroupProps[], labelsToHide: string[]) => {
     .filter((group) => group.menus.length > 0);
 };
 
-export const Menu = ({ isOpen }: { isOpen: boolean }) => {
+interface SidebarMenuProps {
+  isOpen: boolean;
+  onSelect?: MenuSelectionHandler;
+}
+
+export const Menu = ({ isOpen, onSelect }: SidebarMenuProps) => {
   const pathname = usePathname();
   const { permissions } = useAuth();
   const openLaunchScanModal = useScansStore(
@@ -66,7 +74,10 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
   );
   const isScansPage = pathname.startsWith("/scans");
   const { apiDocsUrl } = useRuntimeConfig();
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   const navigationMode = useSidebar((state) => state.navigationMode);
   const setNavigationMode = useSidebar((state) => state.setNavigationMode);
 
@@ -95,7 +106,10 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 className={cn(isOpen ? "h-14 w-full p-1" : "w-14")}
                 variant="default"
                 size="default"
-                onClick={openLaunchScanModal}
+                onClick={() => {
+                  openLaunchScanModal();
+                  onSelect?.();
+                }}
               >
                 <LaunchScanButtonContent isOpen={isOpen} />
               </Button>
@@ -106,7 +120,11 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                 variant="default"
                 size="default"
               >
-                <Link href={LAUNCH_SCAN_HREF} aria-label="Launch Scan">
+                <Link
+                  href={LAUNCH_SCAN_HREF}
+                  aria-label="Launch Scan"
+                  onClick={onSelect}
+                >
                   <LaunchScanButtonContent isOpen={isOpen} />
                 </Link>
               </Button>
@@ -121,6 +139,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         value={navigationMode}
         onChange={setNavigationMode}
         chatEnabled={isCloudEnv}
+        onSelect={onSelect}
       />
 
       {/* Menu Items */}
@@ -142,6 +161,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                             submenus={menu.submenus}
                             defaultOpen={menu.defaultOpen}
                             isOpen={isOpen}
+                            onSelect={onSelect}
                           />
                         ) : (
                           <MenuItem
@@ -153,6 +173,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                             tooltip={menu.tooltip}
                             isOpen={isOpen}
                             highlight={menu.highlight}
+                            onSelect={onSelect}
                           />
                         )}
                       </div>
@@ -165,12 +186,41 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
         )}
       </div>
 
+      {!isCloudEnv && (
+        <div className="shrink-0 px-2 pt-4 pb-3">
+          <Tooltip delayDuration={100}>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="default"
+                aria-label="Explore Prowler Cloud"
+                className={cn("w-full", isOpen ? "justify-center" : "px-0")}
+                onClick={() => {
+                  openCloudUpgrade(
+                    CLOUD_UPGRADE_FEATURE.GENERAL,
+                    onSelect?.() ?? undefined,
+                  );
+                }}
+              >
+                <Cloud aria-hidden="true" className="size-4" />
+                {isOpen && <span>Explore Prowler Cloud</span>}
+              </Button>
+            </TooltipTrigger>
+            {!isOpen && (
+              <TooltipContent side="right">
+                Explore Prowler Cloud
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </div>
+      )}
+
       {/* Footer */}
       <div className="text-muted-foreground border-border-neutral-secondary flex shrink-0 items-center justify-center gap-2 border-t pt-4 pb-2 text-center text-xs">
         {isOpen ? (
           <>
             <span>{process.env.NEXT_PUBLIC_PROWLER_RELEASE_VERSION}</span>
-            {process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+            {isCloudEnv && (
               <>
                 <Separator orientation="vertical" />
                 <Link
@@ -178,6 +228,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1"
+                  onClick={onSelect}
                 >
                   <InfoIcon size={16} />
                   <span className="text-muted-foreground font-normal opacity-80 transition-opacity hover:font-bold hover:opacity-100">
@@ -188,7 +239,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
             )}
           </>
         ) : (
-          process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true" && (
+          isCloudEnv && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Link
@@ -196,6 +247,7 @@ export const Menu = ({ isOpen }: { isOpen: boolean }) => {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center"
+                  onClick={onSelect}
                 >
                   <InfoIcon size={16} />
                 </Link>

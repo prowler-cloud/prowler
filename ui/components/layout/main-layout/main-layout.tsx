@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
+import { CloudUpgradeModal } from "@/components/shared/cloud-upgrade-modal";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useStore } from "@/hooks/use-store";
@@ -61,6 +62,7 @@ export default function MainLayout({
       />
 
       <Sidebar />
+      <CloudUpgradeModal />
       <main
         // @container: <main> is the reference for the app's (container-query)
         // breakpoints, so pushing it with the side panel re-evaluates them.
