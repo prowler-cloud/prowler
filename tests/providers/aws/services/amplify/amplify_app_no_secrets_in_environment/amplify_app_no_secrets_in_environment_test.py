@@ -1,5 +1,6 @@
 from unittest import mock
 
+from prowler.lib.utils.utils import SecretsScanError
 from prowler.providers.aws.services.amplify.amplify_service import App, Branch
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -107,8 +108,6 @@ class Test_amplify_app_no_secrets_in_environment:
         assert "app buildSpec line 6" in result[0].status_extended
 
     def test_app_scan_error_marks_manual(self):
-        from prowler.lib.utils.utils import SecretsScanError
-
         app = _build_app(
             environment_variables={"key1": "val1"},
             build_spec="version: 1",
@@ -118,11 +117,10 @@ class Test_amplify_app_no_secrets_in_environment:
         amplify_client.apps = {app.arn: app}
         amplify_client.audit_config = {"secrets_ignore_patterns": []}
 
-        with mock.patch(
-            "prowler.providers.aws.services.amplify.amplify_app_no_secrets_in_environment.amplify_app_no_secrets_in_environment.detect_secrets_scan_batch",
+        result = _execute_check_with_mocked_scan(
+            amplify_client,
             side_effect=SecretsScanError("Scanner failure"),
-        ):
-            result = _execute_check(amplify_client)
+        )
 
         assert len(result) == 1
         assert result[0].status == "MANUAL"
@@ -168,3 +166,29 @@ def _execute_check(amplify_client):
 
         check = amplify_app_no_secrets_in_environment()
         return check.execute()
+
+
+def _execute_check_with_mocked_scan(
+    amplify_client, return_value=None, side_effect=None
+):
+    aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+    with (
+        mock.patch(
+            "prowler.providers.common.provider.Provider.get_global_provider",
+            return_value=aws_provider,
+        ),
+        mock.patch(
+            "prowler.providers.aws.services.amplify.amplify_app_no_secrets_in_environment.amplify_app_no_secrets_in_environment.amplify_client",
+            amplify_client,
+        ),
+    ):
+        import prowler.providers.aws.services.amplify.amplify_app_no_secrets_in_environment.amplify_app_no_secrets_in_environment as check_module
+
+        with mock.patch.object(
+            check_module,
+            "detect_secrets_scan_batch",
+            return_value=return_value,
+            side_effect=side_effect,
+        ):
+            check = check_module.amplify_app_no_secrets_in_environment()
+            return check.execute()

@@ -82,7 +82,9 @@ class Amplify(AWSService):
                         Branch(
                             name=branch_name,
                             arn=branch_arn,
-                            environment_variables=branch.get("environmentVariables", {}),
+                            environment_variables=branch.get(
+                                "environmentVariables", {}
+                            ),
                         )
                     )
         except ClientError as error:
