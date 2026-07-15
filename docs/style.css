@@ -71,7 +71,7 @@
    Rendered as a trailing ::after glyph so sidebar labels stay left-aligned.
    Nested groups render as li[data-title] with a button toggle; top-level groups
    render as h3 headings. Every ungated group that shares a name with a gated one
-   (Providers, Compliance, Prowler Cloud, Prowler Lighthouse AI) is top-level,
+   (Providers, Prowler Cloud, Prowler Lighthouse AI) is top-level,
    so plain li[data-title] selectors match only the gated nested groups, folded
    or unfolded. The Security tab group is top-level (h3) and always expanded,
    so it is selected through its sibling list content with :has().
@@ -82,7 +82,6 @@
 li[data-title="Prowler Cloud"] > button span:first-child::after,
 li[data-title="Prowler Lighthouse AI"] > button span:first-child::after,
 li[data-title="Providers"] > button span:first-child::after,
-li[data-title="Compliance"] > button span:first-child::after,
 li[data-title="Scans"] > button span:first-child::after,
 li[data-title="Prowler MCP"] > button span:first-child::after,
 div:has(+ ul a[href="/security/encryption"]) h3 span::after,
