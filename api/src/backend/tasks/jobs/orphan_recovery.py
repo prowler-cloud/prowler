@@ -172,11 +172,9 @@ def reconcile_orphans(
     window_hours: int = 6,
     dry_run: bool = False,
 ) -> dict:
-    """Run the full orphan sweep under a single-flight advisory lock.
+    """Run the orphan task sweep under a single-flight advisory lock.
 
-    Recovers any orphaned in-flight task and delegates attack-paths scans that
-    never reached a worker to their existing stale-cleanup. Returns a summary;
-    a no-op (lock not won) is reported too.
+    Returns a recovery summary. A no-op is reported when the lock is not acquired.
     """
     with advisory_lock() as acquired:
         if not acquired:
@@ -199,11 +197,6 @@ def reconcile_orphans(
         else:
             logger.info("Orphan task recovery disabled by feature flag")
             result = {"recovered": [], "failed": [], "skipped": [], "enabled": False}
-
-        if not dry_run:
-            from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
-
-            result["attack_paths"] = cleanup_stale_attack_paths_scans()
 
         return {"acquired": True, **result}
 
