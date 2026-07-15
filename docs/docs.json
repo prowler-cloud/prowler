@@ -139,7 +139,9 @@
               {
                 "group": "Compliance",
                 "pages": [
-                  "user-guide/compliance/tutorials/cross-provider-compliance"
+                  "user-guide/compliance/tutorials/compliance",
+                  "user-guide/compliance/tutorials/cross-provider-compliance",
+                  "user-guide/compliance/tutorials/threatscore"
                 ]
               },
               {
@@ -423,13 +425,6 @@
                   "user-guide/providers/vercel/authentication"
                 ]
               }
-            ]
-          },
-          {
-            "group": "Compliance",
-            "pages": [
-              "user-guide/compliance/tutorials/compliance",
-              "user-guide/compliance/tutorials/threatscore"
             ]
           },
           {
