@@ -1,5 +1,3 @@
-import { isCloud } from "./shared/env";
-
 export const DEPLOYMENT_MODE = {
   CLOUD: "cloud",
   ON_PREMISE: "onpremise",
@@ -67,5 +65,5 @@ export const isPostHogEnabled = (): boolean =>
   getBooleanEnv(ENTERPRISE_FEATURE_ENV.POSTHOG_ENABLED, true);
 
 export const isGroupedJiraDispatchEnabled = (): boolean =>
-  isCloud() &&
+  getDeploymentMode() === DEPLOYMENT_MODE.CLOUD &&
   getBooleanEnv(ENTERPRISE_FEATURE_ENV.GROUPED_JIRA_DISPATCH_ENABLED, false);

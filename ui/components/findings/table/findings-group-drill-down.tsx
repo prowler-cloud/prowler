@@ -251,7 +251,7 @@ export function FindingsGroupDrillDown({
             return resolveSelectedFindingIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
-          isBulkOperation
+          isBulkOperation={selectedFindingIds.length > 1}
           showSendToJira
           canSendToJira={canSendSelectedFindingsToJira}
           jiraDisabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}

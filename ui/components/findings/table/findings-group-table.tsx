@@ -101,6 +101,9 @@ export function FindingsGroupTable({
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
+  const previousRequestedExpandedCheckIdRef = useRef<string | undefined>(
+    undefined,
+  );
 
   const safeData = data ?? [];
   const hasResourceSelection = resourceSelection.length > 0;
@@ -108,7 +111,21 @@ export function FindingsGroupTable({
   const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
   useEffect(() => {
-    if (!requestedExpandedCheckId) return;
+    const previousRequestedExpandedCheckId =
+      previousRequestedExpandedCheckIdRef.current;
+    previousRequestedExpandedCheckIdRef.current = requestedExpandedCheckId;
+
+    if (!requestedExpandedCheckId) {
+      if (previousRequestedExpandedCheckId) {
+        setExpandedCheckId(null);
+        setExpandedGroup(null);
+        setResourceSearchInput("");
+        setResourceSearch("");
+        setResourceSelection([]);
+      }
+
+      return;
+    }
 
     const requestedGroup = safeData.find(
       (group) => group.checkId === requestedExpandedCheckId,
@@ -430,6 +447,9 @@ export function FindingsGroupTable({
           targetType={jiraTargetType}
           targetBatches={jiraBatches}
           defaultDispatchMode={jiraDispatchMode}
+          isFindingGroupSelection={
+            !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)
+          }
           canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
           selectedResourceCount={selectedJiraResourceCount}
           description={jiraDescription}

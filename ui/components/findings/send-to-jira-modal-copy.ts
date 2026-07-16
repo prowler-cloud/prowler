@@ -1,6 +1,7 @@
 interface JiraDispatchChoiceCopyParams {
   selectedCount: number;
   isSelectedFindingGroupFlow: boolean;
+  selectionKind?: "findings" | "resources";
 }
 
 interface JiraDispatchChoiceCopy {
@@ -13,6 +14,7 @@ interface JiraDispatchChoiceCopy {
 export const buildJiraDispatchChoiceCopy = ({
   selectedCount,
   isSelectedFindingGroupFlow,
+  selectionKind = "resources",
 }: JiraDispatchChoiceCopyParams): JiraDispatchChoiceCopy => {
   if (isSelectedFindingGroupFlow) {
     return {
@@ -21,6 +23,17 @@ export const buildJiraDispatchChoiceCopy = ({
         "Create one Jira issue for all selected Findings in this Finding Group",
       groupedHelp:
         "Recommended. The issue will include every selected Finding from this Finding Group.",
+      individualHelp:
+        "Use this when each selected Finding should be tracked independently.",
+    };
+  }
+
+  if (selectionKind === "findings") {
+    return {
+      description: `Create Jira issue(s) for ${selectedCount} selected Findings.`,
+      groupedTitle: "Create one Jira issue for all selected Findings",
+      groupedHelp:
+        "Recommended. The issue will include every selected Finding.",
       individualHelp:
         "Use this when each selected Finding should be tracked independently.",
     };

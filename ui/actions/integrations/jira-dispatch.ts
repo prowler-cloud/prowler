@@ -63,7 +63,9 @@ const buildJiraDispatchFailureMessage = (
   if (result?.error) return result.error;
 
   const createdCount = result?.created_count ?? 0;
-  return `Jira dispatch completed with ${failedCount} failed and ${createdCount} created issue${createdCount === 1 ? "" : "s"}.`;
+  const updatedCount = result?.updated_count ?? 0;
+  const successCount = createdCount + updatedCount;
+  return `Jira dispatch completed with ${failedCount} failed and ${successCount} created/updated issue${successCount === 1 ? "" : "s"}.`;
 };
 
 export const getJiraIssueTypes = async (
@@ -254,7 +256,7 @@ export const pollJiraDispatchTask = async (
       };
     }
 
-    if (jiraResult && getJiraDispatchSuccessCount(jiraResult) === 0) {
+    if (!jiraResult || getJiraDispatchSuccessCount(jiraResult) === 0) {
       return {
         success: false,
         error:

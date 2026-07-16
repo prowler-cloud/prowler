@@ -496,6 +496,44 @@ describe("DataTableRowActions", () => {
     );
   });
 
+  it("keeps single finding Jira dispatch enabled when other rows are selected outside cloud", async () => {
+    // Given
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
+    const user = userEvent.setup();
+    render(
+      <FindingsSelectionContext.Provider
+        value={{
+          selectedFindingIds: ["finding-2", "finding-3"],
+          selectedFindings: [],
+          clearSelection: vi.fn(),
+          isSelected: vi.fn(),
+        }}
+      >
+        <DataTableRowActions row={makeFindingRow()} />
+      </FindingsSelectionContext.Provider>,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    ).toBeEnabled();
+    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        isOpen: true,
+        targetIds: ["finding-1"],
+        targetType: "finding_id",
+        defaultDispatchMode: "individual",
+        canChooseGroupedDispatch: false,
+      }),
+      undefined,
+    );
+  });
+
   it("shows Add Triage Note for editable findings without a note", () => {
     // Given / When
     render(

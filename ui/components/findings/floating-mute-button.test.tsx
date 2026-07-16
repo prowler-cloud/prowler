@@ -260,7 +260,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     ).toBeVisible();
     expect(
       screen.getByRole("button", {
-        name: "Send to Jira",
+        name: "Send 1 Group and 1 Finding to Jira",
       }),
     ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
   });

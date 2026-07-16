@@ -38,4 +38,21 @@ describe("buildJiraDispatchChoiceCopy", () => {
         "Use this when each selected resource should be tracked independently.",
     });
   });
+
+  it("uses neutral Findings copy outside a single Finding Group", () => {
+    expect(
+      buildJiraDispatchChoiceCopy({
+        selectedCount: 2,
+        isSelectedFindingGroupFlow: false,
+        selectionKind: "findings",
+      }),
+    ).toEqual({
+      description: "Create Jira issue(s) for 2 selected Findings.",
+      groupedTitle: "Create one Jira issue for all selected Findings",
+      groupedHelp:
+        "Recommended. The issue will include every selected Finding.",
+      individualHelp:
+        "Use this when each selected Finding should be tracked independently.",
+    });
+  });
 });

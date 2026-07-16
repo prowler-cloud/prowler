@@ -129,9 +129,38 @@ describe("SendToJiraModal", () => {
         "Create one Jira issue for all selected Findings in this Finding Group",
       ),
     ).toBeInTheDocument();
+    expect(
+      screen.getByText("Create Jira issues for 1 Group and 2 Findings."),
+    ).toBeInTheDocument();
     expect(screen.getByText("Create separate Jira issues")).toBeInTheDocument();
     expect(sendFindingToJiraMock).not.toHaveBeenCalled();
     expect(sendJiraDispatchMock).not.toHaveBeenCalled();
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+  });
+
+  it("uses neutral Findings copy for ordinary multi-Finding selections", async () => {
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={vi.fn()}
+        findingId="finding-1"
+        findingTitle="Finding 1"
+        targetIds={["finding-1", "finding-2"]}
+        targetType="finding_id"
+        defaultDispatchMode="grouped"
+        canChooseGroupedDispatch
+      />,
+    );
+
+    expect(screen.getByText("Jira issue creation mode")).toBeInTheDocument();
+    expect(
+      screen.getByText("Create one Jira issue for all selected Findings"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        "Create one Jira issue for all selected Findings in this Finding Group",
+      ),
+    ).not.toBeInTheDocument();
     await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
   });
 
@@ -518,6 +547,66 @@ describe("SendToJiraModal", () => {
     );
     expect(toastMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ title: "Success!" }),
+    );
+  });
+
+  it("polls started tasks when a later mixed dispatch batch fails to launch", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "group-task",
+        message: "Group started",
+      })
+      .mockResolvedValueOnce({
+        success: false,
+        error: "Failed to launch Finding batch.",
+      });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetBatches={[
+          {
+            targetIds: ["check-a"],
+            targetType: "check_id",
+            dispatchMode: "grouped",
+          },
+          {
+            targetIds: ["finding-1", "finding-2"],
+            targetType: "finding_id",
+          },
+        ]}
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("group-task"),
+    );
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Error",
+        description:
+          "Some Jira dispatches started, but Failed to launch Finding batch.",
+      }),
     );
   });
 });

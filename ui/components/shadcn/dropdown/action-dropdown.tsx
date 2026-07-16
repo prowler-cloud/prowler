@@ -116,6 +116,8 @@ export function ActionDropdownItem({
   destructive = false,
   className,
   disabledTooltip,
+  disabled,
+  onSelect,
   ...props
 }: ActionDropdownItemProps) {
   const item = (
@@ -126,6 +128,16 @@ export function ActionDropdownItem({
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
       )}
+      aria-disabled={disabled || undefined}
+      disabled={disabled && !disabledTooltip}
+      onSelect={(event) => {
+        if (disabled) {
+          event.preventDefault();
+          return;
+        }
+
+        onSelect?.(event);
+      }}
       {...props}
     >
       {icon && (
@@ -154,12 +166,10 @@ export function ActionDropdownItem({
     </DropdownMenuItem>
   );
 
-  if (props.disabled && disabledTooltip) {
+  if (disabled && disabledTooltip) {
     return (
       <Tooltip>
-        <TooltipTrigger asChild>
-          <span className="block">{item}</span>
-        </TooltipTrigger>
+        <TooltipTrigger asChild>{item}</TooltipTrigger>
         <TooltipContent>{disabledTooltip}</TooltipContent>
       </Tooltip>
     );

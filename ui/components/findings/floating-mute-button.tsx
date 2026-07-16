@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
 
@@ -171,12 +172,11 @@ export function FloatingMuteButton({
                   <Button
                     type="button"
                     variant="outline"
-                    className={
-                      canSendToJira
-                        ? "w-full justify-start"
-                        : "w-full justify-start pr-56"
-                    }
-                    aria-label="Send to Jira"
+                    className={cn(
+                      "w-full justify-start",
+                      !canSendToJira && "pr-56",
+                    )}
+                    aria-label={sendToJiraLabel}
                     disabled={!canSendToJira}
                     onClick={handleJiraClick}
                   >

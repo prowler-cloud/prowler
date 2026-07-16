@@ -68,7 +68,7 @@ describe("enterprise feature flags", () => {
 
   it("should enable grouped Jira dispatch from the enterprise env flag in cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE", "cloud");
     vi.stubEnv(
       "NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED",
       "true",
@@ -83,7 +83,7 @@ describe("enterprise feature flags", () => {
 
   it("should keep grouped Jira dispatch disabled outside cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE", "onpremise");
     vi.stubEnv(
       "NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED",
       "true",

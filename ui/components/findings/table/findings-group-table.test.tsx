@@ -407,6 +407,38 @@ describe("FindingsGroupTable", () => {
         screen.queryByRole("button", { name: "Select finding-1" }),
       ).not.toBeInTheDocument();
     });
+
+    it("clears the expanded group when expandedCheckId is removed", () => {
+      // Given
+      const data = [
+        { checkId: "check-a", resourcesTotal: 1 },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+      const { rerender } = render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-a"
+        />,
+      );
+      expect(
+        screen.getByRole("button", { name: "Select finding-1" }),
+      ).toBeInTheDocument();
+
+      // When
+      rerender(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   describe("bulk Jira action", () => {

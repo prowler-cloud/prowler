@@ -56,6 +56,7 @@ interface SendToJiraModalProps {
   targetBatches?: JiraDispatchTargetBatch[];
   defaultDispatchMode?: JiraDispatchMode;
   canChooseGroupedDispatch?: boolean;
+  isFindingGroupSelection?: boolean;
   selectedResourceCount?: number;
   description?: string;
 }
@@ -99,6 +100,7 @@ export const SendToJiraModal = ({
   targetBatches,
   defaultDispatchMode = JIRA_DISPATCH_MODE.INDIVIDUAL,
   canChooseGroupedDispatch = false,
+  isFindingGroupSelection = false,
   selectedResourceCount,
   description,
 }: SendToJiraModalProps) => {
@@ -142,14 +144,14 @@ export const SendToJiraModal = ({
     (multiFindingTargetCount > 1 || jiraSelectedResourceCount > 1);
   const isSelectedFindingGroupFlow =
     shouldShowDispatchChoice &&
-    (targetType === JIRA_DISPATCH_TARGET.FINDING_ID ||
-      multiFindingTargetCount > 1);
+    (targetType === JIRA_DISPATCH_TARGET.CHECK_ID || isFindingGroupSelection);
   const jiraDispatchChoiceCopy = buildJiraDispatchChoiceCopy({
     selectedCount:
       multiFindingTargetCount > 1
         ? multiFindingTargetCount
         : jiraSelectedResourceCount,
     isSelectedFindingGroupFlow,
+    selectionKind: multiFindingTargetCount > 1 ? "findings" : "resources",
   });
 
   const selectedIntegration = form.watch("integration");
@@ -217,6 +219,7 @@ export const SendToJiraModal = ({
     void (async () => {
       try {
         const taskIds: string[] = [];
+        const launchErrors: string[] = [];
 
         for (const batch of jiraTargetBatches) {
           const batchDispatchMode = batch.dispatchMode ?? data.dispatchMode;
@@ -240,10 +243,15 @@ export const SendToJiraModal = ({
                 });
 
           if (!result.success) {
-            throw new Error(result.error || "Failed to send to Jira");
+            launchErrors.push(result.error || "Failed to send to Jira");
+            continue;
           }
 
           taskIds.push(result.taskId);
+        }
+
+        if (taskIds.length === 0 && launchErrors.length > 0) {
+          throw new Error(launchErrors.join(" "));
         }
 
         // Poll for task completion and notify once
@@ -256,6 +264,12 @@ export const SendToJiraModal = ({
 
         if (failedTask && !failedTask.success) {
           throw new Error(failedTask.error || "Failed to create Jira issue");
+        }
+
+        if (launchErrors.length > 0) {
+          throw new Error(
+            `Some Jira dispatches started, but ${launchErrors.join(" ")}`,
+          );
         }
 
         toast({
@@ -375,10 +389,10 @@ export const SendToJiraModal = ({
       onOpenChange={onOpenChange}
       title="Send Finding to Jira"
       description={
-        shouldShowDispatchChoice
-          ? jiraDispatchChoiceCopy.description
-          : description
-            ? description
+        description
+          ? description
+          : shouldShowDispatchChoice
+            ? jiraDispatchChoiceCopy.description
             : findingTitle
               ? `Create a Jira issue for: "${findingTitle}"`
               : "Select integration, project and issue type to create a Jira issue"

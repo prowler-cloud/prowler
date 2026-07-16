@@ -153,8 +153,6 @@ export function DataTableRowActions<T extends FindingRowData>({
   const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
   const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
-  const isJiraActionDisabled =
-    (isGroup || hasMultipleSelected) && !groupedJiraDispatchEnabled;
 
   const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
@@ -188,6 +186,8 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const jiraTargetIds = getJiraTargetIds();
+  const isJiraActionDisabled =
+    (isGroup || jiraTargetIds.length > 1) && !groupedJiraDispatchEnabled;
   const selectedJiraResourceCount = isGroup
     ? (finding.resourcesFail ?? 0)
     : undefined;

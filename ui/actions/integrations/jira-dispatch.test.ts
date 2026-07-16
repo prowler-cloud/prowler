@@ -100,7 +100,27 @@ describe("sendJiraDispatch", () => {
     // Then
     expect(result).toEqual({
       success: false,
-      error: "Jira dispatch completed with 1 failed and 2 created issues.",
+      error:
+        "Jira dispatch completed with 1 failed and 2 created/updated issues.",
+    });
+  });
+
+  it("should include updated issues in partial failure summaries", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: { created_count: 0, updated_count: 2, failed_count: 1 },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error:
+        "Jira dispatch completed with 1 failed and 2 created/updated issues.",
     });
   });
 
@@ -118,7 +138,8 @@ describe("sendJiraDispatch", () => {
     // Then
     expect(result).toEqual({
       success: false,
-      error: "Jira dispatch completed with 1 failed and 1 created issue.",
+      error:
+        "Jira dispatch completed with 1 failed and 1 created/updated issue.",
     });
   });
 
@@ -175,6 +196,24 @@ describe("sendJiraDispatch", () => {
       ok: true,
       state: "completed",
       result: { created_count: 0, updated_count: 0, failed_count: 0 },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error: "Jira dispatch completed but did not create or update any issues.",
+    });
+  });
+
+  it("should fail completed task polling when Jira dispatch has no result payload", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: null,
     });
 
     // When
