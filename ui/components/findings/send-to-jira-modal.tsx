@@ -72,6 +72,23 @@ const sendToJiraSchema = z.object({
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
+const JIRA_TASK_TIMEOUT_ERROR = "Task timeout";
+const JIRA_TASK_POLL_ROUNDS = 15;
+
+const pollJiraDispatchTaskUntilDone = async (taskId: string) => {
+  for (let round = 0; round < JIRA_TASK_POLL_ROUNDS; round++) {
+    const result = await pollJiraDispatchTask(taskId);
+    if (result.success || result.error !== JIRA_TASK_TIMEOUT_ERROR) {
+      return result;
+    }
+  }
+
+  return {
+    success: false,
+    error: "The Jira dispatch task is taking too long. Try again later.",
+  } as const;
+};
+
 export const SendToJiraModal = ({
   isOpen,
   onOpenChange,
@@ -232,7 +249,7 @@ export const SendToJiraModal = ({
 
         // Poll for task completion and notify once
         const taskResults = await Promise.all(
-          taskIds.map((taskId) => pollJiraDispatchTask(taskId)),
+          taskIds.map((taskId) => pollJiraDispatchTaskUntilDone(taskId)),
         );
         const failedTask = taskResults.find(
           (taskResult) => !taskResult.success,

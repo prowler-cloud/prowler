@@ -300,6 +300,59 @@ describe("SendToJiraModal", () => {
     });
   });
 
+  it("keeps polling until a slow grouped Finding Group dispatch succeeds", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock.mockResolvedValueOnce({
+      success: true,
+      taskId: "group-task",
+      message: "Group started",
+    });
+    pollJiraDispatchTaskMock
+      .mockResolvedValueOnce({
+        success: false,
+        error: "Task timeout",
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        message: "Finding successfully sent to Jira!",
+      });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetIds={["check-a"]}
+        targetType="check_id"
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(pollJiraDispatchTaskMock).toHaveBeenCalledTimes(2),
+    );
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        title: "Success!",
+        description: "Finding successfully sent to Jira!",
+      }),
+    );
+  });
+
   it("shows one success toast after mixed Group and Finding batches all succeed", async () => {
     // Given
     const user = userEvent.setup();
