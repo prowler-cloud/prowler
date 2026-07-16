@@ -139,4 +139,51 @@ describe("sendJiraDispatch", () => {
       message: "Finding successfully sent to Jira!",
     });
   });
+
+  it("should succeed completed task polling with grouped created and updated issue result shape", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: {
+        created_count: 1,
+        updated_count: 1,
+        failed_count: 0,
+        created_issues: [{ key: "SEC-1" }],
+        updated_issues: [{ key: "SEC-2" }],
+        failed_groups: [],
+      },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(pollTaskUntilSettledMock).toHaveBeenCalledWith("task-1", {
+      maxAttempts: 5,
+      delayMs: 2000,
+    });
+    expect(result).toEqual({
+      success: true,
+      message: "Finding successfully sent to Jira!",
+    });
+  });
+
+  it("should fail completed task polling when Jira dispatch completed as a no-op", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: { created_count: 0, updated_count: 0, failed_count: 0 },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error: "Jira dispatch completed but did not create or update any issues.",
+    });
+  });
 });

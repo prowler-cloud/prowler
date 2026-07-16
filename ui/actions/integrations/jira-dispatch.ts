@@ -32,15 +32,27 @@ interface JiraDispatchInput {
   dispatchMode?: JiraDispatchMode;
 }
 
-const getArrayFailureCount = (value: unknown[] | undefined) =>
+const getArrayCount = (value: unknown[] | undefined) =>
   Array.isArray(value) ? value.length : 0;
 
 const getJiraDispatchFailedCount = (result: JiraTaskResult | undefined) => {
   if (!result) return 0;
   return Math.max(
     result.failed_count ?? 0,
-    getArrayFailureCount(result.failed_groups),
-    getArrayFailureCount(result.failed_batches),
+    getArrayCount(result.failed_groups),
+    getArrayCount(result.failed_batches),
+  );
+};
+
+const getJiraDispatchSuccessCount = (result: JiraTaskResult | undefined) => {
+  if (!result) return 0;
+  return Math.max(
+    result.successful_count ?? 0,
+    result.created_count ?? 0,
+    result.updated_count ?? 0,
+    getArrayCount(result.created_issues),
+    getArrayCount(result.updated_issues),
+    result.issue_key || result.issue_url ? 1 : 0,
   );
 };
 
@@ -217,7 +229,7 @@ export const pollJiraDispatchTask = async (
   { success: true; message: string } | { success: false; error: string }
 > => {
   const res = await pollTaskUntilSettled(taskId, {
-    maxAttempts: 30,
+    maxAttempts: 5,
     delayMs: 2000,
   });
   if (!res.ok) {
@@ -239,6 +251,14 @@ export const pollJiraDispatchTask = async (
       return {
         success: false,
         error: jiraResult?.error || "Failed to create Jira issue.",
+      };
+    }
+
+    if (jiraResult && getJiraDispatchSuccessCount(jiraResult) === 0) {
+      return {
+        success: false,
+        error:
+          "Jira dispatch completed but did not create or update any issues.",
       };
     }
 
