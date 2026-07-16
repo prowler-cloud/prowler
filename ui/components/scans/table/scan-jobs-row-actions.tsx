@@ -93,7 +93,7 @@ export function ScanJobsRowActions({
   const openFindings = () => {
     if (!isCompleted || !scanDate) return;
     router.push(
-      `/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
     );
   };
 
