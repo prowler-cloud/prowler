@@ -48,6 +48,9 @@ export function GlobalSidePanel() {
   const isResizing = useSidePanelStore((state) => state.isResizing);
   const openPanel = useSidePanelStore((state) => state.openPanel);
   const closePanel = useSidePanelStore((state) => state.closePanel);
+  // Stable action for the outlet ref: an inline closure would detach/reattach
+  // (null → element) on every render, e.g. on each resize tick.
+  const setContextOutlet = useSidePanelStore((state) => state.setContextOutlet);
   // Below `sm` the panel overlays full-width; the resizable px width and the
   // push margin only make sense from `sm` up.
   const isPushViewport = useMediaQuery(SIDE_PANEL_PUSH_MEDIA_QUERY);
@@ -186,13 +189,18 @@ export function GlobalSidePanel() {
           asChild
         >
           <SidePanelBody
-            ref={(element) =>
-              useSidePanelStore.getState().setContextOutlet(element)
-            }
             hidden={!isContextSelected}
-            data-testid="side-panel-context-outlet"
             className="overflow-hidden p-6 pt-4"
-          />
+          >
+            {/* Plain inner node: the outlet ref must not go through Radix's
+                Slot (asChild), whose per-render composeRefs would detach and
+                reattach it — flickering the store outlet — on every render. */}
+            <div
+              ref={setContextOutlet}
+              data-testid="side-panel-context-outlet"
+              className="h-full"
+            />
+          </SidePanelBody>
         </TabsContent>
         {/* Registry (AI) content stays mounted after the first open so scroll
             position and composer drafts survive closes. [contain:layout] traps
@@ -209,7 +217,10 @@ export function GlobalSidePanel() {
               className="[contain:layout]"
             >
               {hasBeenOpened ? (
+                // key: a tab switch must reset the lazy instance and any
+                // error-boundary state from the previous tab.
                 <RetryableLazyContent
+                  key={activeRegistryTab.id}
                   load={activeRegistryTab.loadContent}
                   fallback={<activeRegistryTab.Fallback />}
                 />

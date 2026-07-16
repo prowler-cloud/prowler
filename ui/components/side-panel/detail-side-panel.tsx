@@ -43,6 +43,8 @@ function DetailSidePanelActive({
   useMountEffect(() => {
     const registered = useSidePanelStore.getState().registerContextTab({
       label: "Details",
+      // Mount-scoped capture is safe: the component remounts per open cycle
+      // and every consumer's close path ends in stable setters.
       onRequestClose: () => onOpenChange(false),
     });
     setToken(registered);

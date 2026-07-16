@@ -17,7 +17,38 @@ const mediaMocks = vi.hoisted(() => ({ isPushViewport: false }));
 // Toggles a render failure to exercise the panel's local error boundary.
 const chatMocks = vi.hoisted(() => ({ shouldThrow: false }));
 
+// Adds a second registry tab on demand: the real registry only holds one
+// today, but tab-switch isolation must already hold for when cloud adds more.
+const registryMocks = vi.hoisted(() => ({ extraTab: false }));
+
 vi.mock("@/lib/shared/env", () => ({ isCloud: isCloudMock }));
+
+vi.mock("./side-panel-tabs", async (importOriginal) => {
+  const original = await importOriginal<typeof import("./side-panel-tabs")>();
+  return {
+    ...original,
+    getVisibleSidePanelTabs: () => {
+      const tabs = original.getVisibleSidePanelTabs();
+      if (!registryMocks.extraTab) return tabs;
+      return [
+        ...tabs,
+        {
+          id: "second-tab",
+          label: "Second tab",
+          Icon: () => null,
+          loadContent: () =>
+            Promise.resolve({
+              default: () => (
+                <div data-testid="second-tab-content">second content</div>
+              ),
+            }),
+          Fallback: () => null,
+          isAvailable: () => true,
+        },
+      ];
+    },
+  };
+});
 
 vi.mock("next/navigation", () => ({
   usePathname: () => navigationMocks.pathname,
@@ -49,6 +80,7 @@ describe("GlobalSidePanel", () => {
     navigationMocks.pathname = "/findings";
     mediaMocks.isPushViewport = false;
     chatMocks.shouldThrow = false;
+    registryMocks.extraTab = false;
     localStorage.clear();
     useSidePanelStore.setState({
       isOpen: false,
@@ -261,6 +293,54 @@ describe("GlobalSidePanel", () => {
     // Then: the content mounts normally
     expect(await screen.findByTestId("panel-chat-content")).toBeInTheDocument();
     consoleError.mockRestore();
+  });
+
+  it("renders the next tab fresh after another tab failed", async () => {
+    // Given: two registry tabs, with the first one failing to render
+    registryMocks.extraTab = true;
+    chatMocks.shouldThrow = true;
+    const user = userEvent.setup();
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    render(<GlobalSidePanel />);
+    act(() => useSidePanelStore.getState().openPanel(SIDE_PANEL_TAB.AI_CHAT));
+    await screen.findByText("This panel failed to load.");
+
+    // When: the user switches to the healthy second tab
+    await user.click(screen.getByRole("tab", { name: "Second tab" }));
+
+    // Then: its content mounts instead of the previous tab's error state
+    expect(await screen.findByTestId("second-tab-content")).toBeInTheDocument();
+    expect(
+      screen.queryByText("This panel failed to load."),
+    ).not.toBeInTheDocument();
+    consoleError.mockRestore();
+  });
+
+  it("keeps the context outlet attached across store-driven re-renders", () => {
+    // Given: a registered detail view with its portal outlet attached
+    render(<GlobalSidePanel />);
+    act(() =>
+      useSidePanelStore.getState().registerContextTab({
+        label: "Details",
+        onRequestClose: vi.fn(),
+      }),
+    );
+    const outlet = useSidePanelStore.getState().contextOutlet;
+    expect(outlet).not.toBeNull();
+
+    // When: an unrelated update re-renders the panel (a resize tick)
+    const seen: (HTMLElement | null)[] = [];
+    const unsubscribe = useSidePanelStore.subscribe((state) =>
+      seen.push(state.contextOutlet),
+    );
+    act(() => useSidePanelStore.getState().setWidth(500));
+    unsubscribe();
+
+    // Then: the outlet never detached (a null flicker remounts the portal)
+    expect(seen).not.toContain(null);
+    expect(useSidePanelStore.getState().contextOutlet).toBe(outlet);
   });
 
   it("re-clamps a persisted oversized width to the current viewport", () => {
