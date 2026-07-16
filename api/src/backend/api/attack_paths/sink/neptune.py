@@ -66,7 +66,7 @@ READ_EXCEPTION_CODES = [
     "Neo.ClientError.Procedure.ProcedureNotFound",
 ]
 CLIENT_STATEMENT_EXCEPTION_PREFIX = "Neo.ClientError.Statement."
-RETRYABLE_WRITE_ERROR_PREFIXES = (
+RETRYABLE_WRITE_ERROR_FRAGMENTS = (
     "Operation failed due to conflicting concurrent operations",
     "Operation terminated (deadline exceeded)",
 )
@@ -78,7 +78,8 @@ SIGV4_TOKEN_LIFETIME_MINUTES = 4
 def _is_retryable_write_error(exc: Exception) -> bool:
     if not isinstance(exc, neo4j.exceptions.Neo4jError):
         return False
-    return bool(exc.message and exc.message.startswith(RETRYABLE_WRITE_ERROR_PREFIXES))
+    message = exc.message or ""
+    return any(fragment in message for fragment in RETRYABLE_WRITE_ERROR_FRAGMENTS)
 
 
 class NeptuneSink(SinkDatabase):

@@ -3304,6 +3304,7 @@ class TestTaskTimeLimits:
         for name in (
             "scan-perform",
             "scan-perform-scheduled",
+            "attack-paths-scan-perform",
             "provider-deletion",
             "tenant-deletion",
         ):

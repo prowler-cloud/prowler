@@ -3,19 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import MainLayout from "./main-layout";
 
-vi.mock("@/hooks/use-sidebar", () => ({
-  useSidebar: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-store", () => ({
-  useStore: () => ({
-    getOpenState: () => true,
-    settings: { disabled: false },
-  }),
-}));
-
-vi.mock("../sidebar/sidebar", () => ({
-  Sidebar: () => <aside data-testid="sidebar" />,
+vi.mock("@/components/layout/app-sidebar", () => ({
+  AppSidebar: () => <aside data-testid="sidebar" />,
 }));
 
 vi.mock("@/components/shared/cloud-upgrade-modal", () => ({
@@ -31,6 +20,8 @@ describe("MainLayout", () => {
     );
 
     expect(screen.getByTestId("cloud-upgrade-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeVisible();
+    expect(screen.getByRole("main")).toBeVisible();
   });
 });

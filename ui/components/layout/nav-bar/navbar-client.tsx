@@ -4,6 +4,7 @@ import { BellRing, Info } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, Suspense } from "react";
 
+import { MobileAppSidebar } from "@/components/layout/app-sidebar";
 import {
   BreadcrumbNavigation,
   Button,
@@ -12,7 +13,6 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
-import { useSidebar } from "@/hooks/use-sidebar";
 import { getFlowById } from "@/lib/onboarding";
 import { isCloud } from "@/lib/shared/env";
 import { useTourCompletion } from "@/lib/tours/use-tour-completion";
@@ -20,8 +20,6 @@ import { cn } from "@/lib/utils";
 import { useOnboardingReplayStore } from "@/store/onboarding-replay";
 import { usePageReadyStore } from "@/store/page-ready";
 
-import { SheetMenu } from "../sidebar/sheet-menu";
-import { SidebarToggle } from "../sidebar/sidebar-toggle";
 import { UserNav } from "../user-nav/user-nav";
 
 export interface OnboardingActionConfig {
@@ -43,7 +41,6 @@ export function NavbarClient({
   onboardingAction,
   feedsSlot,
 }: NavbarClientProps) {
-  const { isOpen, toggleOpen } = useSidebar();
   const pathname = usePathname();
   const router = useRouter();
   const requestReplay = useOnboardingReplayStore(
@@ -85,10 +82,7 @@ export function NavbarClient({
     <header className="sticky top-0 z-10 w-full pt-4 backdrop-blur-sm">
       <div className="flex h-14 items-center pr-6">
         <div className="flex items-center gap-2">
-          <SheetMenu />
-          <div className="hidden lg:block">
-            <SidebarToggle isOpen={isOpen} setIsOpen={toggleOpen} />
-          </div>
+          <MobileAppSidebar />
           {/* Suspense contains the useSearchParams() CSR bailout in BreadcrumbNavigation
               so statically prerendered pages don't fail the build. */}
           <Suspense fallback={null}>

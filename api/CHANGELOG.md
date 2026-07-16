@@ -4,6 +4,21 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.35.0] (Prowler v5.34.0)
+
+### 🐞 Fixed
+
+- `rls_transaction` now falls back directly to the primary DB for connection-level mid-query read replica failures via `execute_wrapper`, reducing non-streaming read crashes during replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
+- RBAC permission gates now combine permissions from every role assigned to a user in the active tenant [(#11979)](https://github.com/prowler-cloud/prowler/pull/11979)
+- `attack-paths-cleanup-stale-scans` now retries worker pings and checks recent scan activity before failing scans and removing temporary databases [(#11986)](https://github.com/prowler-cloud/prowler/pull/11986)
+
+### 🔐 Security
+
+- User role relationship updates are limited to the active tenant to preserve role assignments in other tenants [(#11903)](https://github.com/prowler-cloud/prowler/pull/11903)
+- `api` container image removes the unused Debian `libxml2` runtime package and scopes the `CVE-2026-13221` Trivy exception to unaffected Perl 5.36 packages [(#11991)](https://github.com/prowler-cloud/prowler/pull/11991)
+
+---
+
 ## [1.34.2] (Prowler v5.33.2)
 
 ### 🐞 Fixed

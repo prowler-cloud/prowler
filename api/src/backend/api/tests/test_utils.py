@@ -856,7 +856,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {}
 
@@ -884,7 +884,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="test@example.com",
             api_token="test_api_token",
-            domain="example.atlassian.net",
+            domain="example",
             raise_on_exception=False,
         )
 
@@ -917,7 +917,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "invalid@example.com",
             "api_token": "invalid_token",
-            "domain": "invalid.atlassian.net",
+            "domain": "invalid",
         }
         integration.configuration = {}
 
@@ -942,7 +942,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="invalid@example.com",
             api_token="invalid_token",
-            domain="invalid.atlassian.net",
+            domain="invalid",
             raise_on_exception=False,
         )
 
@@ -970,7 +970,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {
             "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration

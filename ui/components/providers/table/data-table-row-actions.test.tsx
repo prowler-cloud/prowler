@@ -303,7 +303,7 @@ describe("DataTableRowActions", () => {
     expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 
-  it("blocks provider-account actions (alias/credentials/delete) for a dynamic provider but keeps operational actions", async () => {
+  it("allows rename/delete and operational actions for a dynamic provider but hides credential management", async () => {
     // Given a dynamic provider outside the configurable set, with the advanced
     // schedule capability enabled (so Edit Scan Schedule can show).
     const user = userEvent.setup();
@@ -323,15 +323,16 @@ describe("DataTableRowActions", () => {
     // When
     await user.click(screen.getByRole("button"));
 
-    // Then — provider-account CRUD is suppressed (can't add/edit/delete it)
-    expect(screen.queryByText("Edit Provider Alias")).not.toBeInTheDocument();
-    expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
-    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
-    expect(screen.queryByText("Delete Provider")).not.toBeInTheDocument();
-    // ...but operational actions the provider exists for stay available
+    // Then — rename and delete are backend-generic, so they stay available
+    expect(screen.getByText("Edit Provider Alias")).toBeInTheDocument();
+    expect(screen.getByText("Delete Provider")).toBeInTheDocument();
+    // ...operational actions stay available too
     expect(screen.getByText("Test Connection")).toBeInTheDocument();
     expect(screen.getByText("View Scan Jobs")).toBeInTheDocument();
     expect(screen.getByText("Edit Scan Schedule")).toBeInTheDocument();
+    // ...but credential management is hidden (no bespoke wizard for dynamic types)
+    expect(screen.queryByText("Add Credentials")).not.toBeInTheDocument();
+    expect(screen.queryByText("Update Credentials")).not.toBeInTheDocument();
   });
 
   it("navigates to the provider-filtered scan jobs from View Scan Jobs", async () => {
