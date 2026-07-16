@@ -91,6 +91,13 @@ def before_send(event, hint):
         log_msg = log_record.getMessage()
         log_lvl = log_record.levelno
 
+        if (
+            getattr(log_record, "name", "") == "cartography.graph.job"
+            and "Neo.ClientError.Database.DatabaseNotFound" in log_msg
+            and "db-tmp-scan-" in log_msg
+        ):
+            return None
+
         # The Neo4j driver logs transient connection errors (defunct
         # connections, resets) at ERROR level via the `neo4j.io` logger.
         # `RetryableSession` handles these with retries. If all retries

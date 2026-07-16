@@ -27,6 +27,7 @@ from django.conf import (
 MAX_CUSTOM_QUERY_NODES = env.int("ATTACK_PATHS_MAX_CUSTOM_QUERY_NODES", default=250)
 
 TEMP_DB_PREFIX = "db-tmp-scan-"
+DATABASE_NOT_FOUND_CODE = "Neo.ClientError.Database.DatabaseNotFound"
 
 
 # Exceptions

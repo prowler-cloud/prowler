@@ -1,3 +1,4 @@
+import logging
 from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -5,7 +6,9 @@ from unittest.mock import MagicMock, call, patch
 from uuid import uuid4
 
 import pytest
+from api.attack_paths.database import GraphDatabaseQueryException
 from api.db_utils import rls_transaction
+from api.exceptions import ProviderDeletedException
 from api.models import (
     AttackPathsScan,
     Finding,
@@ -250,6 +253,32 @@ class TestAttackPathsRun:
         mock_starting.assert_not_called()
         mock_create_db.assert_not_called()
 
+    @pytest.mark.parametrize(
+        ("ingestion_error", "temporary_database_missing"),
+        [
+            (RuntimeError("ingestion boom"), False),
+            (
+                GraphDatabaseQueryException(
+                    message="Graph not found: db-scan-id",
+                    code="Neo.ClientError.Database.DatabaseNotFound",
+                ),
+                True,
+            ),
+            (
+                GraphDatabaseQueryException(
+                    message="Graph not found: db-tenant-id",
+                    code="Neo.ClientError.Database.DatabaseNotFound",
+                ),
+                False,
+            ),
+        ],
+        ids=[
+            "regular-error",
+            "temporary-database-missing",
+            "sink-database-missing",
+        ],
+    )
+    @patch("tasks.jobs.attack_paths.scan.logger")
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
         return_value="Cartography failed: ingestion boom",
@@ -302,6 +331,9 @@ class TestAttackPathsRun:
         mock_drop_db,
         mock_event_loop,
         mock_stringify,
+        mock_logger,
+        ingestion_error,
+        temporary_database_missing,
         tenants_fixture,
         aws_provider,
         scans_fixture,
@@ -321,7 +353,11 @@ class TestAttackPathsRun:
         session_ctx = MagicMock()
         session_ctx.__enter__.return_value = mock_session
         session_ctx.__exit__.return_value = False
-        ingestion_fn = MagicMock(side_effect=RuntimeError("ingestion boom"))
+        ingestion_fn = MagicMock(side_effect=ingestion_error)
+        if temporary_database_missing:
+            mock_finish.side_effect = DatabaseError(
+                "Save with update_fields did not affect any rows"
+            )
 
         with (
             patch(
@@ -337,13 +373,28 @@ class TestAttackPathsRun:
                 return_value=ingestion_fn,
             ),
         ):
-            with pytest.raises(RuntimeError, match="ingestion boom"):
+            with pytest.raises(type(ingestion_error)):
                 attack_paths_run(str(tenant.id), str(scan.id), "task-456")
 
         failure_args = mock_finish.call_args[0]
         assert failure_args[0] is attack_paths_scan
         assert failure_args[1] == StateChoices.FAILED
         assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
+        mock_drop_db.assert_called_once_with("db-scan-id")
+        if temporary_database_missing:
+            mock_logger.warning.assert_any_call("Cartography failed: ingestion boom")
+            mock_logger.exception.assert_not_called()
+            mock_logger.log.assert_called_once_with(
+                logging.WARNING,
+                f"Could not mark Attack Paths scan {attack_paths_scan.id} as `FAILED` "
+                "(row may have been deleted): Save with update_fields did not affect "
+                "any rows",
+                exc_info=False,
+            )
+        else:
+            mock_logger.exception.assert_called_once_with(
+                "Cartography failed: ingestion boom"
+            )
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -1264,6 +1315,33 @@ class TestAttackPathsScanRLSTaskOnFailure:
             )
 
         mock_fail.assert_called_once_with("t-1", "s-1", "boom")
+
+    def test_on_failure_logs_provider_deletion_as_warning(self):
+        from tasks.tasks import AttackPathsScanRLSTask
+
+        task = AttackPathsScanRLSTask()
+        error = ProviderDeletedException("provider deleted")
+
+        with (
+            patch("tasks.tasks.logger") as mock_logger,
+            patch(
+                "tasks.tasks.attack_paths_db_utils.fail_attack_paths_scan"
+            ) as mock_fail,
+        ):
+            task.on_failure(
+                exc=error,
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_logger.warning.assert_called_once_with(
+            "Attack paths scan task task-abc stopped because its provider or tenant "
+            "was deleted: provider deleted"
+        )
+        mock_logger.error.assert_not_called()
+        mock_fail.assert_called_once_with("t-1", "s-1", "provider deleted")
 
     def test_on_failure_skips_when_missing_kwargs(self):
         from tasks.tasks import AttackPathsScanRLSTask
