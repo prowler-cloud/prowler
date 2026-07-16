@@ -5,11 +5,13 @@ import { AuthLayout } from "./auth-layout";
 import { PublicAuthShell } from "./public-auth-shell";
 
 vi.mock("@/components/ThemeSwitch", () => ({
-  ThemeSwitch: () => <button type="button">Auth card theme toggle</button>,
+  ThemeSwitch: ({ "aria-label": ariaLabel }: { "aria-label"?: string }) => (
+    <button type="button" aria-label={ariaLabel} />
+  ),
 }));
 
 describe("AuthLayout", () => {
-  it("renders the auth card title and content without the theme toggle", () => {
+  it("renders the auth card title and content", () => {
     // Given
     const title = "Sign in to Prowler";
 
@@ -23,9 +25,6 @@ describe("AuthLayout", () => {
     // Then
     expect(screen.getByText(title)).toBeVisible();
     expect(screen.getByRole("form", { name: "Sign in form" })).toBeVisible();
-    expect(
-      screen.queryByRole("button", { name: "Auth card theme toggle" }),
-    ).not.toBeInTheDocument();
   });
 
   it("renders the brand in the centered auth layout flow above the card", () => {

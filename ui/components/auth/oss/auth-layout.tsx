@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 
 import { ProwlerBrand } from "@/components/icons";
+import { ThemeSwitch } from "@/components/ThemeSwitch";
 
 interface AuthLayoutProps {
   title: string;
@@ -26,8 +27,11 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
 
         {/* Auth Form Container */}
         <div className="border-border-neutral-secondary dark:bg-bg-neutral-primary/85 relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-[14px] border bg-white/90 px-8 py-10 shadow-sm md:max-w-md">
-          {/* Header */}
-          <p className="pb-2 text-xl font-medium">{title}</p>
+          {/* Header with Title and Theme Toggle */}
+          <div className="flex items-center justify-between">
+            <p className="pb-2 text-xl font-medium">{title}</p>
+            <ThemeSwitch aria-label="Toggle theme" />
+          </div>
 
           {/* Content */}
           {children}
