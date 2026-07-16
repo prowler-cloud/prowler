@@ -23,8 +23,9 @@ overrides:
   # advisories (serve-static path traversal, Lambda Set-Cookie merge, body-limit
   # bypass, Lambda@Edge repeated-header loss), all fixed in 4.12.25, plus
   # CVE-2026-59896 (hono/jsx SSR context leak across concurrent requests; in NVD
-  # but not yet in the npm audit feed), fixed in 4.12.27.
-  "hono": "4.12.29"
+  # but not yet in the npm audit feed), fixed in 4.12.27. Not 4.12.29: it is
+  # still inside StepSecurity's 7-day npm cooldown gate.
+  "hono": "4.12.28"
   "@hono/node-server": "1.19.14"
   "@isaacs/brace-expansion": "5.0.1"
   "fast-xml-parser": "5.8.0"
@@ -37,6 +38,24 @@ overrides:
   # (vitest/@vitejs/plugin-react); consumers allow ^7 but never resolve past 7.3.2
   # without a nudge.
   "vite@>=7 <8": "7.3.5"
+  # GHSA-96hv-2xvq-fx4p (memory exhaustion DoS from tiny fragments, high) +
+  # GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure), both fixed in 8.21.0.
+  # Not 8.21.1: it is still inside StepSecurity's 7-day npm cooldown gate.
+  "ws@>=8 <9": "8.21.0"
+  # Pulled by @sentry/server-utils bundler plugins (^2.1.0). Pinned because the
+  # latest 2.3.1 is still inside StepSecurity's 7-day npm cooldown gate; safe to
+  # drop this pin after 2026-07-20.
+  "es-module-lexer": "2.3.0"
+  # GHSA-4x5r-pxfx-6jf8 (arbitrary file read via sourceMappingURL comment, low),
+  # fixed in 7.29.1. An override instead of `pnpm update` so the rest of the
+  # babel/browserslist subtree keeps its existing lockfile resolutions.
+  "@babel/core": "7.29.7"
+  # Ephemeral cooldown pins: the @babel/helper-compilation-targets refresh pulls
+  # browserslist-ecosystem releases newer than StepSecurity's 7-day npm cooldown.
+  # Safe to drop after 2026-07-20.
+  "browserslist": "4.28.2"
+  "caniuse-lite": "1.0.30001792"
+  "baseline-browser-mapping": "2.10.29"
   "minimatch@<4": "3.1.4"
   "minimatch@>=9 <10": "9.0.7"
   "minimatch@>=10": "10.2.3"
