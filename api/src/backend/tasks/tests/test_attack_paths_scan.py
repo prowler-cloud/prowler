@@ -3134,6 +3134,62 @@ class TestCleanupStaleAttackPathsScans:
         ap_scan.refresh_from_db()
         assert ap_scan.state == StateChoices.FAILED
 
+    @pytest.mark.parametrize(
+        ("age_seconds", "should_clean"),
+        [
+            (960 * 60 - 1, False),
+            (960 * 60, False),
+            (960 * 60 + 1, True),
+        ],
+    )
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    @patch("tasks.jobs.attack_paths.cleanup._ping_workers")
+    def test_stale_threshold_boundary_is_strict(
+        self,
+        mock_ping,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        age_seconds,
+        should_clean,
+        tenants_fixture,
+        aws_provider,
+        scans_fixture,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        now = datetime.now(tz=UTC)
+        ap_scan, task_result = self._create_executing_scan(
+            tenants_fixture[0],
+            aws_provider,
+            started_at=now - timedelta(seconds=age_seconds),
+            worker="live-worker@host",
+        )
+        mock_ping.return_value = ({"live-worker@host"}, set())
+
+        with patch("tasks.jobs.attack_paths.cleanup.datetime") as mock_datetime:
+            mock_datetime.now.return_value = now
+            result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == int(should_clean)
+        ap_scan.refresh_from_db()
+        expected_state = StateChoices.FAILED if should_clean else StateChoices.EXECUTING
+        assert ap_scan.state == expected_state
+        if should_clean:
+            mock_revoke.assert_called_once_with(task_result, terminate=True)
+            mock_drop_db.assert_called_once()
+            mock_recover.assert_called_once()
+        else:
+            mock_revoke.assert_not_called()
+            mock_drop_db.assert_not_called()
+            mock_recover.assert_not_called()
+
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
     @patch(
