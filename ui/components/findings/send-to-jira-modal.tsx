@@ -13,7 +13,6 @@ import {
   sendFindingToJira,
   sendJiraDispatch,
 } from "@/actions/integrations/jira-dispatch";
-import { useToast } from "@/components/shadcn";
 import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
 import { Form, FormField, FormMessage } from "@/components/shadcn/form";
 import { FormButtons } from "@/components/shadcn/form/form-buttons";
@@ -24,6 +23,7 @@ import {
 } from "@/components/shadcn/radio-group/radio-group";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
+import { toast } from "@/components/shadcn/toast";
 import {
   IntegrationProps,
   JIRA_DISPATCH_MODE,
@@ -102,7 +102,6 @@ export const SendToJiraModal = ({
   selectedResourceCount,
   description,
 }: SendToJiraModalProps) => {
-  const { toast } = useToast();
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
   const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(false);
   const [fetchedIssueTypes, setFetchedIssueTypes] = useState<

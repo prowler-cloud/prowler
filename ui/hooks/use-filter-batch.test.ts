@@ -98,6 +98,25 @@ describe("useFilterBatch", () => {
         "filter[delta]": ["new"],
       });
     });
+
+    it("should parse filter[check_id] from grouped finding deep links", () => {
+      // Given - URL produced by the grouped finding resources panel deep link.
+      setSearchParams({
+        "filter[check_id]": "teams_external_users_can_join",
+        expandedCheckId: "teams_external_users_can_join",
+      });
+
+      // When
+      const { result } = renderHook(() => useFilterBatch());
+
+      // Then - expandedCheckId is not a filter chip, but check_id is URL-backed.
+      expect(result.current.pendingFilters).toEqual({
+        "filter[check_id]": ["teams_external_users_can_join"],
+      });
+      expect(result.current.getFilterValue("filter[check_id]")).toEqual([
+        "teams_external_users_can_join",
+      ]);
+    });
   });
 
   // ── Excluded keys ──────────────────────────────────────────────────────────

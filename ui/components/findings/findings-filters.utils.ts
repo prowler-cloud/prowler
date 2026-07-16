@@ -15,6 +15,7 @@ interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
   providerGroups?: ProviderGroup[];
+  checkTitles?: Record<string, string>;
 }
 
 const FINDING_DELTA_DISPLAY_NAMES: Record<string, string> = {
@@ -64,6 +65,12 @@ export function getFindingsFilterDisplayValue(
   if (filterKey === "filter[scan__in]" || filterKey === "filter[scan]") {
     return getScanDisplayValue(value, options.scans || []);
   }
+  if (
+    filterKey === "filter[check_id]" ||
+    filterKey === "filter[check_id__in]"
+  ) {
+    return options.checkTitles?.[value] || value;
+  }
   if (filterKey === "filter[severity__in]") {
     return (
       SEVERITY_DISPLAY_NAMES[
@@ -108,6 +115,8 @@ export function getFindingsFilterDisplayValue(
  * label is missing.
  */
 export const FILTER_KEY_LABELS: Record<FindingsFilterParam, string> = {
+  "filter[check_id]": "Finding Group",
+  "filter[check_id__in]": "Finding Group",
   "filter[provider_type__in]": "Provider",
   "filter[provider_id__in]": "Account",
   "filter[provider_groups__in]": "Provider Group",
@@ -134,6 +143,7 @@ interface BuildFindingsFilterChipsOptions {
   providers?: ProviderProps[];
   scans?: Array<{ [scanId: string]: ScanEntity }>;
   providerGroups?: ProviderGroup[];
+  checkTitles?: Record<string, string>;
   includeMuted?: boolean;
 }
 

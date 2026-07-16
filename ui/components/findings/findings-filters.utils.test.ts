@@ -164,6 +164,30 @@ describe("getFindingsFilterDisplayValue", () => {
     );
   });
 
+  it("uses the finding group title for check_id filters when available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+        {
+          checkTitles: {
+            teams_external_users_can_join:
+              "External Teams users can join meetings",
+          },
+        },
+      ),
+    ).toBe("External Teams users can join meetings");
+  });
+
+  it("keeps the check id when no finding group title is available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+      ),
+    ).toBe("teams_external_users_can_join");
+  });
+
   it("uses the provider display name regardless of account alias/uid", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-2", {
@@ -296,6 +320,45 @@ describe("buildFindingsFilterChips", () => {
       chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })),
     ).toEqual([{ label: "Delta", v: "+2" }]);
     expect(chipsPlural[0].displayValues).toEqual(["New", "Changed"]);
+  });
+
+  it("renders filter[check_id] as a first-class Finding Group chip", () => {
+    // Given - exact deep-link params from the grouped findings page.
+    const chips = buildFindingsFilterChips(
+      {
+        "filter[check_id]": ["teams_external_users_can_join"],
+      },
+      {
+        checkTitles: {
+          teams_external_users_can_join:
+            "External Teams users can join meetings",
+        },
+      },
+    );
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "External Teams users can join meetings",
+      },
+    ]);
+  });
+
+  it("renders filter[check_id__in] with the Finding Group chip label", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[check_id__in]": ["teams_external_users_can_join"],
+    });
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id__in]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "teams_external_users_can_join",
+      },
+    ]);
   });
 
   it("skips muted filters because the table toolbar owns that control", () => {

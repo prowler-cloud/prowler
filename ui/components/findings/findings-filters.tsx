@@ -42,8 +42,14 @@ interface FindingsFiltersProps {
   uniqueResourceTypes: string[];
   uniqueCategories: string[];
   uniqueGroups: string[];
+  checkOptions?: FindingCheckFilterOption[];
   trailingControls?: ReactNode;
   variant?: "default" | "alerts-edit";
+}
+
+interface FindingCheckFilterOption {
+  checkId: string;
+  checkTitle?: string;
 }
 
 interface FindingsFilterBatchControlsProps extends FindingsFiltersProps {
@@ -72,6 +78,10 @@ const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 const FILTER_GRID_ITEM_CLASS = "min-w-0";
 
+function uniqueNonEmptyValues(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
 export const FindingsFilterBatchControls = ({
   providers,
   // Undefined = caller opted out (the alert editor shares this component but
@@ -85,6 +95,7 @@ export const FindingsFilterBatchControls = ({
   uniqueResourceTypes,
   uniqueCategories,
   uniqueGroups,
+  checkOptions = [],
   trailingControls,
   appliedFilters,
   pendingFilters,
@@ -102,6 +113,17 @@ export const FindingsFilterBatchControls = ({
 }: FindingsFilterBatchControlsProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const isAlertsEdit = variant === "alerts-edit";
+  const checkTitles = Object.fromEntries(
+    checkOptions.map(({ checkId, checkTitle }) => [
+      checkId,
+      checkTitle || checkId,
+    ]),
+  );
+  const checkFilterValues = uniqueNonEmptyValues([
+    ...checkOptions.map((option) => option.checkId),
+    ...getFilterValue("filter[check_id]"),
+    ...getFilterValue("filter[check_id__in]"),
+  ]);
 
   const customFilters = [
     ...filterFindings
@@ -112,39 +134,54 @@ export const FindingsFilterBatchControls = ({
           getFindingsFilterDisplayValue(`filter[${filter.key}]`, value, {
             providers,
             scans: scanDetails,
+            checkTitles,
           }),
       })),
+    ...(checkFilterValues.length > 0
+      ? [
+          {
+            key: "check_id",
+            labelCheckboxGroup: "Finding Group",
+            values: checkFilterValues,
+            labelFormatter: (value: string) =>
+              getFindingsFilterDisplayValue("filter[check_id]", value, {
+                checkTitles,
+              }),
+            index: 3,
+          },
+        ]
+      : []),
     {
       key: FILTER_FIELD.REGION,
       labelCheckboxGroup: "Regions",
       values: uniqueRegions,
-      index: 3,
+      index: 4,
     },
     {
       key: FILTER_FIELD.SERVICE,
       labelCheckboxGroup: "Services",
       values: uniqueServices,
-      index: 4,
+      index: 5,
     },
     {
       key: FILTER_FIELD.RESOURCE_TYPE,
       labelCheckboxGroup: "Resource Type",
       values: uniqueResourceTypes,
-      index: 8,
+      index: 9,
     },
     {
       key: FILTER_FIELD.CATEGORY,
       labelCheckboxGroup: "Category",
       values: uniqueCategories,
       labelFormatter: getCategoryLabel,
-      index: 5,
+      index: 6,
     },
     {
       key: FILTER_FIELD.RESOURCE_GROUPS,
       labelCheckboxGroup: "Resource Group",
       values: uniqueGroups,
       labelFormatter: getGroupLabel,
-      index: 6,
+      index: 7,
     },
     ...(isAlertsEdit
       ? []
@@ -164,7 +201,7 @@ export const FindingsFilterBatchControls = ({
                   scans: scanDetails,
                 },
               ),
-            index: 7,
+            index: 8,
           },
         ]),
   ];
@@ -177,6 +214,7 @@ export const FindingsFilterBatchControls = ({
       providers,
       providerGroups,
       scans: scanDetails,
+      checkTitles,
     },
   );
   const pendingFilterChips: FilterChip[] = buildFindingsFilterChips(
@@ -185,6 +223,7 @@ export const FindingsFilterBatchControls = ({
       providers,
       providerGroups,
       scans: scanDetails,
+      checkTitles,
     },
   );
   const appliedCount = countVisibleFilterKeys(appliedFilters);

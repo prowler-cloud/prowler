@@ -28,8 +28,8 @@ vi.mock("@/actions/integrations/jira-dispatch", () => ({
   sendJiraDispatch: sendJiraDispatchMock,
 }));
 
-vi.mock("@/components/shadcn", () => ({
-  useToast: () => ({ toast: toastMock }),
+vi.mock("@/components/shadcn/toast", () => ({
+  toast: toastMock,
 }));
 
 vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
