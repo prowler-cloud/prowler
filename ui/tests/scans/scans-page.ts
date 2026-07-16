@@ -107,7 +107,11 @@ export class ScansPage extends BasePage {
     await expect(this.launchScanDialog).toBeVisible();
     await this.scanProviderSelect.click();
     await this.scanProviderSearchInput.fill(uid);
-    await this.scanProviderOption.first().click();
+
+    const providerOption = this.scanProviderOption.first();
+    await expect(providerOption).toBeVisible();
+    await expect(providerOption).toHaveAttribute("aria-disabled", "false");
+    await providerOption.click();
   }
 
   async fillScanNote(note: string): Promise<void> {

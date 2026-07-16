@@ -67,8 +67,10 @@ export class SignInPage extends BasePage {
     this.signUpLink = page.getByRole("link", { name: "Sign up" });
     this.backButton = page.getByRole("button", { name: "Back" });
 
-    // UI elements - title is a <p> element, not a heading
-    this.logo = page.locator('svg[width="300"]');
+    // UI elements - ProwlerBrand exposes the deployed brand variant as an image.
+    this.logo = page.getByRole("img", {
+      name: /^Prowler (Cloud|Local Server)$/,
+    });
     // Use text matching with exact=true to avoid matching other elements
     this.pageTitle = page.getByText("Sign in", { exact: true });
 
