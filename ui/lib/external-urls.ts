@@ -1,4 +1,4 @@
-import { IntegrationType } from "../types/integrations";
+import type { IntegrationType } from "../types/integrations";
 
 // Documentation URLs
 export const DOCS_URLS = {
@@ -26,16 +26,28 @@ export const PROWLER_CF_TEMPLATE_URL =
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
 
-// AWS Console URL for creating a new StackSet.
-// Hardcoded to us-east-1 — StackSets are typically managed from this region.
-// Users in AWS GovCloud or China partitions would need different URLs.
-export const STACKSET_CONSOLE_URL =
-  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
-
 // Base URL for the CloudFormation "quick create stack" console flow.
-// Hardcoded to us-east-1, same rationale as STACKSET_CONSOLE_URL above.
+// Hardcoded to us-east-1 because the public template is hosted for that flow.
 const CF_QUICKCREATE_BASE_URL =
   "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+
+export interface AWSOrgDeploymentQuickLinkParams {
+  externalId: string;
+  organizationalUnitId: string;
+  deployFromDelegatedAdmin?: boolean;
+}
+
+const buildCloudFormationQuickCreateLink = (
+  parameters: Record<string, string>,
+): string => {
+  const searchParams = new URLSearchParams({
+    templateURL: PROWLER_CF_TEMPLATE_URL,
+    stackName: "Prowler",
+    ...parameters,
+  });
+
+  return `${CF_QUICKCREATE_BASE_URL}?${searchParams.toString()}`;
+};
 
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
@@ -157,25 +169,27 @@ export const getAWSCredentialsTemplateLinks = (
     };
   }
 
-  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
   // The template requires S3IntegrationBucketAccountId (owner account of the
   // bucket) whenever EnableS3Integration is true, so include it alongside the
   // bucket name to avoid a stack validation error on the quick-create flow.
-  const s3Params = bucketName
-    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}` +
-      (bucketAccountId
-        ? `&param_S3IntegrationBucketAccountId=${bucketAccountId}`
-        : "")
-    : "";
+  const parameters: Record<string, string> = {
+    param_ExternalId: externalId,
+  };
+
+  if (bucketName) {
+    parameters.param_EnableS3Integration = "true";
+    parameters.param_S3IntegrationBucketName = bucketName;
+    if (bucketAccountId) {
+      parameters.param_S3IntegrationBucketAccountId = bucketAccountId;
+    }
+  }
 
   return {
     ...(links as {
       cloudformation: string;
       terraform: string;
     }),
-    cloudformationQuickLink:
-      `${CF_QUICKCREATE_BASE_URL}?templateURL=${encodedTemplateUrl}` +
-      `&stackName=Prowler&param_ExternalId=${externalId}${s3Params}`,
+    cloudformationQuickLink: buildCloudFormationQuickCreateLink(parameters),
   };
 };
 
@@ -189,20 +203,18 @@ export const getAWSOrgDeploymentQuickLink = ({
   externalId,
   organizationalUnitId,
   deployFromDelegatedAdmin = false,
-}: {
-  externalId: string;
-  organizationalUnitId: string;
-  deployFromDelegatedAdmin?: boolean;
-}): string => {
-  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
+}: AWSOrgDeploymentQuickLinkParams): string => {
+  const parameters: Record<string, string> = {
+    param_ExternalId: externalId,
+    param_EnableOrganizations: "true",
+    param_DeployLocalRole: "true",
+    param_DeployStackSet: "true",
+    param_AWSOrganizationalUnitId: organizationalUnitId,
+  };
 
-  return (
-    `${CF_QUICKCREATE_BASE_URL}?templateURL=${encodedTemplateUrl}` +
-    `&stackName=Prowler&param_ExternalId=${externalId}` +
-    "&param_EnableOrganizations=true" +
-    "&param_DeployLocalRole=true" +
-    "&param_DeployStackSet=true" +
-    `&param_AWSOrganizationalUnitId=${organizationalUnitId}` +
-    (deployFromDelegatedAdmin ? "&param_DeployFromDelegatedAdmin=true" : "")
-  );
+  if (deployFromDelegatedAdmin) {
+    parameters.param_DeployFromDelegatedAdmin = "true";
+  }
+
+  return buildCloudFormationQuickCreateLink(parameters);
 };

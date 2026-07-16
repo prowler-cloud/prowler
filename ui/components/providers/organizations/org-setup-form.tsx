@@ -3,20 +3,17 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Check, Copy, ExternalLink } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { FormEvent, useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { AWSProviderBadge } from "@/components/icons/providers-badge";
-import {
-  WIZARD_FOOTER_ACTION_TYPE,
-  WizardFooterConfig,
-} from "@/components/providers/wizard/steps/footer-controls";
-import {
-  ORG_WIZARD_INTENT,
-  OrgWizardIntent,
-} from "@/components/providers/wizard/types";
+import type { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
+import { WIZARD_FOOTER_ACTION_TYPE } from "@/components/providers/wizard/steps/footer-controls";
+import type { OrgWizardIntent } from "@/components/providers/wizard/types";
+import { ORG_WIZARD_INTENT } from "@/components/providers/wizard/types";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { useToast } from "@/components/shadcn";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
@@ -26,7 +23,8 @@ import { Form } from "@/components/shadcn/form";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { getAWSOrgDeploymentQuickLink } from "@/lib";
 import { useOrgSetupStore } from "@/store/organizations/store";
-import { ORG_SETUP_PHASE, OrgSetupPhase } from "@/types/organizations";
+import type { OrgSetupPhase } from "@/types/organizations";
+import { ORG_SETUP_PHASE } from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
 
@@ -55,7 +53,7 @@ const orgSetupSchema = z.object({
   organizationalUnitId: z.string().trim().optional(),
   deployFromDelegatedAdmin: z.boolean().optional(),
   stackSetDeployed: z.boolean().refine((value) => value, {
-    message: "You must confirm the deployment before continuing.",
+    error: "You must confirm the deployment before continuing.",
   }),
 });
 
@@ -142,6 +140,12 @@ export function OrgSetupForm({
 
   const organizationalUnitId = watch("organizationalUnitId") || "";
   const deployFromDelegatedAdmin = watch("deployFromDelegatedAdmin") || false;
+  const deploymentAccountName = deployFromDelegatedAdmin
+    ? "delegated administrator account"
+    : "management account";
+  const deploymentAccountLabel = deployFromDelegatedAdmin
+    ? "Delegated Administrator Account"
+    : "Management Account";
   const isOrgUnitIdValid =
     /^(ou-[a-z0-9]{4,32}-[a-z0-9]{8,32}|r-[a-z0-9]{4,32})$/.test(
       organizationalUnitId.trim(),
@@ -396,7 +400,7 @@ export function OrgSetupForm({
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 1) Choose the AWS <strong>Organizational Unit</strong> (or root)
-                to deploy to. Prowler creates the role in your management
+                to deploy to. Prowler creates the role in your deployment
                 account and rolls it out to every member account under this
                 target.
               </p>
@@ -449,26 +453,38 @@ export function OrgSetupForm({
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 2) Create the CloudFormation Stack in your{" "}
-                <strong>management account</strong>. It deploys the ProwlerScan
-                role and a service-managed StackSet that rolls the role out to
-                your member accounts in one step.
+                <strong>{deploymentAccountName}</strong>. It deploys the
+                ProwlerScan role and a service-managed StackSet that rolls the
+                role out to your member accounts in one step.
               </p>
-              <Button
-                variant="outline"
-                size="lg"
-                className="border-border-input-primary bg-bg-input-primary text-button-tertiary hover:bg-bg-input-primary active:bg-bg-input-primary h-12 w-full justify-start"
-                disabled={!orgQuickLink}
-                asChild
-              >
-                <a
-                  href={orgQuickLink || "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {orgQuickLink ? (
+                <Button
+                  variant="outline"
+                  size="xl"
+                  className="w-full justify-start"
+                  asChild
+                >
+                  <a
+                    href={orgQuickLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLink className="size-5" />
+                    <span>{`Create Stack in ${deploymentAccountLabel}`}</span>
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="xl"
+                  className="w-full justify-start"
+                  disabled
                 >
                   <ExternalLink className="size-5" />
-                  <span>Create Stack in Management Account</span>
-                </a>
-              </Button>
+                  <span>{`Create Stack in ${deploymentAccountLabel}`}</span>
+                </Button>
+              )}
               {!isOrgUnitIdValid && (
                 <p className="text-text-neutral-tertiary text-xs leading-5">
                   Enter a valid Organizational Unit or Root ID above to enable
@@ -480,7 +496,7 @@ export function OrgSetupForm({
             {/* Step 3: Role ARN + confirm */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                3) Paste the management account Role ARN and confirm the
+                3) Paste the {deploymentAccountName} Role ARN and confirm the
                 deployment is complete.
               </p>
             </div>
@@ -488,7 +504,7 @@ export function OrgSetupForm({
             <WizardInputField
               control={control}
               name="roleArn"
-              label="Management Account Role ARN"
+              label={`${deploymentAccountLabel} Role ARN`}
               labelPlacement="outside"
               placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerScan"
               isRequired={false}
