@@ -176,6 +176,33 @@ class Test_AWS_Enums:
         assert _validate({"ecr_repository_vulnerability_minimum_severity": level}) == {}
 
 
+class TestAWSELBv2PQCTLSAllowedPolicies:
+    def test_valid_policy_list_round_trips(self):
+        policies = [
+            "ELBSecurityPolicy-TLS13-1-2-Res-2021-06",
+            "ELBSecurityPolicy-TLS13-1-3-2021-06",
+        ]
+
+        assert _validate({"elbv2_listener_pqc_tls_allowed_policies": policies}) == {
+            "elbv2_listener_pqc_tls_allowed_policies": policies
+        }
+
+    def test_key_is_exposed_in_scan_config_schema(self):
+        aws_properties = SCAN_CONFIG_SCHEMA["properties"]["aws"]["properties"]
+
+        assert "elbv2_listener_pqc_tls_allowed_policies" in aws_properties
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            "ELBSecurityPolicy-TLS13-1-2-Res-2021-06",
+            ["ELBSecurityPolicy-TLS13-1-2-Res-2021-06", 123],
+        ],
+    )
+    def test_invalid_policy_values_are_dropped(self, value):
+        assert _validate({"elbv2_listener_pqc_tls_allowed_policies": value}) == {}
+
+
 class Test_AWS_Secrets_Ignore_Files:
     def test_valid_file_patterns_round_trip(self):
         files = ["*.deps.json", "vendor/*.js"]

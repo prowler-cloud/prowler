@@ -176,6 +176,8 @@ Resources:
                 Effect: Allow
                 Action:
                   - "account:Get*"
+                  - "amplify:ListApps"
+                  - "amplify:ListBranches"
                   - "appstream:Describe*"
                   - "appstream:List*"
                   - "backup:List*"

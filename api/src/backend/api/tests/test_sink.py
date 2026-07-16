@@ -332,9 +332,10 @@ class TestNeptuneRetryPolicy:
     @pytest.mark.parametrize(
         "message",
         [
-            "Operation failed due to conflicting concurrent operations "
-            + "(please retry), 0 transactions are currently rolling back.",
-            "Operation terminated (deadline exceeded)",
+            "Unexpected server exception 'Operation failed due to conflicting "
+            "concurrent operations (please retry), 0 transactions are currently "
+            "rolling back.'",
+            "Unexpected server exception 'Operation terminated (deadline exceeded)'",
         ],
     )
     def test_observed_transient_write_errors_are_retryable(self, message):
@@ -345,7 +346,9 @@ class TestNeptuneRetryPolicy:
 
     def test_unrelated_database_error_is_not_retryable(self):
         error = MagicMock(spec=neo4j.exceptions.Neo4jError)
-        error.message = "Operation terminated (out of memory)"
+        error.message = (
+            "Unexpected server exception 'Operation terminated (out of memory)'"
+        )
 
         assert _is_retryable_write_error(error) is False
 

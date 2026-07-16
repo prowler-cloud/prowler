@@ -18,7 +18,7 @@ title: 'Getting Started With AWS on Prowler'
 
 ### Step 2: Access Prowler Cloud
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Providers"
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
@@ -75,13 +75,13 @@ For detailed instructions on how to create the role, see [Authentication > Assum
 
     ![New Role Info](/images/providers/get-role-arn.png)
 
-9. Paste the ARN into the corresponding field in Prowler Cloud or Prowler App
+9. Paste the ARN into the corresponding field in Prowler Cloud or Prowler Local Server
 
     ![Input the Role ARN](/images/providers/paste-role-arn-prowler.png)
 
 10. Select the credential source Prowler should use to call `sts:AssumeRole`. The option label differs between deployments but both map to the same `aws-sdk-default` credential type:
 
-    - **"Prowler Cloud will assume your IAM role"** (default in Prowler Cloud) / **"AWS SDK Default"** (in self-hosted Prowler App): Prowler uses the credentials available in the API and worker environment through the [AWS SDK default credential chain](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html). In self-hosted Prowler App, these containers have no AWS credentials by default — see [Configuring AWS SDK Default for Self-Hosted Prowler App](/user-guide/providers/aws/authentication#configuring-aws-sdk-default-for-self-hosted-prowler-app) before choosing this option, or the connection test will fail with `InvalidClientTokenId`.
+    - **"Prowler Cloud will assume your IAM role"** (default in Prowler Cloud) / **"AWS SDK Default"** (in Prowler Local Server): Prowler uses the credentials available in the API and worker environment through the [AWS SDK default credential chain](https://boto3.amazonaws.com/v1/documentation/api/latest/guide/credentials.html). In Prowler Local Server, these containers have no AWS credentials by default — see [Configuring AWS SDK Default for Prowler Local Server](/user-guide/providers/aws/authentication#configuring-aws-sdk-default-for-prowler-local-server) before choosing this option, or the connection test will fail with `InvalidClientTokenId`.
     - **Access & Secret Key**: Paste an IAM user's `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` (and optional `AWS_SESSION_TOKEN`) into the form. The IAM principal must be allowed to assume the target role and must match the `IAMPrincipal` parameter of the scan role template (default: `role/prowler*`).
 
 11. Click "Next", then "Launch Scan"
@@ -110,7 +110,7 @@ AWS accounts can also be configured using static credentials (not recommended fo
 
 For detailed instructions on how to create the credentials, see [Authentication > Credentials](/user-guide/providers/aws/authentication#credentials).
 
-1. Complete the form in Prowler Cloud or Prowler App and click "Next"
+1. Complete the form in Prowler Cloud or Prowler Local Server and click "Next"
 
     ![Filled credentials page](/images/providers/prowler-cloud-credentials-next.png)
 

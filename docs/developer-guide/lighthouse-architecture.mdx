@@ -141,7 +141,7 @@ Key constants:
 - `RECONNECT_INTERVAL_MS`: 5 minutes before retry after failure
 
 ```typescript
-// Authentication injection for Prowler App tools
+// Authentication injection for prowler_app tools
 private handleBeforeToolCall = ({ name, args }) => {
   // Only inject auth for prowler_app_* tools (user-specific data)
   if (!name.startsWith("prowler_app_")) {
@@ -307,13 +307,13 @@ MCP tools are organized into three namespaces based on authentication requiremen
 
 | Namespace | Auth Required | Description |
 |-----------|---------------|-------------|
-| `prowler_app_*` | Yes (JWT) | Prowler Cloud/App tools for findings, providers, scans, resources |
+| `prowler_app_*` | Yes (JWT) | Prowler Cloud and Prowler Local Server tools for findings, providers, scans, resources |
 | `prowler_hub_*` | No | Security checks catalog, compliance frameworks |
 | `prowler_docs_*` | No | Documentation search and retrieval |
 
 ### Authentication Flow
 
-1. User authenticates with Prowler App, receiving a JWT token
+1. User authenticates with Prowler Local Server, receiving a JWT token
 2. Token is stored in session and propagated via `authContextStorage`
 3. MCP client injects `Authorization: Bearer <token>` header for `prowler_app_*` calls
 4. MCP Server validates token and applies RLS filtering

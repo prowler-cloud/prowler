@@ -3,19 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import MainLayout from "./main-layout";
 
-vi.mock("@/hooks/use-sidebar", () => ({
-  useSidebar: vi.fn(),
-}));
-
-vi.mock("@/hooks/use-store", () => ({
-  useStore: () => ({
-    getOpenState: () => true,
-    settings: { disabled: false },
-  }),
-}));
-
-vi.mock("../sidebar/sidebar", () => ({
-  Sidebar: () => <aside data-testid="sidebar" />,
+vi.mock("@/components/layout/app-sidebar", () => ({
+  AppSidebar: () => <aside data-testid="sidebar" />,
 }));
 
 vi.mock("@/components/shared/cloud-upgrade-modal", () => ({
@@ -31,7 +20,9 @@ describe("MainLayout", () => {
     );
 
     expect(screen.getByTestId("cloud-upgrade-modal")).toBeInTheDocument();
+    expect(screen.getByTestId("sidebar")).toBeInTheDocument();
     expect(screen.getByText("Page content")).toBeVisible();
+    expect(screen.getByRole("main")).toBeVisible();
   });
 
   it("keeps the desktop sidebar offset based on the viewport", () => {
@@ -44,7 +35,7 @@ describe("MainLayout", () => {
 
     // Then: a right panel may narrow main, but the desktop sidebar stays open
     expect(screen.getByText("Page content").parentElement).toHaveClass(
-      "min-[64rem]:ml-[248px]",
+      "min-[64rem]:ml-[280px]",
     );
   });
 
