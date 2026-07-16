@@ -26,6 +26,7 @@ the UI can validate live with `ajv`. This module provides:
   endpoint and consumed by the UI editor for in-editor live validation.
 """
 
+import json
 from typing import Any
 
 from pydantic import ValidationError
@@ -96,10 +97,39 @@ def validate_and_normalize_scan_config(
     normalized: dict[str, Any] = {}
 
     for provider, section in payload.items():
-        provider_key = str(provider)
+        # Reject non-string provider keys so distinct entries like ``123``
+        # and ``"123"`` don't collide after ``str()`` in the normalized dict.
+        # YAML always produces string keys at this level; anything else
+        # comes from a hand-built payload and is a caller bug.
+        if not isinstance(provider, str):
+            errors.append(
+                {
+                    "path": repr(provider),
+                    "message": "provider keys must be strings.",
+                }
+            )
+            continue
+
+        provider_key = provider
         schema_cls = SCHEMAS.get(provider_key)
         if schema_cls is None:
-            # Unknown provider type: tolerated. The SDK will simply ignore it.
+            # Unknown provider type: tolerated, but only when its contents
+            # are already JSON-serializable. The API persists the returned
+            # payload in a Django ``JSONField`` and would blow up at write
+            # time if we let a ``set()`` or similar through here.
+            try:
+                json.dumps(section)
+            except (TypeError, ValueError) as exc:
+                errors.append(
+                    {
+                        "path": provider_key,
+                        "message": (
+                            "unknown provider section is not JSON-serializable: "
+                            f"{exc}"
+                        ),
+                    }
+                )
+                continue
             normalized[provider_key] = section
             continue
         if not isinstance(section, dict):

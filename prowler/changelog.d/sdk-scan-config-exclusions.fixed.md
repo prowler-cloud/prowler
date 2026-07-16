@@ -1,1 +1,0 @@
-Applying scan-configuration exclusions in `Scan` no longer mutates the selected checks while iterating and no longer misclassifies checks whose service is not excluded; unknown or duplicate excluded checks and services now raise actionable errors, and a configuration that excludes every selected check is rejected up front

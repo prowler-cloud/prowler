@@ -156,6 +156,51 @@ class Test_Error_Path:
         assert any(p.startswith("aws.excluded_services") for p in paths)
 
 
+class Test_Non_String_Provider_Keys:
+    """The normalized payload is later persisted in a Django JSONField
+    keyed by provider. Two entries whose ``str()`` collide (e.g. ``123``
+    and ``"123"``) would silently overwrite each other, so non-string
+    keys are rejected up front instead of silently coerced."""
+
+    def test_non_string_key_is_rejected(self):
+        normalized, errors = validate_and_normalize_scan_config({123: {}})
+        assert normalized == {}
+        assert errors == [{"path": "123", "message": "provider keys must be strings."}]
+
+    def test_string_and_int_collision_does_not_silently_overwrite(self):
+        # If only ``str()`` coercion happened both keys would collapse to
+        # ``"aws"`` in the output — this test guards against that regression.
+        normalized, errors = validate_and_normalize_scan_config(
+            {"aws": {}, 123: {"a": 1}}
+        )
+        assert normalized == {}
+        assert any(err["path"] == "123" for err in errors)
+
+
+class Test_Unknown_Sections_Must_Be_JSON_Serializable:
+    """``normalized`` is persisted by the API in a Django JSONField, so
+    unknown provider sections must fail fast here instead of blowing up
+    at persist time. Registered sections cannot hit this path — they go
+    through ``model_dump(mode="json", ...)`` which already coerces."""
+
+    def test_set_inside_unknown_section_is_rejected(self):
+        # ``set`` is a common trap: ``yaml.safe_load`` never produces it,
+        # but a hand-built dict might.
+        normalized, errors = validate_and_normalize_scan_config(
+            {"future_provider": {"values": {1, 2, 3}}}
+        )
+        assert normalized == {}
+        assert errors
+        assert errors[0]["path"] == "future_provider"
+        assert "JSON-serializable" in errors[0]["message"]
+
+    def test_json_safe_unknown_section_is_still_preserved(self):
+        payload = {"future_provider": {"nested": {"k": [1, 2, 3]}}}
+        normalized, errors = validate_and_normalize_scan_config(payload)
+        assert errors == []
+        assert normalized == payload
+
+
 class Test_Backward_Compatible_Wrapper:
     def test_valid_payload_yields_no_errors(self):
         assert (
