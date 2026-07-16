@@ -1974,7 +1974,7 @@ class TestSyncNodes:
         mock_source_1.run.return_value = [row]
         mock_source_2 = MagicMock()
         mock_source_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
@@ -2011,7 +2011,7 @@ class TestSyncNodes:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
         sink.write_nodes.side_effect = lambda *_a, **_kw: call_order.append(
             "sink:write"
         )
@@ -2047,7 +2047,7 @@ class TestSyncNodes:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with (
             patch(
@@ -2058,7 +2058,7 @@ class TestSyncNodes:
                     _make_session_ctx(src_3),
                 ],
             ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+            patch.object(sink, "sync_batch_size", 1),
         ):
             result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
@@ -2087,7 +2087,7 @@ class TestSyncNodes:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with (
             patch(
@@ -2097,7 +2097,7 @@ class TestSyncNodes:
                     _make_session_ctx(src_2),
                 ],
             ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+            patch.object(sink, "sync_batch_size", 2),
         ):
             result = sync_module.sync_nodes(
                 "src", "tgt", "t-1", "p-1", sink, normalized_lists
@@ -2115,7 +2115,7 @@ class TestSyncNodes:
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
@@ -2144,7 +2144,7 @@ class TestSyncRelationships:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
         sink.write_relationships.side_effect = lambda *_a, **_kw: call_order.append(
             "sink:write"
         )
@@ -2182,7 +2182,7 @@ class TestSyncRelationships:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with (
             patch(
@@ -2193,7 +2193,7 @@ class TestSyncRelationships:
                     _make_session_ctx(src_3),
                 ],
             ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+            patch.object(sink, "sync_batch_size", 1),
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
@@ -2218,7 +2218,7 @@ class TestSyncRelationships:
         src_1.run.return_value = rows
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with (
             patch(
@@ -2228,7 +2228,7 @@ class TestSyncRelationships:
                     _make_session_ctx(src_2),
                 ],
             ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+            patch.object(sink, "sync_batch_size", 2),
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
@@ -2241,7 +2241,7 @@ class TestSyncRelationships:
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",

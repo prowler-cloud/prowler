@@ -45,6 +45,10 @@ class GraphDatabaseQueryException(Exception):
         return self.message
 
 
+class NeptuneWriteRetryExhaustedException(GraphDatabaseQueryException):
+    pass
+
+
 class WriteQueryNotAllowedException(GraphDatabaseQueryException):
     pass
 

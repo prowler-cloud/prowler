@@ -11,7 +11,11 @@ from unittest.mock import MagicMock, patch
 import neo4j
 import pytest
 from api.attack_paths import sink as sink_module
-from api.attack_paths.database import GraphDatabaseQueryException
+from api.attack_paths.database import (
+    GraphDatabaseQueryException,
+    NeptuneWriteRetryExhaustedException,
+)
+from api.attack_paths.retryable_session import RetryExhaustedError
 from api.attack_paths.sink import factory
 from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
 from api.attack_paths.sink.neptune import (
@@ -121,6 +125,14 @@ class TestSinkFactory:
 
         # Only one driver call — reader aliases writer
         assert mock_driver.call_count == 1
+
+
+def test_neo4j_sync_batch_size_defaults_to_1000():
+    assert Neo4jSink.sync_batch_size == 1000
+
+
+def test_neptune_sync_batch_size_defaults_to_500():
+    assert NeptuneSink.sync_batch_size == 500
 
 
 class TestGetBackendForScan:
@@ -372,6 +384,7 @@ class TestNeptuneRetryPolicy:
         assert (
             kwargs["initial_retry_delay_seconds"] == NEPTUNE_WRITE_RETRY_DELAY_SECONDS
         )
+        assert kwargs["retry_context"] == "Neptune write"
 
     @patch("api.attack_paths.sink.neptune.RetryableSession")
     def test_reader_session_does_not_enable_write_retry_policy(self, retryable_session):
@@ -384,6 +397,42 @@ class TestNeptuneRetryPolicy:
         kwargs = retryable_session.call_args.kwargs
         assert kwargs["retry_if"] is None
         assert kwargs["initial_retry_delay_seconds"] == 0
+        assert kwargs["retry_context"] is None
+
+    def test_writer_retry_exhaustion_preserves_neptune_error_details(self):
+        message = (
+            "Unexpected server exception 'Operation failed due to conflicting "
+            "concurrent operations (please retry), 0 transactions are currently "
+            "rolling back.'"
+        )
+        error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code="BoltProtocol.unexpectedException",
+            message=message,
+        )
+        retry_error = RetryExhaustedError(
+            retry_context="Neptune write",
+            method_name="execute_write",
+            attempts=4,
+            elapsed_seconds=27.1234,
+            last_error=error,
+        )
+        sink = NeptuneSink()
+        driver = MagicMock()
+
+        with (
+            patch.object(sink, "_get_writer", return_value=driver),
+            pytest.raises(NeptuneWriteRetryExhaustedException) as exc_info,
+            sink.get_session(),
+        ):
+            raise retry_error
+
+        assert exc_info.value.code == "BoltProtocol.unexpectedException"
+        assert str(exc_info.value) == (
+            "BoltProtocol.unexpectedException: Neptune write execute_write failed "
+            "after 4 attempts over 27.123s. Last error: "
+            f"{message}"
+        )
+        assert exc_info.value.__cause__ is error
 
 
 class TestNeptuneSinkDropSubgraph:
