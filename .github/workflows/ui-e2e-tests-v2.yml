@@ -10,12 +10,12 @@ on:
       - master
       - "v5.*"
     paths:
-      - ".github/workflows/ui-e2e-tests-v2.yml"
-      - ".github/test-impact.yml"
-      - "ui/**"
-      - "api/**" # API changes can affect UI E2E
-      - "!ui/CHANGELOG.md"
-      - "!api/CHANGELOG.md"
+      - '.github/workflows/ui-e2e-tests-v2.yml'
+      - '.github/test-impact.yml'
+      - 'ui/**'
+      - 'api/**'  # API changes can affect UI E2E
+      - '!ui/CHANGELOG.md'
+      - '!api/CHANGELOG.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -39,11 +39,11 @@ jobs:
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
-      AUTH_SECRET: "fallback-ci-secret-for-testing"
+      AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
-      NEXTAUTH_URL: "http://localhost:3000"
-      AUTH_URL: "http://localhost:3000"
-      UI_API_BASE_URL: "http://localhost:8080/api/v1"
+      NEXTAUTH_URL: 'http://localhost:3000'
+      AUTH_URL: 'http://localhost:3000'
+      UI_API_BASE_URL: 'http://localhost:8080/api/v1'
       E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
@@ -59,7 +59,7 @@ jobs:
       E2E_M365_SECRET_ID: ${{ secrets.E2E_M365_SECRET_ID }}
       E2E_M365_TENANT_ID: ${{ secrets.E2E_M365_TENANT_ID }}
       E2E_M365_CERTIFICATE_CONTENT: ${{ secrets.E2E_M365_CERTIFICATE_CONTENT }}
-      E2E_KUBERNETES_CONTEXT: "kind-kind"
+      E2E_KUBERNETES_CONTEXT: 'kind-kind'
       E2E_KUBERNETES_KUBECONFIG_PATH: /home/runner/.kube/config
       E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY: ${{ secrets.E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY }}
       E2E_GCP_PROJECT_ID: ${{ secrets.E2E_GCP_PROJECT_ID }}
@@ -298,7 +298,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version-file: "ui/.nvmrc"
+          node-version-file: 'ui/.nvmrc'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
