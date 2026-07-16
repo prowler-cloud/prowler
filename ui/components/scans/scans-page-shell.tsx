@@ -119,10 +119,7 @@ export function ScansPageShell({
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
       {showProvidersHint && (
-        <ScansProvidersEmptyState
-          thereIsNoProviders={thereAreNoProviders}
-          containerClassName="min-h-0"
-        />
+        <ScansProvidersEmptyState thereIsNoProviders={thereAreNoProviders} />
       )}
       <div
         role="group"
