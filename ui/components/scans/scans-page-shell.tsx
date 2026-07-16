@@ -30,6 +30,7 @@ const viewFirstScanFlow = getFlowById("view-first-scan")!;
 import { CliImportBanner } from "./cli-import-banner";
 import { LaunchScanModal } from "./launch-scan-modal";
 import { ScansFilterBar } from "./scans-filter-bar";
+import { ScansProvidersEmptyState } from "./scans-providers-empty-state";
 import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
@@ -68,6 +69,10 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
+  const thereAreNoProviders = providers.length === 0;
+  // Non-blocking onboarding hint: shown when scans can't be launched (no provider, or
+  // none connected). The table still renders below, so imported scans stay visible.
+  const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
   const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
@@ -113,6 +118,12 @@ export function ScansPageShell({
       </Suspense>
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
+      {showProvidersHint && (
+        <ScansProvidersEmptyState
+          thereIsNoProviders={thereAreNoProviders}
+          containerClassName="min-h-0"
+        />
+      )}
       <div
         role="group"
         aria-label="Scan filters and actions"

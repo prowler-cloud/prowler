@@ -144,6 +144,19 @@ const providers: ProviderProps[] = [
   },
 ];
 
+const disconnectedProviders: ProviderProps[] = [
+  {
+    ...providers[0],
+    attributes: {
+      ...providers[0].attributes,
+      connection: {
+        ...providers[0].attributes.connection,
+        connected: false,
+      },
+    },
+  },
+];
+
 describe("ScansPageShell", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
@@ -415,5 +428,52 @@ describe("ScansPageShell", () => {
     const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
     expect(calledUrl).toContain("tab=scheduled");
     expect(calledUrl).not.toContain("filter%5Btrigger%5D");
+  });
+
+  it("shows a non-blocking hint when no provider is connected, while still rendering the table", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Connected Providers")).toBeInTheDocument();
+    // The table (and therefore imported scans) must still render below the hint.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("shows the no-providers hint when there are no providers, while still rendering the table", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Providers Configured")).toBeInTheDocument();
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("does not show the providers hint when a provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.queryByText("No Connected Providers"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No Providers Configured"),
+    ).not.toBeInTheDocument();
   });
 });

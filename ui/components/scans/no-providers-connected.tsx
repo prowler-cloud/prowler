@@ -18,12 +18,8 @@ export const NoProvidersConnected = () => {
             </h2>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            No providers are currently connected. Connecting a provider is
-            required to launch on-demand scans.
-          </p>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Once the providers are correctly configured, this message will
-            disappear, and on-demand scans can be launched.
+            None of your providers are connected yet. Connect one to launch
+            on-demand scans — imported scans still appear below.
           </p>
         </div>
         <div className="w-full md:w-auto md:shrink-0">
