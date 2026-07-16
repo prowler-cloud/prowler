@@ -13,7 +13,7 @@ GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Do not require email confirmation
-ACCOUNT_EMAIL_NOTIFICATIONS = True
+ACCOUNT_EMAIL_NOTIFICATIONS = False
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 REST_AUTH = {
     "TOKEN_MODEL": None,

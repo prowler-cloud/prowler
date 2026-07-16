@@ -302,7 +302,9 @@ class TestProwlerSocialAccountAdapter:
 
         sociallogin.connect.assert_called_once_with(request, create_test_user)
 
-    def test_verified_social_account_link_notifies_owner(self, create_test_user, rf):
+    def test_verified_social_account_link_does_not_send_notification(
+        self, create_test_user, rf
+    ):
         _verify_local_email(create_test_user)
         sociallogin = _real_oauth_sociallogin(
             create_test_user,
@@ -318,34 +320,7 @@ class TestProwlerSocialAccountAdapter:
             uid="verified-google-account",
             user=create_test_user,
         ).exists()
-        assert len(mail.outbox) == 1
-        assert mail.outbox[0].to == [create_test_user.email]
-
-    def test_notification_delivery_failure_does_not_break_verified_link(
-        self, create_test_user, rf
-    ):
-        _verify_local_email(create_test_user)
-        sociallogin = _real_oauth_sociallogin(
-            create_test_user,
-            uid="verified-google-account-without-smtp",
-        )
-        request = rf.get("/")
-
-        with (
-            context.request_context(request),
-            patch(
-                "allauth.socialaccount.adapter."
-                "DefaultSocialAccountAdapter.send_notification_mail",
-                side_effect=ConnectionRefusedError,
-            ),
-        ):
-            ProwlerSocialAccountAdapter().pre_social_login(request, sociallogin)
-
-        assert SocialAccount.objects.filter(
-            provider="google",
-            uid="verified-google-account-without-smtp",
-            user=create_test_user,
-        ).exists()
+        assert mail.outbox == []
 
     def test_pre_social_login_uses_verified_email_missing_from_extra_data(
         self, create_test_user, rf
@@ -367,7 +342,7 @@ class TestProwlerSocialAccountAdapter:
     def test_social_account_linking_settings_are_fail_closed(self):
         assert not socialaccount_app_settings.EMAIL_AUTHENTICATION
         assert not socialaccount_app_settings.EMAIL_AUTHENTICATION_AUTO_CONNECT
-        assert account_app_settings.EMAIL_NOTIFICATIONS
+        assert not account_app_settings.EMAIL_NOTIFICATIONS
 
     def test_save_user_social_with_invitation_joins_invited_tenant(
         self, rf, create_test_user, tenants_fixture
