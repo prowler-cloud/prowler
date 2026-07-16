@@ -32,7 +32,33 @@ describe("getAWSCredentialsTemplateLinks", () => {
     // Then
     expect(params.get("param_ExternalId")).toBe(externalId);
     expect(params.get("param_S3IntegrationBucketName")).toBe(bucketName);
+    expect(params.get("param_S3IntegrationBucketAccountId")).toBe(
+      "123456789012",
+    );
     expect(params.get("param_DeployStackSet")).toBeNull();
+  });
+
+  it("should omit S3 integration parameters when the bucket account id is missing", () => {
+    // Given - the template requires S3IntegrationBucketAccountId whenever
+    // EnableS3Integration is true, so an incomplete link would fail CFN
+    // validation. This is reachable from the edit-credentials flow, where the
+    // account id can resolve to an empty string.
+    const externalId = "tenant-id";
+    const bucketName = "my-findings-bucket";
+
+    // When
+    const links = getAWSCredentialsTemplateLinks(
+      externalId,
+      bucketName,
+      "amazon_s3",
+    );
+    const params = getQuickCreateParams(links.cloudformationQuickLink);
+
+    // Then
+    expect(params.get("param_ExternalId")).toBe(externalId);
+    expect(params.get("param_EnableS3Integration")).toBeNull();
+    expect(params.get("param_S3IntegrationBucketName")).toBeNull();
+    expect(params.get("param_S3IntegrationBucketAccountId")).toBeNull();
   });
 });
 

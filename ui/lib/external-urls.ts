@@ -170,18 +170,18 @@ export const getAWSCredentialsTemplateLinks = (
   }
 
   // The template requires S3IntegrationBucketAccountId (owner account of the
-  // bucket) whenever EnableS3Integration is true, so include it alongside the
-  // bucket name to avoid a stack validation error on the quick-create flow.
+  // bucket) whenever EnableS3Integration is true. Only enable S3 when both the
+  // bucket name and its account id are known, otherwise an incomplete link
+  // would fail stack validation on the quick-create flow (reachable from the
+  // edit-credentials flow, where the account id can resolve to an empty value).
   const parameters: Record<string, string> = {
     param_ExternalId: externalId,
   };
 
-  if (bucketName) {
+  if (bucketName && bucketAccountId) {
     parameters.param_EnableS3Integration = "true";
     parameters.param_S3IntegrationBucketName = bucketName;
-    if (bucketAccountId) {
-      parameters.param_S3IntegrationBucketAccountId = bucketAccountId;
-    }
+    parameters.param_S3IntegrationBucketAccountId = bucketAccountId;
   }
 
   return {
@@ -195,10 +195,11 @@ export const getAWSCredentialsTemplateLinks = (
 
 // Builds the CloudFormation quick-create link that onboards an entire AWS
 // Organization in a single stack: it creates the ProwlerScan role in the
-// management account (DeployLocalRole) and a service-managed StackSet that
-// rolls the role out to the member accounts under the given OU/root
-// (DeployStackSet). Set deployFromDelegatedAdmin when launching from a
-// delegated administrator account instead of the management account.
+// account launching the stack (DeployLocalRole) and a service-managed StackSet
+// that rolls the role out to the member accounts under the given OU/root
+// (DeployStackSet). By default the stack is launched from the management
+// account; set deployFromDelegatedAdmin when launching from a delegated
+// administrator account instead, where the local role lands in that account.
 export const getAWSOrgDeploymentQuickLink = ({
   externalId,
   organizationalUnitId,
