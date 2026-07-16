@@ -72,9 +72,9 @@
                 "group": "Prowler MCP",
                 "pages": [
                   "getting-started/products/prowler-mcp",
-                  "getting-started/installation/prowler-mcp",
                   "getting-started/basic-usage/prowler-mcp",
-                  "getting-started/basic-usage/prowler-mcp-tools"
+                  "getting-started/basic-usage/prowler-mcp-tools",
+                  "getting-started/installation/prowler-mcp"
                 ]
               },
               {

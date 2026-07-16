@@ -62,45 +62,52 @@ const ALLOWED_TOOLS = new Set([
   // === Prowler Docs Tools - read-only ===
   "prowler_docs_search",
   "prowler_docs_get_document",
-  // === Prowler App Tools - read-only ===
+  // === Prowler platform Tools - read-only ===
   // Findings
-  "prowler_app_search_security_findings",
-  "prowler_app_get_finding_details",
-  "prowler_app_get_findings_overview",
+  "prowler_search_security_findings",
+  "prowler_get_finding_details",
+  "prowler_get_findings_overview",
   // Finding Groups
-  "prowler_app_list_finding_groups",
-  "prowler_app_get_finding_group_details",
-  "prowler_app_list_finding_group_resources",
+  "prowler_list_finding_groups",
+  "prowler_get_finding_group_details",
+  "prowler_list_finding_group_resources",
   // Providers
-  "prowler_app_search_providers",
+  "prowler_search_providers",
   // Scans
-  "prowler_app_list_scans",
-  "prowler_app_get_scan",
+  "prowler_list_scans",
+  "prowler_get_scan",
   // Muting
-  "prowler_app_get_mutelist",
-  "prowler_app_list_mute_rules",
-  "prowler_app_get_mute_rule",
+  "prowler_get_mutelist",
+  "prowler_list_mute_rules",
+  "prowler_get_mute_rule",
   // Compliance
-  "prowler_app_get_compliance_overview",
-  "prowler_app_get_compliance_framework_state_details",
+  "prowler_get_compliance_overview",
+  "prowler_get_compliance_framework_state_details",
   // Resources
-  "prowler_app_list_resources",
-  "prowler_app_get_resource",
-  "prowler_app_get_resource_events",
-  "prowler_app_get_resources_overview",
+  "prowler_list_resources",
+  "prowler_get_resource",
+  "prowler_get_resource_events",
+  "prowler_get_resources_overview",
   // Attack Paths
-  "prowler_app_list_attack_paths_queries",
-  "prowler_app_list_attack_paths_scans",
-  "prowler_app_run_attack_paths_query",
-  "prowler_app_get_attack_paths_cartography_schema",
+  "prowler_list_attack_paths_queries",
+  "prowler_list_attack_paths_scans",
+  "prowler_run_attack_paths_query",
+  "prowler_get_attack_paths_cartography_schema",
 ]);
 
 /**
  * Check if a tool is allowed for LLM access.
  * Returns true only if the tool is explicitly in the whitelist.
+ *
+ * The Prowler platform tools were renamed from the `prowler_app_` prefix to
+ * `prowler_`. The legacy prefix is normalized here so tools served by
+ * an older MCP server (or a mismatched rollout) still resolve.
  */
 export function isAllowedTool(toolName: string): boolean {
-  return ALLOWED_TOOLS.has(toolName);
+  const normalized = toolName.startsWith("prowler_app_")
+    ? toolName.replace(/^prowler_app_/, "prowler_")
+    : toolName;
+  return ALLOWED_TOOLS.has(normalized);
 }
 
 /**

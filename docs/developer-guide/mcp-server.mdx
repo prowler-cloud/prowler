@@ -18,11 +18,15 @@ The Prowler MCP Server brings the entire Prowler ecosystem to AI assistants thro
 
 The server follows a modular architecture with three independent sub-servers:
 
-| Sub-Server | Auth Required | Description |
-|------------|---------------|-------------|
-| `prowler_app` | Yes | Full access to Prowler Cloud and Prowler Local Server features |
-| Prowler Hub | No | Security checks catalog with **over 2,000 checks**, fixers, and **70+ compliance frameworks** |
-| Prowler Documentation | No | Full-text search and retrieval of official documentation |
+| Sub-Server | Tool Prefix | Auth Required | Description |
+|------------|-------------|---------------|-------------|
+| Prowler | `prowler_` | Yes | Full access to Prowler Cloud, Prowler Private Cloud, and Prowler Local Server features |
+| Prowler Hub | `prowler_hub_` | No | Security checks catalog with **over 2,000 checks**, fixers, and **70+ compliance frameworks** |
+| Prowler Documentation | `prowler_docs_` | No | Full-text search and retrieval of official documentation |
+
+<Note>
+The core Prowler sub-server is served under the `prowler_` tool prefix, while its source lives in the `prowler_app/` module for historical reasons. Tool names use the prefix; import paths use the module.
+</Note>
 
 <Note>
 For a complete list of tools and their descriptions, see the [Tools Reference](/getting-started/basic-usage/prowler-mcp-tools).
@@ -413,7 +417,7 @@ uv run prowler-mcp
 uv run prowler-mcp --transport http --host 0.0.0.0 --port 8000
 
 # Run with environment variables
-PROWLER_APP_API_KEY="pk_xxx" uv run prowler-mcp
+PROWLER_API_KEY="pk_xxx" uv run prowler-mcp
 ```
 
 For complete installation and deployment options, see:

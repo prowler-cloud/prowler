@@ -25,7 +25,7 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 ## CRITICAL RULES
 
 ### Tool Implementation
-- ALWAYS: Extend `BaseTool` ABC for Prowler App tools (auto-registration)
+- ALWAYS: Extend `BaseTool` ABC for Prowler tools (auto-registration)
 - ALWAYS: Use `@mcp.tool()` decorator for Hub/Docs tools
 - NEVER: Manually register BaseTool subclasses
 - NEVER: Import tools directly in server.py
@@ -56,7 +56,7 @@ await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
 ### Tool Naming
 - `prowler_hub_*` - Catalog and compliance (no auth)
 - `prowler_docs_*` - Documentation search (no auth)
-- `prowler_app_*` - Cloud/App management (auth required)
+- `prowler_*` - Prowler Cloud, Private Cloud & Local Server management (auth required)
 
 ---
 

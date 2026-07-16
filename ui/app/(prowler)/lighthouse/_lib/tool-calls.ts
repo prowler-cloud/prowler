@@ -1,11 +1,14 @@
 import type { LighthouseV2ToolCallContent } from "@/app/(prowler)/lighthouse/_types";
 
 // Prefixes shared by the MCP-sourced tools; stripped for display so a name like
-// `prowler_app_search_security_findings` reads as "Search security findings".
+// `prowler_search_security_findings` reads as "Search security findings". The
+// specific prefixes are listed before the bare `prowler_` catch-all so Hub, Docs,
+// and legacy `prowler_app_` records match first and render cleanly.
 const TOOL_NAME_PREFIXES = [
-  "prowler_app_",
   "prowler_hub_",
   "prowler_docs_",
+  "prowler_app_",
+  "prowler_",
 ] as const;
 
 // Reads the snake_case TOOL_CALL blob the backend persists and normalizes it to

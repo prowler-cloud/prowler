@@ -19,15 +19,15 @@ def setup_main_server():
     except Exception as e:
         logger.error(f"Failed to mount Prowler Hub server: {e}")
 
-    # Mount Prowler App tools with prowler_app_ namespace
+    # Mount core Prowler tools with prowler_ namespace
     try:
-        logger.info("Mounting Prowler App server...")
+        logger.info("Mounting Prowler tools server...")
         from prowler_mcp_server.prowler_app.server import app_mcp_server
 
-        prowler_mcp_server.mount(app_mcp_server, namespace="prowler_app")
-        logger.info("Successfully mounted Prowler App server")
+        prowler_mcp_server.mount(app_mcp_server, namespace="prowler")
+        logger.info("Successfully mounted Prowler tools server")
     except Exception as e:
-        logger.error(f"Failed to mount Prowler App server: {e}")
+        logger.error(f"Failed to mount Prowler tools server: {e}")
 
     # Mount Prowler Documentation tools with prowler_docs_ namespace
     try:

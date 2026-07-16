@@ -59,7 +59,7 @@ You have access to THREE meta-tools to interact with the available tools and ski
    - Use empty object {} for tools with no parameters
    - You must always provide the toolName and toolInput keys in the JSON object
    - Example: execute_tool({ "toolName": "prowler_hub_list_providers", "toolInput": {} })
-   - Example: execute_tool({ "toolName": "prowler_app_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
+   - Example: execute_tool({ "toolName": "prowler_search_security_findings", "toolInput": { "severity": ["critical", "high"], "status": ["FAIL"] } })
 
 3. **load_skill** - Load specialized instructions for a complex task
    - Use when you identify a matching skill from the skill catalog below
