@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Button } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { Modal } from "@/components/shadcn/modal";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
@@ -42,15 +43,15 @@ interface FloatingMuteButtonProps {
 export const PROWLER_CLOUD_ONLY_TOOLTIP = "Available only in Prowler Cloud";
 
 const CloudFeatureBadgeLink = () => (
-  <a
-    href="https://prowler.com/pricing"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="bg-info/10 text-info rounded-full px-2 py-0.5 text-xs font-medium"
-    aria-label="Available in Prowler Cloud"
-  >
-    Cloud
-  </a>
+  <Badge variant="cloud" asChild>
+    <a
+      href="https://prowler.com/pricing"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      {PROWLER_CLOUD_ONLY_TOOLTIP}
+    </a>
+  </Badge>
 );
 
 export function FloatingMuteButton({
@@ -172,7 +173,7 @@ export function FloatingMuteButton({
                     className={
                       canSendToJira
                         ? "w-full justify-start"
-                        : "w-full justify-start pr-44"
+                        : "w-full justify-start pr-56"
                     }
                     aria-label="Send to Jira"
                     disabled={!canSendToJira}

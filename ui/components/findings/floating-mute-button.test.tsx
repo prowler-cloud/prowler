@@ -288,8 +288,9 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     expect(jiraButton).toBeVisible();
     expect(jiraButton).toBeDisabled();
     const cloudBadgeLink = screen.getByRole("link", {
-      name: "Available in Prowler Cloud",
+      name: "Available only in Prowler Cloud",
     });
+    expect(cloudBadgeLink).toHaveTextContent("Available only in Prowler Cloud");
     expect(cloudBadgeLink).toHaveAttribute(
       "href",
       "https://prowler.com/pricing",
