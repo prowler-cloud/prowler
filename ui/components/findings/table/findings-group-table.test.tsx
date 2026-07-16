@@ -318,6 +318,97 @@ describe("FindingsGroupTable", () => {
     });
   });
 
+  describe("expanded deep link", () => {
+    it("opens the matching drillable group from expandedCheckId", () => {
+      // Given
+      const data = [
+        { checkId: "check-a", resourcesTotal: 1 },
+        { checkId: "check-b", resourcesTotal: 1 },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-b"
+        />,
+      );
+
+      // Then
+      expect(
+        screen.getByRole("button", { name: "Select finding-1" }),
+      ).toBeInTheDocument();
+    });
+
+    it("ignores a missing expandedCheckId", () => {
+      // Given
+      const data = [
+        { checkId: "check-a", resourcesTotal: 1 },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-missing"
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("ignores a non-drillable expandedCheckId", () => {
+      // Given
+      const data = [
+        { checkId: "check-a", resourcesTotal: 0 },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-a"
+        />,
+      );
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("allows manual collapse after opening from expandedCheckId", async () => {
+      // Given
+      const user = userEvent.setup();
+      const data = [
+        { checkId: "check-a", resourcesTotal: 1 },
+      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+      render(
+        <FindingsGroupTable
+          data={data}
+          resolvedFilters={{}}
+          hasHistoricalData={false}
+          expandedCheckId="check-a"
+        />,
+      );
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
+
+      // Then
+      expect(
+        screen.queryByRole("button", { name: "Select finding-1" }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe("bulk Jira action", () => {
     it("should summarize group-only selections", async () => {
       // Given

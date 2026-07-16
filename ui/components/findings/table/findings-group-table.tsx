@@ -2,7 +2,7 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
@@ -78,6 +78,7 @@ interface FindingsGroupTableProps {
   metadata?: MetaDataProps;
   resolvedFilters: Record<string, string>;
   hasHistoricalData: boolean;
+  expandedCheckId?: string;
 }
 
 export function FindingsGroupTable({
@@ -85,6 +86,7 @@ export function FindingsGroupTable({
   metadata,
   resolvedFilters,
   hasHistoricalData,
+  expandedCheckId: requestedExpandedCheckId,
 }: FindingsGroupTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,6 +106,29 @@ export function FindingsGroupTable({
   const hasResourceSelection = resourceSelection.length > 0;
   const filters = resolvedFilters;
   const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
+
+  useEffect(() => {
+    if (!requestedExpandedCheckId) return;
+
+    const requestedGroup = safeData.find(
+      (group) => group.checkId === requestedExpandedCheckId,
+    );
+
+    if (!requestedGroup || !canDrillDownFindingGroup(requestedGroup)) {
+      setExpandedCheckId(null);
+      setExpandedGroup(null);
+      setResourceSearchInput("");
+      setResourceSearch("");
+      setResourceSelection([]);
+      return;
+    }
+
+    setExpandedCheckId(requestedExpandedCheckId);
+    setExpandedGroup(requestedGroup);
+    setResourceSearchInput("");
+    setResourceSearch("");
+    setResourceSelection([]);
+  }, [requestedExpandedCheckId, safeData]);
 
   // Exclude expanded group from group-level mutes when it has resource selections.
   const selectedCheckIds = Object.keys(rowSelection)

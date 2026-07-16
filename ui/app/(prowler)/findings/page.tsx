@@ -145,6 +145,10 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const expandedCheckIdParam = searchParams.expandedCheckId;
+  const expandedCheckId = Array.isArray(expandedCheckIdParam)
+    ? expandedCheckIdParam[0]
+    : expandedCheckIdParam;
 
   const { encodedSort } = extractSortAndKey(searchParams);
   const hasHistoricalData = hasDateOrScanFilter(filters);
@@ -178,6 +182,7 @@ const SSRDataTable = async ({
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
+        expandedCheckId={expandedCheckId}
       />
     </>
   );
