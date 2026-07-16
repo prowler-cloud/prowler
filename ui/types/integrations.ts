@@ -73,6 +73,8 @@ export interface JiraDispatchResponse {
         message?: string;
         created_count?: number;
         failed_count?: number;
+        failed_groups?: unknown[];
+        failed_batches?: unknown[];
         issue_url?: string;
         issue_key?: string;
       } | null;

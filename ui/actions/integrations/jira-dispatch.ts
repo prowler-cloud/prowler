@@ -19,6 +19,10 @@ const JIRA_DISPATCH_FILTER = {
 type JiraDispatchFilter =
   (typeof JIRA_DISPATCH_FILTER)[keyof typeof JIRA_DISPATCH_FILTER];
 
+type JiraTaskResult = NonNullable<
+  JiraDispatchResponse["data"]["attributes"]["result"]
+>;
+
 interface JiraDispatchInput {
   integrationId: string;
   targetIds: string[];
@@ -27,6 +31,28 @@ interface JiraDispatchInput {
   issueType: string;
   dispatchMode?: JiraDispatchMode;
 }
+
+const getArrayFailureCount = (value: unknown[] | undefined) =>
+  Array.isArray(value) ? value.length : 0;
+
+const getJiraDispatchFailedCount = (result: JiraTaskResult | undefined) => {
+  if (!result) return 0;
+  return Math.max(
+    result.failed_count ?? 0,
+    getArrayFailureCount(result.failed_groups),
+    getArrayFailureCount(result.failed_batches),
+  );
+};
+
+const buildJiraDispatchFailureMessage = (
+  result: JiraTaskResult | undefined,
+  failedCount: number,
+) => {
+  if (result?.error) return result.error;
+
+  const createdCount = result?.created_count ?? 0;
+  return `Jira dispatch completed with ${failedCount} failed and ${createdCount} created issue${createdCount === 1 ? "" : "s"}.`;
+};
 
 export const getJiraIssueTypes = async (
   integrationId: string,
@@ -198,28 +224,25 @@ export const pollJiraDispatchTask = async (
     return { success: false, error: res.error };
   }
   const { state, result } = res;
-  type JiraTaskResult = JiraDispatchResponse["data"]["attributes"]["result"];
-  const jiraResult = result as JiraTaskResult | undefined;
+  const jiraResult = (result ?? undefined) as JiraTaskResult | undefined;
 
   if (state === "completed") {
-    const failedCount = jiraResult?.failed_count ?? 0;
+    const failedCount = getJiraDispatchFailedCount(jiraResult);
     if (failedCount > 0) {
-      const createdCount = jiraResult?.created_count ?? 0;
       return {
         success: false,
-        error:
-          jiraResult?.error ||
-          `Jira dispatch completed with ${failedCount} failed and ${createdCount} created issue${createdCount === 1 ? "" : "s"}.`,
+        error: buildJiraDispatchFailureMessage(jiraResult, failedCount),
       };
     }
 
-    if (!jiraResult?.error) {
-      return { success: true, message: "Finding successfully sent to Jira!" };
+    if (jiraResult?.success === false || jiraResult?.error) {
+      return {
+        success: false,
+        error: jiraResult?.error || "Failed to create Jira issue.",
+      };
     }
-    return {
-      success: false,
-      error: jiraResult?.error || "Failed to create Jira issue.",
-    };
+
+    return { success: true, message: "Finding successfully sent to Jira!" };
   }
 
   if (state === "failed") {

@@ -103,4 +103,40 @@ describe("sendJiraDispatch", () => {
       error: "Jira dispatch completed with 1 failed and 2 created issues.",
     });
   });
+
+  it("should fail completed task polling when grouped dispatch reports failed groups", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: { created_count: 1, failed_groups: [{ check_id: "check-a" }] },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(result).toEqual({
+      success: false,
+      error: "Jira dispatch completed with 1 failed and 1 created issue.",
+    });
+  });
+
+  it("should succeed completed task polling when grouped dispatch reports no failed groups", async () => {
+    // Given
+    pollTaskUntilSettledMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: { created_count: 1, failed_groups: [] },
+    });
+
+    // When
+    const result = await pollJiraDispatchTask("task-1");
+
+    // Then
+    expect(result).toEqual({
+      success: true,
+      message: "Finding successfully sent to Jira!",
+    });
+  });
 });

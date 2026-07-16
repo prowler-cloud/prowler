@@ -213,6 +213,150 @@ describe("SendToJiraModal", () => {
     expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("finding-task");
   });
 
+  it("shows a success toast after individual Finding dispatch succeeds", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="finding-1"
+        findingTitle="Finding 1"
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        title: "Success!",
+        description: "Finding successfully sent to Jira!",
+      }),
+    );
+    expect(sendFindingToJiraMock).toHaveBeenCalledWith(
+      "jira-1",
+      "finding-1",
+      "SEC",
+      "Task",
+    );
+  });
+
+  it("shows a success toast after grouped Finding Group dispatch succeeds", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock.mockResolvedValueOnce({
+      success: true,
+      taskId: "group-task",
+      message: "Group started",
+    });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetIds={["check-a"]}
+        targetType="check_id"
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        title: "Success!",
+        description: "Finding successfully sent to Jira!",
+      }),
+    );
+    expect(sendJiraDispatchMock).toHaveBeenCalledWith({
+      integrationId: "jira-1",
+      targetIds: ["check-a"],
+      filter: "check_id",
+      projectKey: "SEC",
+      issueType: "Task",
+      dispatchMode: "grouped",
+    });
+  });
+
+  it("shows one success toast after mixed Group and Finding batches all succeed", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "group-task",
+        message: "Group started",
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "finding-task",
+        message: "Findings started",
+      });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetBatches={[
+          {
+            targetIds: ["check-a"],
+            targetType: "check_id",
+            dispatchMode: "grouped",
+          },
+          {
+            targetIds: ["finding-1", "finding-2"],
+            targetType: "finding_id",
+          },
+        ]}
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        title: "Success!",
+        description: "Finding successfully sent to Jira!",
+      }),
+    );
+    expect(toastMock).toHaveBeenCalledTimes(1);
+  });
+
   it("shows an error toast when Jira dispatch polling reports partial failures", async () => {
     // Given
     const user = userEvent.setup();
@@ -248,6 +392,79 @@ describe("SendToJiraModal", () => {
         description:
           "Jira dispatch completed with 1 failed and 2 created issues.",
       }),
+    );
+    expect(toastMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Success!" }),
+    );
+  });
+
+  it("shows an error toast when one mixed dispatch batch fails", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "group-task",
+        message: "Group started",
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "finding-task",
+        message: "Findings started",
+      });
+    pollJiraDispatchTaskMock
+      .mockResolvedValueOnce({
+        success: true,
+        message: "Finding successfully sent to Jira!",
+      })
+      .mockResolvedValueOnce({
+        success: false,
+        error: "Jira dispatch completed with 1 failed and 1 created issue.",
+      });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetBatches={[
+          {
+            targetIds: ["check-a"],
+            targetType: "check_id",
+            dispatchMode: "grouped",
+          },
+          {
+            targetIds: ["finding-1", "finding-2"],
+            targetType: "finding_id",
+          },
+        ]}
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Error",
+        description:
+          "Jira dispatch completed with 1 failed and 1 created issue.",
+      }),
+    );
+    expect(toastMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ title: "Success!" }),
     );
   });
 });
