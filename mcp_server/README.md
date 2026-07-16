@@ -6,9 +6,9 @@
 
 ## Key Capabilities
 
-### Prowler Cloud and Prowler App (Self-Managed)
+### Prowler Cloud, Prowler Private Cloud & Prowler Local Server
 
-Full access to Prowler Cloud platform and self-managed Prowler App for:
+Full access to your Prowler data (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server) for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Finding Groups Analysis**: Triage findings grouped by check ID and drill down into affected resources
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
@@ -49,7 +49,7 @@ For comprehensive guides and tutorials, see the official documentation:
 
 Prowler MCP Server can be used in three ways:
 
-### 1. Prowler Cloud MCP Server (Recommended)
+### 1. Hosted Prowler MCP (Recommended)
 
 **Use Prowler's managed MCP server at `https://mcp.prowler.com/mcp`**
 
@@ -126,7 +126,7 @@ For complete tool descriptions and parameters, see the [Tools Reference](https:/
 ### Tool Naming Convention
 
 All tools follow a consistent naming pattern with prefixes:
-- `prowler_app_*` - Prowler Cloud and App (Self-Managed) management tools
+- `prowler_*` - Prowler Cloud, Prowler Private Cloud & Prowler Local Server management tools
 - `prowler_hub_*` - Prowler Hub catalog and compliance tools
 - `prowler_docs_*` - Prowler documentation search and retrieval
 
@@ -146,7 +146,7 @@ prowler_mcp_server/
 
 **Key Features:**
 - **Modular Design**: Three independent sub-servers with prefixed namespacing
-- **Auto-Discovery**: Prowler App tools are automatically discovered and registered
+- **Auto-Discovery**: Prowler tools are automatically discovered and registered
 - **LLM Optimization**: Response models minimize token usage by excluding empty values
 - **Dual Transport**: Supports both STDIO (local) and HTTP (remote) modes
 
@@ -174,17 +174,17 @@ The Prowler MCP Server enables powerful workflows through AI assistants:
 
 ## Requirements
 
-**For Prowler Cloud MCP Server:**
-- Prowler Cloud account and API key (only for Prowler Cloud/App features)
+**For the hosted Prowler MCP:**
+- Prowler Cloud account and API key (only for Prowler features)
 
 **For self-hosted STDIO/HTTP Mode:**
 - Python 3.12+ or Docker
 - Network access to:
   - `https://hub.prowler.com` (for Prowler Hub)
   - `https://docs.prowler.com` (for Prowler Documentation)
-  - Prowler Cloud API or self-hosted Prowler App API (for Prowler Cloud/App features)
+  - Prowler Cloud API or Prowler Local Server API (for Prowler features)
 
-> **No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication. A Prowler API key is only required to access Prowler Cloud or Prowler App (Self-Managed) features.
+> **No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication. A Prowler API key is only required to access Prowler features (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server).
 
 ## Configuring MCP Hosts
 
@@ -200,7 +200,7 @@ For developers looking to extend the MCP server with new tools or features:
 ## Related Products
 
 - **[Prowler Hub](https://hub.prowler.com)**: Browse security checks and compliance frameworks
-- **[Prowler Cloud](https://cloud.prowler.com)**: Managed Prowler platform
+- **[Prowler Cloud](https://cloud.prowler.com)**: Fully managed Prowler in the cloud
 - **[Lighthouse AI](https://docs.prowler.com/getting-started/products/prowler-lighthouse-ai)**: AI security analyst
 
 ## License

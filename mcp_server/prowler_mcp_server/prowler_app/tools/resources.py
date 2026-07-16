@@ -1,4 +1,4 @@
-"""Cloud Resources tools for Prowler App MCP Server.
+"""Cloud Resources tools for Prowler MCP Server.
 
 This module provides tools for searching, viewing, and analyzing cloud resources
 across all providers.
@@ -86,7 +86,7 @@ class ResourcesTools(BaseTool):
 
         IMPORTANT: This tool returns LIGHTWEIGHT resource information. Use this for fast searching
         and filtering across many resources. For complete configuration details, metadata, and finding
-        relationships, use prowler_app_get_resource on specific resources of interest.
+        relationships, use prowler_get_resource on specific resources of interest.
 
         This is the primary tool for browsing resources with rich filtering capabilities.
         Returns current state by default (latest scan per provider). Specify dates to query
@@ -102,16 +102,16 @@ class ResourcesTools(BaseTool):
         - With dates: queries historical resource state (2-day maximum range between date_from and date_to)
 
         Each resource includes:
-        - Core identification: id (UUID for prowler_app_get_resource), uid, name
+        - Core identification: id (UUID for prowler_get_resource), uid, name
         - Location context: region, service, type
         - Security context: failed_findings_count (number of active security issues)
         - Tags: tags associated with the resource
 
         Useful Workflow:
         1. Use this tool to search and filter resources by provider, region, service, tags, etc.
-        2. Use prowler_app_get_resource with the resource 'id' to get complete configuration and metadata
-        3. Use prowler_app_search_security_findings to find security issues for specific resources
-        4. Use prowler_app_get_finding_details to get details about the security issues for specific resources
+        2. Use prowler_get_resource with the resource 'id' to get complete configuration and metadata
+        3. Use prowler_search_security_findings to find security issues for specific resources
+        4. Use prowler_get_finding_details to get details about the security issues for specific resources
         """
         # Validate page_size parameter
         self.api_client.validate_page_size(page_size)
@@ -177,15 +177,15 @@ class ResourcesTools(BaseTool):
     async def get_resource(
         self,
         resource_id: str = Field(
-            description="Prowler's internal UUID (v4) for the resource to retrieve, generated when the resource was discovered in the system. Use `prowler_app_list_resources` tool to find the right ID"
+            description="Prowler's internal UUID (v4) for the resource to retrieve, generated when the resource was discovered in the system. Use `prowler_list_resources` tool to find the right ID"
         ),
     ) -> dict[str, Any]:
         """Retrieve comprehensive details about a specific resource by its ID.
 
         IMPORTANT: This tool provides COMPLETE resource details with all available information.
-        Use this after finding a specific resource via prowler_app_list_resources.
+        Use this after finding a specific resource via prowler_list_resources.
 
-        This tool provides ALL information that prowler_app_list_resources returns PLUS:
+        This tool provides ALL information that prowler_list_resources returns PLUS:
 
         1. Configuration Details:
            - metadata: Provider-specific configuration (tags, policies, encryption settings, network rules)
@@ -197,12 +197,12 @@ class ResourcesTools(BaseTool):
 
         3. Security Relationships:
            - finding_ids: Prowler's internal UUIDs (v4) of all security findings associated with this resource
-           - Use prowler_app_get_finding_details on these IDs to get remediation guidance
+           - Use prowler_get_finding_details on these IDs to get remediation guidance
 
         Useful Workflow:
-        1. Use prowler_app_list_resources to browse and filter across many resources
+        1. Use prowler_list_resources to browse and filter across many resources
         2. Use this tool to drill down into specific resources of interest
-        3. Use prowler_app_get_finding_details to get details about the security issues for specific resources
+        3. Use prowler_get_finding_details to get details about the security issues for specific resources
         """
         params = {}
 
@@ -348,7 +348,7 @@ class ResourcesTools(BaseTool):
     async def get_resource_events(
         self,
         resource_id: str = Field(
-            description="Prowler's internal UUID (v4) for the resource. Use `prowler_app_list_resources` to find the right ID, or get it from a finding's resource relationship via `prowler_app_get_finding_details`."
+            description="Prowler's internal UUID (v4) for the resource. Use `prowler_list_resources` to find the right ID, or get it from a finding's resource relationship via `prowler_get_finding_details`."
         ),
         lookback_days: int = Field(
             default=90,
@@ -386,8 +386,8 @@ class ResourcesTools(BaseTool):
         - Identifying unauthorized or unexpected modifications
 
         Workflows:
-        1. Resource browsing: prowler_app_list_resources → find resource → this tool for event history
-        2. Incident investigation: prowler_app_get_finding_details → get resource ID from finding → this tool to identify who caused the issue, what they changed, and when
+        1. Resource browsing: prowler_list_resources → find resource → this tool for event history
+        2. Incident investigation: prowler_get_finding_details → get resource ID from finding → this tool to identify who caused the issue, what they changed, and when
         """
         params = {
             "lookback_days": lookback_days,

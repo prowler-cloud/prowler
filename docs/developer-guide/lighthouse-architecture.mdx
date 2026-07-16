@@ -132,7 +132,7 @@ The MCP client manages connections to the Prowler MCP Server using a singleton p
 
 - **Connection Management**: Retry logic with configurable attempts and delays
 - **Tool Discovery**: Fetches available tools from MCP server on initialization
-- **Authentication Injection**: Automatically adds JWT tokens to `prowler_app_*` tool calls
+- **Authentication Injection**: Automatically adds JWT tokens to `prowler_*` tool calls
 - **Reconnection**: Supports forced reconnection after server restarts
 
 Key constants:
@@ -141,10 +141,14 @@ Key constants:
 - `RECONNECT_INTERVAL_MS`: 5 minutes before retry after failure
 
 ```typescript
-// Authentication injection for prowler_app tools
+// Authentication injection for core prowler_ tools (Hub/Docs excluded)
 private handleBeforeToolCall = ({ name, args }) => {
-  // Only inject auth for prowler_app_* tools (user-specific data)
-  if (!name.startsWith("prowler_app_")) {
+  // Only inject auth for prowler_* tools (user-specific data).
+  // The legacy prowler_app_ prefix is also accepted for a resilient rollout.
+  if (
+    !name.startsWith("prowler_") &&
+    !name.startsWith("prowler_app_")
+  ) {
     return { args };
   }
 
@@ -307,7 +311,7 @@ MCP tools are organized into three namespaces based on authentication requiremen
 
 | Namespace | Auth Required | Description |
 |-----------|---------------|-------------|
-| `prowler_app_*` | Yes (JWT) | Prowler Cloud and Prowler Local Server tools for findings, providers, scans, resources |
+| `prowler_*` | Yes (JWT) | Prowler Cloud, Prowler Private Cloud, and Prowler Local Server tools for findings, providers, scans, resources |
 | `prowler_hub_*` | No | Security checks catalog, compliance frameworks |
 | `prowler_docs_*` | No | Documentation search and retrieval |
 
@@ -315,7 +319,7 @@ MCP tools are organized into three namespaces based on authentication requiremen
 
 1. User authenticates with Prowler Local Server, receiving a JWT token
 2. Token is stored in session and propagated via `authContextStorage`
-3. MCP client injects `Authorization: Bearer <token>` header for `prowler_app_*` calls
+3. MCP client injects `Authorization: Bearer <token>` header for `prowler_*` calls
 4. MCP Server validates token and applies RLS filtering
 
 ### Tool Execution Pattern
@@ -323,7 +327,7 @@ MCP tools are organized into three namespaces based on authentication requiremen
 The agent uses meta-tools rather than direct tool registration:
 
 ```
-Agent needs data → describe_tool("prowler_app_search_findings")
+Agent needs data → describe_tool("prowler_search_findings")
     → Returns parameter schema → execute_tool with parameters
     → MCP client adds auth header → MCP Server executes
     → Results returned to agent → Agent continues reasoning

@@ -1,29 +1,40 @@
 flowchart LR
-    subgraph HOSTS["MCP Hosts"]
+    subgraph HOSTS["MCP Clients"]
         chat["Chat Interfaces<br/>(Claude Desktop, LobeChat)"]
         ide["IDEs and Code Editors<br/>(Claude Code, Cursor)"]
         apps["Other AI Applications<br/>(5ire, custom agents)"]
     end
 
-    subgraph MCP["Prowler MCP Server"]
-        app_tools["prowler_app_* tools<br/>(JWT or API key auth)<br/>Findings · Providers · Scans<br/>Resources · Muting · Compliance<br/>Attack Paths"]
+    subgraph SERVERS["Prowler MCP Server"]
+        direction TB
+        cloud["☁️ Cloud MCP Server (Recommended)<br/>mcp.prowler.com/mcp · HTTP<br/>Managed by Prowler · always up to date<br/>Adds Cloud-only tools (Alerts,<br/>Scan Scheduling, Findings Triage)"]
+        local["💻 Local MCP Server<br/>Self-run · STDIO or HTTP<br/>Python 3.12+ or Docker<br/>You manage updates"]
+    end
+
+    subgraph TOOLS["Prowler MCP Tools"]
+        prowler_tools["prowler_* tools<br/>(API key or JWT auth)<br/>Findings · Providers · Scans<br/>Resources · Muting · Compliance<br/>Attack Paths"]
         hub_tools["prowler_hub_* tools<br/>(no auth)<br/>Checks Catalog · Check Code<br/>Fixers · Compliance Frameworks"]
         docs_tools["prowler_docs_* tools<br/>(no auth)<br/>Search · Document Retrieval"]
     end
 
-    api["Prowler API<br/>(REST)"]
+    api["Prowler API (REST)<br/>Cloud · Private Cloud · Local Server"]
     hub["hub.prowler.com<br/>(REST)"]
     docs["docs.prowler.com<br/>(Mintlify)"]
 
-    chat -->|STDIO or HTTP| app_tools
-    chat -->|STDIO or HTTP| hub_tools
-    chat -->|STDIO or HTTP| docs_tools
-    ide -->|STDIO or HTTP| app_tools
-    ide -->|STDIO or HTTP| hub_tools
-    ide -->|STDIO or HTTP| docs_tools
-    apps -->|STDIO or HTTP| app_tools
-    apps -->|STDIO or HTTP| hub_tools
-    apps -->|STDIO or HTTP| docs_tools
-    app_tools -->|REST| api
+    chat -->|HTTP| cloud
+    ide -->|HTTP| cloud
+    apps -->|HTTP| cloud
+    chat -->|STDIO or HTTP| local
+    ide -->|STDIO or HTTP| local
+    apps -->|STDIO or HTTP| local
+
+    cloud --> prowler_tools
+    cloud --> hub_tools
+    cloud --> docs_tools
+    local --> prowler_tools
+    local --> hub_tools
+    local --> docs_tools
+
+    prowler_tools -->|REST| api
     hub_tools -->|REST| hub
     docs_tools -->|REST| docs
