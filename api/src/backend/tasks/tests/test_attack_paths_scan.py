@@ -1,3 +1,4 @@
+import logging
 from contextlib import nullcontext
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
@@ -5,7 +6,9 @@ from unittest.mock import MagicMock, call, patch
 from uuid import uuid4
 
 import pytest
+from api.attack_paths.database import GraphDatabaseQueryException
 from api.db_utils import rls_transaction
+from api.exceptions import ProviderDeletedException
 from api.models import (
     AttackPathsScan,
     Finding,
@@ -250,6 +253,32 @@ class TestAttackPathsRun:
         mock_starting.assert_not_called()
         mock_create_db.assert_not_called()
 
+    @pytest.mark.parametrize(
+        ("ingestion_error", "temporary_database_missing"),
+        [
+            (RuntimeError("ingestion boom"), False),
+            (
+                GraphDatabaseQueryException(
+                    message="Graph not found: db-scan-id",
+                    code="Neo.ClientError.Database.DatabaseNotFound",
+                ),
+                True,
+            ),
+            (
+                GraphDatabaseQueryException(
+                    message="Graph not found: db-tenant-id",
+                    code="Neo.ClientError.Database.DatabaseNotFound",
+                ),
+                False,
+            ),
+        ],
+        ids=[
+            "regular-error",
+            "temporary-database-missing",
+            "sink-database-missing",
+        ],
+    )
+    @patch("tasks.jobs.attack_paths.scan.logger")
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
         return_value="Cartography failed: ingestion boom",
@@ -302,6 +331,9 @@ class TestAttackPathsRun:
         mock_drop_db,
         mock_event_loop,
         mock_stringify,
+        mock_logger,
+        ingestion_error,
+        temporary_database_missing,
         tenants_fixture,
         aws_provider,
         scans_fixture,
@@ -321,7 +353,11 @@ class TestAttackPathsRun:
         session_ctx = MagicMock()
         session_ctx.__enter__.return_value = mock_session
         session_ctx.__exit__.return_value = False
-        ingestion_fn = MagicMock(side_effect=RuntimeError("ingestion boom"))
+        ingestion_fn = MagicMock(side_effect=ingestion_error)
+        if temporary_database_missing:
+            mock_finish.side_effect = DatabaseError(
+                "Save with update_fields did not affect any rows"
+            )
 
         with (
             patch(
@@ -337,13 +373,28 @@ class TestAttackPathsRun:
                 return_value=ingestion_fn,
             ),
         ):
-            with pytest.raises(RuntimeError, match="ingestion boom"):
+            with pytest.raises(type(ingestion_error)):
                 attack_paths_run(str(tenant.id), str(scan.id), "task-456")
 
         failure_args = mock_finish.call_args[0]
         assert failure_args[0] is attack_paths_scan
         assert failure_args[1] == StateChoices.FAILED
         assert failure_args[2] == {"global_error": "Cartography failed: ingestion boom"}
+        mock_drop_db.assert_called_once_with("db-scan-id")
+        if temporary_database_missing:
+            mock_logger.warning.assert_any_call("Cartography failed: ingestion boom")
+            mock_logger.exception.assert_not_called()
+            mock_logger.log.assert_called_once_with(
+                logging.WARNING,
+                f"Could not mark Attack Paths scan {attack_paths_scan.id} as `FAILED` "
+                "(row may have been deleted): Save with update_fields did not affect "
+                "any rows",
+                exc_info=False,
+            )
+        else:
+            mock_logger.exception.assert_called_once_with(
+                "Cartography failed: ingestion boom"
+            )
 
     @patch(
         "tasks.jobs.attack_paths.scan.utils.stringify_exception",
@@ -1265,6 +1316,33 @@ class TestAttackPathsScanRLSTaskOnFailure:
 
         mock_fail.assert_called_once_with("t-1", "s-1", "boom")
 
+    def test_on_failure_logs_provider_deletion_as_warning(self):
+        from tasks.tasks import AttackPathsScanRLSTask
+
+        task = AttackPathsScanRLSTask()
+        error = ProviderDeletedException("provider deleted")
+
+        with (
+            patch("tasks.tasks.logger") as mock_logger,
+            patch(
+                "tasks.tasks.attack_paths_db_utils.fail_attack_paths_scan"
+            ) as mock_fail,
+        ):
+            task.on_failure(
+                exc=error,
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_logger.warning.assert_called_once_with(
+            "Attack paths scan task task-abc stopped because its provider or tenant "
+            "was deleted: provider deleted"
+        )
+        mock_logger.error.assert_not_called()
+        mock_fail.assert_called_once_with("t-1", "s-1", "provider deleted")
+
     def test_on_failure_skips_when_missing_kwargs(self):
         from tasks.tasks import AttackPathsScanRLSTask
 
@@ -1896,7 +1974,7 @@ class TestSyncNodes:
         mock_source_1.run.return_value = [row]
         mock_source_2 = MagicMock()
         mock_source_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
@@ -1933,7 +2011,7 @@ class TestSyncNodes:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
         sink.write_nodes.side_effect = lambda *_a, **_kw: call_order.append(
             "sink:write"
         )
@@ -1969,18 +2047,15 @@ class TestSyncNodes:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                    _make_session_ctx(src_3),
-                ],
-            ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+                _make_session_ctx(src_3),
+            ],
         ):
             result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
@@ -2009,17 +2084,14 @@ class TestSyncNodes:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=2)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                ],
-            ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+            ],
         ):
             result = sync_module.sync_nodes(
                 "src", "tgt", "t-1", "p-1", sink, normalized_lists
@@ -2037,7 +2109,7 @@ class TestSyncNodes:
     def test_sync_nodes_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
@@ -2066,7 +2138,7 @@ class TestSyncRelationships:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
         sink.write_relationships.side_effect = lambda *_a, **_kw: call_order.append(
             "sink:write"
         )
@@ -2104,18 +2176,15 @@ class TestSyncRelationships:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                    _make_session_ctx(src_3),
-                ],
-            ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 1),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+                _make_session_ctx(src_3),
+            ],
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
@@ -2140,17 +2209,14 @@ class TestSyncRelationships:
         src_1.run.return_value = rows
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=2)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                ],
-            ),
-            patch("tasks.jobs.attack_paths.sync.SYNC_BATCH_SIZE", 2),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+            ],
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
@@ -2163,7 +2229,7 @@ class TestSyncRelationships:
     def test_sync_relationships_empty_source_returns_zero(self):
         src = MagicMock()
         src.run.return_value = []
-        sink = MagicMock()
+        sink = MagicMock(sync_batch_size=1000)
 
         with patch(
             "tasks.jobs.attack_paths.sync.graph_database.get_session",
@@ -3055,6 +3121,61 @@ class TestCleanupStaleAttackPathsScans:
 
         ap_scan.refresh_from_db()
         assert ap_scan.state == StateChoices.FAILED
+
+    @pytest.mark.parametrize(
+        ("age_seconds", "should_clean"),
+        [
+            (960 * 60 - 1, False),
+            (960 * 60, False),
+            (960 * 60 + 1, True),
+        ],
+    )
+    @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
+    @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
+    @patch(
+        "tasks.jobs.attack_paths.cleanup.rls_transaction",
+        new=lambda *args, **kwargs: nullcontext(),
+    )
+    @patch("tasks.jobs.attack_paths.cleanup._revoke_task")
+    @patch("tasks.jobs.attack_paths.cleanup._ping_workers")
+    def test_stale_threshold_boundary_is_strict(
+        self,
+        mock_ping,
+        mock_revoke,
+        mock_drop_db,
+        mock_recover,
+        age_seconds,
+        should_clean,
+        tenants_fixture,
+        aws_provider,
+    ):
+        from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
+
+        now = datetime.now(tz=UTC)
+        ap_scan, task_result = self._create_executing_scan(
+            tenants_fixture[0],
+            aws_provider,
+            started_at=now - timedelta(seconds=age_seconds),
+            worker="live-worker@host",
+        )
+        mock_ping.return_value = ({"live-worker@host"}, set())
+
+        with patch("tasks.jobs.attack_paths.cleanup.datetime") as mock_datetime:
+            mock_datetime.now.return_value = now
+            result = cleanup_stale_attack_paths_scans()
+
+        assert result["cleaned_up_count"] == int(should_clean)
+        ap_scan.refresh_from_db()
+        expected_state = StateChoices.FAILED if should_clean else StateChoices.EXECUTING
+        assert ap_scan.state == expected_state
+        if should_clean:
+            mock_revoke.assert_called_once_with(task_result, terminate=True)
+            mock_drop_db.assert_called_once()
+            mock_recover.assert_called_once()
+        else:
+            mock_revoke.assert_not_called()
+            mock_drop_db.assert_not_called()
+            mock_recover.assert_not_called()
 
     @patch("tasks.jobs.attack_paths.cleanup.recover_graph_data_ready")
     @patch("tasks.jobs.attack_paths.cleanup.graph_database.drop_database")
