@@ -150,7 +150,6 @@ export default defineConfig(() => {
         "@react-aria/visually-hidden",
         "modern-screenshot",
         "framer-motion",
-        "vaul",
         "cmdk",
         "react-markdown",
         "jwt-decode",
