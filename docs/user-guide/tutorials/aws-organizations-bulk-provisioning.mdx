@@ -272,6 +272,8 @@ python aws_org_generator.py \
     4. Deploy to all organizational units
     5. Use a unique external ID (e.g., `prowler-org-2024-abc123`)
 
+    Alternatively, deploy the same template as a **single stack** with `DeployStackSet=true` and `AWSOrganizationalUnitId` set to your root/OU ID — it creates the StackSet for you. See [Native CloudFormation StackSet Deployment](../providers/aws/organizations#native-cloudformation-stackset-deployment-recommended).
+
     {/* TODO: Add screenshot of CloudFormation StackSets deployment */}
   </Step>
 
