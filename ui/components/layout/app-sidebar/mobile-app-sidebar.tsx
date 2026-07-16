@@ -35,7 +35,9 @@ export function MobileAppSidebar() {
           variant="bare"
           size="icon-sm"
           aria-label="Open menu"
-          className={cn("lg:hidden", open && "invisible")}
+          // min-[64rem] (not lg:): inside <main>, lg is a container query and
+          // the side panel squeezing the page would surface the mobile menu.
+          className={cn("min-[64rem]:hidden", open && "invisible")}
         >
           <MenuIcon aria-hidden="true" className="size-5" />
         </Button>
