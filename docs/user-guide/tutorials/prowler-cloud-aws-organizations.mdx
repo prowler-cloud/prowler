@@ -282,7 +282,7 @@ Click **Next** to proceed to the authentication phase.
 
 ## Step 4: Authenticate with Your Management Account
 
-The wizard's **Authentication Details** page guides you through three actions: deploying the roles in AWS, entering the management account Role ARN, and confirming the deployment.
+The wizard's **Authentication Details** page guides you through three actions: deploying the roles in AWS, entering the deployment account Role ARN, and confirming the deployment. The deployment account is either the management account or, when delegated administrator mode is selected, the delegated administrator account.
 
 ### External ID
 
@@ -290,13 +290,15 @@ The wizard displays a **Prowler External ID** at the top — auto-generated and 
 
 ### Deploy the Roles
 
-The wizard deploys the management account role and the member-account StackSet in a **single** CloudFormation Stack:
+<VersionBadge version="5.35.0" />
+
+The wizard deploys the deployment account role and the member-account StackSet in a **single** CloudFormation Stack:
 
 1. **Organizational Unit or Root ID** — enter the AWS OU (`ou-xxxx-yyyyyyyy`) or organization root (`r-xxxx`) you want to onboard. Prowler rolls the ProwlerScan role out to every member account under this target. Find it in the [AWS Organizations Console](https://console.aws.amazon.com/organizations/); use the **root ID** (`r-`) to cover the entire organization or an **OU ID** (`ou-`) to target a specific unit.
 
 2. *(Optional)* Check **"I'm deploying from a delegated administrator account"** if you launch the stack from a delegated administrator account instead of the management account.
 
-3. **Create Stack in Management Account** — opens a Quick Create link that deploys, in a single stack: the ProwlerScan role in your management account (`DeployLocalRole`, with `EnableOrganizations=true`) **and** a service-managed StackSet (`DeployStackSet`) that rolls the role out to your member accounts. The External ID, OU/Root ID, and deployment options are pre-filled.
+3. **Create Stack in Management Account** — or **Create Stack in Delegated Administrator Account** when delegated administrator mode is selected — opens a Quick Create link that deploys, in a single stack: the ProwlerScan role in the account where you launch the stack (`DeployLocalRole`, with `EnableOrganizations=true`) **and** a service-managed StackSet (`DeployStackSet`) that rolls the role out to your member accounts. The External ID, OU/Root ID, and deployment options are pre-filled.
 
 <Tip>
 **Finding your Organizational Unit or Root ID.** In the [AWS Organizations Console](https://console.aws.amazon.com/organizations/) the root (`r-…`) and OU (`ou-…`) IDs appear in the account tree, or run these from your management account:
@@ -314,12 +316,12 @@ If you deploy the CloudFormation template manually (instead of via the wizard li
 </Tip>
 
 <Frame>
-  <img src="/images/organizations/authentication-details.png" alt="Authentication Details form showing External ID, Organizational Unit or Root ID field, delegated administrator checkbox, the Create Stack in Management Account button, Management Account Role ARN field, and deployment confirmation checkbox" />
+  <img src="/images/organizations/authentication-details.png" alt="Authentication Details form showing External ID, Organizational Unit or Root ID field, delegated administrator checkbox, deployment account stack button, deployment account Role ARN field, and deployment confirmation checkbox" />
 </Frame>
 
-### Enter the Management Account Role ARN
+### Enter the Deployment Account Role ARN
 
-Paste the **Role ARN** of the management account role — created by the single stack above, or beforehand in [Step 1](#step-1-create-the-management-account-role) — into the **Management Account Role ARN** field.
+Paste the **Role ARN** created by the single stack above into the **Management Account Role ARN** field or, when delegated administrator mode is selected, the **Delegated Administrator Account Role ARN** field. If you deployed the management account role beforehand, use the role created in [Step 1](#step-1-create-the-management-account-role).
 
 The ARN follows this format:
 ```
@@ -329,7 +331,7 @@ arn:aws:iam::<account-id>:role/ProwlerScan
 For example: `arn:aws:iam::123456789012:role/ProwlerScan`
 
 <Frame>
-  <img src="/images/organizations/role-arn-field.png" alt="Management Account Role ARN field in the Authentication Details form" />
+  <img src="/images/organizations/role-arn-field.png" alt="Deployment account Role ARN field in the Authentication Details form" />
 </Frame>
 
 ### Confirm and Discover

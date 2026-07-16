@@ -2,6 +2,8 @@
 title: 'AWS Organizations in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 <Info>
 **Using Prowler Cloud?** You can onboard your entire AWS Organization through the UI with automatic account discovery, OU-aware tree selection, and bulk connection testing — no scripts or YAML files required.
 
@@ -70,6 +72,8 @@ The additional fields in CSV header output are as follows:
 - ACCOUNT\_DETAILS\_TAGS
 
 ## Deploying Prowler IAM Roles Across AWS Organizations
+
+<VersionBadge version="5.35.0" />
 
 When onboarding multiple AWS accounts into Prowler Cloud, it is important to deploy the Prowler Scan IAM Role in each account. The most efficient way to do this across an AWS Organization is by leveraging AWS CloudFormation StackSets, which rolls out infrastructure—like IAM roles—to all accounts centrally from the Management or Delegated Admin account.
 
