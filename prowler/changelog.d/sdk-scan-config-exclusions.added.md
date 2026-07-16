@@ -1,1 +1,1 @@
-`excluded_checks` and `excluded_services` fields on the shared provider configuration schema, plus a strict `validate_and_normalize_scan_config` contract that returns a normalized JSON-serializable payload for the Prowler App backend to persist
+`excluded_checks` and `excluded_services` in scan configurations to narrow the execution scope
