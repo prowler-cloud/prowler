@@ -1,3 +1,7 @@
+import logging
+
+from allauth.account.models import EmailAddress
+from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
@@ -11,6 +15,9 @@ from api.models import (
 )
 from api.utils import accept_invitation_for_user
 from django.db import transaction
+from django.http import HttpResponseForbidden
+
+logger = logging.getLogger(__name__)
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -38,8 +45,13 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         return None
 
     def pre_social_login(self, request, sociallogin):
-        # Link existing accounts with the same email address
-        email = sociallogin.account.extra_data.get("email")
+        # The provider account is already bound, so no email-based linking is needed.
+        if sociallogin.account.pk:
+            return
+
+        # Prefer the normalized email populated by allauth. GitHub can return the
+        # primary email separately from the profile stored in extra_data.
+        email = sociallogin.user.email or sociallogin.account.extra_data.get("email")
         if sociallogin.provider.id == "saml":
             # For SAML, the asserted NameID email cannot be trusted on its own:
             # any tenant can claim any email domain in its SAML configuration. To
@@ -80,7 +92,24 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
         if email:
             existing_user = self.get_user_by_email(email)
             if existing_user:
+                email_is_verified = EmailAddress.objects.filter(
+                    user=existing_user,
+                    email__iexact=email,
+                    verified=True,
+                ).exists()
+                provider_verified_email = any(
+                    address.verified and address.email.casefold() == email.casefold()
+                    for address in sociallogin.email_addresses
+                )
+                if not email_is_verified or not provider_verified_email:
+                    raise ImmediateHttpResponse(HttpResponseForbidden())
                 sociallogin.connect(request, existing_user)
+
+    def send_notification_mail(self, *args, **kwargs):
+        try:
+            return super().send_notification_mail(*args, **kwargs)
+        except OSError:
+            logger.exception("Failed to send social account connection notification")
 
     def save_user(self, request, sociallogin, form=None):
         """
