@@ -25,6 +25,7 @@ import {
   hasDateOrScanFilter,
 } from "@/lib";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
+import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
@@ -89,7 +90,7 @@ export default async function Findings({
     completedScans || [],
     providersData,
   ) as { [uid: string]: ScanEntity }[];
-  const alertsEnabled = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const alertsEnabled = isCloud();
 
   return (
     <ContentLayout

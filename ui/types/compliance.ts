@@ -1,3 +1,5 @@
+import type { ProviderType } from "./providers";
+
 export const REQUIREMENT_STATUS = {
   PASS: "PASS",
   FAIL: "FAIL",
@@ -47,6 +49,10 @@ export interface Requirement {
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
+
+/** Check id → provider types it belongs to, for provider-labeled check
+ *  lists in the cross-provider view (a check can exist in several). */
+export type CheckProviderTypesMap = Partial<Record<string, ProviderType[]>>;
 
 export interface Control {
   label: string;
@@ -127,7 +133,7 @@ export interface ISO27001AttributesMetadata {
 export interface CISAttributesMetadata {
   Section: string;
   SubSection: string | null;
-  Profile: string; // "Level 1" or "Level 2"
+  Profile: string; // "Level 1"/"Level 2" (M365 prefixes the tier: "E3 Level 1", "E5 Level 2")
   AssessmentStatus: string; // "Manual" or "Automated"
   Description: string;
   RationaleStatement: string;

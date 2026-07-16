@@ -2,7 +2,13 @@ import type { LighthouseV2Configuration } from "@/app/(prowler)/lighthouse/_type
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
 import type { ServerActionResult } from "@/types/server-actions";
 
-export const LIGHTHOUSE_OVERVIEW_BANNER_HREF = LIGHTHOUSE_ROUTE;
+export const LIGHTHOUSE_OVERVIEW_PROMPT =
+  "Find and guide me to remediate which actually matters. What do I have to do today to be secure?";
+
+export const LIGHTHOUSE_OVERVIEW_BANNER_HREF = {
+  CHAT: `${LIGHTHOUSE_ROUTE.CHAT}?prompt=${encodeURIComponent(LIGHTHOUSE_OVERVIEW_PROMPT)}`,
+  SETTINGS: LIGHTHOUSE_ROUTE.SETTINGS,
+} as const;
 
 export type LighthouseOverviewBannerHref =
   (typeof LIGHTHOUSE_OVERVIEW_BANNER_HREF)[keyof typeof LIGHTHOUSE_OVERVIEW_BANNER_HREF];

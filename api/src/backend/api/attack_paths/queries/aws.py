@@ -418,7 +418,8 @@ AWS_APPRUNNER_PRIVESC_UPDATE_SERVICE = AttackPathsQueryDefinition(
         // Find existing App Runner services with roles attached (potential targets)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'tasks.apprunner.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -523,7 +524,8 @@ AWS_BEDROCK_PRIVESC_INVOKE_CODE_INTERPRETER = AttackPathsQueryDefinition(
         // Find roles that trust the Bedrock AgentCore service (already attached to existing code interpreters)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'bedrock-agentcore.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -607,7 +609,8 @@ AWS_CLOUDFORMATION_PRIVESC_UPDATE_STACK = AttackPathsQueryDefinition(
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -753,7 +756,8 @@ AWS_CLOUDFORMATION_PRIVESC_CHANGESET = AttackPathsQueryDefinition(
         // Find roles that trust CloudFormation service (already attached to existing stacks)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'cloudformation.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -844,7 +848,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD = AttackPathsQueryDefinition(
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -880,7 +885,8 @@ AWS_CODEBUILD_PRIVESC_START_BUILD_BATCH = AttackPathsQueryDefinition(
         // Find roles that trust CodeBuild service (already attached to existing projects)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'codebuild.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1096,7 +1102,8 @@ AWS_EC2_PRIVESC_MODIFY_INSTANCE_ATTRIBUTE = AttackPathsQueryDefinition(
         // Find EC2 instances with instance profiles (potential targets)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1187,7 +1194,8 @@ AWS_EC2_PRIVESC_LAUNCH_TEMPLATE = AttackPathsQueryDefinition(
         // Find launch templates in the account (potential targets)
         MATCH path_target = (aws)--(template:LaunchTemplate)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1223,7 +1231,8 @@ AWS_EC2INSTANCECONNECT_PRIVESC_SEND_SSH_PUBLIC_KEY = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1539,7 +1548,8 @@ AWS_ECS_PRIVESC_EXECUTE_COMMAND = AttackPathsQueryDefinition(
         // Target: roles already attached to running tasks (trust ECS tasks service)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'ecs-tasks.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -1622,7 +1632,8 @@ AWS_GLUE_PRIVESC_UPDATE_DEV_ENDPOINT = AttackPathsQueryDefinition(
         // Find roles that trust Glue service (already attached to existing dev endpoints)
         MATCH path_target = (aws)--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(:AWSPrincipal {{arn: 'glue.amazonaws.com'}})
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -3337,7 +3348,8 @@ AWS_SSM_PRIVESC_START_SESSION = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 
@@ -3373,7 +3385,8 @@ AWS_SSM_PRIVESC_SEND_COMMAND = AttackPathsQueryDefinition(
         // Find EC2 instances with attached roles (targets for credential theft via IMDS)
         MATCH path_target = (aws)--(ec2:EC2Instance)-[:STS_ASSUMEROLE_ALLOW]->(target_role:AWSRole)
 
-        WITH principal_paths + collect(DISTINCT path_target) AS paths
+        WITH principal_paths, collect(DISTINCT path_target) AS target_paths
+        WITH principal_paths + target_paths AS paths
         UNWIND paths AS p
         UNWIND nodes(p) AS n
 

@@ -39,6 +39,7 @@ import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { isConfigurableProvider } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -308,14 +309,20 @@ export function DataTableRowActions({
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
-  const providerType = provider?.attributes.provider ?? "aws";
+  const providerType = provider?.attributes.provider ?? "";
+  // Only predefined providers can be managed from the UI
+  const canManageProvider = isConfigurableProvider(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
   const isCloudProvider = isCloud() && Boolean(provider);
+  // Dynamic providers have no config.yaml baseline, so a Scan Configuration
+  // can't apply to them — hide the action entirely.
+  const isDynamicProvider = Boolean(provider?.attributes.is_dynamic);
   const canManageScanConfig =
     isCloudProvider &&
+    !isDynamicProvider &&
     scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE;
   const scheduleProvider: ScanScheduleProvider | undefined = provider
     ? {
@@ -583,11 +590,13 @@ export function DataTableRowActions({
       )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
-          <ActionDropdownItem
-            icon={<Pencil />}
-            label="Edit Provider Alias"
-            onSelect={() => setIsEditOpen(true)}
-          />
+          {canManageProvider && (
+            <ActionDropdownItem
+              icon={<Pencil />}
+              label="Edit Provider Alias"
+              onSelect={() => setIsEditOpen(true)}
+            />
+          )}
           <ActionDropdownItem
             icon={<Timer />}
             label="View Scan Jobs"
@@ -616,6 +625,7 @@ export function DataTableRowActions({
             />
           )}
           {isCloudProvider &&
+            !isDynamicProvider &&
             scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE && (
               <ActionDropdownItem
                 icon={<SlidersHorizontal />}
@@ -624,22 +634,24 @@ export function DataTableRowActions({
                 disabled
               />
             )}
-          <ActionDropdownItem
-            icon={<KeyRound />}
-            label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            onSelect={() =>
-              onOpenProviderWizard({
-                providerId,
-                providerType,
-                providerUid,
-                providerAlias,
-                secretId: providerSecretId,
-                mode: providerSecretId
-                  ? PROVIDER_WIZARD_MODE.UPDATE
-                  : PROVIDER_WIZARD_MODE.ADD,
-              })
-            }
-          />
+          {canManageProvider && (
+            <ActionDropdownItem
+              icon={<KeyRound />}
+              label={hasSecret ? "Update Credentials" : "Add Credentials"}
+              onSelect={() =>
+                onOpenProviderWizard({
+                  providerId,
+                  providerType,
+                  providerUid,
+                  providerAlias,
+                  secretId: providerSecretId,
+                  mode: providerSecretId
+                    ? PROVIDER_WIZARD_MODE.UPDATE
+                    : PROVIDER_WIZARD_MODE.ADD,
+                })
+              }
+            />
+          )}
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : "Test Connection"}
@@ -649,14 +661,16 @@ export function DataTableRowActions({
             }}
             disabled={!hasSecret || loading}
           />
-          <ActionDropdownDangerZone>
-            <ActionDropdownItem
-              icon={<Trash2 />}
-              label="Delete Provider"
-              destructive
-              onSelect={() => setIsDeleteOpen(true)}
-            />
-          </ActionDropdownDangerZone>
+          {canManageProvider && (
+            <ActionDropdownDangerZone>
+              <ActionDropdownItem
+                icon={<Trash2 />}
+                label="Delete Provider"
+                destructive
+                onSelect={() => setIsDeleteOpen(true)}
+              />
+            </ActionDropdownDangerZone>
+          )}
         </ActionDropdown>
       </div>
     </>

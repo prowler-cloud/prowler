@@ -4,6 +4,46 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.35.0] (Prowler v5.34.0)
+
+### 🐞 Fixed
+
+- `rls_transaction` now falls back directly to the primary DB for connection-level mid-query read replica failures via `execute_wrapper`, reducing non-streaming read crashes during replica recovery [(#10379)](https://github.com/prowler-cloud/prowler/pull/10379)
+- RBAC permission gates now combine permissions from every role assigned to a user in the active tenant [(#11979)](https://github.com/prowler-cloud/prowler/pull/11979)
+- `attack-paths-cleanup-stale-scans` now retries worker pings and checks recent scan activity before failing scans and removing temporary databases [(#11986)](https://github.com/prowler-cloud/prowler/pull/11986)
+
+### 🔐 Security
+
+- User role relationship updates are limited to the active tenant to preserve role assignments in other tenants [(#11903)](https://github.com/prowler-cloud/prowler/pull/11903)
+- `api` container image removes the unused Debian `libxml2` runtime package and scopes the `CVE-2026-13221` Trivy exception to unaffected Perl 5.36 packages [(#11991)](https://github.com/prowler-cloud/prowler/pull/11991)
+
+---
+
+## [1.34.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- Attack Paths graph mutations now retry transient Neptune concurrency and deadline failures, while Neo4j mutations use managed transaction retries [(#11968)](https://github.com/prowler-cloud/prowler/pull/11968)
+- Attack Paths scans now use bounded child node identifiers for normalized list values in Neo4j and Neptune, preventing Neo4j RANGE index key size failures [(#11969)](https://github.com/prowler-cloud/prowler/pull/11969)
+- `scan-summary` aggregation now upserts summaries in deterministic conflict-key order, preventing PostgreSQL deadlocks during concurrent reaggregation [(#11971)](https://github.com/prowler-cloud/prowler/pull/11971)
+
+---
+
+## [1.34.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- Session tokens are rejected after account password updates [(#11914)](https://github.com/prowler-cloud/prowler/pull/11914)
+- Jira dispatch task results now surface user-facing Jira failure messages [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- AWS Attack Paths privilege escalation queries no longer fail on Neo4j with `Aggregation column contains implicit grouping expressions` [(#11939)](https://github.com/prowler-cloud/prowler/pull/11939)
+
+### 🔐 Security
+
+- OpenAI-compatible Lighthouse provider base URLs are restricted before connection checks [(#11940)](https://github.com/prowler-cloud/prowler/pull/11940)
+- `LIGHTHOUSE_AI_OPENAI_COMPATIBLE_ALLOWED_HOSTS` environment variable to allow internal hosts as OpenAI-compatible Lighthouse AI base URLs [(#11942)](https://github.com/prowler-cloud/prowler/pull/11942)
+
+---
+
 ## [1.34.0] (Prowler v5.33.0)
 
 ### 🚀 Added

@@ -51,6 +51,39 @@ class JiraConnection(Connection):
     issue_types: dict = None
 
 
+def _format_jira_issue_creation_error(response_json: object, status_code: int) -> str:
+    """Build a safe Jira issue creation error message from structured fields.
+
+    Args:
+        response_json: Parsed Jira response body.
+        status_code: HTTP status code returned by Jira.
+
+    Returns:
+        Safe issue creation error message for user-facing propagation.
+    """
+    message_parts = []
+
+    if not isinstance(response_json, dict):
+        return f"Failed to create Jira issue: Jira returned status code {status_code}."
+
+    errors = response_json.get("errors")
+    if isinstance(errors, dict):
+        message_parts.extend(
+            f"'{field}': '{message}'" for field, message in errors.items() if message
+        )
+
+    error_messages = response_json.get("errorMessages")
+    if isinstance(error_messages, list):
+        message_parts.extend(str(message) for message in error_messages if message)
+    elif isinstance(error_messages, str) and error_messages:
+        message_parts.append(error_messages)
+
+    if message_parts:
+        return f"Failed to create Jira issue: {'; '.join(message_parts)}"
+
+    return f"Failed to create Jira issue: Jira returned status code {status_code}."
+
+
 class MarkdownToADFConverter:
     """Helper to convert Markdown strings into Atlassian Document Format blocks."""
 
@@ -2060,6 +2093,7 @@ class Jira:
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
             - JiraRefreshTokenResponseError: Failed to refresh the access token, response code did not match 200
+            - JiraNoTokenError: Failed to get an access token
             - JiraCreateIssueError: Failed to create an issue in Jira
             - JiraSendFindingsResponseError: Failed to send the finding to Jira
             - JiraRequiredCustomFieldsError: Jira project requires custom fields that are not supported
@@ -2155,31 +2189,45 @@ class Jira:
                 try:
                     response_json = response.json()
                 except (ValueError, requests.exceptions.JSONDecodeError):
-                    response_error = f"Failed to send finding: {response.status_code} - {response.text}"
+                    response_error = _format_jira_issue_creation_error(
+                        {}, response.status_code
+                    )
                     logger.error(response_error)
-                    return False
+                    raise JiraSendFindingsResponseError(
+                        message=response_error, file=os.path.basename(__file__)
+                    )
 
                 # Check if the error is due to required custom fields
-                if response.status_code == 400 and "errors" in response_json:
+                if (
+                    response.status_code == 400
+                    and isinstance(response_json, dict)
+                    and "errors" in response_json
+                ):
                     errors = response_json.get("errors", {})
                     # Look for custom field errors (fields starting with "customfield_")
-                    custom_field_errors = {
-                        k: v for k, v in errors.items() if k.startswith("customfield_")
-                    }
+                    custom_field_errors = {}
+                    if isinstance(errors, dict):
+                        custom_field_errors = {
+                            k: v
+                            for k, v in errors.items()
+                            if k.startswith("customfield_")
+                        }
                     if custom_field_errors:
                         custom_fields_formatted = ", ".join(
                             [f"'{k}': '{v}'" for k, v in custom_field_errors.items()]
                         )
-                        logger.error(
-                            f"Jira project requires custom fields that are not supported: {custom_fields_formatted}"
+                        raise JiraRequiredCustomFieldsError(
+                            message=f"Jira project requires custom fields that are not supported: {custom_fields_formatted}",
+                            file=os.path.basename(__file__),
                         )
-                        return False
 
-                response_error = (
-                    f"Failed to send finding: {response.status_code} - {response_json}"
+                response_error = _format_jira_issue_creation_error(
+                    response_json, response.status_code
                 )
                 logger.error(response_error)
-                return False
+                raise JiraSendFindingsResponseError(
+                    message=response_error, file=os.path.basename(__file__)
+                )
             else:
                 try:
                     response_json = response.json()
@@ -2191,13 +2239,17 @@ class Jira:
                 return True
         except JiraRequiredCustomFieldsError as custom_fields_error:
             logger.error(f"Custom fields error: {custom_fields_error}")
-            return False
+            raise custom_fields_error
+        except JiraSendFindingsResponseError as response_error:
+            logger.error(f"Jira response error: {response_error}")
+            raise response_error
         except JiraRefreshTokenError as refresh_error:
             logger.error(f"Token refresh error: {refresh_error}")
-            return False
+            raise refresh_error
         except JiraRefreshTokenResponseError as response_error:
-            logger.error(f"Token response error: {response_error}")
-            return False
+            raise response_error
+        except JiraNoTokenError as no_token_error:
+            raise no_token_error
         except Exception as e:
             logger.error(f"Failed to send finding: {e}")
             return False

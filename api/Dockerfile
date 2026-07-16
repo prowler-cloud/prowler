@@ -113,6 +113,7 @@ RUN apt-get purge -y --auto-remove \
     make \
     libxml2-dev \
     libxmlsec1-dev \
+    libxmlsec1-openssl \
     pkg-config \
     libtool \
     libxslt1-dev \

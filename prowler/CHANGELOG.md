@@ -4,6 +4,51 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.34.0] (Prowler v5.34.0)
+
+### 🚀 Added
+
+- `elbv2_listener_pqc_tls_enabled` check for AWS provider, verifying that ELBv2 listeners use post-quantum TLS policies [(#11254)](https://github.com/prowler-cloud/prowler/pull/11254)
+- `iaas_server_public_ip_attached` check for STACKIT provider, flagging IaaS servers that have a public IP address directly attached to a network interface [(#11549)](https://github.com/prowler-cloud/prowler/pull/11549)
+- Changelog fragment workflow for SDK, API, UI, and MCP Server releases, including PR attribution, fragment validation, release compilation, and preserved section ordering [(#11572)](https://github.com/prowler-cloud/prowler/pull/11572)
+- E2E Networks provider with 27 checks across compute nodes, networking, security groups, load balancers, block/file storage, and managed databases [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
+- `datapipeline_pipeline_no_secrets_in_definition` check for AWS provider, scanning Data Pipeline object fields, parameter objects, and parameter values for hardcoded secrets with Kingfisher [(#11821)](https://github.com/prowler-cloud/prowler/pull/11821)
+- `amplify_app_no_secrets_in_environment` check for AWS provider, scanning Amplify app and branch environment variables and build settings for hardcoded secrets [(#11825)](https://github.com/prowler-cloud/prowler/pull/11825)
+- `ec2_ami_account_block_public_access` check for AWS provider, verifying AMI block public access is enabled at the account level in each Region so AMIs cannot be shared publicly [(#11828)](https://github.com/prowler-cloud/prowler/pull/11828)
+- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#11835)](https://github.com/prowler-cloud/prowler/pull/11835)
+- `core_minimize_hostpath_volume_mounts` check for Kubernetes provider, detecting Pods that use `hostPath` volumes [(#11837)](https://github.com/prowler-cloud/prowler/pull/11837)
+- `app_function_ensure_http_is_redirected_to_https` check for Azure provider, verifying that Function Apps enforce HTTPS-only traffic [(#11929)](https://github.com/prowler-cloud/prowler/pull/11929)
+
+### 🔄 Changed
+
+- Add missing trailing newlines to compliance, region, and fixture data files for POSIX compliance [(#11765)](https://github.com/prowler-cloud/prowler/pull/11765)
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11853)](https://github.com/prowler-cloud/prowler/pull/11853)
+- Redesign the local dashboard sidebar and informational pages [(#11972)](https://github.com/prowler-cloud/prowler/pull/11972)
+
+---
+
+## [5.33.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- EC2 AMI loading now targets Amazon-owned AMIs used by audited instances, reducing AWS API calls during EC2 scans [(#11958)](https://github.com/prowler-cloud/prowler/pull/11958)
+- `ec2_instance_account_imdsv2_enabled` findings now use regional resource ARNs, preventing findings from different AWS Regions from collapsing into one resource [(#11966)](https://github.com/prowler-cloud/prowler/pull/11966)
+
+---
+
+## [5.33.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- ECS task definition resource limits now select the latest task definitions by registration date instead of relying on ARN ordering [(#11891)](https://github.com/prowler-cloud/prowler/pull/11891)
+- `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11900)](https://github.com/prowler-cloud/prowler/pull/11900)
+- `dms_instance_no_public_access` no longer initializes the full EC2 service when there are no DMS replication instances [(#11902)](https://github.com/prowler-cloud/prowler/pull/11902)
+- `organizations_scp_check_deny_regions` no longer reports false `FAIL` for AWS Organizations that restrict regions with Allow-based SCPs; the Allow path now checks the statement `Effect` instead of an always-false comparison that made it unreachable [(#11915)](https://github.com/prowler-cloud/prowler/pull/11915)
+- Jira issue creation failures now preserve safe structured response details from Jira [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- Azure Function App optional permission failures now log as warnings, and Function App environment variable fields use the correct spelling internally [(#11926)](https://github.com/prowler-cloud/prowler/pull/11926)
+
+---
+
 ## [5.33.0] (Prowler v5.33.0)
 
 ### 🐞 Fixed

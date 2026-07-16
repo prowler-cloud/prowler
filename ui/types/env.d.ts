@@ -15,12 +15,12 @@ declare global {
       NEXT_PUBLIC_API_DOCS_URL?: string;
       UI_API_DOCS_URL?: string;
 
-      UI_GOOGLE_TAG_MANAGER_ENABLE?: "true" | "false";
+      UI_GOOGLE_TAG_MANAGER_ENABLED?: "true" | "false";
       /** @deprecated use UI_GOOGLE_TAG_MANAGER_ID */
       NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID?: string;
       UI_GOOGLE_TAG_MANAGER_ID?: string;
 
-      UI_SENTRY_ENABLE?: "true" | "false";
+      UI_SENTRY_ENABLED?: "true" | "false";
       /** @deprecated use UI_SENTRY_DSN */
       NEXT_PUBLIC_SENTRY_DSN?: string;
       UI_SENTRY_DSN?: string;
@@ -28,7 +28,7 @@ declare global {
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
       UI_SENTRY_ENVIRONMENT?: string;
 
-      BILLING_CLOUD_ENABLE?: "true" | "false";
+      CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
       // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
@@ -46,7 +46,7 @@ declare global {
       SENTRY_PROJECT?: string;
       SENTRY_AUTH_TOKEN?: string;
 
-      UI_POSTHOG_ENABLE?: "true" | "false";
+      UI_POSTHOG_ENABLED?: "true" | "false";
       /** @deprecated use UI_POSTHOG_KEY */
       POSTHOG_KEY?: string;
       UI_POSTHOG_KEY?: string;
