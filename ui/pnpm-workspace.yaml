@@ -21,8 +21,10 @@ overrides:
   "lodash-es": "4.18.1"
   # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials) + 4 moderate
   # advisories (serve-static path traversal, Lambda Set-Cookie merge, body-limit
-  # bypass, Lambda@Edge repeated-header loss), all fixed in 4.12.25.
-  "hono": "4.12.25"
+  # bypass, Lambda@Edge repeated-header loss), all fixed in 4.12.25, plus
+  # CVE-2026-59896 (hono/jsx SSR context leak across concurrent requests; in NVD
+  # but not yet in the npm audit feed), fixed in 4.12.27.
+  "hono": "4.12.29"
   "@hono/node-server": "1.19.14"
   "@isaacs/brace-expansion": "5.0.1"
   "fast-xml-parser": "5.8.0"
