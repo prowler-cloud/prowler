@@ -162,30 +162,14 @@ export async function deleteProviderIfExists(
 
   const allRows = page.providersTable.locator("tbody tr");
 
-  const isNoResultsRow = async (row: Locator): Promise<boolean> => {
-    const text = await row.textContent();
-    return text?.includes("No results") || text?.includes("No data") || false;
-  };
-
   const findProviderRow = async (): Promise<Locator | null> => {
-    const rowByText = page.providersTable
-      .locator("tbody tr")
-      .filter({ hasText: providerUID })
-      .first();
-    if (await rowByText.isVisible().catch(() => false)) {
-      return rowByText;
-    }
-
-    const count = await allRows.count();
-    for (let i = 0; i < count; i++) {
-      const row = allRows.nth(i);
-      if (await isNoResultsRow(row)) {
-        continue;
-      }
-      const rowText = await row.textContent();
-      if (rowText?.includes(providerUID)) {
-        return row;
-      }
+    // Read the currently rendered rows in one evaluation. Reading individual
+    // locators can wait for a virtualized row that was removed during a table
+    // refresh, exhausting the whole Playwright test timeout.
+    const rowTexts = await allRows.allTextContents();
+    const rowIndex = rowTexts.findIndex((text) => text.includes(providerUID));
+    if (rowIndex >= 0) {
+      return allRows.nth(rowIndex);
     }
 
     return null;
