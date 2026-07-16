@@ -25,7 +25,7 @@ import {
   FormField,
   FormMessage,
 } from "@/components/shadcn/form";
-import { isLocalDevelopment } from "@/lib/shared/env";
+import { stripPasswordManagerHighlight } from "@/lib/password-manager";
 import { ApiError, SignUpFormData, signUpSchema } from "@/types";
 
 const AUTH_ERROR_PATHS = {
@@ -71,7 +71,6 @@ export const SignUpForm = ({
       name: "",
       company: "",
       confirmPassword: "",
-      termsAndConditions: false,
       ...(invitationToken && { invitationToken }),
     },
   });
@@ -100,7 +99,7 @@ export const SignUpForm = ({
       });
       form.reset();
 
-      if (isCloudEnv && !isLocalDevelopment()) {
+      if (isCloudEnv) {
         router.push("/email-verification");
       } else {
         router.push("/sign-in");
@@ -165,6 +164,7 @@ export const SignUpForm = ({
     <AuthLayout title="Sign up">
       <Form {...form}>
         <form
+          ref={stripPasswordManagerHighlight}
           noValidate
           method="post"
           className="flex flex-col gap-4"
@@ -218,28 +218,30 @@ export const SignUpForm = ({
               name="termsAndConditions"
               render={({ field }) => (
                 <>
-                  <FormControl>
-                    <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-2 py-4">
+                    <FormControl>
                       <Checkbox
-                        required
+                        id="termsAndConditions"
                         size="sm"
                         checked={field.value}
-                        onCheckedChange={(checked) =>
-                          field.onChange(checked === true)
-                        }
+                        onCheckedChange={field.onChange}
                       />
-                      <span className="text-sm">
-                        I agree with the{" "}
-                        <CustomLink
-                          href="https://prowler.com/terms-of-service"
-                          size="sm"
-                        >
-                          Terms of Service
-                        </CustomLink>{" "}
-                        of Prowler
-                      </span>
-                    </div>
-                  </FormControl>
+                    </FormControl>
+                    <label
+                      htmlFor="termsAndConditions"
+                      className="cursor-pointer text-sm"
+                    >
+                      I agree with the&nbsp;
+                      <CustomLink
+                        href="https://prowler.com/terms-of-service/"
+                        size="sm"
+                      >
+                        Terms of Service
+                      </CustomLink>
+                      &nbsp;of Prowler
+                      <span className="text-text-error-primary">*</span>
+                    </label>
+                  </div>
                   <FormMessage className="text-text-error" />
                 </>
               )}

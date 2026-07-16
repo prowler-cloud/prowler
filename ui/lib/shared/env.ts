@@ -12,11 +12,3 @@
 export function isCloud(): boolean {
   return process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
 }
-
-export function isLocalDevelopment(): boolean {
-  return process.env.NODE_ENV === "development";
-}
-
-export function shouldRequireEmailVerification(): boolean {
-  return isCloud() && !isLocalDevelopment();
-}
