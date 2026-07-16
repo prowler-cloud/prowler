@@ -33,9 +33,12 @@ describe("MainLayout", () => {
       </MainLayout>,
     );
 
-    // Then: a right panel may narrow main, but the desktop sidebar stays open
+    // Then: a right panel may narrow main, but the desktop sidebar stays open.
+    // Margin reaches the sidebar edge; the 16px gutter is padding so the
+    // navbar's bled border-b paints instead of being clipped by the scroller.
     expect(screen.getByText("Page content").parentElement).toHaveClass(
-      "min-[64rem]:ml-[280px]",
+      "min-[64rem]:ml-[264px]",
+      "pl-4",
     );
   });
 

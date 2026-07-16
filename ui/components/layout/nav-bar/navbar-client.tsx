@@ -80,7 +80,10 @@ export function NavbarClient({
   };
 
   return (
-    <header className="sticky top-0 z-10 w-full pt-4 backdrop-blur-sm">
+    // -ml-4/pl-4: bleed the bar across <main>'s 16px left gutter so its
+    // border-b meets the sidebar's border-r. The gutter is main's padding —
+    // main scrolls and would clip anything bled past its padding box.
+    <header className="border-border-neutral-secondary sticky top-0 z-10 -ml-4 border-b pt-4 pl-4 backdrop-blur-sm">
       <div className="flex h-14 items-center pr-6">
         <div className="flex items-center gap-2">
           <MobileAppSidebar />

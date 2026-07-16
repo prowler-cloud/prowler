@@ -42,9 +42,12 @@ export default function MainLayout({ children }: { children: ReactNode }) {
         // @container: <main> is the reference for the app's (container-query)
         // breakpoints, so pushing it with the side panel re-evaluates them.
         // min-[64rem] (not lg:) keeps the sidebar margin on viewport terms.
+        // The 16px gutter is padding (not margin): main scrolls, and a scroll
+        // container clips at its padding box — the navbar's border-b bleeds
+        // across this gutter to meet the sidebar's border-r.
         data-responsive-container
         className={cn(
-          "no-scrollbar @container relative z-10 mb-auto ml-4 h-full flex-1 flex-col overflow-y-auto min-[64rem]:ml-[280px]",
+          "no-scrollbar @container relative z-10 mb-auto h-full flex-1 flex-col overflow-y-auto pl-4 min-[64rem]:ml-[264px]",
           // Margin animates on open/close, but tracks the pointer 1:1 during
           // a drag resize.
           !sidePanelResizing &&
