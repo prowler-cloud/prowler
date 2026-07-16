@@ -35,4 +35,18 @@ describe("LighthouseOverviewBanner", () => {
       }),
     ).toHaveAttribute("href", "/lighthouse/settings");
   });
+
+  it("isolates its stacking so content never paints over the sticky navbar", () => {
+    // Given / When: the banner's inner z-10 must stay scoped to the card —
+    // without isolation it ties the sticky header's z-10 and wins by DOM order
+    render(
+      <LighthouseOverviewBanner href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT} />,
+    );
+
+    // Then
+    const card = screen
+      .getByRole("link", { name: /Find and remediate what actually matters\./ })
+      .querySelector("[data-slot='card']");
+    expect(card).toHaveClass("isolate");
+  });
 });

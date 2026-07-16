@@ -66,7 +66,9 @@ export function LighthouseOverviewBanner({
       <Card
         variant="base"
         padding="none"
-        className="group-hover:border-border-input-primary relative overflow-hidden transition-colors"
+        // isolate: the content's internal z-10 (above the gradient layers)
+        // must not compete with the page's sticky header, which is also z-10.
+        className="group-hover:border-border-input-primary relative isolate overflow-hidden transition-colors"
         onMouseMove={handleMouseMove}
       >
         <svg className="hidden">
