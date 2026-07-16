@@ -135,6 +135,84 @@ describe("SendToJiraModal", () => {
     await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
   });
 
+  it("submits mixed Group and Finding batches with the correct dispatch filters and modes", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "group-task",
+        message: "Group started",
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "finding-task",
+        message: "Findings started",
+      });
+
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetIds={["check-a"]}
+        targetType="check_id"
+        targetBatches={[
+          {
+            targetIds: ["check-a"],
+            targetType: "check_id",
+            dispatchMode: "grouped",
+          },
+          {
+            targetIds: ["finding-1", "finding-2"],
+            targetType: "finding_id",
+          },
+        ]}
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+        description="Create Jira issues for 1 Group and 2 Findings."
+      />,
+    );
+
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+    await user.click(
+      screen.getByRole("radio", { name: "Create separate Jira issues" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() => expect(sendJiraDispatchMock).toHaveBeenCalledTimes(2));
+    expect(sendFindingToJiraMock).not.toHaveBeenCalled();
+    expect(sendJiraDispatchMock).toHaveBeenNthCalledWith(1, {
+      integrationId: "jira-1",
+      targetIds: ["check-a"],
+      filter: "check_id",
+      projectKey: "SEC",
+      issueType: "Task",
+      dispatchMode: "grouped",
+    });
+    expect(sendJiraDispatchMock).toHaveBeenNthCalledWith(2, {
+      integrationId: "jira-1",
+      targetIds: ["finding-1", "finding-2"],
+      filter: "finding_id",
+      projectKey: "SEC",
+      issueType: "Task",
+      dispatchMode: "individual",
+    });
+    expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("group-task");
+    expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("finding-task");
+  });
+
   it("shows an error toast when Jira dispatch polling reports partial failures", async () => {
     // Given
     const user = userEvent.setup();

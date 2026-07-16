@@ -71,12 +71,14 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label,
     onSelect,
     disabled,
+    disabledTooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
+    disabledTooltip?: string;
   }) => (
-    <button disabled={disabled} onClick={onSelect}>
+    <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
   ),
@@ -622,6 +624,10 @@ describe("column-finding-resources", () => {
 
     // Then
     expect(jiraButton).toBeDisabled();
+    expect(jiraButton).toHaveAttribute(
+      "title",
+      "Available only in Prowler Cloud",
+    );
     expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ isOpen: true }),
       undefined,
