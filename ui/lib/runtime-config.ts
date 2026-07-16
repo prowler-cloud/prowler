@@ -49,5 +49,13 @@ export async function getRuntimePublicConfig(): Promise<RuntimePublicConfig> {
     // server-side for V1/V2 routing). Default (unset) is off.
     cloudBillingEnabled:
       (readEnv("CLOUD_BILLING_ENABLED") ?? "false") !== "false",
+    stripePublishableKey: readEnv(
+      "CLOUD_STRIPE_PUBLISHABLE_KEY",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+    ),
+    stripePublishableKeyV2: readEnv(
+      "CLOUD_STRIPE_PUBLISHABLE_KEY_V2",
+      "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_V2",
+    ),
   };
 }

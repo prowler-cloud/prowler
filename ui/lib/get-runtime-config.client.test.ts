@@ -105,6 +105,8 @@ describe("getRuntimeConfigClient", () => {
         "reoDevClientId",
         "sentryDsn",
         "sentryEnvironment",
+        "stripePublishableKey",
+        "stripePublishableKeyV2",
       ].sort(),
     );
     expect(config.apiBaseUrl).toBe("https://api.example.com/api/v1");
