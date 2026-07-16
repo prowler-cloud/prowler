@@ -40,6 +40,9 @@ interface SidePanelState {
   contextOwnerToken: number;
   // Portal target the context owner renders its detail content into.
   contextOutlet: HTMLElement | null;
+  // One-time discovery callout on the navbar trigger (persisted): true once
+  // the user dismissed it or reached the AI chat panel by any entry point.
+  hasSeenAiTriggerHint: boolean;
   openPanel: (tab?: SidePanelTabId) => void;
   closePanel: (tab?: SidePanelTabId) => void;
   togglePanel: () => void;
@@ -48,6 +51,7 @@ interface SidePanelState {
   registerContextTab: (tab: SidePanelContextTab) => number;
   unregisterContextTab: (token: number) => void;
   setContextOutlet: (element: HTMLElement | null) => void;
+  markAiTriggerHintSeen: () => void;
 }
 
 // Monotonic so a recycled token can never let a stale detail view unregister
@@ -65,12 +69,20 @@ export const useSidePanelStore = create<SidePanelState>()(
       contextTab: null,
       contextOwnerToken: 0,
       contextOutlet: null,
-      openPanel: (tab) =>
+      hasSeenAiTriggerHint: false,
+      openPanel: (tab) => {
+        const selectedTab = tab ?? get().selectedTab;
         set({
           isOpen: true,
           hasBeenOpened: true,
-          selectedTab: tab ?? get().selectedTab,
-        }),
+          selectedTab,
+          // Reaching the AI chat by any entry point retires the discovery
+          // callout: the user no longer needs to be pointed at the trigger.
+          ...(selectedTab === SIDE_PANEL_TAB.AI_CHAT
+            ? { hasSeenAiTriggerHint: true }
+            : {}),
+        });
+      },
       // Tab-scoped close only applies while that tab is showing, so a stale
       // closer never hides a panel someone else switched to another tab.
       closePanel: (tab) => {
@@ -86,7 +98,13 @@ export const useSidePanelStore = create<SidePanelState>()(
           get().closePanel();
           return;
         }
-        set({ isOpen: true, hasBeenOpened: true });
+        set({
+          isOpen: true,
+          hasBeenOpened: true,
+          ...(get().selectedTab === SIDE_PANEL_TAB.AI_CHAT
+            ? { hasSeenAiTriggerHint: true }
+            : {}),
+        });
       },
       setWidth: (width) => set({ width: clampSidePanelWidth(width) }),
       setIsResizing: (isResizing) => set({ isResizing }),
@@ -124,17 +142,20 @@ export const useSidePanelStore = create<SidePanelState>()(
         }));
       },
       setContextOutlet: (element) => set({ contextOutlet: element }),
+      markAiTriggerHintSeen: () => set({ hasSeenAiTriggerHint: true }),
     }),
     {
       name: "side-panel-store",
-      // Only the last-used tab and width persist; the panel never auto-reopens
-      // and a context tab cannot exist on a fresh load.
+      // Only the last-used tab, width, and the one-time hint persist; the
+      // panel never auto-reopens and a context tab cannot exist on a fresh
+      // load.
       partialize: (state) => ({
         selectedTab:
           state.selectedTab === SIDE_PANEL_TAB.CONTEXT
             ? SIDE_PANEL_TAB.AI_CHAT
             : state.selectedTab,
         width: state.width,
+        hasSeenAiTriggerHint: state.hasSeenAiTriggerHint,
       }),
     },
   ),
