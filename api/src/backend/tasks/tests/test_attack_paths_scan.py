@@ -2047,18 +2047,15 @@ class TestSyncNodes:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock(sync_batch_size=1000)
+        sink = MagicMock(sync_batch_size=1)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                    _make_session_ctx(src_3),
-                ],
-            ),
-            patch.object(sink, "sync_batch_size", 1),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+                _make_session_ctx(src_3),
+            ],
         ):
             result = sync_module.sync_nodes("src", "tgt", "t-1", "p-1", sink, [])
 
@@ -2087,17 +2084,14 @@ class TestSyncNodes:
         src_1.run.return_value = [row]
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock(sync_batch_size=1000)
+        sink = MagicMock(sync_batch_size=2)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                ],
-            ),
-            patch.object(sink, "sync_batch_size", 2),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+            ],
         ):
             result = sync_module.sync_nodes(
                 "src", "tgt", "t-1", "p-1", sink, normalized_lists
@@ -2182,18 +2176,15 @@ class TestSyncRelationships:
         src_2.run.return_value = [row_b]
         src_3 = MagicMock()
         src_3.run.return_value = []
-        sink = MagicMock(sync_batch_size=1000)
+        sink = MagicMock(sync_batch_size=1)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                    _make_session_ctx(src_3),
-                ],
-            ),
-            patch.object(sink, "sync_batch_size", 1),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+                _make_session_ctx(src_3),
+            ],
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 
@@ -2218,17 +2209,14 @@ class TestSyncRelationships:
         src_1.run.return_value = rows
         src_2 = MagicMock()
         src_2.run.return_value = []
-        sink = MagicMock(sync_batch_size=1000)
+        sink = MagicMock(sync_batch_size=2)
 
-        with (
-            patch(
-                "tasks.jobs.attack_paths.sync.graph_database.get_session",
-                side_effect=[
-                    _make_session_ctx(src_1),
-                    _make_session_ctx(src_2),
-                ],
-            ),
-            patch.object(sink, "sync_batch_size", 2),
+        with patch(
+            "tasks.jobs.attack_paths.sync.graph_database.get_session",
+            side_effect=[
+                _make_session_ctx(src_1),
+                _make_session_ctx(src_2),
+            ],
         ):
             total = sync_module.sync_relationships("src", "tgt", "p-1", sink)
 

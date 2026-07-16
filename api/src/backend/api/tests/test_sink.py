@@ -418,13 +418,19 @@ class TestNeptuneRetryPolicy:
         )
         sink = NeptuneSink()
         driver = MagicMock()
+        retryable_session = MagicMock()
+        retryable_session.execute_write.side_effect = retry_error
 
         with (
             patch.object(sink, "_get_writer", return_value=driver),
+            patch(
+                "api.attack_paths.sink.neptune.RetryableSession",
+                return_value=retryable_session,
+            ),
             pytest.raises(NeptuneWriteRetryExhaustedException) as exc_info,
-            sink.get_session(),
         ):
-            raise retry_error
+            with sink.get_session() as session:
+                session.execute_write(MagicMock())
 
         assert exc_info.value.code == "BoltProtocol.unexpectedException"
         assert str(exc_info.value) == (
