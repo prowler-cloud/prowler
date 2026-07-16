@@ -3,7 +3,6 @@ import { SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
-import type { CloudUpgradeFeature } from "./cloud-upgrade";
 import type { FindingTriageSummary } from "./findings-triage";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
@@ -16,67 +15,6 @@ export type IconProps = {
 };
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
-
-export const SUBMENU_KIND = {
-  LINK: "link",
-  CLOUD_UPGRADE: "cloud_upgrade",
-} as const;
-
-interface SubmenuBaseProps {
-  label: string;
-  icon: IconComponent;
-}
-
-export interface SubmenuLinkProps extends SubmenuBaseProps {
-  kind?: typeof SUBMENU_KIND.LINK;
-  href: string;
-  target?: string;
-  active?: boolean;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  cloudUpgradeFeature?: never;
-}
-
-export interface SubmenuCloudUpgradeProps extends SubmenuBaseProps {
-  kind: typeof SUBMENU_KIND.CLOUD_UPGRADE;
-  cloudUpgradeFeature: CloudUpgradeFeature;
-  href?: never;
-  target?: never;
-  active?: never;
-  disabled?: never;
-  highlight?: never;
-  cloudOnly?: never;
-}
-
-export type SubmenuProps = SubmenuLinkProps | SubmenuCloudUpgradeProps;
-
-export type MenuSelectionHandler = () => HTMLElement | null;
-
-export type MenuProps = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  submenus?: SubmenuProps[];
-  defaultOpen?: boolean;
-  target?: string;
-  tooltip?: string;
-  highlight?: boolean;
-};
-
-export type GroupProps = {
-  groupLabel: string;
-  menus: MenuProps[];
-};
-
-export interface CollapseMenuButtonProps {
-  icon: IconComponent;
-  label: string;
-  submenus: SubmenuProps[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
 
 export const NEXT_UI_VARIANTS = {
   SOLID: "solid",

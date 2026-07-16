@@ -56,7 +56,7 @@ class TestJiraIntegration:
 
         self.user_mail = "test_user_mail"
         self.api_token = "test_api_token"
-        self.domain = "test_domain"
+        self.domain = "test-domain"
 
         self.jira_integration_basic_auth = Jira(
             user_mail=self.user_mail,
@@ -385,6 +385,35 @@ class TestJiraIntegration:
         self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
 
         assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @pytest.mark.parametrize(
+        "domain",
+        (
+            "169.254.169.254#",
+            "internal/service",
+            "internal?target",
+            "internal\\target",
+            "internal:8000",
+            "user@internal",
+        ),
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_rejects_invalid_domain(self, mock_get, domain):
+        with pytest.raises(JiraGetCloudIDError):
+            self.jira_integration_basic_auth.get_cloud_id(domain=domain)
+
+        mock_get.assert_not_called()
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_disables_redirects(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"cloudId": "test_cloud_id"}
+        mock_get.return_value = mock_response
+
+        self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
+
+        assert mock_get.call_args.kwargs["allow_redirects"] is False
 
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_refresh_access_token_sends_timeout(self, mock_post):

@@ -1,5 +1,6 @@
 import base64
 import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -36,6 +37,10 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraTestConnectionError,
 )
 from prowler.providers.common.models import Connection
+
+ATLASSIAN_SITE_NAME_REGEX = re.compile(
+    r"\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\Z"
+)
 
 
 @dataclass
@@ -665,11 +670,14 @@ class Jira:
         """
         try:
             if self._using_basic_auth:
+                if not domain or not ATLASSIAN_SITE_NAME_REGEX.fullmatch(domain):
+                    raise ValueError("Invalid Jira site name.")
                 headers = self.get_headers(access_token)
                 response = requests.get(
                     f"https://{domain}.atlassian.net/_edge/tenant_info",
                     headers=headers,
                     timeout=self.REQUEST_TIMEOUT,
+                    allow_redirects=False,
                 )
                 response = response.json()
                 return response.get("cloudId")

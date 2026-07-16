@@ -13423,6 +13423,45 @@ class TestIntegrationViewSet:
         )
         assert "credentials" not in response.json()["data"]["attributes"]
 
+    @pytest.mark.parametrize(
+        "domain",
+        (
+            "169.254.169.254#",
+            "internal/service",
+            "internal?target",
+            "internal\\target",
+            "internal:8000",
+            "user@internal",
+        ),
+    )
+    def test_integrations_create_jira_rejects_invalid_domain(
+        self, authenticated_client, domain
+    ):
+        data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "domain": domain,
+                        "api_token": "fake-api-token",
+                        "user_mail": "testing@prowler.com",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+
+        response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert Integration.objects.count() == 0
+
     def test_integrations_create_valid_relationships(
         self,
         authenticated_client,
@@ -13962,6 +14001,55 @@ class TestIntegrationViewSet:
         # Verify other configuration fields are preserved
         assert "projects" in configuration
         assert "issue_types" in configuration
+
+    def test_integrations_update_jira_rejects_invalid_domain(
+        self, authenticated_client
+    ):
+        create_data = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": Integration.IntegrationChoices.JIRA,
+                    "configuration": {},
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "original-domain",
+                    },
+                    "enabled": True,
+                },
+            }
+        }
+        create_response = authenticated_client.post(
+            reverse("integration-list"),
+            data=json.dumps(create_data),
+            content_type="application/vnd.api+json",
+        )
+        assert create_response.status_code == status.HTTP_201_CREATED
+        integration_id = create_response.json()["data"]["id"]
+
+        update_data = {
+            "data": {
+                "type": "integrations",
+                "id": integration_id,
+                "attributes": {
+                    "credentials": {
+                        "user_mail": "test@example.com",
+                        "api_token": "fake-api-token",
+                        "domain": "169.254.169.254#",
+                    }
+                },
+            }
+        }
+        response = authenticated_client.patch(
+            reverse("integration-detail", kwargs={"pk": integration_id}),
+            data=json.dumps(update_data),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        integration = Integration.objects.get(id=integration_id)
+        assert integration.credentials["domain"] == "original-domain"
 
 
 @pytest.mark.django_db
