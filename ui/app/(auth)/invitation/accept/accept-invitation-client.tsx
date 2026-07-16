@@ -10,6 +10,7 @@ import {
   getInvitationErrorDisplay,
   INVITATION_ERROR_FLOW,
 } from "@/app/(auth)/invitation/_lib/invitation-errors";
+import { AuthBrand } from "@/components/auth/oss/auth-brand";
 import { Button } from "@/components/shadcn";
 
 type AcceptState =
@@ -69,6 +70,7 @@ export function AcceptInvitationClient({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 text-center">
+        <AuthBrand className="mx-auto" />
         {/* No token */}
         {state.kind === "no-token" && (
           <div className="flex flex-col items-center gap-4">
