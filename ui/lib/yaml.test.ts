@@ -55,4 +55,39 @@ describe("validateYaml", () => {
     // Then
     expect(result.isValid).toBe(false);
   });
+
+  // Users author these documents by hand in the Mutelist and Scan Configuration
+  // editors, so anchors, aliases and merge keys are legitimate input the syntax
+  // check must keep accepting across js-yaml upgrades (4.3.0 rewrote merge-key
+  // handling for CVE-2026-59869).
+  it("accepts anchors, aliases and merge keys", () => {
+    // When
+    const result = validateYaml(
+      [
+        "defaults: &defaults",
+        "  max_unused_access_keys_days: 45",
+        "aws:",
+        "  <<: *defaults",
+        "  max_console_access_days: 45",
+      ].join("\n"),
+    );
+
+    // Then
+    expect(result.isValid).toBe(true);
+  });
+
+  it("stays fast on a deep merge-key chain (CVE-2026-59869 shape)", () => {
+    // Given — each mapping merges the previous one; on js-yaml < 4.3.0 this
+    // parses in quadratic time and times out the test
+    const chain = ["a0: &a0 { x: 0 }"];
+    for (let i = 1; i < 2000; i++) {
+      chain.push(`a${i}: &a${i} { <<: *a${i - 1}, x: ${i} }`);
+    }
+
+    // When
+    const result = validateYaml(chain.join("\n"));
+
+    // Then
+    expect(result.isValid).toBe(true);
+  });
 });
