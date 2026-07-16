@@ -138,11 +138,12 @@ export function NavbarClient({
 export function FeedsLoadingFallback() {
   return (
     <Button
-      variant="outline"
-      className="border-border-input-primary-fill relative h-8 w-8 rounded-full bg-transparent p-2"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Loading updates"
       disabled
     >
-      <BellRing size={18} className="animate-pulse text-slate-400" />
+      <BellRing className="size-5 animate-pulse" />
     </Button>
   );
 }

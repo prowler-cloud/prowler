@@ -8,7 +8,7 @@ import { localStorageAdapter } from "@/lib/tours/store/local-storage-adapter";
 import { usePageReadyStore } from "@/store/page-ready";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
-import { NavbarClient } from "./navbar-client";
+import { FeedsLoadingFallback, NavbarClient } from "./navbar-client";
 
 const navigationMocks = vi.hoisted(() => ({
   pathname: "/findings",
@@ -304,5 +304,30 @@ describe("NavbarClient", () => {
     expect(
       screen.queryByRole("button", { name: /start product tour/i }),
     ).not.toBeInTheDocument();
+  });
+
+  it("draws a bottom separator that reaches the sidebar's edge", () => {
+    // Given / When
+    render(<NavbarClient title="Findings" />);
+
+    // Then: same token as the sidebar's border-r, bled 16px left to meet it
+    const header = screen.getByRole("banner");
+    expect(header).toHaveClass(
+      "border-b",
+      "border-border-neutral-secondary",
+      "-ml-4",
+      "pl-4",
+    );
+    expect(header).not.toHaveClass("w-full");
+  });
+
+  it("keeps the feeds fallback on the shared ghost icon treatment", () => {
+    // Given / When
+    render(<FeedsLoadingFallback />);
+
+    // Then: same 32px square as the rest of the navbar action cluster
+    const button = screen.getByRole("button", { name: "Loading updates" });
+    expect(button).toHaveClass("size-8");
+    expect(button).not.toHaveClass("rounded-full");
   });
 });
