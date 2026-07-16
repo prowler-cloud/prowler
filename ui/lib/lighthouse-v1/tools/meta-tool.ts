@@ -5,8 +5,8 @@ import { tool } from "@langchain/core/tools";
 import { addBreadcrumb, captureException } from "@sentry/nextjs";
 import { z } from "zod";
 
+import { isAllowedTool } from "@/lib/lighthouse-v1/allowed-tools";
 import { getMCPTools, isMCPAvailable } from "@/lib/lighthouse-v1/mcp-client";
-import { isAllowedTool } from "@/lib/lighthouse-v1/workflow";
 
 /** Input type for describe_tool */
 interface DescribeToolInput {
