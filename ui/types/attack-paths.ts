@@ -129,6 +129,15 @@ export interface AttackPathQueryDocumentationLink {
   link: string;
 }
 
+// Precomputed per-query result summary from the scan (Prowler Cloud only).
+// `has_data` is null when the query errored; the whole object is null/absent
+// when the query was never precomputed (parameterized, a scan predating the
+// precompute step, or one the bounded pass did not reach).
+export interface AttackPathQueryResultSummary {
+  status: "ok" | "error";
+  has_data: boolean | null;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
   short_description: string;
@@ -137,6 +146,7 @@ export interface AttackPathQueryAttributes {
   parameters: AttackPathQueryParameter[];
   attribution: AttackPathQueryAttribution | null;
   documentation_link?: AttackPathQueryDocumentationLink | null;
+  result_summary?: AttackPathQueryResultSummary | null;
 }
 
 export interface AttackPathQuery {
