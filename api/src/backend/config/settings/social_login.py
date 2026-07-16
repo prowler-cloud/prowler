@@ -13,16 +13,17 @@ GITHUB_OAUTH_CALLBACK_URL = env("SOCIAL_GITHUB_OAUTH_CALLBACK_URL", default="")
 ACCOUNT_LOGIN_METHODS = {"email"}  # Use Email / Password authentication
 ACCOUNT_SIGNUP_FIELDS = ["email*", "password1*", "password2*"]
 ACCOUNT_EMAIL_VERIFICATION = "none"  # Do not require email confirmation
+ACCOUNT_EMAIL_NOTIFICATIONS = True
 ACCOUNT_USER_MODEL_USERNAME_FIELD = None
 REST_AUTH = {
     "TOKEN_MODEL": None,
     "REST_USE_JWT": True,
 }
 # django-allauth (social)
-# Authenticate if local account with this email address already exists
-SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
-# Connect local account and social account if local account with that email address already exists
-SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+# Email-based account matching is handled by ProwlerSocialAccountAdapter, which
+# verifies both the provider email and the existing account email before linking.
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = False
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = False
 SOCIALACCOUNT_ADAPTER = "api.adapters.ProwlerSocialAccountAdapter"
 
 
