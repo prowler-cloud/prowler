@@ -1,3 +1,4 @@
+import copy
 import csv
 import io
 import json
@@ -642,9 +643,7 @@ def _process_finding_micro_batch(
                 if resource_instance is None:
                     raise
 
-        resource_cache[resource_uid] = resource_instance
-        resource_failed_findings_cache.setdefault(resource_uid, 0)
-        return resource_instance
+        return cache_resource(resource_uid, resource_instance)
 
     # Accumulate objects for bulk operations
     findings_to_create = []
@@ -684,7 +683,103 @@ def _process_finding_micro_batch(
 
     # All DB writes for this micro-batch run inside ONE rls_transaction,
     # with deadlock-retry at micro-batch granularity instead of per-finding.
+    missing_cache_value = object()
     for attempt in range(CELERY_DEADLOCK_ATTEMPTS):
+        resource_cache_originals: dict[str, Resource | object] = {}
+        failed_count_originals: dict[str, int | None] = {}
+        resource_field_originals: dict[str, dict[str, Any]] = {}
+        tag_cache_original = dict(tag_cache)
+        scan_resource_cache_original = set(scan_resource_cache)
+        scan_categories_cache_original = {
+            key: value.copy() for key, value in scan_categories_cache.items()
+        }
+        scan_resource_groups_cache_original = {
+            key: value.copy() for key, value in scan_resource_groups_cache.items()
+        }
+        group_resources_cache_original = {
+            key: set(value) for key, value in group_resources_cache.items()
+        }
+
+        def cache_resource(resource_uid: str, resource_instance: Resource) -> Resource:
+            if resource_uid not in resource_cache_originals:
+                resource_cache_originals[resource_uid] = resource_cache.get(
+                    resource_uid, missing_cache_value
+                )
+            resource_cache[resource_uid] = resource_instance
+            if resource_uid not in resource_failed_findings_cache:
+                failed_count_originals[resource_uid] = None
+                resource_failed_findings_cache[resource_uid] = 0
+            return resource_instance
+
+        def snapshot_failed_count(resource_uid: str) -> None:
+            if resource_uid not in failed_count_originals:
+                failed_count_originals[resource_uid] = (
+                    resource_failed_findings_cache.get(resource_uid)
+                )
+
+        def snapshot_resource_fields(
+            resource_uid: str, resource_instance: Resource
+        ) -> None:
+            if resource_uid in resource_field_originals:
+                return
+            resource_field_originals[resource_uid] = {
+                field: copy.deepcopy(getattr(resource_instance, field))
+                for field in (
+                    "name",
+                    "metadata",
+                    "details",
+                    "partition",
+                    "region",
+                    "service",
+                    "type",
+                    "groups",
+                    "updated_at",
+                )
+            }
+
+        def restore_attempt_caches() -> None:
+            for resource_uid, original_fields in resource_field_originals.items():
+                resource_instance = resource_cache.get(resource_uid)
+                if resource_instance is None:
+                    continue
+                for field, value in original_fields.items():
+                    setattr(resource_instance, field, value)
+            for resource_uid, original_resource in resource_cache_originals.items():
+                if original_resource is missing_cache_value:
+                    resource_cache.pop(resource_uid, None)
+                else:
+                    resource_cache[resource_uid] = original_resource
+            for resource_uid, original_count in failed_count_originals.items():
+                if original_count is None:
+                    resource_failed_findings_cache.pop(resource_uid, None)
+                else:
+                    resource_failed_findings_cache[resource_uid] = original_count
+            tag_cache.clear()
+            tag_cache.update(tag_cache_original)
+            scan_resource_cache.clear()
+            scan_resource_cache.update(scan_resource_cache_original)
+            scan_categories_cache.clear()
+            scan_categories_cache.update(
+                {
+                    key: value.copy()
+                    for key, value in scan_categories_cache_original.items()
+                }
+            )
+            scan_resource_groups_cache.clear()
+            scan_resource_groups_cache.update(
+                {
+                    key: value.copy()
+                    for key, value in scan_resource_groups_cache_original.items()
+                }
+            )
+            group_resources_cache.clear()
+            group_resources_cache.update(
+                {
+                    key: set(value)
+                    for key, value in group_resources_cache_original.items()
+                }
+            )
+
         try:
             with rls_transaction(tenant_id):
                 # 1) Pre-resolve Resources in bulk
@@ -741,8 +836,7 @@ def _process_finding_micro_batch(
                             }
                         )
                     for uid, r in existing_resources.items():
-                        resource_cache[uid] = r
-                        resource_failed_findings_cache.setdefault(uid, 0)
+                        cache_resource(uid, r)
 
                 # 2) Pre-resolve ResourceTags in bulk
                 batch_tag_kv: set[tuple[str, str]] = set()
@@ -795,35 +889,43 @@ def _process_finding_micro_batch(
                     group = check_metadata.get("resourcegroup") or None
                     updated = False
                     if finding.region and resource_instance.region != finding.region:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.region = finding.region
                         updated = True
                     if (
                         finding.resource_name
                         and resource_instance.name != finding.resource_name
                     ):
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.name = finding.resource_name
                         updated = True
                     if resource_instance.service != finding.service_name:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.service = finding.service_name
                         updated = True
                     if resource_instance.type != finding.resource_type:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.type = finding.resource_type
                         updated = True
                     if resource_instance.metadata != finding.resource_metadata:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.metadata = json.dumps(
                             finding.resource_metadata, cls=CustomEncoder
                         )
                         updated = True
                     if resource_instance.details != finding.resource_details:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.details = finding.resource_details
                         updated = True
                     if resource_instance.partition != finding.partition:
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.partition = finding.partition
                         updated = True
                     if group and (
                         not resource_instance.groups
                         or group not in resource_instance.groups
                     ):
+                        snapshot_resource_fields(resource_uid, resource_instance)
                         resource_instance.groups = (resource_instance.groups or []) + [
                             group
                         ]
@@ -885,6 +987,7 @@ def _process_finding_micro_batch(
                         muted_reason = mute_rules_cache[finding_uid]
 
                     if status == FindingStatus.FAIL and not is_muted:
+                        snapshot_failed_count(resource_uid)
                         resource_failed_findings_cache[resource_uid] += 1
 
                     check_metadata["compliance"] = finding.compliance
@@ -1038,6 +1141,7 @@ def _process_finding_micro_batch(
                         if r is None:
                             continue
                         # Manually bump updated_at since bulk_update bypasses auto_now.
+                        snapshot_resource_fields(uid, r)
                         r.updated_at = now_utc
                         resources_to_bulk_update.append(r)
                     if resources_to_bulk_update:
@@ -1059,6 +1163,7 @@ def _process_finding_micro_batch(
             # Successful execution: leave deadlock retry loop.
             break
         except (OperationalError, IntegrityError) as db_err:
+            restore_attempt_caches()
             if attempt < CELERY_DEADLOCK_ATTEMPTS - 1:
                 logger.warning(
                     f"{'Deadlock error' if isinstance(db_err, OperationalError) else 'Integrity error'} "
