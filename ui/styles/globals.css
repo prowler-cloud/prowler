@@ -93,6 +93,25 @@
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 
+  /* App sidebar */
+  --bg-sidebar-active: rgba(255, 255, 255, 0.78);
+  --bg-sidebar-hover: rgba(255, 255, 255, 0.55);
+  --bg-sidebar-subitem-active: rgba(16, 185, 129, 0.1);
+  --bg-sidebar-toggle: rgba(255, 255, 255, 0.4);
+  --border-sidebar-active: rgba(15, 23, 42, 0.09);
+  --border-sidebar-hover: rgba(15, 23, 42, 0.06);
+  --border-sidebar-guide: rgba(15, 23, 42, 0.12);
+  --border-sidebar-toggle: rgba(15, 23, 42, 0.08);
+  --sidebar-active-bar: var(--color-emerald-400);
+  --sidebar-active-icon: var(--color-emerald-600);
+  --shadow-sidebar-active: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --gradient-sidebar-halo: radial-gradient(
+    circle,
+    rgba(46, 229, 155, 0.14) 0%,
+    rgba(98, 223, 240, 0.06) 42%,
+    transparent 72%
+  );
+
   /* Lighthouse AI */
   --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
 
@@ -182,6 +201,25 @@
   /* Progress Bar */
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+
+  /* App sidebar */
+  --bg-sidebar-active: rgba(255, 255, 255, 0.06);
+  --bg-sidebar-hover: rgba(255, 255, 255, 0.045);
+  --bg-sidebar-subitem-active: rgba(46, 229, 155, 0.09);
+  --bg-sidebar-toggle: rgba(255, 255, 255, 0.025);
+  --border-sidebar-active: rgba(255, 255, 255, 0.11);
+  --border-sidebar-hover: rgba(255, 255, 255, 0.07);
+  --border-sidebar-guide: rgba(255, 255, 255, 0.1);
+  --border-sidebar-toggle: rgba(255, 255, 255, 0.08);
+  --sidebar-active-bar: var(--color-emerald-300);
+  --sidebar-active-icon: var(--color-emerald-300);
+  --shadow-sidebar-active: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --gradient-sidebar-halo: radial-gradient(
+    circle,
+    rgba(46, 229, 155, 0.16) 0%,
+    rgba(98, 223, 240, 0.07) 40%,
+    transparent 72%
+  );
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -254,8 +292,21 @@
   --color-bg-feature-new: var(--bg-feature-new);
   --color-text-feature-new: var(--text-feature-new);
 
+  /* App sidebar */
+  --color-bg-sidebar-active: var(--bg-sidebar-active);
+  --color-bg-sidebar-hover: var(--bg-sidebar-hover);
+  --color-bg-sidebar-subitem-active: var(--bg-sidebar-subitem-active);
+  --color-bg-sidebar-toggle: var(--bg-sidebar-toggle);
+  --color-border-sidebar-active: var(--border-sidebar-active);
+  --color-border-sidebar-hover: var(--border-sidebar-hover);
+  --color-border-sidebar-guide: var(--border-sidebar-guide);
+  --color-border-sidebar-toggle: var(--border-sidebar-toggle);
+  --color-sidebar-active-bar: var(--sidebar-active-bar);
+  --color-sidebar-active-icon: var(--sidebar-active-icon);
+
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+  --shadow-sidebar-active: var(--shadow-sidebar-active);
 
   /* Background images */
   --background-image-feature-cloud: var(--gradient-feature-cloud);
@@ -320,6 +371,17 @@
 
 /* ===== COMPONENT LAYER ===== */
 @layer components {
+  .app-sidebar-halo {
+    position: absolute;
+    top: -8rem;
+    left: -9rem;
+    width: 26rem;
+    height: 26rem;
+    pointer-events: none;
+    background: var(--gradient-sidebar-halo);
+    filter: blur(28px);
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;

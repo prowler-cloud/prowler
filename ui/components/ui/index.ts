@@ -6,7 +6,6 @@ export * from "./dialog/dialog";
 export * from "./dropdown/Dropdown";
 export * from "./select";
 export * from "@/components/layout/main-layout";
-export * from "@/components/layout/sidebar";
 export * from "@/components/shadcn/accordion";
 export * from "@/components/shadcn/action-card";
 export * from "@/components/shadcn/alert-dialog";
