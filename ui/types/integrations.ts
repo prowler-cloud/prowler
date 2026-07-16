@@ -208,7 +208,7 @@ const baseS3IntegrationSchema = z.object({
     .string()
     .optional()
     .refine((value) => !value || /^\d{12}$/.test(value), {
-      message: "Must be a valid 12-digit AWS Account ID",
+      error: "Must be a valid 12-digit AWS Account ID",
     }),
   providers: z.array(z.string()).optional(),
   enabled: z.boolean().optional(),
