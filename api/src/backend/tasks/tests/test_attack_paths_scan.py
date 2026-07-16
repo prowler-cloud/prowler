@@ -3160,7 +3160,6 @@ class TestCleanupStaleAttackPathsScans:
         should_clean,
         tenants_fixture,
         aws_provider,
-        scans_fixture,
     ):
         from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
 
