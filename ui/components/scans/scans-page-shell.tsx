@@ -17,9 +17,11 @@ import {
   LAUNCH_SCAN_SEARCH_PARAM,
   LAUNCH_SCAN_SEARCH_VALUE,
 } from "@/lib/scans-navigation";
+import { isCloud } from "@/lib/shared/env";
 import { buildViewFirstScanTour } from "@/lib/tours/view-first-scan.tour";
 import { useScansStore } from "@/store";
 import { SCAN_JOBS_TAB, SCAN_TAB_LABELS, type ScanJobsTab } from "@/types";
+import type { ProviderGroup } from "@/types/components";
 import type { ProviderProps } from "@/types/providers";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
@@ -32,6 +34,7 @@ import { useScansFilters } from "./use-scans-filters";
 
 interface ScansPageShellProps {
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   hasManageScansPermission: boolean;
   activeScanCount?: number;
   children: ReactNode;
@@ -42,6 +45,7 @@ interface ScansPageShellProps {
 
 export function ScansPageShell({
   providers,
+  providerGroups = [],
   hasManageScansPermission,
   activeScanCount = 0,
   children,
@@ -64,7 +68,7 @@ export function ScansPageShell({
   const hasConnectedProviders = providers.some(
     (provider) => provider.attributes.connection.connected === true,
   );
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
   const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
   // When a scan is already running, the tour highlights its row (anchored in
@@ -116,6 +120,7 @@ export function ScansPageShell({
       >
         <ScansFilterBar
           providers={providers}
+          providerGroups={providerGroups}
           activeTab={filters.activeTab}
           scheduleType={filters.scheduleType}
           scanStatus={filters.scanStatus}

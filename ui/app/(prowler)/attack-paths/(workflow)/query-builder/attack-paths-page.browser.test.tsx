@@ -101,6 +101,31 @@ describe("waiting states", () => {
 });
 
 describe("running a query", () => {
+  test("the query builder surface uses the shared card primitive", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+
+    const card = await graph.waitFor(() => graph.queryBuilderCard, 10000);
+
+    expect(card).toHaveAttribute("data-slot", "card");
+    expect(card).toHaveClass("rounded-xl");
+  });
+
+  test("a parameterized query shows its required inputs after selection", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.parameterizedQuery());
+
+    await graph.selectQuery();
+
+    expect(graph.containsText(/Query Parameters/i)).toBe(true);
+    expect(graph.containsText(/Tag key/i)).toBe(true);
+    expect(graph.getInputByName("tag_key")).toBeTruthy();
+    expect(graph.containsText(/Tag value/i)).toBe(true);
+    expect(graph.getInputByName("tag_value")).toBeTruthy();
+  });
+
   test("the graph renders with a background, a minimap, and a viewport", async ({
     mountWith,
   }) => {

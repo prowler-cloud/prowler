@@ -1,10 +1,13 @@
 import os
 import re
 
+from api.v1.serializer_utils.base import BaseValidateSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
 
-from api.v1.serializer_utils.base import BaseValidateSerializer
+ATLASSIAN_SITE_NAME_REGEX = re.compile(
+    r"\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\Z"
+)
 
 
 class S3ConfigSerializer(BaseValidateSerializer):
@@ -98,7 +101,17 @@ class AWSCredentialSerializer(BaseValidateSerializer):
 class JiraCredentialSerializer(BaseValidateSerializer):
     user_mail = serializers.EmailField(required=True)
     api_token = serializers.CharField(required=True)
-    domain = serializers.CharField(required=True)
+    domain = serializers.RegexField(
+        regex=ATLASSIAN_SITE_NAME_REGEX,
+        required=True,
+        trim_whitespace=False,
+        error_messages={
+            "invalid": (
+                "Domain must be a valid Atlassian site name containing only "
+                "letters, numbers, and hyphens."
+            )
+        },
+    )
 
     class Meta:
         resource_name = "integrations"
@@ -171,7 +184,10 @@ class JiraCredentialSerializer(BaseValidateSerializer):
                     },
                     "domain": {
                         "type": "string",
-                        "description": "The JIRA domain/instance URL (e.g., 'your-domain.atlassian.net').",
+                        "description": "The Jira site name without the '.atlassian.net' suffix (e.g., 'your-domain').",
+                        "minLength": 1,
+                        "maxLength": 63,
+                        "pattern": "^[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$",
                     },
                 },
                 "required": ["user_mail", "api_token", "domain"],

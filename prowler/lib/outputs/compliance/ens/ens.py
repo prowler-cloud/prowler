@@ -2,6 +2,11 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_ens_table(
@@ -25,9 +30,11 @@ def get_ens_table(
         "Opcional": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
@@ -35,6 +42,12 @@ def get_ens_table(
             if compliance.Framework == "ENS":
                 provider = compliance.Provider
                 for requirement in compliance.Requirements:
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         marco_categoria = f"{attribute.Marco}/{attribute.Categoria}"
                         # Check if Marco/Categoria exists
@@ -50,25 +63,24 @@ def get_ens_table(
                             marco_muted_seen[marco_categoria] = set()
                         if finding.muted:
                             # Overview total: count each finding once per framework
-                            if index not in muted_count:
-                                muted_count.append(index)
+                            muted_count.add(index)
                             # Per-marco Muted: count each finding once per marco
                             # it belongs to (a finding can map to several marcos).
                             if index not in marco_muted_seen[marco_categoria]:
                                 marco_muted_seen[marco_categoria].add(index)
                                 marcos[marco_categoria]["Muted"] += 1
                         else:
-                            if finding.status == "FAIL":
+                            if effective_status == "FAIL":
                                 if attribute.Tipo != "recomendacion":
-                                    if index not in fail_count:
-                                        fail_count.append(index)
+                                    fail_count.add(index)
+                                    pass_count.discard(index)
                                     # Mark every marco the finding belongs to as
                                     # NO CUMPLE, not just the first one seen.
                                     marcos[marco_categoria][
                                         "Estado"
                                     ] = f"{Fore.RED}NO CUMPLE{Style.RESET_ALL}"
-                            elif finding.status == "PASS" and index not in pass_count:
-                                pass_count.append(index)
+                            elif effective_status == "PASS" and index not in fail_count:
+                                pass_count.add(index)
                         if attribute.Nivel == "opcional":
                             marcos[marco_categoria]["Opcional"] += 1
                         elif attribute.Nivel == "alto":

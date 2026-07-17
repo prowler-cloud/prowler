@@ -216,6 +216,22 @@ export class AttackPathPageHarness {
     return this.q(AttackPathPageHarness.VIEWPORT_SEL);
   }
 
+  get queryBuilderCard(): HTMLElement | null {
+    return (
+      this.container
+        .querySelector<HTMLElement>(
+          '[data-tour-id="attack-paths-query-selector"]',
+        )
+        ?.closest<HTMLElement>('[data-slot="card"]') ?? null
+    );
+  }
+
+  getInputByName(name: string): HTMLInputElement | null {
+    return this.container.querySelector<HTMLInputElement>(
+      `input[name="${name}"]`,
+    );
+  }
+
   /**
    * Inline `transform` of the React Flow viewport element. This is the
    * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing

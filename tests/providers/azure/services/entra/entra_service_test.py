@@ -294,6 +294,7 @@ def test_azure_entra__get_users_handles_pagination():
         "id",
         "displayName",
         "accountEnabled",
+        "signInActivity",
     ]
     with_url_mock.assert_called_once_with("next-link")
     registration_details_builder.get.assert_awaited()

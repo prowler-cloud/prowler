@@ -14,6 +14,7 @@ import {
   WizardFooterConfig,
 } from "@/components/providers/wizard/steps/footer-controls";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
+import { ToastAction, useToast } from "@/components/shadcn";
 import {
   Select,
   SelectContent,
@@ -23,7 +24,8 @@ import {
 } from "@/components/shadcn/select/select";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
-import { ToastAction, useToast } from "@/components/ui";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import {
   buildScheduleUpdatePayload,
   getScanScheduleCapability,
@@ -169,12 +171,12 @@ export function OrgLaunchScan({
       buildScheduleUpdatePayload(values),
     );
 
-    if (result.error) {
+    if (hasActionError(result)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
         title: "Unable to save scan schedules",
-        description: String(result.error),
+        description: getActionErrorMessage(result),
       });
       return;
     }
@@ -361,10 +363,7 @@ export function OrgLaunchScan({
           )}
 
           {isBlocked ? (
-            <p className="text-text-error-primary text-sm">
-              You have reached your scan limit, so additional scans are not
-              available right now.
-            </p>
+            <UsageLimitMessage />
           ) : isAdvanced ? (
             <ScanScheduleFields
               form={form}

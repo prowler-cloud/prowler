@@ -48,6 +48,7 @@ class ProwlerArgumentParser:
             "nhn",
             "mongodbatlas",
             "vercel",
+            "e2enetworks",
             "okta",
             "scaleway",
             "stackit",
@@ -74,10 +75,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2enetworks,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,e2enetworks{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -98,7 +99,8 @@ Available Cloud Providers:
     mongodbatlas        MongoDB Atlas Provider
     scaleway            Scaleway Provider
     vercel              Vercel Provider
-    linode              Linode Provider{extra_providers_text}
+    linode              Linode Provider
+    e2enetworks         E2E Networks Provider{extra_providers_text}
 
 
 Available components:
@@ -472,6 +474,18 @@ Detailed documentation at https://docs.prowler.com
             nargs="?",
             default=default_fixer_config_file_path,
             help="Set configuration fixer file path",
+        )
+        config_parser.add_argument(
+            "--scan-secrets-validate",
+            action="store_true",
+            default=False,
+            help=(
+                "Validate secrets discovered by the secrets checks by checking "
+                "whether they are live against the provider APIs. WARNING: this "
+                "makes outbound network calls using the discovered secret itself; "
+                "the credential is exercised against the provider and the call "
+                "appears in the audited account's logs. Disabled by default."
+            ),
         )
 
     def __init_custom_checks_metadata_parser__(self):

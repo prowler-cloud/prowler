@@ -40,9 +40,184 @@ When adding a new configurable check to Prowler, update the following files:
   # aws.awslambda_function_vpc_multi_az
   lambda_min_azs: 2
   ```
+- **Provider Schema:** Add the typed field to the provider's Pydantic schema in `prowler/config/schema/<provider>.py`. This is required: the loader validates user configs against these schemas and the shipped `config.yaml` must round-trip with zero warnings. See [Adding a Parameter to the Provider Schema](#adding-a-parameter-to-the-provider-schema) below.
 - **Test Fixtures:** If tests depend on this configuration, add the variable to `tests/config/fixtures/config.yaml`.
-- **Documentation:** Document the new variable in the list of configurable checks in `docs/tutorials/configuration_file.md`.
+- **Documentation:** Document the new variable in the list of configurable checks in [Configuration File](/user-guide/cli/tutorials/configuration_file) (`docs/user-guide/cli/tutorials/configuration_file.mdx`).
 
 For a complete list of checks that already support configuration, see the [Configuration File Tutorial](/user-guide/cli/tutorials/configuration_file).
+
+<Note>
+Because a configurable check's verdict depends on the `audit_config` value it reads, a compliance requirement can lose meaning if the scan ran with a looser threshold than the control demands. Compliance frameworks can guard against this with **configuration guardrails**: a requirement declares the strictest configuration it tolerates and is forced to FAIL when the scan's config falls short. See [Configuration Guardrails for Requirements](/developer-guide/security-compliance-framework#configuration-guardrails-for-requirements).
+</Note>
+
+## Adding a Parameter to the Provider Schema
+
+Most providers have a typed Pydantic schema in `prowler/config/schema/`, registered in `prowler/config/schema/registry.py`. When a config is loaded and the provider has a registered schema, `validate_provider_config` checks each user-supplied key against it, logs a warning, and drops any field that fails validation. The consumer's `.get(key, default)` then falls back to the built-in default. Providers without a registered schema are passed through unchanged.
+
+This catches typos in a value (for example, `0.2` typed as `20`, or `"medium"` for an enum that expects `"MEDIUM"`). It does NOT catch typos in a key name: `disalowed_regions` (one `l` missing) is treated as an unknown key and passes through untouched, because third-party check plugins legitimately rely on unknown keys being preserved. Reviewers should still check that any new key the YAML adds is named exactly the same as the field on the schema.
+
+### Where to Add the Field
+
+1. Open `prowler/config/schema/<provider>.py` (for example, `aws.py`).
+2. Add a field on the provider's schema class. Always make it `Optional[...] = None` so the absence of the key is valid.
+3. Apply the tightest type the value allows. Examples below.
+
+If you are introducing an entirely new provider rather than a new parameter, also add an entry mapping the provider name to its schema class in `prowler/config/schema/registry.py`. The loader uses that registry to find the schema for the provider it is loading.
+
+### Choosing the Right Type
+
+| Value kind | Field declaration |
+|---|---|
+| Boolean toggle | `Optional[bool] = None` |
+| Strictly positive integer (days, counts) | `Optional[int] = Field(default=None, gt=0)` |
+| Fraction in 0..1 (threshold) | `Optional[float] = Field(default=None, ge=0.0, le=1.0)` |
+| Closed set of strings | `Optional[Literal["A", "B", "C"]] = None` |
+| Free-form string | `Optional[str] = None` |
+| List of strings or ints | `Optional[list[str]] = None` |
+
+Prefer `Literal[...]` over `str` whenever the value is one of a known set. Prefer `Field(gt=0)` over `int` whenever zero or negative would be nonsensical. The point of the schema is to catch real-world mistakes that previously passed silently.
+
+### Custom Validators (Only When Needed)
+
+If the value has structural rules beyond type and range, add a `field_validator`. Examples already in `aws.py`:
+
+- `_validate_port_range` rejects ports outside `0..65535`.
+- `_validate_account_ids` rejects anything that isn't a 12-digit AWS account ID.
+- `_validate_trusted_ips` rejects entries that aren't a valid IP or CIDR.
+
+Raise `ValueError` from the validator. The framework converts the error into a warning and drops the offending key.
+
+### Example: Adding a New Parameter
+
+Say a new check needs `max_iam_role_session_hours`, a strictly positive integer that defaults to 12 in code.
+
+1. **Schema** (`prowler/config/schema/aws.py`):
+    ```python
+    # IAM
+    max_iam_role_session_hours: Optional[int] = Field(default=None, gt=0)
+    ```
+2. **Shipped config** (`prowler/config/config.yaml`):
+    ```yaml
+    # aws.iam_role_session_duration_within_limit
+    max_iam_role_session_hours: 12
+    ```
+3. **Consumer** (the check):
+    ```python
+    max_hours = iam_client.audit_config.get("max_iam_role_session_hours", 12)
+    ```
+4. **Tests** in `tests/config/schema/aws_schema_test.py`:
+    - one test for a valid value that round-trips,
+    - one test for an invalid value (zero, negative, wrong type) that is dropped.
+
+### What the Loader Guarantees
+
+- **Unknown keys pass through.** Third-party check plugins can introduce arbitrary keys without schema edits; they will not be filtered.
+- **Invalid values never crash the run.** They produce a single warning per field and the key is dropped.
+- **Coerced values are normalized.** A YAML-quoted `"180"` for an `int` field arrives downstream as the integer `180`.
+- **The shipped `config.yaml` must round-trip cleanly.** The integration test `test_shipped_default_config_loads_without_warnings` will fail if a key is added to the YAML without a matching schema field, so the two stay in sync.
+
+## Configuration Value Limits
+
+Configurable thresholds enforce hard limits. A value outside the documented range is **dropped with a warning** and the check falls back to its built-in default (the same as if the key were absent). These bounds are intentionally conservative: they are not the absolute service maxima but the range that still produces a meaningful security check.
+
+Use this section as the reference when upgrading an existing config: if a value you set is being rejected, it is outside the range below.
+
+Only fields with a numeric range, a fixed value set, or a length cap are listed. Fields typed as free-form strings or lists (for example `disallowed_regions`, `secrets_ignore_patterns`, `trusted_account_ids`) have no range limit — they are validated for shape only (a 12-digit account ID, a valid IP/CIDR, a dotted version string), not for magnitude.
+
+### AWS
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `max_unused_access_keys_days` | `30..180` days | CIS AWS 1.13 recommends 45; NIST IA-5 ≤90 |
+| `max_console_access_days` | `30..180` days | CIS AWS 1.12 recommends 45 |
+| `max_unused_sagemaker_access_days` | `7..180` days | |
+| `max_security_group_rules` | `1..1000` | AWS hard limit is 1000 rules per security group |
+| `max_ec2_instance_age_in_days` | `1..1095` days | 3 years |
+| `ec2_high_risk_ports` | each port `1..65535` | port 0 is reserved |
+| `max_idle_disconnect_timeout_in_seconds` | `60..1800` s | NIST AC-12: cap at 30 min |
+| `max_disconnect_timeout_in_seconds` | `60..3600` s | |
+| `max_session_duration_seconds` | `600..86400` s | 10 min .. 24 h (AppStream per-session hard limit) |
+| `lambda_min_azs` | `1..6` | |
+| `recommended_cdk_bootstrap_version` | `1..100` | |
+| `log_group_retention_days` | one of `1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653` | only the CloudWatch Logs API-accepted retention values |
+| `threat_detection_privilege_escalation_threshold` | `0.0..1.0` | fraction of suspicious actions |
+| `threat_detection_privilege_escalation_minutes` | `5..43200` min | under 5 min the signal is mostly false positives |
+| `threat_detection_enumeration_threshold` | `0.0..1.0` | |
+| `threat_detection_enumeration_minutes` | `5..43200` min | |
+| `threat_detection_llm_jacking_threshold` | `0.0..1.0` | |
+| `threat_detection_llm_jacking_minutes` | `5..43200` min | |
+| `days_to_expire_threshold` (ACM) | `7..365` days | PCI-DSS 4.2.1.1: alert ≥30 days before expiry |
+| `elb_min_azs` | `1..6` | |
+| `elbv2_min_azs` | `1..6` | |
+| `minimum_snapshot_retention_period` | `1..35` days | ElastiCache service hard limit |
+| `max_days_secret_unused` | `7..365` days | |
+| `max_days_secret_unrotated` | `1..180` days | NIST IA-5: rotate quarterly; CIS ≤90 |
+| `min_kinesis_stream_retention_hours` | `24..8760` h | 1 day .. 1 year |
+| `shodan_api_key` | ≤512 chars | |
+
+### Azure
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `vm_backup_min_daily_retention_days` | `7..9999` days | Azure Backup hard limit; under 7 days defeats DR/ransomware recovery |
+| `apim_threat_detection_llm_jacking_threshold` | `0.0..1.0` | fraction of suspicious actions |
+| `apim_threat_detection_llm_jacking_minutes` | `5..43200` min | under 5 min the signal is mostly false positives |
+| `shodan_api_key` | ≤512 chars | |
+
+### GCP
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `mig_min_zones` | `1..5` | |
+| `max_snapshot_age_days` | `1..1095` days | 3 years |
+| `max_unused_account_days` | `30..365` days | |
+| `storage_min_retention_days` | `1..3650` days | |
+| `shodan_api_key` | ≤512 chars | |
+
+### Kubernetes
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `audit_log_maxbackup` | `2..1000` | CIS Kubernetes 1.2.18 recommends ≥10 |
+| `audit_log_maxsize` | `10..10000` MB | CIS Kubernetes 1.2.19 recommends ≥100 MB |
+| `audit_log_maxage` | `7..3650` days | CIS Kubernetes 1.2.17 recommends ≥30 days |
+
+### M365
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `sign_in_frequency` | `1..168` h | 1 h .. 7 days; Conditional Access baseline for admins ≤24 h |
+| `recommended_mailtips_large_audience_threshold` | `5..10000` | Microsoft default 25 |
+| `audit_log_age` | `30..3650` days | M365 E3 default 90 days; SEC/FINRA require ≥7 years |
+
+### GitHub
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `inactive_not_archived_days_threshold` | `30..3650` days | CIS GitHub recommends 180 |
+
+### Cloudflare
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `max_retries` | `0..10` | 0 disables retries |
+
+### MongoDB Atlas
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `max_service_account_secret_validity_hours` | `1..720` h | 1 h .. 30 days |
+
+### Vercel
+
+| Key | Allowed range | Notes |
+|---|---|---|
+| `days_to_expire_threshold` | `7..365` days | PCI-DSS 4.2.1.1: alert ≥30 days before expiry |
+| `stale_token_threshold_days` | `30..3650` days | NIST AC-2(3) typical window 30..90 days |
+| `stale_invitation_threshold_days` | `7..365` days | |
+| `max_owner_percentage` | `1..50` % | guidance recommends ≤25% |
+| `max_owners` | `1..1000` | absolute cap, overrides percentage for large teams |
+
+These bounds live in the provider schemas under `prowler/config/schema/`; each field's `Field(ge=..., le=...)` (or `field_validator`) is the source of truth and the descriptions there carry the full rationale.
 
 This approach ensures that checks are easily configurable, making Prowler highly adaptable to different environments and requirements.

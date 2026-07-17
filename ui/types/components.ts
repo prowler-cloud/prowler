@@ -1,7 +1,9 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
+import type { FindingTriageSummary } from "./findings-triage";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -13,43 +15,6 @@ export type IconProps = {
 };
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
-
-export type SubmenuProps = {
-  href: string;
-  target?: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-};
-
-export type MenuProps = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  submenus?: SubmenuProps[];
-  defaultOpen?: boolean;
-  target?: string;
-  tooltip?: string;
-  highlight?: boolean;
-};
-
-export type GroupProps = {
-  groupLabel: string;
-  menus: MenuProps[];
-};
-
-export interface CollapseMenuButtonProps {
-  icon: IconComponent;
-  label: string;
-  submenus: SubmenuProps[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
 
 export const NEXT_UI_VARIANTS = {
   SOLID: "solid",
@@ -612,6 +577,7 @@ export interface FindingsResponse {
 export interface FindingProps {
   type: "findings";
   id: string;
+  triage?: FindingTriageSummary;
   attributes: {
     uid: string;
     delta: FindingDelta;

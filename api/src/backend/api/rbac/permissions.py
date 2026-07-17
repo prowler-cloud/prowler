@@ -1,11 +1,10 @@
 from enum import Enum
 
+from api.db_router import MainRouter
+from api.models import Provider, Role, User
 from django.db.models import QuerySet
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
-
-from api.db_router import MainRouter
-from api.models import Provider, Role, User
 
 
 class Permissions(Enum):
@@ -35,7 +34,7 @@ class HasPermissions(BasePermission):
         if not tenant_id:
             return False
 
-        user_roles = (
+        user_roles = list(
             User.objects.using(MainRouter.admin_db)
             .get(id=request.user.id)
             .roles.using(MainRouter.admin_db)
@@ -44,11 +43,10 @@ class HasPermissions(BasePermission):
         if not user_roles:
             return False
 
-        for perm in required_permissions:
-            if not getattr(user_roles[0], perm.value, False):
-                return False
-
-        return True
+        return all(
+            any(getattr(role, permission.value, False) for role in user_roles)
+            for permission in required_permissions
+        )
 
 
 def get_role(user: User, tenant_id: str) -> Role:

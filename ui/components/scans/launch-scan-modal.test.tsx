@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ComponentProps } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const {
   getScheduleMock,
@@ -50,7 +50,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedule: updateScheduleMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -74,7 +74,7 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -91,12 +91,14 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
     onBatchChange,
     selectedValues,
     id,
+    placeholder = "All Providers",
   }: {
     disabledValues?: string[];
     providers: { id: string; attributes: { alias: string; uid: string } }[];
     onBatchChange: (filterKey: string, values: string[]) => void;
     selectedValues: string[];
     id?: string;
+    placeholder?: string;
   }) => (
     <div>
       <input aria-label="Search Providers" placeholder="Search Providers..." />
@@ -108,7 +110,7 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
           onBatchChange("provider_id__in", [event.target.value])
         }
       >
-        <option value="">All Providers</option>
+        <option value="">{placeholder}</option>
         {providers.map((provider) => (
           <option
             key={provider.id}
@@ -123,15 +125,22 @@ vi.mock("@/app/(prowler)/_overview/_components/accounts-selector", () => ({
   ),
 }));
 
+import {
+  ACTION_ERROR_API_MESSAGES,
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
+import { ProviderProps } from "@/types";
 import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { LaunchScanModal } from "./launch-scan-modal";
 
-const provider = {
+const provider: ProviderProps = {
   id: "provider-1",
   type: "providers" as const,
   attributes: {
     provider: "aws" as const,
+    is_dynamic: false,
     uid: "123456789012",
     alias: "Production",
     status: "completed" as const,
@@ -186,12 +195,26 @@ describe("LaunchScanModal", () => {
     scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("shows a searchable provider selector", () => {
     render(
       <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
     );
 
     expect(screen.getByPlaceholderText("Search Providers...")).toBeVisible();
+  });
+
+  it("uses a single-provider placeholder in the launch selector", () => {
+    render(
+      <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
+    );
+
+    expect(
+      screen.getByRole("option", { name: "Select a Provider" }),
+    ).toBeInTheDocument();
   });
 
   it("disables disconnected providers in the launch selector", () => {
@@ -334,6 +357,40 @@ describe("LaunchScanModal", () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(false);
   });
 
+  it("maps payment-required scan errors to the shared subscription message", async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    scanOnDemandMock.mockResolvedValueOnce({
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    render(
+      <LaunchScanModal
+        open
+        onOpenChange={onOpenChange}
+        providers={[provider]}
+      />,
+    );
+
+    await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+    await user.click(screen.getByRole("button", { name: /launch scan/i }));
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).not.toBeInTheDocument();
+    expect(toastMock).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+    expect(onOpenChange).not.toHaveBeenCalledWith(false);
+  });
+
   describe("schedule mode", () => {
     const weeklyScheduleResponse = {
       data: {
@@ -399,6 +456,64 @@ describe("LaunchScanModal", () => {
       );
     });
 
+    it("keeps the upcoming local hour when provider scan fields say there is no schedule", async () => {
+      // Given
+      const user = userEvent.setup();
+      vi.setSystemTime(new Date(2026, 5, 10, 11, 59, 0, 0));
+      getScheduleMock.mockResolvedValue({
+        data: {
+          type: "schedules",
+          id: provider.id,
+          attributes: {
+            scan_enabled: true,
+            scan_frequency: "DAILY",
+            scan_hour: 0,
+            scan_timezone: "UTC",
+            scan_interval_hours: null,
+            scan_day_of_week: null,
+            scan_day_of_month: null,
+          },
+        },
+      });
+      const providerWithoutSchedule = {
+        ...provider,
+        attributes: {
+          ...provider.attributes,
+          scan_enabled: true,
+          scan_frequency: "DAILY" as const,
+          scan_hour: null,
+          scan_timezone: "UTC",
+          scan_interval_hours: null,
+          scan_day_of_week: null,
+          scan_day_of_month: null,
+          next_scan_at: null,
+          last_scan_at: null,
+        },
+      };
+
+      render(
+        <LaunchScanModal
+          open
+          onOpenChange={vi.fn()}
+          providers={[providerWithoutSchedule]}
+          capability={SCAN_SCHEDULE_CAPABILITY.ADVANCED}
+        />,
+      );
+
+      // When
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+
+      // Then
+      expect(
+        await screen.findByRole("combobox", { name: "Scan Time" }),
+      ).toHaveTextContent("12:00pm");
+      expect(
+        screen.getByRole("combobox", { name: "Scan Time" }),
+      ).not.toHaveTextContent("12:00am");
+      expect(getScheduleMock).not.toHaveBeenCalled();
+    });
+
     it("launches the initial scan when the checkbox is checked", async () => {
       const user = userEvent.setup();
       renderAdvanced();
@@ -421,15 +536,38 @@ describe("LaunchScanModal", () => {
       );
     });
 
-    it("locks schedule mode outside ADVANCED (OSS default)", () => {
+    it("disables Save Schedule until a provider is selected", async () => {
+      const user = userEvent.setup();
+      renderAdvanced();
+
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+
+      expect(
+        screen.getByRole("button", { name: /save schedule/i }),
+      ).toBeDisabled();
+      expect(getScheduleMock).not.toHaveBeenCalled();
+    });
+
+    it("preserves legacy daily scheduling outside Cloud", async () => {
+      const user = userEvent.setup();
+      scheduleDailyMock.mockResolvedValue({ data: { id: provider.id } });
       render(
         <LaunchScanModal open onOpenChange={vi.fn()} providers={[provider]} />,
       );
 
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
-      ).toBeDisabled();
+      ).toBeEnabled();
+
+      await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
+      await user.click(screen.getByRole("radio", { name: "On a schedule" }));
+      expect(screen.getByRole("combobox", { name: "Repeats" })).toBeDisabled();
+
+      await user.click(screen.getByRole("button", { name: /save schedule/i }));
+
+      await waitFor(() => expect(scheduleDailyMock).toHaveBeenCalledTimes(1));
       expect(getScheduleMock).not.toHaveBeenCalled();
+      expect(updateScheduleMock).not.toHaveBeenCalled();
     });
 
     it("hides schedule mode but allows manual scans in MANUAL_ONLY", async () => {
@@ -466,7 +604,7 @@ describe("LaunchScanModal", () => {
       );
 
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: /launch scan/i }),
       ).toBeDisabled();
@@ -485,7 +623,7 @@ describe("LaunchScanModal", () => {
       );
 
       expect(screen.queryByRole("radio")).not.toBeInTheDocument();
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
 
       await user.selectOptions(screen.getByLabelText("Providers"), provider.id);
       await user.click(screen.getByRole("button", { name: /launch scan/i }));

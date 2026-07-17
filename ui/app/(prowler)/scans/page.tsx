@@ -1,28 +1,37 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
-import { getSchedules } from "@/actions/schedules";
+import {
+  SCANS_PROVIDER_FILTER_FIELD,
+  type ScansFilterParam,
+} from "@/actions/scans/scans-filters";
+import { getSchedules, getSchedulesPage } from "@/actions/schedules";
 import { auth } from "@/auth.config";
 import { PageReady } from "@/components/onboarding";
 import {
   appendPendingScheduleRowsToPage,
+  buildScheduledTabRows,
   getProviderIdsFromScans,
   getScanJobsTab,
   getScanJobsTabFilters,
   getScanJobsUserFilters,
+  pickScheduleProviderFilters,
 } from "@/components/scans/scans.utils";
 import { ScansPageShell } from "@/components/scans/scans-page-shell";
 import { ScansProvidersEmptyState } from "@/components/scans/scans-providers-empty-state";
 import { SkeletonTableScans } from "@/components/scans/table";
 import { ScanJobsTable } from "@/components/scans/table/scan-jobs-table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import {
   buildProviderScheduleSummary,
   buildSchedulesByProviderId,
+  getScanScheduleCapability,
   isScheduleConfigured,
 } from "@/lib/schedules";
+import { isCloud } from "@/lib/shared/env";
 import {
   ProviderProps,
   SCAN_JOBS_TAB,
@@ -30,32 +39,28 @@ import {
   ScanProps,
   SearchParamsProps,
 } from "@/types";
-import type { ScanScheduleCapability } from "@/types/schedules";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
 const ACTIVE_SCAN_COUNT_PAGE_SIZE = 1;
 // Pending schedule rows are derived from provider schedules, but must honor the
-// same provider filters as real scan rows. Keep these filter keys typed locally
-// without narrowing the global SearchParamsProps shape used by Next pages.
-const PENDING_ROW_PROVIDER_FILTER = {
-  PROVIDER_UID_IN: "provider_uid__in",
-  PROVIDER_UID: "provider_uid",
-  PROVIDER_TYPE_IN: "provider_type__in",
-  PROVIDER_TYPE: "provider_type",
-} as const;
-
-type PendingRowProviderFilter =
-  (typeof PENDING_ROW_PROVIDER_FILTER)[keyof typeof PENDING_ROW_PROVIDER_FILTER];
-type PendingRowProviderFilterParam = `filter[${PendingRowProviderFilter}]`;
-
-const PROVIDER_UID_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_UID}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+// same provider filters as real scan rows. The filter keys live with the scans
+// action (SCANS_PROVIDER_FILTER_FIELD) so they stay in sync with ScansFilterParam.
+const PROVIDER_ID_FILTER_KEYS = [
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const PROVIDER_TYPE_FILTER_KEYS = [
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE_IN}]`,
-  `filter[${PENDING_ROW_PROVIDER_FILTER.PROVIDER_TYPE}]`,
-] as const satisfies ReadonlyArray<PendingRowProviderFilterParam>;
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE_IN}]`,
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_TYPE}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
+
+const PROVIDER_GROUP_FILTER_KEYS = [
+  `filter[${SCANS_PROVIDER_FILTER_FIELD.PROVIDER_GROUPS_IN}]`,
+] as const satisfies ReadonlyArray<ScansFilterParam>;
 
 const getFilterSearchQuery = (
   filters: Record<string, string | string[]>,
@@ -78,7 +83,7 @@ const parseCsvParam = (value?: string | string[]): string[] => {
 
 const getFirstSearchParam = (
   searchParams: SearchParamsProps,
-  keys: ReadonlyArray<PendingRowProviderFilterParam>,
+  keys: ReadonlyArray<ScansFilterParam>,
 ): string | string[] | undefined => {
   for (const key of keys) {
     const value = searchParams[key];
@@ -93,17 +98,24 @@ const filterProvidersForPendingRows = (
   providers: ProviderProps[],
   searchParams: SearchParamsProps,
 ): ProviderProps[] => {
-  const uids = parseCsvParam(
-    getFirstSearchParam(searchParams, PROVIDER_UID_FILTER_KEYS),
+  const ids = parseCsvParam(
+    getFirstSearchParam(searchParams, PROVIDER_ID_FILTER_KEYS),
   );
   const types = parseCsvParam(
     getFirstSearchParam(searchParams, PROVIDER_TYPE_FILTER_KEYS),
   );
+  const groups = parseCsvParam(
+    getFirstSearchParam(searchParams, PROVIDER_GROUP_FILTER_KEYS),
+  );
 
   return providers.filter(
     (provider) =>
-      (uids.length === 0 || uids.includes(provider.attributes.uid)) &&
-      (types.length === 0 || types.includes(provider.attributes.provider)),
+      (ids.length === 0 || ids.includes(provider.id)) &&
+      (types.length === 0 || types.includes(provider.attributes.provider)) &&
+      (groups.length === 0 ||
+        (provider.relationships?.provider_groups?.data ?? []).some((group) =>
+          groups.includes(group.id),
+        )),
   );
 };
 
@@ -169,8 +181,12 @@ export default async function Scans({
   const session = await auth();
   const resolvedSearchParams = await searchParams;
 
-  const providersData = await getAllProviders();
+  const [providersData, providerGroupsData] = await Promise.all([
+    getAllProviders(),
+    getAllProviderGroups(),
+  ]);
   const providers = providersData?.data ?? [];
+  const providerGroups = providerGroupsData?.data ?? [];
 
   const connectedProviders = providers.filter(
     (provider: ProviderProps) =>
@@ -205,7 +221,7 @@ export default async function Scans({
 
   return (
     <ContentLayout
-      title="Scan Jobs"
+      title="Scans"
       icon="lucide:timer"
       onboardingAction={onboardingAction}
     >
@@ -221,6 +237,7 @@ export default async function Scans({
       ) : (
         <ScansPageShell
           providers={providers}
+          providerGroups={providerGroups}
           hasManageScansPermission={hasManageScansPermission}
           activeScanCount={activeScanCount}
         >
@@ -271,6 +288,33 @@ const SSRDataTableScans = async ({
   };
 
   const query = (filters["filter[search]"] as string) || "";
+
+  // Advanced (Cloud) sources the Scheduled tab from /schedules; other envs keep the legacy /scans path.
+  const capability =
+    scanScheduleCapability ?? getScanScheduleCapability(isCloud());
+
+  if (
+    tab === SCAN_JOBS_TAB.SCHEDULED &&
+    capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED
+  ) {
+    const schedulesPage = await getSchedulesPage({
+      page,
+      pageSize,
+      sort,
+      filters: pickScheduleProviderFilters(searchParams),
+    });
+    const { data, meta } = buildScheduledTabRows(schedulesPage, new Date());
+
+    return (
+      <ScanJobsTable
+        data={data}
+        meta={meta}
+        tab={tab}
+        hasFilters={hasUserFilters}
+        scanScheduleCapability={capability}
+      />
+    );
+  }
 
   const scansData = await getScans({
     query,

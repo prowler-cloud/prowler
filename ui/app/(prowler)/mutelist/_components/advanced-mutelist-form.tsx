@@ -1,6 +1,5 @@
 "use client";
 
-import { Textarea } from "@heroui/input";
 import { Trash2 } from "lucide-react";
 import { useActionState, useEffect, useState } from "react";
 
@@ -10,11 +9,18 @@ import {
   getMutedFindingsConfig,
   updateMutedFindingsConfig,
 } from "@/actions/processors";
-import { Button, Card, Skeleton } from "@/components/shadcn";
+import {
+  Button,
+  Card,
+  FieldError,
+  Skeleton,
+  Textarea,
+} from "@/components/shadcn";
+import { useToast } from "@/components/shadcn";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
-import { CustomLink } from "@/components/ui/custom/custom-link";
 import { fontMono } from "@/config/fonts";
+import { cn } from "@/lib/utils";
 import {
   convertToYaml,
   defaultMutedFindingsConfig,
@@ -132,6 +138,13 @@ export function AdvancedMutelistForm() {
     }
   };
 
+  const isConfigInvalid =
+    (!hasUserStartedTyping && !!state?.errors?.configuration) ||
+    !yamlValidation.isValid;
+  const configErrorMessage =
+    (!hasUserStartedTyping && state?.errors?.configuration) ||
+    (!yamlValidation.isValid ? yamlValidation.error : "");
+
   if (isLoading) {
     return (
       <Card variant="base" className="p-6">
@@ -159,7 +172,7 @@ export function AdvancedMutelistForm() {
         size="md"
       >
         <div className="flex flex-col gap-4">
-          <p className="text-default-600 text-sm">
+          <p className="text-text-neutral-secondary text-sm">
             Are you sure you want to delete this configuration? This action
             cannot be undone.
           </p>
@@ -193,10 +206,10 @@ export function AdvancedMutelistForm() {
 
           <div className="flex flex-col gap-4">
             <div>
-              <h3 className="text-default-700 mb-2 text-lg font-semibold">
+              <h3 className="text-text-neutral-secondary mb-2 text-lg font-semibold">
                 Advanced Mutelist Configuration
               </h3>
-              <ul className="text-default-600 mb-4 list-disc pl-5 text-sm">
+              <ul className="text-text-neutral-secondary mb-4 list-disc pl-5 text-sm">
                 <li>
                   <strong>
                     This Mutelist configuration will take effect on the next
@@ -227,7 +240,7 @@ export function AdvancedMutelistForm() {
             <div className="flex flex-col gap-2">
               <label
                 htmlFor="configuration"
-                className="text-default-700 text-sm font-medium"
+                className="text-text-neutral-secondary text-sm font-medium"
               >
                 Mutelist Configuration (YAML)
               </label>
@@ -236,29 +249,26 @@ export function AdvancedMutelistForm() {
                   id="configuration"
                   name="configuration"
                   placeholder={defaultMutedFindingsConfig}
-                  variant="bordered"
                   value={configText}
                   onChange={(e) => handleConfigChange(e.target.value)}
-                  minRows={20}
-                  maxRows={20}
-                  isInvalid={
-                    (!hasUserStartedTyping && !!state?.errors?.configuration) ||
-                    !yamlValidation.isValid
-                  }
-                  errorMessage={
-                    (!hasUserStartedTyping && state?.errors?.configuration) ||
-                    (!yamlValidation.isValid ? yamlValidation.error : "")
-                  }
-                  classNames={{
-                    input: fontMono.className + " text-sm",
-                    base: "min-h-[400px]",
-                    errorMessage: "whitespace-pre-wrap",
-                  }}
+                  rows={20}
+                  aria-invalid={isConfigInvalid}
+                  className={cn(
+                    fontMono.className,
+                    "min-h-[400px] text-sm",
+                    isConfigInvalid &&
+                      "border-border-error focus:border-border-error focus:ring-border-error",
+                  )}
                 />
+                {isConfigInvalid && configErrorMessage && (
+                  <FieldError className="my-1 px-1 whitespace-pre-wrap">
+                    {configErrorMessage}
+                  </FieldError>
+                )}
                 {yamlValidation.isValid &&
                   configText &&
                   hasUserStartedTyping && (
-                    <div className="text-tiny text-success my-1 flex items-center px-1">
+                    <div className="text-text-success-primary my-1 flex items-center px-1 text-xs">
                       <span>Valid YAML format</span>
                     </div>
                   )}

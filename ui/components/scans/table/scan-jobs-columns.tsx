@@ -3,8 +3,8 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { StackedCell } from "@/components/shadcn";
-import { DataTableColumnHeader } from "@/components/ui/table";
-import { StatusBadge } from "@/components/ui/table/status-badge";
+import { DataTableColumnHeader } from "@/components/shadcn/table";
+import { StatusBadge } from "@/components/shadcn/table/status-badge";
 import { formatLocalDate, formatLocalTimeWithZone } from "@/lib/date-utils";
 import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";
@@ -119,12 +119,13 @@ const resourcesColumn: ColumnDef<ScanProps> = {
 };
 
 const actionsColumn = (
+  tab: ScanJobsTab,
   capability?: ScanScheduleCapability,
 ): ColumnDef<ScanProps> => ({
   id: "actions",
   header: ({ column }) => <DataTableColumnHeader column={column} title="" />,
   cell: ({ row }) => (
-    <ScanJobsRowActions scan={row.original} capability={capability} />
+    <ScanJobsRowActions scan={row.original} tab={tab} capability={capability} />
   ),
   enableSorting: false,
 });
@@ -164,7 +165,7 @@ const activeColumns = (
       ),
     enableSorting: false,
   },
-  actionsColumn(capability),
+  actionsColumn(SCAN_JOBS_TAB.ACTIVE, capability),
 ];
 
 const completedColumns = (
@@ -195,7 +196,7 @@ const completedColumns = (
     ),
     cell: ({ row }) => renderDateCell(row.original.attributes.completed_at),
   },
-  actionsColumn(capability),
+  actionsColumn(SCAN_JOBS_TAB.COMPLETED, capability),
 ];
 
 const scheduledColumns = (
@@ -206,7 +207,7 @@ const scheduledColumns = (
   scheduledScanScheduleColumn,
   nextScanColumn,
   lastScanColumn,
-  actionsColumn(capability),
+  actionsColumn(SCAN_JOBS_TAB.SCHEDULED, capability),
 ];
 
 export function getScanJobsColumns(

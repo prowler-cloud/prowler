@@ -5,13 +5,12 @@ import { formatLocalTimeWithZone } from "@/lib/date-utils";
 import type { ScanScheduleSummary } from "@/types/scans";
 
 interface LinkToScansProps {
-  hasSchedule: boolean;
   schedule?: ScanScheduleSummary;
 }
 
 // Matches the scans table Schedule column: cadence on top, next-run local time
-// underneath. Falls back to a plain label when the cadence is unknown.
-export const LinkToScans = ({ hasSchedule, schedule }: LinkToScansProps) => {
+// underneath. Falls back to None when no configured schedule is present.
+export const LinkToScans = ({ schedule }: LinkToScansProps) => {
   if (schedule) {
     return (
       <StackedCell
@@ -21,9 +20,5 @@ export const LinkToScans = ({ hasSchedule, schedule }: LinkToScansProps) => {
     );
   }
 
-  return (
-    <span className="text-text-neutral-secondary text-sm">
-      {hasSchedule ? "Daily" : "None"}
-    </span>
-  );
+  return <span className="text-text-neutral-secondary text-sm">None</span>;
 };

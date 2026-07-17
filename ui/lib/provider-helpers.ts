@@ -46,7 +46,7 @@ export const createProviderDetailsMapping = (
 
     return {
       [uid]: {
-        provider: provider?.attributes?.provider || "aws",
+        provider: provider?.attributes?.provider ?? "",
         uid: uid,
         alias: provider?.attributes?.alias ?? null,
       },
@@ -65,7 +65,7 @@ export const createProviderDetailsMappingById = (
 
     return {
       [id]: {
-        provider: provider?.attributes?.provider || "aws",
+        provider: provider?.attributes?.provider ?? "",
         uid: provider?.attributes?.uid || "",
         alias: provider?.attributes?.alias ?? null,
       },

@@ -1,11 +1,13 @@
-FROM python:3.12.13-slim-bookworm@sha256:76d4b7b6305788c6b4c6a19d6a22a3921bf802e9af4d5e1e5bd771208dba74bf AS build
+FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/api"
 
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
+# Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.71.0
+ARG TRIVY_VERSION=0.71.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -101,6 +103,24 @@ RUN uv sync --locked --no-install-project && \
     rm -rf ~/.cache/uv
 
 RUN .venv/bin/python .venv/lib/python3.12/site-packages/prowler/providers/m365/lib/powershell/m365_powershell.py
+
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    gcc \
+    g++ \
+    make \
+    libxml2-dev \
+    libxmlsec1-dev \
+    libxmlsec1-openssl \
+    pkg-config \
+    libtool \
+    libxslt1-dev \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
 
 COPY --chown=prowler:prowler src/backend/ ./backend/
 COPY --chown=prowler:prowler docker-entrypoint.sh ./docker-entrypoint.sh

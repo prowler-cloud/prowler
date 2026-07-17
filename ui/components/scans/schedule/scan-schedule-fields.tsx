@@ -6,6 +6,8 @@ import type { ReactNode } from "react";
 import { Controller, type UseFormReturn, useWatch } from "react-hook-form";
 
 import {
+  Badge,
+  Button,
   Checkbox,
   Field,
   FieldLabel,
@@ -15,12 +17,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
-import { CloudFeatureBadgeLink } from "@/components/shared/cloud-feature-badge";
 import {
+  formatDayOfMonth,
   formatScheduleHour,
   getBrowserTimezone,
   getNextScheduledRun,
 } from "@/lib/schedules";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   SCHEDULE_FREQUENCY,
   SCHEDULE_WEEKDAY_LABELS,
@@ -59,20 +63,18 @@ interface ScanScheduleFieldsProps {
    * (interval/weekly/monthly) are disabled. Used for non-Cloud (OSS) accounts.
    */
   canUseAdvancedSchedule?: boolean;
-  /** Render the "Available in Prowler Cloud" upsell badge on locked controls. */
+  /** Render the "Available in Prowler Cloud" upsell badge in the header. */
   showCloudUpgradeBadge?: boolean;
 }
 
 function NumberSelect({
   label,
-  labelAddon,
   value,
   values,
   onChange,
   disabled,
 }: {
   label: string;
-  labelAddon?: ReactNode;
   value: number;
   values: ReadonlyArray<{ value: number; label: string }>;
   onChange: (value: number) => void;
@@ -80,10 +82,7 @@ function NumberSelect({
 }) {
   return (
     <Field>
-      <div className="flex items-center justify-between gap-2">
-        <FieldLabel>{label}</FieldLabel>
-        {labelAddon}
-      </div>
+      <FieldLabel>{label}</FieldLabel>
       <Select
         value={String(value)}
         onValueChange={(nextValue) => onChange(Number(nextValue))}
@@ -119,7 +118,7 @@ function getScheduleSummary({
     case SCHEDULE_FREQUENCY.WEEKLY:
       return `Weekly on ${SCHEDULE_WEEKDAY_LABELS[dayOfWeek] ?? SCHEDULE_WEEKDAY_LABELS[0]}`;
     case SCHEDULE_FREQUENCY.MONTHLY:
-      return `Monthly on day ${dayOfMonth}`;
+      return `Monthly on the ${formatDayOfMonth(dayOfMonth)}`;
     default:
       return "Daily";
   }
@@ -134,6 +133,9 @@ export function ScanScheduleFields({
   canUseAdvancedSchedule = true,
   showCloudUpgradeBadge = false,
 }: ScanScheduleFieldsProps) {
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
   // useWatch, not form.watch: form.watch re-renders are dropped by React Compiler memoization.
   const control = form.control;
   const [frequency, hour, dayOfWeek, dayOfMonth, intervalHours] = useWatch({
@@ -153,7 +155,19 @@ export function ScanScheduleFields({
   // ignores them, so they are display-only with a Cloud upsell.
   const advancedDisabled = disabled || !canUseAdvancedSchedule;
   const cloudUpgradeBadge = showCloudUpgradeBadge ? (
-    <CloudFeatureBadgeLink size="sm" />
+    <Button
+      type="button"
+      variant="bare"
+      size="link-xs"
+      aria-label="Explore advanced scheduling in Prowler Cloud"
+      onClick={() =>
+        openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ADVANCED_SCHEDULING)
+      }
+    >
+      <Badge variant="cloud" size="sm">
+        Cloud
+      </Badge>
+    </Button>
   ) : null;
 
   return (
@@ -164,6 +178,7 @@ export function ScanScheduleFields({
           <h3 className="text-text-neutral-primary text-sm font-medium">
             Scan Schedule
           </h3>
+          {cloudUpgradeBadge}
         </div>
         {headerAction}
       </div>
@@ -175,7 +190,6 @@ export function ScanScheduleFields({
           render={({ field }) => (
             <NumberSelect
               label="Scan Time"
-              labelAddon={cloudUpgradeBadge}
               value={field.value}
               values={HOUR_OPTIONS}
               onChange={field.onChange}
@@ -189,10 +203,7 @@ export function ScanScheduleFields({
           name="frequency"
           render={({ field }) => (
             <Field>
-              <div className="flex items-center justify-between gap-2">
-                <FieldLabel>Repeats</FieldLabel>
-                {cloudUpgradeBadge}
-              </div>
+              <FieldLabel>Repeats</FieldLabel>
               <Select
                 value={
                   canUseAdvancedSchedule

@@ -24,16 +24,22 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
-import type { ProviderType, ScanProps, ScheduleApiResponse } from "@/types";
+import {
+  type ProviderType,
+  SCAN_JOBS_TAB,
+  type ScanJobsTab,
+  type ScanProps,
+  type ScheduleApiResponse,
+} from "@/types";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -42,6 +48,8 @@ import {
 
 interface ScanJobsRowActionsProps {
   scan: ScanProps;
+  /** The scan jobs tab this row is rendered in. */
+  tab: ScanJobsTab;
   /**
    * Schedule capability override. Only for Prowler Cloud.
    */
@@ -50,6 +58,7 @@ interface ScanJobsRowActionsProps {
 
 export function ScanJobsRowActions({
   scan,
+  tab,
   capability,
 }: ScanJobsRowActionsProps) {
   const router = useRouter();
@@ -84,7 +93,7 @@ export function ScanJobsRowActions({
   const openFindings = () => {
     if (!isCompleted || !scanDate) return;
     router.push(
-      `/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
     );
   };
 
@@ -170,7 +179,8 @@ export function ScanJobsRowActions({
   return (
     <div className="flex items-center justify-end">
       <ActionDropdown>
-        {canEditSchedule && (
+        {/* Schedule editing belongs only to the Scheduled tab. */}
+        {tab === SCAN_JOBS_TAB.SCHEDULED && canEditSchedule && (
           <ActionDropdownItem
             icon={<CalendarClock />}
             label="Edit Scan Schedule"

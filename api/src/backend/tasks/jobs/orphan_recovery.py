@@ -21,7 +21,7 @@ This is the shared engine behind both the periodic Beat watchdog and the
 import ast
 import json
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 from celery import current_app, states
@@ -172,11 +172,9 @@ def reconcile_orphans(
     window_hours: int = 6,
     dry_run: bool = False,
 ) -> dict:
-    """Run the full orphan sweep under a single-flight advisory lock.
+    """Run the orphan task sweep under a single-flight advisory lock.
 
-    Recovers any orphaned in-flight task and delegates attack-paths scans that
-    never reached a worker to their existing stale-cleanup. Returns a summary;
-    a no-op (lock not won) is reported too.
+    Returns a recovery summary. A no-op is reported when the lock is not acquired.
     """
     with advisory_lock() as acquired:
         if not acquired:
@@ -200,11 +198,6 @@ def reconcile_orphans(
             logger.info("Orphan task recovery disabled by feature flag")
             result = {"recovered": [], "failed": [], "skipped": [], "enabled": False}
 
-        if not dry_run:
-            from tasks.jobs.attack_paths.cleanup import cleanup_stale_attack_paths_scans
-
-            result["attack_paths"] = cleanup_stale_attack_paths_scans()
-
         return {"acquired": True, **result}
 
 
@@ -213,7 +206,7 @@ def _reconcile_task_results(
 ) -> dict:
     from django_celery_results.models import TaskResult
 
-    cutoff = datetime.now(tz=timezone.utc) - timedelta(minutes=grace_minutes)
+    cutoff = datetime.now(tz=UTC) - timedelta(minutes=grace_minutes)
     candidates = list(
         TaskResult.objects.filter(status__in=IN_FLIGHT_STATES, date_created__lt=cutoff)
         .exclude(worker__isnull=True)
@@ -278,7 +271,7 @@ def _recover_task(task_result, max_attempts: int, window_hours: int) -> str:
     name = task_result.task_name
     args_repr = task_result.task_args
     kwargs_repr = task_result.task_kwargs
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=UTC)
 
     # Drop any future broker redelivery of the stale message.
     revoke_task(task_result, terminate=False)

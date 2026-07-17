@@ -16,8 +16,11 @@ from prowler.lib.outputs.jira.exceptions.exceptions import (
     JiraGetProjectsError,
     JiraGetProjectsResponseError,
     JiraNoProjectsError,
+    JiraNoTokenError,
     JiraRefreshTokenError,
+    JiraRefreshTokenResponseError,
     JiraRequiredCustomFieldsError,
+    JiraSendFindingsResponseError,
     JiraTestConnectionError,
 )
 from prowler.lib.outputs.jira.jira import Jira
@@ -53,7 +56,7 @@ class TestJiraIntegration:
 
         self.user_mail = "test_user_mail"
         self.api_token = "test_api_token"
-        self.domain = "test_domain"
+        self.domain = "test-domain"
 
         self.jira_integration_basic_auth = Jira(
             user_mail=self.user_mail,
@@ -382,6 +385,35 @@ class TestJiraIntegration:
         self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
 
         assert mock_get.call_args.kwargs["timeout"] == Jira.REQUEST_TIMEOUT
+
+    @pytest.mark.parametrize(
+        "domain",
+        (
+            "169.254.169.254#",
+            "internal/service",
+            "internal?target",
+            "internal\\target",
+            "internal:8000",
+            "user@internal",
+        ),
+    )
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_rejects_invalid_domain(self, mock_get, domain):
+        with pytest.raises(JiraGetCloudIDError):
+            self.jira_integration_basic_auth.get_cloud_id(domain=domain)
+
+        mock_get.assert_not_called()
+
+    @patch("prowler.lib.outputs.jira.jira.requests.get")
+    def test_get_cloud_id_basic_auth_disables_redirects(self, mock_get):
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {"cloudId": "test_cloud_id"}
+        mock_get.return_value = mock_response
+
+        self.jira_integration_basic_auth.get_cloud_id(domain=self.domain)
+
+        assert mock_get.call_args.kwargs["allow_redirects"] is False
 
     @patch("prowler.lib.outputs.jira.jira.requests.post")
     def test_refresh_access_token_sends_timeout(self, mock_post):
@@ -1692,7 +1724,7 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when the request fails."""
+        """Test that send_finding raises with Jira JSON error details."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1702,19 +1734,66 @@ class TestJiraIntegration:
         # Mock failed response
         mock_response = MagicMock()
         mock_response.status_code = 400
-        mock_response.json.return_value = {"errors": {"summary": "Required field"}}
+        mock_response.json.return_value = {
+            "errors": {"Team": "Team is required."},
+            "errorMessages": ["Field 'Team' cannot be set."],
+        }
         mock_post.return_value = mock_response
 
-        result = self.jira_integration.send_finding(
-            check_id="test-check",
-            check_title="Test Finding",
-            severity="High",
-            status="FAIL",
-            project_key="TEST",
-            issue_type="Bug",
-        )
+        with pytest.raises(JiraSendFindingsResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
 
-        assert result is False
+        assert "Failed to create Jira issue" in str(error.value)
+        assert "'Team': 'Team is required.'" in str(error.value)
+        assert "Field 'Team' cannot be set." in str(error.value)
+        mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_response_error_without_json_body(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test send_finding raises with status-code context for non-JSON errors."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock()
+        mock_response.status_code = 502
+        mock_response.json.side_effect = ValueError("No JSON body")
+        mock_post.return_value = mock_response
+
+        with pytest.raises(JiraSendFindingsResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert "Failed to create Jira issue" in str(error.value)
+        assert "Jira returned status code 502" in str(error.value)
         mock_post.assert_called_once()
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
@@ -1732,7 +1811,7 @@ class TestJiraIntegration:
         mock_cloud_id,
         mock_get_access_token,
     ):
-        """Test that send_finding returns False when custom fields cause an error."""
+        """Test that send_finding raises when custom fields cause an error."""
         # To disable vulture
         mock_cloud_id = mock_cloud_id
         mock_get_access_token = mock_get_access_token
@@ -1750,17 +1829,88 @@ class TestJiraIntegration:
         }
         mock_post.return_value = mock_response
 
-        result = self.jira_integration.send_finding(
-            check_id="test-check",
-            check_title="Test Finding",
-            severity="High",
-            status="FAIL",
-            project_key="TEST",
-            issue_type="Bug",
-        )
+        with pytest.raises(JiraRequiredCustomFieldsError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
 
-        assert result is False
+        assert "Jira project requires custom fields" in str(error.value)
+        assert "customfield_10001" in str(error.value)
         mock_post.assert_called_once()
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenError(message="Failed to refresh the access token"),
+    )
+    def test_send_finding_reraises_refresh_token_error(self, mock_get_access_token):
+        """Test send_finding re-raises refresh token errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert error.value.message == "Failed to refresh the access token"
+
+    @patch.object(Jira, "get_access_token", return_value=None)
+    def test_send_finding_reraises_no_token_error(self, mock_get_access_token):
+        """Test send_finding re-raises missing token errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraNoTokenError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert error.value.message == "No token was found"
+
+    @patch.object(
+        Jira,
+        "get_access_token",
+        side_effect=JiraRefreshTokenResponseError(
+            message="Failed to refresh the access token, response code did not match 200"
+        ),
+    )
+    def test_send_finding_reraises_refresh_token_response_error(
+        self, mock_get_access_token
+    ):
+        """Test send_finding re-raises refresh token response errors for API propagation."""
+        # To disable vulture
+        mock_get_access_token = mock_get_access_token
+
+        with pytest.raises(JiraRefreshTokenResponseError) as error:
+            self.jira_integration.send_finding(
+                check_id="test-check",
+                check_title="Test Finding",
+                severity="High",
+                status="FAIL",
+                project_key="TEST",
+                issue_type="Bug",
+            )
+
+        assert (
+            error.value.message
+            == "Failed to refresh the access token, response code did not match 200"
+        )
 
     def test_get_headers_oauth_with_access_token(self):
         """Test get_headers returns correct OAuth headers with access token."""

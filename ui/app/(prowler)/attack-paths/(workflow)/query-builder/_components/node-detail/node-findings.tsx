@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/shadcn";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import type { GraphNode } from "@/types/attack-paths";
 
 const SEVERITY_LEVELS = {
@@ -80,7 +80,7 @@ export const NodeFindings = ({
                       severity={normalizeSeverity(finding.properties.severity)}
                     />
                   )}
-                  <h5 className="dark:text-prowler-theme-pale/90 text-sm font-medium">
+                  <h5 className="dark:text-text-neutral-primary/90 text-sm font-medium">
                     {findingName}
                   </h5>
                 </div>

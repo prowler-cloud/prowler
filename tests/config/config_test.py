@@ -320,6 +320,19 @@ config_aws = {
     "minimum_snapshot_retention_period": 7,
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
+    "elbv2_listener_pqc_tls_allowed_policies": [
+        "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-3-FIPS-PQ-2025-09",
+    ],
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
     "max_days_secret_unrotated": 90,
@@ -488,7 +501,7 @@ class Test_Config:
             with open(json_path, "w") as f:
                 json.dump({"Framework": "CIS", "Provider": "aws"}, f)
 
-            mock_dirs.return_value = {"aws": tmpdir}
+            mock_dirs.return_value = {"aws": [tmpdir]}
 
             frameworks = get_available_compliance_frameworks("aws")
 
@@ -496,6 +509,32 @@ class Test_Config:
                 f"Expected cis_2.0_aws to appear exactly once, got "
                 f"{frameworks.count('cis_2.0_aws')} occurrences in: {frameworks}"
             )
+
+    @mock.patch("prowler.config.config._get_ep_compliance_dirs")
+    def test_get_available_compliance_frameworks_merges_multiple_ep_dirs_same_provider(
+        self, mock_dirs
+    ):
+        """Frameworks from every package contributing the same provider must
+        surface, not just the last directory discovered."""
+        import json
+        import tempfile
+
+        with (
+            tempfile.TemporaryDirectory() as pkg_a,
+            tempfile.TemporaryDirectory() as pkg_b,
+        ):
+            with open(os.path.join(pkg_a, "cis_1.0_template.json"), "w") as f:
+                json.dump({"Framework": "CIS", "Provider": "template"}, f)
+            with open(os.path.join(pkg_b, "nis2_1.0_template.json"), "w") as f:
+                json.dump({"Framework": "NIS2", "Provider": "template"}, f)
+
+            # Two packages register `prowler.compliance` with the same name.
+            mock_dirs.return_value = {"template": [pkg_a, pkg_b]}
+
+            frameworks = get_available_compliance_frameworks("template")
+
+            assert "cis_1.0_template" in frameworks
+            assert "nis2_1.0_template" in frameworks
 
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))

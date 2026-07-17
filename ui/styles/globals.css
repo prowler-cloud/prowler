@@ -1,12 +1,84 @@
 @import "tailwindcss";
-/* All @import rules must precede @config/@source — a late @import is invalid
+/* All @import rules must precede @plugin/@source — a late @import is invalid
  * per the CSS spec and lightningcss (Tailwind v4) silently drops it. */
 @import "./tours.css";
-
-@config "../tailwind.config.js";
+@plugin "tailwindcss-animate";
+@plugin "@tailwindcss/typography";
 @source "../node_modules/streamdown/dist/*.js";
 
 @custom-variant dark (&:where(.dark, .dark *));
+
+/* Pushed page/panel content resolves responsive variants against its marked
+ * width container. Everything else — notably body portals and fixed overlays
+ * — keeps normal viewport media queries, so body never becomes a containing
+ * block for fixed positioning. Widths match Tailwind's defaults. */
+@custom-variant sm {
+  @media (width >= 40rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 40rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant md {
+  @media (width >= 48rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 48rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant lg {
+  @media (width >= 64rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 64rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant xl {
+  @media (width >= 80rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 80rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant 2xl {
+  @media (width >= 96rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 96rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+
+/* Fonts are provided by next/font as CSS variables on <html>; `inline` avoids
+ * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
+@theme inline {
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
 
 /* ===== LIGHT THEME (ROOT) ===== */
 :root {
@@ -86,8 +158,36 @@
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
 
+  /* App sidebar */
+  --bg-sidebar-active: rgba(255, 255, 255, 0.78);
+  --bg-sidebar-hover: rgba(255, 255, 255, 0.55);
+  --bg-sidebar-subitem-active: rgba(16, 185, 129, 0.1);
+  --bg-sidebar-toggle: rgba(255, 255, 255, 0.4);
+  --border-sidebar-active: rgba(15, 23, 42, 0.09);
+  --border-sidebar-hover: rgba(15, 23, 42, 0.06);
+  --border-sidebar-guide: rgba(15, 23, 42, 0.12);
+  --border-sidebar-toggle: rgba(15, 23, 42, 0.08);
+  --sidebar-active-bar: var(--color-emerald-400);
+  --sidebar-active-icon: var(--color-emerald-600);
+  --shadow-sidebar-active: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --gradient-sidebar-halo: radial-gradient(
+    circle,
+    rgba(46, 229, 155, 0.14) 0%,
+    rgba(98, 223, 240, 0.06) 42%,
+    transparent 72%
+  );
+
   /* Lighthouse AI */
   --gradient-lighthouse: linear-gradient(96deg, #2ee59b 3.55%, #62dff0 98.85%);
+
+  /* Cloud feature badge */
+  --gradient-feature-cloud: linear-gradient(
+    112deg,
+    rgb(46, 229, 155) 3.5%,
+    rgb(98, 223, 240) 98.8%
+  );
+  --bg-feature-new: var(--color-emerald-500);
+  --text-feature-new: var(--color-white);
 }
 
 /* ===== DARK THEME =====
@@ -166,6 +266,25 @@
   /* Progress Bar */
   --shadow-progress-glow:
     0 0 10px var(--bg-button-primary), 0 0 5px var(--bg-button-primary);
+
+  /* App sidebar */
+  --bg-sidebar-active: rgba(255, 255, 255, 0.06);
+  --bg-sidebar-hover: rgba(255, 255, 255, 0.045);
+  --bg-sidebar-subitem-active: rgba(46, 229, 155, 0.09);
+  --bg-sidebar-toggle: rgba(255, 255, 255, 0.025);
+  --border-sidebar-active: rgba(255, 255, 255, 0.11);
+  --border-sidebar-hover: rgba(255, 255, 255, 0.07);
+  --border-sidebar-guide: rgba(255, 255, 255, 0.1);
+  --border-sidebar-toggle: rgba(255, 255, 255, 0.08);
+  --sidebar-active-bar: var(--color-emerald-300);
+  --sidebar-active-icon: var(--color-emerald-300);
+  --shadow-sidebar-active: 0 10px 28px rgba(0, 0, 0, 0.22);
+  --gradient-sidebar-halo: radial-gradient(
+    circle,
+    rgba(46, 229, 155, 0.16) 0%,
+    rgba(98, 223, 240, 0.07) 40%,
+    transparent 72%
+  );
 }
 
 /* ===== TAILWIND THEME MAPPINGS ===== */
@@ -235,9 +354,78 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
+  --color-bg-feature-new: var(--bg-feature-new);
+  --color-text-feature-new: var(--text-feature-new);
+
+  /* App sidebar */
+  --color-bg-sidebar-active: var(--bg-sidebar-active);
+  --color-bg-sidebar-hover: var(--bg-sidebar-hover);
+  --color-bg-sidebar-subitem-active: var(--bg-sidebar-subitem-active);
+  --color-bg-sidebar-toggle: var(--bg-sidebar-toggle);
+  --color-border-sidebar-active: var(--border-sidebar-active);
+  --color-border-sidebar-hover: var(--border-sidebar-hover);
+  --color-border-sidebar-guide: var(--border-sidebar-guide);
+  --color-border-sidebar-toggle: var(--border-sidebar-toggle);
+  --color-sidebar-active-bar: var(--sidebar-active-bar);
+  --color-sidebar-active-icon: var(--sidebar-active-icon);
 
   /* Shadows */
   --shadow-progress-glow: var(--shadow-progress-glow);
+  --shadow-sidebar-active: var(--shadow-sidebar-active);
+
+  /* Background images */
+  --background-image-feature-cloud: var(--gradient-feature-cloud);
+
+  /* Breakpoints */
+  --breakpoint-3xl: 1920px;
+
+  /* Animations */
+  --animate-fade-in: fade-in 200ms ease-out forwards;
+  --animate-collapsible-down: collapsible-down 0.2s ease-out;
+  --animate-collapsible-up: collapsible-up 0.2s ease-out;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes collapsible-down {
+    from {
+      height: 0;
+    }
+    to {
+      height: var(--radix-collapsible-content-height);
+    }
+  }
+
+  @keyframes collapsible-up {
+    from {
+      height: var(--radix-collapsible-content-height);
+    }
+    to {
+      height: 0;
+    }
+  }
+}
+
+/* Used from plain CSS (`.animate-download-icon`), so it must always be
+ * emitted — keep it outside @theme. */
+@keyframes dropArrow {
+  0% {
+    transform: translateY(-8px);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* ===== CONTAINER UTILITY ===== */
@@ -248,6 +436,17 @@
 
 /* ===== COMPONENT LAYER ===== */
 @layer components {
+  .app-sidebar-halo {
+    position: absolute;
+    top: -8rem;
+    left: -9rem;
+    width: 26rem;
+    height: 26rem;
+    pointer-events: none;
+    background: var(--gradient-sidebar-halo);
+    filter: blur(28px);
+  }
+
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
@@ -311,6 +510,112 @@
   .lighthouse-markdown p + ul,
   .lighthouse-markdown p + ol {
     margin-top: 0.25rem;
+  }
+
+  .lighthouse-markdown table {
+    min-width: 100%;
+    width: max-content;
+  }
+
+  .lighthouse-markdown [data-streamdown="mermaid-block"] {
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed {
+    padding: 1rem !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    > [role="presentation"] {
+    box-sizing: border-box;
+    width: 100% !important;
+    height: 100% !important;
+    overflow: hidden;
+    border: 1px solid var(--border-neutral-tertiary);
+    border-radius: 0.75rem;
+    background: var(--bg-neutral-tertiary);
+    backdrop-filter: blur(46px);
+  }
+
+  /* !important beats the inline max-width px that mermaid sets on the svg.
+     Scoped to the inline chart (last child): streamdown renders its
+     fullscreen overlay inside the controls row and sizes it itself. */
+  .lighthouse-markdown [data-streamdown="mermaid-block"] > div:last-child svg {
+    max-width: 100% !important;
+    height: auto;
+  }
+
+  /* Streamdown's fullscreen [&>div]:h-full can stretch the floating
+     pan/zoom controls; keep the pills content-sized and inside the chart. */
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    div:has(> div[role="application"])
+    > div:not([role="application"]) {
+    height: auto !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:last-child
+    > div:not([role="application"]) {
+    bottom: 0 !important;
+    flex-direction: row !important;
+  }
+
+  .lighthouse-markdown
+    [data-streamdown="mermaid-block"]
+    > div:first-child
+    .fixed
+    [role="presentation"]
+    > div
+    > div:not([role="application"]) {
+    bottom: 3rem !important;
+  }
+
+  /* Lighthouse overview banner animated gradient layers */
+  .lighthouse-banner-gradient-neutral {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-neutral-tertiary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-hover {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-hover) 0,
+        transparent 50%
+      )
+      no-repeat;
+  }
+
+  .lighthouse-banner-gradient-primary-press {
+    background: radial-gradient(
+        circle at center,
+        var(--bg-button-primary-press) 0,
+        transparent 50%
+      )
+      no-repeat;
   }
 }
 
@@ -401,11 +706,6 @@
     background-color: rgb(100 116 139 / 0.7);
   }
 
-  .checkbox-update {
-    margin-right: 0.5rem;
-    background-color: var(--background);
-  }
-
   /* Download icon animation */
   .animate-download-icon polyline,
   .animate-download-icon line {
@@ -419,8 +719,29 @@
 @layer base {
   /* Global base styles */
   body {
-    @apply bg-background text-foreground;
+    @apply bg-bg-neutral-primary text-text-neutral-primary;
   }
+}
+
+/* Neutralize the browser's native autofill highlight (Chromium/WebKit paint a
+   forced blue/yellow background on :autofill). box-shadow inset masks it; the
+   long transition stops the native color from flashing before the mask lands.
+   Kept UNLAYERED + !important: the mask is a box-shadow and collides with
+   shadcn's focus:ring (also a box-shadow, in @layer utilities) — a layered
+   rule can't win that, so this sits outside the cascade layers. */
+input:autofill,
+input:autofill:hover,
+input:autofill:focus,
+input:autofill:active,
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--text-neutral-secondary) !important;
+  -webkit-box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  box-shadow: 0 0 0 1000px var(--bg-input-primary) inset !important;
+  caret-color: var(--text-neutral-secondary);
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Override vaul's injected user-select: none to allow text selection in drawers */

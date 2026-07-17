@@ -4,6 +4,7 @@ import {
   ACTION_ERROR_MESSAGES,
   ACTION_ERROR_STATUS,
   getActionErrorMessage,
+  hasActionError,
 } from "./action-errors";
 
 describe("getActionErrorMessage", () => {
@@ -21,7 +22,7 @@ describe("getActionErrorMessage", () => {
     expect(message).toBe(ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.FORBIDDEN]);
   });
 
-  it("should use the default subscription error for payment-required responses", () => {
+  it("should use the default usage-limit error for payment-required responses", () => {
     // Given
     const result = {
       error: "Payment required.",
@@ -68,5 +69,38 @@ describe("getActionErrorMessage", () => {
 
     // Then
     expect(message).toBe(result.error);
+  });
+
+  it("should identify action errors by error payload", () => {
+    // Given
+    const result = { error: "Payment required." };
+
+    // When
+    const hasError = hasActionError(result);
+
+    // Then
+    expect(hasError).toBe(true);
+  });
+
+  it("should identify action errors by HTTP error status", () => {
+    // Given
+    const result = { status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED };
+
+    // When
+    const hasError = hasActionError(result);
+
+    // Then
+    expect(hasError).toBe(true);
+  });
+
+  it("should ignore successful status-only action results", () => {
+    // Given
+    const result = { status: 204 };
+
+    // When
+    const hasError = hasActionError(result);
+
+    // Then
+    expect(hasError).toBe(false);
   });
 });

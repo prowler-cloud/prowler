@@ -16,10 +16,11 @@ import {
   type ProviderTypeIconStackItem,
 } from "@/components/icons/providers-badge/provider-type-icon";
 import { Button, FieldError } from "@/components/shadcn";
+import { EntityInfo } from "@/components/shadcn/entities";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { EntityInfo } from "@/components/ui/entities";
-import { FormButtons } from "@/components/ui/form";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/shadcn/toast";
+import { getActionErrorMessage, hasActionError } from "@/lib/action-errors";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import {
   buildScheduleUpdatePayload,
@@ -129,8 +130,8 @@ function EditScanScheduleForm({
       ? await updateSchedulesBulk(targetProviderIds, payload)
       : await updateSchedule(targetProviderIds[0], payload);
 
-    if (result?.error) {
-      form.setError("root", { message: String(result.error) });
+    if (hasActionError(result)) {
+      form.setError("root", { message: getActionErrorMessage(result) });
       return;
     }
 
@@ -155,9 +156,9 @@ function EditScanScheduleForm({
     setIsRemoving(false);
     setIsConfirmRemoveOpen(false);
 
-    const failedResult = results.find((result) => result?.error);
-    if (failedResult?.error) {
-      form.setError("root", { message: String(failedResult.error) });
+    const failedResult = results.find(hasActionError);
+    if (failedResult) {
+      form.setError("root", { message: getActionErrorMessage(failedResult) });
       return;
     }
 

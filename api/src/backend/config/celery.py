@@ -1,7 +1,6 @@
 import warnings
 
 from celery import Celery, Task
-
 from config.env import env
 
 # Suppress specific warnings from django-rest-auth: https://github.com/iMerica/dj-rest-auth/issues/684
@@ -75,6 +74,7 @@ celery_app.conf.task_annotations = {
         for name in (
             "scan-perform",
             "scan-perform-scheduled",
+            "attack-paths-scan-perform",
             "provider-deletion",
             "tenant-deletion",
         )
@@ -96,9 +96,8 @@ class RLSTask(Task):
         shadow=None,
         **options,
     ):
-        from django_celery_results.models import TaskResult
-
         from api.models import Task as APITask
+        from django_celery_results.models import TaskResult
 
         result = super().apply_async(
             args=args,
