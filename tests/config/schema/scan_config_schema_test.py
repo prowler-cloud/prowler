@@ -8,6 +8,7 @@ the backend can persist verbatim in a Django ``JSONField``.
 """
 
 import json
+from unittest.mock import patch
 
 import pytest
 
@@ -39,7 +40,7 @@ class Test_Success_Path:
         normalized, errors = validate_and_normalize_scan_config(
             {
                 "aws": {
-                    "excluded_checks": [" s3_bucket_public_access "],
+                    "excluded_checks": [" s3_bucket_default_encryption "],
                     "excluded_services": [" s3 "],
                 }
             }
@@ -47,7 +48,7 @@ class Test_Success_Path:
         assert errors == []
         assert normalized == {
             "aws": {
-                "excluded_checks": ["s3_bucket_public_access"],
+                "excluded_checks": ["s3_bucket_default_encryption"],
                 "excluded_services": ["s3"],
             }
         }
@@ -61,6 +62,36 @@ class Test_Success_Path:
         )
         assert errors == []
         assert normalized == {"aws": {"plugin_option": "preserved", "another": 42}}
+
+    def test_plugin_catalog_identifiers_are_accepted(self):
+        with (
+            patch(
+                "prowler.config.scan_config_schema.CheckMetadata.get_bulk",
+                return_value={"plugin_check": object()},
+            ) as check_catalog,
+            patch(
+                "prowler.config.scan_config_schema.list_services",
+                return_value=["plugin_service"],
+            ) as service_catalog,
+        ):
+            normalized, errors = validate_and_normalize_scan_config(
+                {
+                    "aws": {
+                        "excluded_checks": ["plugin_check"],
+                        "excluded_services": ["plugin_service"],
+                    }
+                }
+            )
+
+        assert errors == []
+        assert normalized == {
+            "aws": {
+                "excluded_checks": ["plugin_check"],
+                "excluded_services": ["plugin_service"],
+            }
+        }
+        check_catalog.assert_called_once_with("aws")
+        service_catalog.assert_called_once_with("aws")
 
     def test_omitted_defaults_are_not_injected(self):
         normalized, errors = validate_and_normalize_scan_config(
@@ -103,6 +134,89 @@ class Test_Success_Path:
 
 
 class Test_Error_Path:
+    def test_unknown_excluded_check_is_rejected(self):
+        normalized, errors = validate_and_normalize_scan_config(
+            {"aws": {"excluded_checks": ["aws_check_that_does_not_exist"]}}
+        )
+        assert normalized == {}
+        assert errors == [
+            {
+                "path": "aws.excluded_checks[0]",
+                "message": (
+                    "Unknown check 'aws_check_that_does_not_exist' for provider "
+                    "'aws'."
+                ),
+            }
+        ]
+
+    def test_unknown_excluded_service_is_rejected(self):
+        normalized, errors = validate_and_normalize_scan_config(
+            {"aws": {"excluded_services": ["not_a_real_aws_service"]}}
+        )
+        assert normalized == {}
+        assert errors == [
+            {
+                "path": "aws.excluded_services[0]",
+                "message": (
+                    "Unknown service 'not_a_real_aws_service' for provider 'aws'."
+                ),
+            }
+        ]
+
+    def test_multiple_unknown_exclusions_return_deterministic_errors(self):
+        normalized, errors = validate_and_normalize_scan_config(
+            {
+                "aws": {
+                    "excluded_checks": [
+                        "unknown_check_one",
+                        "s3_bucket_default_encryption",
+                        "unknown_check_two",
+                    ],
+                    "excluded_services": [
+                        "unknown_service_one",
+                        "s3",
+                        "unknown_service_two",
+                    ],
+                }
+            }
+        )
+        assert normalized == {}
+        assert errors == [
+            {
+                "path": "aws.excluded_checks[0]",
+                "message": "Unknown check 'unknown_check_one' for provider 'aws'.",
+            },
+            {
+                "path": "aws.excluded_checks[2]",
+                "message": "Unknown check 'unknown_check_two' for provider 'aws'.",
+            },
+            {
+                "path": "aws.excluded_services[0]",
+                "message": (
+                    "Unknown service 'unknown_service_one' for provider 'aws'."
+                ),
+            },
+            {
+                "path": "aws.excluded_services[2]",
+                "message": (
+                    "Unknown service 'unknown_service_two' for provider 'aws'."
+                ),
+            },
+        ]
+
+    def test_check_from_another_provider_is_rejected(self):
+        azure_check = "postgresql_flexible_server_allow_access_services_disabled"
+        normalized, errors = validate_and_normalize_scan_config(
+            {"aws": {"excluded_checks": [azure_check]}}
+        )
+        assert normalized == {}
+        assert errors == [
+            {
+                "path": "aws.excluded_checks[0]",
+                "message": f"Unknown check '{azure_check}' for provider 'aws'.",
+            }
+        ]
+
     def test_invalid_input_returns_empty_normalized_and_errors(self):
         normalized, errors = validate_and_normalize_scan_config(
             {"aws": {"excluded_services": ["s3", " s3 "]}}
@@ -214,6 +328,18 @@ class Test_Backward_Compatible_Wrapper:
         errors = validate_scan_config({"aws": {"excluded_checks": ["", ""]}})
         assert errors
         assert all(set(err) == {"path", "message"} for err in errors)
+
+    def test_unknown_exclusion_yields_the_semantic_error(self):
+        assert validate_scan_config(
+            {"aws": {"excluded_services": ["not_a_real_aws_service"]}}
+        ) == [
+            {
+                "path": "aws.excluded_services[0]",
+                "message": (
+                    "Unknown service 'not_a_real_aws_service' for provider 'aws'."
+                ),
+            }
+        ]
 
     def test_non_mapping_root_matches_new_contract(self):
         assert validate_scan_config(None) == [

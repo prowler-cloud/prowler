@@ -32,6 +32,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from prowler.config.schema.registry import SCHEMAS
+from prowler.lib.check.check import list_services
+from prowler.lib.check.models import CheckMetadata
 
 # Pydantic v2 prefixes messages emitted from a ``field_validator`` that
 # raises ``ValueError`` with this string. Strip it so the message that
@@ -79,9 +81,9 @@ def validate_and_normalize_scan_config(
       sections and unknown keys inside registered sections are preserved
       untouched for forward compatibility with plugin-provided keys.
     - ``errors`` is a list of ``{"path": <dotted-path>, "message": <str>}``
-      entries — one per Pydantic violation. When any error is present the
-      normalized dictionary is returned empty so the caller never
-      persists a partially validated configuration.
+      entries, one per schema or exclusion-catalog violation. When any error
+      is present the normalized dictionary is returned empty so the caller
+      never persists a partially validated configuration.
 
     The input payload is never mutated.
     """
@@ -156,6 +158,35 @@ def validate_and_normalize_scan_config(
                     message = message[len(_PYDANTIC_VALUE_ERROR_PREFIX) :]
                 errors.append({"path": path, "message": message})
             continue
+
+        if model.excluded_checks:
+            available_checks = set(CheckMetadata.get_bulk(provider_key))
+            for index, check in enumerate(model.excluded_checks):
+                if check not in available_checks:
+                    errors.append(
+                        {
+                            "path": f"{provider_key}.excluded_checks[{index}]",
+                            "message": (
+                                f"Unknown check '{check}' for provider "
+                                f"'{provider_key}'."
+                            ),
+                        }
+                    )
+
+        if model.excluded_services:
+            available_services = set(list_services(provider_key))
+            for index, service in enumerate(model.excluded_services):
+                if service not in available_services:
+                    errors.append(
+                        {
+                            "path": f"{provider_key}.excluded_services[{index}]",
+                            "message": (
+                                f"Unknown service '{service}' for provider "
+                                f"'{provider_key}'."
+                            ),
+                        }
+                    )
+
         normalized[provider_key] = model.model_dump(mode="json", exclude_unset=True)
 
     if errors:
