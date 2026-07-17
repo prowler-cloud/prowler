@@ -17,6 +17,10 @@ const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
 }));
 
+const { onboardingTriggerSpy } = vi.hoisted(() => ({
+  onboardingTriggerSpy: vi.fn(),
+}));
+
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
 
@@ -101,6 +105,14 @@ vi.mock("./launch-scan-modal", () => ({
 
 vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
+}));
+
+vi.mock("@/components/onboarding", () => ({
+  OnboardingTrigger: (props: unknown) => {
+    onboardingTriggerSpy(props);
+    return <div data-testid="onboarding-trigger" />;
+  },
+  PageReady: () => <div data-testid="page-ready" />,
 }));
 
 const providers: ProviderProps[] = [
@@ -475,5 +487,58 @@ describe("ScansPageShell", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
+  });
+
+  it("starts the view-first-scan tour when a provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render even with the tour suppressed.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when there are no providers", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+  });
+
+  it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
   });
 });

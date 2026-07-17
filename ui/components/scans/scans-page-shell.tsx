@@ -107,15 +107,21 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
+      {/* Only start the scan tour when a provider is connected: its primary target
+          (Launch Scan) is disabled otherwise, so a `?onboarding=view-first-scan`
+          URL or active sequence would anchor to an unusable button. The navbar
+          replay falls back to the add-provider flow in this state (see page.tsx). */}
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      <Suspense fallback={null}>
-        <OnboardingTrigger
-          flow={{
-            ...viewFirstScanFlow,
-            tour: buildViewFirstScanTour(hasInProgressScan),
-          }}
-        />
-      </Suspense>
+      {hasConnectedProviders && (
+        <Suspense fallback={null}>
+          <OnboardingTrigger
+            flow={{
+              ...viewFirstScanFlow,
+              tour: buildViewFirstScanTour(hasInProgressScan),
+            }}
+          />
+        </Suspense>
+      )}
       {/* Signals the navbar that this route's data has loaded (enables the replay icon). */}
       <PageReady />
       {showProvidersHint && (
