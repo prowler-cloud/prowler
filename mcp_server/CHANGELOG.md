@@ -4,6 +4,14 @@ All notable changes to the **Prowler MCP Server** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [0.8.0] (Prowler v5.35.0)
+
+### 🔄 Changed
+
+- Core Prowler tool namespace from the `prowler_app_*` prefix to `prowler_*` [(#12017)](https://github.com/prowler-cloud/prowler/pull/12017)
+
+---
+
 ## [0.7.2] (Prowler v5.28.1)
 
 ### 🐞 Fixed
