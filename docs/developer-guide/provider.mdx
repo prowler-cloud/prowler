@@ -19,6 +19,10 @@ For providers supported by Prowler, refer to [Prowler Hub](https://hub.prowler.c
 <Warning>
     There are some custom providers added by the community, like [NHN Cloud](https://www.nhncloud.com/), that are not maintained by the Prowler team, but can be used in the Prowler CLI. The main purpose of this documentation is to guide you through creating a new provider and integrating it not only in the CLI, but also in the API and UI. Non official providers can be checked directly at the [Prowler GitHub repository](https://github.com/prowler-cloud/prowler/tree/master/prowler/providers).
 </Warning>
+
+<Tip>
+New to adding a provider? Start with [Provider Golden Paths](./provider-golden-paths) to choose your scope (built-in CLI/SDK, external entry-point, or full-stack) before working through the full guide below.
+</Tip>
 ---
 
 ## Provider Types in Prowler
@@ -988,6 +992,10 @@ class YourProviderService(BaseService):
 
 #### Step 9: Register in CLI
 
+<Note>
+This step is now optional. `prowler/lib/cli/parser.py` keeps this hardcoded list for formatting, but any provider not in it is discovered automatically and appended to the CLI help text, using a `_cli_help_text` class attribute on your provider class. Editing this file gives your provider a spot in the primary list instead of an auto-appended one — it does not change whether the CLI recognizes it.
+</Note>
+
 **Explanation:**
 Add your provider to the available providers in the CLI.
 
@@ -1092,6 +1100,10 @@ Main registration makes your provider discoverable by Prowler's core system. It'
 
 #### Step 11: Register in the list of providers
 
+<Note>
+This step is still required — every current provider is wired into this `elif` chain. The base `Provider` class also exposes a `from_cli_args()` override point meant to let a provider handle its own argument parsing and instantiation instead of extending this chain, but as of this writing no built-in provider uses it, so treat it as an available option rather than the established pattern.
+</Note>
+
 **Explanation:**
 This is needed to be able to use the provider in the generic checks. The provider must be registered in the `init_global_provider` method to handle CLI arguments and initialization.
 
@@ -1110,6 +1122,10 @@ elif "your_provider" in provider_class_name.lower():
 ```
 
 #### Step 12: Add to Config
+
+<Note>
+As of this writing, this `Provider` enum has no other references in the codebase — it is not required for a provider to work end to end. It may still be worth keeping in sync in case other tooling comes to depend on it, but don't treat a missing entry here as a functional gap without confirming a specific consumer needs it.
+</Note>
 
 **Explanation:**
 Configuration registration ensures your provider is recognized by Prowler's configuration system. This enables proper handling of provider-specific settings and defaults.
@@ -3329,7 +3345,7 @@ def __init__(
 
 ## Step 3: Integrate the Provider in the UI
 
-TBD
+TBD — this section is tracked as its own phase of [issue #12026](https://github.com/prowler-cloud/prowler/issues/12026). In the meantime, see [Scope 3](./provider-golden-paths#scope-3-full-stack-provider-sdk-api-ui) in Provider Golden Paths for a pointer to using an existing full-stack provider as a working reference.
 
 ---
 

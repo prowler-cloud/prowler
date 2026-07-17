@@ -444,6 +444,7 @@
             "group": "Concepts",
             "pages": [
               "developer-guide/introduction",
+              "developer-guide/provider-golden-paths",
               "developer-guide/provider",
               "developer-guide/services",
               "developer-guide/checks",
