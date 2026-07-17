@@ -99,6 +99,41 @@ class TestJiraIntegration:
         return None
 
     @staticmethod
+    def _find_link_mark_by_href(nodes: List[dict], href: str) -> Optional[dict]:
+        for node in nodes:
+            if node.get("type") == "text":
+                for mark in node.get("marks", []):
+                    if (
+                        mark.get("type") == "link"
+                        and mark.get("attrs", {}).get("href") == href
+                    ):
+                        return mark
+            found = TestJiraIntegration._find_link_mark_by_href(
+                node.get("content", []), href
+            )
+            if found:
+                return found
+        return None
+
+    @staticmethod
+    def _collect_link_texts_by_href(nodes: List[dict], href: str) -> List[str]:
+        link_texts: List[str] = []
+
+        for node in nodes:
+            if node.get("type") == "text" and any(
+                mark.get("type") == "link" and mark.get("attrs", {}).get("href") == href
+                for mark in node.get("marks", [])
+            ):
+                link_texts.append(node.get("text", ""))
+            link_texts.extend(
+                TestJiraIntegration._collect_link_texts_by_href(
+                    node.get("content", []), href
+                )
+            )
+
+        return link_texts
+
+    @staticmethod
     def _find_table_row(rows: List[dict], header: str) -> dict:
         for row in rows:
             header_cell = row.get("content", [])[0]
@@ -918,6 +953,12 @@ class TestJiraIntegration:
         intro_text = intro_paragraph["content"][0]
         assert intro_text["type"] == "text"
         assert intro_text["text"] == "Prowler has discovered the following finding:"
+        assert all(
+            self._collect_text_from_cell({"content": node.get("content", [])})
+            != "Summary"
+            for node in description_content
+            if node.get("type") == "heading"
+        )
 
         table = description_content[1]
         assert table["type"] == "table"
@@ -1200,6 +1241,218 @@ class TestJiraIntegration:
         row = self._find_table_row(table["content"], header)
         value_cell = row["content"][1]
         assert self._collect_text_from_cell(value_cell) == "-"
+
+    def test_get_grouped_adf_description_uses_capped_finding_group_link_copy(self):
+        finding_group_url = (
+            "https://security.example.com/findings?"
+            "filter%5Bcheck_id%5D=admincenter_users_admins_reduced_license_footprint&"
+            "expandedCheckId=admincenter_users_admins_reduced_license_footprint"
+        )
+        finding_group_link_text = "View the remaining grouped findings."
+        recommendation_url = (
+            "https://hub.prowler.com/check/"
+            "admincenter_users_admins_reduced_license_footprint"
+        )
+        adf_description = self.jira_integration.get_grouped_adf_description(
+            check_id="admincenter_users_admins_reduced_license_footprint",
+            check_title="Administrative user has no license or an allowed license",
+            check_description="Administrative users are assigned productivity licenses.",
+            severity="HIGH",
+            status="FAIL",
+            provider="m365",
+            service="exchange",
+            affected_failing_resources=123,
+            last_seen="Jul 09, 2026 11:38AM UTC",
+            failing_for="< 1 day",
+            grouped_resources=[
+                {
+                    "resource_name": "rich@prowler.com",
+                    "resource_uid": "3f9a216b-b66b-4d5d-a812-2ad538732cfb",
+                    "provider": "m365",
+                    "service": "exchange",
+                    "provider_account": "ProwlerPro.onmicrosoft.com",
+                    "status": "FAIL",
+                    "severity": "high",
+                    "region": "global",
+                    "last_seen": "Jul 09, 2026 11:38AM UTC",
+                    "failing_for": "< 1 day",
+                    "triage": "Open",
+                }
+            ],
+            resources_total=123,
+            resources_shown=100,
+            finding_group_url=finding_group_url,
+            finding_group_link_text=finding_group_link_text,
+            risk="Productivity licenses on privileged identities create risk.",
+            recommendation_text="Maintain dedicated admin accounts.",
+            recommendation_url=recommendation_url,
+        )
+
+        assert adf_description["type"] == "doc"
+        assert self._find_empty_text_nodes(adf_description) == []
+
+        main_table = adf_description["content"][1]
+        main_rows = {}
+        for row in main_table["content"]:
+            key_cell, value_cell = row["content"]
+            main_rows[self._collect_text_from_cell(key_cell)] = (
+                self._collect_text_from_cell(value_cell)
+            )
+
+        assert (
+            main_rows["Check Id"]
+            == "admincenter_users_admins_reduced_license_footprint"
+        )
+        assert main_rows["Service"] == "exchange"
+        assert main_rows["Affected Failing Resources"] == "123"
+        assert (
+            main_rows["Risk"]
+            == "Productivity licenses on privileged identities create risk."
+        )
+        assert main_rows["Recommendation"] == (
+            "Maintain dedicated admin accounts. " + recommendation_url
+        )
+        assert "Finding Group Link" not in main_rows
+        assert "Region" not in main_rows
+
+        top_level_headings = [
+            self._collect_text_from_cell({"content": node.get("content", [])})
+            for node in adf_description["content"]
+            if node.get("type") == "heading"
+        ]
+        assert "Risk" not in top_level_headings
+        assert "Recommendation" not in top_level_headings
+        assert "Summary" not in top_level_headings
+
+        def text_marks(cell: dict) -> list[dict]:
+            return cell["content"][0]["content"][0]["marks"]
+
+        severity_marks = text_marks(
+            self._find_table_row(main_table["content"], "Severity")["content"][1]
+        )
+        status_marks = text_marks(
+            self._find_table_row(main_table["content"], "Status")["content"][1]
+        )
+        assert {
+            "type": "backgroundColor",
+            "attrs": {"color": "#FFA500"},
+        } in severity_marks
+        assert {"type": "textColor", "attrs": {"color": "#FF0000"}} in status_marks
+
+        resource_table = next(
+            node
+            for node in adf_description["content"]
+            if node.get("type") == "table"
+            and self._collect_text_from_cell(node["content"][0]["content"][0])
+            == "Resource"
+        )
+        resource_cells = resource_table["content"][1]["content"]
+        assert {"type": "textColor", "attrs": {"color": "#FF0000"}} in text_marks(
+            resource_cells[5]
+        )
+        assert {
+            "type": "backgroundColor",
+            "attrs": {"color": "#FFA500"},
+        } in text_marks(resource_cells[6])
+
+        document_text = self._collect_text_from_cell(
+            {"content": adf_description["content"]}
+        )
+        assert (
+            "Administrative users are assigned productivity licenses."
+            not in document_text
+        )
+        assert "Affected failing resources" in document_text
+        capped_link_copy = (
+            f"Showing 100 of 123 Findings in this Jira issue. {finding_group_link_text}"
+        )
+        assert document_text.count(capped_link_copy) == 1
+        assert "Finding Group Link" not in document_text
+        assert recommendation_url in document_text
+        recommendation_link_mark = self._find_link_mark_by_href(
+            adf_description["content"], recommendation_url
+        )
+        assert recommendation_link_mark is not None
+        link_mark = self._find_link_mark_by_href(
+            adf_description["content"], finding_group_url
+        )
+        assert link_mark is not None
+        assert link_mark["attrs"]["href"] == finding_group_url
+        assert self._collect_link_texts_by_href(
+            adf_description["content"], finding_group_url
+        ) == [finding_group_link_text]
+        assert (
+            len(
+                self._collect_link_texts_by_href(
+                    adf_description["content"], finding_group_url
+                )
+            )
+            == 1
+        )
+        assert "filter%5Bcheck_id%5D=" in link_mark["attrs"]["href"]
+        assert "expandedCheckId=" in link_mark["attrs"]["href"]
+
+    def test_get_grouped_adf_description_includes_link_when_not_capped(self):
+        finding_group_url = (
+            "https://security.example.com/findings?"
+            "filter%5Bcheck_id%5D=s3_bucket_public_access&"
+            "expandedCheckId=s3_bucket_public_access"
+        )
+        finding_group_link_text = "View this grouped finding."
+        adf_description = self.jira_integration.get_grouped_adf_description(
+            check_id="s3_bucket_public_access",
+            check_title="S3 bucket public access",
+            severity="HIGH",
+            status="FAIL",
+            provider="aws",
+            service="s3",
+            affected_failing_resources=1,
+            grouped_resources=[
+                {
+                    "resource_name": "bucket-a",
+                    "resource_uid": "arn:aws:s3:::bucket-a",
+                    "provider": "aws",
+                    "service": "s3",
+                    "provider_account": "production (123456789012)",
+                    "status": "FAIL",
+                    "severity": "high",
+                    "region": "us-east-1",
+                    "last_seen": "Jul 09, 2026 11:38AM UTC",
+                    "failing_for": "< 1 day",
+                    "triage": "Open",
+                }
+            ],
+            resources_total=1,
+            resources_shown=1,
+            finding_group_url=finding_group_url,
+            finding_group_link_text=finding_group_link_text,
+        )
+
+        document_text = self._collect_text_from_cell(
+            {"content": adf_description["content"]}
+        )
+        assert "Showing 1 of 1 Findings." not in document_text
+        assert "remaining Findings" not in document_text
+        assert document_text.count(finding_group_link_text) == 1
+        assert "Finding Group Link" not in document_text
+        main_table = adf_description["content"][1]
+        main_row_headers = [
+            self._collect_text_from_cell(row["content"][0])
+            for row in main_table["content"]
+        ]
+        assert "Finding Group Link" not in main_row_headers
+        link_mark = self._find_link_mark_by_href(
+            adf_description["content"], finding_group_url
+        )
+        assert link_mark is not None
+        assert link_mark["attrs"]["href"] == finding_group_url
+        assert self._collect_link_texts_by_href(
+            adf_description["content"], finding_group_url
+        ) == [finding_group_link_text]
+        assert (
+            "filter%5Bcheck_id%5D=s3_bucket_public_access" in link_mark["attrs"]["href"]
+        )
+        assert "expandedCheckId=s3_bucket_public_access" in link_mark["attrs"]["href"]
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
@@ -1708,6 +1961,51 @@ class TestJiraIntegration:
 
         assert result is True
         mock_post.assert_called_once()
+
+    @patch.object(Jira, "get_access_token", return_value="valid_access_token")
+    @patch.object(
+        Jira, "cloud_id", new_callable=PropertyMock, return_value="test_cloud_id"
+    )
+    @patch.object(Jira, "get_projects", return_value={"TEST": {"name": "Test Project"}})
+    @patch.object(Jira, "get_available_issue_types", return_value=["Bug"])
+    @patch("prowler.lib.outputs.jira.jira.requests.post")
+    def test_send_finding_sanitizes_summary_control_characters(
+        self,
+        mock_post,
+        mock_get_issue_types,
+        mock_get_projects,
+        mock_cloud_id,
+        mock_get_access_token,
+    ):
+        """Test that Jira summary is sent as one line."""
+        # To disable vulture
+        mock_cloud_id = mock_cloud_id
+        mock_get_access_token = mock_get_access_token
+        mock_get_projects = mock_get_projects
+        mock_get_issue_types = mock_get_issue_types
+
+        mock_response = MagicMock()
+        mock_response.status_code = 201
+        mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
+        mock_post.return_value = mock_response
+
+        result = self.jira_integration.send_finding(
+            check_id="check\nwith\rcontrol\tcharacters",
+            check_title="Test Finding",
+            severity="High\n",
+            status="FAIL",
+            project_key="TEST",
+            issue_type="Bug",
+            affected_failing_resources=2,
+            grouped_resources=[],
+        )
+
+        assert result is True
+        payload = mock_post.call_args.kwargs["json"]
+        assert payload["fields"]["summary"] == (
+            "[Prowler] HIGH - check with control characters - "
+            "2 affected failing resources"
+        )
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(
