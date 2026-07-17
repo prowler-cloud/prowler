@@ -76,18 +76,22 @@ describe("validateYaml", () => {
     expect(result.isValid).toBe(true);
   });
 
-  it("stays fast on a deep merge-key chain (CVE-2026-59869 shape)", () => {
-    // Given — each mapping merges the previous one; on js-yaml < 4.3.0 this
-    // parses in quadratic time and times out the test
-    const chain = ["a0: &a0 { x: 0 }"];
-    for (let i = 1; i < 2000; i++) {
-      chain.push(`a${i}: &a${i} { <<: *a${i - 1}, x: ${i} }`);
+  it("rejects a merge-key amplification document (CVE-2026-59869 shape)", () => {
+    // Given — each mapping merges the previous one and adds a distinct key, so
+    // merged-key copies grow quadratically (~45k total here). js-yaml 4.3.0
+    // fixes the CVE by capping that work (maxTotalMergeKeys) and rejecting the
+    // document; a vulnerable parser accepts it instead, turning the assertion
+    // below red without relying on timing or suite timeouts.
+    const chain = ["a0: &a0 { k0: 0 }"];
+    for (let i = 1; i < 300; i++) {
+      chain.push(`a${i}: &a${i} { <<: *a${i - 1}, k${i}: ${i} }`);
     }
 
     // When
     const result = validateYaml(chain.join("\n"));
 
     // Then
-    expect(result.isValid).toBe(true);
+    expect(result.isValid).toBe(false);
+    expect(result.error).toMatch(/merge keys/i);
   });
 });
