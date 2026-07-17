@@ -89,7 +89,7 @@ describe("DataTable", () => {
       );
     });
 
-    it("should stack the right content below search on narrow screens", () => {
+    it("should stack the right content below search when the container is narrow", () => {
       // Given
       render(
         <DataTable
@@ -105,11 +105,13 @@ describe("DataTable", () => {
       const toolbar = screen.getByTestId("data-table-toolbar");
       const rightContent = screen.getByTestId("data-table-toolbar-right");
 
-      // Then
+      // Then: md is a container query app-wide, so this also reacts when the
+      // side panel shrinks the page; the right group stays on one row.
       expect(toolbar).toHaveClass("flex-col");
       expect(toolbar).toHaveClass("md:flex-row");
       expect(rightContent).toHaveClass("w-full");
       expect(rightContent).toHaveClass("md:w-auto");
+      expect(rightContent).toHaveClass("flex-wrap", "items-center");
     });
   });
 

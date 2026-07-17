@@ -118,7 +118,9 @@ function ChatComposer({
         aria-label="Message"
         value={input}
         onChange={(event) => onInputChange(event.target.value)}
-        disabled={!canSend}
+        // Typing stays available while a response streams (sending is what is
+        // gated, via canSend); only a disconnected provider blocks the input.
+        disabled={!selectedConfigurationConnected}
         placeholder={
           selectedConfigurationConnected
             ? "Ask a question"

@@ -15,9 +15,9 @@ This skill provides openCypher syntax guidance and Cartography schema knowledge 
 
 Follow these steps when the user asks you to write a custom openCypher query:
 
-1. **Find a completed scan**: Use \`prowler_app_list_attack_paths_scans\` (filter by \`state=['completed']\`) to find a scan for the user's provider. You need the \`scan_id\` for the next step.
+1. **Find a completed scan**: Use \`prowler_list_attack_paths_scans\` (filter by \`state=['completed']\`) to find a scan for the user's provider. You need the \`scan_id\` for the next step.
 
-2. **Fetch the Cartography schema**: Use \`prowler_app_get_attack_paths_cartography_schema\` with the \`scan_id\`. This returns the full schema markdown with all node labels, relationships, and properties for the scan's provider and Cartography version. If this tool fails, use the Cartography Schema Reference section below as a fallback (AWS only).
+2. **Fetch the Cartography schema**: Use \`prowler_get_attack_paths_cartography_schema\` with the \`scan_id\`. This returns the full schema markdown with all node labels, relationships, and properties for the scan's provider and Cartography version. If this tool fails, use the Cartography Schema Reference section below as a fallback (AWS only).
 
 3. **Analyze the schema**: From \`schema_content\`, identify the node labels, properties, and relationships relevant to the user's request. Cross-reference with the Common openCypher Patterns section below.
 

@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 
 import neo4j
 import neo4j.exceptions
-from api.attack_paths.retryable_session import RetryableSession
+from api.attack_paths.retryable_session import RetryableSession, RetryExhaustedError
 from api.attack_paths.sink.base import SinkDatabase
 from api.attack_paths.sink.drop import (
     NODE_DELETE_QUERY_TEMPLATE,
@@ -84,6 +84,8 @@ def _is_retryable_write_error(exc: Exception) -> bool:
 
 class NeptuneSink(SinkDatabase):
     """Neptune-backed sink. Single database; isolation is label-based."""
+
+    sync_batch_size = env.int("ATTACK_PATHS_NEPTUNE_SYNC_BATCH_SIZE", default=500)
 
     def __init__(self) -> None:
         self._writer: neo4j.Driver | None = None
@@ -206,6 +208,7 @@ class NeptuneSink(SinkDatabase):
         from api.attack_paths.database import (
             ClientStatementException,
             GraphDatabaseQueryException,
+            NeptuneWriteRetryExhaustedException,
             WriteQueryNotAllowedException,
         )
 
@@ -227,8 +230,16 @@ class NeptuneSink(SinkDatabase):
                 initial_retry_delay_seconds=(
                     NEPTUNE_WRITE_RETRY_DELAY_SECONDS if is_write_session else 0
                 ),
+                retry_context="Neptune write" if is_write_session else None,
             )
             yield session_wrapper
+
+        except RetryExhaustedError as exc:
+            last_error = exc.last_error
+            raise NeptuneWriteRetryExhaustedException(
+                message=str(exc),
+                code=getattr(last_error, "code", None),
+            ) from last_error
 
         except neo4j.exceptions.Neo4jError as exc:
             if (
@@ -291,7 +302,7 @@ class NeptuneSink(SinkDatabase):
         graph's branching factor.
         """
         from tasks.jobs.attack_paths.config import (
-            BATCH_SIZE,
+            GRAPH_MUTATION_BATCH_SIZE,
             PROVIDER_RESOURCE_LABEL,
             get_provider_label,
         )
@@ -330,7 +341,7 @@ class NeptuneSink(SinkDatabase):
                     total_key="rels",
                     deleted_key="deleted_rels",
                     initial_total=deleted_relationships,
-                    batch_size=BATCH_SIZE,
+                    batch_size=GRAPH_MUTATION_BATCH_SIZE,
                     drop_t0=drop_t0,
                 )
                 relationship_batches += phase_batches
@@ -349,7 +360,7 @@ class NeptuneSink(SinkDatabase):
                 total_key="nodes",
                 deleted_key="deleted_nodes",
                 initial_total=0,
-                batch_size=BATCH_SIZE,
+                batch_size=GRAPH_MUTATION_BATCH_SIZE,
                 drop_t0=drop_t0,
             )
 

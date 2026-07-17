@@ -8,6 +8,71 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Pushed page/panel content resolves responsive variants against its marked
+ * width container. Everything else — notably body portals and fixed overlays
+ * — keeps normal viewport media queries, so body never becomes a containing
+ * block for fixed positioning. Widths match Tailwind's defaults. */
+@custom-variant sm {
+  @media (width >= 40rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 40rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant md {
+  @media (width >= 48rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 48rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant lg {
+  @media (width >= 64rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 64rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant xl {
+  @media (width >= 80rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 80rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+@custom-variant 2xl {
+  @media (width >= 96rem) {
+    &:where(:not([data-responsive-container] *)) {
+      @slot;
+    }
+  }
+  @container (width >= 96rem) {
+    &:where([data-responsive-container] *) {
+      @slot;
+    }
+  }
+}
+
 /* Fonts are provided by next/font as CSS variables on <html>; `inline` avoids
  * emitting a circular --font-sans: var(--font-sans) declaration on :root. */
 @theme inline {

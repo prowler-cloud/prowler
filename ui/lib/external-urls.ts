@@ -1,4 +1,4 @@
-import { IntegrationType } from "../types/integrations";
+import type { IntegrationType } from "../types/integrations";
 
 // Documentation URLs
 export const DOCS_URLS = {
@@ -18,19 +18,36 @@ export const DOCS_URLS = {
 } as const;
 
 // CloudFormation template URL for the ProwlerScan role.
-// Also used (URL-encoded) as the templateURL param in cloudformationQuickLink
-// and cloudformationOrgQuickLink below — keep both in sync.
+// Also used (URL-encoded) as the templateURL param in the quick-create links
+// built by getAWSCredentialsTemplateLinks and getAWSOrgDeploymentQuickLink below.
 export const PROWLER_CF_TEMPLATE_URL =
   "https://prowler-cloud-public.s3.eu-west-1.amazonaws.com/permissions/templates/aws/cloudformation/prowler-scan-role.yml";
 
 // Prowler Cloud billing/subscription management page.
 export const BILLING_URL = "https://cloud.prowler.com/billing";
 
-// AWS Console URL for creating a new StackSet.
-// Hardcoded to us-east-1 — StackSets are typically managed from this region.
-// Users in AWS GovCloud or China partitions would need different URLs.
-export const STACKSET_CONSOLE_URL =
-  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacksets/create";
+// Base URL for the CloudFormation "quick create stack" console flow.
+// Hardcoded to us-east-1 because the public template is hosted for that flow.
+const CF_QUICKCREATE_BASE_URL =
+  "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
+
+export interface AWSOrgDeploymentQuickLinkParams {
+  externalId: string;
+  organizationalUnitId: string;
+  deployFromDelegatedAdmin?: boolean;
+}
+
+const buildCloudFormationQuickCreateLink = (
+  parameters: Record<string, string>,
+): string => {
+  const searchParams = new URLSearchParams({
+    templateURL: PROWLER_CF_TEMPLATE_URL,
+    stackName: "Prowler",
+    ...parameters,
+  });
+
+  return `${CF_QUICKCREATE_BASE_URL}?${searchParams.toString()}`;
+};
 
 export const getProviderHelpText = (provider: string) => {
   switch (provider) {
@@ -126,11 +143,11 @@ export const getAWSCredentialsTemplateLinks = (
   externalId: string,
   bucketName?: string,
   integrationType?: IntegrationType,
+  bucketAccountId?: string,
 ): {
   cloudformation: string;
   terraform: string;
   cloudformationQuickLink: string;
-  cloudformationOrgQuickLink: string;
 } => {
   let links = {};
 
@@ -152,24 +169,53 @@ export const getAWSCredentialsTemplateLinks = (
     };
   }
 
-  const encodedTemplateUrl = encodeURIComponent(PROWLER_CF_TEMPLATE_URL);
-  const cfBaseUrl =
-    "https://us-east-1.console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/quickcreate";
-  const s3Params = bucketName
-    ? `&param_EnableS3Integration=true&param_S3IntegrationBucketName=${bucketName}`
-    : "";
+  // The template requires S3IntegrationBucketAccountId (owner account of the
+  // bucket) whenever EnableS3Integration is true. Only enable S3 when both the
+  // bucket name and its account id are known, otherwise an incomplete link
+  // would fail stack validation on the quick-create flow (reachable from the
+  // edit-credentials flow, where the account id can resolve to an empty value).
+  const parameters: Record<string, string> = {
+    param_ExternalId: externalId,
+  };
+
+  if (bucketName && bucketAccountId) {
+    parameters.param_EnableS3Integration = "true";
+    parameters.param_S3IntegrationBucketName = bucketName;
+    parameters.param_S3IntegrationBucketAccountId = bucketAccountId;
+  }
 
   return {
     ...(links as {
       cloudformation: string;
       terraform: string;
     }),
-    cloudformationQuickLink:
-      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
-      `&stackName=Prowler&param_ExternalId=${externalId}${s3Params}`,
-    cloudformationOrgQuickLink:
-      `${cfBaseUrl}?templateURL=${encodedTemplateUrl}` +
-      `&stackName=Prowler&param_ExternalId=${externalId}` +
-      `&param_EnableOrganizations=true${s3Params}`,
+    cloudformationQuickLink: buildCloudFormationQuickCreateLink(parameters),
   };
+};
+
+// Builds the CloudFormation quick-create link that onboards an entire AWS
+// Organization in a single stack: it creates the ProwlerScan role in the
+// account launching the stack (DeployLocalRole) and a service-managed StackSet
+// that rolls the role out to the member accounts under the given OU/root
+// (DeployStackSet). By default the stack is launched from the management
+// account; set deployFromDelegatedAdmin when launching from a delegated
+// administrator account instead, where the local role lands in that account.
+export const getAWSOrgDeploymentQuickLink = ({
+  externalId,
+  organizationalUnitId,
+  deployFromDelegatedAdmin = false,
+}: AWSOrgDeploymentQuickLinkParams): string => {
+  const parameters: Record<string, string> = {
+    param_ExternalId: externalId,
+    param_EnableOrganizations: "true",
+    param_DeployLocalRole: "true",
+    param_DeployStackSet: "true",
+    param_AWSOrganizationalUnitId: organizationalUnitId,
+  };
+
+  if (deployFromDelegatedAdmin) {
+    parameters.param_DeployFromDelegatedAdmin = "true";
+  }
+
+  return buildCloudFormationQuickCreateLink(parameters);
 };

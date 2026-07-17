@@ -8,8 +8,29 @@ title: "Overview"
 **Preview Feature**: This MCP server is currently under active development. Features and functionality may change. We welcome your feedback—please report any issues on [GitHub](https://github.com/prowler-cloud/prowler/issues) or join our [Slack community](https://goto.prowler.com/slack) to discuss and share your thoughts.
 </Warning>
 
+## Quickest Way to Connect: Cloud MCP Server
+
+The fastest way to get started is the **Cloud MCP Server** at `https://mcp.prowler.com/mcp` — no installation, always up to date, and maintained by Prowler. Just point your MCP client at the URL and authenticate with a [Prowler API key](/user-guide/tutorials/prowler-app-api-keys) as a Bearer token:
+
+```json
+{
+  "mcpServers": {
+    "prowler": {
+      "url": "https://mcp.prowler.com/mcp",
+      "headers": {
+        "Authorization": "Bearer <your-api-key-here>"
+      }
+    }
+  }
+}
+```
+
+<Card title="Connect Your MCP Client to the Cloud MCP Server" icon="cloud" href="/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended" horizontal>
+  Step-by-step setup for Claude Desktop, Claude Code, Cursor, and other clients.
+</Card>
+
 <Note>
-Prowler MCP Server can run as a local instance, or as the hosted **Prowler MCP** at `https://mcp.prowler.com/mcp`. The hosted server also provides tools for Prowler Cloud-specific features such as [Alerts](/user-guide/tutorials/prowler-alerts), [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling), and [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage). See [Deployment Options](#deployment-options).
+Prefer to run it yourself? The **Local MCP Server** runs on your own machine or infrastructure. The Cloud MCP Server additionally provides tools for Prowler Cloud-specific features such as [Alerts](/user-guide/tutorials/prowler-alerts), [Scan Scheduling](/user-guide/tutorials/prowler-scan-scheduling), and [Findings Triage](/user-guide/tutorials/prowler-app-findings-triage). See [Cloud vs Local MCP Server](#cloud-vs-local-mcp-server).
 </Note>
 
 ## What is the Model Context Protocol?
@@ -20,9 +41,9 @@ The [Model Context Protocol (MCP)](https://modelcontextprotocol.io) is an open s
 
 The Prowler MCP Server provides three main integration points:
 
-### 1. Prowler Cloud and Prowler Local Server
+### 1. Prowler Cloud, Private Cloud & Local Server
 
-Full access to Prowler Cloud and Prowler Local Server for:
+Full access to your Prowler deployment — Prowler Cloud, Prowler Private Cloud, or Prowler Local Server — for:
 - **Findings Analysis**: Query, filter, and analyze security findings across all your cloud environments
 - **Provider Management**: Create, configure, and manage your configured Prowler providers (AWS, Azure, GCP, etc.)
 - **Scan Orchestration**: Trigger on-demand scans and schedule recurring security assessments
@@ -48,12 +69,53 @@ Search and retrieve official Prowler documentation:
 
 ## MCP Server Architecture
 
-The following diagram illustrates the Prowler MCP Server architecture and its integration points:
+The following diagram illustrates the Prowler MCP Server architecture and its integration points. MCP clients connect to either the **Cloud MCP Server** (recommended) or a **Local MCP Server**; both expose the same tools and reach the same Prowler backends:
 
-![Prowler MCP Server Schema](/images/prowler_mcp_schema.png)
+```mermaid
+flowchart LR
+    subgraph HOSTS["MCP Clients"]
+        chat["Chat Interfaces<br/>(Claude Desktop, LobeChat)"]
+        ide["IDEs and Code Editors<br/>(Claude Code, Cursor)"]
+        apps["Other AI Applications<br/>(5ire, custom agents)"]
+    end
+
+    subgraph SERVERS["Prowler MCP Server"]
+        direction TB
+        cloud["☁️ Cloud MCP Server (Recommended)<br/>mcp.prowler.com/mcp · HTTP<br/>Managed by Prowler · always up to date<br/>Adds Cloud-only tools (Alerts,<br/>Scan Scheduling, Findings Triage)"]
+        local["💻 Local MCP Server<br/>Self-run · STDIO or HTTP<br/>Python 3.12+ or Docker<br/>You manage updates"]
+    end
+
+    subgraph TOOLS["Prowler MCP Tools"]
+        prowler_tools["prowler_* tools<br/>(API key or JWT auth)<br/>Findings · Providers · Scans<br/>Resources · Muting · Compliance<br/>Attack Paths"]
+        hub_tools["prowler_hub_* tools<br/>(no auth)<br/>Checks Catalog · Check Code<br/>Fixers · Compliance Frameworks"]
+        docs_tools["prowler_docs_* tools<br/>(no auth)<br/>Search · Document Retrieval"]
+    end
+
+    api["Prowler API (REST)<br/>Cloud · Private Cloud · Local Server"]
+    hub["hub.prowler.com<br/>(REST)"]
+    docs["docs.prowler.com<br/>(Mintlify)"]
+
+    chat -->|HTTP| cloud
+    ide -->|HTTP| cloud
+    apps -->|HTTP| cloud
+    chat -->|STDIO or HTTP| local
+    ide -->|STDIO or HTTP| local
+    apps -->|STDIO or HTTP| local
+
+    cloud --> prowler_tools
+    cloud --> hub_tools
+    cloud --> docs_tools
+    local --> prowler_tools
+    local --> hub_tools
+    local --> docs_tools
+
+    prowler_tools -->|REST| api
+    hub_tools -->|REST| hub
+    docs_tools -->|REST| docs
+```
 
 The architecture shows how AI assistants connect through the MCP protocol to access Prowler's three main components:
-- Prowler Cloud and Prowler Local Server for security operations
+- Prowler Cloud, Prowler Private Cloud, or Prowler Local Server for security operations
 - Prowler Hub for security knowledge
 - Prowler Documentation for guidance and reference.
 
@@ -92,8 +154,8 @@ REQUIREMENTS:
 
 DATA TO FETCH:
 Use these MCP tools in this order:
-1. Prowler app list providers - To get all available configured provider in the account
-2. Prowler app get latest findings - To get findings information, if there are so many you can use the filter_fields to get less information, or pagination to get in different batches
+1. Prowler list providers - To get all available configured provider in the account
+2. Prowler get latest findings - To get findings information, if there are so many you can use the filter_fields to get less information, or pagination to get in different batches
 3. For most critical findings you can get more context and remediation with Prowler Hub to get remediations for example
 
 DESIGN REQUIREMENTS:
@@ -130,66 +192,48 @@ Generate the complete HTML file and display it
 ></iframe>
 
 
-## Deployment Options
+## Cloud vs Local MCP Server
 
-Prowler MCP Server can be used in three ways:
+There are two ways to run the Prowler MCP Server. For almost everyone, the **Cloud MCP Server** is the right choice — it needs no installation and is maintained by Prowler. The **Local MCP Server** exists for users who need to run it on their own machine or infrastructure.
 
-### 1. Prowler Cloud MCP Server
+| | ☁️ **Cloud MCP Server** (Recommended) | 💻 **Local MCP Server** |
+|---|---|---|
+| **Endpoint** | `https://mcp.prowler.com/mcp` | Runs on your machine or infrastructure |
+| **Setup** | Just configure your MCP client | Install via Docker, or source |
+| **Transport** | HTTP | STDIO (subprocess) or self-hosted HTTP |
+| **Maintenance** | Managed by Prowler, always up to date | You manage updates |
+| **Requirements** | None (just an MCP client) | Python 3.12+ or Docker |
+| **Cloud-only tools** | ✅ Alerts, Scan Scheduling, Findings Triage | ❌ Not available |
+| **Authentication** | API key or JWT token | API key/JWT (HTTP) or env vars (STDIO) |
 
-**Use Prowler's managed MCP server at `https://mcp.prowler.com/mcp`**
+### ☁️ Cloud MCP Server (Recommended)
 
-- No installation required.
-- Managed and maintained by Prowler team.
-- Authentication to Prowler Cloud or Prowler Local Server via API key or JWT token.
-- Includes tools for Prowler Cloud-specific features such as Alerts, Scan Scheduling, and Findings Triage.
+Prowler's managed MCP server at `https://mcp.prowler.com/mcp`. No installation, always up to date, and it includes tools for Prowler Cloud-specific features such as Alerts, Scan Scheduling, and Findings Triage. This is the path we recommend for nearly all users — go straight to the [Configuration guide](/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended).
 
-### 2. Local STDIO Mode
+### 💻 Local MCP Server
 
-**Run the server locally on your machine**
+Run the server yourself when you need full control over the deployment. It connects to Prowler Cloud, Prowler Private Cloud, or Prowler Local Server and can run in two modes:
 
-- Runs as a subprocess of the MCP client.
-- Possibility to connect to Prowler Local Server.
-- Authentication to Prowler Cloud or Prowler Local Server via environment variables.
-- Requires Python 3.12+ or Docker.
+- **STDIO mode** — the server runs as a subprocess of your MCP client. Authentication via environment variables.
+- **Self-hosted HTTP mode** — deploy your own remote HTTP server. Authentication via API key or JWT token.
 
-### 3. Self-Hosted HTTP Mode
-
-**Deploy your own remote MCP server**
-
-- Full control over deployment.
-- Possibility to connect to Prowler Local Server.
-- Authentication to Prowler Local Server via API key or JWT token.
-- Requires Python 3.12+ or Docker.
-
-## Requirements
-
-Requirements vary based on deployment option:
-
-**For Prowler Cloud MCP Server:**
-- Prowler Cloud account and API key (only for Prowler Cloud and Prowler Local Server features)
-
-**For self-hosted STDIO/HTTP Mode:**
-- Python 3.12+ or Docker
-- Network access to:
-  - `https://hub.prowler.com` (for Prowler Hub)
-  - `https://docs.prowler.com` (for Prowler Documentation)
-  - Prowler Cloud API or Prowler Local Server API (for Prowler Cloud and Prowler Local Server features)
+Both require Python 3.12+ or Docker, plus network access to `https://hub.prowler.com` (Prowler Hub), `https://docs.prowler.com` (Prowler Documentation), and the Prowler API or Prowler Local Server API (Prowler features). See the [Installation guide](/getting-started/installation/prowler-mcp) to get started.
 
 <Note>
-**No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication in both deployment options. A Prowler API key is only required to access Prowler Cloud or Prowler Local Server features.
+**No Authentication Required**: Prowler Hub and Prowler Documentation features work without authentication on both the Cloud and Local MCP Server. A Prowler API key is only required to access Prowler features (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server).
 </Note>
 
 ## Next Steps
 
 <CardGroup cols={2}>
-  <Card title="Installation" icon="download" href="/getting-started/installation/prowler-mcp">
-    Install the Prowler MCP Server using uv or Docker
-  </Card>
   <Card title="Configuration" icon="gear" href="/getting-started/basic-usage/prowler-mcp">
-    Configure your MCP client to connect to the server
+    Connect your MCP client to the Cloud MCP Server
+  </Card>
+  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+    Explore all available tools and capabilities
   </Card>
 </CardGroup>
 
-<Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools" horizontal>
-  Explore all available tools and capabilities
+<Card title="Local Installation" icon="download" href="/getting-started/installation/prowler-mcp" horizontal>
+  Run the Local MCP Server yourself using Docker, source, or uvx
 </Card>

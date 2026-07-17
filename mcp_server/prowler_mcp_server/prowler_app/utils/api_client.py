@@ -1,4 +1,4 @@
-"""Shared API client utilities for Prowler App tools."""
+"""Shared API client utilities for Prowler tools."""
 
 import asyncio
 from datetime import datetime, timedelta

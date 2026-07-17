@@ -30,3 +30,43 @@ export function notifyLighthouseV2NewChat() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(LIGHTHOUSE_V2_NEW_CHAT_EVENT));
 }
+
+export const LIGHTHOUSE_V2_CONFIGURATIONS_CHANGED_EVENT =
+  "lighthouse-v2:configurations-changed";
+
+// Fired after provider configuration CRUD so cached chat configs (the panel
+// keeps one at module scope) can invalidate and reload.
+export function notifyLighthouseV2ConfigurationsChanged() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(LIGHTHOUSE_V2_CONFIGURATIONS_CHANGED_EVENT));
+}
+
+// Typed subscribe helpers: each returns an unsubscribe function so consumers
+// never hand-roll addEventListener plus the CustomEvent detail cast.
+function subscribe(eventName: string, handler: (event: Event) => void) {
+  if (typeof window === "undefined") return () => {};
+  window.addEventListener(eventName, handler);
+  return () => window.removeEventListener(eventName, handler);
+}
+
+export function onLighthouseV2SessionsChanged(callback: () => void) {
+  return subscribe(LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT, callback);
+}
+
+export function onLighthouseV2SessionArchived(
+  callback: (sessionId: string) => void,
+) {
+  return subscribe(LIGHTHOUSE_V2_SESSION_ARCHIVED_EVENT, (event) => {
+    const sessionId = (event as CustomEvent<{ sessionId: string }>).detail
+      ?.sessionId;
+    if (sessionId) callback(sessionId);
+  });
+}
+
+export function onLighthouseV2NewChat(callback: () => void) {
+  return subscribe(LIGHTHOUSE_V2_NEW_CHAT_EVENT, callback);
+}
+
+export function onLighthouseV2ConfigurationsChanged(callback: () => void) {
+  return subscribe(LIGHTHOUSE_V2_CONFIGURATIONS_CHANGED_EVENT, callback);
+}

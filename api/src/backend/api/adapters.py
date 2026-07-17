@@ -1,5 +1,3 @@
-import logging
-
 from allauth.account.models import EmailAddress
 from allauth.core.exceptions import ImmediateHttpResponse
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
@@ -16,8 +14,6 @@ from api.models import (
 from api.utils import accept_invitation_for_user
 from django.db import transaction
 from django.http import HttpResponseForbidden
-
-logger = logging.getLogger(__name__)
 
 
 class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
@@ -104,12 +100,6 @@ class ProwlerSocialAccountAdapter(DefaultSocialAccountAdapter):
                 if not email_is_verified or not provider_verified_email:
                     raise ImmediateHttpResponse(HttpResponseForbidden())
                 sociallogin.connect(request, existing_user)
-
-    def send_notification_mail(self, *args, **kwargs):
-        try:
-            return super().send_notification_mail(*args, **kwargs)
-        except OSError:
-            logger.exception("Failed to send social account connection notification")
 
     def save_user(self, request, sociallogin, form=None):
         """

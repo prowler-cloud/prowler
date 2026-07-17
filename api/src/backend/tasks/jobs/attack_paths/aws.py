@@ -8,6 +8,8 @@ import aioboto3
 import boto3
 import botocore
 import neo4j
+import neo4j.exceptions
+from api.attack_paths.database import DATABASE_NOT_FOUND_CODE
 from api.models import (
     AttackPathsScan as ProwlerAPIAttackPathsScan,
 )
@@ -347,6 +349,12 @@ def sync_aws_account(
                 )
 
             except Exception as e:
+                if (
+                    isinstance(e, neo4j.exceptions.Neo4jError)
+                    and e.code == DATABASE_NOT_FOUND_CODE
+                ):
+                    raise
+
                 logger.info(
                     f"Synced function {func_name} for AWS account {prowler_api_provider.uid} in {time.perf_counter() - func_t0:.3f}s (FAILED)"
                 )

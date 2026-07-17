@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftIcon, ArrowRightIcon } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { Control, useForm } from "react-hook-form";
+import type { Control } from "react-hook-form";
+import { useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
 import {
@@ -24,13 +25,13 @@ import {
 import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
-import { AWSCredentialsRole } from "@/types";
+import type { AWSCredentialsRole } from "@/types";
+import type { IntegrationProps } from "@/types/integrations";
 import {
   editS3IntegrationFormSchema,
-  IntegrationProps,
   s3IntegrationFormSchema,
 } from "@/types/integrations";
-import { ProviderProps } from "@/types/providers";
+import type { ProviderProps } from "@/types/providers";
 
 interface S3IntegrationFormProps {
   integration?: IntegrationProps | null;
@@ -39,6 +40,25 @@ interface S3IntegrationFormProps {
   onCancel: () => void;
   editMode?: "configuration" | "credentials" | null; // null means creating new
 }
+
+const getSelectedAWSAccountId = (
+  selectedProviderIds: string[],
+  providers: ProviderProps[],
+): string => {
+  for (const providerId of selectedProviderIds) {
+    const provider = providers.find(({ id }) => id === providerId);
+    const uid = provider?.attributes.uid;
+    if (
+      provider?.attributes.provider === "aws" &&
+      uid &&
+      /^\d{12}$/.test(uid)
+    ) {
+      return uid;
+    }
+  }
+
+  return "";
+};
 
 export const S3IntegrationForm = ({
   integration,
@@ -74,6 +94,7 @@ export const S3IntegrationForm = ({
     defaultValues: {
       integration_type: "amazon_s3" as const,
       bucket_name: integration?.attributes.configuration.bucket_name || "",
+      bucket_account_id: "",
       output_directory:
         integration?.attributes.configuration.output_directory || "output",
       providers:
@@ -93,6 +114,14 @@ export const S3IntegrationForm = ({
   });
 
   const isLoading = form.formState.isSubmitting;
+  const selectedProviderIds = form.watch("providers") || [];
+  const bucketAccountIdOverride = form.watch("bucket_account_id")?.trim() || "";
+  const derivedBucketAccountId = getSelectedAWSAccountId(
+    selectedProviderIds,
+    providers,
+  );
+  const resolvedBucketAccountId =
+    bucketAccountIdOverride || derivedBucketAccountId;
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -102,18 +131,36 @@ export const S3IntegrationForm = ({
       return;
     }
 
-    // Validate current step fields for creation flow
+    // Validate current step fields for creation flow. bucket_account_id is
+    // validated here, while its input is visible, so a malformed value surfaces
+    // its error instead of silently blocking the step 1 submit.
     const stepFields =
       currentStep === 0
-        ? (["bucket_name", "output_directory", "providers"] as const)
+        ? ([
+            "bucket_name",
+            "output_directory",
+            "providers",
+            "bucket_account_id",
+          ] as const)
         : // Step 1: No required fields since role_arn and external_id are optional
           [];
 
     const isValid = stepFields.length === 0 || (await form.trigger(stepFields));
 
-    if (isValid) {
-      setCurrentStep(1);
+    if (!isValid) {
+      return;
     }
+
+    if (!resolvedBucketAccountId) {
+      form.setError("bucket_account_id", {
+        message:
+          "Bucket owner account ID is required when no AWS account is selected",
+      });
+      return;
+    }
+
+    form.clearErrors("bucket_account_id");
+    setCurrentStep(1);
   };
 
   const handleBack = () => {
@@ -254,6 +301,30 @@ export const S3IntegrationForm = ({
     }
   };
 
+  const renderBucketAccountIdField = () => (
+    <div className="flex flex-col gap-1">
+      <CustomInput
+        control={form.control}
+        name="bucket_account_id"
+        type="text"
+        label="Bucket owner account ID"
+        labelPlacement="inside"
+        placeholder={
+          derivedBucketAccountId
+            ? `Defaults to ${derivedBucketAccountId}`
+            : "12-digit AWS account ID"
+        }
+        variant="bordered"
+        isRequired={false}
+      />
+      <p className="text-text-neutral-tertiary text-xs">
+        {derivedBucketAccountId
+          ? `Leave empty to use selected AWS account ${derivedBucketAccountId}, or enter another bucket owner account ID.`
+          : "Required because the selected provider does not identify the AWS account that owns the bucket."}
+      </p>
+    </div>
+  );
+
   const renderStepContent = () => {
     // If editing credentials, show only credentials form
     if (isEditingCredentials || currentStep === 1) {
@@ -264,17 +335,21 @@ export const S3IntegrationForm = ({
         externalId,
         bucketName,
         "amazon_s3",
+        resolvedBucketAccountId,
       );
 
       return (
-        <AWSRoleCredentialsForm
-          control={form.control as unknown as Control<AWSCredentialsRole>}
-          setValue={form.setValue as any}
-          externalId={externalId}
-          templateLinks={templateLinks}
-          type="integrations"
-          integrationType="amazon_s3"
-        />
+        <div className="flex flex-col gap-4">
+          {isEditingCredentials && renderBucketAccountIdField()}
+          <AWSRoleCredentialsForm
+            control={form.control as unknown as Control<AWSCredentialsRole>}
+            setValue={form.setValue as any}
+            externalId={externalId}
+            templateLinks={templateLinks}
+            type="integrations"
+            integrationType="amazon_s3"
+          />
+        </div>
       );
     }
 
@@ -345,6 +420,8 @@ export const S3IntegrationForm = ({
               variant="bordered"
               isRequired
             />
+
+            {!isEditingConfig && renderBucketAccountIdField()}
           </div>
         </>
       );

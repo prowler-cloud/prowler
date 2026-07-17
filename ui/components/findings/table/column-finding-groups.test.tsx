@@ -409,7 +409,9 @@ describe("column-finding-groups — accessibility of check title cell", () => {
     expect(
       screen.queryByRole("button", { name: "Fallback IaC Check" }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText("Fallback IaC Check")).toBeInTheDocument();
+    // The title renders as plain (non-clickable) text and the inline-mocked
+    // tooltip duplicates it, so exactly both copies must exist.
+    expect(screen.getAllByText("Fallback IaC Check")).toHaveLength(2);
     expect(onDrillDown).not.toHaveBeenCalled();
   });
 });

@@ -312,8 +312,8 @@ ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_INACTIVITY_THRESHOLD_MINUTES", 30
 )
 ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
-    "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
-)  # 48h
+    "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 960
+)  # 16h
 
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.

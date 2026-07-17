@@ -160,7 +160,16 @@ export const SignUpForm = ({
   };
 
   return (
-    <AuthLayout title="Sign up">
+    <AuthLayout
+      title="Get started"
+      footer={
+        <AuthFooterLink
+          text="Already have an account?"
+          linkText="Log in"
+          href="/sign-in"
+        />
+      }
+    >
       <Form {...form}>
         <form
           ref={stripPasswordManagerHighlight}
@@ -262,7 +271,7 @@ export const SignUpForm = ({
       {(!invitationToken || isCloudEnv) && (
         <>
           <AuthDivider />
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
@@ -275,12 +284,6 @@ export const SignUpForm = ({
           </div>
         </>
       )}
-
-      <AuthFooterLink
-        text="Already have an account?"
-        linkText="Log in"
-        href="/sign-in"
-      />
     </AuthLayout>
   );
 };
