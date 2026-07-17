@@ -1,3 +1,6 @@
+import uuid
+from unittest.mock import MagicMock, patch
+
 import pytest
 from api.db_utils import rls_transaction
 from api.models import (
@@ -7,6 +10,7 @@ from api.models import (
     ProviderSecret,
 )
 from django.db import DataError, connections
+from tasks.tasks import generate_outputs_task
 
 
 @pytest.fixture
@@ -156,3 +160,98 @@ class TestGenerateOutputsTenantScoping:
         assert len(materialized) == 1
         with pytest.raises(DataError):
             list(lazy)
+
+
+@pytest.mark.django_db(transaction=True)
+class TestGenerateOutputsTransactionScope:
+    """
+    Runs the real task and checks where its transactions begin and end.
+
+    `set_tenant` wraps the function it decorates in `transaction.atomic`, so
+    re-adding it to `generate_outputs_task` puts provider authentication, rendering,
+    compression and upload — tens of minutes of work — inside one writer
+    transaction. That is the stall this task was changed to avoid, and it is what
+    the `in_atomic_block` probes below detect.
+
+    `transaction=True` is required: plain `django_db` runs the test inside its own
+    atomic block, which would make every probe report True and the test pass or fail
+    for reasons unrelated to the task.
+    """
+
+    def test_slow_phases_hold_no_transaction_and_writes_stay_scoped(self):
+        scan_id = str(uuid.uuid4())
+        provider_id = str(uuid.uuid4())
+        tenant_id = str(uuid.uuid4())
+
+        # READ_REPLICA_ALIAS is None under the test settings, so the task's replica
+        # transactions also open on `default`; one connection sees every phase.
+        connection = connections["default"]
+        probes = {}
+
+        def probe(name, result=None):
+            def record(*_args, **_kwargs):
+                probes[name] = connection.in_atomic_block
+                return result
+
+            return record
+
+        provider_obj = MagicMock(uid="provider-uid", provider="aws")
+
+        integrations = MagicMock()
+        integrations.exists.return_value = False
+        integrations.__iter__.return_value = iter([])
+
+        scan_update = MagicMock()
+        scan_update.return_value.update.side_effect = probe("scan_output_location")
+
+        with (
+            patch("tasks.tasks._cleanup_stale_tmp_output_directories"),
+            patch("tasks.tasks.ScanSummary.objects.filter") as scan_summary_filter,
+            patch("tasks.tasks.ScanSummary.objects.select_related"),
+            patch("tasks.tasks.Provider.objects.select_related") as provider_select,
+            patch("tasks.tasks.Integration.objects.filter", return_value=integrations),
+            patch("tasks.tasks.Finding.all_objects.filter") as finding_filter,
+            patch(
+                "tasks.tasks.initialize_prowler_provider",
+                side_effect=probe("provider_authentication", MagicMock()),
+            ),
+            patch("tasks.tasks.Compliance.get_bulk", return_value={}),
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+            patch("tasks.tasks.get_compliance_frameworks", return_value=[]),
+            patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+            patch("tasks.tasks.OUTPUT_FORMATS_MAPPING", {}),
+            patch(
+                "tasks.tasks._generate_output_directory",
+                return_value=("/tmp/test/out-dir", "/tmp/test/comp-dir"),
+            ),
+            patch(
+                "tasks.tasks._compress_output_files",
+                side_effect=probe("compression", "/tmp/zipped.zip"),
+            ),
+            patch(
+                "tasks.tasks._upload_to_s3",
+                side_effect=probe("upload", "s3://bucket/zipped.zip"),
+            ),
+            patch("tasks.tasks.Scan.all_objects.filter", scan_update),
+            patch("tasks.tasks.rmtree"),
+        ):
+            scan_summary_filter.return_value.exists.return_value = True
+            provider_select.return_value.get.return_value = provider_obj
+            finding_filter.return_value.order_by.return_value.iterator.return_value = []
+
+            result = generate_outputs_task(
+                scan_id=scan_id,
+                provider_id=provider_id,
+                tenant_id=tenant_id,
+            )
+
+        assert result == {"upload": True}
+
+        # The phases that made the original transaction long-lived.
+        assert probes["provider_authentication"] is False
+        assert probes["compression"] is False
+        assert probes["upload"] is False
+
+        # The counterpart: dropping the task-wide transaction must not leave the
+        # writer accesses bare, or they would run with no tenant context at all.
+        assert probes["scan_output_location"] is True

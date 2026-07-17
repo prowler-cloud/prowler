@@ -375,6 +375,7 @@ class TestGenerateOutputs:
     def test_generate_outputs_fails_upload(self):
         with (
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+            patch("tasks.tasks.ScanSummary.objects.select_related"),
             patch("tasks.tasks.Provider.objects.select_related"),
             patch("tasks.tasks.initialize_prowler_provider"),
             patch("tasks.tasks.Compliance.get_bulk"),

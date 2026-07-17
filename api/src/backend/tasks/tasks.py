@@ -750,10 +750,14 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     batch is being processed. Finally, the output files are compressed and
     uploaded to S3.
 
-    Rendering and uploading take tens of minutes, so every database access is
-    scoped to its own short `rls_transaction`. A task-wide transaction would hold
-    ACCESS SHARE on the tables it read for the whole run, and any DDL waiting on
-    one of those tables would queue every later reader behind itself.
+    Rendering and uploading take tens of minutes, so every writer access is scoped
+    to its own short `rls_transaction` and the task holds no writer transaction
+    across that work. A task-wide writer transaction would hold ACCESS SHARE on the
+    tables it read for the whole run, and any DDL waiting on one of those tables
+    would queue every later reader behind itself. The findings loop and the report
+    rendering still run inside one long read-replica transaction, which is
+    deliberate: it keeps a consistent snapshot across batches, and locks taken there
+    do not block writers on the primary.
 
     Args:
         tenant_id (str): The tenant identifier.
@@ -829,10 +833,12 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     universal_output_filename = os.path.basename(out_dir)
 
     with rls_transaction(tenant_id):
-        # `_transform_findings_stats` walks the queryset and follows its `scan`
-        # relation, so it has to run with the tenant context live.
+        # `_transform_findings_stats` indexes the rows and then iterates them, which
+        # on a lazy queryset runs the query twice, and it reads `scan` off the first
+        # row, which costs a third. Materializing once with the relation joined in
+        # answers all three from a single query.
         scan_summary = FindingOutput._transform_findings_stats(
-            ScanSummary.objects.filter(scan_id=scan_id)
+            list(ScanSummary.objects.select_related("scan").filter(scan_id=scan_id))
         )
 
         # Check if we need to generate ASFF output for AWS providers with SecurityHub integration
