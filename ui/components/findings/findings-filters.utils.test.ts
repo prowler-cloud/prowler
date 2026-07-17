@@ -408,7 +408,7 @@ describe("buildFindingGroupFilterOption", () => {
 
     // Then
     expect(filter).toMatchObject({
-      key: "check_id",
+      key: "check_id__in",
       labelCheckboxGroup: "Finding Group",
       values: ["teams_external_users_can_join", "s3_bucket_public_access"],
       index: 3,

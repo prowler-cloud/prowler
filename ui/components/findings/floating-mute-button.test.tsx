@@ -61,7 +61,6 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When — click the button (triggers onBeforeOpen which rejects)
     await user.click(button);
-    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then — button should NOT be disabled (isResolving reset to false)
     await waitFor(() => {
@@ -84,7 +83,6 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
-    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then
     await waitFor(() => {
@@ -124,7 +122,6 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
-    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then — modal opened (MuteFindingsModal called with isOpen=true)
     await waitFor(() => {
@@ -159,7 +156,6 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button"));
-    await user.click(screen.getByRole("button", { name: "Mute" }));
 
     // Then
     const preparingCall = (
@@ -219,7 +215,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Mute (1)" }));
+    await user.click(screen.getByRole("button", { name: "1 selected" }));
     await user.click(screen.getByRole("button", { name: "Send to Jira" }));
 
     // Then
@@ -281,7 +277,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Mute (1)" }));
+    await user.click(screen.getByRole("button", { name: "1 selected" }));
     const jiraButton = screen.getByRole("button", { name: "Send to Jira" });
 
     // Then

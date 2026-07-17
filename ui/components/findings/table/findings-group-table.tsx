@@ -9,17 +9,17 @@ import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbo
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
+import {
+  isGroupedJiraDispatchEnabled,
+  PROWLER_CLOUD_ONLY_TOOLTIP,
+} from "@/lib/deployment";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 import { JIRA_DISPATCH_MODE } from "@/types/integrations";
 
-import {
-  FloatingMuteButton,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "../floating-mute-button";
+import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -29,6 +29,7 @@ import {
 } from "./inline-resource-container";
 
 const exploreFindingsFlow = getFlowById("explore-findings")!;
+const EMPTY_FINDING_GROUPS: FindingGroupRow[] = [];
 
 function buildSelectionSummary(
   groupCount: number,
@@ -105,7 +106,7 @@ export function FindingsGroupTable({
     undefined,
   );
 
-  const safeData = data ?? [];
+  const safeData = data ?? EMPTY_FINDING_GROUPS;
   const hasResourceSelection = resourceSelection.length > 0;
   const filters = resolvedFilters;
   const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();

@@ -483,7 +483,7 @@ describe("SendToJiraModal", () => {
     );
   });
 
-  it("shows an error toast when one mixed dispatch batch fails", async () => {
+  it("shows a partial success toast when one mixed dispatch batch fails after another succeeds", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -542,10 +542,9 @@ describe("SendToJiraModal", () => {
     // Then
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith({
-        variant: "destructive",
-        title: "Error",
+        title: "Partial success",
         description:
-          "Jira dispatch completed with 1 failed and 1 created issue.",
+          "Finding successfully sent to Jira! Some Jira dispatches failed: Jira dispatch completed with 1 failed and 1 created issue.",
       }),
     );
     expect(toastMock).not.toHaveBeenCalledWith(
@@ -605,9 +604,9 @@ describe("SendToJiraModal", () => {
     );
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to launch Finding batch.",
+        title: "Partial success",
+        description:
+          "Finding successfully sent to Jira! Some Jira dispatches failed: Failed to launch Finding batch.",
       }),
     );
   });

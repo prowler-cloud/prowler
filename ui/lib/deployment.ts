@@ -10,6 +10,8 @@ export const ENTERPRISE_FEATURE_ENV = {
   POSTHOG_ENABLED: "NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED",
 } as const;
 
+export const PROWLER_CLOUD_ONLY_TOOLTIP = "Available only in Prowler Cloud";
+
 export type DeploymentMode =
   (typeof DEPLOYMENT_MODE)[keyof typeof DEPLOYMENT_MODE];
 

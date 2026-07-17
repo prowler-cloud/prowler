@@ -13,7 +13,10 @@ import {
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
+import {
+  isGroupedJiraDispatchEnabled,
+  PROWLER_CLOUD_ONLY_TOOLTIP,
+} from "@/lib/deployment";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { getOptionalText } from "@/lib/utils";
 import type {
@@ -23,7 +26,6 @@ import type {
 import { JIRA_DISPATCH_MODE } from "@/types/integrations";
 import type { ProviderType } from "@/types/providers";
 
-import { PROWLER_CLOUD_ONLY_TOOLTIP } from "../floating-mute-button";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import type { FindingTriageContext } from "./finding-note-modal";
 import { FindingNoteActionItem } from "./finding-triage-cells";

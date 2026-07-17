@@ -8,16 +8,9 @@ import type {
   JiraDispatchMode,
   JiraDispatchRequest,
   JiraDispatchResponse,
+  JiraDispatchTarget,
 } from "@/types/integrations";
-import { JIRA_DISPATCH_MODE } from "@/types/integrations";
-
-const JIRA_DISPATCH_FILTER = {
-  CHECK_ID: "check_id",
-  FINDING_ID: "finding_id",
-} as const;
-
-type JiraDispatchFilter =
-  (typeof JIRA_DISPATCH_FILTER)[keyof typeof JIRA_DISPATCH_FILTER];
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 type JiraTaskResult = NonNullable<
   JiraDispatchResponse["data"]["attributes"]["result"]
@@ -26,7 +19,7 @@ type JiraTaskResult = NonNullable<
 interface JiraDispatchInput {
   integrationId: string;
   targetIds: string[];
-  filter: JiraDispatchFilter;
+  filter: JiraDispatchTarget;
   projectKey: string;
   issueType: string;
   dispatchMode?: JiraDispatchMode;
@@ -150,7 +143,7 @@ export const sendFindingToJira = async (
   return sendJiraDispatch({
     integrationId,
     targetIds: [findingId],
-    filter: JIRA_DISPATCH_FILTER.FINDING_ID,
+    filter: JIRA_DISPATCH_TARGET.FINDING_ID,
     projectKey,
     issueType,
   });

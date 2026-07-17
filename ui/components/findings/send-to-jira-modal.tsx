@@ -27,7 +27,9 @@ import { toast } from "@/components/shadcn/toast";
 import {
   IntegrationProps,
   JIRA_DISPATCH_MODE,
+  JIRA_DISPATCH_TARGET,
   type JiraDispatchMode,
+  type JiraDispatchTarget,
 } from "@/types/integrations";
 
 import {
@@ -35,34 +37,46 @@ import {
   JIRA_SELECTION_KIND,
 } from "./send-to-jira-modal-copy";
 
-const JIRA_DISPATCH_TARGET = {
-  CHECK_ID: "check_id",
-  FINDING_ID: "finding_id",
-} as const;
-
-type JiraDispatchTarget =
-  (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
-
 interface JiraDispatchTargetBatch {
   targetIds: string[];
   targetType: JiraDispatchTarget;
   dispatchMode?: JiraDispatchMode;
 }
 
-interface SendToJiraModalProps {
+interface SendToJiraModalBaseProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   findingId: string;
   findingTitle?: string;
-  targetIds?: string[];
-  targetType?: JiraDispatchTarget;
-  targetBatches?: JiraDispatchTargetBatch[];
   defaultDispatchMode?: JiraDispatchMode;
   canChooseGroupedDispatch?: boolean;
   isFindingGroupSelection?: boolean;
   selectedResourceCount?: number;
   description?: string;
 }
+
+interface SendToJiraSingleTargetProps extends SendToJiraModalBaseProps {
+  targetIds?: never;
+  targetType?: never;
+  targetBatches?: never;
+}
+
+interface SendToJiraTargetListProps extends SendToJiraModalBaseProps {
+  targetIds?: string[];
+  targetType?: JiraDispatchTarget;
+  targetBatches?: never;
+}
+
+interface SendToJiraBatchProps extends SendToJiraModalBaseProps {
+  targetIds?: string[];
+  targetType?: JiraDispatchTarget;
+  targetBatches?: JiraDispatchTargetBatch[];
+}
+
+type SendToJiraModalProps =
+  | SendToJiraSingleTargetProps
+  | SendToJiraTargetListProps
+  | SendToJiraBatchProps;
 
 const sendToJiraSchema = z.object({
   integration: z.string().min(1, "Please select a Jira integration"),
@@ -217,7 +231,7 @@ export const SendToJiraModal = ({
       form.reset();
       setFetchedIssueTypes({});
     }
-  }, [isOpen, form, toast]);
+  }, [isOpen, form]);
 
   useEffect(() => {
     if (isOpen) {
@@ -281,6 +295,17 @@ export const SendToJiraModal = ({
         ];
 
         if (errors.length > 0) {
+          const successfulTask = taskResults.find(
+            (taskResult) => taskResult.success,
+          );
+          if (successfulTask) {
+            toast({
+              title: "Partial success",
+              description: `${successfulTask.message || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${errors.join(" ")}`,
+            });
+            return;
+          }
+
           throw new Error(errors.join(" "));
         }
 
@@ -377,7 +402,6 @@ export const SendToJiraModal = ({
     selectedProject,
     issueTypesFromConfig.length,
     fetchedIssueTypes,
-    toast,
   ]);
 
   const issueTypeOptions = issueTypesForProject.map((type) => ({

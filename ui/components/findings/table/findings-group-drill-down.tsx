@@ -26,7 +26,10 @@ import {
 import { SeverityBadge, StatusFindingBadge } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
+import {
+  isGroupedJiraDispatchEnabled,
+  PROWLER_CLOUD_ONLY_TOOLTIP,
+} from "@/lib/deployment";
 import {
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
@@ -35,10 +38,7 @@ import {
 import { FindingGroupRow } from "@/types";
 import { JIRA_DISPATCH_MODE } from "@/types/integrations";
 
-import {
-  FloatingMuteButton,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "../floating-mute-button";
+import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import { ImpactedResourcesCell } from "./impacted-resources-cell";

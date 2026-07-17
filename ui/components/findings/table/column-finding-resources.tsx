@@ -19,7 +19,10 @@ import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { SeverityBadge } from "@/components/shadcn/table";
 import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
 import { getFailingForLabel } from "@/lib/date-utils";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
+import {
+  isGroupedJiraDispatchEnabled,
+  PROWLER_CLOUD_ONLY_TOOLTIP,
+} from "@/lib/deployment";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
@@ -27,7 +30,6 @@ import type {
 } from "@/types/findings-triage";
 import { JIRA_DISPATCH_MODE } from "@/types/integrations";
 
-import { PROWLER_CLOUD_ONLY_TOOLTIP } from "../floating-mute-button";
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
   FindingNoteActionItem,

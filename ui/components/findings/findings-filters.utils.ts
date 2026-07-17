@@ -139,7 +139,7 @@ export function buildFindingGroupFilterOption({
   }
 
   return {
-    key: "check_id",
+    key: "check_id__in",
     labelCheckboxGroup: "Finding Group",
     values,
     labelFormatter: (value: string) =>

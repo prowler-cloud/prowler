@@ -122,6 +122,7 @@ vi.mock("@/actions/findings/findings-by-resource", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("../send-to-jira-modal", () => ({

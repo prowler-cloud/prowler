@@ -12,6 +12,14 @@ export const JIRA_DISPATCH_MODE = {
 export type JiraDispatchMode =
   (typeof JIRA_DISPATCH_MODE)[keyof typeof JIRA_DISPATCH_MODE];
 
+export const JIRA_DISPATCH_TARGET = {
+  CHECK_ID: "check_id",
+  FINDING_ID: "finding_id",
+} as const;
+
+export type JiraDispatchTarget =
+  (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
+
 export interface IntegrationProps {
   type: "integrations";
   id: string;

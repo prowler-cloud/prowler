@@ -14,6 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { PROWLER_CLOUD_ONLY_TOOLTIP } from "@/lib/deployment";
 import { cn } from "@/lib/utils";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
@@ -41,8 +42,6 @@ interface FloatingMuteButtonProps {
   /** Tooltip shown when the Jira action is visible but disabled. */
   jiraDisabledTooltip?: string;
 }
-
-export const PROWLER_CLOUD_ONLY_TOOLTIP = "Available only in Prowler Cloud";
 
 const CloudFeatureBadgeLink = () => (
   <Badge variant="cloud" asChild>
@@ -136,6 +135,15 @@ export function FloatingMuteButton({
   };
 
   const findingIds = onBeforeOpen ? resolvedIds : selectedFindingIds;
+  const hasMultipleActions = showSendToJira;
+  const handlePrimaryClick = () => {
+    if (hasMultipleActions) {
+      setIsActionChooserOpen(true);
+      return;
+    }
+
+    void handleMuteClick();
+  };
 
   return (
     <>
@@ -205,7 +213,7 @@ export function FloatingMuteButton({
         ? createPortal(
             <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 flex gap-2 duration-300">
               <Button
-                onClick={() => setIsActionChooserOpen(true)}
+                onClick={handlePrimaryClick}
                 disabled={isResolving}
                 size="lg"
                 className="shadow-lg"
@@ -215,7 +223,9 @@ export function FloatingMuteButton({
                 ) : (
                   <Ellipsis className="size-5" />
                 )}
-                {label ?? `Mute (${selectedCount})`}
+                {hasMultipleActions
+                  ? (label ?? `${selectedCount} selected`)
+                  : `Mute (${selectedCount})`}
               </Button>
             </div>,
             document.body,

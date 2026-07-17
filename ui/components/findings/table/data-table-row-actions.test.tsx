@@ -27,6 +27,7 @@ vi.mock("@/components/findings/send-to-jira-modal", () => ({
 
 vi.mock("@/lib/deployment", () => ({
   isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
