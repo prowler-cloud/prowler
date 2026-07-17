@@ -61,6 +61,17 @@ const buildJiraDispatchFailureMessage = (
   return `Jira dispatch completed with ${failedCount} failed and ${successCount} created/updated issue${successCount === 1 ? "" : "s"}.`;
 };
 
+const buildJiraDispatchSuccessMessage = (
+  result: JiraTaskResult | undefined,
+) => {
+  const successCount = getJiraDispatchSuccessCount(result);
+  if (successCount > 1) {
+    return `${successCount} Jira issues were created or updated successfully.`;
+  }
+
+  return "Finding successfully sent to Jira!";
+};
+
 export const getJiraIssueTypes = async (
   integrationId: string,
   projectKey: string,
@@ -221,7 +232,8 @@ export const sendJiraDispatch = async ({
 export const pollJiraDispatchTask = async (
   taskId: string,
 ): Promise<
-  { success: true; message: string } | { success: false; error: string }
+  | { success: true; message: string; warning?: string }
+  | { success: false; error: string }
 > => {
   const res = await pollTaskUntilSettled(taskId, {
     maxAttempts: 5,
@@ -236,6 +248,15 @@ export const pollJiraDispatchTask = async (
   if (state === "completed") {
     const failedCount = getJiraDispatchFailedCount(jiraResult);
     if (failedCount > 0) {
+      const successCount = getJiraDispatchSuccessCount(jiraResult);
+      if (successCount > 0) {
+        return {
+          success: true,
+          message: buildJiraDispatchSuccessMessage(jiraResult),
+          warning: buildJiraDispatchFailureMessage(jiraResult, failedCount),
+        };
+      }
+
       return {
         success: false,
         error: buildJiraDispatchFailureMessage(jiraResult, failedCount),
@@ -257,7 +278,10 @@ export const pollJiraDispatchTask = async (
       };
     }
 
-    return { success: true, message: "Finding successfully sent to Jira!" };
+    return {
+      success: true,
+      message: buildJiraDispatchSuccessMessage(jiraResult),
+    };
   }
 
   if (state === "failed") {

@@ -74,6 +74,7 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
 const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 const FILTER_GRID_ITEM_CLASS = "min-w-0";
+const FINDING_GROUP_FILTER_KEYS = ["filter[check_id]", "filter[check_id__in]"];
 
 export const FindingsFilterBatchControls = ({
   providers,
@@ -367,6 +368,7 @@ export const FindingsFilters = (props: FindingsFiltersProps) => {
     getFilterValue,
   } = useFilterBatch({
     defaultParams: { "filter[muted]": "false" },
+    exclusiveFilterGroups: [FINDING_GROUP_FILTER_KEYS],
   });
 
   return (

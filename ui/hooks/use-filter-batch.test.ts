@@ -198,6 +198,30 @@ describe("useFilterBatch", () => {
       // Then
       expect(result.current.pendingFilters["filter[severity__in]"]).toEqual([]);
     });
+
+    it("should replace exclusive legacy filters when the new grouped filter is edited", () => {
+      // Given - a legacy deep link with the exact check_id filter applied.
+      setSearchParams({
+        "filter[check_id]": "teams_external_users_can_join",
+      });
+      const { result } = renderHook(() =>
+        useFilterBatch({
+          exclusiveFilterGroups: [["filter[check_id]", "filter[check_id__in]"]],
+        }),
+      );
+
+      // When - the Finding Group multi-select writes the __in filter.
+      act(() => {
+        result.current.setPending("filter[check_id__in]", [
+          "teams_external_users_cannot_join",
+        ]);
+      });
+
+      // Then - the stale exact filter is removed from pending state.
+      expect(result.current.pendingFilters).toEqual({
+        "filter[check_id__in]": ["teams_external_users_cannot_join"],
+      });
+    });
   });
 
   // ── getFilterValue ─────────────────────────────────────────────────────────
@@ -245,6 +269,24 @@ describe("useFilterBatch", () => {
 
       // Then
       expect(values).toEqual(["critical"]);
+    });
+
+    it("should expose legacy exclusive filter values through the replacement key", () => {
+      // Given - a legacy grouped finding deep link uses filter[check_id].
+      setSearchParams({
+        "filter[check_id]": "teams_external_users_can_join",
+      });
+      const { result } = renderHook(() =>
+        useFilterBatch({
+          exclusiveFilterGroups: [["filter[check_id]", "filter[check_id__in]"]],
+        }),
+      );
+
+      // When - the new Finding Group control asks for filter[check_id__in].
+      const values = result.current.getFilterValue("filter[check_id__in]");
+
+      // Then - the existing exact value appears selected in the control.
+      expect(values).toEqual(["teams_external_users_can_join"]);
     });
   });
 

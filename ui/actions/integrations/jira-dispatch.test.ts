@@ -86,7 +86,7 @@ describe("sendJiraDispatch", () => {
     });
   });
 
-  it("should fail completed task polling when Jira dispatch has partial failures", async () => {
+  it("should preserve partial success when Jira dispatch has created and failed issues", async () => {
     // Given
     pollTaskUntilSettledMock.mockResolvedValue({
       ok: true,
@@ -99,8 +99,9 @@ describe("sendJiraDispatch", () => {
 
     // Then
     expect(result).toEqual({
-      success: false,
-      error:
+      success: true,
+      message: "2 Jira issues were created or updated successfully.",
+      warning:
         "Jira dispatch completed with 1 failed and 2 created/updated issues.",
     });
   });
@@ -118,8 +119,9 @@ describe("sendJiraDispatch", () => {
 
     // Then
     expect(result).toEqual({
-      success: false,
-      error:
+      success: true,
+      message: "2 Jira issues were created or updated successfully.",
+      warning:
         "Jira dispatch completed with 1 failed and 2 created/updated issues.",
     });
   });
@@ -137,8 +139,9 @@ describe("sendJiraDispatch", () => {
 
     // Then
     expect(result).toEqual({
-      success: false,
-      error:
+      success: true,
+      message: "Finding successfully sent to Jira!",
+      warning:
         "Jira dispatch completed with 1 failed and 1 created/updated issue.",
     });
   });

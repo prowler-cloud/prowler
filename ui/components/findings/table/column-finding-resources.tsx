@@ -28,7 +28,7 @@ import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
-import { JIRA_DISPATCH_MODE } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
@@ -133,7 +133,7 @@ const ResourceRowActions = ({
         findingId={resource.findingId}
         findingTitle={resource.checkId}
         targetIds={displayIds}
-        targetType="finding_id"
+        targetType={JIRA_DISPATCH_TARGET.FINDING_ID}
         defaultDispatchMode={
           displayIds.length > 1
             ? JIRA_DISPATCH_MODE.GROUPED

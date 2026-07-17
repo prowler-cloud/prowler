@@ -4,10 +4,8 @@ export const DEPLOYMENT_MODE = {
 } as const;
 
 export const ENTERPRISE_FEATURE_ENV = {
-  BILLING_ENABLED: "NEXT_PUBLIC_PROWLER_ENTERPRISE_BILLING_ENABLED",
   GROUPED_JIRA_DISPATCH_ENABLED:
     "NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED",
-  POSTHOG_ENABLED: "NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED",
 } as const;
 
 export const PROWLER_CLOUD_ONLY_TOOLTIP = "Available only in Prowler Cloud";
@@ -21,16 +19,12 @@ type EnterpriseFeatureEnv =
 const getEnterpriseFeatureValue = (
   envName: EnterpriseFeatureEnv,
 ): string | undefined => {
-  if (envName === ENTERPRISE_FEATURE_ENV.BILLING_ENABLED) {
-    return process.env.NEXT_PUBLIC_PROWLER_ENTERPRISE_BILLING_ENABLED;
-  }
-
   if (envName === ENTERPRISE_FEATURE_ENV.GROUPED_JIRA_DISPATCH_ENABLED) {
     return process.env
       .NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED;
   }
 
-  return process.env.NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED;
+  return undefined;
 };
 
 const getBooleanEnv = (
@@ -55,16 +49,6 @@ export const getDeploymentMode = (): DeploymentMode | undefined => {
 
   return undefined;
 };
-
-export const isOnPremiseDeployment = (): boolean =>
-  getDeploymentMode() === DEPLOYMENT_MODE.ON_PREMISE;
-
-export const isBillingEnabled = (): boolean =>
-  getBooleanEnv(ENTERPRISE_FEATURE_ENV.BILLING_ENABLED, true);
-
-export const isPostHogEnabled = (): boolean =>
-  isBillingEnabled() ||
-  getBooleanEnv(ENTERPRISE_FEATURE_ENV.POSTHOG_ENABLED, true);
 
 export const isGroupedJiraDispatchEnabled = (): boolean =>
   getDeploymentMode() === DEPLOYMENT_MODE.CLOUD &&

@@ -23,7 +23,7 @@ import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
-import { JIRA_DISPATCH_MODE } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
@@ -279,7 +279,11 @@ export function DataTableRowActions<T extends FindingRowData>({
           findingId={finding.id}
           findingTitle={findingTitle}
           targetIds={jiraTargetIds}
-          targetType={isGroup ? "check_id" : "finding_id"}
+          targetType={
+            isGroup
+              ? JIRA_DISPATCH_TARGET.CHECK_ID
+              : JIRA_DISPATCH_TARGET.FINDING_ID
+          }
           defaultDispatchMode={jiraDefaultDispatchMode}
           canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
           selectedResourceCount={selectedJiraResourceCount}

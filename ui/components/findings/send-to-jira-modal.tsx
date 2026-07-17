@@ -62,15 +62,15 @@ interface SendToJiraSingleTargetProps extends SendToJiraModalBaseProps {
 }
 
 interface SendToJiraTargetListProps extends SendToJiraModalBaseProps {
-  targetIds?: string[];
-  targetType?: JiraDispatchTarget;
+  targetIds: string[];
+  targetType: JiraDispatchTarget;
   targetBatches?: never;
 }
 
 interface SendToJiraBatchProps extends SendToJiraModalBaseProps {
-  targetIds?: string[];
-  targetType?: JiraDispatchTarget;
-  targetBatches?: JiraDispatchTargetBatch[];
+  targetIds?: never;
+  targetType?: never;
+  targetBatches: JiraDispatchTargetBatch[];
 }
 
 type SendToJiraModalProps =
@@ -293,15 +293,20 @@ export const SendToJiraModal = ({
             ),
           ...launchErrors,
         ];
+        const warnings = taskResults.flatMap((taskResult) => {
+          if (!taskResult.success || !taskResult.warning) return [];
+          return [taskResult.warning];
+        });
 
-        if (errors.length > 0) {
+        if (errors.length > 0 || warnings.length > 0) {
           const successfulTask = taskResults.find(
             (taskResult) => taskResult.success,
           );
           if (successfulTask) {
+            const failedMessages = [...warnings, ...errors].join(" ");
             toast({
               title: "Partial success",
-              description: `${successfulTask.message || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${errors.join(" ")}`,
+              description: `${successfulTask.message || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${failedMessages}`,
             });
             return;
           }

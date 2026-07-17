@@ -36,7 +36,7 @@ import {
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { FindingGroupRow } from "@/types";
-import { JIRA_DISPATCH_MODE } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingResources } from "./column-finding-resources";
@@ -268,7 +268,7 @@ export function FindingsGroupDrillDown({
         findingId={selectedFindingIds[0] ?? ""}
         findingTitle={group.checkTitle}
         targetIds={selectedFindingIds}
-        targetType="finding_id"
+        targetType={JIRA_DISPATCH_TARGET.FINDING_ID}
         defaultDispatchMode={
           selectedFindingIds.length > 1
             ? JIRA_DISPATCH_MODE.GROUPED

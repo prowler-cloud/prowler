@@ -60,9 +60,8 @@ async function getFindingGroupFilterOptions({
   const optionFilters = excludeFindingGroupOwnFilters(filters);
   const options = new Map<string, { checkId: string; checkTitle: string }>();
   let page = 1;
-  let totalPages = 1;
 
-  do {
+  while (true) {
     const response = await fetchFindingGroups({
       filters: optionFilters,
       page,
@@ -76,9 +75,10 @@ async function getFindingGroupFilterOptions({
       });
     }
 
-    totalPages = response?.meta?.pagination?.pages ?? page;
+    const totalPages = response?.meta?.pagination?.pages ?? page;
+    if (page >= totalPages) break;
     page += 1;
-  } while (page <= totalPages);
+  }
 
   return Array.from(options.values());
 }

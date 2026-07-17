@@ -10,54 +10,6 @@ describe("enterprise feature flags", () => {
     vi.unstubAllEnvs();
   });
 
-  it("should enable billing and PostHog by default", async () => {
-    // Given / When
-    const { isBillingEnabled, isPostHogEnabled } = await importFresh();
-
-    // Then
-    expect(isBillingEnabled()).toBe(true);
-    expect(isPostHogEnabled()).toBe(true);
-  });
-
-  it("should disable billing independently from PostHog", async () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_BILLING_ENABLED", "false");
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED", "true");
-
-    // When
-    const { isBillingEnabled, isPostHogEnabled } = await importFresh();
-
-    // Then
-    expect(isBillingEnabled()).toBe(false);
-    expect(isPostHogEnabled()).toBe(true);
-  });
-
-  it("should disable PostHog when billing and PostHog are disabled", async () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_BILLING_ENABLED", "false");
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED", "false");
-
-    // When
-    const { isBillingEnabled, isPostHogEnabled } = await importFresh();
-
-    // Then
-    expect(isBillingEnabled()).toBe(false);
-    expect(isPostHogEnabled()).toBe(false);
-  });
-
-  it("should force PostHog on when billing is enabled", async () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_BILLING_ENABLED", "true");
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_ENTERPRISE_POSTHOG_ENABLED", "false");
-
-    // When
-    const { isBillingEnabled, isPostHogEnabled } = await importFresh();
-
-    // Then
-    expect(isBillingEnabled()).toBe(true);
-    expect(isPostHogEnabled()).toBe(true);
-  });
-
   it("should keep grouped Jira dispatch disabled by default", async () => {
     // Given / When
     const { isGroupedJiraDispatchEnabled } = await importFresh();

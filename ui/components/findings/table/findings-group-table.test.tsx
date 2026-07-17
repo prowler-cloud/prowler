@@ -573,8 +573,6 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-a"],
-        targetType: "check_id",
         targetBatches: [
           {
             targetIds: ["check-a"],
@@ -641,8 +639,6 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-b"],
-        targetType: "check_id",
         targetBatches: [
           {
             targetIds: ["check-b"],
@@ -711,8 +707,6 @@ describe("FindingsGroupTable", () => {
       };
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-b"],
-        targetType: "check_id",
         targetBatches: [
           {
             targetIds: ["check-b"],

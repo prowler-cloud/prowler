@@ -17,7 +17,7 @@ import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
-import { JIRA_DISPATCH_MODE } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 import { getColumnFindingGroups } from "./column-finding-groups";
@@ -171,8 +171,8 @@ export function FindingsGroupTable({
     ? selectedCheckIds
     : resourceSelection;
   const jiraTargetType = jiraGroupSelectionTakesPrecedence
-    ? "check_id"
-    : "finding_id";
+    ? JIRA_DISPATCH_TARGET.CHECK_ID
+    : JIRA_DISPATCH_TARGET.FINDING_ID;
   const singleSelectedGroup =
     selectedCheckIds.length === 1
       ? selectedFindings.find(
@@ -203,12 +203,12 @@ export function FindingsGroupTable({
     ? [
         {
           targetIds: selectedCheckIds,
-          targetType: "check_id" as const,
+          targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
           dispatchMode: JIRA_DISPATCH_MODE.GROUPED,
         },
         {
           targetIds: resourceSelection,
-          targetType: "finding_id" as const,
+          targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
           ...(resourceSelection.length > 1
             ? {}
             : { dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL }),
@@ -438,7 +438,24 @@ export function FindingsGroupTable({
         />
       )}
 
-      {canSendToJira && (
+      {canSendToJira && jiraBatches && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          findingId={jiraTargetIds[0] ?? ""}
+          findingTitle={jiraTitle}
+          targetBatches={jiraBatches}
+          defaultDispatchMode={jiraDispatchMode}
+          isFindingGroupSelection={
+            !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)
+          }
+          canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
+          selectedResourceCount={selectedJiraResourceCount}
+          description={jiraDescription}
+        />
+      )}
+
+      {canSendToJira && !jiraBatches && (
         <SendToJiraModal
           isOpen={isJiraModalOpen}
           onOpenChange={setIsJiraModalOpen}
@@ -446,7 +463,6 @@ export function FindingsGroupTable({
           findingTitle={jiraTitle}
           targetIds={jiraTargetIds}
           targetType={jiraTargetType}
-          targetBatches={jiraBatches}
           defaultDispatchMode={jiraDispatchMode}
           isFindingGroupSelection={
             !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)

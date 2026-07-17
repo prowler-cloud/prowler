@@ -2,6 +2,8 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+
 import { SendToJiraModal } from "./send-to-jira-modal";
 
 const {
@@ -104,20 +106,18 @@ describe("SendToJiraModal", () => {
         onOpenChange={vi.fn()}
         findingId="check-a"
         findingTitle="Check A"
-        targetIds={["check-a"]}
-        targetType="check_id"
         targetBatches={[
           {
             targetIds: ["check-a"],
-            targetType: "check_id",
-            dispatchMode: "grouped",
+            targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
+            dispatchMode: JIRA_DISPATCH_MODE.GROUPED,
           },
           {
             targetIds: ["finding-1", "finding-2"],
-            targetType: "finding_id",
+            targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
           },
         ]}
-        defaultDispatchMode="grouped"
+        defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
         selectedResourceCount={1}
         description="Create Jira issues for 1 Group and 2 Findings."
       />,
@@ -189,20 +189,18 @@ describe("SendToJiraModal", () => {
         onOpenChange={onOpenChange}
         findingId="check-a"
         findingTitle="Check A"
-        targetIds={["check-a"]}
-        targetType="check_id"
         targetBatches={[
           {
             targetIds: ["check-a"],
-            targetType: "check_id",
-            dispatchMode: "grouped",
+            targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
+            dispatchMode: JIRA_DISPATCH_MODE.GROUPED,
           },
           {
             targetIds: ["finding-1", "finding-2"],
-            targetType: "finding_id",
+            targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
           },
         ]}
-        defaultDispatchMode="grouped"
+        defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
         selectedResourceCount={1}
         description="Create Jira issues for 1 Group and 2 Findings."
       />,
@@ -442,13 +440,14 @@ describe("SendToJiraModal", () => {
     expect(toastMock).toHaveBeenCalledTimes(1);
   });
 
-  it("shows an error toast when Jira dispatch polling reports partial failures", async () => {
+  it("shows a partial success toast when a task reports created and failed issues", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
     pollJiraDispatchTaskMock.mockResolvedValue({
-      success: false,
-      error: "Jira dispatch completed with 1 failed and 2 created issues.",
+      success: true,
+      message: "2 Jira issues were created or updated successfully.",
+      warning: "Jira dispatch completed with 1 failed and 2 created issues.",
     });
     render(
       <SendToJiraModal
@@ -472,10 +471,9 @@ describe("SendToJiraModal", () => {
     // Then
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith({
-        variant: "destructive",
-        title: "Error",
+        title: "Partial success",
         description:
-          "Jira dispatch completed with 1 failed and 2 created issues.",
+          "2 Jira issues were created or updated successfully. Some Jira dispatches failed: Jira dispatch completed with 1 failed and 2 created issues.",
       }),
     );
     expect(toastMock).not.toHaveBeenCalledWith(
