@@ -1988,9 +1988,10 @@ class TestJiraIntegration:
         mock_response.status_code = 201
         mock_response.json.return_value = {"id": "ISSUE-123", "key": "TEST-123"}
         mock_post.return_value = mock_response
+        long_check_id = "check\nwith\rcontrol\tcharacters " + "x" * 260
 
         result = self.jira_integration.send_finding(
-            check_id="check\nwith\rcontrol\tcharacters",
+            check_id=long_check_id,
             check_title="Test Finding",
             severity="High\n",
             status="FAIL",
@@ -2002,10 +2003,12 @@ class TestJiraIntegration:
 
         assert result is True
         payload = mock_post.call_args.kwargs["json"]
-        assert payload["fields"]["summary"] == (
-            "[Prowler] HIGH - check with control characters - "
+        expected_summary = (
+            f"[Prowler] HIGH - {' '.join(long_check_id.split())} - "
             "2 affected failing resources"
-        )
+        )[:255]
+        assert payload["fields"]["summary"] == expected_summary
+        assert len(payload["fields"]["summary"]) == 255
 
     @patch.object(Jira, "get_access_token", return_value="valid_access_token")
     @patch.object(

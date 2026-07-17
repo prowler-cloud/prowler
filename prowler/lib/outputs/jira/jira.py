@@ -419,6 +419,15 @@ class Jira:
 
     @staticmethod
     def _sanitize_summary(summary: str) -> str:
+        """Normalize and truncate a Jira issue summary.
+
+        Args:
+            summary: Raw summary text.
+
+        Returns:
+            The summary collapsed to one line and limited to Jira's 255-character
+            summary maximum.
+        """
         return " ".join(summary.split())[:255]
 
     @staticmethod
@@ -1161,6 +1170,16 @@ class Jira:
 
     @staticmethod
     def _adf_colored_strong_marks(color_mark_type: str, color: str) -> list[dict]:
+        """Build ADF marks for bold text with a Jira color mark.
+
+        Args:
+            color_mark_type: Jira ADF color mark type, such as textColor or
+                backgroundColor.
+            color: Hex color value for the mark.
+
+        Returns:
+            ADF marks for strong colored text.
+        """
         return [
             {"type": "strong"},
             {"type": color_mark_type, "attrs": {"color": color}},
@@ -1169,17 +1188,46 @@ class Jira:
     def _adf_severity_marks(
         self, severity: str = "", severity_color: str | None = None
     ) -> list[dict]:
+        """Build ADF marks for severity text.
+
+        Args:
+            severity: Finding severity used to derive a color when severity_color
+                is not provided.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF marks for highlighted severity text.
+        """
         color = severity_color or self.get_severity_color(str(severity).lower())
         return self._adf_colored_strong_marks("backgroundColor", color)
 
     def _adf_status_marks(
         self, status: str = "", status_color: str | None = None
     ) -> list[dict]:
+        """Build ADF marks for status text.
+
+        Args:
+            status: Finding status used to derive a color when status_color is
+                not provided.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF marks for colored status text.
+        """
         color = status_color or self.get_color_from_status(str(status).upper())
         return self._adf_colored_strong_marks("textColor", color)
 
     @staticmethod
     def _adf_text_node(text: str, marks: list[dict] | None = None) -> dict:
+        """Build an ADF text node.
+
+        Args:
+            text: Text content for the node.
+            marks: Optional ADF marks to apply to the text.
+
+        Returns:
+            ADF text node with optional marks.
+        """
         node = {"type": "text", "text": text}
         if marks:
             node["marks"] = marks
@@ -1188,6 +1236,15 @@ class Jira:
     def _adf_severity_text_node(
         self, severity: str = "", severity_color: str | None = None
     ) -> dict:
+        """Build an ADF text node for severity.
+
+        Args:
+            severity: Severity text to render.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF text node with severity marks.
+        """
         return self._adf_text_node(
             severity, self._adf_severity_marks(severity, severity_color)
         )
@@ -1195,6 +1252,15 @@ class Jira:
     def _adf_status_text_node(
         self, status: str = "", status_color: str | None = None
     ) -> dict:
+        """Build an ADF text node for status.
+
+        Args:
+            status: Status text to render.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF text node with status marks.
+        """
         return self._adf_text_node(status, self._adf_status_marks(status, status_color))
 
     def get_adf_description(
@@ -1915,6 +1981,32 @@ class Jira:
         recommendation_text: str = "",
         recommendation_url: str = "",
     ) -> dict:
+        """Build a Jira ADF description for a grouped finding issue.
+
+        Args:
+            check_id: Finding check ID.
+            check_title: Finding check title.
+            check_description: Finding check description.
+            severity: Finding group severity.
+            status: Finding group status.
+            provider: Cloud provider name.
+            service: Provider service name.
+            affected_failing_resources: Number of failing resources in the group.
+            last_seen: Last time the finding group was seen.
+            failing_for: Duration the finding group has been failing.
+            grouped_resources: Resource rows to include in the grouped issue.
+            resources_total: Total number of resources in the group.
+            resources_shown: Number of resources rendered in this Jira issue.
+            finding_group_url: Optional URL for the full finding group.
+            finding_group_link_text: Optional link text for finding_group_url.
+            risk: Risk description for the check.
+            recommendation_text: Remediation recommendation text.
+            recommendation_url: Optional remediation recommendation URL.
+
+        Returns:
+            Jira ADF document describing the finding group.
+        """
+
         def _safe(value) -> str:
             return str(value) if value not in (None, "") else "-"
 
@@ -2315,11 +2407,13 @@ class Jira:
         Args:
             - check_id: The check ID
             - check_title: The check title
+            - check_description: The check description
             - severity: The severity
             - status: The status
             - status_extended: The status extended
             - provider: The provider
             - region: The region
+            - service: The service
             - resource_uid: The resource UID
             - resource_name: The resource name
             - risk: The risk
@@ -2336,6 +2430,15 @@ class Jira:
             - issue_labels: The issue labels
             - finding_url: The finding URL
             - tenant_info: The tenant info
+            - affected_failing_resources: The number of affected failing resources
+            - grouped_resources: The grouped resources to render, or None for a
+              single finding issue
+            - resources_total: The total resources in the finding group
+            - resources_shown: The resources shown in the Jira issue
+            - last_seen: The last time the finding group was seen
+            - failing_for: The duration the finding group has been failing
+            - finding_group_url: The finding group URL
+            - finding_group_link_text: The link text for the finding group URL
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
