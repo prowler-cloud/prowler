@@ -75,7 +75,8 @@ export function ScansPageShell({
   const showProvidersHint = thereAreNoProviders || !hasConnectedProviders;
   const isCloudEnvironment = isCloud();
   const launchDisabled = !hasManageScansPermission || !hasConnectedProviders;
-  const launchOpen = isLaunchScanModalOpen || urlLaunchOpen;
+  const launchOpen =
+    !launchDisabled && (isLaunchScanModalOpen || urlLaunchOpen);
   // When a scan is already running, the tour highlights its row (anchored in
   // ScanJobsTable); otherwise it falls back to the Launch Scan button + tabs.
   const hasInProgressScan = activeScanCount > 0;

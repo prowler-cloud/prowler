@@ -329,6 +329,51 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
   });
 
+  it("does not open the launch scan modal from the URL when no provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from client state when no provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    useScansStore.getState().openLaunchScanModal();
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from the URL without manage scans permission", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("strips the launchScan URL param via the History API when closing the URL-opened modal", async () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
