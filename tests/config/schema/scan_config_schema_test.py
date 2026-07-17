@@ -8,14 +8,26 @@ the backend can persist verbatim in a Django ``JSONField``.
 """
 
 import json
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 import pytest
 
 from prowler.config.scan_config_schema import (
+    _get_provider_check_ids,
+    _get_provider_services,
     validate_and_normalize_scan_config,
     validate_scan_config,
 )
+
+
+@pytest.fixture(autouse=True)
+def clear_provider_catalog_caches():
+    """Keep provider catalog cache state isolated between tests."""
+    _get_provider_check_ids.cache_clear()
+    _get_provider_services.cache_clear()
+    yield
+    _get_provider_check_ids.cache_clear()
+    _get_provider_services.cache_clear()
 
 
 class Test_Non_Dict_Root:
@@ -63,7 +75,13 @@ class Test_Success_Path:
         assert errors == []
         assert normalized == {"aws": {"plugin_option": "preserved", "another": 42}}
 
-    def test_plugin_catalog_identifiers_are_accepted(self):
+    def test_plugin_catalog_identifiers_are_accepted_and_catalogs_are_cached(self):
+        payload = {
+            "aws": {
+                "excluded_checks": ["plugin_check"],
+                "excluded_services": ["plugin_service"],
+            }
+        }
         with (
             patch(
                 "prowler.config.scan_config_schema.CheckMetadata.get_bulk",
@@ -74,15 +92,10 @@ class Test_Success_Path:
                 return_value=["plugin_service"],
             ) as service_catalog,
         ):
-            normalized, errors = validate_and_normalize_scan_config(
-                {
-                    "aws": {
-                        "excluded_checks": ["plugin_check"],
-                        "excluded_services": ["plugin_service"],
-                    }
-                }
-            )
+            first_result = validate_and_normalize_scan_config(payload)
+            second_result = validate_and_normalize_scan_config(payload)
 
+        normalized, errors = first_result
         assert errors == []
         assert normalized == {
             "aws": {
@@ -90,8 +103,38 @@ class Test_Success_Path:
                 "excluded_services": ["plugin_service"],
             }
         }
+        assert second_result == first_result
         check_catalog.assert_called_once_with("aws")
         service_catalog.assert_called_once_with("aws")
+
+    def test_catalog_caches_are_keyed_by_provider(self):
+        with (
+            patch(
+                "prowler.config.scan_config_schema.CheckMetadata.get_bulk",
+                side_effect=lambda provider: {f"{provider}_plugin_check": object()},
+            ) as check_catalog,
+            patch(
+                "prowler.config.scan_config_schema.list_services",
+                side_effect=lambda provider: [f"{provider}_plugin_service"],
+            ) as service_catalog,
+        ):
+            payload = {
+                "aws": {
+                    "excluded_checks": ["aws_plugin_check"],
+                    "excluded_services": ["aws_plugin_service"],
+                },
+                "azure": {
+                    "excluded_checks": ["azure_plugin_check"],
+                    "excluded_services": ["azure_plugin_service"],
+                },
+            }
+            first_result = validate_and_normalize_scan_config(payload)
+            second_result = validate_and_normalize_scan_config(payload)
+
+        assert first_result[1] == []
+        assert second_result == first_result
+        assert check_catalog.call_args_list == [call("aws"), call("azure")]
+        assert service_catalog.call_args_list == [call("aws"), call("azure")]
 
     def test_omitted_defaults_are_not_injected(self):
         normalized, errors = validate_and_normalize_scan_config(

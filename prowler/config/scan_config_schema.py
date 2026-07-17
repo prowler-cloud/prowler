@@ -27,6 +27,7 @@ the UI can validate live with `ajv`. This module provides:
 """
 
 import json
+from functools import lru_cache
 from typing import Any
 
 from pydantic import ValidationError
@@ -39,6 +40,18 @@ from prowler.lib.check.models import CheckMetadata
 # raises ``ValueError`` with this string. Strip it so the message that
 # reaches the UI is the one the validator actually wrote.
 _PYDANTIC_VALUE_ERROR_PREFIX = "Value error, "
+
+
+@lru_cache(maxsize=None)
+def _get_provider_check_ids(provider: str) -> frozenset[str]:
+    """Return cached check identifiers for a provider."""
+    return frozenset(CheckMetadata.get_bulk(provider))
+
+
+@lru_cache(maxsize=None)
+def _get_provider_services(provider: str) -> frozenset[str]:
+    """Return cached service identifiers for a provider."""
+    return frozenset(list_services(provider))
 
 
 def _format_loc(loc: tuple) -> str:
@@ -160,7 +173,7 @@ def validate_and_normalize_scan_config(
             continue
 
         if model.excluded_checks:
-            available_checks = set(CheckMetadata.get_bulk(provider_key))
+            available_checks = _get_provider_check_ids(provider_key)
             for index, check in enumerate(model.excluded_checks):
                 if check not in available_checks:
                     errors.append(
@@ -174,7 +187,7 @@ def validate_and_normalize_scan_config(
                     )
 
         if model.excluded_services:
-            available_services = set(list_services(provider_key))
+            available_services = _get_provider_services(provider_key)
             for index, service in enumerate(model.excluded_services):
                 if service not in available_services:
                     errors.append(
