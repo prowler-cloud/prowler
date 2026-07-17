@@ -26,13 +26,11 @@ export const CustomBanner = ({
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-start gap-3">
               <InfoIcon className="text-bg-data-info h-6 w-6" />
-              <h2 className="text-lg font-bold text-gray-800 dark:text-white">
+              <h2 className="text-text-neutral-primary text-lg font-bold">
                 {title}
               </h2>
             </div>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
-              {message}
-            </p>
+            <p className="text-text-neutral-tertiary text-sm">{message}</p>
           </div>
           <div className="w-full md:w-auto md:shrink-0">
             <Button
