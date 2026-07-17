@@ -26,7 +26,9 @@ import { DATA_TABLE_FILTER_MODE } from "@/types/filters";
 import { ProviderProps } from "@/types/providers";
 
 import {
+  buildFindingGroupFilterOption,
   buildFindingsFilterChips,
+  type FindingCheckFilterOption,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
 
@@ -45,11 +47,6 @@ interface FindingsFiltersProps {
   checkOptions?: FindingCheckFilterOption[];
   trailingControls?: ReactNode;
   variant?: "default" | "alerts-edit";
-}
-
-interface FindingCheckFilterOption {
-  checkId: string;
-  checkTitle?: string;
 }
 
 interface FindingsFilterBatchControlsProps extends FindingsFiltersProps {
@@ -77,10 +74,6 @@ const countVisibleFilterKeys = (filters: Record<string, string[]>): number =>
 const FILTER_CONTROL_COLUMN_CLASS =
   "min-w-0 flex-none basis-full sm:basis-[calc((100%_-_0.75rem)/2)] lg:basis-[calc((100%_-_1.5rem)/3)] xl:basis-[calc((100%_-_2.25rem)/4)] 2xl:basis-[calc((100%_-_3rem)/5)]";
 const FILTER_GRID_ITEM_CLASS = "min-w-0";
-
-function uniqueNonEmptyValues(values: string[]): string[] {
-  return Array.from(new Set(values.filter(Boolean)));
-}
 
 export const FindingsFilterBatchControls = ({
   providers,
@@ -119,11 +112,12 @@ export const FindingsFilterBatchControls = ({
       checkTitle || checkId,
     ]),
   );
-  const checkFilterValues = uniqueNonEmptyValues([
-    ...checkOptions.map((option) => option.checkId),
-    ...getFilterValue("filter[check_id]"),
-    ...getFilterValue("filter[check_id__in]"),
-  ]);
+  const findingGroupFilterOption = buildFindingGroupFilterOption({
+    checkOptions,
+    selectedCheckIds: getFilterValue("filter[check_id]"),
+    selectedCheckIdsIn: getFilterValue("filter[check_id__in]"),
+    checkTitles,
+  });
 
   const customFilters = [
     ...filterFindings
@@ -137,20 +131,7 @@ export const FindingsFilterBatchControls = ({
             checkTitles,
           }),
       })),
-    ...(checkFilterValues.length > 0
-      ? [
-          {
-            key: "check_id",
-            labelCheckboxGroup: "Finding Group",
-            values: checkFilterValues,
-            labelFormatter: (value: string) =>
-              getFindingsFilterDisplayValue("filter[check_id]", value, {
-                checkTitles,
-              }),
-            index: 3,
-          },
-        ]
-      : []),
+    ...(findingGroupFilterOption ? [findingGroupFilterOption] : []),
     {
       key: FILTER_FIELD.REGION,
       labelCheckboxGroup: "Regions",

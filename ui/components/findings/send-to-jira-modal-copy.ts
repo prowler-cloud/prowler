@@ -1,7 +1,15 @@
+export const JIRA_SELECTION_KIND = {
+  FINDINGS: "findings",
+  RESOURCES: "resources",
+} as const;
+
+type JiraSelectionKind =
+  (typeof JIRA_SELECTION_KIND)[keyof typeof JIRA_SELECTION_KIND];
+
 interface JiraDispatchChoiceCopyParams {
   selectedCount: number;
   isSelectedFindingGroupFlow: boolean;
-  selectionKind?: "findings" | "resources";
+  selectionKind?: JiraSelectionKind;
 }
 
 interface JiraDispatchChoiceCopy {
@@ -14,7 +22,7 @@ interface JiraDispatchChoiceCopy {
 export const buildJiraDispatchChoiceCopy = ({
   selectedCount,
   isSelectedFindingGroupFlow,
-  selectionKind = "resources",
+  selectionKind = JIRA_SELECTION_KIND.RESOURCES,
 }: JiraDispatchChoiceCopyParams): JiraDispatchChoiceCopy => {
   if (isSelectedFindingGroupFlow) {
     return {
@@ -28,7 +36,7 @@ export const buildJiraDispatchChoiceCopy = ({
     };
   }
 
-  if (selectionKind === "findings") {
+  if (selectionKind === JIRA_SELECTION_KIND.FINDINGS) {
     return {
       description: `Create Jira issue(s) for ${selectedCount} selected Findings.`,
       groupedTitle: "Create one Jira issue for all selected Findings",

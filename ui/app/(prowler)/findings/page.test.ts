@@ -44,4 +44,10 @@ describe("findings page", () => {
   it("applies the shared default muted filter so muted findings are hidden unless the caller opts in", () => {
     expect(source).toContain("applyDefaultMutedFilter");
   });
+
+  it("loads finding groups as selectable Finding Group filter options", () => {
+    expect(source).toContain("fetchFindingGroupFilterOptions");
+    expect(source).toContain("pageSize: 100");
+    expect(source).toContain("checkOptions={checkOptions}");
+  });
 });

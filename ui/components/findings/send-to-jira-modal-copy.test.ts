@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildJiraDispatchChoiceCopy } from "./send-to-jira-modal-copy";
+import {
+  buildJiraDispatchChoiceCopy,
+  JIRA_SELECTION_KIND,
+} from "./send-to-jira-modal-copy";
 
 describe("buildJiraDispatchChoiceCopy", () => {
   it("uses Finding Group copy for selected Findings grouped Jira choice", () => {
@@ -44,7 +47,7 @@ describe("buildJiraDispatchChoiceCopy", () => {
       buildJiraDispatchChoiceCopy({
         selectedCount: 2,
         isSelectedFindingGroupFlow: false,
-        selectionKind: "findings",
+        selectionKind: JIRA_SELECTION_KIND.FINDINGS,
       }),
     ).toEqual({
       description: "Create Jira issue(s) for 2 selected Findings.",

@@ -30,7 +30,10 @@ import {
   type JiraDispatchMode,
 } from "@/types/integrations";
 
-import { buildJiraDispatchChoiceCopy } from "./send-to-jira-modal-copy";
+import {
+  buildJiraDispatchChoiceCopy,
+  JIRA_SELECTION_KIND,
+} from "./send-to-jira-modal-copy";
 
 const JIRA_DISPATCH_TARGET = {
   CHECK_ID: "check_id",
@@ -142,16 +145,26 @@ export const SendToJiraModal = ({
   const shouldShowDispatchChoice =
     (canChooseGroupedDispatch || hasMultipleFindingTargets) &&
     (multiFindingTargetCount > 1 || jiraSelectedResourceCount > 1);
+  const checkIdBatches = jiraTargetBatches.filter(
+    (batch) => batch.targetType === JIRA_DISPATCH_TARGET.CHECK_ID,
+  );
+  const hasOnlySingleFindingGroupBatch =
+    jiraTargetBatches.length === 1 &&
+    checkIdBatches.length === 1 &&
+    checkIdBatches[0].targetIds.length === 1;
   const isSelectedFindingGroupFlow =
     shouldShowDispatchChoice &&
-    (targetType === JIRA_DISPATCH_TARGET.CHECK_ID || isFindingGroupSelection);
+    (isFindingGroupSelection || hasOnlySingleFindingGroupBatch);
   const jiraDispatchChoiceCopy = buildJiraDispatchChoiceCopy({
     selectedCount:
       multiFindingTargetCount > 1
         ? multiFindingTargetCount
         : jiraSelectedResourceCount,
     isSelectedFindingGroupFlow,
-    selectionKind: multiFindingTargetCount > 1 ? "findings" : "resources",
+    selectionKind:
+      multiFindingTargetCount > 1
+        ? JIRA_SELECTION_KIND.FINDINGS
+        : JIRA_SELECTION_KIND.RESOURCES,
   });
 
   const selectedIntegration = form.watch("integration");
@@ -258,18 +271,17 @@ export const SendToJiraModal = ({
         const taskResults = await Promise.all(
           taskIds.map((taskId) => pollJiraDispatchTaskUntilDone(taskId)),
         );
-        const failedTask = taskResults.find(
-          (taskResult) => !taskResult.success,
-        );
+        const errors = [
+          ...taskResults
+            .filter((taskResult) => !taskResult.success)
+            .map(
+              (taskResult) => taskResult.error || "Failed to create Jira issue",
+            ),
+          ...launchErrors,
+        ];
 
-        if (failedTask && !failedTask.success) {
-          throw new Error(failedTask.error || "Failed to create Jira issue");
-        }
-
-        if (launchErrors.length > 0) {
-          throw new Error(
-            `Some Jira dispatches started, but ${launchErrors.join(" ")}`,
-          );
+        if (errors.length > 0) {
+          throw new Error(errors.join(" "));
         }
 
         toast({

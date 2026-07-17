@@ -7,9 +7,15 @@ import {
 } from "@/lib/helper-filters";
 import { FINDING_STATUS_DISPLAY_NAMES } from "@/types";
 import { ProviderGroup } from "@/types/components";
+import type { FilterOption } from "@/types/filters";
 import { getProviderDisplayName, ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 import { SEVERITY_DISPLAY_NAMES } from "@/types/severities";
+
+export interface FindingCheckFilterOption {
+  checkId: string;
+  checkTitle?: string;
+}
 
 interface GetFindingsFilterDisplayValueOptions {
   providers?: ProviderProps[];
@@ -105,6 +111,43 @@ export function getFindingsFilterDisplayValue(
   }
 
   return formatLabel(value);
+}
+
+function uniqueNonEmptyValues(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+export function buildFindingGroupFilterOption({
+  checkOptions,
+  selectedCheckIds,
+  selectedCheckIdsIn,
+  checkTitles,
+}: {
+  checkOptions: FindingCheckFilterOption[];
+  selectedCheckIds: string[];
+  selectedCheckIdsIn: string[];
+  checkTitles: Record<string, string>;
+}): FilterOption | null {
+  const values = uniqueNonEmptyValues([
+    ...checkOptions.map((option) => option.checkId),
+    ...selectedCheckIds,
+    ...selectedCheckIdsIn,
+  ]);
+
+  if (values.length === 0) {
+    return null;
+  }
+
+  return {
+    key: "check_id",
+    labelCheckboxGroup: "Finding Group",
+    values,
+    labelFormatter: (value: string) =>
+      getFindingsFilterDisplayValue("filter[check_id]", value, {
+        checkTitles,
+      }),
+    index: 3,
+  };
 }
 
 /**

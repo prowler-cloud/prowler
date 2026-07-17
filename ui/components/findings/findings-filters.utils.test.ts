@@ -5,6 +5,7 @@ import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
 import {
+  buildFindingGroupFilterOption,
   buildFindingsFilterChips,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
@@ -385,5 +386,49 @@ describe("buildFindingsFilterChips", () => {
         displayValue: "Value",
       },
     ]);
+  });
+});
+
+describe("buildFindingGroupFilterOption", () => {
+  it("builds a selectable Finding Group filter from fetched options and URL-backed values", () => {
+    // Given
+    const filter = buildFindingGroupFilterOption({
+      checkOptions: [
+        {
+          checkId: "teams_external_users_can_join",
+          checkTitle: "External Teams users can join meetings",
+        },
+      ],
+      selectedCheckIds: ["s3_bucket_public_access"],
+      selectedCheckIdsIn: ["teams_external_users_can_join"],
+      checkTitles: {
+        teams_external_users_can_join: "External Teams users can join meetings",
+      },
+    });
+
+    // Then
+    expect(filter).toMatchObject({
+      key: "check_id",
+      labelCheckboxGroup: "Finding Group",
+      values: ["teams_external_users_can_join", "s3_bucket_public_access"],
+      index: 3,
+    });
+    expect(filter?.labelFormatter?.("teams_external_users_can_join")).toBe(
+      "External Teams users can join meetings",
+    );
+    expect(filter?.labelFormatter?.("s3_bucket_public_access")).toBe(
+      "s3_bucket_public_access",
+    );
+  });
+
+  it("omits the Finding Group filter when there are no selectable or URL-backed values", () => {
+    expect(
+      buildFindingGroupFilterOption({
+        checkOptions: [],
+        selectedCheckIds: [],
+        selectedCheckIdsIn: [],
+        checkTitles: {},
+      }),
+    ).toBeNull();
   });
 });

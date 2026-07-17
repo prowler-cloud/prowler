@@ -68,6 +68,19 @@ export default async function Findings({
     metadataInfoData?.data?.attributes?.resource_types || [];
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
+  const fetchFindingGroupFilterOptions = hasHistoricalData
+    ? getFindingGroups
+    : getLatestFindingGroups;
+  const findingGroupFilterOptionsData = await fetchFindingGroupFilterOptions({
+    filters: resolvedFilters,
+    pageSize: 100,
+  });
+  const checkOptions = adaptFindingGroupsResponse(
+    findingGroupFilterOptionsData,
+  ).map((group) => ({
+    checkId: group.checkId,
+    checkTitle: group.checkTitle,
+  }));
 
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
@@ -110,6 +123,7 @@ export default async function Findings({
             uniqueResourceTypes={uniqueResourceTypes}
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
+            checkOptions={checkOptions}
             trailingControls={
               <SeedFromFindingsButton
                 filterBag={filters}

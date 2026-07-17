@@ -125,10 +125,13 @@ describe("SendToJiraModal", () => {
 
     expect(screen.getByText("Jira issue creation mode")).toBeInTheDocument();
     expect(
-      screen.getByText(
+      screen.getByText("Create one Jira issue for all selected Findings"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
         "Create one Jira issue for all selected Findings in this Finding Group",
       ),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
     expect(
       screen.getByText("Create Jira issues for 1 Group and 2 Findings."),
     ).toBeInTheDocument();
@@ -604,8 +607,68 @@ describe("SendToJiraModal", () => {
       expect(toastMock).toHaveBeenCalledWith({
         variant: "destructive",
         title: "Error",
+        description: "Failed to launch Finding batch.",
+      }),
+    );
+  });
+
+  it("reports polling and launch failures together for mixed dispatches", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    sendJiraDispatchMock
+      .mockResolvedValueOnce({
+        success: true,
+        taskId: "group-task",
+        message: "Group started",
+      })
+      .mockResolvedValueOnce({
+        success: false,
+        error: "Failed to launch Finding batch.",
+      });
+    pollJiraDispatchTaskMock.mockResolvedValueOnce({
+      success: false,
+      error: "Jira dispatch completed with 1 failed issue.",
+    });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        findingId="check-a"
+        findingTitle="Check A"
+        targetBatches={[
+          {
+            targetIds: ["check-a"],
+            targetType: "check_id",
+            dispatchMode: "grouped",
+          },
+          {
+            targetIds: ["finding-1", "finding-2"],
+            targetType: "finding_id",
+          },
+        ]}
+        defaultDispatchMode="grouped"
+        selectedResourceCount={1}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() =>
+      expect(toastMock).toHaveBeenCalledWith({
+        variant: "destructive",
+        title: "Error",
         description:
-          "Some Jira dispatches started, but Failed to launch Finding batch.",
+          "Jira dispatch completed with 1 failed issue. Failed to launch Finding batch.",
       }),
     );
   });
