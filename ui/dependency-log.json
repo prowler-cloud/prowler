@@ -306,10 +306,10 @@
   {
     "section": "dependencies",
     "name": "@sentry/nextjs",
-    "from": "10.11.0",
-    "to": "10.27.0",
+    "from": "10.27.0",
+    "to": "10.65.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-16T15:35:58.334Z"
   },
   {
     "section": "dependencies",
@@ -435,17 +435,17 @@
     "section": "dependencies",
     "name": "import-in-the-middle",
     "from": "2.0.0",
-    "to": "2.0.0",
+    "to": "3.3.1",
     "strategy": "installed",
-    "generatedAt": "2025-12-16T08:33:37.278Z"
+    "generatedAt": "2026-07-16T15:35:58.334Z"
   },
   {
     "section": "dependencies",
     "name": "js-yaml",
-    "from": "4.1.0",
-    "to": "4.1.1",
+    "from": "4.1.1",
+    "to": "4.3.0",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-16T15:29:57.887Z"
   },
   {
     "section": "dependencies",
