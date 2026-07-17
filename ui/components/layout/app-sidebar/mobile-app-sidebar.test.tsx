@@ -45,6 +45,17 @@ describe("MobileAppSidebar", () => {
     expect(openButton).toHaveFocus();
   });
 
+  it("hides the trigger based on the viewport, not the narrowed content", () => {
+    // Given / When
+    render(<MobileAppSidebar />);
+
+    // Then: lg: is a container query inside <main>; the side panel squeezing
+    // the page must not surface the mobile menu on desktop.
+    expect(screen.getByRole("button", { name: "Open menu" })).toHaveClass(
+      "min-[64rem]:hidden",
+    );
+  });
+
   it("closes after selecting an item from the shared sidebar content", async () => {
     // Given
     const user = userEvent.setup();

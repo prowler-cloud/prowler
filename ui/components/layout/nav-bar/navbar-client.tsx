@@ -12,6 +12,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn";
+import { SidePanelTrigger } from "@/components/side-panel";
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 import { getFlowById } from "@/lib/onboarding";
 import { isCloud } from "@/lib/shared/env";
@@ -79,7 +80,10 @@ export function NavbarClient({
   };
 
   return (
-    <header className="sticky top-0 z-10 w-full pt-4 backdrop-blur-sm">
+    // -ml-4/pl-4: bleed the bar across <main>'s 16px left gutter so its
+    // border-b meets the sidebar's border-r. The gutter is main's padding —
+    // main scrolls and would clip anything bled past its padding box.
+    <header className="border-border-neutral-secondary sticky top-0 z-10 -ml-4 border-b pt-4 pl-4 backdrop-blur-sm">
       <div className="flex h-14 items-center pr-6">
         <div className="flex items-center gap-2">
           <MobileAppSidebar />
@@ -121,6 +125,7 @@ export function NavbarClient({
           </Suspense>
         </div>
         <div className="flex flex-1 items-center justify-end gap-3">
+          <SidePanelTrigger />
           <ThemeSwitch />
           {feedsSlot}
           <UserNav />
@@ -133,11 +138,12 @@ export function NavbarClient({
 export function FeedsLoadingFallback() {
   return (
     <Button
-      variant="outline"
-      className="border-border-input-primary-fill relative h-8 w-8 rounded-full bg-transparent p-2"
+      variant="ghost"
+      size="icon-sm"
+      aria-label="Loading updates"
       disabled
     >
-      <BellRing size={18} className="animate-pulse text-slate-400" />
+      <BellRing className="size-5 animate-pulse" />
     </Button>
   );
 }

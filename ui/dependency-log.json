@@ -633,14 +633,6 @@
   },
   {
     "section": "dependencies",
-    "name": "vaul",
-    "from": "1.1.2",
-    "to": "1.1.2",
-    "strategy": "installed",
-    "generatedAt": "2026-01-05T16:21:23.125Z"
-  },
-  {
-    "section": "dependencies",
     "name": "world-atlas",
     "from": "2.0.2",
     "to": "2.0.2",

@@ -3,12 +3,12 @@
 import { useTheme } from "next-themes";
 import { ComponentProps, useSyncExternalStore } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { cn } from "@/lib/utils";
 
 import { MoonFilledIcon, SunFilledIcon } from "./icons";
 
@@ -30,24 +30,23 @@ export function ThemeSwitch({ className, ...props }: ThemeSwitchProps) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <button
+        <Button
           type="button"
           {...props}
+          variant="ghost"
+          size="icon-sm"
           role="switch"
           aria-checked={isLightMode}
           aria-label={`Switch to ${isLightMode ? "dark" : "light"} mode`}
           onClick={() => setTheme(isLightMode ? "dark" : "light")}
-          className={cn(
-            "text-neutral-tertiary flex cursor-pointer items-center justify-center rounded-lg px-px pt-px transition-opacity hover:opacity-80",
-            className,
-          )}
+          className={className}
         >
           {isLightMode && isHydrated ? (
-            <MoonFilledIcon size={22} />
+            <MoonFilledIcon className="size-5" />
           ) : (
-            <SunFilledIcon size={22} />
+            <SunFilledIcon className="size-5" />
           )}
-        </button>
+        </Button>
       </TooltipTrigger>
       <TooltipContent>
         {isLightMode ? "Switch to Dark Mode" : "Switch to Light Mode"}

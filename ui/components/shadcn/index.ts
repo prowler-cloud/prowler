@@ -12,7 +12,6 @@ export * from "./card/resource-stats-card/resource-stats-card-header";
 export * from "./checkbox/checkbox";
 export * from "./combobox";
 export * from "./download-icon-button";
-export * from "./drawer";
 export * from "./dropdown/dropdown";
 export * from "./feedback-banner";
 export * from "./field/field";

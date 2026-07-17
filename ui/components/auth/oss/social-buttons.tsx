@@ -35,12 +35,13 @@ const SocialButton = ({
   const button = (
     <Button
       variant="outline"
-      className="w-full"
+      aria-label={provider.label}
+      className={isDisabled ? "w-full" : "flex-1"}
       asChild={!isDisabled}
       disabled={isDisabled}
     >
       {isDisabled ? (
-        <span className="flex items-center gap-2">
+        <span className="flex items-center justify-center">
           <Icon
             icon={
               provider.isOAuthEnabled
@@ -49,25 +50,28 @@ const SocialButton = ({
             }
             width={24}
           />
-          {provider.label}
         </span>
       ) : (
-        <a href={provider.url} className="flex items-center gap-2">
+        <a href={provider.url} className="flex items-center justify-center">
           <Icon icon={provider.enabledIcon} width={24} />
-          {provider.label}
         </a>
       )}
     </Button>
   );
 
   if (!isDisabled) {
-    return button;
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{button}</TooltipTrigger>
+        <TooltipContent side="top">{provider.label}</TooltipContent>
+      </Tooltip>
+    );
   }
 
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <span className="flex w-full">{button}</span>
+        <span className="flex flex-1">{button}</span>
       </TooltipTrigger>
       <TooltipContent side="top" className="w-96">
         {provider.isOAuthEnabled ? (

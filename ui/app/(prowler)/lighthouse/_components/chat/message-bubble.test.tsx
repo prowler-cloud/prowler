@@ -51,7 +51,7 @@ describe("MessageBubble", () => {
     // Given
     const orderedMessage = buildAssistantMessage([
       textPart("part-1", "Voy a buscar los findings por severidad"),
-      toolCallPart("part-2", "prowler_app_search_security_findings"),
+      toolCallPart("part-2", "prowler_search_security_findings"),
       textPart("part-3", "Ahora voy a buscar en los criticos"),
     ]);
 
