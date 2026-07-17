@@ -124,11 +124,11 @@ Every AWS provider scan will enqueue an Attack Paths ingestion job automatically
 | Provider | Checks | Services | [Compliance Frameworks](https://docs.prowler.com/user-guide/compliance/tutorials/compliance) | [Categories](https://docs.prowler.com/user-guide/cli/tutorials/misc#categories) | Support | Interface |
 |---|---|---|---|---|---|---|
 | AWS | 621 | 86 | 47 | 19 | Official | UI, API, CLI |
-| Azure | 190 | 22 | 21 | 16 | Official | UI, API, CLI |
+| Azure | 191 | 22 | 21 | 16 | Official | UI, API, CLI |
 | GCP | 109 | 20 | 19 | 12 | Official | UI, API, CLI |
-| Kubernetes | 90 | 7 | 8 | 11 | Official | UI, API, CLI |
+| Kubernetes | 92 | 7 | 8 | 11 | Official | UI, API, CLI |
 | GitHub | 24 | 3 | 2 | 5 | Official | UI, API, CLI |
-| M365 | 109 | 10 | 6 | 10 | Official | UI, API, CLI |
+| M365 | 111 | 10 | 6 | 10 | Official | UI, API, CLI |
 | OCI | 52 | 14 | 5 | 10 | Official | UI, API, CLI |
 | Alibaba Cloud | 63 | 9 | 6 | 9 | Official | UI, API, CLI |
 | Cloudflare | 29 | 3 | 2 | 5 | Official | UI, API, CLI |
