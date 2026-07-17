@@ -1,7 +1,5 @@
-import { NoProvidersAdded } from "@/components/providers/no-providers-added";
+import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
 import { ADD_PROVIDER_HREF } from "@/lib/providers-navigation";
-
-import { NoProvidersConnected } from "./no-providers-connected";
 
 interface ScansProvidersEmptyStateProps {
   thereIsNoProviders: boolean;
@@ -11,8 +9,18 @@ export function ScansProvidersEmptyState({
   thereIsNoProviders,
 }: ScansProvidersEmptyStateProps) {
   return thereIsNoProviders ? (
-    <NoProvidersAdded action="link" href={ADD_PROVIDER_HREF} variant="hint" />
+    <CustomBanner
+      title="No Providers Configured"
+      message="No providers have been configured. Start by setting up a provider."
+      buttonLabel="Add a Provider"
+      buttonLink={ADD_PROVIDER_HREF}
+    />
   ) : (
-    <NoProvidersConnected />
+    <CustomBanner
+      title="No Connected Providers"
+      message="None of your providers are connected yet. Connect one to launch on-demand scans — imported scans still appear below."
+      buttonLabel="Review Providers"
+      buttonLink="/providers"
+    />
   );
 }
