@@ -8,6 +8,7 @@ import type {
 import {
   applySentryEventPolicy,
   isErrorAlreadyReported,
+  isErrorCapturedBySentry,
   markErrorAsReported,
 } from "./event-policy";
 
@@ -286,6 +287,22 @@ describe("applySentryEventPolicy", () => {
       // Then
       expect(isErrorAlreadyReported(error)).toBe(true);
       expect(result).toBeNull();
+    });
+
+    it("should keep the first event for an error marked by Sentry", () => {
+      // Given
+      const error = new Error("First capture");
+      Object.defineProperty(error, "__sentry_captured__", { value: true });
+      const event = { level: "error", message: error.message };
+
+      // When
+      const result = applySentryEventPolicy(event, {
+        originalException: error,
+      });
+
+      // Then
+      expect(isErrorCapturedBySentry(error)).toBe(true);
+      expect(result).toBe(event);
     });
   });
 });

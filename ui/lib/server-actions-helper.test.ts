@@ -104,7 +104,7 @@ describe("server-actions-helper", () => {
       },
     );
 
-    it("should capture and mark server errors before throwing", async () => {
+    it("should not mark server errors before Sentry processes the event", async () => {
       // Given
       const response = new Response(
         JSON.stringify({ message: "backend down" }),
@@ -121,10 +121,10 @@ describe("server-actions-helper", () => {
       expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       const capturedError = vi.mocked(Sentry.captureException).mock
         .calls[0]?.[0];
-      expect(isErrorAlreadyReported(capturedError)).toBe(true);
+      expect(isErrorAlreadyReported(capturedError)).toBe(false);
     });
 
-    it("should fingerprint server errors by pathname without query string", async () => {
+    it("should fingerprint server errors by a normalized pathname", async () => {
       // Given
       const response = new Response(
         JSON.stringify({ message: "backend down" }),
@@ -134,7 +134,8 @@ describe("server-actions-helper", () => {
         },
       );
       Object.defineProperty(response, "url", {
-        value: "https://api.prowler.test/api/v1/providers?tenant=123",
+        value:
+          "https://api.prowler.test/api/v1/providers/550e8400-e29b-41d4-a716-446655440000?tenant=123",
       });
 
       // When
@@ -144,19 +145,19 @@ describe("server-actions-helper", () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
-          fingerprint: ["api-server-error", "500", "/api/v1/providers"],
+          fingerprint: ["api-server-error", "500", "/api/v1/providers/:id"],
         }),
       );
     });
 
-    it("should fingerprint unexpected client failures by pathname without query string", async () => {
+    it("should fingerprint unexpected client failures by a normalized pathname", async () => {
       // Given
       const response = new Response(
         JSON.stringify({ message: "Unexpected API contract failure" }),
         { status: 429, statusText: "Too Many Requests" },
       );
       Object.defineProperty(response, "url", {
-        value: "https://api.prowler.test/api/v1/scans?page=2",
+        value: "https://api.prowler.test/api/v1/scans/12345?page=2",
       });
 
       // When
@@ -166,7 +167,11 @@ describe("server-actions-helper", () => {
       expect(Sentry.captureException).toHaveBeenCalledWith(
         expect.any(Error),
         expect.objectContaining({
-          fingerprint: ["api-client-contract-error", "429", "/api/v1/scans"],
+          fingerprint: [
+            "api-client-contract-error",
+            "429",
+            "/api/v1/scans/:id",
+          ],
         }),
       );
     });
@@ -185,6 +190,20 @@ describe("server-actions-helper", () => {
       // Then
       expect(Sentry.captureException).not.toHaveBeenCalled();
       expect(result).toEqual({ error: "Already reported failure" });
+    });
+
+    it("should not recapture errors already marked by Sentry", () => {
+      // Given
+      const error = new Error("Already captured failure");
+      Object.defineProperty(error, "__sentry_captured__", { value: true });
+      vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+      // When
+      const result = handleApiError(error);
+
+      // Then
+      expect(Sentry.captureException).not.toHaveBeenCalled();
+      expect(result).toEqual({ error: "Already captured failure" });
     });
 
     it("should capture unmarked request failure errors", () => {
@@ -206,7 +225,7 @@ describe("server-actions-helper", () => {
           }),
         }),
       );
-      expect(isErrorAlreadyReported(error)).toBe(true);
+      expect(isErrorAlreadyReported(error)).toBe(false);
       expect(result).toEqual({ error: "Request failed unexpectedly" });
     });
 

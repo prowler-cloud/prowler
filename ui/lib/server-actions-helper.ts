@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 import {
   isErrorAlreadyReported,
-  markErrorAsReported,
+  isErrorCapturedBySentry,
 } from "@/sentry/event-policy";
 
 import {
@@ -93,7 +93,6 @@ export const handleApiResponse = async (
           getSentryFingerprintUrlPath(response.url),
         ],
       });
-      markErrorAsReported(serverError);
 
       throw serverError;
     }
@@ -151,7 +150,8 @@ export const handleApiError = (error: unknown): { error: string } => {
   console.error(error);
 
   // Check if this error was already captured by handleApiResponse
-  const isAlreadyCaptured = isErrorAlreadyReported(error);
+  const isAlreadyCaptured =
+    isErrorAlreadyReported(error) || isErrorCapturedBySentry(error);
 
   // Only capture if not already captured by handleApiResponse.
   // HTTP status-based suppression belongs in the structured Sentry event policy,
@@ -171,7 +171,6 @@ export const handleApiError = (error: unknown): { error: string } => {
           },
         },
       });
-      markErrorAsReported(error);
     } else {
       // Capture non-Error objects
       Sentry.captureMessage(
@@ -187,7 +186,6 @@ export const handleApiError = (error: unknown): { error: string } => {
           },
         },
       );
-      markErrorAsReported(error);
     }
   }
 
@@ -252,7 +250,16 @@ function getSentryFingerprintUrlPath(url: string) {
   }
 
   try {
-    return new URL(url).pathname || UNKNOWN_URL_PATH_FINGERPRINT;
+    const pathname = new URL(url).pathname;
+
+    return (
+      pathname
+        .replace(
+          /\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}(?=\/|$)/gi,
+          "/:id",
+        )
+        .replace(/\/\d+(?=\/|$)/g, "/:id") || UNKNOWN_URL_PATH_FINGERPRINT
+    );
   } catch {
     return UNKNOWN_URL_PATH_FINGERPRINT;
   }

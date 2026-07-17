@@ -35,6 +35,7 @@ const HTTP_CONTEXT_MESSAGES = [
 const EXPECTED_HTTP_STATUS_CODES = new Set([401, 403, 404]);
 const EXPECTED_HTTP_STATUS_PATTERN = /(^|\D)(401|403|404)(\D|$)/;
 const REPORTED_ERROR_MARKER = Symbol.for("prowler.sentry.reported_error");
+const SENTRY_CAPTURED_MARKER = "__sentry_captured__";
 const reportedErrors = new WeakSet<object>();
 
 type SentryEventSource =
@@ -96,6 +97,12 @@ export function isErrorAlreadyReported(error: unknown) {
   return (
     reportedErrors.has(error) ||
     (error as ReportedErrorRecord)[REPORTED_ERROR_MARKER] === true
+  );
+}
+
+export function isErrorCapturedBySentry(error: unknown) {
+  return (
+    isObjectLike(error) && getProperty(error, SENTRY_CAPTURED_MARKER) === true
   );
 }
 
