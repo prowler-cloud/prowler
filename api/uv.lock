@@ -4674,7 +4674,7 @@ wheels = [
 [[package]]
 name = "prowler"
 version = "5.35.0"
-source = { git = "https://github.com/prowler-cloud/prowler.git?rev=master#f5ea116763aeffede9f399c8934fc280eaccd315" }
+source = { git = "https://github.com/prowler-cloud/prowler.git?rev=v5.35#1459046985908c099bd2b2e279530e8a47bccdf8" }
 dependencies = [
     { name = "alibabacloud-actiontrail20200706" },
     { name = "alibabacloud-credentials" },
@@ -4862,7 +4862,7 @@ requires-dist = [
     { name = "matplotlib", specifier = "==3.10.8" },
     { name = "neo4j", specifier = "==6.1.0" },
     { name = "openai", specifier = "==1.109.1" },
-    { name = "prowler", git = "https://github.com/prowler-cloud/prowler.git?rev=master" },
+    { name = "prowler", git = "https://github.com/prowler-cloud/prowler.git?rev=v5.35" },
     { name = "psycopg2-binary", specifier = "==2.9.9" },
     { name = "pytest-celery", extras = ["redis"], specifier = "==1.3.0" },
     { name = "reportlab", specifier = "==4.4.10" },
