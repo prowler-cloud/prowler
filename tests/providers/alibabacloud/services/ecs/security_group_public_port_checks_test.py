@@ -154,7 +154,7 @@ def test_public_port_check_fail_and_pass_wiring(check_id, expected_ports, messag
 
 
 @pytest.mark.parametrize("check_id,expected_ports,message", PORT_CHECKS)
-def test_public_port_check_metadata_has_cli_for_each_port_and_family(
+def test_public_port_check_metadata_has_exact_rule_guidance(
     check_id, expected_ports, message
 ):
     module_path = f"prowler.providers.alibabacloud.services.ecs.{check_id}.{check_id}"
@@ -165,17 +165,15 @@ def test_public_port_check_metadata_has_cli_for_each_port_and_family(
         check_module = importlib.import_module(module_path)
         check_class = getattr(check_module, check_id)
         metadata = json.loads(check_class().metadata())
-        cli_commands = metadata["Remediation"]["Code"]["CLI"].splitlines()
+        remediation_code = metadata["Remediation"]["Code"]
 
-    assert len(cli_commands) == len(expected_ports) * 2
+    assert remediation_code["CLI"] == ""
+    guidance = remediation_code["Other"]
     for port in expected_ports:
-        command_prefix = (
-            "aliyun ecs RevokeSecurityGroup --RegionId <region_id> "
-            "--SecurityGroupId <security_group_id> --IpProtocol tcp "
-            f"--PortRange {port}/{port}"
-        )
-        assert f"{command_prefix} --SourceCidrIp 0.0.0.0/0" in cli_commands
-        assert f"{command_prefix} --Ipv6SourceCidrIp ::/0" in cli_commands
+        assert str(port) in guidance
+    assert "TCP or ALL" in guidance
+    assert "exact rule" in guidance.lower()
+    assert "exactly match" in guidance.lower()
 
 
 @pytest.mark.parametrize("check_id,expected_ports,message,target_port", PORT_CASES)
