@@ -167,7 +167,16 @@ def test_public_port_check_metadata_has_exact_rule_guidance(
         metadata = json.loads(check_class().metadata())
         remediation_code = metadata["Remediation"]["Code"]
 
-    assert remediation_code["CLI"] == ""
+    cli_command = remediation_code["CLI"]
+    assert cli_command
+    assert "aliyun ecs RevokeSecurityGroup" in cli_command
+    assert "--SecurityGroupRuleId <matched_security_group_rule_id>" in cli_command
+    assert cli_command == (
+        "aliyun ecs RevokeSecurityGroup --RegionId <region_id> "
+        "--SecurityGroupId <security_group_id> "
+        "--SecurityGroupRuleId <matched_security_group_rule_id>"
+    )
+    assert metadata["Remediation"]["Recommendation"]["Text"]
     guidance = remediation_code["Other"]
     for port in expected_ports:
         assert str(port) in guidance
