@@ -9,6 +9,15 @@ PUBLIC_SOURCE_FIELDS = ("source_cidr_ip", "ipv_6source_cidr_ip")
 
 @dataclass(frozen=True)
 class EffectiveRule:
+    """Normalized public ingress rule used for priority evaluation.
+
+    Attributes:
+        policy: Normalized Accept or Drop policy.
+        priority: Rule priority, where lower numbers take precedence.
+        from_port: Inclusive lower port boundary.
+        to_port: Inclusive upper port boundary.
+    """
+
     policy: str
     priority: int
     from_port: int
@@ -51,6 +60,15 @@ def port_in_range(port_range: str, target_port: int) -> bool:
 
 
 def _parse_priority(ingress_rule: Mapping[str, object]) -> int | None:
+    """Parse an Alibaba rule priority, where lower numbers take precedence.
+
+    Args:
+        ingress_rule: Raw ingress rule from the ECS API.
+
+    Returns:
+        A priority from 1 through 100, defaulting to 1 when omitted, or None
+        when an explicit value is malformed.
+    """
     if "priority" not in ingress_rule:
         return 1
     priority = ingress_rule["priority"]
@@ -66,6 +84,15 @@ def _parse_priority(ingress_rule: Mapping[str, object]) -> int | None:
 def _parse_effective_rule(
     ingress_rule: Mapping[str, object], source_field: str
 ) -> EffectiveRule | None:
+    """Normalize a public TCP or all-protocol rule for one address family.
+
+    Args:
+        ingress_rule: Raw ingress rule from the ECS API.
+        source_field: IPv4 or IPv6 source field to evaluate.
+
+    Returns:
+        The normalized rule, or None when it cannot affect public exposure.
+    """
     if not is_public_cidr(str(ingress_rule.get(source_field, ""))):
         return None
 
@@ -102,6 +129,18 @@ def _parse_effective_rule(
 
 
 def _effective_policy(rules: Sequence[EffectiveRule], port: int) -> str | None:
+    """Resolve the effective policy for a port using Alibaba priorities.
+
+    Lower priority numbers win, and Drop wins when policies share the same
+    winning priority.
+
+    Args:
+        rules: Normalized rules for one public address family.
+        port: Port whose effective policy is requested.
+
+    Returns:
+        "accept", "drop", or None when no rule matches.
+    """
     matching_rules = [rule for rule in rules if rule.from_port <= port <= rule.to_port]
     if not matching_rules:
         return None
