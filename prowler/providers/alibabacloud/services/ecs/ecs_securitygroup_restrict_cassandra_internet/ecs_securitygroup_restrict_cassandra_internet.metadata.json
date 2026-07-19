@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 7199/7199 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 7199/7199 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9160/9160 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9160/9160 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 8888/8888 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 8888/8888 --Ipv6SourceCidrIp ::/0",
       "NativeIaC": "",
       "Other": "Restrict Cassandra ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to cluster members, application hosts, or trusted CIDRs.",
       "Terraform": ""

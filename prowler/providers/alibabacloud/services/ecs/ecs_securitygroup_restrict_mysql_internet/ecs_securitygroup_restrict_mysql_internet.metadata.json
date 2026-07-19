@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 3306/3306 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 3306/3306 --Ipv6SourceCidrIp ::/0",
       "NativeIaC": "",
       "Other": "Restrict MySQL ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to application hosts or trusted private CIDRs.",
       "Terraform": ""
