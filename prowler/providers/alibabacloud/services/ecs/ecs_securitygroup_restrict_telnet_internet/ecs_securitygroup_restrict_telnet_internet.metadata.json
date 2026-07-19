@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 23/23 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 23/23 --Ipv6SourceCidrIp ::/0",
       "NativeIaC": "",
       "Other": "Remove Telnet rules for both `0.0.0.0/0` and `::/0`, and use SSH from trusted IPv4 or IPv6 sources instead.",
       "Terraform": ""

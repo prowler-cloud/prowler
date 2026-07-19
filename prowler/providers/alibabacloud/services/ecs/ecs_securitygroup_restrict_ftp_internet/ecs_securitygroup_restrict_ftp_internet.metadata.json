@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 20/20 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 20/20 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 21/21 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 21/21 --Ipv6SourceCidrIp ::/0",
       "NativeIaC": "",
       "Other": "Remove FTP rules for both `0.0.0.0/0` and `::/0`, and use an encrypted transfer service restricted to trusted IPv4 or IPv6 sources.",
       "Terraform": ""
