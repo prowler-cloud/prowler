@@ -139,6 +139,7 @@ class ECS(AlibabaCloudService):
                         ):
                             # Get security group rules
                             ingress_rules = []
+                            ingress_rules_complete = True
                             egress_rules = []
 
                             # Get ingress rules
@@ -155,15 +156,19 @@ class ECS(AlibabaCloudService):
                                     )
                                 )
 
-                                if (
-                                    rules_response
-                                    and rules_response.body
-                                    and rules_response.body.permissions
-                                ):
-                                    permissions = (
-                                        rules_response.body.permissions.permission
+                                if not rules_response or not rules_response.body:
+                                    ingress_rules_complete = False
+                                elif rules_response.body.permissions is None:
+                                    ingress_rules_complete = False
+                                else:
+                                    permissions = getattr(
+                                        rules_response.body.permissions,
+                                        "permission",
+                                        None,
                                     )
-                                    if permissions:
+                                    if not isinstance(permissions, list):
+                                        ingress_rules_complete = False
+                                    else:
                                         for rule in permissions:
                                             ingress_rules.append(
                                                 {
@@ -173,15 +178,33 @@ class ECS(AlibabaCloudService):
                                                     "source_cidr_ip": getattr(
                                                         rule, "source_cidr_ip", ""
                                                     ),
+                                                    "ipv_6source_cidr_ip": getattr(
+                                                        rule,
+                                                        "ipv_6source_cidr_ip",
+                                                        "",
+                                                    ),
                                                     "ip_protocol": getattr(
                                                         rule, "ip_protocol", ""
                                                     ),
                                                     "policy": getattr(
                                                         rule, "policy", "accept"
                                                     ),
+                                                    "priority": (
+                                                        priority
+                                                        if (
+                                                            priority := getattr(
+                                                                rule,
+                                                                "priority",
+                                                                None,
+                                                            )
+                                                        )
+                                                        is not None
+                                                        else 1
+                                                    ),
                                                 }
                                             )
                             except Exception as error:
+                                ingress_rules_complete = False
                                 logger.warning(
                                     f"Could not get ingress rules for security group {sg_id}: {error}"
                                 )
@@ -240,6 +263,7 @@ class ECS(AlibabaCloudService):
                                 vpc_id=getattr(sg_data, "vpc_id", ""),
                                 description=getattr(sg_data, "description", ""),
                                 ingress_rules=ingress_rules,
+                                ingress_rules_complete=ingress_rules_complete,
                                 egress_rules=egress_rules,
                             )
 
@@ -361,6 +385,7 @@ class SecurityGroup(BaseModel):
     vpc_id: str = ""
     description: str = ""
     ingress_rules: list[dict] = []
+    ingress_rules_complete: bool = True
     egress_rules: list[dict] = []
 
 
