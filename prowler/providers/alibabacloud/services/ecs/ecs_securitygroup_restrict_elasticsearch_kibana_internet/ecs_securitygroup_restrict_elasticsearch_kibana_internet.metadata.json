@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9200/9200 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9200/9200 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9300/9300 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9300/9300 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 5601/5601 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 5601/5601 --Ipv6SourceCidrIp ::/0",
       "NativeIaC": "",
       "Other": "Restrict Elasticsearch and Kibana ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to cluster members, administrators, or trusted CIDRs.",
       "Terraform": ""
