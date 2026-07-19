@@ -1,4 +1,5 @@
 import importlib
+import json
 from unittest import mock
 
 import pytest
@@ -74,11 +75,11 @@ PORT_CASES = tuple(
 )
 
 
-@pytest.fixture(autouse=True)
-def clear_failed_checks():
-    AlibabaCloudService.failed_checks.clear()
-    yield
-    AlibabaCloudService.failed_checks.clear()
+def _configure_failed_check_state(mocked_client):
+    service = object.__new__(AlibabaCloudService)
+    service.failed_checks = set()
+    mocked_client.set_failed_check.side_effect = service.set_failed_check
+    mocked_client.is_failed_check.side_effect = service.is_failed_check
 
 
 def _security_group(group_id, ingress_rules):
@@ -150,6 +151,31 @@ def test_public_port_check_fail_and_pass_wiring(check_id, expected_ports, messag
     assert result[1].resource_id == "sg-pass"
     assert message in result[1].status_extended
     assert "does not have" in result[1].status_extended
+
+
+@pytest.mark.parametrize("check_id,expected_ports,message", PORT_CHECKS)
+def test_public_port_check_metadata_has_cli_for_each_port_and_family(
+    check_id, expected_ports, message
+):
+    module_path = f"prowler.providers.alibabacloud.services.ecs.{check_id}.{check_id}"
+    with mock.patch(
+        "prowler.providers.common.provider.Provider.get_global_provider",
+        return_value=set_mocked_alibabacloud_provider(),
+    ):
+        check_module = importlib.import_module(module_path)
+        check_class = getattr(check_module, check_id)
+        metadata = json.loads(check_class().metadata())
+        cli_commands = metadata["Remediation"]["Code"]["CLI"].splitlines()
+
+    assert len(cli_commands) == len(expected_ports) * 2
+    for port in expected_ports:
+        command_prefix = (
+            "aliyun ecs RevokeSecurityGroup --RegionId <region_id> "
+            "--SecurityGroupId <security_group_id> --IpProtocol tcp "
+            f"--PortRange {port}/{port}"
+        )
+        assert f"{command_prefix} --SourceCidrIp 0.0.0.0/0" in cli_commands
+        assert f"{command_prefix} --Ipv6SourceCidrIp ::/0" in cli_commands
 
 
 @pytest.mark.parametrize("check_id,expected_ports,message,target_port", PORT_CASES)
@@ -314,9 +340,7 @@ def test_all_ports_check_only_fails_for_public_protocol_all_wildcard():
             failing_group.arn: failing_group,
             passing_group.arn: passing_group,
         }
-        mocked_client.set_failed_check.side_effect = (
-            AlibabaCloudService.set_failed_check
-        )
+        _configure_failed_check_state(mocked_client)
 
         with mock.patch.object(check_module, "ecs_client", mocked_client):
             result = check_class().execute()
@@ -388,10 +412,7 @@ def test_tcp_full_range_fails_specialized_check_without_all_port_dedup(
         )
         mocked_client = mock.MagicMock()
         mocked_client.security_groups = {security_group.arn: security_group}
-        mocked_client.set_failed_check.side_effect = (
-            AlibabaCloudService.set_failed_check
-        )
-        mocked_client.is_failed_check.side_effect = AlibabaCloudService.is_failed_check
+        _configure_failed_check_state(mocked_client)
 
         with (
             mock.patch.object(all_ports_module, "ecs_client", mocked_client),
@@ -446,10 +467,7 @@ def test_all_ports_failure_suppresses_redundant_specialized_failure():
         )
         mocked_client = mock.MagicMock()
         mocked_client.security_groups = {security_group.arn: security_group}
-        mocked_client.set_failed_check.side_effect = (
-            AlibabaCloudService.set_failed_check
-        )
-        mocked_client.is_failed_check.side_effect = AlibabaCloudService.is_failed_check
+        _configure_failed_check_state(mocked_client)
 
         with (
             mock.patch.object(all_ports_module, "ecs_client", mocked_client),

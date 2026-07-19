@@ -9,6 +9,22 @@ from tests.providers.alibabacloud.alibabacloud_fixtures import (
 
 
 class TestECSService:
+    def test_failed_check_state_is_isolated_per_service_instance(self):
+        from prowler.providers.alibabacloud.lib.service.service import (
+            AlibabaCloudService,
+        )
+
+        first_service = object.__new__(AlibabaCloudService)
+        first_service.failed_checks = set()
+        second_service = object.__new__(AlibabaCloudService)
+        second_service.failed_checks = set()
+
+        first_service.set_failed_check("package.check-id", "acs:resource:first")
+
+        assert first_service.is_failed_check("check-id", "acs:resource:first")
+        assert not second_service.is_failed_check("check-id", "acs:resource:first")
+        assert first_service.failed_checks is not second_service.failed_checks
+
     def test_service(self):
         alibabacloud_provider = set_mocked_alibabacloud_provider()
 

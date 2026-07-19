@@ -15,16 +15,29 @@ class AlibabaCloudService:
     - Handles if the service is Regional or Global
     """
 
-    failed_checks = set()
+    def set_failed_check(
+        self, check_id: str | None = None, arn: str | None = None
+    ) -> None:
+        """Record a failed check for a resource.
 
-    @classmethod
-    def set_failed_check(cls, check_id=None, arn=None):
+        Args:
+            check_id: Check identifier or dotted check path.
+            arn: Alibaba Cloud resource ARN.
+        """
         if check_id is not None and arn is not None:
-            cls.failed_checks.add((check_id.split(".")[-1], arn))
+            self.failed_checks.add((check_id.split(".")[-1], arn))
 
-    @classmethod
-    def is_failed_check(cls, check_id, arn):
-        return (check_id.split(".")[-1], arn) in cls.failed_checks
+    def is_failed_check(self, check_id: str, arn: str) -> bool:
+        """Return whether a check failed for a resource.
+
+        Args:
+            check_id: Check identifier or dotted check path.
+            arn: Alibaba Cloud resource ARN.
+
+        Returns:
+            True when this service instance recorded the check and ARN pair.
+        """
+        return (check_id.split(".")[-1], arn) in self.failed_checks
 
     def __init__(self, service: str, provider, global_service: bool = False):
         """
@@ -36,6 +49,7 @@ class AlibabaCloudService:
             global_service: Whether this is a global service (default: False)
         """
         # Audit Information
+        self.failed_checks: set[tuple[str, str]] = set()
         self.provider = provider
         self.audited_account = provider.identity.account_id
         self.audited_account_name = provider.identity.account_name
