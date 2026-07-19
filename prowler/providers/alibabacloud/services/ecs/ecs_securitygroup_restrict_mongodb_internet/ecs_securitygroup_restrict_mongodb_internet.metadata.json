@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_mongodb_internet",
+  "CheckTitle": "Security group restricts MongoDB access from the internet",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Checks that MongoDB TCP ports 27017 and 27018 are not exposed to unrestricted IPv4 (`0.0.0.0/0`) or IPv6 (`::/0`) sources.",
+  "Risk": "Public MongoDB access enables unauthorized database discovery, credential attacks, and data theft or destruction.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ecs/user-guide/add-a-security-group-rule"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Restrict MongoDB ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to application hosts or trusted CIDRs.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Do not expose TCP ports 27017 or 27018 to `0.0.0.0/0` or `::/0`.",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_mongodb_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

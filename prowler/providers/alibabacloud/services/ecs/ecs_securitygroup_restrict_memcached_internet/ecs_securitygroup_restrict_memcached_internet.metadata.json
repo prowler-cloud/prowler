@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_memcached_internet",
+  "CheckTitle": "Security group restricts Memcached access from the internet",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Checks that Memcached TCP port 11211 is not exposed to unrestricted IPv4 (`0.0.0.0/0`) or IPv6 (`::/0`) sources.",
+  "Risk": "Public Memcached access can disclose cached data, permit cache poisoning, and expose the service to denial-of-service abuse.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ecs/user-guide/add-a-security-group-rule"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "Restrict Memcached ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to application hosts or trusted CIDRs.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Do not expose TCP port 11211 to `0.0.0.0/0` or `::/0`.",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_memcached_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
