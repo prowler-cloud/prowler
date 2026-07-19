@@ -17,9 +17,9 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "aliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9200/9200 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9200/9200 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9300/9300 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 9300/9300 --Ipv6SourceCidrIp ::/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 5601/5601 --SourceCidrIp 0.0.0.0/0\naliyun ecs RevokeSecurityGroup --RegionId <region_id> --SecurityGroupId <security_group_id> --IpProtocol tcp --PortRange 5601/5601 --Ipv6SourceCidrIp ::/0",
+      "CLI": "",
       "NativeIaC": "",
-      "Other": "Restrict Elasticsearch and Kibana ingress for both `SourceCidrIp` and `Ipv6SourceCidrIp` to cluster members, administrators, or trusted CIDRs.",
+      "Other": "Inspect inbound rules in the ECS console. Locate effective Accept rules from `0.0.0.0/0` or `::/0` using TCP or ALL whose actual port range contains Elasticsearch ports `9200` or `9300`, or Kibana port `5601`. Restrict the source or range, or revoke the exact rule by SecurityGroupRuleId. Revocation using protocol/range/source must exactly match the existing rule.",
       "Terraform": ""
     },
     "Recommendation": {
