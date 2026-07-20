@@ -429,7 +429,7 @@ worker:
     # defaults target the bundled postgresql subchart; set them explicitly when
     # using an external database (postgresql.enabled: false).
     postgresql:
-      # -- Scaler database host. Defaults to the bundled "<release>-postgresql" service.
+      # -- Scaler database host. Defaults to the bundled "<release>-postgresql.<namespace>.svc.cluster.local" service.
       host: ""
       # -- Scaler database port.
       port: "5432"
