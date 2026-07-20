@@ -274,6 +274,12 @@ describe("useProviderWizardController", () => {
   it("does not rerender when setting a semantically unchanged footer config", () => {
     // Given
     const onOpenChange = vi.fn();
+    const firstOnBack = vi.fn();
+    const firstOnSecondaryAction = vi.fn();
+    const firstOnAction = vi.fn();
+    const latestOnBack = vi.fn();
+    const latestOnSecondaryAction = vi.fn();
+    const latestOnAction = vi.fn();
     let renderCount = 0;
     const { result } = renderHook(() => {
       renderCount += 1;
@@ -287,34 +293,58 @@ describe("useProviderWizardController", () => {
     const firstFooterConfig = {
       showBack: true,
       backLabel: "Back",
-      onBack: vi.fn(),
+      onBack: firstOnBack,
+      showSecondaryAction: true,
+      secondaryActionLabel: "Cancel",
+      secondaryActionVariant: "outline" as const,
+      secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onSecondaryAction: firstOnSecondaryAction,
       showAction: true,
       actionLabel: "Next",
       actionDisabled: false,
       actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
-      onAction: vi.fn(),
+      onAction: firstOnAction,
     };
 
     act(() => {
       result.current.setFooterConfig(firstFooterConfig);
     });
     const renderCountAfterFirstUpdate = renderCount;
-    const footerConfigAfterFirstUpdate = result.current.resolvedFooterConfig;
 
     // When
     act(() => {
       result.current.setFooterConfig({
         ...firstFooterConfig,
-        onBack: vi.fn(),
-        onAction: vi.fn(),
+        onBack: latestOnBack,
+        onSecondaryAction: latestOnSecondaryAction,
+        onAction: latestOnAction,
       });
+
+      result.current.resolvedFooterConfig.onBack?.();
+      result.current.resolvedFooterConfig.onSecondaryAction?.();
+      result.current.resolvedFooterConfig.onAction?.();
     });
 
     // Then
     expect(renderCount).toBe(renderCountAfterFirstUpdate);
-    expect(result.current.resolvedFooterConfig).toBe(
-      footerConfigAfterFirstUpdate,
-    );
+    expect(result.current.resolvedFooterConfig).toMatchObject({
+      showBack: true,
+      backLabel: "Back",
+      showSecondaryAction: true,
+      secondaryActionLabel: "Cancel",
+      secondaryActionVariant: "outline",
+      secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: false,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+    });
+    expect(firstOnBack).not.toHaveBeenCalled();
+    expect(firstOnSecondaryAction).not.toHaveBeenCalled();
+    expect(firstOnAction).not.toHaveBeenCalled();
+    expect(latestOnBack).toHaveBeenCalledTimes(1);
+    expect(latestOnSecondaryAction).toHaveBeenCalledTimes(1);
+    expect(latestOnAction).toHaveBeenCalledTimes(1);
   });
 
   it("does not override launch footer config in the controller", () => {

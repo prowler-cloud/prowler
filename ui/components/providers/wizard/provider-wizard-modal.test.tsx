@@ -81,12 +81,8 @@ describe("ProviderWizardModal", () => {
 
     // Then
     const dialog = screen.getByRole("dialog", { name: /adding a provider/i });
-    const descriptionId = dialog.getAttribute("aria-describedby");
 
-    expect(descriptionId).toBeTruthy();
-    expect(document.getElementById(descriptionId ?? "")).toHaveTextContent(
-      /connect or update a provider/i,
-    );
+    expect(dialog).toHaveAccessibleDescription(/connect or update a provider/i);
   });
 
   it("shows the launch progress step when update mode reaches launch", async () => {

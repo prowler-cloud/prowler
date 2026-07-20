@@ -117,6 +117,11 @@ export function useProviderWizardController({
   const [footerConfig, setFooterConfigState] =
     useState<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
   const footerConfigRef = useRef<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
+  const footerActionCallbacksRef = useRef({
+    onBack: () => footerConfigRef.current.onBack?.(),
+    onSecondaryAction: () => footerConfigRef.current.onSecondaryAction?.(),
+    onAction: () => footerConfigRef.current.onAction?.(),
+  });
   const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
     null,
   );
@@ -268,13 +273,16 @@ export function useProviderWizardController({
       typeof nextFooterConfig === "function"
         ? nextFooterConfig(currentFooterConfig)
         : nextFooterConfig;
+    footerConfigRef.current = resolvedNextFooterConfig;
 
     if (isSameFooterConfig(currentFooterConfig, resolvedNextFooterConfig)) {
       return;
     }
 
-    footerConfigRef.current = resolvedNextFooterConfig;
-    setFooterConfigState(resolvedNextFooterConfig);
+    setFooterConfigState({
+      ...resolvedNextFooterConfig,
+      ...footerActionCallbacksRef.current,
+    });
   };
 
   const openOrganizationsFlow = () => {
