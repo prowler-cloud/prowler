@@ -157,6 +157,7 @@ describe("getNavigationConfig", () => {
     const billing = getNavigationConfig({
       pathname: "/billing",
       apiDocsUrl: null,
+      cloudBillingEnabled: true,
       permissions,
     })
       .flatMap((section) => section.items)
@@ -183,17 +184,28 @@ describe("getNavigationConfig", () => {
     const cloudItems = getNavigationConfig({
       pathname: "/",
       apiDocsUrl: null,
+      cloudBillingEnabled: true,
       permissions,
+    }).flatMap((section) => section.items);
+    const enterpriseItems = getNavigationConfig({
+      pathname: "/",
+      apiDocsUrl: null,
+      cloudBillingEnabled: false,
+      permissions: { ...permissions, manage_billing: true },
     }).flatMap((section) => section.items);
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
     const localItems = getNavigationConfig({
       pathname: "/",
       apiDocsUrl: null,
+      cloudBillingEnabled: true,
       permissions: { ...permissions, manage_billing: true },
     }).flatMap((section) => section.items);
 
     // Then
     expect(cloudItems.find((item) => item.label === "Billing")).toBeUndefined();
+    expect(
+      enterpriseItems.find((item) => item.label === "Billing"),
+    ).toBeUndefined();
     expect(localItems.find((item) => item.label === "Billing")).toBeUndefined();
   });
 
