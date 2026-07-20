@@ -85,7 +85,9 @@ def get_providers(role: Role) -> QuerySet[Provider]:
     ).distinct()
 
 
-def get_integrations(role: Role) -> QuerySet[Integration]:
+def get_integrations(
+    role: Role, providers: QuerySet[Provider] | None = None
+) -> QuerySet[Integration]:
     """
     Return a distinct queryset of Integrations visible to the given role.
 
@@ -95,6 +97,8 @@ def get_integrations(role: Role) -> QuerySet[Integration]:
 
     Args:
         role: A Role instance.
+        providers: Optional queryset of the providers accessible by the role, to reuse
+            an already resolved `get_providers(role)` result within the same request.
 
     Returns:
         A QuerySet of Integration objects visible to the role.
@@ -103,6 +107,8 @@ def get_integrations(role: Role) -> QuerySet[Integration]:
     if role.unlimited_visibility:
         return queryset
 
+    if providers is None:
+        providers = get_providers(role)
     return queryset.filter(
-        Q(providers__isnull=True) | Q(providers__in=get_providers(role))
+        Q(providers__isnull=True) | Q(providers__in=providers)
     ).distinct()

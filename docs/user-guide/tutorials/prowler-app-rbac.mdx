@@ -142,6 +142,10 @@ New roles have no provider visibility by default. Assign at least one Provider G
 
 **Unlimited Visibility** grants organization-wide visibility across every provider, regardless of the Provider Groups assigned to the role. It does not grant administrative permissions.
 
+#### Integration Visibility
+
+<VersionBadge version="5.36.0" />
+
 Integrations follow the visibility of the providers attached to them: a role can see an integration when it can access at least one of its providers, and only the providers visible to that role are listed on the integration. Integrations that are not attached to any provider, such as Jira, are tenant-wide and remain available to every role with the **Manage Integrations** permission.
 
 #### Creating a Provider Group

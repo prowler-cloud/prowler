@@ -6712,7 +6712,7 @@ class IntegrationViewSet(BaseRLSViewSet):
         return get_providers(self.user_role)
 
     def get_queryset(self):
-        queryset = get_integrations(self.user_role)
+        queryset = get_integrations(self.user_role, providers=self.allowed_providers)
         if self.allowed_providers is not None and self.action in ("list", "retrieve"):
             # Restrict the relationship itself, so that the providers hidden to the role
             # are left out of the sideloaded resources of `?include=providers` too
@@ -6825,18 +6825,31 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
             return []
         return super().get_filter_backends()
 
-    def get_queryset(self):
+    @cached_property
+    def allowed_providers(self):
+        """
+        Providers the role can access, or None when it has unlimited visibility.
+
+        Resolved once per request and shared between the findings queryset and the
+        integration lookup.
+        """
         if self.user_role.unlimited_visibility:
+            return None
+        return get_providers(self.user_role)
+
+    def get_queryset(self):
+        if self.allowed_providers is None:
             # User has unlimited visibility, return all findings
             return Finding.all_objects.filter(tenant_id=self.request.tenant_id)
         # Findings are limited to the providers the role can access
-        return Finding.all_objects.filter(
-            scan__provider__in=get_providers(self.user_role)
-        )
+        return Finding.all_objects.filter(scan__provider__in=self.allowed_providers)
 
     def get_integration(self, integration_pk):
         """Retrieve the integration, honoring the provider visibility of the user's role."""
-        return get_object_or_404(get_integrations(self.user_role), pk=integration_pk)
+        return get_object_or_404(
+            get_integrations(self.user_role, providers=self.allowed_providers),
+            pk=integration_pk,
+        )
 
     @extend_schema(
         tags=["Integration"],
