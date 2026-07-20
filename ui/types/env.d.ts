@@ -28,6 +28,9 @@ declare global {
       NEXT_PUBLIC_SENTRY_ENVIRONMENT?: string;
       UI_SENTRY_ENVIRONMENT?: string;
 
+      // Prowler Cloud deployment flag — runtime read (server env, client island).
+      UI_CLOUD_ENABLED?: "true" | "false";
+
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
       // Cloud-only Stripe publishable keys (public; shipped to the browser).
@@ -40,7 +43,6 @@ declare global {
       UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2?: string;
 
       // Build-time public config
-      NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
       NEXT_PUBLIC_PROWLER_RELEASE_VERSION?: string;
 
       // Auth (NextAuth)
