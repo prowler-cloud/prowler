@@ -14,6 +14,8 @@ import {
 import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
+import { getRequiredAuthHeaders } from "./server-auth";
+
 export const baseUrl = process.env.AUTH_URL;
 export const apiBaseUrl = readEnv(
   "UI_API_BASE_URL",
@@ -61,16 +63,7 @@ export function filterEmptyValues(
 export const getAuthHeaders = async (options?: { contentType?: boolean }) => {
   const session = await auth();
 
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.api+json",
-    Authorization: `Bearer ${session?.accessToken}`,
-  };
-
-  if (options?.contentType) {
-    headers["Content-Type"] = "application/vnd.api+json";
-  }
-
-  return headers;
+  return getRequiredAuthHeaders(session?.accessToken, options, session?.error);
 };
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
