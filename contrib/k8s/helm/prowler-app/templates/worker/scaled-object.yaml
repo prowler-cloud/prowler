@@ -20,7 +20,7 @@ spec:
       metadata:
         userName: {{ .Values.worker.keda.postgresql.userName | quote }}
         passwordFromEnv: {{ .Values.worker.keda.postgresql.passwordFromEnv | quote }}
-        host: {{ .Values.worker.keda.postgresql.host | default (printf "%s-postgresql" .Release.Name) | quote }}
+        host: {{ .Values.worker.keda.postgresql.host | default (printf "%s-postgresql.%s.svc.cluster.local" .Release.Name .Release.Namespace) | quote }}
         port: {{ .Values.worker.keda.postgresql.port | quote }}
         dbName: {{ .Values.worker.keda.postgresql.database | default .Values.postgresql.auth.database | quote }}
         sslmode: {{ .Values.worker.keda.postgresql.sslmode | quote }}
