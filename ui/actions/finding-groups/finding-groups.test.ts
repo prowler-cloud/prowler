@@ -39,6 +39,10 @@ vi.mock("@/lib", () => ({
   splitCsvFilterValues,
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/provider-filters", () => ({
   // Simulate real appendSanitizedProviderFilters: appends all non-undefined filters to the URL.
   appendSanitizedProviderFilters: vi.fn(

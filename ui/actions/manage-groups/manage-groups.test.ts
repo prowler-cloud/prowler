@@ -26,6 +26,10 @@ vi.mock("@/lib", () => ({
   getErrorMessage: vi.fn(),
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/server-actions-helper", () => ({
   handleApiError: handleApiErrorMock,
   handleApiResponse: handleApiResponseMock,
@@ -109,6 +113,16 @@ describe("getAllProviderGroups", () => {
     const result = await getAllProviderGroups();
 
     expect(result).toBeUndefined();
+  });
+
+  it("rethrows the framework redirect from authentication", async () => {
+    // Given
+    const redirectError = new Error("NEXT_REDIRECT");
+    getAuthHeadersMock.mockRejectedValueOnce(redirectError);
+
+    // When / Then
+    await expect(getAllProviderGroups()).rejects.toBe(redirectError);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("returns undefined when a later page resolves to an error payload", async () => {

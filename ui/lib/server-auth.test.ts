@@ -7,6 +7,8 @@ const { headersMock, redirectMock } = vi.hoisted(() => ({
   }),
 }));
 
+vi.mock("server-only", () => ({}));
+
 vi.mock("next/headers", () => ({
   headers: headersMock,
 }));

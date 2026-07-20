@@ -23,6 +23,10 @@ vi.mock("@/lib", () => ({
   getAuthHeaders: getAuthHeadersMock,
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/provider-filters", () => ({
   appendSanitizedProviderTypeFilters: appendSanitizedProviderTypeFiltersMock,
 }));

@@ -20,6 +20,10 @@ vi.mock("@/lib", () => ({
   GENERIC_SERVER_ERROR_MESSAGE: "Generic server error.",
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/server-actions-helper", () => ({
   handleApiResponse: handleApiResponseMock,
 }));

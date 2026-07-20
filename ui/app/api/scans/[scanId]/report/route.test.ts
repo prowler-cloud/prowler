@@ -11,6 +11,10 @@ vi.mock("@/lib", () => ({
   getAuthHeaders: getAuthHeadersMock,
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 describe("GET /api/scans/[scanId]/report", () => {
   afterEach(() => {
     vi.unstubAllGlobals();

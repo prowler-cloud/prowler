@@ -19,6 +19,10 @@ vi.mock("@/lib", () => ({
     error instanceof Error ? error.message : String(error),
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/server-actions-helper", () => ({
   handleApiError: handleApiErrorMock,
   handleApiResponse: handleApiResponseMock,

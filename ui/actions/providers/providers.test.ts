@@ -29,6 +29,10 @@ vi.mock("@/lib", () => ({
   wait: vi.fn(),
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: getAuthHeadersMock,
+}));
+
 vi.mock("@/lib/provider-credentials/build-credentials", () => ({
   buildSecretConfig: vi.fn(() => ({
     secretType: "access-secret-key",

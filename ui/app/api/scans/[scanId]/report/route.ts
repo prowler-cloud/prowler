@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

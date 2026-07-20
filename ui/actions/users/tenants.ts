@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 import { signOut } from "@/auth.config";
-import { apiBaseUrl, getAuthHeaders } from "@/lib/helper";
+import { getAuthHeaders } from "@/lib/auth-headers";
+import { apiBaseUrl } from "@/lib/helper";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 
 export const getAllTenants = async () => {

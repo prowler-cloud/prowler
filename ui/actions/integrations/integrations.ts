@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
-import { apiBaseUrl, getAuthHeaders, parseStringify } from "@/lib";
+import { apiBaseUrl, parseStringify } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { IntegrationType } from "@/types/integrations";
 import type { TaskState } from "@/types/tasks";

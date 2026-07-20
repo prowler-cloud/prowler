@@ -5,7 +5,6 @@ import {
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
-import { auth } from "@/auth.config";
 import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
@@ -13,8 +12,6 @@ import {
 } from "@/lib/compliance/compliance-report-types";
 import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
-
-import { getRequiredAuthHeaders } from "./server-auth";
 
 export const baseUrl = process.env.AUTH_URL;
 export const apiBaseUrl = readEnv(
@@ -54,17 +51,6 @@ export function filterEmptyValues(
     }),
   );
 }
-
-/**
- * Returns the authentication headers for API requests
- * @param options - Optional configuration options
- * @returns Authentication headers with Accept and Authorization
- */
-export const getAuthHeaders = async (options?: { contentType?: boolean }) => {
-  const session = await auth();
-
-  return getRequiredAuthHeaders(session?.accessToken, options, session?.error);
-};
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {

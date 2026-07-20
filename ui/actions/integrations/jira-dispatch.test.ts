@@ -13,6 +13,10 @@ vi.mock("@/lib", () => ({
   getAuthHeaders: vi.fn(),
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: vi.fn(),
+}));
+
 vi.mock("@/lib/server-actions-helper", () => ({
   handleApiError: vi.fn(),
 }));

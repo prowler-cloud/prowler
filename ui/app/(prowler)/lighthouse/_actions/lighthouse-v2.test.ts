@@ -24,6 +24,12 @@ vi.mock("@/lib/helper", () => ({
   GENERIC_SERVER_ERROR_MESSAGE: "Server error",
 }));
 
+vi.mock("@/lib/auth-headers", () => ({
+  getAuthHeaders: vi
+    .fn()
+    .mockResolvedValue({ Authorization: "Bearer token-123" }),
+}));
+
 import {
   createLighthouseV2Session,
   getLighthouseV2SupportedModels,
