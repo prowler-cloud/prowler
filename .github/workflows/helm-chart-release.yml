@@ -45,8 +45,7 @@ jobs:
           echo "Setting chart version and appVersion to ${RELEASE_TAG}"
           # Publish an immutable chart version per release instead of the static
           # 0.0.1 in source, so every release is a distinct, addressable artifact.
-          sed -i "s/^version:.*/version: ${RELEASE_TAG}/" ${{ env.CHART_PATH }}/Chart.yaml
-          sed -i "s/^appVersion:.*/appVersion: \"${RELEASE_TAG}\"/" ${{ env.CHART_PATH }}/Chart.yaml
+          yq -i ".version = \"${RELEASE_TAG}\" | .appVersion = \"${RELEASE_TAG}\"" ${{ env.CHART_PATH }}/Chart.yaml
         env:
           GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
 
