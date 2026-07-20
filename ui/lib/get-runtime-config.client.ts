@@ -21,6 +21,8 @@ const pickConfig = (
   posthogHost: parsed.posthogHost ?? null,
   reoDevClientId: parsed.reoDevClientId ?? null,
   cloudBillingEnabled: parsed.cloudBillingEnabled ?? false,
+  stripePublishableKey: parsed.stripePublishableKey ?? null,
+  stripePublishableKeyV2: parsed.stripePublishableKeyV2 ?? null,
 });
 
 // Reads the <head> island once (memoized); all-null during SSR or if it's
