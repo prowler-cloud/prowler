@@ -49,6 +49,7 @@ from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_FINDINGS_BATCH_SIZE
 from config.env import env
 from config.settings.celery import CELERY_DEADLOCK_ATTEMPTS
+from django.core.exceptions import ImproperlyConfigured
 from django.db import DatabaseError, IntegrityError, OperationalError, transaction
 from django.db.models import (
     Case,
@@ -104,6 +105,11 @@ SCAN_DB_BATCH_SIZE = env.int("DJANGO_SCAN_DB_BATCH_SIZE", default=1000)
 # client-side CSV buffer and how long each individual COPY statement runs on the
 # writer (memory footprint, lock time and slow-statement logging under load).
 COMPLIANCE_COPY_BATCH_SIZE = env.int("DJANGO_COMPLIANCE_COPY_BATCH_SIZE", default=2000)
+if COMPLIANCE_COPY_BATCH_SIZE < 1:
+    raise ImproperlyConfigured(
+        "DJANGO_COMPLIANCE_COPY_BATCH_SIZE must be a positive integer, got "
+        f"{COMPLIANCE_COPY_BATCH_SIZE}"
+    )
 # Throttle scan progress persistence: minimum progress delta (fraction 0-1)
 # between two persisted progress updates.
 PROGRESS_THROTTLE_DELTA = env.float("DJANGO_SCAN_PROGRESS_THROTTLE_DELTA", default=0.01)
@@ -361,17 +367,36 @@ def _bulk_update_resource_failed_findings_counts(
                 raise
 
 
-def _compliance_requirement_rows_to_csv(rows: list[dict[str, Any]]) -> io.StringIO:
-    """Serialize compliance requirement rows into a CSV buffer for COPY."""
+class ComplianceRowScopeError(ValueError):
+    """A compliance requirement row does not belong to the scan being ingested."""
+
+
+def _compliance_requirement_rows_to_csv(
+    rows: list[dict[str, Any]], tenant_id: str, scan_id: str
+) -> io.StringIO:
+    """Serialize compliance requirement rows into a CSV buffer for COPY.
+
+    COPY runs on the admin connection, which bypasses RLS, so every row is
+    checked against the expected tenant/scan before it is written: a mismatched
+    row would otherwise be inserted verbatim into another tenant's data.
+    """
     csv_buffer = io.StringIO()
     writer = csv.writer(csv_buffer)
 
     datetime_now = datetime.now(tz=UTC)
     for row in rows:
+        row_tenant_id = str(row.get("tenant_id"))
+        row_scan_id = str(row.get("scan_id"))
+        if row_tenant_id != tenant_id or row_scan_id != scan_id:
+            raise ComplianceRowScopeError(
+                "Compliance requirement row does not belong to the scan being "
+                f"ingested (expected tenant {tenant_id} / scan {scan_id}, got "
+                f"tenant {row_tenant_id} / scan {row_scan_id})"
+            )
         writer.writerow(
             [
                 str(row.get("id")),
-                str(row.get("tenant_id")),
+                row_tenant_id,
                 (row.get("inserted_at") or datetime_now).isoformat(),
                 row.get("compliance_id") or "",
                 row.get("framework") or "",
@@ -385,7 +410,7 @@ def _compliance_requirement_rows_to_csv(rows: list[dict[str, Any]]) -> io.String
                 row.get("total_checks", 0),
                 row.get("passed_findings", 0),
                 row.get("total_findings", 0),
-                str(row.get("scan_id")),
+                row_scan_id,
             ]
         )
 
@@ -413,7 +438,14 @@ def _copy_compliance_requirement_rows(
 
     Returns:
         int: total number of rows staged and committed.
+
+    Raises:
+        ComplianceRowScopeError: A row belongs to another tenant or scan.
     """
+    # Normalized once so the per-row scope check compares like with like even if
+    # the caller passes UUID instances instead of strings.
+    tenant_id = str(tenant_id)
+    scan_id = str(scan_id)
     total_rows = 0
     batch_num = 0
     copy_sql = (
@@ -438,7 +470,9 @@ def _copy_compliance_requirement_rows(
                     if not batch:
                         continue
                     batch_num += 1
-                    csv_buffer = _compliance_requirement_rows_to_csv(batch)
+                    csv_buffer = _compliance_requirement_rows_to_csv(
+                        batch, tenant_id, scan_id
+                    )
                     try:
                         cursor.copy_expert(copy_sql, csv_buffer)
                     finally:
@@ -528,6 +562,10 @@ def _persist_compliance_requirement_rows(
         return _copy_compliance_requirement_rows(
             tenant_id, scan_id, rows_factory(), batch_size
         )
+    except ComplianceRowScopeError:
+        # Cross-tenant/scan rows are a bug in the caller, not a COPY failure:
+        # retrying through the ORM would persist the very rows we rejected.
+        raise
     except Exception as error:
         logger.exception(
             "COPY bulk insert for compliance requirements failed; "

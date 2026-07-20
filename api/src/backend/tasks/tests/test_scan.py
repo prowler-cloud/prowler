@@ -26,6 +26,7 @@ from prowler.lib.check.models import Severity
 from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
+    ComplianceRowScopeError,
     _aggregate_findings_by_region,
     _bulk_update_resource_failed_findings_counts,
     _copy_compliance_requirement_rows,
@@ -2948,6 +2949,76 @@ class TestComplianceRequirementCopy:
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
+
+    @pytest.mark.parametrize("mismatched_field", ["tenant_id", "scan_id"])
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_rejects_out_of_scope_rows(
+        self, mock_psycopg_connection, mismatched_field, settings
+    ):
+        """COPY bypasses RLS, so rows from another tenant/scan must be rejected."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": tenant_id,
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": scan_id,
+        }
+        row[mismatched_field] = str(uuid.uuid4())
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(ComplianceRowScopeError):
+                _copy_compliance_requirement_rows(tenant_id, scan_id, [row], 2000)
+
+        cursor.copy_expert.assert_not_called()
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=ComplianceRowScopeError("out of scope"),
+    )
+    def test_persist_compliance_requirement_rows_does_not_fall_back_on_scope_error(
+        self, mock_copy, mock_rls_transaction, mock_model
+    ):
+        """A scope violation is a caller bug: the ORM fallback must not persist it."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with pytest.raises(ComplianceRowScopeError):
+            _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [])
+
+        mock_copy.assert_called_once()
+        mock_rls_transaction.assert_not_called()
+        mock_model.objects.filter.assert_not_called()
+        mock_model.objects.bulk_create.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
