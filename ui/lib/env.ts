@@ -2,7 +2,6 @@ import {
   assertGatedIntegrations,
   warnGatedIntegrationsMisconfig,
 } from "@/lib/integrations";
-import { CLOUD_ENABLED_ENV } from "@/lib/runtime-config.shared";
 import { readBoolEnv, readEnv } from "@/lib/runtime-env";
 
 // Boot-time required-env assertion so a misconfigured container fails fast
@@ -42,7 +41,7 @@ warnGatedIntegrationsMisconfig();
 // The billing UI is Cloud-only: navigation (navigation-config.ts) and the
 // /billing route (proxy.ts) additionally gate on the cloud flag, so billing
 // enabled without it is inert — warn, don't throw.
-const cloudEnabled = readBoolEnv(CLOUD_ENABLED_ENV);
+const cloudEnabled = readBoolEnv("UI_CLOUD_ENABLED");
 const cloudBillingSelector = readEnv("CLOUD_BILLING_ENABLED");
 const cloudBillingOn =
   cloudBillingSelector !== null && cloudBillingSelector !== "false";
@@ -50,7 +49,7 @@ const cloudBillingOn =
 if (cloudBillingOn && !cloudEnabled) {
   // eslint-disable-next-line no-console
   console.warn(
-    `CLOUD_BILLING_ENABLED is "${cloudBillingSelector}" but ${CLOUD_ENABLED_ENV} is not "true"; the billing UI will not be shown.`,
+    `CLOUD_BILLING_ENABLED is "${cloudBillingSelector}" but UI_CLOUD_ENABLED is not "true"; the billing UI will not be shown.`,
   );
 }
 

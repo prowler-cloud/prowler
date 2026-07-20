@@ -1,10 +1,7 @@
 /**
  * Shared environment helpers.
  */
-import {
-  CLOUD_ENABLED_ENV,
-  readRuntimeConfigIsland,
-} from "@/lib/runtime-config.shared";
+import { readRuntimeConfigIsland } from "@/lib/runtime-config.shared";
 import { readBoolEnv } from "@/lib/runtime-env";
 
 /**
@@ -21,5 +18,5 @@ export function isCloud(): boolean {
   const islandConfig = readRuntimeConfigIsland();
   if (islandConfig) return islandConfig.cloudEnabled;
 
-  return readBoolEnv(CLOUD_ENABLED_ENV);
+  return readBoolEnv("UI_CLOUD_ENABLED");
 }

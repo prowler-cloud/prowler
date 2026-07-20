@@ -17,11 +17,6 @@ export interface RuntimePublicConfig {
 
 export const RUNTIME_CONFIG_SCRIPT_ID = "__PROWLER_RUNTIME_CONFIG__";
 
-// Env var for the Prowler Cloud flag; shared so the island producer
-// (lib/runtime-config.ts), the isCloud() env fallback (lib/shared/env.ts)
-// and the boot checks (lib/env.ts) can never drift.
-export const CLOUD_ENABLED_ENV = "UI_CLOUD_ENABLED" as const;
-
 // All-null fallback (SSR or parse failure).
 export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   sentryDsn: null,
