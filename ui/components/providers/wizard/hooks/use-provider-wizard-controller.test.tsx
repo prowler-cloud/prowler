@@ -271,7 +271,7 @@ describe("useProviderWizardController", () => {
     expect(refreshMock).not.toHaveBeenCalled();
   });
 
-  it("does not rerender when setting a semantically unchanged footer config", () => {
+  it("keeps the footer setter stable and uses replacement action callbacks", () => {
     // Given
     const onOpenChange = vi.fn();
     const firstOnBack = vi.fn();
@@ -280,15 +280,13 @@ describe("useProviderWizardController", () => {
     const latestOnBack = vi.fn();
     const latestOnSecondaryAction = vi.fn();
     const latestOnAction = vi.fn();
-    let renderCount = 0;
-    const { result } = renderHook(() => {
-      renderCount += 1;
-
-      return useProviderWizardController({
+    const { result } = renderHook(() =>
+      useProviderWizardController({
         open: true,
         onOpenChange,
-      });
-    });
+      }),
+    );
+    const initialSetFooterConfig = result.current.setFooterConfig;
 
     const firstFooterConfig = {
       showBack: true,
@@ -309,7 +307,6 @@ describe("useProviderWizardController", () => {
     act(() => {
       result.current.setFooterConfig(firstFooterConfig);
     });
-    const renderCountAfterFirstUpdate = renderCount;
 
     // When
     act(() => {
@@ -319,14 +316,15 @@ describe("useProviderWizardController", () => {
         onSecondaryAction: latestOnSecondaryAction,
         onAction: latestOnAction,
       });
-
+    });
+    act(() => {
       result.current.resolvedFooterConfig.onBack?.();
       result.current.resolvedFooterConfig.onSecondaryAction?.();
       result.current.resolvedFooterConfig.onAction?.();
     });
 
     // Then
-    expect(renderCount).toBe(renderCountAfterFirstUpdate);
+    expect(result.current.setFooterConfig).toBe(initialSetFooterConfig);
     expect(result.current.resolvedFooterConfig).toMatchObject({
       showBack: true,
       backLabel: "Back",

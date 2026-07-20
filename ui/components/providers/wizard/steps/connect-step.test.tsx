@@ -39,7 +39,7 @@ describe("ConnectStep", () => {
     useProviderWizardStore.getState().reset();
   });
 
-  it("does not publish a new footer config when form UI state is unchanged", async () => {
+  it("does not republish footer config for repeated unchanged form UI state", async () => {
     // Given
     const onFooterChange = vi.fn();
 
@@ -56,12 +56,19 @@ describe("ConnectStep", () => {
 
     // When
     act(() => {
-      capturedConnectAccountFormProps.current?.onUiStateChange?.({
+      const unchangedUiState = {
         showBack: false,
         showAction: false,
         actionLabel: "Next",
         actionDisabled: true,
         isLoading: false,
+      };
+
+      capturedConnectAccountFormProps.current?.onUiStateChange?.(
+        unchangedUiState,
+      );
+      capturedConnectAccountFormProps.current?.onUiStateChange?.({
+        ...unchangedUiState,
       });
     });
 
