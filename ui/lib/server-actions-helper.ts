@@ -1,6 +1,10 @@
 import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
+import { apiBaseUrl } from "@/lib";
+import { fetchMaintenanceStatus, MAINTENANCE_PATH } from "@/lib/maintenance";
+import { isCloud } from "@/lib/shared/env";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 
 import {
@@ -20,6 +24,30 @@ export const handleApiResponse = async (
   parse = true,
 ) => {
   if (!response.ok) {
+    // Maintenance Mode is Cloud-only (see lib/maintenance.ts): self-hosted
+    // has no MM status endpoint, so a 503 there is always a normal server
+    // error, never a maintenance redirect — skip the check entirely.
+    //
+    // On Cloud: when MM flips on between the proxy check and a server action
+    // firing, the API returns 503 for every endpoint. Redirect to the
+    // full-screen /maintenance landing page instead of surfacing a generic
+    // server error. `redirect()` throws NEXT_REDIRECT, which Next turns into
+    // a client navigation, so this short-circuits before the
+    // Sentry-capturing 5xx branch below.
+    //
+    // A 503 alone isn't proof of MM though — any transient upstream error
+    // (DB blip, deploy rollout) also returns 503 and must NOT be conflated
+    // with real maintenance. Confirm against the status endpoint first;
+    // `fetchMaintenanceStatus` fails open (2s timeout → `enabled: false`), so
+    // a status-check blip falls through to normal error handling instead of
+    // redirecting.
+    if (isCloud() && response.status === 503) {
+      const status = await fetchMaintenanceStatus(apiBaseUrl);
+      if (status.enabled) {
+        redirect(MAINTENANCE_PATH);
+      }
+    }
+
     // Read error body safely; prefer JSON, fallback to plain text
     const rawErrorText = await response.text().catch(() => "");
     const contentType = response.headers.get("content-type")?.toLowerCase();
