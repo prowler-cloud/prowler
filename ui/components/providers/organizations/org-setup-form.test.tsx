@@ -115,7 +115,7 @@ describe("OrgSetupForm", () => {
 
     expect(params.get("param_DeployFromDelegatedAdmin")).toBe("true");
     expect(
-      screen.getByLabelText("Delegated Administrator Account Role ARN"),
+      screen.getByLabelText("Delegated Administrator Account IAM Role ARN"),
     ).toBeInTheDocument();
   });
 });

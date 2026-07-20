@@ -295,16 +295,21 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The OCID of the tenancy.",
                     },
-                    "region": {
-                        "type": "string",
-                        "description": "The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).",
-                    },
                     "pass_phrase": {
                         "type": "string",
                         "description": "The passphrase for the private key, if encrypted.",
                     },
+                    "region": {
+                        "type": "string",
+                        "deprecated": True,
+                        "description": "Legacy OCI region field accepted for backwards compatibility but ignored; OCI scans all regions.",
+                    },
                 },
-                "required": ["user", "fingerprint", "tenancy", "region"],
+                "required": ["user", "fingerprint", "tenancy"],
+                "anyOf": [
+                    {"required": ["key_file"]},
+                    {"required": ["key_content"]},
+                ],
             },
             {
                 "type": "object",

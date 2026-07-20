@@ -4,6 +4,18 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.35.0] (Prowler v5.35.0)
+
+### 🚀 Added
+
+- `excluded_checks` and `excluded_services` in scan configurations to narrow the execution scope [(#12028)](https://github.com/prowler-cloud/prowler/pull/12028)
+
+### 🔐 Security
+
+- Jira tenant information requests validate site names and do not follow redirects [(#12012)](https://github.com/prowler-cloud/prowler/pull/12012)
+
+---
+
 ## [5.34.0] (Prowler v5.34.0)
 
 ### 🚀 Added
