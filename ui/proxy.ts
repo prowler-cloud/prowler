@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
+import { readEnv } from "@/lib/runtime-env";
 
 const publicRoutes = [
   "/sign-in",
@@ -23,6 +24,8 @@ export default auth((req: NextAuthRequest) => {
 
   const user = req.auth?.user;
   const sessionError = req.auth?.error;
+  const cloudBillingEnabled =
+    (readEnv("CLOUD_BILLING_ENABLED") ?? "false") !== "false";
 
   // If there's a session error (e.g., RefreshAccessTokenError), redirect to login with error info
   if (sessionError && !isPublicRoute(pathname)) {
@@ -38,12 +41,15 @@ export default auth((req: NextAuthRequest) => {
     return NextResponse.redirect(signInUrl);
   }
 
+  if (
+    pathname.startsWith("/billing") &&
+    (!cloudBillingEnabled || user?.permissions?.manage_billing !== true)
+  ) {
+    return NextResponse.redirect(new URL("/profile", req.url));
+  }
+
   if (user?.permissions) {
     const permissions = user.permissions;
-
-    if (pathname.startsWith("/billing") && !permissions.manage_billing) {
-      return NextResponse.redirect(new URL("/profile", req.url));
-    }
 
     if (
       pathname.startsWith("/integrations") &&

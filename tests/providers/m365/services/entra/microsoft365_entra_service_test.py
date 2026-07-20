@@ -1,39 +1,40 @@
 import asyncio
+import importlib
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
-from prowler.providers.m365.services.entra.entra_service import (
-    AdminConsentPolicy,
-    AdminRoles,
-    ApplicationEnforcedRestrictions,
-    ApplicationsConditions,
-    AppManagementRestrictions,
-    AuthorizationPolicy,
-    AuthPolicyRoles,
-    ConditionalAccessGrantControl,
-    ConditionalAccessPolicy,
-    ConditionalAccessPolicyState,
-    Conditions,
-    CredentialRestriction,
-    DefaultAppManagementPolicy,
-    DefaultUserRolePermissions,
-    Entra,
-    GrantControlOperator,
-    GrantControls,
-    InvitationsFrom,
-    Organization,
-    PersistentBrowser,
-    SessionControls,
-    SignInFrequency,
-    SignInFrequencyInterval,
-    SignInFrequencyType,
-    User,
-    UserAction,
-    UsersConditions,
-)
+from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
+
+AdminConsentPolicy = entra_service.AdminConsentPolicy
+AdminRoles = entra_service.AdminRoles
+ApplicationEnforcedRestrictions = entra_service.ApplicationEnforcedRestrictions
+ApplicationsConditions = entra_service.ApplicationsConditions
+AppManagementRestrictions = entra_service.AppManagementRestrictions
+AuthorizationPolicy = entra_service.AuthorizationPolicy
+AuthPolicyRoles = entra_service.AuthPolicyRoles
+ConditionalAccessGrantControl = entra_service.ConditionalAccessGrantControl
+ConditionalAccessPolicy = entra_service.ConditionalAccessPolicy
+ConditionalAccessPolicyState = entra_service.ConditionalAccessPolicyState
+Conditions = entra_service.Conditions
+CredentialRestriction = entra_service.CredentialRestriction
+DefaultAppManagementPolicy = entra_service.DefaultAppManagementPolicy
+DefaultUserRolePermissions = entra_service.DefaultUserRolePermissions
+Entra = entra_service.Entra
+GrantControlOperator = entra_service.GrantControlOperator
+GrantControls = entra_service.GrantControls
+InvitationsFrom = entra_service.InvitationsFrom
+Organization = entra_service.Organization
+PersistentBrowser = entra_service.PersistentBrowser
+SessionControls = entra_service.SessionControls
+SignInFrequency = entra_service.SignInFrequency
+SignInFrequencyInterval = entra_service.SignInFrequencyInterval
+SignInFrequencyType = entra_service.SignInFrequencyType
+User = entra_service.User
+UserAction = entra_service.UserAction
+UsersConditions = entra_service.UsersConditions
 
 
 async def mock_entra_get_authorization_policy(_):
@@ -697,9 +698,12 @@ class Test_Entra_Service:
         a descriptive error message naming the missing AuditLog.Read.All permission.
         """
         from msgraph.generated.models.o_data_errors.main_error import MainError
-        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 
-        odata_error = ODataError()
+        o_data_error = importlib.import_module(
+            "msgraph.generated.models.o_data_errors.o_data_error"
+        )
+
+        odata_error = o_data_error.ODataError()
         odata_error.error = MainError()
         odata_error.error.code = "Authorization_RequestDenied"
 
@@ -878,6 +882,134 @@ class Test_Entra_Service:
         assert merged.password_credentials[0].key_id == "cred-app"
         assert merged.password_credentials[0].display_name == "app-level-secret"
         assert merged.password_credentials[0].is_active()
+
+    def test__get_exchange_mailbox_permission_service_principals(self):
+        """Service principals with Exchange Graph application roles are returned."""
+        graph_sp_id = "graph-sp-id"
+        mail_read_role_id = "11111111-1111-1111-1111-111111111111"
+        user_read_role_id = "22222222-2222-2222-2222-222222222222"
+
+        graph_sp = SimpleNamespace(
+            id=graph_sp_id,
+            display_name="Microsoft Graph",
+            app_id="00000003-0000-0000-c000-000000000000",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[
+                SimpleNamespace(
+                    id=mail_read_role_id,
+                    value="Mail.Read",
+                    allowed_member_types=["Application"],
+                ),
+                SimpleNamespace(
+                    id=user_read_role_id,
+                    value="User.Read.All",
+                    allowed_member_types=["Application"],
+                ),
+            ],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        mailbox_app = SimpleNamespace(
+            id="sp-mailbox",
+            display_name="Mailbox App",
+            app_id="app-mailbox",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        disabled_app = SimpleNamespace(
+            id="sp-disabled",
+            display_name="Disabled App",
+            app_id="app-disabled",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=False,
+            service_principal_type="Application",
+        )
+        first_party_app = SimpleNamespace(
+            id="sp-first-party",
+            display_name="Microsoft App",
+            app_id="app-first-party",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+
+        app_role_assignments = {
+            "sp-mailbox": SimpleNamespace(
+                value=[
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=mail_read_role_id,
+                    ),
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=user_read_role_id,
+                    ),
+                ],
+                odata_next_link=None,
+            )
+        }
+
+        def by_service_principal_id(service_principal_id):
+            return SimpleNamespace(
+                app_role_assignments=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=app_role_assignments.get(
+                            service_principal_id,
+                            SimpleNamespace(value=[], odata_next_link=None),
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(
+                        value=[graph_sp, mailbox_app, disabled_app, first_party_app],
+                        odata_next_link=None,
+                    )
+                ),
+                with_url=MagicMock(),
+                by_service_principal_id=MagicMock(side_effect=by_service_principal_id),
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert set(result.keys()) == {"sp-mailbox"}
+        assert result["sp-mailbox"].app_id == "app-mailbox"
+        assert result["sp-mailbox"].exchange_mailbox_permissions == ["Mail.Read"]
+
+    def test__get_exchange_mailbox_permission_service_principals_records_error(self):
+        """
+        Graph collection failures preserve unavailable state separately from empty results.
+        """
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(side_effect=RuntimeError("Graph unavailable"))
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert result == {}
+        assert "RuntimeError" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+        assert "Graph unavailable" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
 
     def test__resolve_identifiers_for_type_flags_only_404(self):
         """Only HTTP 404 / Request_ResourceNotFound mark an id as deleted.

@@ -7,9 +7,19 @@ from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Integration, Invitation, Processor, Provider, Resource
+from api.models import (
+    Integration,
+    Invitation,
+    Membership,
+    Processor,
+    Provider,
+    Resource,
+    Role,
+    UserRoleRelationship,
+)
 from api.v1.serializers import FindingMetadataSerializer
 from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
 from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
@@ -242,12 +252,6 @@ def get_prowler_provider_kwargs(
             **prowler_provider_kwargs,
             "filter_accounts": [provider.uid],
         }
-    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
-        if isinstance(prowler_provider_kwargs.get("region"), str):
-            prowler_provider_kwargs = {
-                **prowler_provider_kwargs,
-                "region": {prowler_provider_kwargs["region"]},
-            }
     elif provider.provider == Provider.ProviderChoices.OPENSTACK.value:
         # clouds_yaml_content, clouds_yaml_cloud and provider_id are validated
         # in the provider itself, so it's not needed here.
@@ -278,6 +282,11 @@ def get_prowler_provider_kwargs(
                 **{k: v for k, v in prowler_provider_kwargs.items() if v},
             }
 
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        prowler_provider_kwargs = _normalize_oraclecloud_provider_kwargs(
+            prowler_provider_kwargs
+        )
+
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
         # IaC and Image providers don't support mutelist (both use Trivy's built-in logic)
@@ -286,6 +295,40 @@ def get_prowler_provider_kwargs(
             Provider.ProviderChoices.IMAGE.value,
         ):
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into SDK provider kwargs."""
+    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs.pop("region", None)
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into test_connection kwargs."""
+    from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+
+    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs.pop("region", None)
+
+    if (
+        prowler_provider_kwargs.get("user")
+        and prowler_provider_kwargs.get("fingerprint")
+        and prowler_provider_kwargs.get("tenancy")
+        and (
+            prowler_provider_kwargs.get("key_content")
+            or prowler_provider_kwargs.get("key_file")
+        )
+    ):
+        # Connection validation needs one OCI endpoint, but scans remain unfiltered.
+        prowler_provider_kwargs["region"] = getattr(
+            OraclecloudProvider,
+            "_bootstrap_region",
+            OraclecloudProvider._home_region,
+        )
 
     return prowler_provider_kwargs
 
@@ -392,6 +435,15 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         if prowler_provider_kwargs.get("registry_token"):
             image_kwargs["registry_token"] = prowler_provider_kwargs["registry_token"]
         return prowler_provider.test_connection(**image_kwargs)
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        oraclecloud_kwargs = _normalize_oraclecloud_connection_test_kwargs(
+            prowler_provider_kwargs
+        )
+        return prowler_provider.test_connection(
+            **oraclecloud_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,
@@ -536,6 +588,35 @@ def validate_invitation(
         )
 
     return invitation
+
+
+def accept_invitation_for_user(
+    *, user, invitation_token: str, raise_not_found: bool = False
+):
+    with transaction.atomic(using=MainRouter.admin_db):
+        invitation = validate_invitation(
+            invitation_token, user.email, raise_not_found=raise_not_found
+        )
+        with rls_transaction(str(invitation.tenant_id), using=MainRouter.admin_db):
+            membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
+                user=user,
+                tenant=invitation.tenant,
+                defaults={"role": Membership.RoleChoices.MEMBER},
+            )
+            invitation_roles = Role.objects.using(MainRouter.admin_db).filter(
+                invitations=invitation
+            )
+            for role in invitation_roles:
+                UserRoleRelationship.objects.using(MainRouter.admin_db).get_or_create(
+                    user=user,
+                    role=role,
+                    defaults={"tenant": invitation.tenant},
+                )
+
+            invitation.state = Invitation.State.ACCEPTED
+            invitation.save(using=MainRouter.admin_db)
+
+    return invitation, membership
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata

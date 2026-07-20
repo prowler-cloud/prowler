@@ -42,3 +42,25 @@ def init_parser(self):
         default=None,
         metavar="OKTA_SCOPES",
     )
+    okta_rate_limit_subparser = okta_parser.add_argument_group("Rate limiting")
+    okta_rate_limit_subparser.add_argument(
+        "--okta-retries-max-attempts",
+        type=int,
+        default=None,
+        help=(
+            "Maximum number of retries on Okta API rate limiting (HTTP 429). "
+            "Overrides the config.yaml value (okta_max_retries). Default: 5."
+        ),
+        metavar="OKTA_RETRIES_MAX_ATTEMPTS",
+    )
+    okta_rate_limit_subparser.add_argument(
+        "--okta-requests-per-second",
+        type=float,
+        default=None,
+        help=(
+            "Maximum aggregate Okta API requests per second. Throttles requests "
+            "to stay under Okta's rate limits. Overrides the config.yaml value "
+            "(okta_requests_per_second); set to 0 to disable. Default: 4."
+        ),
+        metavar="OKTA_REQUESTS_PER_SECOND",
+    )

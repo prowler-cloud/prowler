@@ -34,7 +34,8 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedule: updateScheduleMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -93,7 +94,7 @@ describe("LaunchStep", () => {
       );
 
       // Then
-      expect(screen.getByText("Account Connected!")).toBeInTheDocument();
+      expect(screen.getByText("Provider Connected!")).toBeInTheDocument();
       expect(
         screen.getByRole("radio", { name: "On a schedule" }),
       ).toBeChecked();
@@ -373,6 +374,31 @@ describe("LaunchStep", () => {
       scanOnDemandMock.mockResolvedValue({ data: { id: "scan-1" } });
     });
 
+    it("uses a warning badge for the subscription requirement", () => {
+      // Given
+      seedConnectedProvider();
+
+      // When
+      render(
+        <LaunchStep
+          onBack={vi.fn()}
+          onClose={vi.fn()}
+          onFooterChange={vi.fn()}
+          capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+        />,
+      );
+
+      // Then
+      expect(screen.getByText("Requires subscription")).toHaveClass(
+        "bg-bg-warning-secondary/20",
+        "text-text-warning-primary",
+      );
+      expect(screen.getByText("Requires subscription")).toHaveAttribute(
+        "data-slot",
+        "badge",
+      );
+    });
+
     it("defaults to run now, locks schedule mode, and only launches a manual scan", async () => {
       // Given
       const onClose = vi.fn();
@@ -473,7 +499,7 @@ describe("LaunchStep", () => {
       );
 
       // Then
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       await waitFor(() => expect(onFooterChange).toHaveBeenCalled());
       expect(lastFooterConfig(onFooterChange)?.actionDisabled).toBe(true);
     });

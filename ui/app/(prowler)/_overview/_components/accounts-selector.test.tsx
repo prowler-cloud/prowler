@@ -2,7 +2,8 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
-import { FilterType } from "@/types/filters";
+import { ProviderProps } from "@/types";
+import { FILTER_FIELD } from "@/types/filters";
 
 import { AccountsSelector } from "./accounts-selector";
 
@@ -99,12 +100,13 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   ),
 }));
 
-const providers = [
+const providers: ProviderProps[] = [
   {
     id: "provider-1",
     type: "providers" as const,
     attributes: {
       provider: "aws" as const,
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production AWS",
       status: "completed" as const,
@@ -189,7 +191,7 @@ describe("AccountsSelector", () => {
     render(
       <AccountsSelector
         providers={providers}
-        filterKey={FilterType.PROVIDER_UID}
+        filterKey={FILTER_FIELD.PROVIDER_UID}
       />,
     );
 

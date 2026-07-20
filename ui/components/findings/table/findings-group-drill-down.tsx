@@ -8,6 +8,10 @@ import {
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
@@ -16,8 +20,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge, StatusFindingBadge } from "@/components/ui/table";
+} from "@/components/shadcn/table";
+import { SeverityBadge, StatusFindingBadge } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
 import {
@@ -73,6 +77,7 @@ export function FindingsGroupDrillDown({
     handleMuteComplete,
     handleRowSelectionChange,
     resolveSelectedFindingIds,
+    updateTriageOptimistically,
   } = useFindingGroupResourceState({
     group,
     filters,
@@ -82,6 +87,10 @@ export function FindingsGroupDrillDown({
   const columns = getColumnFindingResources({
     rowSelection,
     selectableRowCount,
+    findingTitle: group.checkTitle,
+    onTriageUpdateAction: (input) =>
+      updateTriageOptimistically(input, updateFindingTriage),
+    onTriageNoteLoadAction: loadLatestFindingTriageNote,
   });
 
   const table = useReactTable({
@@ -116,7 +125,7 @@ export function FindingsGroupDrillDown({
     >
       <div
         className={cn(
-          "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary",
+          "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary rounded-[14px] shadow-sm",
           "flex w-full flex-col overflow-auto border",
         )}
       >
@@ -249,6 +258,7 @@ export function FindingsGroupDrillDown({
         onNavigatePrev={drawer.navigatePrev}
         onNavigateNext={drawer.navigateNext}
         onMuteComplete={handleDrawerMuteComplete}
+        onTriageUpdate={drawer.patchTriageUpdate}
       />
     </FindingsSelectionContext.Provider>
   );

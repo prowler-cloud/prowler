@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FilterType } from "@/types/filters";
+import { FILTER_FIELD } from "@/types/filters";
 import type { ProviderProps } from "@/types/providers";
 
 import { ProviderAccountSelectors } from "./provider-account-selectors";
@@ -77,6 +77,7 @@ const makeProvider = ({
   type: "providers",
   attributes: {
     provider,
+    is_dynamic: false,
     uid,
     alias,
     status: "completed",
@@ -171,7 +172,7 @@ describe("ProviderAccountSelectors", () => {
     render(
       <ProviderAccountSelectors
         providers={providers}
-        accountFilterKey={FilterType.PROVIDER_UID}
+        accountFilterKey={FILTER_FIELD.PROVIDER_UID}
         accountValue="uid"
         paramsToDeleteOnChange={["page", "scanId"]}
       />,
@@ -230,7 +231,7 @@ describe("ProviderAccountSelectors", () => {
       <ProviderAccountSelectors
         providers={providers}
         mode="batch"
-        accountFilterKey={FilterType.PROVIDER_UID}
+        accountFilterKey={FILTER_FIELD.PROVIDER_UID}
         accountValue="uid"
         selectedProviderTypes={["aws"]}
         selectedAccounts={["123456789012", "prowler-project"]}

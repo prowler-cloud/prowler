@@ -43,7 +43,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
     <button {...props}>{children}</button>
   ),
@@ -429,7 +430,7 @@ describe("OrgLaunchScan", () => {
       });
 
       // Then
-      expect(screen.getByText(/reached your scan limit/i)).toBeInTheDocument();
+      expect(screen.getByText(/exceeded the usage limit/i)).toBeInTheDocument();
       expect(updateSchedulesBulkMock).not.toHaveBeenCalled();
       expect(launchOrganizationScansMock).not.toHaveBeenCalled();
     });

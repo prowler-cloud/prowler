@@ -1,4 +1,4 @@
-from unittest.mock import call, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from api.attack_paths import database as graph_database
@@ -9,7 +9,7 @@ from tasks.jobs.deletion import delete_provider, delete_tenant
 
 @pytest.mark.django_db
 class TestDeleteProvider:
-    def test_delete_provider_success(self, providers_fixture):
+    def test_delete_provider_success(self, aws_provider):
         with (
             patch(
                 "tasks.jobs.deletion.graph_database.get_database_name",
@@ -19,7 +19,7 @@ class TestDeleteProvider:
                 "tasks.jobs.deletion.graph_database.drop_subgraph"
             ) as mock_drop_subgraph,
         ):
-            instance = providers_fixture[0]
+            instance = aws_provider
             tenant_id = str(instance.tenant_id)
             result = delete_provider(tenant_id, instance.id)
 
@@ -53,17 +53,19 @@ class TestDeleteProvider:
             mock_drop_subgraph.assert_not_called()
 
     def test_delete_provider_drops_temp_attack_paths_databases(
-        self, providers_fixture, create_attack_paths_scan
+        self, aws_provider, create_attack_paths_scan
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider
         tenant_id = str(instance.tenant_id)
 
         aps1 = create_attack_paths_scan(instance)
         aps2 = create_attack_paths_scan(instance)
+        backend = MagicMock()
 
         with (
             patch(
-                "tasks.jobs.deletion.graph_database.drop_subgraph",
+                "tasks.jobs.deletion.sink_module.get_backend_for_name",
+                return_value=backend,
             ),
             patch(
                 "tasks.jobs.deletion.graph_database.drop_database",
@@ -72,23 +74,68 @@ class TestDeleteProvider:
             result = delete_provider(tenant_id, instance.id)
 
         assert result
+        backend.drop_subgraph.assert_called_once_with(
+            graph_database.get_database_name(tenant_id), str(instance.id)
+        )
         expected_tmp_calls = [
             call(f"db-tmp-scan-{str(aps1.id).lower()}"),
             call(f"db-tmp-scan-{str(aps2.id).lower()}"),
         ]
         mock_drop_database.assert_has_calls(expected_tmp_calls, any_order=True)
 
-    def test_delete_provider_continues_when_temp_db_drop_fails(
-        self, providers_fixture, create_attack_paths_scan
+    def test_delete_provider_drops_graph_data_from_all_recorded_sinks(
+        self, aws_provider, create_attack_paths_scan
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider
         tenant_id = str(instance.tenant_id)
+        create_attack_paths_scan(instance, sink_backend="neo4j")
+        create_attack_paths_scan(instance, sink_backend="neptune")
+        neo4j_backend = MagicMock()
+        neptune_backend = MagicMock()
 
-        create_attack_paths_scan(instance)
+        def get_backend_for_name(name):
+            return {
+                "neo4j": neo4j_backend,
+                "neptune": neptune_backend,
+            }[name]
 
         with (
             patch(
-                "tasks.jobs.deletion.graph_database.drop_subgraph",
+                "tasks.jobs.deletion.graph_database.get_database_name",
+                return_value="tenant-db",
+            ),
+            patch(
+                "tasks.jobs.deletion.sink_module.get_backend_for_name",
+                side_effect=get_backend_for_name,
+            ) as mock_get_backend_for_name,
+            patch("tasks.jobs.deletion.graph_database.drop_database"),
+        ):
+            result = delete_provider(tenant_id, instance.id)
+
+        assert result
+        mock_get_backend_for_name.assert_has_calls(
+            [call("neo4j"), call("neptune")], any_order=True
+        )
+        neo4j_backend.drop_subgraph.assert_called_once_with(
+            "tenant-db", str(instance.id)
+        )
+        neptune_backend.drop_subgraph.assert_called_once_with(
+            "tenant-db", str(instance.id)
+        )
+
+    def test_delete_provider_continues_when_temp_db_drop_fails(
+        self, aws_provider, create_attack_paths_scan
+    ):
+        instance = aws_provider
+        tenant_id = str(instance.tenant_id)
+
+        create_attack_paths_scan(instance)
+        backend = MagicMock()
+
+        with (
+            patch(
+                "tasks.jobs.deletion.sink_module.get_backend_for_name",
+                return_value=backend,
             ),
             patch(
                 "tasks.jobs.deletion.graph_database.drop_database",
@@ -104,10 +151,10 @@ class TestDeleteProvider:
 
     def test_delete_provider_recalculates_tenant_compliance_summary(
         self,
-        providers_fixture,
+        aws_provider_pair,
         provider_compliance_scores_fixture,
     ):
-        instance = providers_fixture[0]
+        instance = aws_provider_pair[0]
         tenant_id = instance.tenant_id
 
         TenantComplianceSummary.objects.create(
@@ -152,7 +199,7 @@ class TestDeleteProvider:
 
 @pytest.mark.django_db
 class TestDeleteTenant:
-    def test_delete_tenant_success(self, tenants_fixture, providers_fixture):
+    def test_delete_tenant_success(self, tenants_fixture, aws_provider):
         """
         Test successful deletion of a tenant and its related data.
         """

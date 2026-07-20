@@ -1,6 +1,7 @@
 "use client";
 
 import { ProviderAccountSelectors } from "@/components/filters/provider-account-selectors";
+import { ProviderGroupSelector } from "@/components/filters/provider-group-selector";
 import {
   Select,
   SelectContent,
@@ -8,8 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/shadcn";
+import { isCloud } from "@/lib/shared/env";
 import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
-import { FilterType } from "@/types/filters";
+import type { ProviderGroup } from "@/types/components";
+import { FILTER_FIELD } from "@/types/filters";
 import type { ProviderProps } from "@/types/providers";
 
 import {
@@ -19,6 +22,7 @@ import {
 
 interface ScansFilterBarProps {
   providers: ProviderProps[];
+  providerGroups?: ProviderGroup[];
   activeTab: ScanJobsTab;
   scheduleType: string;
   scanStatus: string;
@@ -31,6 +35,7 @@ const filterItemClass = "w-full md:w-[calc(50%-0.375rem)] xl:w-60";
 
 export function ScansFilterBar({
   providers,
+  providerGroups = [],
   activeTab,
   scheduleType,
   scanStatus,
@@ -38,7 +43,7 @@ export function ScansFilterBar({
   onScheduleTypeChange,
   onScanStatusChange,
 }: ScansFilterBarProps) {
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
   const triggerFilterOptions = getScanTriggerFilterOptions(isCloudEnvironment);
   const statusFilterOptions = getScanStatusFilterOptions(activeTab);
   const showScheduleTypeFilter = activeTab !== SCAN_JOBS_TAB.SCHEDULED;
@@ -47,12 +52,19 @@ export function ScansFilterBar({
     <>
       <ProviderAccountSelectors
         providers={providers}
-        accountFilterKey={FilterType.PROVIDER}
+        accountFilterKey={FILTER_FIELD.PROVIDER}
         accountValue="id"
         paramsToDeleteOnChange={["page", "scanId"]}
         providerSelectorClassName={filterItemClass}
         accountSelectorClassName={filterItemClass}
       />
+
+      <div className={filterItemClass}>
+        <ProviderGroupSelector
+          groups={providerGroups}
+          paramsToDeleteOnChange={["page", "scanId"]}
+        />
+      </div>
 
       {showScheduleTypeFilter && (
         <Select value={scheduleType} onValueChange={onScheduleTypeChange}>

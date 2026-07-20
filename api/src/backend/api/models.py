@@ -757,6 +757,10 @@ class Scan(RowLevelSecurityProtectedModel):
 
 
 class AttackPathsScan(RowLevelSecurityProtectedModel):
+    class SinkBackendChoices(models.TextChoices):
+        NEO4J = "neo4j", "Neo4j"
+        NEPTUNE = "neptune", "Neptune"
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
@@ -804,6 +808,19 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    # True when the scan was synced with the current schema (list-typed
+    # properties materialised as child item nodes). False for pre-cutover scans
+    # still using the previous graph shape. Query catalog selection uses this
+    # flag; physical read routing uses sink_backend below.
+    # TODO: drop after Neptune cutover
+    is_migrated = models.BooleanField(default=False, db_default=False)
+    sink_backend = models.CharField(
+        choices=SinkBackendChoices.choices,
+        db_default=SinkBackendChoices.NEO4J,
+        default=SinkBackendChoices.NEO4J,
+        max_length=16,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "attack_paths_scans"

@@ -27,7 +27,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
 }));
 
@@ -332,7 +333,7 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
     );
   });
 

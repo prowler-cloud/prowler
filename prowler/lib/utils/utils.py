@@ -9,52 +9,116 @@ except ImportError:
     pass
 
 import re
+import shutil
+import subprocess
 import sys
 import tempfile
 from datetime import datetime
-from hashlib import sha512
+from functools import lru_cache
+from hashlib import sha1, sha512
 from io import TextIOWrapper
 from ipaddress import ip_address
 from os.path import exists
 from time import mktime
-from typing import Any, Optional
+from typing import Any, Iterable, Mapping, Optional, Union
 
 from colorama import Style
-from detect_secrets import SecretsCollection
-from detect_secrets.settings import transient_settings
 
 from prowler.config.config import encoding_format_utf_8
 from prowler.lib.logger import logger
 
-default_detect_secrets_plugins = [
-    {"name": "ArtifactoryDetector"},
-    {"name": "AWSKeyDetector"},
-    {"name": "AzureStorageKeyDetector"},
-    {"name": "BasicAuthDetector"},
-    {"name": "CloudantDetector"},
-    {"name": "DiscordBotTokenDetector"},
-    {"name": "GitHubTokenDetector"},
-    {"name": "GitLabTokenDetector"},
-    {"name": "Base64HighEntropyString", "limit": 6.0},
-    {"name": "HexHighEntropyString", "limit": 3.0},
-    {"name": "IbmCloudIamDetector"},
-    {"name": "IbmCosHmacDetector"},
-    # {"name": "IPPublicDetector"}, https://github.com/Yelp/detect-secrets/pull/885
-    {"name": "JwtTokenDetector"},
-    {"name": "KeywordDetector"},
-    {"name": "MailchimpDetector"},
-    {"name": "NpmDetector"},
-    {"name": "OpenAIDetector"},
-    {"name": "PrivateKeyDetector"},
-    {"name": "PypiTokenDetector"},
-    {"name": "SendGridDetector"},
-    {"name": "SlackDetector"},
-    {"name": "SoftlayerDetector"},
-    {"name": "SquareOAuthDetector"},
-    {"name": "StripeDetector"},
-    # {"name": "TelegramBotTokenDetector"}, https://github.com/Yelp/detect-secrets/pull/878
-    {"name": "TwilioKeyDetector"},
-]
+# Default minimum confidence level for reporting findings. "low" is required to
+# enable Kingfisher's built-in generic rules (Generic Password / Secret / API
+# Key), which preserve the keyword-based coverage Prowler had with
+# detect-secrets' KeywordDetector; at "medium" those generic rules do not fire.
+# Possible values: "low", "medium", "high".
+default_secrets_confidence = "low"
+
+# Kingfisher exit codes considered successful: 0 (no findings), 200 (findings),
+# 205 (validated findings).
+_kingfisher_success_exit_codes = (0, 200, 205)
+
+# Number of payloads scanned per Kingfisher invocation in batch mode. Bounds
+# peak temp-disk and memory while still amortizing the per-process spawn cost
+# across many fragments (see detect_secrets_scan_batch).
+default_secrets_batch_chunk_size = 500
+
+# Wall-clock cap (seconds) for a single Kingfisher subprocess, so a hung binary
+# cannot block the audit indefinitely.
+default_secrets_scan_timeout = 300
+
+
+class SecretsScanError(Exception):
+    """The secret scanner could not produce a trustworthy result.
+
+    Raised when Kingfisher exits with a non-success code, times out, cannot be
+    located/executed, or returns output that cannot be parsed. This is distinct
+    from "no secrets found": a security check must never treat a scanner failure
+    as a clean result, so callers are expected to surface it as ``MANUAL``
+    (manual review required) instead of ``PASS``.
+    """
+
+
+@lru_cache(maxsize=1)
+def get_kingfisher_binary() -> str:
+    """Return the path to the bundled Kingfisher binary (cached)."""
+    from kingfisher import get_binary_path
+
+    return get_binary_path()
+
+
+def _build_kingfisher_command(
+    scan_paths: list,
+    output_path: str,
+    confidence: str,
+    validate: bool,
+    no_dedup: bool = False,
+) -> list:
+    """Build the Kingfisher ``scan`` command shared by single and batch scans."""
+    command = [
+        get_kingfisher_binary(),
+        "scan",
+        *scan_paths,
+        "--format",
+        "json",
+        "--output",
+        output_path,
+        "--no-update-check",
+        "--confidence",
+        confidence,
+    ]
+    if validate:
+        # Live-validate discovered secrets against provider APIs. Use
+        # conservative defaults (short timeout, no retries) to limit the blast
+        # radius of the outbound calls.
+        command += ["--validation-timeout", "5", "--validation-retries", "0"]
+    else:
+        command.append("--no-validate")
+    if no_dedup:
+        # Report every occurrence (one per file) so batched results match
+        # scanning each payload individually.
+        command.append("--no-dedup")
+    return command
+
+
+def _finding_to_dict(entry: dict, fallback_filename: str) -> dict:
+    """Convert a Kingfisher finding entry into Prowler's finding dict shape."""
+    rule = entry.get("rule", {})
+    finding = entry.get("finding", {})
+    snippet = finding.get("snippet", "") or ""
+    return {
+        "filename": finding.get("path", fallback_filename),
+        "line_number": finding.get("line"),
+        "type": rule.get("name"),
+        # Non-security identifier for the matched secret (matches the
+        # detect-secrets output shape); not used for security.
+        "hashed_secret": (
+            sha1(snippet.encode(), usedforsecurity=False).hexdigest()
+            if snippet
+            else None
+        ),
+        "is_verified": finding.get("validation", {}).get("status") == "Active",
+    }
 
 
 def open_file(input_file: str, mode: str = "r") -> TextIOWrapper:
@@ -111,77 +175,188 @@ def hash_sha512(string: str) -> str:
     return sha512(string.encode(encoding_format_utf_8)).hexdigest()[0:9]
 
 
-def detect_secrets_scan(
-    data: str = None,
-    file=None,
-    excluded_secrets: list[str] = None,
-    detect_secrets_plugins: dict = None,
-) -> list[dict[str, str]]:
-    """detect_secrets_scan scans the data or file for secrets using the detect-secrets library.
-    Args:
-        data (str): The data to scan for secrets.
-        file (str): The file to scan for secrets.
-        excluded_secrets (list): A list of regex patterns to exclude from the scan.
-        detect_secrets_plugins (dict): The settings to use for the scan.
-    Returns:
-        dict: The secrets found in the
-    Raises:
-        Exception: If an error occurs during the scan.
-    Examples:
-        >>> detect_secrets_scan(data="password=password")
-        [{'filename': 'data', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]
-        >>> detect_secrets_scan(file="file.txt")
-        {'file.txt': [{'filename': 'file.txt', 'hashed_secret': 'f7c3bc1d808e04732adf679965ccc34ca7ae3441', 'is_verified': False, 'line_number': 1, 'type': 'Secret Keyword'}]}
+def _scan_batch_chunk(
+    chunk: list,
+    excluded_secrets: list,
+    confidence: str,
+    validate: bool,
+    results: dict,
+) -> None:
+    """Scan one chunk of ``(key, data)`` payloads in a single Kingfisher call.
+
+    Writes each payload to its own file in a temp directory, scans the whole
+    directory once (``--no-dedup`` so per-file results match individual scans),
+    maps findings back to their key by file path, and appends them to
+    ``results``. The temp directory is always removed.
     """
+    if not chunk:
+        return
+    tmp_dir = tempfile.mkdtemp()
+    temp_output_file = None
     try:
-        if not file:
-            temp_data_file = tempfile.NamedTemporaryFile(delete=False)
-            temp_data_file.write(bytes(data, encoding="raw_unicode_escape"))
-            temp_data_file.close()
+        index_to_key = {}
+        for index, (key, data) in enumerate(chunk):
+            content = data if data.endswith("\n") else data + "\n"
+            name = str(index)
+            with open(os.path.join(tmp_dir, name), "wb") as fh:
+                fh.write(bytes(content, encoding="raw_unicode_escape"))
+            index_to_key[name] = key
 
-        secrets = SecretsCollection()
-
-        if not detect_secrets_plugins:
-            detect_secrets_plugins = default_detect_secrets_plugins
-
-        settings = {
-            "plugins_used": detect_secrets_plugins,
-            "filters_used": [
-                {"path": "detect_secrets.filters.common.is_invalid_file"},
-                {"path": "detect_secrets.filters.common.is_known_false_positive"},
-                {"path": "detect_secrets.filters.heuristic.is_likely_id_string"},
-                {"path": "detect_secrets.filters.heuristic.is_potential_secret"},
-            ],
-        }
-
-        if excluded_secrets and len(excluded_secrets) > 0:
-            settings["filters_used"].append(
-                {
-                    "path": "detect_secrets.filters.regex.should_exclude_line",
-                    "pattern": excluded_secrets,
-                }
+        temp_output_file = tempfile.NamedTemporaryFile(delete=False, suffix=".json")
+        temp_output_file.close()
+        command = _build_kingfisher_command(
+            [tmp_dir], temp_output_file.name, confidence, validate, no_dedup=True
+        )
+        process = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=default_secrets_scan_timeout,
+        )
+        if process.returncode not in _kingfisher_success_exit_codes:
+            raise SecretsScanError(
+                f"Kingfisher exited with code {process.returncode}: "
+                f"{process.stderr.strip()[:500]}"
             )
-        with transient_settings(settings):
-            if file:
-                secrets.scan_file(file)
-            else:
-                secrets.scan_file(temp_data_file.name)
 
-        if not file:
-            os.remove(temp_data_file.name)
+        with open(temp_output_file.name, encoding=encoding_format_utf_8) as f:
+            output = f.read()
+        kingfisher_output = json.loads(output) if output.strip() else {}
 
-        detect_secrets_output = secrets.json()
+        source_lines_cache = {}
 
-        if detect_secrets_output:
-            if file:
-                return detect_secrets_output[file]
-            else:
-                return detect_secrets_output[temp_data_file.name]
-        else:
-            return None
-    except Exception as e:
-        logger.error(f"Error scanning for secrets: {e}")
-        return None
+        def source_lines(file_name: str) -> list:
+            if file_name not in source_lines_cache:
+                with open(
+                    os.path.join(tmp_dir, file_name),
+                    encoding=encoding_format_utf_8,
+                    errors="replace",
+                ) as f:
+                    source_lines_cache[file_name] = f.read().splitlines()
+            return source_lines_cache[file_name]
+
+        for entry in kingfisher_output.get("findings", []):
+            finding = entry.get("finding", {})
+            name = os.path.basename(finding.get("path", ""))
+            key = index_to_key.get(name)
+            if key is None:
+                continue
+            # Validate the line index before any consumer trusts it. Checks use
+            # ``line_number`` as a 1-based index into their own parallel data
+            # (e.g. CloudWatch does ``events[line_number - 1]``), so a missing,
+            # non-integer, or out-of-range line would crash the check or map the
+            # secret to the wrong resource. Fail closed: surface a malformed
+            # finding as a scan failure so callers report MANUAL instead of a
+            # wrong PASS/FAIL. ``bool`` is rejected explicitly because it is a
+            # subclass of ``int``.
+            line_number = finding.get("line")
+            lines = source_lines(name)
+            if (
+                isinstance(line_number, bool)
+                or not isinstance(line_number, int)
+                or not 1 <= line_number <= len(lines)
+            ):
+                raise SecretsScanError(
+                    f"Kingfisher returned an invalid line number "
+                    f"{line_number!r} for a finding in {name}"
+                )
+            if excluded_secrets and any(
+                re.search(pattern, lines[line_number - 1])
+                for pattern in excluded_secrets
+            ):
+                continue
+            results.setdefault(key, []).append(_finding_to_dict(entry, name))
+    except SecretsScanError:
+        # Already a typed scan failure; propagate so callers report MANUAL.
+        raise
+    except subprocess.TimeoutExpired as error:
+        raise SecretsScanError(
+            f"Kingfisher timed out after {default_secrets_scan_timeout}s "
+            "while scanning for secrets"
+        ) from error
+    except Exception as error:
+        # Fail closed: a missing/unexecutable binary, unparseable JSON output or
+        # any other runtime failure must NOT be silently treated as "no secrets
+        # found". Surface it so callers can report MANUAL instead of PASS.
+        raise SecretsScanError(f"Secret scan failed: {error}") from error
+    finally:
+        if temp_output_file and os.path.exists(temp_output_file.name):
+            os.remove(temp_output_file.name)
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+
+def detect_secrets_scan_batch(
+    payloads: Union[Mapping[Any, str], Iterable[tuple[Any, str]]],
+    excluded_secrets: Optional[list[str]] = None,
+    confidence: str = default_secrets_confidence,
+    validate: bool = False,
+    chunk_size: int = default_secrets_batch_chunk_size,
+) -> dict:
+    """Scan many payloads with Kingfisher in chunked subprocess invocations.
+
+    This is the scan entry point used by every secret check. Each payload is
+    written to its own file and scanned with ``--no-dedup`` so per-payload
+    results match scanning each payload on its own. Payloads are processed in
+    chunks (writing each to disk and releasing it as it is consumed) to bound
+    peak temp-disk and memory use while amortizing the per-process spawn cost
+    across many fragments.
+
+    By default the scan runs fully offline (``--no-validate``,
+    ``--no-update-check``): no network calls are made, so the scanned data is
+    never sent anywhere. When ``validate`` is True, Kingfisher additionally
+    checks whether each discovered secret is live by authenticating with it
+    against the provider's API (the secret itself is the credential; no extra
+    permissions are required). That makes outbound network calls, so it must be
+    explicitly opted in.
+
+    Args:
+        payloads: a mapping ``{key: data}`` or any iterable of ``(key, data)``
+            pairs. ``key`` is any hashable the caller uses to map findings back
+            to its source (e.g. a variable name or a ``(resource, stream)``).
+        excluded_secrets (list): regex patterns; a finding whose source line
+            matches one is excluded.
+        confidence (str): minimum Kingfisher confidence ("low"/"medium"/"high").
+        validate (bool): live-validate discovered secrets (outbound calls).
+        chunk_size (int): payloads scanned per Kingfisher invocation.
+    Returns:
+        dict mapping each key that produced findings to its list of finding
+        dicts, each with ``filename``, ``line_number``, ``type``,
+        ``hashed_secret`` and ``is_verified`` keys. Keys with no findings are
+        omitted.
+    Raises:
+        SecretsScanError: if the scanner fails for any chunk (non-success exit
+            code, timeout, missing/unexecutable binary or unparseable output).
+            An empty result is therefore always "no secrets found", never a
+            silent scan failure; callers must report MANUAL on this error.
+    """
+    items = payloads.items() if hasattr(payloads, "items") else payloads
+    results = {}
+    chunk = []
+    for key, data in items:
+        chunk.append((key, data))
+        if len(chunk) >= chunk_size:
+            _scan_batch_chunk(chunk, excluded_secrets, confidence, validate, results)
+            chunk = []
+    _scan_batch_chunk(chunk, excluded_secrets, confidence, validate, results)
+    return results
+
+
+def annotate_verified_secrets(report, secrets: list) -> None:
+    """Escalate and annotate a finding when any of its secrets is confirmed live.
+
+    When secret validation (``--scan-secrets-validate`` / ``secrets_validate``)
+    confirms that a discovered secret is live, the finding is more severe than a
+    potential secret: its severity is raised to critical and a note is appended
+    to ``status_extended``. No-op when no secret was validated as live, so the
+    default offline behavior (and existing finding messages) is unchanged.
+    """
+    if secrets and any(secret.get("is_verified") for secret in secrets):
+        from prowler.lib.check.models import Severity
+
+        report.check_metadata.Severity = Severity.critical
+        report.status_extended += (
+            " One or more of these secrets were confirmed to be live."
+        )
 
 
 def validate_ip_address(ip_string):

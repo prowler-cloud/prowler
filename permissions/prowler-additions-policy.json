@@ -4,6 +4,8 @@
     {
       "Action": [
         "account:Get*",
+        "amplify:ListApps",
+        "amplify:ListBranches",
         "appstream:Describe*",
         "appstream:List*",
         "backup:List*",
@@ -15,6 +17,9 @@
         "codebuild:BatchGet*",
         "codebuild:ListReportGroups",
         "cognito-idp:GetUserPoolMfaConfig",
+        "datapipeline:DescribePipelines",
+        "datapipeline:GetPipelineDefinition",
+        "datapipeline:ListPipelines",
         "dlm:Get*",
         "drs:Describe*",
         "ds:Get*",
@@ -39,6 +44,8 @@
         "rolesanywhere:ListTagsForResource",
         "rolesanywhere:ListTrustAnchors",
         "s3:GetAccountPublicAccessBlock",
+        "s3:GetObjectAcl",
+        "s3:ListBucket",
         "shield:DescribeProtection",
         "shield:GetSubscriptionState",
         "securityhub:BatchImportFindings",

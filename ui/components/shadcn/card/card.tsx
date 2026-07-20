@@ -28,6 +28,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       sm: "px-3 py-2",
       md: "px-4 py-3",
       lg: "px-5 py-4",
+      xl: "p-8",
       none: "p-0",
     },
   },
@@ -78,7 +79,7 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card-header"
       className={cn(
-        "@container/card-header mb-6 grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
+        "@container/card-header grid auto-rows-min grid-rows-[auto_auto] items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] [.border-b]:pb-6",
         className,
       )}
       {...props}

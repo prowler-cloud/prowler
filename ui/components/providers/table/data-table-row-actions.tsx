@@ -6,6 +6,7 @@ import {
   KeyRound,
   Pencil,
   Rocket,
+  SlidersHorizontal,
   Timer,
   Trash2,
 } from "lucide-react";
@@ -25,19 +26,20 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownDangerZone,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import { isConfigurableProvider } from "@/types/providers";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -45,6 +47,11 @@ import {
   ProvidersOrganizationRow,
   ProvidersTableRow,
 } from "@/types/providers-table";
+import {
+  SCAN_CONFIGURATION_LIST_STATUS,
+  ScanConfigurationData,
+  type ScanConfigurationListStatus,
+} from "@/types/scan-configurations";
 import {
   SCAN_SCHEDULE_CAPABILITY,
   type ScanScheduleCapability,
@@ -55,6 +62,7 @@ import {
 import { DeleteForm } from "../forms/delete-form";
 import { DeleteOrganizationForm } from "../forms/delete-organization-form";
 import { EditNameForm } from "../forms/edit-name-form";
+import { ManageScanConfigModal } from "../scan-config/manage-scan-config-modal";
 
 interface DataTableRowActionsProps {
   row: Row<ProvidersTableRow>;
@@ -72,6 +80,13 @@ interface DataTableRowActionsProps {
   onClearSelection: () => void;
   onOpenProviderWizard: (initialData?: ProviderWizardInitialData) => void;
   onOpenOrganizationWizard: (initialData: OrgWizardInitialData) => void;
+  /**
+   * All scan configurations in the tenant, used to associate/disassociate this
+   * provider's config from the row menu (Cloud-only feature). Empty in OSS.
+   */
+  scanConfigs?: ScanConfigurationData[];
+  scanConfigStatus?: ScanConfigurationListStatus;
+  currentScanConfigId?: string | null;
   /**
    * Schedule capability override. Absent in OSS (defaults to a Cloud-vs-non-Cloud
    * decision). The prowler-cloud overlay injects a billing-aware capability so
@@ -271,6 +286,9 @@ export function DataTableRowActions({
   onClearSelection,
   onOpenProviderWizard,
   onOpenOrganizationWizard,
+  scanConfigs = [],
+  scanConfigStatus = SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+  currentScanConfigId = null,
   capability,
 }: DataTableRowActionsProps) {
   const canEditSchedule =
@@ -282,6 +300,7 @@ export function DataTableRowActions({
     kind: EDIT_SCAN_SCHEDULE_STATE.LOADING,
   });
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isScanConfigOpen, setIsScanConfigOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -290,11 +309,21 @@ export function DataTableRowActions({
   const isOrganizationRow = isProvidersOrganizationRow(rowData);
   const provider = isOrganizationRow ? null : rowData;
   const providerId = provider?.id ?? "";
-  const providerType = provider?.attributes.provider ?? "aws";
+  const providerType = provider?.attributes.provider ?? "";
+  // Only predefined providers can manage credentials from the UI
+  const canManageCredentials = isConfigurableProvider(providerType);
   const providerUid = provider?.attributes.uid ?? "";
   const providerAlias = provider?.attributes.alias ?? null;
   const providerSecretId = provider?.relationships.secret.data?.id ?? null;
   const hasSecret = Boolean(provider?.relationships.secret.data);
+  const isCloudProvider = isCloud() && Boolean(provider);
+  // Dynamic providers have no config.yaml baseline, so a Scan Configuration
+  // can't apply to them — hide the action entirely.
+  const isDynamicProvider = Boolean(provider?.attributes.is_dynamic);
+  const canManageScanConfig =
+    isCloudProvider &&
+    !isDynamicProvider &&
+    scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE;
   const scheduleProvider: ScanScheduleProvider | undefined = provider
     ? {
         providerId,
@@ -548,6 +577,17 @@ export function DataTableRowActions({
         provider={scheduleProvider}
         state={scheduleState}
       />
+      {canManageScanConfig && provider && (
+        <ManageScanConfigModal
+          open={isScanConfigOpen}
+          onOpenChange={setIsScanConfigOpen}
+          providerId={providerId}
+          providerLabel={providerAlias || providerUid}
+          scanConfigs={scanConfigs}
+          currentConfigId={currentScanConfigId}
+          onSaved={() => router.refresh()}
+        />
+      )}
       <div className="relative flex items-center justify-end gap-2">
         <ActionDropdown>
           <ActionDropdownItem
@@ -575,22 +615,41 @@ export function DataTableRowActions({
               onSelect={() => void openScheduleEditor()}
             />
           )}
-          <ActionDropdownItem
-            icon={<KeyRound />}
-            label={hasSecret ? "Update Credentials" : "Add Credentials"}
-            onSelect={() =>
-              onOpenProviderWizard({
-                providerId,
-                providerType,
-                providerUid,
-                providerAlias,
-                secretId: providerSecretId,
-                mode: providerSecretId
-                  ? PROVIDER_WIZARD_MODE.UPDATE
-                  : PROVIDER_WIZARD_MODE.ADD,
-              })
-            }
-          />
+          {canManageScanConfig && (
+            <ActionDropdownItem
+              icon={<SlidersHorizontal />}
+              label="Edit Scan Configuration"
+              onSelect={() => setIsScanConfigOpen(true)}
+            />
+          )}
+          {isCloudProvider &&
+            !isDynamicProvider &&
+            scanConfigStatus === SCAN_CONFIGURATION_LIST_STATUS.UNAVAILABLE && (
+              <ActionDropdownItem
+                icon={<SlidersHorizontal />}
+                label="Scan Configuration unavailable"
+                description="Try again later."
+                disabled
+              />
+            )}
+          {canManageCredentials && (
+            <ActionDropdownItem
+              icon={<KeyRound />}
+              label={hasSecret ? "Update Credentials" : "Add Credentials"}
+              onSelect={() =>
+                onOpenProviderWizard({
+                  providerId,
+                  providerType,
+                  providerUid,
+                  providerAlias,
+                  secretId: providerSecretId,
+                  mode: providerSecretId
+                    ? PROVIDER_WIZARD_MODE.UPDATE
+                    : PROVIDER_WIZARD_MODE.ADD,
+                })
+              }
+            />
+          )}
           <ActionDropdownItem
             icon={<Rocket />}
             label={loading ? "Testing..." : "Test Connection"}

@@ -18,6 +18,10 @@ const schedulesActionsMock = vi.hoisted(() => ({
   getSchedules: vi.fn(),
 }));
 
+const manageGroupsActionsMock = vi.hoisted(() => ({
+  getAllProviderGroups: vi.fn(),
+}));
+
 vi.mock("@/actions/providers", () => providersActionsMock);
 vi.mock(
   "@/actions/organizations/organizations",
@@ -25,6 +29,7 @@ vi.mock(
 );
 vi.mock("@/actions/scans", () => scansActionsMock);
 vi.mock("@/actions/schedules", () => schedulesActionsMock);
+vi.mock("@/actions/manage-groups/manage-groups", () => manageGroupsActionsMock);
 
 import { SearchParamsProps } from "@/types";
 import { ProvidersApiResponse } from "@/types/providers";
@@ -57,6 +62,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "111111111111",
         alias: "AWS App Account",
         status: "completed",
@@ -102,6 +108,7 @@ const providersResponse: ProvidersApiResponse = {
       type: "providers",
       attributes: {
         provider: "aws",
+        is_dynamic: false,
         uid: "222222222222",
         alias: "Standalone Account",
         status: "completed",
