@@ -393,7 +393,7 @@ describe("DataTableRowActions", () => {
 
   it("opens Edit Scan Schedule for Prowler Cloud subscribed provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -420,7 +420,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Schedule for manual-only Cloud provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -445,7 +445,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Schedule for blocked Cloud provider rows", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -470,7 +470,7 @@ describe("DataTableRowActions", () => {
 
   it("opens scan config management with the precomputed current config id", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -500,7 +500,7 @@ describe("DataTableRowActions", () => {
 
   it("shows scan config management as unavailable when scan configs failed to load", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
@@ -528,7 +528,7 @@ describe("DataTableRowActions", () => {
 
   it("hides Edit Scan Configuration for dynamic providers in Prowler Cloud", async () => {
     // Given a dynamic provider in a Cloud tenant with scan configs available.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
     render(
