@@ -79,6 +79,7 @@ ENV HOSTNAME="0.0.0.0"
 # Helm/K8s):
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
+#   - optional: UI_CLOUD_ENABLED ("true" only in Prowler Cloud deployments)
 #   - gated integrations (load only when *_ENABLED="true"; the value is then
 #     required or boot fails). Legacy names (NEXT_PUBLIC_*, POSTHOG_KEY/HOST)
 #     still activate without the flag:
