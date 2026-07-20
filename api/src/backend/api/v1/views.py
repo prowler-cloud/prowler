@@ -124,7 +124,12 @@ from api.models import (
     UserRoleRelationship,
 )
 from api.pagination import ComplianceOverviewPagination
-from api.rbac.permissions import Permissions, get_providers, get_role
+from api.rbac.permissions import (
+    Permissions,
+    get_integrations,
+    get_providers,
+    get_role,
+)
 from api.renderers import APIJSONRenderer, PlainTextRenderer
 from api.rls import Tenant
 from api.utils import (
@@ -281,6 +286,7 @@ from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils.dateparse import parse_date
 from django.utils.decorators import method_decorator
+from django.utils.functional import cached_property
 from django.views.decorators.cache import cache_control
 from django_celery_beat.models import PeriodicTask
 from drf_spectacular.settings import spectacular_settings
@@ -6652,27 +6658,34 @@ class ScheduleViewSet(BaseRLSViewSet):
     list=extend_schema(
         tags=["Integration"],
         summary="List all integrations",
-        description="Retrieve a list of all configured integrations with options for filtering by various criteria.",
+        description="Retrieve a list of all configured integrations with options for filtering by various criteria.\n\n"
+        "Integrations attached to one or more providers are only returned when the role can access at least one of "
+        "those providers, and each integration lists only the providers visible to the role. Integrations not "
+        "attached to any provider, such as Jira, are tenant-wide and are returned for every role.",
     ),
     retrieve=extend_schema(
         tags=["Integration"],
         summary="Retrieve integration details",
-        description="Fetch detailed information about a specific integration by its ID.",
+        description="Fetch detailed information about a specific integration by its ID. Integrations outside the "
+        "provider visibility of the role are reported the same way as one that does not exist.",
     ),
     create=extend_schema(
         tags=["Integration"],
         summary="Create a new integration",
-        description="Register a new integration with the system, providing necessary configuration details.",
+        description="Register a new integration with the system, providing necessary configuration details. Only "
+        "providers visible to the role can be attached to the integration.",
     ),
     partial_update=extend_schema(
         tags=["Integration"],
         summary="Partially update an integration",
-        description="Modify certain fields of an existing integration without affecting other settings.",
+        description="Modify certain fields of an existing integration without affecting other settings. Replacing "
+        "the attached providers only affects the ones visible to the role.",
     ),
     destroy=extend_schema(
         tags=["Integration"],
         summary="Delete an integration",
-        description="Remove an integration from the system by its ID.",
+        description="Remove an integration from the system by its ID. Integrations attached to providers outside "
+        "the visibility of the role cannot be deleted by it.",
     ),
 )
 @method_decorator(CACHE_DECORATOR, name="list")
@@ -6685,18 +6698,27 @@ class IntegrationViewSet(BaseRLSViewSet):
     ordering = ["integration_type", "-inserted_at"]
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_INTEGRATIONS]
-    allowed_providers = None
+
+    @cached_property
+    def allowed_providers(self):
+        """
+        Providers the role can access, or None when it has unlimited visibility.
+
+        Resolved per request and independently of the action, so that writes are scoped
+        as tightly as reads.
+        """
+        if self.user_role.unlimited_visibility:
+            return None
+        return get_providers(self.user_role)
 
     def get_queryset(self):
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
-            # User has unlimited visibility, return all integrations
-            queryset = Integration.objects.filter(tenant_id=self.request.tenant_id)
-        else:
-            # User lacks permission, filter providers based on provider groups associated with the role
-            allowed_providers = get_providers(user_roles)
-            queryset = Integration.objects.filter(providers__in=allowed_providers)
-            self.allowed_providers = allowed_providers
+        queryset = get_integrations(self.user_role)
+        if self.allowed_providers is not None and self.action in ("list", "retrieve"):
+            # Restrict the relationship itself, so that the providers hidden to the role
+            # are left out of the sideloaded resources of `?include=providers` too
+            queryset = queryset.prefetch_related(
+                Prefetch("providers", queryset=self.allowed_providers)
+            )
         return queryset
 
     def get_serializer_class(self):
@@ -6711,16 +6733,31 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
+    def perform_destroy(self, instance):
+        # Deleting is not a way around the provider scoping applied when updating: an
+        # integration shared with providers hidden to the role cannot be removed by it
+        if (
+            self.allowed_providers is not None
+            and instance.providers.exclude(
+                id__in=self.allowed_providers.values("id")
+            ).exists()
+        ):
+            raise PermissionDenied(
+                "The integration is attached to providers outside the visibility of your role."
+            )
+        super().perform_destroy(instance)
+
     @extend_schema(
         tags=["Integration"],
         summary="Check integration connection",
-        description="Try to verify integration connection",
+        description="Try to verify integration connection. Integrations outside the provider visibility of the role "
+        "are reported the same way as one that does not exist.",
         request=None,
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Integration, pk=pk)
+        get_object_or_404(self.get_queryset(), pk=pk)
         with transaction.atomic():
             task = check_integration_connection_task.delay(
                 integration_id=pk, tenant_id=self.request.tenant_id
@@ -6743,7 +6780,8 @@ class IntegrationViewSet(BaseRLSViewSet):
         tags=["Integration"],
         summary="Send findings to a Jira integration",
         description="Send a set of filtered findings to the given integration. At least one finding filter must be "
-        "provided.\n\n"
+        "provided. Jira integrations are tenant-wide and do not require unlimited visibility, while the findings "
+        "sent are limited to the providers the role can access.\n\n"
         "## Known Limitations\n\n"
         "### Issue Types with Required Custom Fields\n\n"
         "Certain Jira issue types (such as Epic) may require mandatory custom fields that Prowler does not "
@@ -6788,23 +6826,23 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
         return super().get_filter_backends()
 
     def get_queryset(self):
-        tenant_id = self.request.tenant_id
-        user_roles = get_role(self.request.user, self.request.tenant_id)
-        if user_roles.unlimited_visibility:
+        if self.user_role.unlimited_visibility:
             # User has unlimited visibility, return all findings
-            queryset = Finding.all_objects.filter(tenant_id=tenant_id)
-        else:
-            # User lacks permission, filter findings based on provider groups associated with the role
-            queryset = Finding.all_objects.filter(
-                scan__provider__in=get_providers(user_roles)
-            )
+            return Finding.all_objects.filter(tenant_id=self.request.tenant_id)
+        # Findings are limited to the providers the role can access
+        return Finding.all_objects.filter(
+            scan__provider__in=get_providers(self.user_role)
+        )
 
-        return queryset
+    def get_integration(self, integration_pk):
+        """Retrieve the integration, honoring the provider visibility of the user's role."""
+        return get_object_or_404(get_integrations(self.user_role), pk=integration_pk)
 
     @extend_schema(
         tags=["Integration"],
         summary="Get available issue types for a Jira project",
-        description="Fetch the available issue types from Jira for a given project key and update the integration configuration.",
+        description="Fetch the available issue types from Jira for a given project key and update the integration "
+        "configuration. Jira integrations are tenant-wide and do not require unlimited visibility.",
         parameters=[
             OpenApiParameter(
                 name="project_key",
@@ -6817,7 +6855,7 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
     )
     @action(detail=False, methods=["get"], url_name="issue-types")
     def issue_types(self, request, integration_pk=None):
-        integration = get_object_or_404(Integration, pk=integration_pk)
+        integration = self.get_integration(integration_pk)
 
         project_key = request.query_params.get("project_key")
         if not project_key:
@@ -6862,16 +6900,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
 
     @action(detail=False, methods=["post"], url_name="dispatches")
     def dispatches(self, request, integration_pk=None):
-        get_object_or_404(Integration, pk=integration_pk)
+        self.get_integration(integration_pk)
         serializer = self.get_serializer(
             data=request.data, context={"integration_id": integration_pk}
         )
         serializer.is_valid(raise_exception=True)
-
-        if self.filter_queryset(self.get_queryset()).count() == 0:
-            raise ValidationError(
-                {"findings": "No findings match the provided filters"}
-            )
 
         finding_ids = [
             str(finding_id)
@@ -6879,6 +6912,11 @@ class IntegrationJiraViewSet(BaseRLSViewSet):
                 "id", flat=True
             )
         ]
+        if not finding_ids:
+            raise ValidationError(
+                {"findings": "No findings match the provided filters"}
+            )
+
         project_key = serializer.validated_data["project_key"]
         issue_type = serializer.validated_data["issue_type"]
 

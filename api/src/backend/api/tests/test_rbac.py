@@ -3,6 +3,8 @@ from unittest.mock import ANY, Mock, patch
 
 import pytest
 from api.models import (
+    Integration,
+    IntegrationProviderRelationship,
     Membership,
     ProviderGroup,
     ProviderGroupMembership,
@@ -680,6 +682,343 @@ class TestLimitedVisibility:
         assert (
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
+
+    @pytest.fixture
+    def jira_integration(self, tenants_fixture):
+        # Jira is a tenant-wide integration: it is not attached to any provider
+        return Integration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"projects": {"TEST": "Test project"}},
+            credentials={
+                "domain": "test",
+                "user_mail": "a@b.com",
+                "api_token": "token",
+            },
+        )
+
+    @pytest.fixture
+    def out_of_scope_integration(self, tenants_fixture, provider_factory):
+        tenant_id = tenants_fixture[0].id
+        integration = Integration.objects.create(
+            tenant_id=tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            configuration={
+                "bucket_name": "bucket",
+                "output_directory": "output",
+            },
+            credentials={"aws_access_key_id": "key"},
+        )
+        IntegrationProviderRelationship.objects.create(
+            tenant_id=tenant_id,
+            integration=integration,
+            provider=provider_factory(),
+        )
+        return integration
+
+    def test_integrations_list_includes_tenant_wide_integration(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration,
+        aws_provider_pair,
+    ):
+        # Integration 2 is attached to both providers, so make both visible to the role
+        # to assert the provider join does not duplicate it in the listing
+        ProviderGroupMembership.objects.create(
+            tenant_id=aws_provider_pair[1].tenant_id,
+            provider=aws_provider_pair[1],
+            provider_group=ProviderGroup.objects.get(name="limited_visibility_group"),
+        )
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        # The tenant-wide Jira integration is visible without unlimited visibility
+        assert str(jira_integration.id) in integration_ids
+        # Integrations attached to more than one visible provider are not duplicated
+        assert integration_ids.count(str(integrations_fixture[1].id)) == 1
+        assert response.json()["meta"]["pagination"]["count"] == len(integration_ids)
+
+    def test_integrations_list_without_provider_groups_keeps_tenant_wide_integration(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+    ):
+        # A role with no provider group at all sees no provider, but still needs Jira
+        RoleProviderGroupRelationship.objects.all().delete()
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert integration_ids == [str(jira_integration.id)]
+
+    def test_integrations_include_providers_hides_out_of_scope_providers(
+        self, authenticated_client_rbac_limited, integrations_fixture, aws_provider_pair
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        hidden_provider = aws_provider_pair[1]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"include": "providers"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        included_ids = {item["id"] for item in response.json().get("included", [])}
+        assert str(aws_provider_pair[0].id) in included_ids
+        # Sideloaded resources must not disclose the provider the role cannot see
+        assert str(hidden_provider.id) not in included_ids
+
+    def test_integrations_list_with_sparse_fields(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"fields[integrations]": "enabled"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert all(
+            list(item["attributes"].keys()) == ["enabled"]
+            for item in response.json()["data"]
+        )
+
+    def test_integrations_list_excludes_out_of_scope_integration(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert str(out_of_scope_integration.id) not in integration_ids
+
+    def test_integration_detail_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-detail", kwargs={"pk": out_of_scope_integration.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_connection_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-connection", kwargs={"pk": out_of_scope_integration.id}
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_update_hides_out_of_scope_providers(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        # Integration 2 is related to provider1 and provider2, this user cannot see provider2
+        integration = integrations_fixture[1]
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "enabled": False,
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert integration.providers.count() == 2
+        assert len(response.json()["data"]["relationships"]["providers"]["data"]) == 1
+
+    def test_integration_create_rejects_out_of_scope_provider(
+        self, authenticated_client_rbac_limited, aws_provider_pair
+    ):
+        # provider2 is not in any provider group assigned to the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": "amazon_s3",
+                    "configuration": {
+                        "bucket_name": "attacker_bucket",
+                        "output_directory": "output",
+                    },
+                    "credentials": {"aws_access_key_id": "key"},
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(aws_provider_pair[1].id)}
+                        ]
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("integration-list"),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Integration.objects.filter(
+            integrationproviderrelationship__provider=aws_provider_pair[1],
+            configuration__bucket_name="attacker_bucket",
+        ).exists()
+
+    @pytest.mark.parametrize("submitted_providers", [True, False])
+    def test_integration_update_keeps_out_of_scope_providers(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        aws_provider_pair,
+        submitted_providers,
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        integration = integrations_fixture[1]
+        visible_provider, hidden_provider = aws_provider_pair
+        providers_data = (
+            [{"type": "providers", "id": str(visible_provider.id)}]
+            if submitted_providers
+            else []
+        )
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+                "relationships": {"providers": {"data": providers_data}},
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        # The relationship to the provider the role cannot see is left untouched
+        assert integration.providers.filter(id=hidden_provider.id).exists()
+        assert (
+            integration.providers.filter(id=visible_provider.id).exists()
+            is submitted_providers
+        )
+
+    def test_integration_delete_denied_when_shared_with_hidden_provider(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        integration = integrations_fixture[1]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Integration.objects.filter(id=integration.id).exists()
+
+    def test_integration_delete_allowed_when_fully_visible(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+    ):
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Integration.objects.filter(id=integration.id).exists()
+
+        # Tenant-wide integrations have no provider restricting the role
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": jira_integration.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_jira_issue_types_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration
+    ):
+        with patch("api.v1.views.initialize_prowler_integration") as mock_jira:
+            mock_jira.return_value.get_available_issue_types.return_value = ["Task"]
+            response = authenticated_client_rbac_limited.get(
+                reverse(
+                    "integration-jira-issue-types",
+                    kwargs={"integration_pk": jira_integration.id},
+                ),
+                {"project_key": "TEST"},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["issue_types"] == ["Task"]
+
+    def test_jira_issue_types_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse(
+                "integration-jira-issue-types",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            {"project_key": "TEST"},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        # The integration is reachable: the request fails on payload validation, not RBAC
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
     @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(

@@ -2743,6 +2743,37 @@ class ScheduleDailyCreateSerializer(BaseSerializerV1):
 # Integrations
 
 
+class IntegrationProviderVisibilityMixin:
+    """
+    Keep the `providers` relationship within the provider visibility of the role.
+
+    The view injects `allowed_providers` in the serializer context: `None` when the role
+    has unlimited visibility, and the queryset of visible providers otherwise. Roles with
+    limited visibility can neither attach providers they cannot see nor discover, through
+    the serialized output, the ones already attached.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        allowed_providers = self.context.get("allowed_providers")
+        if allowed_providers is not None:
+            self.fields["providers"].child_relation.queryset = allowed_providers
+
+    def hide_restricted_providers(self, representation: dict) -> dict:
+        allowed_providers = self.context.get("allowed_providers")
+        # `providers` is missing when the request asks for a subset of the fields
+        if allowed_providers is None or "providers" not in representation:
+            return representation
+
+        allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
+        representation["providers"] = [
+            provider
+            for provider in representation["providers"]
+            if provider["id"] in allowed_provider_ids
+        ]
+        return representation
+
+
 class BaseWriteIntegrationSerializer(BaseWriteSerializer):
     def validate(self, attrs):
         integration_type = attrs.get("integration_type")
@@ -2875,7 +2906,7 @@ class BaseWriteIntegrationSerializer(BaseWriteSerializer):
             )
 
 
-class IntegrationSerializer(RLSSerializer):
+class IntegrationSerializer(IntegrationProviderVisibilityMixin, RLSSerializer):
     """
     Serializer for the Integration model.
     """
@@ -2904,15 +2935,9 @@ class IntegrationSerializer(RLSSerializer):
     }
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
-        allowed_providers = self.context.get("allowed_providers")
-        if allowed_providers:
-            allowed_provider_ids = {str(provider.id) for provider in allowed_providers}
-            representation["providers"] = [
-                provider
-                for provider in representation["providers"]
-                if provider["id"] in allowed_provider_ids
-            ]
+        representation = self.hide_restricted_providers(
+            super().to_representation(instance)
+        )
         if instance.integration_type == Integration.IntegrationChoices.JIRA:
             representation["configuration"].update(
                 {"domain": instance.credentials.get("domain")}
@@ -2920,7 +2945,9 @@ class IntegrationSerializer(RLSSerializer):
         return representation
 
 
-class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
+class IntegrationCreateSerializer(
+    IntegrationProviderVisibilityMixin, BaseWriteIntegrationSerializer
+):
     credentials = IntegrationCredentialField(write_only=True)
     configuration = IntegrationConfigField()
     providers = serializers.ResourceRelatedField(
@@ -2986,7 +3013,9 @@ class IntegrationCreateSerializer(BaseWriteIntegrationSerializer):
         return integration
 
 
-class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
+class IntegrationUpdateSerializer(
+    IntegrationProviderVisibilityMixin, BaseWriteIntegrationSerializer
+):
     credentials = IntegrationCredentialField(write_only=True, required=False)
     configuration = IntegrationConfigField(required=False)
     providers = serializers.ResourceRelatedField(
@@ -3031,13 +3060,25 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
 
     def update(self, instance, validated_data):
         tenant_id = self.context.get("tenant_id")
-        if validated_data.get("providers") is not None:
-            instance.providers.clear()
+        # Relationships are replaced here, so they are kept out of the default
+        # `ModelSerializer.update()`, which would otherwise reset them all
+        providers = validated_data.pop("providers", None)
+        if providers is not None:
+            relationships = IntegrationProviderRelationship.objects.filter(
+                integration=instance
+            )
+            allowed_providers = self.context.get("allowed_providers")
+            if allowed_providers is not None:
+                # Roles with limited visibility only replace the providers they can see,
+                # so they never detach an integration from providers hidden to them
+                relationships = relationships.filter(provider__in=allowed_providers)
+            relationships.delete()
+
             new_relationships = [
                 IntegrationProviderRelationship(
                     integration=instance, provider=provider, tenant_id=tenant_id
                 )
-                for provider in validated_data["providers"]
+                for provider in providers
             ]
             IntegrationProviderRelationship.objects.bulk_create(new_relationships)
 
@@ -3051,7 +3092,9 @@ class IntegrationUpdateSerializer(BaseWriteIntegrationSerializer):
         return super().update(instance, validated_data)
 
     def to_representation(self, instance):
-        representation = super().to_representation(instance)
+        representation = self.hide_restricted_providers(
+            super().to_representation(instance)
+        )
         # Ensure JIRA integrations show updated domain in configuration from credentials
         if instance.integration_type == Integration.IntegrationChoices.JIRA:
             representation["configuration"].update(
