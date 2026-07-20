@@ -418,6 +418,19 @@ class Jira:
             )
 
     @staticmethod
+    def _sanitize_summary(summary: str) -> str:
+        """Normalize and truncate a Jira issue summary.
+
+        Args:
+            summary: Raw summary text.
+
+        Returns:
+            The summary collapsed to one line and limited to Jira's 255-character
+            summary maximum.
+        """
+        return " ".join(summary.split())[:255]
+
+    @staticmethod
     def _build_code_block_content(code_value: str) -> Optional[Dict]:
         if not code_value:
             return None
@@ -1155,6 +1168,101 @@ class Jira:
             return "#0000FF"
         return "#000000"  # Default black color for unknown severities
 
+    @staticmethod
+    def _adf_colored_strong_marks(color_mark_type: str, color: str) -> list[dict]:
+        """Build ADF marks for bold text with a Jira color mark.
+
+        Args:
+            color_mark_type: Jira ADF color mark type, such as textColor or
+                backgroundColor.
+            color: Hex color value for the mark.
+
+        Returns:
+            ADF marks for strong colored text.
+        """
+        return [
+            {"type": "strong"},
+            {"type": color_mark_type, "attrs": {"color": color}},
+        ]
+
+    def _adf_severity_marks(
+        self, severity: str = "", severity_color: str | None = None
+    ) -> list[dict]:
+        """Build ADF marks for severity text.
+
+        Args:
+            severity: Finding severity used to derive a color when severity_color
+                is not provided.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF marks for highlighted severity text.
+        """
+        color = severity_color or self.get_severity_color(str(severity).lower())
+        return self._adf_colored_strong_marks("backgroundColor", color)
+
+    def _adf_status_marks(
+        self, status: str = "", status_color: str | None = None
+    ) -> list[dict]:
+        """Build ADF marks for status text.
+
+        Args:
+            status: Finding status used to derive a color when status_color is
+                not provided.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF marks for colored status text.
+        """
+        color = status_color or self.get_color_from_status(str(status).upper())
+        return self._adf_colored_strong_marks("textColor", color)
+
+    @staticmethod
+    def _adf_text_node(text: str, marks: list[dict] | None = None) -> dict:
+        """Build an ADF text node.
+
+        Args:
+            text: Text content for the node.
+            marks: Optional ADF marks to apply to the text.
+
+        Returns:
+            ADF text node with optional marks.
+        """
+        node = {"type": "text", "text": text}
+        if marks:
+            node["marks"] = marks
+        return node
+
+    def _adf_severity_text_node(
+        self, severity: str = "", severity_color: str | None = None
+    ) -> dict:
+        """Build an ADF text node for severity.
+
+        Args:
+            severity: Severity text to render.
+            severity_color: Optional explicit severity color.
+
+        Returns:
+            ADF text node with severity marks.
+        """
+        return self._adf_text_node(
+            severity, self._adf_severity_marks(severity, severity_color)
+        )
+
+    def _adf_status_text_node(
+        self, status: str = "", status_color: str | None = None
+    ) -> dict:
+        """Build an ADF text node for status.
+
+        Args:
+            status: Status text to render.
+            status_color: Optional explicit status color.
+
+        Returns:
+            ADF text node with status marks.
+        """
+        return self._adf_text_node(status, self._adf_status_marks(status, status_color))
+
     def get_adf_description(
         self,
         check_id: str = "",
@@ -1293,19 +1401,9 @@ class Jira:
                             {
                                 "type": "paragraph",
                                 "content": [
-                                    {
-                                        "type": "text",
-                                        "text": severity,
-                                        "marks": [
-                                            {"type": "strong"},
-                                            {
-                                                "type": "backgroundColor",
-                                                "attrs": {
-                                                    "color": severity_color,
-                                                },
-                                            },
-                                        ],
-                                    }
+                                    self._adf_severity_text_node(
+                                        severity, severity_color
+                                    )
                                 ],
                             }
                         ],
@@ -1338,17 +1436,7 @@ class Jira:
                             {
                                 "type": "paragraph",
                                 "content": [
-                                    {
-                                        "type": "text",
-                                        "text": status,
-                                        "marks": [
-                                            {"type": "strong"},
-                                            {
-                                                "type": "textColor",
-                                                "attrs": {"color": status_color},
-                                            },
-                                        ],
-                                    }
+                                    self._adf_status_text_node(status, status_color)
                                 ],
                             }
                         ],
@@ -1872,6 +1960,239 @@ class Jira:
             ],
         }
 
+    def get_grouped_adf_description(
+        self,
+        check_id: str = "",
+        check_title: str = "",
+        check_description: str = "",
+        severity: str = "",
+        status: str = "",
+        provider: str = "",
+        service: str = "",
+        affected_failing_resources: int = 0,
+        last_seen: str = "",
+        failing_for: str = "",
+        grouped_resources: list[dict] | None = None,
+        resources_total: int = 0,
+        resources_shown: int = 0,
+        finding_group_url: str = "",
+        finding_group_link_text: str = "",
+        risk: str = "",
+        recommendation_text: str = "",
+        recommendation_url: str = "",
+    ) -> dict:
+        """Build a Jira ADF description for a grouped finding issue.
+
+        Args:
+            check_id: Finding check ID.
+            check_title: Finding check title.
+            check_description: Finding check description.
+            severity: Finding group severity.
+            status: Finding group status.
+            provider: Cloud provider name.
+            service: Provider service name.
+            affected_failing_resources: Number of failing resources in the group.
+            last_seen: Last time the finding group was seen.
+            failing_for: Duration the finding group has been failing.
+            grouped_resources: Resource rows to include in the grouped issue.
+            resources_total: Total number of resources in the group.
+            resources_shown: Number of resources rendered in this Jira issue.
+            finding_group_url: Optional URL for the full finding group.
+            finding_group_link_text: Optional link text for finding_group_url.
+            risk: Risk description for the check.
+            recommendation_text: Remediation recommendation text.
+            recommendation_url: Optional remediation recommendation URL.
+
+        Returns:
+            Jira ADF document describing the finding group.
+        """
+
+        def _safe(value) -> str:
+            return str(value) if value not in (None, "") else "-"
+
+        def _text(value, marks: list[dict] | None = None) -> dict:
+            node = {"type": "text", "text": _safe(value)}
+            if marks:
+                node["marks"] = marks
+            return node
+
+        def _paragraph(value, marks: list[dict] | None = None) -> dict:
+            return {"type": "paragraph", "content": [_text(value, marks)]}
+
+        def _cell(value, marks: list[dict] | None = None) -> dict:
+            return {"type": "tableCell", "content": [_paragraph(value, marks)]}
+
+        def _content_cell(content: list[dict]) -> dict:
+            return {"type": "tableCell", "content": content}
+
+        def _append_link(content: list[dict], url: str) -> list[dict]:
+            if not url:
+                return content
+
+            link_node = {
+                "type": "text",
+                "text": url,
+                "marks": [{"type": "link", "attrs": {"href": url}}],
+            }
+            if content and content[-1].get("type") == "paragraph":
+                paragraph_content = content[-1].setdefault("content", [])
+                if paragraph_content:
+                    last_inline = paragraph_content[-1]
+                    if last_inline.get("type") != "text" or not last_inline.get(
+                        "text", ""
+                    ).endswith(" "):
+                        paragraph_content.append({"type": "text", "text": " "})
+                paragraph_content.append(link_node)
+            else:
+                content.append({"type": "paragraph", "content": [link_node]})
+            return content
+
+        def _row(cells: list[dict]) -> dict:
+            return {"type": "tableRow", "content": cells}
+
+        strong = [{"type": "strong"}]
+        code = [{"type": "code"}]
+        severity_marks = self._adf_severity_marks(severity)
+        status_marks = self._adf_status_marks(status)
+        recommendation_content = _append_link(
+            self._markdown_converter.convert(_safe(recommendation_text)),
+            recommendation_url,
+        )
+        main_rows = [
+            _row([_cell("Check Id", strong), _cell(check_id, code)]),
+            _row([_cell("Check Title", strong), _cell(check_title)]),
+            _row([_cell("Severity", strong), _cell(severity, severity_marks)]),
+            _row([_cell("Status", strong), _cell(status, status_marks)]),
+            _row([_cell("Provider", strong), _cell(provider, code)]),
+            _row([_cell("Service", strong), _cell(service, code)]),
+            _row(
+                [
+                    _cell("Affected Failing Resources", strong),
+                    _cell(affected_failing_resources, strong),
+                ]
+            ),
+            _row([_cell("Last Seen", strong), _cell(last_seen)]),
+            _row([_cell("Failing For", strong), _cell(failing_for)]),
+            _row(
+                [
+                    _cell("Risk", strong),
+                    _content_cell(self._markdown_converter.convert(_safe(risk))),
+                ]
+            ),
+            _row(
+                [
+                    _cell("Recommendation", strong),
+                    _content_cell(recommendation_content),
+                ]
+            ),
+        ]
+
+        resource_rows = [
+            _row(
+                [
+                    _cell("Resource", strong),
+                    _cell("Resource UID", strong),
+                    _cell("Provider", strong),
+                    _cell("Service", strong),
+                    _cell("Account / Tenant", strong),
+                    _cell("Status", strong),
+                    _cell("Severity", strong),
+                    _cell("Region", strong),
+                    _cell("Last Seen", strong),
+                    _cell("Failing For", strong),
+                    _cell("Triage", strong),
+                ]
+            )
+        ]
+        for resource in grouped_resources or []:
+            resource_status = resource.get("status")
+            resource_severity = str(resource.get("severity", "")).upper()
+            resource_status_marks = self._adf_status_marks(resource_status)
+            resource_severity_marks = self._adf_severity_marks(resource_severity)
+            resource_rows.append(
+                _row(
+                    [
+                        _cell(resource.get("resource_name"), code),
+                        _cell(resource.get("resource_uid"), code),
+                        _cell(resource.get("provider"), code),
+                        _cell(resource.get("service"), code),
+                        _cell(resource.get("provider_account"), code),
+                        _cell(resource_status, resource_status_marks),
+                        _cell(resource_severity, resource_severity_marks),
+                        _cell(resource.get("region"), code),
+                        _cell(resource.get("last_seen")),
+                        _cell(resource.get("failing_for")),
+                        _cell(resource.get("triage")),
+                    ]
+                )
+            )
+
+        content = [
+            _paragraph("Prowler has discovered the following Finding Group:"),
+            {"type": "table", "attrs": {"layout": "full-width"}, "content": main_rows},
+        ]
+
+        content.extend(
+            [
+                {
+                    "type": "heading",
+                    "attrs": {"level": 2},
+                    "content": [_text("Affected failing resources")],
+                },
+                {
+                    "type": "table",
+                    "attrs": {"layout": "full-width"},
+                    "content": resource_rows,
+                },
+            ]
+        )
+
+        if resources_total > resources_shown:
+            remaining_content = [
+                _text(f"Showing {resources_shown} of {resources_total} Findings.")
+            ]
+            if finding_group_url and finding_group_link_text:
+                remaining_content = [
+                    _text(
+                        f"Showing {resources_shown} of {resources_total} Findings "
+                        "in this Jira issue. "
+                    ),
+                    _text(
+                        finding_group_link_text,
+                        [
+                            {
+                                "type": "link",
+                                "attrs": {"href": finding_group_url},
+                            }
+                        ],
+                    ),
+                ]
+            content.append(
+                {
+                    "type": "paragraph",
+                    "content": remaining_content,
+                }
+            )
+        elif finding_group_url and finding_group_link_text:
+            content.append(
+                {
+                    "type": "paragraph",
+                    "content": [
+                        _text(
+                            finding_group_link_text,
+                            [
+                                {
+                                    "type": "link",
+                                    "attrs": {"href": finding_group_url},
+                                }
+                            ],
+                        ),
+                    ],
+                }
+            )
+
+        return {"type": "doc", "version": 1, "content": content}
+
     def send_findings(
         self,
         findings: list[Finding] = None,
@@ -1965,7 +2286,7 @@ class Jira:
                     summary_parts.append(finding.resource_uid)
 
                 summary = " - ".join(summary_parts[1:])
-                summary = f"{summary_parts[0]} {summary}"[:255]
+                summary = self._sanitize_summary(f"{summary_parts[0]} {summary}")
 
                 payload = {
                     "fields": {
@@ -2048,11 +2369,13 @@ class Jira:
         self,
         check_id: str = "",
         check_title: str = "",
+        check_description: str = "",
         severity: str = "",
         status: str = "",
         status_extended: str = "",
         provider: str = "",
         region: str = "",
+        service: str = "",
         resource_uid: str = "",
         resource_name: str = "",
         risk: str = "",
@@ -2069,6 +2392,14 @@ class Jira:
         issue_labels: list[str] = "",
         finding_url: str = "",
         tenant_info: str = "",
+        affected_failing_resources: int = 0,
+        grouped_resources: list[dict] | None = None,
+        resources_total: int = 0,
+        resources_shown: int = 0,
+        last_seen: str = "",
+        failing_for: str = "",
+        finding_group_url: str = "",
+        finding_group_link_text: str = "",
     ) -> bool:
         """
         Send the finding to Jira
@@ -2076,11 +2407,13 @@ class Jira:
         Args:
             - check_id: The check ID
             - check_title: The check title
+            - check_description: The check description
             - severity: The severity
             - status: The status
             - status_extended: The status extended
             - provider: The provider
             - region: The region
+            - service: The service
             - resource_uid: The resource UID
             - resource_name: The resource name
             - risk: The risk
@@ -2097,6 +2430,15 @@ class Jira:
             - issue_labels: The issue labels
             - finding_url: The finding URL
             - tenant_info: The tenant info
+            - affected_failing_resources: The number of affected failing resources
+            - grouped_resources: The grouped resources to render, or None for a
+              single finding issue
+            - resources_total: The total resources in the finding group
+            - resources_shown: The resources shown in the Jira issue
+            - last_seen: The last time the finding group was seen
+            - failing_for: The duration the finding group has been failing
+            - finding_group_url: The finding group URL
+            - finding_group_link_text: The link text for the finding group URL
 
         Raises:
             - JiraRefreshTokenError: Failed to refresh the access token
@@ -2140,40 +2482,66 @@ class Jira:
 
             status_color = self.get_color_from_status(status)
             severity_color = self.get_severity_color(severity.lower())
-            adf_description = self.get_adf_description(
-                check_id=check_id,
-                check_title=check_title,
-                severity=severity.upper(),
-                severity_color=severity_color,
-                status=status,
-                status_color=status_color,
-                status_extended=status_extended,
-                provider=provider,
-                region=region,
-                resource_uid=resource_uid,
-                resource_name=resource_name,
-                risk=risk,
-                recommendation_text=recommendation_text,
-                recommendation_url=recommendation_url,
-                remediation_code_native_iac=remediation_code_native_iac,
-                remediation_code_terraform=remediation_code_terraform,
-                remediation_code_cli=remediation_code_cli,
-                remediation_code_other=remediation_code_other,
-                resource_tags=resource_tags,
-                compliance=compliance,
-                finding_url=finding_url,
-                tenant_info=tenant_info,
-            )
+            if grouped_resources is not None:
+                adf_description = self.get_grouped_adf_description(
+                    check_id=check_id,
+                    check_title=check_title,
+                    check_description=check_description,
+                    severity=severity.upper(),
+                    status=status,
+                    provider=provider,
+                    service=service,
+                    affected_failing_resources=affected_failing_resources,
+                    last_seen=last_seen,
+                    failing_for=failing_for,
+                    grouped_resources=grouped_resources,
+                    resources_total=resources_total,
+                    resources_shown=resources_shown,
+                    finding_group_url=finding_group_url,
+                    finding_group_link_text=finding_group_link_text,
+                    risk=risk,
+                    recommendation_text=recommendation_text,
+                    recommendation_url=recommendation_url,
+                )
+            else:
+                adf_description = self.get_adf_description(
+                    check_id=check_id,
+                    check_title=check_title,
+                    severity=severity.upper(),
+                    severity_color=severity_color,
+                    status=status,
+                    status_color=status_color,
+                    status_extended=status_extended,
+                    provider=provider,
+                    region=region,
+                    resource_uid=resource_uid,
+                    resource_name=resource_name,
+                    risk=risk,
+                    recommendation_text=recommendation_text,
+                    recommendation_url=recommendation_url,
+                    remediation_code_native_iac=remediation_code_native_iac,
+                    remediation_code_terraform=remediation_code_terraform,
+                    remediation_code_cli=remediation_code_cli,
+                    remediation_code_other=remediation_code_other,
+                    resource_tags=resource_tags,
+                    compliance=compliance,
+                    finding_url=finding_url,
+                    tenant_info=tenant_info,
+                )
 
             summary_parts = ["[Prowler]"]
             if severity:
                 summary_parts.append(severity.upper())
             if check_id:
                 summary_parts.append(check_id)
-            if resource_uid:
+            if grouped_resources is not None:
+                summary_parts.append(
+                    f"{affected_failing_resources} affected failing resources"
+                )
+            elif resource_uid:
                 summary_parts.append(resource_uid)
             summary = " - ".join(summary_parts[1:])
-            summary = f"{summary_parts[0]} {summary}"[:255]
+            summary = self._sanitize_summary(f"{summary_parts[0]} {summary}")
 
             payload = {
                 "fields": {
