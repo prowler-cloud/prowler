@@ -96,6 +96,7 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": [
         "error",
         {
+          enableAutofixRemoval: { imports: true },
           argsIgnorePattern: "^_",
           varsIgnorePattern: "^_",
           caughtErrorsIgnorePattern: "^_",
