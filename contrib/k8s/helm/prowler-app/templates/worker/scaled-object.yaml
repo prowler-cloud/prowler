@@ -18,15 +18,12 @@ spec:
   triggers:
     - type: {{ .Values.worker.keda.triggerType }}
       metadata:
-        userName: "postgres"
-        passwordFromEnv: POSTGRES_ADMIN_PASSWORD
-        host: {{ .Release.Name }}-postgresql
-        port: {{ .Values.postgresql.port | quote }}
-        dbName: {{ .Values.postgresql.auth.database | quote }}
-        sslmode: disable
-        # Query for KEDA to count the number of scans that are in executing, available, or scheduled states,
-        # where the scheduled time is within the last 2 hours and is before NOW(). Used for scaling workers.
-        query: >-
-          SELECT COUNT(*) FROM scans WHERE ((state='executing' OR state='available' OR state='scheduled') and scheduled_at < NOW() and scheduled_at > NOW() - INTERVAL '2 hours')
-        targetQueryValue: "1"
+        userName: {{ .Values.worker.keda.postgresql.userName | quote }}
+        passwordFromEnv: {{ .Values.worker.keda.postgresql.passwordFromEnv | quote }}
+        host: {{ .Values.worker.keda.postgresql.host | default (printf "%s-postgresql" .Release.Name) | quote }}
+        port: {{ .Values.worker.keda.postgresql.port | quote }}
+        dbName: {{ .Values.worker.keda.postgresql.database | default .Values.postgresql.auth.database | quote }}
+        sslmode: {{ .Values.worker.keda.postgresql.sslmode | quote }}
+        query: {{ .Values.worker.keda.query | quote }}
+        targetQueryValue: {{ .Values.worker.keda.targetQueryValue | quote }}
 {{- end }}
