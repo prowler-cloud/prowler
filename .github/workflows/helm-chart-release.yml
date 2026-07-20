@@ -38,10 +38,14 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@dda3372f752e03dde6b3237bc9431cdc2f7a02a2 # v5.0.0
 
-      - name: Set appVersion from release tag
+      - name: Set chart version and appVersion from release tag
         run: |
-          RELEASE_TAG="${GITHUB_EVENT_RELEASE_TAG_NAME}"
-          echo "Setting appVersion to ${RELEASE_TAG}"
+          # Strip any leading "v" so the chart version is valid SemVer 2.
+          RELEASE_TAG="${GITHUB_EVENT_RELEASE_TAG_NAME#v}"
+          echo "Setting chart version and appVersion to ${RELEASE_TAG}"
+          # Publish an immutable chart version per release instead of the static
+          # 0.0.1 in source, so every release is a distinct, addressable artifact.
+          sed -i "s/^version:.*/version: ${RELEASE_TAG}/" ${{ env.CHART_PATH }}/Chart.yaml
           sed -i "s/^appVersion:.*/appVersion: \"${RELEASE_TAG}\"/" ${{ env.CHART_PATH }}/Chart.yaml
         env:
           GITHUB_EVENT_RELEASE_TAG_NAME: ${{ github.event.release.tag_name }}
