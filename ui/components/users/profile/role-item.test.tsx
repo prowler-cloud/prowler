@@ -34,7 +34,7 @@ describe("RoleItem", () => {
 
   it("shows Manage Alerts in Prowler Cloud role details", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);
@@ -45,7 +45,7 @@ describe("RoleItem", () => {
 
   it("hides Manage Alerts outside Prowler Cloud role details", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);
@@ -56,7 +56,7 @@ describe("RoleItem", () => {
 
   it("displays the permission state as a badge", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);
@@ -67,7 +67,7 @@ describe("RoleItem", () => {
 
   it("does not render the details toggle", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);

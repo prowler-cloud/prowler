@@ -14,6 +14,7 @@ import {
 } from "@/components/shadcn/select/select";
 import { Separator } from "@/components/shadcn/separator/separator";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+import { isCloud } from "@/lib/shared/env";
 import { AWSCredentialsRole } from "@/types";
 import { IntegrationType } from "@/types/integrations";
 
@@ -36,7 +37,7 @@ export const AWSRoleCredentialsForm = ({
   type?: "providers" | "integrations";
   integrationType?: IntegrationType;
 }) => {
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
   const defaultCredentialsType = isCloudEnv
     ? "aws-sdk-default"
     : "access-secret-key";

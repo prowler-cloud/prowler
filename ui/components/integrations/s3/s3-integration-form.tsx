@@ -26,6 +26,7 @@ import {
 import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { getAWSCredentialsTemplateLinks } from "@/lib";
+import { isCloud } from "@/lib/shared/env";
 import type { AWSCredentialsRole } from "@/types";
 import type { IntegrationProps } from "@/types/integrations";
 import {
@@ -78,10 +79,9 @@ export const S3IntegrationForm = ({
   const isEditingConfig = editMode === "configuration";
   const isEditingCredentials = editMode === "credentials";
 
-  const defaultCredentialsType =
-    process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true"
-      ? "aws-sdk-default"
-      : "access-secret-key";
+  const defaultCredentialsType = isCloud()
+    ? "aws-sdk-default"
+    : "access-secret-key";
 
   const form = useForm({
     resolver: zodResolver(

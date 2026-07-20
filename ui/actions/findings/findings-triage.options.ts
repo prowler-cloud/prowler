@@ -1,3 +1,4 @@
+import { isCloud } from "@/lib/shared/env";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   type FindingTriageDisabledReason,
@@ -9,7 +10,7 @@ interface FindingTriageAdapterOptions {
 }
 
 export function getFindingTriageAdapterOptions(): FindingTriageAdapterOptions {
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   return {
     canEdit: isCloudEnvironment,
