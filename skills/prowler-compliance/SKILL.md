@@ -814,19 +814,19 @@ coverage and missing mappings for legitimate coverage.
 1. **Build a per-provider check inventory** — `assets/build_inventory.py`
    (writes `/tmp/checks_{provider}.json` for every provider discovered under
    `prowler/providers/`).
-2. **Query it** — `assets/query_checks.py`:
+2. **Query it** — `assets/query_checks.py` (run from the repository root):
 
    ```bash
-   python assets/query_checks.py aws encryption transit    # keyword AND-search
-   python assets/query_checks.py aws --service iam         # all iam checks
-   python assets/query_checks.py aws --id kms_cmk_rotation_enabled
+   python skills/prowler-compliance/assets/query_checks.py aws encryption transit  # keyword AND-search
+   python skills/prowler-compliance/assets/query_checks.py aws --service iam       # all iam checks
+   python skills/prowler-compliance/assets/query_checks.py aws --id kms_cmk_rotation_enabled
    ```
 
 3. **Dump a framework section with current mappings** — `assets/dump_section.py`:
 
    ```bash
-   python assets/dump_section.py ccc "CCC.Core."
-   python assets/dump_section.py cis_5.0_aws "1."
+   python skills/prowler-compliance/assets/dump_section.py ccc "CCC.Core."
+   python skills/prowler-compliance/assets/dump_section.py cis_5.0_aws "1."
    ```
 
 4. **Encode explicit REPLACE decisions** — `assets/audit_framework_template.py`:
@@ -956,7 +956,8 @@ use `TYPE_CHECKING`/function-local imports where both are genuinely needed.
        assert not missing, f"{prov} missing: {missing}"
    ```
 
-   (For universal files iterate `r["checks"][prov]` instead.)
+   (For universal files use `r.get("checks", {}).get(prov, [])` instead —
+   requirements may legitimately omit a provider key.)
 
 3. **CLI smoke test**:
 
@@ -1081,8 +1082,8 @@ jq '[.requirements[].checks | keys[]] | unique' file.json
 jq '[.Requirements[].Attributes[0].Section] | unique' file.json
 jq '[.Requirements[].Attributes[0].FamilyName] | unique' file.json
 
-# Requirements with config guardrails
-jq '[.Requirements[] | select(.ConfigRequirements)] | length' file.json
+# Requirements with config guardrails (empty arrays are truthy in jq — check length)
+jq '[.Requirements[] | select((.ConfigRequirements // []) | length > 0)] | length' file.json
 
 # Diff requirement ids between two versions
 diff <(jq -r '.Requirements[].Id' a.json | sort) <(jq -r '.Requirements[].Id' b.json | sort)

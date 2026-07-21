@@ -6,6 +6,13 @@ verify them. Always re-validate every check id against the current inventory
 (`assets/build_inventory.py` + `assets/query_checks.py`) before using a row —
 checks get renamed and added over time.
 
+**Entries containing `*` are glob patterns, NOT literal check ids** (e.g.
+`iam_*_no_administrative_privileges`, `cloudwatch_log_metric_filter_*`,
+`*_minimum_tls_version_12`). Copied verbatim into a compliance JSON they map
+nothing — expand each pattern to the concrete check ids via
+`python skills/prowler-compliance/assets/query_checks.py <provider> <keywords>`
+before writing any mapping.
+
 | Requirement text | AWS checks | Azure checks | GCP checks |
 |---|---|---|---|
 | **TLS in transit enforced** | `cloudfront_distributions_https_enabled`, `s3_bucket_secure_transport_policy`, `elbv2_ssl_listeners`, `elbv2_insecure_ssl_ciphers`, `elb_ssl_listeners`, `elb_insecure_ssl_ciphers`, `opensearch_service_domains_https_communications_enforced`, `rds_instance_transport_encrypted`, `redshift_cluster_in_transit_encryption_enabled`, `elasticache_redis_cluster_in_transit_encryption_enabled`, `dynamodb_accelerator_cluster_in_transit_encryption_enabled`, `dms_endpoint_ssl_enabled`, `kafka_cluster_in_transit_encryption_enabled`, `transfer_server_in_transit_encryption_enabled`, `glue_database_connections_ssl_enabled`, `sns_subscription_not_using_http_endpoints` | `storage_secure_transfer_required_is_enabled`, `storage_ensure_minimum_tls_version_12`, `postgresql_flexible_server_enforce_ssl_enabled`, `mysql_flexible_server_ssl_connection_enabled`, `mysql_flexible_server_minimum_tls_version_12`, `sqlserver_recommended_minimal_tls_version`, `app_minimum_tls_version_12`, `app_ensure_http_is_redirected_to_https`, `app_ftp_deployment_disabled` | `cloudsql_instance_ssl_connections` (almost only option) |
