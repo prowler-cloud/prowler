@@ -5,14 +5,14 @@ import { DOCS_URLS } from "@/lib/external-urls";
 
 import { LIGHTHOUSE_OVERVIEW_BANNER_HREF } from "../_lib/lighthouse-banner";
 
-import { OverviewBanner } from "./overview-banner";
+import { OVERVIEW_BANNER_VARIANT, OverviewBanner } from "./overview-banner";
 
 describe("OverviewBanner", () => {
   it("renders Toni copy and opens a prompted chat when connected", () => {
     // Given / When
     render(
       <OverviewBanner
-        variant="lighthouse"
+        variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
         href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT}
       />,
     );
@@ -30,7 +30,7 @@ describe("OverviewBanner", () => {
     // Given / When
     render(
       <OverviewBanner
-        variant="lighthouse"
+        variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
         href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.SETTINGS}
       />,
     );
@@ -46,7 +46,12 @@ describe("OverviewBanner", () => {
 
   it("opens the AI agents docs in a new tab", () => {
     // Given / When
-    render(<OverviewBanner variant="agents" href={DOCS_URLS.AI_AGENTS} />);
+    render(
+      <OverviewBanner
+        variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+        href={DOCS_URLS.AI_AGENTS}
+      />,
+    );
 
     // Then
     const link = screen.getByRole("link", {
@@ -66,10 +71,13 @@ describe("OverviewBanner", () => {
     const { container } = render(
       <>
         <OverviewBanner
-          variant="lighthouse"
+          variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
           href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT}
         />
-        <OverviewBanner variant="agents" href={DOCS_URLS.AI_AGENTS} />
+        <OverviewBanner
+          variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+          href={DOCS_URLS.AI_AGENTS}
+        />
       </>,
     );
 
@@ -87,7 +95,7 @@ describe("OverviewBanner", () => {
     // without isolation it ties the sticky header's z-10 and wins by DOM order
     render(
       <OverviewBanner
-        variant="lighthouse"
+        variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
         href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT}
       />,
     );

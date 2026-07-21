@@ -9,7 +9,13 @@ import { Card, CardContent } from "@/components/shadcn";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { cn } from "@/lib/utils";
 
-type OverviewBannerVariant = "lighthouse" | "agents";
+export const OVERVIEW_BANNER_VARIANT = {
+  LIGHTHOUSE: "lighthouse",
+  AGENTS: "agents",
+} as const;
+
+type OverviewBannerVariant =
+  (typeof OVERVIEW_BANNER_VARIANT)[keyof typeof OVERVIEW_BANNER_VARIANT];
 
 // Content lives here rather than at the call site so the icons stay inside the
 // client boundary — LighthouseIcon uses useId and cannot render on the server.

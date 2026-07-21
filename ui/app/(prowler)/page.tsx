@@ -14,7 +14,10 @@ import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import { OverviewBanner } from "./_overview/_components/overview-banner";
+import {
+  OVERVIEW_BANNER_VARIANT,
+  OverviewBanner,
+} from "./_overview/_components/overview-banner";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import {
   AttackSurfaceSkeleton,
@@ -69,11 +72,17 @@ export default async function Home({
       <div className="mb-6 flex flex-col gap-6 lg:flex-row">
         {lighthouseBannerHref ? (
           <div className="min-w-0 lg:flex-1">
-            <OverviewBanner variant="lighthouse" href={lighthouseBannerHref} />
+            <OverviewBanner
+              variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
+              href={lighthouseBannerHref}
+            />
           </div>
         ) : null}
         <div className="min-w-0 lg:flex-1">
-          <OverviewBanner variant="agents" href={DOCS_URLS.AI_AGENTS} />
+          <OverviewBanner
+            variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+            href={DOCS_URLS.AI_AGENTS}
+          />
         </div>
       </div>
 
