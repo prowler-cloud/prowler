@@ -64,6 +64,7 @@ interface ComplianceContextInput {
 }
 
 interface AttackPathContextInput {
+  pathname: string;
   scanId: string;
   queryId?: string | null;
   queryLabel?: string;
@@ -211,7 +212,7 @@ export function buildAttackPathContext(
     kind: LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH,
     id: input.queryId ? "current-query" : "current-scan",
     source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
-    scopeKey: getLighthouseScopeKey("/attack-paths"),
+    scopeKey: getLighthouseScopeKey(input.pathname),
     label: toBoundedString(input.queryLabel || "Selected attack-path scan"),
     scanId: toBoundedString(input.scanId),
     queryId: optionalBoundedString(input.queryId ?? undefined),
