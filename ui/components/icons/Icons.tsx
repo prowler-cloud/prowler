@@ -1129,7 +1129,13 @@ export const LighthouseIcon: React.FC<LighthouseIconProps> = ({
   height,
   ...props
 }) => {
-  const gradientId = (id: string) => (animatedAura ? `${id}_animated` : id);
+  // Gradient defs are referenced by id, and this icon renders many times per
+  // page. Duplicate ids resolve against the FIRST instance in the document —
+  // if that one sits in a display:none subtree (e.g. the desktop sidebar on
+  // mobile), every other copy loses its fill and turns invisible. useId keeps
+  // each instance self-contained; strip its delimiters for url(#...) safety.
+  const uid = React.useId().replace(/[«»:]/g, "");
+  const gradientId = (id: string) => `${id}_${uid}`;
 
   return (
     <svg

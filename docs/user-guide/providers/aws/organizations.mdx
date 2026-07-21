@@ -2,6 +2,8 @@
 title: 'AWS Organizations in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 <Info>
 **Using Prowler Cloud?** You can onboard your entire AWS Organization through the UI with automatic account discovery, OU-aware tree selection, and bulk connection testing — no scripts or YAML files required.
 
@@ -71,11 +73,43 @@ The additional fields in CSV header output are as follows:
 
 ## Deploying Prowler IAM Roles Across AWS Organizations
 
+<VersionBadge version="5.35.0" />
+
 When onboarding multiple AWS accounts into Prowler Cloud, it is important to deploy the Prowler Scan IAM Role in each account. The most efficient way to do this across an AWS Organization is by leveraging AWS CloudFormation StackSets, which rolls out infrastructure—like IAM roles—to all accounts centrally from the Management or Delegated Admin account.
 
-When using Infrastructure as Code (IaC), Terraform is recommended to manage this deployment systematically.
+### Native CloudFormation StackSet Deployment (Recommended)
 
-### Recommended Approach
+The [Prowler Scan IAM Role CloudFormation template](https://github.com/prowler-cloud/prowler/blob/master/permissions/templates/cloudformation/prowler-scan-role.yml) can deploy the role across your entire AWS Organization on its own—no third-party modules required. When launched in the **Management Account** (or a **Delegated Administrator** account) with `DeployStackSet=true` and `EnableOrganizations=true`, it creates a service-managed CloudFormation StackSet that rolls the ProwlerScan role out to every account under the target Organizational Unit (or the organization root), and keeps new accounts covered automatically through auto-deployment.
+
+To deploy from the CloudFormation console: open **CloudFormation → Create stack → With new resources**, choose **Upload a template file** and select `prowler-scan-role.yml` (or paste its S3 URL), then set the parameters below on the **Specify stack details** step. Leave the **Configure stack options** step at its defaults.
+
+Deploy a single CloudFormation Stack in the Management Account with the following parameters:
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| `ExternalId` | External ID provided by Prowler Cloud to secure role assumption. | — |
+| `DeployLocalRole` | Create the ProwlerScan role in this (Management) account. | `true` |
+| `DeployStackSet` | Create a service-managed StackSet that deploys the role to member accounts. | `false` |
+| `AWSOrganizationalUnitId` | Target OU (`ou-xxxx-yyyyyyyy`) or organization root (`r-xxxx`) for the StackSet. Required when `DeployStackSet=true`. | `""` |
+| `DeployFromDelegatedAdmin` | Set to `true` when deploying from a Delegated Administrator account instead of the Management Account (uses `CallAs: DELEGATED_ADMIN`). | `false` |
+| `EnableOrganizations` | Add AWS Organizations permissions to the Management Account role: read-only account discovery plus the StackSet-management permissions the deployment needs. Set to `true` when deploying in the Management Account. | `false` |
+| `FailureTolerancePercentage` | Percentage of accounts in which the StackSet operation can fail before CloudFormation stops the operation. | `10` |
+| `RetainStacksOnAccountRemoval` | Keep the role in an account after it leaves the Organization or OU. | `false` |
+
+<Warning>
+On the review step, select **"I acknowledge that AWS CloudFormation might create IAM resources with custom names"** — the template provisions the named `ProwlerScan` IAM role, so the stack requires the `CAPABILITY_NAMED_IAM` capability and fails without this acknowledgment. (The quick-create link handles this for you.)
+</Warning>
+
+<Note>
+The service-managed StackSet does **not** deploy to the Management Account itself. Keeping `DeployLocalRole=true` ensures the role also exists there, so a single stack covers both the Management and member accounts.
+
+Trusted access for CloudFormation StackSets must be enabled in the Organization (see the note at the top of this page) before `DeployStackSet` will work.
+
+Deploying for the CLI or a self-hosted Prowler (not Prowler Cloud)? Also set `AccountId` to the account you assume the role from and `IAMPrincipal` to your identity — the defaults target Prowler Cloud. See [Aligning the trust policy with your identity](/user-guide/providers/aws/authentication#trust-policy-align-iamprincipal-with-your-identity).
+
+</Note>
+
+### Alternative: Deploy with Terraform
 
 - **Use StackSets** from the **Management Account** (or a Delegated Admin/Security Account).
 - **Use Terraform** to orchestrate the deployment.

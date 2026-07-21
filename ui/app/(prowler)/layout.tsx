@@ -16,6 +16,7 @@ import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-
 import { NavigationProgress } from "@/components/shadcn/navigation-progress";
 import { Toaster } from "@/components/shadcn/toast";
 import { TaskPollingWatcher } from "@/components/shared/task-polling-watcher";
+import { GlobalSidePanel } from "@/components/side-panel";
 import { fontMono, fontSans } from "@/config/fonts";
 import { siteConfig } from "@/config/site";
 import { isCloud } from "@/lib/shared/env";
@@ -107,6 +108,9 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
+          {/* Always mounted: it hosts the detail (finding/resource) views in
+              every deployment; the AI tab inside is cloud-gated on its own. */}
+          <GlobalSidePanel />
           {/* Resumes persisted background-task polling (e.g. cross-provider
               PDF generation) so completion toasts survive hard reloads. */}
           <TaskPollingWatcher />

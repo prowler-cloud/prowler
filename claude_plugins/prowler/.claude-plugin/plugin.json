@@ -22,7 +22,7 @@
     "api_key": {
       "type": "string",
       "title": "Prowler API key",
-      "description": "API key token used to authenticate with Prowler Cloud / Prowler App via the Prowler MCP server. Create one at https://cloud.prowler.com.",
+      "description": "API key token used to authenticate with Prowler (Prowler Cloud, Prowler Private Cloud, or Prowler Local Server) via the Prowler MCP server. Create one at https://cloud.prowler.com.",
       "sensitive": true,
       "required": true
     }

@@ -17,6 +17,7 @@ import {
   ChartTooltip,
 } from "@/components/shadcn/chart/Chart";
 
+import { formatYAxisTick } from "./line-chart.utils";
 import { AlertPill } from "./shared/alert-pill";
 import { ChartLegend } from "./shared/chart-legend";
 import { CustomActiveDot, PointClickData } from "./shared/custom-active-dot";
@@ -222,6 +223,8 @@ export function LineChart({
             tickLine={false}
             axisLine={false}
             tickMargin={8}
+            tickFormatter={formatYAxisTick}
+            width={56}
             padding={{ top: 20 }}
             tick={{
               fill: "var(--color-text-neutral-secondary)",

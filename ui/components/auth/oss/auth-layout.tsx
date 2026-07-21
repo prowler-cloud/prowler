@@ -2,12 +2,15 @@ import { ReactNode } from "react";
 
 import { ThemeSwitch } from "@/components/ThemeSwitch";
 
+import { AuthBrand } from "./auth-brand";
+
 interface AuthLayoutProps {
   title: string;
+  footer?: ReactNode;
   children: ReactNode;
 }
 
-export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
+export const AuthLayout = ({ title, footer, children }: AuthLayoutProps) => {
   return (
     <div className="relative flex min-h-screen w-full overflow-x-hidden overflow-y-auto">
       <div className="relative flex w-full flex-col items-center justify-center px-4 py-32">
@@ -20,6 +23,8 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
           }}
         ></div>
 
+        <AuthBrand className="mb-8" />
+
         {/* Auth Form Container */}
         <div className="border-border-neutral-secondary dark:bg-bg-neutral-primary/85 relative z-10 flex w-full max-w-sm flex-col gap-4 rounded-[14px] border bg-white/90 px-8 py-10 shadow-sm md:max-w-md">
           {/* Header with Title and Theme Toggle */}
@@ -31,6 +36,8 @@ export const AuthLayout = ({ title, children }: AuthLayoutProps) => {
           {/* Content */}
           {children}
         </div>
+
+        {footer && <div className="relative z-10 mt-6">{footer}</div>}
       </div>
     </div>
   );

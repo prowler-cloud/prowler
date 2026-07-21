@@ -5,7 +5,6 @@ import { Metadata, Viewport } from "next";
 import { connection } from "next/server";
 import { ReactNode, Suspense } from "react";
 
-import { PublicAuthShell } from "@/components/auth/oss/public-auth-shell";
 import { RuntimePublicConfig } from "@/components/runtime-config/runtime-public-config";
 import { NavigationProgress, Toaster } from "@/components/shadcn";
 import { fontMono, fontSans } from "@/config/fonts";
@@ -66,7 +65,7 @@ export default async function AuthLayout({
           <Suspense>
             <NavigationProgress />
           </Suspense>
-          <PublicAuthShell>{children}</PublicAuthShell>
+          {children}
           <Toaster />
           {gtmId && <GoogleTagManager gtmId={gtmId} />}
         </Providers>

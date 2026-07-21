@@ -7,8 +7,7 @@ import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 import { sendInvite } from "@/actions/invitations/invitation";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
 import {

@@ -4,9 +4,17 @@ import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
+  getOrCreatePanelChatStore,
+  resetPanelChatStoreForTests,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
   LIGHTHOUSE_V2_SESSIONS_CHANGED_EVENT,
   notifyLighthouseV2SessionArchived,
 } from "@/app/(prowler)/lighthouse/_lib/session-events";
+import {
+  type MockEventSource,
+  stubEventSource,
+} from "@/app/(prowler)/lighthouse/_lib/testing/event-source-mock";
 import type {
   LighthouseV2Configuration,
   LighthouseV2Message,
@@ -16,50 +24,7 @@ import type {
 
 import { LighthouseV2ChatPage } from "./lighthouse-v2-chat-page";
 
-// Controllable EventSource mock: records each instance so tests can drive
-// named SSE events and connection failures, while still being a vi.fn so
-// `expect(EventSource).toHaveBeenCalledWith(...)` keeps working.
-interface MockEventSource {
-  url: string;
-  readyState: number;
-  onerror: ((event: Event) => void) | null;
-  listeners: Map<string, Set<EventListener>>;
-  addEventListener: (type: string, cb: EventListener) => void;
-  close: ReturnType<typeof vi.fn>;
-  emit: (type: string, data: unknown) => void;
-  fail: (readyState: number) => void;
-}
-
 let eventSources: MockEventSource[] = [];
-
-function stubEventSource() {
-  eventSources = [];
-  const EventSourceMock = vi.fn(function (this: MockEventSource, url: string) {
-    this.url = url;
-    this.readyState = 0;
-    this.onerror = null;
-    this.listeners = new Map();
-    this.addEventListener = (type: string, cb: EventListener) => {
-      const set = this.listeners.get(type) ?? new Set<EventListener>();
-      set.add(cb);
-      this.listeners.set(type, set);
-    };
-    this.close = vi.fn(() => {
-      this.readyState = 2;
-    });
-    this.emit = (type: string, data: unknown) => {
-      const event = new MessageEvent(type, { data: JSON.stringify(data) });
-      this.listeners.get(type)?.forEach((cb) => cb(event));
-    };
-    this.fail = (readyState: number) => {
-      this.readyState = readyState;
-      this.onerror?.(new Event("error"));
-    };
-    eventSources.push(this);
-  });
-  Object.assign(EventSourceMock, { CONNECTING: 0, OPEN: 1, CLOSED: 2 });
-  vi.stubGlobal("EventSource", EventSourceMock);
-}
 
 const {
   createSessionMock,
@@ -142,11 +107,8 @@ describe("LighthouseV2ChatPage", () => {
     getMessagesMock.mockReset();
     sendMessageMock.mockReset();
     updateConfigurationMock.mockReset();
-    // The mock never fires "open": the client must POST the message without
-    // waiting for it (the backend sends no bytes until the worker emits, which
-    // only happens after the POST). This is the regression guard for the
-    // open-gate deadlock.
-    stubEventSource();
+    resetPanelChatStoreForTests();
+    eventSources = stubEventSource();
 
     createSessionMock.mockResolvedValue({
       data: {
@@ -185,6 +147,62 @@ describe("LighthouseV2ChatPage", () => {
     ).toHaveAttribute("href", "/lighthouse/settings");
   });
 
+  it("renders the empty-state headline with correct wording", () => {
+    // Given / When
+    renderPage();
+
+    // Then
+    expect(
+      screen.getByText("Find and remediate what actually matters."),
+    ).toBeInTheDocument();
+  });
+
+  it("continues using the panel chat store on the full-page surface", () => {
+    // Given: the panel owns an in-progress new chat with a draft
+    const panelStore = getOrCreatePanelChatStore({
+      configurations,
+      modelsByProvider,
+      supportedProviders,
+    });
+    panelStore.getState().setInput("Draft from the side panel");
+
+    // When
+    renderPage();
+
+    // Then: the page owns the same live store, not a stale server snapshot
+    const input = screen.getByRole("textbox", { name: "Message" });
+    expect(input).toHaveValue("Draft from the side panel");
+    act(() => panelStore.getState().setInput("Updated after navigation"));
+    expect(input).toHaveValue("Updated after navigation");
+  });
+
+  it("enables session URL sync after claiming a new panel chat", async () => {
+    // Given: the panel owns a new chat before full-page navigation
+    const user = userEvent.setup();
+    getOrCreatePanelChatStore({
+      configurations,
+      modelsByProvider,
+      supportedProviders,
+    });
+    const replaceStateSpy = vi.spyOn(window.history, "replaceState");
+    renderPage();
+
+    // When: the first page message creates its session
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+
+    // Then: the claimed panel store now follows the full-page URL contract
+    await waitFor(() =>
+      expect(replaceStateSpy).toHaveBeenCalledWith(
+        window.history.state,
+        "",
+        "/lighthouse?session=session-1",
+      ),
+    );
+  });
+
   it("shows the current OpenAI model without a selector when OpenAI is the only connected provider", () => {
     // Given / When
     renderPage({
@@ -208,7 +226,7 @@ describe("LighthouseV2ChatPage", () => {
     expect(within(currentModel).getByText("GPT-5.1")).toBeInTheDocument();
   });
 
-  it("defaults to gpt-5.5 when OpenAI has no remembered model", () => {
+  it("defaults to gpt-5.6-terra when OpenAI has no remembered model", () => {
     // Given / When
     renderPage({
       configurations: [
@@ -216,15 +234,20 @@ describe("LighthouseV2ChatPage", () => {
         { ...configurations[1], connected: false },
       ],
       modelsByProvider: {
-        openai: [model("gpt-4.1", "GPT-4.1"), model("gpt-5.5", "GPT-5.5")],
+        openai: [
+          model("gpt-4.1", "GPT-4.1"),
+          model("gpt-5.6-terra", "GPT-5.6 Terra"),
+        ],
         bedrock: [model("anthropic.claude-4")],
         "openai-compatible": [model("llama-3.3")],
       },
     });
 
     // Then
-    const currentModel = screen.getByLabelText("Current model: OpenAI GPT-5.5");
-    expect(within(currentModel).getByText("GPT-5.5")).toBeInTheDocument();
+    const currentModel = screen.getByLabelText(
+      "Current model: OpenAI GPT-5.6 Terra",
+    );
+    expect(within(currentModel).getByText("GPT-5.6 Terra")).toBeInTheDocument();
   });
 
   it("uses the AWS onboarding quick prompt instead of the docs prompt", async () => {
@@ -251,7 +274,7 @@ describe("LighthouseV2ChatPage", () => {
   it("prefills the overview remediation prompt without starting a conversation", () => {
     // Given
     const initialPrompt =
-      "Find and guide me to remediate which actually matters. What do I have to do today to be secure?";
+      "Find and guide me to remediate what actually matters. What do I have to do today to be secure?";
 
     // When
     renderPage({ initialPrompt });
@@ -686,6 +709,28 @@ describe("LighthouseV2ChatPage", () => {
 
     // Then
     expect(screen.getByText("Existing answer")).toBeInTheDocument();
+  });
+
+  it("lets the user draft the next message while a response is streaming, without sending it", async () => {
+    // Given: a message is in flight (spinner replaces the send button)
+    const user = userEvent.setup();
+    renderPage();
+    await user.type(
+      screen.getByRole("textbox", { name: "Message" }),
+      ["Summarize findings", "{Enter}"].join(""),
+    );
+    await waitFor(() => expect(sendMessageMock).toHaveBeenCalledTimes(1));
+    expect(
+      screen.getByRole("status", { name: "Generating response" }),
+    ).toBeInTheDocument();
+
+    // When: the user types a follow-up and presses Enter mid-stream
+    const input = screen.getByRole("textbox", { name: "Message" });
+    await user.type(input, ["Next question", "{Enter}"].join(""));
+
+    // Then: the draft is kept in the input and no second message is sent
+    expect(input).toHaveValue("Next question");
+    expect(sendMessageMock).toHaveBeenCalledTimes(1);
   });
 
   it("surfaces a connection error when the stream closes without retrying", async () => {

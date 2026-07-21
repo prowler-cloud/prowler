@@ -10,6 +10,8 @@ export interface RuntimePublicConfig {
   posthogHost: string | null; // reserved
   reoDevClientId: string | null; // reserved
   cloudBillingEnabled: boolean;
+  stripePublishableKey: string | null; // reserved
+  stripePublishableKeyV2: string | null; // reserved
 }
 
 export const RUNTIME_CONFIG_SCRIPT_ID = "__PROWLER_RUNTIME_CONFIG__";
@@ -25,4 +27,6 @@ export const EMPTY_RUNTIME_PUBLIC_CONFIG: RuntimePublicConfig = {
   posthogHost: null,
   reoDevClientId: null,
   cloudBillingEnabled: false,
+  stripePublishableKey: null,
+  stripePublishableKeyV2: null,
 };

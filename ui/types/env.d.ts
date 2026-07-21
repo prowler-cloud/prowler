@@ -30,6 +30,15 @@ declare global {
 
       CLOUD_BILLING_ENABLED?: "legacy" | "metronome" | "false";
 
+      // Cloud-only Stripe publishable keys (public; shipped to the browser).
+      // V1 = legacy billing, V2 = metronome.
+      /** @deprecated use UI_CLOUD_STRIPE_PUBLISHABLE_KEY */
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?: string;
+      UI_CLOUD_STRIPE_PUBLISHABLE_KEY?: string;
+      /** @deprecated use UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2 */
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY_V2?: string;
+      UI_CLOUD_STRIPE_PUBLISHABLE_KEY_V2?: string;
+
       // Build-time public config
       NEXT_PUBLIC_IS_CLOUD_ENV?: "true" | "false";
       NEXT_PUBLIC_PROWLER_RELEASE_VERSION?: string;
@@ -134,7 +143,6 @@ declare global {
       E2E_OCI_USER_ID?: string;
       E2E_OCI_FINGERPRINT?: string;
       E2E_OCI_KEY_CONTENT?: string;
-      E2E_OCI_REGION?: string;
 
       // E2E Alibaba Cloud
       E2E_ALIBABACLOUD_ACCOUNT_ID?: string;

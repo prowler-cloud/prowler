@@ -1672,6 +1672,7 @@ class BaseWriteProviderSecretSerializer(BaseWriteSerializer):
                 validation_error.detail[f"secret/{key}"] = value
                 del validation_error.detail[key]
             raise validation_error
+        return serializer.validated_data
 
 
 class AwsProviderSecret(serializers.Serializer):
@@ -1813,14 +1814,32 @@ class IacProviderSecret(serializers.Serializer):
         resource_name = "provider-secrets"
 
 
+class LegacyOCIRegionField(serializers.Field):
+    def to_internal_value(self, data):
+        return data
+
+    def to_representation(self, value):
+        return value
+
+
 class OracleCloudProviderSecret(serializers.Serializer):
     user = serializers.CharField()
     fingerprint = serializers.CharField()
     key_file = serializers.CharField(required=False)
     key_content = serializers.CharField(required=False)
     tenancy = serializers.CharField()
-    region = serializers.CharField()
     pass_phrase = serializers.CharField(required=False)
+    region = LegacyOCIRegionField(required=False, allow_null=True)
+
+    def validate(self, attrs):
+        attrs.pop("region", None)
+
+        if "key_file" not in attrs and "key_content" not in attrs:
+            raise serializers.ValidationError(
+                {"key_file": "Either key_file or key_content must be provided."}
+            )
+
+        return attrs
 
     class Meta:
         resource_name = "provider-secrets"
@@ -1965,7 +1984,11 @@ class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSeria
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
-        self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
+        validated_secret = self.validate_secret_based_on_provider(
+            provider.provider, secret_type, secret
+        )
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 
@@ -1997,7 +2020,11 @@ class ProviderSecretUpdateSerializer(BaseWriteProviderSecretSerializer):
         secret = attrs.get("secret")
 
         validated_attrs = super().validate(attrs)
-        self.validate_secret_based_on_provider(provider.provider, secret_type, secret)
+        validated_secret = self.validate_secret_based_on_provider(
+            provider.provider, secret_type, secret
+        )
+        if provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+            validated_attrs["secret"] = validated_secret
         return validated_attrs
 
 

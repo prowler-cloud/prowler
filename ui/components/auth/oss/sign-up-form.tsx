@@ -15,8 +15,7 @@ import { AuthFooterLink } from "@/components/auth/oss/auth-footer-link";
 import { AuthLayout } from "@/components/auth/oss/auth-layout";
 import { PasswordRequirementsMessage } from "@/components/auth/oss/password-validator";
 import { SocialButtons } from "@/components/auth/oss/social-buttons";
-import { Button, Checkbox } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Button, Checkbox, useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { CustomLink } from "@/components/shadcn/custom/custom-link";
 import {
@@ -161,7 +160,16 @@ export const SignUpForm = ({
   };
 
   return (
-    <AuthLayout title="Sign up">
+    <AuthLayout
+      title="Get started"
+      footer={
+        <AuthFooterLink
+          text="Already have an account?"
+          linkText="Log in"
+          href="/sign-in"
+        />
+      }
+    >
       <Form {...form}>
         <form
           ref={stripPasswordManagerHighlight}
@@ -263,7 +271,7 @@ export const SignUpForm = ({
       {(!invitationToken || isCloudEnv) && (
         <>
           <AuthDivider />
-          <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
             <SocialButtons
               googleAuthUrl={googleAuthUrl}
               githubAuthUrl={githubAuthUrl}
@@ -276,12 +284,6 @@ export const SignUpForm = ({
           </div>
         </>
       )}
-
-      <AuthFooterLink
-        text="Already have an account?"
-        linkText="Log in"
-        href="/sign-in"
-      />
     </AuthLayout>
   );
 };
