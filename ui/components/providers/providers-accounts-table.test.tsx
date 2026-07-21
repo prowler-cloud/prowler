@@ -38,6 +38,20 @@ vi.mock("@/components/shadcn/table", () => ({
   ),
 }));
 
+vi.mock("@/components/lighthouse/context-contributor", () => ({
+  LighthouseContextContributor: ({
+    contributorId,
+    item,
+  }: {
+    contributorId: string;
+    item: unknown;
+  }) => (
+    <output data-testid={`context-${contributorId}`}>
+      {JSON.stringify(item)}
+    </output>
+  ),
+}));
+
 vi.mock("./table", () => ({
   getColumnProviders: (...args: unknown[]) => getColumnProvidersMock(...args),
 }));
@@ -167,6 +181,34 @@ describe("ProvidersAccountsTable", () => {
       [],
       SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
       expect.any(Map),
+    );
+  });
+
+  it("publishes the loaded total and selected providers as context", async () => {
+    const user = userEvent.setup();
+    dataTableMockState.nextSelection = { "0": true };
+
+    render(
+      <ProvidersAccountsTable
+        isCloud
+        metadata={{
+          pagination: { page: 1, pages: 1, count: 4 },
+          version: "v1",
+        }}
+        rows={[providerOne]}
+        onOpenProviderWizard={vi.fn()}
+        onOpenOrganizationWizard={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("context-providers-summary")).toHaveTextContent(
+      '"total":4',
+    );
+
+    await user.click(screen.getByRole("button", { name: "Apply selection" }));
+
+    expect(screen.getByTestId("context-provider-provider-1")).toHaveTextContent(
+      '"providerUid":"111111111111"',
     );
   });
 

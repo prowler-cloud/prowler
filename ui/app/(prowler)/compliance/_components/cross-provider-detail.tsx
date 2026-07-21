@@ -9,9 +9,11 @@ import {
   TopFailedSectionsCard,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card } from "@/components/shadcn/card/card";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import type { Framework, RequirementsTotals } from "@/types/compliance";
 
 import {
@@ -170,6 +172,21 @@ export const CrossProviderDetail = async ({
 
   return (
     <div className="flex flex-col gap-8">
+      <LighthouseContextContributor
+        key={`cross-provider-detail-${complianceId}-${totals.pass}-${totals.fail}`}
+        contributorId="compliance-detail"
+        item={buildComplianceContext({
+          pathname: `/compliance/${compliancetitle}`,
+          id: complianceId,
+          framework: attrs.name || attrs.framework,
+          version: attrs.version,
+          mode: "cross-provider",
+          section: targetSection,
+          passed: totals.pass,
+          failed: totals.fail,
+          total: totals.pass + totals.fail + totals.manual,
+        })}
+      />
       {/* Header card — same structure as the per-scan detail: identity row
           (logo + context) with the report action top-right, filters below
           (lighthouse-settings card pattern). */}

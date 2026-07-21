@@ -25,6 +25,7 @@ interface ChatComposerPanelProps {
   input: string;
   isStreaming: boolean;
   modelSelector: ReactNode;
+  contextControl?: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
@@ -86,6 +87,7 @@ interface ChatComposerProps {
   input: string;
   isStreaming: boolean;
   modelSelector: ReactNode;
+  contextControl?: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
@@ -99,6 +101,7 @@ function ChatComposer({
   selectedConfigurationConnected,
   onInputChange,
   modelSelector,
+  contextControl,
   onSubmit,
   onSubmitText,
 }: ChatComposerProps) {
@@ -144,6 +147,7 @@ function ChatComposer({
       />
       <div className="flex items-center justify-between gap-3 px-3 pb-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
+          {contextControl}
           <Button type="button" variant="outline" size="icon-sm" asChild>
             <Link
               href={LIGHTHOUSE_ROUTE.SETTINGS}

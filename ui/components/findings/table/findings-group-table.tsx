@@ -6,12 +6,18 @@ import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
+import {
+  buildFindingGroupContext,
+  buildFindingResourceContext,
+  buildFindingSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
-import { FindingGroupRow, MetaDataProps } from "@/types";
+import { FindingGroupRow, FindingResourceRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 
@@ -62,6 +68,9 @@ export function FindingsGroupTable({
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
+  const [resourceContextSelection, setResourceContextSelection] = useState<
+    FindingResourceRow[]
+  >([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
   const safeData = data ?? [];
@@ -133,6 +142,7 @@ export function FindingsGroupTable({
   const handleMuteComplete = () => {
     clearSelection();
     setResourceSelection([]);
+    setResourceContextSelection([]);
     inlineRef.current?.clearSelection();
     inlineRef.current?.refresh();
     router.refresh();
@@ -151,6 +161,7 @@ export function FindingsGroupTable({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
+    setResourceContextSelection([]);
   };
 
   const handleCollapse = () => {
@@ -159,6 +170,7 @@ export function FindingsGroupTable({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
+    setResourceContextSelection([]);
   };
 
   // Drives the onboarding "Open a finding group" step: opens the first row when
@@ -197,6 +209,7 @@ export function FindingsGroupTable({
         resourceSearch={resourceSearch}
         columnCount={columns.length}
         onResourceSelectionChange={setResourceSelection}
+        onResourceContextSelectionChange={setResourceContextSelection}
       />
     );
   };
@@ -213,6 +226,29 @@ export function FindingsGroupTable({
     >
       {/* Gate the tour on having at least one finding group */}
       <div>
+        {metadata?.pagination.count !== undefined && (
+          <LighthouseContextContributor
+            key={`findings-summary-${metadata.pagination.count}`}
+            contributorId="findings-summary"
+            item={buildFindingSummaryContext(metadata.pagination.count)}
+          />
+        )}
+        {selectedFindings.slice(0, 6).map((finding) => (
+          <LighthouseContextContributor
+            key={`finding-group-${finding.id}`}
+            contributorId={`finding-group-${finding.id}`}
+            item={buildFindingGroupContext(finding)}
+          />
+        ))}
+        {resourceContextSelection
+          .slice(0, Math.max(0, 6 - selectedFindings.length))
+          .map((finding) => (
+            <LighthouseContextContributor
+              key={`finding-resource-${finding.findingId}`}
+              contributorId={`finding-resource-${finding.findingId}`}
+              item={buildFindingResourceContext(finding)}
+            />
+          ))}
         <Suspense fallback={null}>
           {safeData.length > 0 && (
             <OnboardingTrigger

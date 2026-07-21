@@ -13,6 +13,7 @@ import {
 } from "@/actions/attack-paths";
 import { adaptQueryResultToGraphData } from "@/actions/attack-paths/query-result.adapter";
 import { FindingDetailDrawer } from "@/components/findings/table";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { PageReady } from "@/components/onboarding";
 import { useFindingDetails } from "@/components/resources/table/use-finding-details";
 import { AutoRefresh } from "@/components/scans";
@@ -27,6 +28,7 @@ import {
 } from "@/components/shadcn/dialog";
 import { StatusAlert } from "@/components/shared/status-alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
+import { buildAttackPathContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
 import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import {
@@ -400,6 +402,33 @@ export default function AttackPathsPage() {
     }
   };
 
+  const lighthouseSelectedNode =
+    graphState.selectedNode ?? graphState.filteredNode;
+  // Root-level watch keeps the hidden contributor aligned with typed form
+  // parameters at send time. The factory excludes custom Cypher and secrets.
+  const lighthouseQueryParameters = queryBuilder.form.watch() as Record<
+    string,
+    string | number | boolean
+  >;
+  const lighthouseContext = scanId
+    ? buildAttackPathContext({
+        scanId,
+        queryId: queryBuilder.selectedQuery,
+        queryLabel: queryBuilder.selectedQueryData?.attributes.name,
+        parameters: lighthouseQueryParameters,
+        nodeCount: graphState.data?.nodes.length,
+        edgeCount:
+          graphState.data?.edges?.length ??
+          graphState.data?.relationships?.length,
+        selectedNode: lighthouseSelectedNode
+          ? {
+              id: lighthouseSelectedNode.id,
+              type: lighthouseSelectedNode.labels[0],
+            }
+          : null,
+      })
+    : null;
+
   return (
     <div className="flex flex-col gap-6">
       <AutoRefresh
@@ -413,6 +442,14 @@ export default function AttackPathsPage() {
 
       {/* Enables the navbar replay icon once the initial scan load resolves. */}
       {!scansLoading && <PageReady />}
+
+      {lighthouseContext && (
+        <LighthouseContextContributor
+          key={JSON.stringify(lighthouseContext)}
+          contributorId="attack-path-current"
+          item={lighthouseContext}
+        />
+      )}
 
       <div data-tour-id="attack-paths-intro">
         <p className="text-text-neutral-secondary text-sm">

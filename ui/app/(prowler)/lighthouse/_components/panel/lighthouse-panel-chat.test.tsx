@@ -52,6 +52,11 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   updateLighthouseV2Configuration: updateConfigurationMock,
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => window.location.pathname,
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
 // jsdom; render its text passthrough so message bodies are still assertable.
 vi.mock("streamdown", () => ({
@@ -108,6 +113,11 @@ describe("LighthousePanelChat", () => {
     getSupportedModelsMock.mockResolvedValue({ data: [model("gpt-5.1")] });
     getSessionsMock.mockResolvedValue({ data: [] });
     getMessagesMock.mockResolvedValue({ data: [] });
+    window.history.replaceState(
+      null,
+      "",
+      "/findings?filter%5Bseverity__in%5D=critical",
+    );
   });
 
   afterEach(() => {
@@ -178,6 +188,92 @@ describe("LighthousePanelChat", () => {
     expect(
       await screen.findByText("Counting critical findings"),
     ).toBeInTheDocument();
+  });
+
+  it("sends the current page context from the side panel", async () => {
+    // Given
+    const user = userEvent.setup();
+    createSessionMock.mockResolvedValue({
+      data: session("session-context", "Prioritize findings"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    render(<LighthousePanelChat />);
+    const input = await screen.findByRole("textbox", { name: "Message" });
+    expect(screen.getByText("@ Findings")).toBeInTheDocument();
+
+    // When
+    await user.type(input, "Prioritize findings{Enter}");
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayText: "Prioritize findings",
+          context: expect.objectContaining({
+            items: expect.arrayContaining([
+              expect.objectContaining({
+                kind: "page",
+                id: "findings",
+                filters: { severity: ["critical"] },
+              }),
+            ]),
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("keeps context disabled and restores global suggestions for the conversation", async () => {
+    // Given
+    const user = userEvent.setup();
+    createSessionMock.mockResolvedValue({
+      data: session("session-without-context", "Question"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-without-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    render(<LighthousePanelChat />);
+    const input = await screen.findByRole("textbox", { name: "Message" });
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: "Remove Findings context" }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Add Findings context" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Critical findings" }),
+    ).toBeInTheDocument();
+
+    // When
+    await user.type(input, "Question{Enter}");
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith({
+        sessionId: "session-without-context",
+        displayText: "Question",
+        provider: "openai",
+        model: "gpt-5.1",
+      }),
+    );
   });
 
   it("opens a recent chat in place without navigating", async () => {
