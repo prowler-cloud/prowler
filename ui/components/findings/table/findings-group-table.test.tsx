@@ -573,18 +573,21 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetBatches: [
-          {
-            targetIds: ["check-a"],
-            targetType: "check_id",
-            dispatchMode: "grouped",
-          },
-          {
-            targetIds: ["finding-1"],
-            targetType: "finding_id",
-            dispatchMode: "individual",
-          },
-        ],
+        selection: {
+          kind: "batches",
+          batches: [
+            {
+              targetIds: ["check-a"],
+              targetType: "check_id",
+              dispatchMode: "grouped",
+            },
+            {
+              targetIds: ["finding-1"],
+              targetType: "finding_id",
+              dispatchMode: "individual",
+            },
+          ],
+        },
         canChooseGroupedDispatch: false,
         description: "Create Jira issues for 1 Group and 1 Finding.",
       });
@@ -639,18 +642,21 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetBatches: [
-          {
-            targetIds: ["check-b"],
-            targetType: "check_id",
-            dispatchMode: "grouped",
-          },
-          {
-            targetIds: ["finding-1"],
-            targetType: "finding_id",
-            dispatchMode: "individual",
-          },
-        ],
+        selection: {
+          kind: "batches",
+          batches: [
+            {
+              targetIds: ["check-b"],
+              targetType: "check_id",
+              dispatchMode: "grouped",
+            },
+            {
+              targetIds: ["finding-1"],
+              targetType: "finding_id",
+              dispatchMode: "individual",
+            },
+          ],
+        },
         canChooseGroupedDispatch: false,
         description: "Create Jira issues for 1 Group and 1 Finding.",
       });
@@ -703,25 +709,28 @@ describe("FindingsGroupTable", () => {
 
       // Then
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0] as {
-        targetBatches: Array<Record<string, unknown>>;
+        selection: { batches: Array<Record<string, unknown>> };
       };
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetBatches: [
-          {
-            targetIds: ["check-b"],
-            targetType: "check_id",
-            dispatchMode: "grouped",
-          },
-          {
-            targetIds: ["finding-1", "finding-2"],
-            targetType: "finding_id",
-          },
-        ],
+        selection: {
+          kind: "batches",
+          batches: [
+            {
+              targetIds: ["check-b"],
+              targetType: "check_id",
+              dispatchMode: "grouped",
+            },
+            {
+              targetIds: ["finding-1", "finding-2"],
+              targetType: "finding_id",
+            },
+          ],
+        },
         canChooseGroupedDispatch: false,
         description: "Create Jira issues for 1 Group and 2 Findings.",
       });
-      expect(lastCall.targetBatches[1]).not.toHaveProperty("dispatchMode");
+      expect(lastCall.selection.batches[1]).not.toHaveProperty("dispatchMode");
     });
 
     it("should route choosing Mute through the existing mute resolver", async () => {
@@ -848,8 +857,11 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["finding-1"],
-        targetType: "finding_id",
+        selection: {
+          kind: "single",
+          targetId: "finding-1",
+          targetType: "finding_id",
+        },
         defaultDispatchMode: "individual",
         canChooseGroupedDispatch: false,
       });
@@ -893,8 +905,11 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["finding-1", "finding-2"],
-        targetType: "finding_id",
+        selection: {
+          kind: "target-list",
+          targetIds: ["finding-1", "finding-2"],
+          targetType: "finding_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: true,
       });
@@ -1025,8 +1040,11 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-a"],
-        targetType: "check_id",
+        selection: {
+          kind: "single",
+          targetId: "check-a",
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: true,
         selectedResourceCount: 2,
@@ -1068,8 +1086,11 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-a"],
-        targetType: "check_id",
+        selection: {
+          kind: "single",
+          targetId: "check-a",
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: false,
         selectedResourceCount: 1,
@@ -1118,8 +1139,11 @@ describe("FindingsGroupTable", () => {
       const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
       expect(lastCall).toMatchObject({
         isOpen: true,
-        targetIds: ["check-a", "check-b"],
-        targetType: "check_id",
+        selection: {
+          kind: "target-list",
+          targetIds: ["check-a", "check-b"],
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: false,
         selectedResourceCount: 2,

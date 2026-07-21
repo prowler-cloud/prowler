@@ -216,7 +216,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "1 selected" }));
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await user.click(screen.getByRole("menuitem", { name: "Send to Jira" }));
 
     // Then
     expect(onSendToJira).toHaveBeenCalledTimes(1);
@@ -250,12 +250,12 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // Then
     expect(
-      screen.getByRole("button", {
+      screen.getByRole("menuitem", {
         name: "Mute 1 Group and 1 Finding",
       }),
     ).toBeVisible();
     expect(
-      screen.getByRole("button", {
+      screen.getByRole("menuitem", {
         name: "Send 1 Group and 1 Finding to Jira",
       }),
     ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
@@ -278,11 +278,11 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // When
     await user.click(screen.getByRole("button", { name: "1 selected" }));
-    const jiraButton = screen.getByRole("button", { name: "Send to Jira" });
+    const jiraAction = screen.getByRole("menuitem", { name: "Send to Jira" });
 
     // Then
-    expect(jiraButton).toBeVisible();
-    expect(jiraButton).toBeDisabled();
+    expect(jiraAction).toBeVisible();
+    expect(jiraAction).toHaveAttribute("aria-disabled", "true");
     const cloudBadgeLink = screen.getByRole("link", {
       name: "Available only in Prowler Cloud",
     });
@@ -291,11 +291,11 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
       "href",
       "https://prowler.com/pricing",
     );
-    expect(jiraButton).not.toContainElement(cloudBadgeLink);
+    expect(jiraAction).toContainElement(cloudBadgeLink);
     expect(onSendToJira).not.toHaveBeenCalled();
 
     // When
-    await user.hover(jiraButton.parentElement!);
+    await user.hover(jiraAction);
 
     // Then
     const tooltipTexts = await screen.findAllByText(

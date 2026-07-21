@@ -20,6 +20,47 @@ export const JIRA_DISPATCH_TARGET = {
 export type JiraDispatchTarget =
   (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
 
+export const JIRA_TARGET_SELECTION_KIND = {
+  SINGLE: "single",
+  TARGET_LIST: "target-list",
+  BATCHES: "batches",
+} as const;
+
+export type JiraTargetSelectionKind =
+  (typeof JIRA_TARGET_SELECTION_KIND)[keyof typeof JIRA_TARGET_SELECTION_KIND];
+
+export type NonEmptyStringArray = [string, ...string[]];
+
+export interface JiraDispatchTargetBatch {
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+  dispatchMode?: JiraDispatchMode;
+}
+
+export interface JiraSingleTargetSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.SINGLE;
+  targetId: string;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraTargetListSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.TARGET_LIST;
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraBatchSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.BATCHES;
+  batches: [JiraDispatchTargetBatch, ...JiraDispatchTargetBatch[]];
+}
+
+export type JiraSelection =
+  | JiraSingleTargetSelection
+  | JiraTargetListSelection
+  | JiraBatchSelection;
+
+export const JIRA_DISPATCH_TASK_KIND = "jira-dispatch";
+
 export interface IntegrationProps {
   type: "integrations";
   id: string;
@@ -75,25 +116,28 @@ export interface JiraDispatchResponse {
       completed_at: string | null;
       name: string;
       state: TaskState;
-      result: {
-        success?: boolean;
-        error?: string;
-        message?: string;
-        successful_count?: number;
-        created_count?: number;
-        updated_count?: number;
-        failed_count?: number;
-        created_issues?: unknown[];
-        updated_issues?: unknown[];
-        failed_groups?: unknown[];
-        failed_batches?: unknown[];
-        issue_url?: string;
-        issue_key?: string;
-      } | null;
+      result: JiraDispatchTaskResult | null;
       task_args: Record<string, unknown> | null;
       metadata: Record<string, unknown> | null;
     };
   };
+}
+
+export interface JiraDispatchTaskResult {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  successful_count?: number;
+  created_count?: number;
+  updated_count?: number;
+  failed_count?: number;
+  created_issues?: unknown[];
+  updated_issues?: unknown[];
+  failed_groups?: unknown[];
+  failed_batches?: unknown[];
+  failed_finding_ids?: string[];
+  issue_url?: string;
+  issue_key?: string;
 }
 
 // Shared AWS credential fields schema

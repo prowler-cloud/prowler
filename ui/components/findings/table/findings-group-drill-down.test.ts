@@ -16,7 +16,7 @@ describe("findings group drill down", () => {
 
   it("routes selected child findings through the Send to Jira modal with issue creation mode", () => {
     expect(source).toContain("<SendToJiraModal");
-    expect(source).toContain('targetType="finding_id"');
+    expect(source).toContain("JIRA_DISPATCH_TARGET.FINDING_ID");
     expect(source).toContain(
       "selectedFindingIds.length > 1 && groupedJiraDispatchEnabled",
     );

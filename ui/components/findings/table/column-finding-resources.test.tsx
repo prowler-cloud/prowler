@@ -7,17 +7,20 @@ import type {
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+interface JiraModalMockProps {
+  selection: { targetId?: string };
+  isOpen: boolean;
+}
+
 const { SendToJiraModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
   () => ({
-    SendToJiraModalMock: vi.fn(
-      ({ findingId, isOpen }: { findingId: string; isOpen: boolean }) => (
-        <div
-          data-testid="jira-modal"
-          data-finding-id={findingId}
-          data-open={isOpen ? "true" : "false"}
-        />
-      ),
-    ),
+    SendToJiraModalMock: vi.fn(({ selection, isOpen }: JiraModalMockProps) => (
+      <div
+        data-testid="jira-modal"
+        data-finding-id={selection.targetId}
+        data-open={isOpen ? "true" : "false"}
+      />
+    )),
     isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
   }),
 );
@@ -575,8 +578,11 @@ describe("column-finding-resources", () => {
     // Then
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        targetIds: ["finding-1", "finding-2"],
-        targetType: "finding_id",
+        selection: {
+          kind: "target-list",
+          targetIds: ["finding-1", "finding-2"],
+          targetType: "finding_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: true,
       }),

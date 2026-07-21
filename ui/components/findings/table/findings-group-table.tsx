@@ -2,7 +2,7 @@
 
 import { Row, RowSelectionState } from "@tanstack/react-table";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
@@ -14,6 +14,10 @@ import {
   PROWLER_CLOUD_ONLY_TOOLTIP,
 } from "@/lib/deployment";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
+import {
+  createJiraBatchSelection,
+  createJiraTargetSelection,
+} from "@/lib/jira-dispatch-selection";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
@@ -89,64 +93,68 @@ export function FindingsGroupTable({
   hasHistoricalData,
   expandedCheckId: requestedExpandedCheckId,
 }: FindingsGroupTableProps) {
+  const safeData = data ?? EMPTY_FINDING_GROUPS;
+  const requestedGroup = requestedExpandedCheckId
+    ? safeData.find((group) => group.checkId === requestedExpandedCheckId)
+    : undefined;
+  const initialExpandedCheckId =
+    requestedGroup && canDrillDownFindingGroup(requestedGroup)
+      ? requestedGroup.checkId
+      : null;
+
+  return (
+    <FindingsGroupTableContent
+      key={`${requestedExpandedCheckId ?? "manual"}:${initialExpandedCheckId ?? "collapsed"}`}
+      data={safeData}
+      metadata={metadata}
+      resolvedFilters={resolvedFilters}
+      hasHistoricalData={hasHistoricalData}
+      initialExpandedCheckId={initialExpandedCheckId}
+    />
+  );
+}
+
+interface FindingsGroupTableContentProps {
+  data: FindingGroupRow[];
+  metadata?: MetaDataProps;
+  resolvedFilters: Record<string, string>;
+  hasHistoricalData: boolean;
+  initialExpandedCheckId: string | null;
+}
+
+const FindingsGroupTableContent = ({
+  data,
+  metadata,
+  resolvedFilters,
+  hasHistoricalData,
+  initialExpandedCheckId,
+}: FindingsGroupTableContentProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  const [expandedCheckId, setExpandedCheckId] = useState<string | null>(null);
-  const [expandedGroup, setExpandedGroup] = useState<FindingGroupRow | null>(
-    null,
-  );
+  const [selectedExpandedCheckId, setSelectedExpandedCheckId] = useState<
+    string | null
+  >(initialExpandedCheckId);
   // Separate input (keystroke) from committed search (Enter) to avoid remounting InlineResourceContainer.
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
-  const previousRequestedExpandedCheckIdRef = useRef<string | undefined>(
-    undefined,
-  );
 
   const safeData = data ?? EMPTY_FINDING_GROUPS;
-  const hasResourceSelection = resourceSelection.length > 0;
+  const expandedGroupCandidate = selectedExpandedCheckId
+    ? safeData.find((group) => group.checkId === selectedExpandedCheckId)
+    : undefined;
+  const expandedGroup =
+    expandedGroupCandidate && canDrillDownFindingGroup(expandedGroupCandidate)
+      ? expandedGroupCandidate
+      : null;
+  const expandedCheckId = expandedGroup?.checkId ?? null;
+  const activeResourceSelection = expandedCheckId ? resourceSelection : [];
+  const hasResourceSelection = activeResourceSelection.length > 0;
   const filters = resolvedFilters;
   const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
-
-  useEffect(() => {
-    const previousRequestedExpandedCheckId =
-      previousRequestedExpandedCheckIdRef.current;
-    previousRequestedExpandedCheckIdRef.current = requestedExpandedCheckId;
-
-    if (!requestedExpandedCheckId) {
-      if (previousRequestedExpandedCheckId) {
-        setExpandedCheckId(null);
-        setExpandedGroup(null);
-        setResourceSearchInput("");
-        setResourceSearch("");
-        setResourceSelection([]);
-      }
-
-      return;
-    }
-
-    const requestedGroup = safeData.find(
-      (group) => group.checkId === requestedExpandedCheckId,
-    );
-
-    if (!requestedGroup || !canDrillDownFindingGroup(requestedGroup)) {
-      setExpandedCheckId(null);
-      setExpandedGroup(null);
-      setResourceSearchInput("");
-      setResourceSearch("");
-      setResourceSelection([]);
-      return;
-    }
-
-    setExpandedCheckId(requestedExpandedCheckId);
-    setExpandedGroup(requestedGroup);
-    setResourceSearchInput("");
-    setResourceSearch("");
-    setResourceSelection([]);
-  }, [requestedExpandedCheckId, safeData]);
 
   // Exclude expanded group from group-level mutes when it has resource selections.
   const selectedCheckIds = Object.keys(rowSelection)
@@ -169,7 +177,7 @@ export function FindingsGroupTable({
   const jiraGroupSelectionTakesPrecedence = selectedCheckIds.length > 0;
   const jiraTargetIds = jiraGroupSelectionTakesPrecedence
     ? selectedCheckIds
-    : resourceSelection;
+    : activeResourceSelection;
   const jiraTargetType = jiraGroupSelectionTakesPrecedence
     ? JIRA_DISPATCH_TARGET.CHECK_ID
     : JIRA_DISPATCH_TARGET.FINDING_ID;
@@ -183,53 +191,53 @@ export function FindingsGroupTable({
     ? singleSelectedGroup
       ? singleSelectedGroup.resourcesFail
       : selectedCheckIds.length
-    : resourceSelection.length;
+    : activeResourceSelection.length;
   const jiraDispatchMode = jiraGroupSelectionTakesPrecedence
     ? JIRA_DISPATCH_MODE.GROUPED
-    : resourceSelection.length > 1
+    : activeResourceSelection.length > 1
       ? JIRA_DISPATCH_MODE.GROUPED
       : JIRA_DISPATCH_MODE.INDIVIDUAL;
   const canChooseGroupedJiraDispatch = jiraGroupSelectionTakesPrecedence
     ? !hasMixedJiraSelection &&
       selectedCheckIds.length === 1 &&
       selectedJiraResourceCount > 1
-    : resourceSelection.length > 1;
+    : activeResourceSelection.length > 1;
   const jiraTitle = hasMixedJiraSelection
     ? undefined
     : jiraGroupSelectionTakesPrecedence
       ? selectedGroupTitle
       : expandedGroup?.checkTitle;
-  const jiraBatches = hasMixedJiraSelection
-    ? [
+  const jiraSelection = hasMixedJiraSelection
+    ? createJiraBatchSelection([
         {
           targetIds: selectedCheckIds,
           targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
           dispatchMode: JIRA_DISPATCH_MODE.GROUPED,
         },
         {
-          targetIds: resourceSelection,
+          targetIds: activeResourceSelection,
           targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
-          ...(resourceSelection.length > 1
+          ...(activeResourceSelection.length > 1
             ? {}
             : { dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL }),
         },
-      ]
-    : undefined;
+      ])
+    : createJiraTargetSelection(jiraTargetIds, jiraTargetType);
   const jiraDescription = hasMixedJiraSelection
     ? `Create Jira issues for ${buildSelectionEntityLabel(
         selectedCheckIds.length,
-        resourceSelection.length,
+        activeResourceSelection.length,
       )}.`
     : undefined;
   const hasJiraTargets = jiraTargetIds.length > 0;
   const isSingleFindingJiraDispatch =
-    !jiraGroupSelectionTakesPrecedence && resourceSelection.length === 1;
+    !jiraGroupSelectionTakesPrecedence && activeResourceSelection.length === 1;
   const canSendToJira =
     hasJiraTargets &&
     (isSingleFindingJiraDispatch || groupedJiraDispatchEnabled);
   const sendToJiraLabel = buildJiraActionLabel(
     selectedCheckIds.length,
-    resourceSelection.length,
+    activeResourceSelection.length,
   );
 
   const selectableRowCount = safeData.filter((g) =>
@@ -296,16 +304,14 @@ export function FindingsGroupTable({
       handleCollapse();
       return;
     }
-    setExpandedCheckId(checkId);
-    setExpandedGroup(group);
+    setSelectedExpandedCheckId(checkId);
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
   };
 
   const handleCollapse = () => {
-    setExpandedCheckId(null);
-    setExpandedGroup(null);
+    setSelectedExpandedCheckId(null);
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
@@ -407,28 +413,32 @@ export function FindingsGroupTable({
 
       {(selectedCheckIds.length > 0 || hasResourceSelection) && (
         <FloatingMuteButton
-          selectedCount={selectedCheckIds.length + resourceSelection.length}
-          selectedFindingIds={[...selectedCheckIds, ...resourceSelection]}
+          selectedCount={
+            selectedCheckIds.length + activeResourceSelection.length
+          }
+          selectedFindingIds={[...selectedCheckIds, ...activeResourceSelection]}
           label={buildSelectionSummary(
             selectedCheckIds.length,
-            resourceSelection.length,
+            activeResourceSelection.length,
           )}
           muteLabel={buildMuteActionLabel(
             selectedCheckIds.length,
-            resourceSelection.length,
+            activeResourceSelection.length,
           )}
           onBeforeOpen={async () => {
             const [groupIds, resourceIds] = await Promise.all([
               selectedCheckIds.length > 0
                 ? resolveGroupMuteIds(selectedCheckIds)
                 : Promise.resolve([]),
-              Promise.resolve(hasResourceSelection ? resourceSelection : []),
+              Promise.resolve(
+                hasResourceSelection ? activeResourceSelection : [],
+              ),
             ]);
             return [...groupIds, ...resourceIds];
           }}
           onComplete={handleMuteComplete}
           isBulkOperation={
-            selectedCheckIds.length > 0 || resourceSelection.length > 1
+            selectedCheckIds.length > 0 || activeResourceSelection.length > 1
           }
           showSendToJira={hasJiraTargets}
           canSendToJira={canSendToJira}
@@ -438,31 +448,12 @@ export function FindingsGroupTable({
         />
       )}
 
-      {canSendToJira && jiraBatches && (
+      {canSendToJira && jiraSelection && (
         <SendToJiraModal
           isOpen={isJiraModalOpen}
           onOpenChange={setIsJiraModalOpen}
-          findingId={jiraTargetIds[0] ?? ""}
           findingTitle={jiraTitle}
-          targetBatches={jiraBatches}
-          defaultDispatchMode={jiraDispatchMode}
-          isFindingGroupSelection={
-            !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)
-          }
-          canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
-          selectedResourceCount={selectedJiraResourceCount}
-          description={jiraDescription}
-        />
-      )}
-
-      {canSendToJira && !jiraBatches && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingId={jiraTargetIds[0] ?? ""}
-          findingTitle={jiraTitle}
-          targetIds={jiraTargetIds}
-          targetType={jiraTargetType}
+          selection={jiraSelection}
           defaultDispatchMode={jiraDispatchMode}
           isFindingGroupSelection={
             !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)
@@ -474,4 +465,4 @@ export function FindingsGroupTable({
       )}
     </FindingsSelectionContext.Provider>
   );
-}
+};

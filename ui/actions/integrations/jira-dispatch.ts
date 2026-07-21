@@ -2,6 +2,7 @@
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { evaluateJiraDispatchTask } from "@/lib/jira-dispatch-result";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type {
   IntegrationProps,
@@ -9,12 +10,9 @@ import type {
   JiraDispatchRequest,
   JiraDispatchResponse,
   JiraDispatchTarget,
+  JiraDispatchTaskResult,
 } from "@/types/integrations";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
-
-type JiraTaskResult = NonNullable<
-  JiraDispatchResponse["data"]["attributes"]["result"]
->;
 
 interface JiraDispatchInput {
   integrationId: string;
@@ -24,53 +22,6 @@ interface JiraDispatchInput {
   issueType: string;
   dispatchMode?: JiraDispatchMode;
 }
-
-const getArrayCount = (value: unknown[] | undefined) =>
-  Array.isArray(value) ? value.length : 0;
-
-const getJiraDispatchFailedCount = (result: JiraTaskResult | undefined) => {
-  if (!result) return 0;
-  return Math.max(
-    result.failed_count ?? 0,
-    getArrayCount(result.failed_groups),
-    getArrayCount(result.failed_batches),
-  );
-};
-
-const getJiraDispatchSuccessCount = (result: JiraTaskResult | undefined) => {
-  if (!result) return 0;
-  return Math.max(
-    result.successful_count ?? 0,
-    result.created_count ?? 0,
-    result.updated_count ?? 0,
-    getArrayCount(result.created_issues),
-    getArrayCount(result.updated_issues),
-    result.issue_key || result.issue_url ? 1 : 0,
-  );
-};
-
-const buildJiraDispatchFailureMessage = (
-  result: JiraTaskResult | undefined,
-  failedCount: number,
-) => {
-  if (result?.error) return result.error;
-
-  const createdCount = result?.created_count ?? 0;
-  const updatedCount = result?.updated_count ?? 0;
-  const successCount = createdCount + updatedCount;
-  return `Jira dispatch completed with ${failedCount} failed and ${successCount} created/updated issue${successCount === 1 ? "" : "s"}.`;
-};
-
-const buildJiraDispatchSuccessMessage = (
-  result: JiraTaskResult | undefined,
-) => {
-  const successCount = getJiraDispatchSuccessCount(result);
-  if (successCount > 1) {
-    return `${successCount} Jira issues were created or updated successfully.`;
-  }
-
-  return "Finding successfully sent to Jira!";
-};
 
 export const getJiraIssueTypes = async (
   integrationId: string,
@@ -242,51 +193,8 @@ export const pollJiraDispatchTask = async (
   if (!res.ok) {
     return { success: false, error: res.error };
   }
-  const { state, result } = res;
-  const jiraResult = (result ?? undefined) as JiraTaskResult | undefined;
-
-  if (state === "completed") {
-    const failedCount = getJiraDispatchFailedCount(jiraResult);
-    if (failedCount > 0) {
-      const successCount = getJiraDispatchSuccessCount(jiraResult);
-      if (successCount > 0) {
-        return {
-          success: true,
-          message: buildJiraDispatchSuccessMessage(jiraResult),
-          warning: buildJiraDispatchFailureMessage(jiraResult, failedCount),
-        };
-      }
-
-      return {
-        success: false,
-        error: buildJiraDispatchFailureMessage(jiraResult, failedCount),
-      };
-    }
-
-    if (jiraResult?.success === false || jiraResult?.error) {
-      return {
-        success: false,
-        error: jiraResult?.error || "Failed to create Jira issue.",
-      };
-    }
-
-    if (!jiraResult || getJiraDispatchSuccessCount(jiraResult) === 0) {
-      return {
-        success: false,
-        error:
-          "Jira dispatch completed but did not create or update any issues.",
-      };
-    }
-
-    return {
-      success: true,
-      message: buildJiraDispatchSuccessMessage(jiraResult),
-    };
-  }
-
-  if (state === "failed") {
-    return { success: false, error: jiraResult?.error || "Task failed." };
-  }
-
-  return { success: false, error: `Unknown task state: ${state}` };
+  return evaluateJiraDispatchTask(
+    res.state,
+    res.result as JiraDispatchTaskResult | undefined,
+  );
 };

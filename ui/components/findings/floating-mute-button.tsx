@@ -7,15 +7,12 @@ import { createPortal } from "react-dom";
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Button } from "@/components/shadcn";
 import { Badge } from "@/components/shadcn/badge/badge";
-import { Modal } from "@/components/shadcn/modal";
-import { Spinner } from "@/components/shadcn/spinner/spinner";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown/action-dropdown";
+import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { PROWLER_CLOUD_ONLY_TOOLTIP } from "@/lib/deployment";
-import { cn } from "@/lib/utils";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
 
@@ -35,7 +32,7 @@ interface FloatingMuteButtonProps {
   onSendToJira?: () => void;
   /** Whether the Jira action is available for the current selection. */
   canSendToJira?: boolean;
-  /** Whether the Jira action should be displayed in the chooser. */
+  /** Whether the Jira action should be displayed in the action menu. */
   showSendToJira?: boolean;
   /** Custom Jira action label. Defaults to "Send to Jira". */
   sendToJiraLabel?: string;
@@ -69,7 +66,6 @@ export function FloatingMuteButton({
   sendToJiraLabel = "Send to Jira",
   jiraDisabledTooltip = PROWLER_CLOUD_ONLY_TOOLTIP,
 }: FloatingMuteButtonProps) {
-  const [isActionChooserOpen, setIsActionChooserOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -93,8 +89,6 @@ export function FloatingMuteButton({
   };
 
   const handleMuteClick = async () => {
-    setIsActionChooserOpen(false);
-
     if (onBeforeOpen) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -125,7 +119,6 @@ export function FloatingMuteButton({
   const handleJiraClick = () => {
     if (!canSendToJira) return;
 
-    setIsActionChooserOpen(false);
     onSendToJira?.();
   };
 
@@ -135,15 +128,6 @@ export function FloatingMuteButton({
   };
 
   const findingIds = onBeforeOpen ? resolvedIds : selectedFindingIds;
-  const hasMultipleActions = showSendToJira;
-  const handlePrimaryClick = () => {
-    if (hasMultipleActions) {
-      setIsActionChooserOpen(true);
-      return;
-    }
-
-    void handleMuteClick();
-  };
 
   return (
     <>
@@ -157,76 +141,62 @@ export function FloatingMuteButton({
         preparationError={mutePreparationError}
       />
 
-      <Modal
-        open={isActionChooserOpen}
-        onOpenChange={setIsActionChooserOpen}
-        title="Choose action"
-        description="Select what to do with the current selection."
-      >
-        <div className="flex flex-col gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="justify-start"
-            onClick={handleMuteClick}
-          >
-            <VolumeX className="size-5" />
-            {muteLabel}
-          </Button>
-          {showSendToJira && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="relative block">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start",
-                      !canSendToJira && "pr-56",
-                    )}
-                    aria-label={sendToJiraLabel}
-                    disabled={!canSendToJira}
-                    onClick={handleJiraClick}
-                  >
-                    <JiraIcon size={20} />
-                    <span className="flex-1 text-left">{sendToJiraLabel}</span>
-                  </Button>
-                  {!canSendToJira && (
-                    <span className="absolute top-1/2 right-2 z-10 -translate-y-1/2">
-                      <CloudFeatureBadgeLink />
-                    </span>
-                  )}
-                </span>
-              </TooltipTrigger>
-              {!canSendToJira && (
-                <TooltipContent>{jiraDisabledTooltip}</TooltipContent>
-              )}
-            </Tooltip>
-          )}
-        </div>
-      </Modal>
-
       {/* Portaled to body: <main> is a layout container (container queries),
           which would otherwise capture this fixed button and scroll it away
           with the content. */}
       {typeof document !== "undefined"
         ? createPortal(
             <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 flex gap-2 duration-300">
-              <Button
-                onClick={handlePrimaryClick}
-                disabled={isResolving}
-                size="lg"
-                className="shadow-lg"
-              >
-                {isResolving ? (
-                  <Spinner className="size-5" />
+              <div className="shadow-lg">
+                {showSendToJira ? (
+                  <ActionDropdown
+                    ariaLabel="Open selection actions"
+                    trigger={
+                      <Button disabled={isResolving} size="lg">
+                        {isResolving ? (
+                          <Spinner className="size-5" />
+                        ) : (
+                          <Ellipsis className="size-5" />
+                        )}
+                        {label ?? `${selectedCount} selected`}
+                      </Button>
+                    }
+                  >
+                    <ActionDropdownItem
+                      icon={<VolumeX />}
+                      label={muteLabel}
+                      aria-label={muteLabel}
+                      onSelect={() => void handleMuteClick()}
+                    />
+                    <ActionDropdownItem
+                      icon={<JiraIcon size={20} />}
+                      label={
+                        <span className="flex items-center gap-2">
+                          {sendToJiraLabel}
+                          {!canSendToJira && <CloudFeatureBadgeLink />}
+                        </span>
+                      }
+                      aria-label={sendToJiraLabel}
+                      disabled={!canSendToJira}
+                      disabledTooltip={jiraDisabledTooltip}
+                      onSelect={handleJiraClick}
+                    />
+                  </ActionDropdown>
                 ) : (
-                  <Ellipsis className="size-5" />
+                  <Button
+                    onClick={() => void handleMuteClick()}
+                    disabled={isResolving}
+                    size="lg"
+                  >
+                    {isResolving ? (
+                      <Spinner className="size-5" />
+                    ) : (
+                      <VolumeX className="size-5" />
+                    )}
+                    Mute ({selectedCount})
+                  </Button>
                 )}
-                {hasMultipleActions
-                  ? (label ?? `${selectedCount} selected`)
-                  : `Mute (${selectedCount})`}
-              </Button>
+              </div>
             </div>,
             document.body,
           )

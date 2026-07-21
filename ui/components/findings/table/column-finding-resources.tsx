@@ -23,6 +23,7 @@ import {
   isGroupedJiraDispatchEnabled,
   PROWLER_CLOUD_ONLY_TOOLTIP,
 } from "@/lib/deployment";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
@@ -87,6 +88,10 @@ const ResourceRowActions = ({
   };
   const displayIds = getDisplayIds();
   const canSendToJira = displayIds.length === 1 || groupedJiraDispatchEnabled;
+  const jiraSelection = createJiraTargetSelection(
+    displayIds,
+    JIRA_DISPATCH_TARGET.FINDING_ID,
+  );
 
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
@@ -127,22 +132,22 @@ const ResourceRowActions = ({
           onComplete={handleMuteComplete}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={resource.findingId}
-        findingTitle={resource.checkId}
-        targetIds={displayIds}
-        targetType={JIRA_DISPATCH_TARGET.FINDING_ID}
-        defaultDispatchMode={
-          displayIds.length > 1
-            ? JIRA_DISPATCH_MODE.GROUPED
-            : JIRA_DISPATCH_MODE.INDIVIDUAL
-        }
-        canChooseGroupedDispatch={
-          displayIds.length > 1 && groupedJiraDispatchEnabled
-        }
-      />
+      {jiraSelection && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          selection={jiraSelection}
+          findingTitle={resource.checkId}
+          defaultDispatchMode={
+            displayIds.length > 1
+              ? JIRA_DISPATCH_MODE.GROUPED
+              : JIRA_DISPATCH_MODE.INDIVIDUAL
+          }
+          canChooseGroupedDispatch={
+            displayIds.length > 1 && groupedJiraDispatchEnabled
+          }
+        />
+      )}
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}

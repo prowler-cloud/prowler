@@ -74,12 +74,14 @@ import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-pan
 import { getFailingForLabel } from "@/lib/date-utils";
 import { formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
@@ -411,6 +413,9 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
+  const jiraSelection = f
+    ? createJiraTargetSelection([f.id], JIRA_DISPATCH_TARGET.FINDING_ID)
+    : null;
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
   const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
@@ -545,11 +550,11 @@ export function ResourceDetailDrawerContent({
           }}
         />
       )}
-      {f && (
+      {f && jiraSelection && (
         <SendToJiraModal
           isOpen={isJiraModalOpen}
           onOpenChange={setIsJiraModalOpen}
-          findingId={f.id}
+          selection={jiraSelection}
           findingTitle={checkMeta.checkTitle}
         />
       )}
@@ -1569,6 +1574,10 @@ function OtherFindingRow({
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
+  const jiraSelection = createJiraTargetSelection(
+    [finding.id],
+    JIRA_DISPATCH_TARGET.FINDING_ID,
+  );
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1585,12 +1594,14 @@ function OtherFindingRow({
           }}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={finding.id}
-        findingTitle={finding.checkTitle}
-      />
+      {jiraSelection && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          selection={jiraSelection}
+          findingTitle={finding.checkTitle}
+        />
+      )}
       <TableRow
         className="group cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}

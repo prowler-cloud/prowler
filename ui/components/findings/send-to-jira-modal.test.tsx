@@ -1,37 +1,64 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { type ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import {
+  createJiraBatchSelection,
+  createJiraTargetSelection,
+} from "@/lib/jira-dispatch-selection";
+import {
+  JIRA_DISPATCH_MODE,
+  JIRA_DISPATCH_TARGET,
+  type JiraDispatchTarget,
+} from "@/types/integrations";
 
 import { SendToJiraModal } from "./send-to-jira-modal";
+
+const targetSelection = (targetIds: string[], targetType: JiraDispatchTarget) =>
+  createJiraTargetSelection(targetIds, targetType)!;
+
+const batchSelection = (
+  batches: Parameters<typeof createJiraBatchSelection>[0],
+) => createJiraBatchSelection(batches)!;
 
 const {
   getJiraIntegrationsMock,
   getJiraIssueTypesMock,
-  pollJiraDispatchTaskMock,
   sendFindingToJiraMock,
   sendJiraDispatchMock,
+  trackAndPollTaskMock,
   toastMock,
 } = vi.hoisted(() => ({
   getJiraIntegrationsMock: vi.fn(),
   getJiraIssueTypesMock: vi.fn(),
-  pollJiraDispatchTaskMock: vi.fn(),
   sendFindingToJiraMock: vi.fn(),
   sendJiraDispatchMock: vi.fn(),
+  trackAndPollTaskMock: vi.fn(),
   toastMock: vi.fn(),
 }));
 
 vi.mock("@/actions/integrations/jira-dispatch", () => ({
   getJiraIntegrations: getJiraIntegrationsMock,
   getJiraIssueTypes: getJiraIssueTypesMock,
-  pollJiraDispatchTask: pollJiraDispatchTaskMock,
   sendFindingToJira: sendFindingToJiraMock,
   sendJiraDispatch: sendJiraDispatchMock,
 }));
 
 vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
+  ToastAction: ({ children, ...props }: ComponentProps<"button">) => (
+    <button {...props}>{children}</button>
+  ),
+}));
+
+vi.mock("@/store/task-watcher/store", () => ({
+  TASK_WATCHER_STATUS: {
+    PENDING: "pending",
+    READY: "ready",
+    ERROR: "error",
+  },
+  trackAndPollTask: trackAndPollTaskMock,
 }));
 
 vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
@@ -93,9 +120,9 @@ describe("SendToJiraModal", () => {
       taskId: "task-1",
       message: "Started",
     });
-    pollJiraDispatchTaskMock.mockResolvedValue({
-      success: true,
-      message: "Finding successfully sent to Jira!",
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: { created_count: 1, failed_count: 0 },
     });
   });
 
@@ -104,9 +131,8 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={vi.fn()}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
@@ -116,7 +142,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
           },
-        ]}
+        ])}
         defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
         selectedResourceCount={1}
         description="Create Jira issues for 1 Group and 2 Findings."
@@ -146,10 +172,11 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={vi.fn()}
-        findingId="finding-1"
         findingTitle="Finding 1"
-        targetIds={["finding-1", "finding-2"]}
-        targetType="finding_id"
+        selection={targetSelection(
+          ["finding-1", "finding-2"],
+          JIRA_DISPATCH_TARGET.FINDING_ID,
+        )}
         defaultDispatchMode="grouped"
         canChooseGroupedDispatch
       />,
@@ -187,9 +214,8 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: JIRA_DISPATCH_TARGET.CHECK_ID,
@@ -199,7 +225,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
           },
-        ]}
+        ])}
         defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
         selectedResourceCount={1}
         description="Create Jira issues for 1 Group and 2 Findings."
@@ -239,8 +265,12 @@ describe("SendToJiraModal", () => {
       issueType: "Task",
       dispatchMode: "individual",
     });
-    expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("group-task");
-    expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("finding-task");
+    expect(trackAndPollTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({ taskId: "group-task", notifyHandler: false }),
+    );
+    expect(trackAndPollTaskMock).toHaveBeenCalledWith(
+      expect.objectContaining({ taskId: "finding-task", notifyHandler: false }),
+    );
   });
 
   it("shows a success toast after individual Finding dispatch succeeds", async () => {
@@ -251,7 +281,10 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="finding-1"
+        selection={targetSelection(
+          ["finding-1"],
+          JIRA_DISPATCH_TARGET.FINDING_ID,
+        )}
         findingTitle="Finding 1"
       />,
     );
@@ -294,10 +327,8 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetIds={["check-a"]}
-        targetType="check_id"
+        selection={targetSelection(["check-a"], JIRA_DISPATCH_TARGET.CHECK_ID)}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -330,7 +361,7 @@ describe("SendToJiraModal", () => {
     });
   });
 
-  it("keeps polling until a slow grouped Finding Group dispatch succeeds", async () => {
+  it("delegates grouped Finding Group task tracking to the shared watcher", async () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
@@ -339,23 +370,12 @@ describe("SendToJiraModal", () => {
       taskId: "group-task",
       message: "Group started",
     });
-    pollJiraDispatchTaskMock
-      .mockResolvedValueOnce({
-        success: false,
-        error: "Task timeout",
-      })
-      .mockResolvedValueOnce({
-        success: true,
-        message: "Finding successfully sent to Jira!",
-      });
     render(
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetIds={["check-a"]}
-        targetType="check_id"
+        selection={targetSelection(["check-a"], JIRA_DISPATCH_TARGET.CHECK_ID)}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -372,9 +392,7 @@ describe("SendToJiraModal", () => {
     await user.click(screen.getByRole("button", { name: "Send to Jira" }));
 
     // Then
-    await waitFor(() =>
-      expect(pollJiraDispatchTaskMock).toHaveBeenCalledTimes(2),
-    );
+    await waitFor(() => expect(trackAndPollTaskMock).toHaveBeenCalledOnce());
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith({
         title: "Success!",
@@ -402,9 +420,8 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: "check_id",
@@ -414,7 +431,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: "finding_id",
           },
-        ]}
+        ])}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -434,7 +451,7 @@ describe("SendToJiraModal", () => {
     await waitFor(() =>
       expect(toastMock).toHaveBeenCalledWith({
         title: "Success!",
-        description: "Finding successfully sent to Jira!",
+        description: "2 Jira issues were created or updated successfully.",
       }),
     );
     expect(toastMock).toHaveBeenCalledTimes(1);
@@ -444,16 +461,18 @@ describe("SendToJiraModal", () => {
     // Given
     const user = userEvent.setup();
     const onOpenChange = vi.fn();
-    pollJiraDispatchTaskMock.mockResolvedValue({
-      success: true,
-      message: "2 Jira issues were created or updated successfully.",
-      warning: "Jira dispatch completed with 1 failed and 2 created issues.",
+    trackAndPollTaskMock.mockResolvedValue({
+      status: "ready",
+      result: { created_count: 2, failed_count: 1 },
     });
     render(
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="finding-1"
+        selection={targetSelection(
+          ["finding-1"],
+          JIRA_DISPATCH_TARGET.FINDING_ID,
+        )}
         findingTitle="Finding 1"
       />,
     );
@@ -473,11 +492,61 @@ describe("SendToJiraModal", () => {
       expect(toastMock).toHaveBeenCalledWith({
         title: "Partial success",
         description:
-          "2 Jira issues were created or updated successfully. Some Jira dispatches failed: Jira dispatch completed with 1 failed and 2 created issues.",
+          "2 Jira issues were created or updated successfully. Some Jira dispatches failed: Jira dispatch completed with 1 failed and 2 created/updated issues.",
       }),
     );
     expect(toastMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ title: "Success!" }),
+    );
+  });
+
+  it("retries only failed Findings after a partial task result", async () => {
+    // Given
+    const user = userEvent.setup();
+    trackAndPollTaskMock.mockResolvedValueOnce({
+      status: "ready",
+      result: {
+        created_count: 1,
+        failed_count: 1,
+        failed_finding_ids: ["finding-2"],
+        error: "Jira rejected one Finding.",
+      },
+    });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={vi.fn()}
+        selection={targetSelection(
+          ["finding-1", "finding-2"],
+          JIRA_DISPATCH_TARGET.FINDING_ID,
+        )}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+
+    // Then
+    await waitFor(() => expect(trackAndPollTaskMock).toHaveBeenCalled());
+    const partialToast = toastMock.mock.calls.find(
+      ([toast]) => toast.title === "Partial success",
+    )?.[0];
+    expect(partialToast?.action).toBeDefined();
+
+    await partialToast.action.props.onClick();
+
+    expect(sendFindingToJiraMock).toHaveBeenLastCalledWith(
+      "jira-1",
+      "finding-2",
+      "SEC",
+      "Task",
     );
   });
 
@@ -496,22 +565,21 @@ describe("SendToJiraModal", () => {
         taskId: "finding-task",
         message: "Findings started",
       });
-    pollJiraDispatchTaskMock
+    trackAndPollTaskMock
       .mockResolvedValueOnce({
-        success: true,
-        message: "Finding successfully sent to Jira!",
+        status: "ready",
+        result: { created_count: 1, failed_count: 0 },
       })
       .mockResolvedValueOnce({
-        success: false,
-        error: "Jira dispatch completed with 1 failed and 1 created issue.",
+        status: "ready",
+        result: { created_count: 0, failed_count: 1 },
       });
     render(
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: "check_id",
@@ -521,7 +589,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: "finding_id",
           },
-        ]}
+        ])}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -542,7 +610,7 @@ describe("SendToJiraModal", () => {
       expect(toastMock).toHaveBeenCalledWith({
         title: "Partial success",
         description:
-          "Finding successfully sent to Jira! Some Jira dispatches failed: Jira dispatch completed with 1 failed and 1 created issue.",
+          "Finding successfully sent to Jira! Some Jira dispatches failed: Jira dispatch completed with 1 failed and 0 created/updated issues.",
       }),
     );
     expect(toastMock).not.toHaveBeenCalledWith(
@@ -568,9 +636,8 @@ describe("SendToJiraModal", () => {
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: "check_id",
@@ -580,7 +647,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: "finding_id",
           },
-        ]}
+        ])}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -598,15 +665,23 @@ describe("SendToJiraModal", () => {
 
     // Then
     await waitFor(() =>
-      expect(pollJiraDispatchTaskMock).toHaveBeenCalledWith("group-task"),
+      expect(trackAndPollTaskMock).toHaveBeenCalledWith(
+        expect.objectContaining({ taskId: "group-task" }),
+      ),
     );
     await waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith({
-        title: "Partial success",
-        description:
-          "Finding successfully sent to Jira! Some Jira dispatches failed: Failed to launch Finding batch.",
-      }),
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: "Partial success",
+          description:
+            "Finding successfully sent to Jira! Some Jira dispatches failed: Failed to launch Finding batch.",
+        }),
+      ),
     );
+    const partialToast = toastMock.mock.calls.find(
+      ([toast]) => toast.title === "Partial success",
+    )?.[0];
+    expect(partialToast?.action).toBeUndefined();
   });
 
   it("reports polling and launch failures together for mixed dispatches", async () => {
@@ -623,17 +698,16 @@ describe("SendToJiraModal", () => {
         success: false,
         error: "Failed to launch Finding batch.",
       });
-    pollJiraDispatchTaskMock.mockResolvedValueOnce({
-      success: false,
+    trackAndPollTaskMock.mockResolvedValueOnce({
+      status: "error",
       error: "Jira dispatch completed with 1 failed issue.",
     });
     render(
       <SendToJiraModal
         isOpen
         onOpenChange={onOpenChange}
-        findingId="check-a"
         findingTitle="Check A"
-        targetBatches={[
+        selection={batchSelection([
           {
             targetIds: ["check-a"],
             targetType: "check_id",
@@ -643,7 +717,7 @@ describe("SendToJiraModal", () => {
             targetIds: ["finding-1", "finding-2"],
             targetType: "finding_id",
           },
-        ]}
+        ])}
         defaultDispatchMode="grouped"
         selectedResourceCount={1}
       />,
@@ -661,12 +735,14 @@ describe("SendToJiraModal", () => {
 
     // Then
     await waitFor(() =>
-      expect(toastMock).toHaveBeenCalledWith({
-        variant: "destructive",
-        title: "Error",
-        description:
-          "Jira dispatch completed with 1 failed issue. Failed to launch Finding batch.",
-      }),
+      expect(toastMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variant: "destructive",
+          title: "Error",
+          description:
+            "Jira dispatch completed with 1 failed issue. Failed to launch Finding batch.",
+        }),
+      ),
     );
   });
 });

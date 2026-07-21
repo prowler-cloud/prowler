@@ -49,6 +49,37 @@ describe("task watcher store", () => {
     expect(onError).not.toHaveBeenCalled();
   });
 
+  it("returns and persists a completed task result while allowing the caller to own notifications", async () => {
+    // Given
+    pollMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: { created_count: 1, failed_count: 1 },
+    });
+
+    // When
+    const result = await trackAndPollTask<{
+      created_count: number;
+      failed_count: number;
+    }>({
+      taskId: "jira-task",
+      kind: "test-kind",
+      meta: {},
+      notifyHandler: false,
+    });
+
+    // Then
+    expect(result).toEqual({
+      status: TASK_WATCHER_STATUS.READY,
+      result: { created_count: 1, failed_count: 1 },
+    });
+    expect(useTaskWatcherStore.getState().tasks["jira-task"]?.result).toEqual({
+      created_count: 1,
+      failed_count: 1,
+    });
+    expect(onReady).not.toHaveBeenCalled();
+  });
+
   it("replaces settled results of the same kind when tracking new work", async () => {
     // Given
     pollMock.mockResolvedValue({ ok: true, state: "completed" });
@@ -199,6 +230,39 @@ describe("task watcher store", () => {
       TASK_WATCHER_STATUS.READY,
     );
     expect(onReady).toHaveBeenCalledTimes(1);
+  });
+
+  it("passes a persisted task result to its handler after resuming", async () => {
+    // Given
+    const taskResult = {
+      created_count: 1,
+      failed_count: 1,
+      failed_finding_ids: ["finding-2"],
+    };
+    pollMock.mockResolvedValue({
+      ok: true,
+      state: "completed",
+      result: taskResult,
+    });
+    useTaskWatcherStore.setState({
+      tasks: {
+        "resumed-jira-task": {
+          taskId: "resumed-jira-task",
+          kind: "test-kind",
+          status: TASK_WATCHER_STATUS.PENDING,
+          meta: {},
+          startedAt: Date.now(),
+        },
+      },
+    });
+
+    // When
+    await resumePendingTasks();
+
+    // Then
+    expect(onReady).toHaveBeenCalledWith(
+      expect.objectContaining({ result: taskResult }),
+    );
   });
 
   it("discards settled tasks before resuming persisted work", async () => {

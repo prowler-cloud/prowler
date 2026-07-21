@@ -306,8 +306,11 @@ describe("DataTableRowActions", () => {
     // Then
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        targetIds: ["s3_bucket_public_access"],
-        targetType: "check_id",
+        selection: {
+          kind: "single",
+          targetId: "s3_bucket_public_access",
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: true,
         selectedResourceCount: 2,
@@ -406,8 +409,11 @@ describe("DataTableRowActions", () => {
     // Then
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        targetIds: ["s3_bucket_public_access"],
-        targetType: "check_id",
+        selection: {
+          kind: "single",
+          targetId: "s3_bucket_public_access",
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: false,
         selectedResourceCount: 1,
@@ -455,8 +461,11 @@ describe("DataTableRowActions", () => {
     // Then
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        targetIds: ["check-a", "check-b"],
-        targetType: "check_id",
+        selection: {
+          kind: "target-list",
+          targetIds: ["check-a", "check-b"],
+          targetType: "check_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: false,
       }),
@@ -488,8 +497,11 @@ describe("DataTableRowActions", () => {
     // Then
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
-        targetIds: ["finding-1", "finding-2"],
-        targetType: "finding_id",
+        selection: {
+          kind: "target-list",
+          targetIds: ["finding-1", "finding-2"],
+          targetType: "finding_id",
+        },
         defaultDispatchMode: "grouped",
         canChooseGroupedDispatch: true,
       }),
@@ -526,8 +538,11 @@ describe("DataTableRowActions", () => {
     expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
       expect.objectContaining({
         isOpen: true,
-        targetIds: ["finding-1"],
-        targetType: "finding_id",
+        selection: {
+          kind: "single",
+          targetId: "finding-1",
+          targetType: "finding_id",
+        },
         defaultDispatchMode: "individual",
         canChooseGroupedDispatch: false,
       }),

@@ -35,6 +35,7 @@ import {
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
@@ -122,6 +123,10 @@ export function FindingsGroupDrillDown({
   const rows = table.getRowModel().rows;
   const canSendSelectedFindingsToJira =
     selectedFindingIds.length === 1 || groupedJiraDispatchEnabled;
+  const jiraSelection = createJiraTargetSelection(
+    selectedFindingIds,
+    JIRA_DISPATCH_TARGET.FINDING_ID,
+  );
 
   return (
     <FindingsSelectionContext.Provider
@@ -262,22 +267,22 @@ export function FindingsGroupDrillDown({
         />
       )}
 
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={selectedFindingIds[0] ?? ""}
-        findingTitle={group.checkTitle}
-        targetIds={selectedFindingIds}
-        targetType={JIRA_DISPATCH_TARGET.FINDING_ID}
-        defaultDispatchMode={
-          selectedFindingIds.length > 1
-            ? JIRA_DISPATCH_MODE.GROUPED
-            : JIRA_DISPATCH_MODE.INDIVIDUAL
-        }
-        canChooseGroupedDispatch={
-          selectedFindingIds.length > 1 && groupedJiraDispatchEnabled
-        }
-      />
+      {jiraSelection && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          selection={jiraSelection}
+          findingTitle={group.checkTitle}
+          defaultDispatchMode={
+            selectedFindingIds.length > 1
+              ? JIRA_DISPATCH_MODE.GROUPED
+              : JIRA_DISPATCH_MODE.INDIVIDUAL
+          }
+          canChooseGroupedDispatch={
+            selectedFindingIds.length > 1 && groupedJiraDispatchEnabled
+          }
+        />
+      )}
 
       <ResourceDetailDrawer
         open={drawer.isOpen}

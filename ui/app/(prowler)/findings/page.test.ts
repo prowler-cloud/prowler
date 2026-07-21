@@ -54,6 +54,7 @@ describe("findings page", () => {
   it("excludes Finding Group's own filters while loading all option pages", () => {
     expect(source).toContain("excludeFindingGroupOwnFilters");
     expect(source).toContain('"filter[check_id__in]"');
-    expect(source).toContain("page <= totalPages");
+    expect(source).toContain("if (page >= totalPages) break");
+    expect(source).toContain("page += 1");
   });
 });

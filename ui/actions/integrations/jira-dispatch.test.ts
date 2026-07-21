@@ -91,7 +91,12 @@ describe("sendJiraDispatch", () => {
     pollTaskUntilSettledMock.mockResolvedValue({
       ok: true,
       state: "completed",
-      result: { created_count: 2, failed_count: 1 },
+      result: {
+        created_count: 2,
+        failed_count: 1,
+        failed_finding_ids: ["finding-3"],
+        error: "Jira rejected one Finding.",
+      },
     });
 
     // When
@@ -102,7 +107,8 @@ describe("sendJiraDispatch", () => {
       success: true,
       message: "2 Jira issues were created or updated successfully.",
       warning:
-        "Jira dispatch completed with 1 failed and 2 created/updated issues.",
+        "Jira rejected one Finding. Jira dispatch completed with 1 failed and 2 created/updated issues.",
+      failedFindingIds: ["finding-3"],
     });
   });
 
@@ -189,7 +195,7 @@ describe("sendJiraDispatch", () => {
     });
     expect(result).toEqual({
       success: true,
-      message: "Finding successfully sent to Jira!",
+      message: "2 Jira issues were created or updated successfully.",
     });
   });
 

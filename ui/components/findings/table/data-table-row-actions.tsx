@@ -18,6 +18,7 @@ import {
   PROWLER_CLOUD_ONLY_TOOLTIP,
 } from "@/lib/deployment";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
@@ -188,6 +189,13 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const jiraTargetIds = getJiraTargetIds();
+  const jiraTargetType = isGroup
+    ? JIRA_DISPATCH_TARGET.CHECK_ID
+    : JIRA_DISPATCH_TARGET.FINDING_ID;
+  const jiraSelection = createJiraTargetSelection(
+    jiraTargetIds,
+    jiraTargetType,
+  );
   const isJiraActionDisabled =
     (isGroup || jiraTargetIds.length > 1) && !groupedJiraDispatchEnabled;
   const selectedJiraResourceCount = isGroup
@@ -272,18 +280,12 @@ export function DataTableRowActions<T extends FindingRowData>({
 
   return (
     <>
-      {(!isGroup || groupedJiraDispatchEnabled) && (
+      {(!isGroup || groupedJiraDispatchEnabled) && jiraSelection && (
         <SendToJiraModal
           isOpen={isJiraModalOpen}
           onOpenChange={setIsJiraModalOpen}
-          findingId={finding.id}
           findingTitle={findingTitle}
-          targetIds={jiraTargetIds}
-          targetType={
-            isGroup
-              ? JIRA_DISPATCH_TARGET.CHECK_ID
-              : JIRA_DISPATCH_TARGET.FINDING_ID
-          }
+          selection={jiraSelection}
           defaultDispatchMode={jiraDefaultDispatchMode}
           canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
           selectedResourceCount={selectedJiraResourceCount}
