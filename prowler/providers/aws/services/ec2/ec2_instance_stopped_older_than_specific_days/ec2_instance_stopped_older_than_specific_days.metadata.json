@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_stopped_older_than_specific_days",
+  "CheckTitle": "EC2 instance is not stopped for longer than the configured maximum age",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "EC2 instances in `stopped` state are evaluated for age. Instances stopped beyond the configurable limit (`max_ec2_stopped_instance_age_in_days`, default `30`) are flagged.",
+  "Risk": "Long-stopped instances may indicate forgotten or abandoned resources that still incur partial costs or retain stale security configurations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 terminate-instances --instance-ids <example_resource_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review long-stopped instances and terminate them if no longer needed.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_stopped_older_than_specific_days"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
