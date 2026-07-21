@@ -144,6 +144,7 @@ describe("Lighthouse page contributions", () => {
   it("builds an attack-path snapshot and excludes unsafe query parameters", () => {
     expect(
       buildAttackPathContext({
+        pathname: "/attack-paths/query-builder",
         scanId: "scan-1",
         queryId: "internet-exposed",
         queryLabel: "Internet exposed resources",
@@ -162,7 +163,7 @@ describe("Lighthouse page contributions", () => {
       kind: "attack_path",
       id: "current-query",
       source: "automatic",
-      scopeKey: "attack-paths:/attack-paths",
+      scopeKey: "attack-paths:/attack-paths/query-builder",
       label: "Internet exposed resources",
       scanId: "scan-1",
       queryId: "internet-exposed",
@@ -176,6 +177,17 @@ describe("Lighthouse page contributions", () => {
       selectedNodeId: "node-1",
       selectedNodeType: "AwsS3Bucket",
     });
+  });
+
+  it("builds an attack-path scope from the current route", () => {
+    // Given / When
+    const context = buildAttackPathContext({
+      pathname: "/attack-paths",
+      scanId: "scan-1",
+    });
+
+    // Then
+    expect(context.scopeKey).toBe("attack-paths:/attack-paths");
   });
 
   it("builds scan summary and selected scan snapshots", () => {

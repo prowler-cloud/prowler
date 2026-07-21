@@ -412,6 +412,7 @@ export default function AttackPathsPage() {
   >;
   const lighthouseContext = scanId
     ? buildAttackPathContext({
+        pathname,
         scanId,
         queryId: queryBuilder.selectedQuery,
         queryLabel: queryBuilder.selectedQueryData?.attributes.name,
