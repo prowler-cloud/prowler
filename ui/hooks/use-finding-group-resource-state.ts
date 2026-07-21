@@ -20,6 +20,7 @@ interface UseFindingGroupResourceStateOptions {
   filters: Record<string, string>;
   hasHistoricalData: boolean;
   onResourceSelectionChange?: (findingIds: string[]) => void;
+  onResourceContextSelectionChange?: (resources: FindingResourceRow[]) => void;
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -52,6 +53,7 @@ export function useFindingGroupResourceState({
   filters,
   hasHistoricalData,
   onResourceSelectionChange,
+  onResourceContextSelectionChange,
   scrollContainerRef,
 }: UseFindingGroupResourceStateOptions): UseFindingGroupResourceStateReturn {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -187,6 +189,7 @@ export function useFindingGroupResourceState({
   const clearSelection = () => {
     setRowSelection({});
     onResourceSelectionChange?.([]);
+    onResourceContextSelectionChange?.([]);
   };
 
   const isSelected = (id: string) => {
@@ -213,6 +216,15 @@ export function useFindingGroupResourceState({
         .map((idx) => resources[parseInt(idx)]?.findingId)
         .filter((id): id is string => Boolean(id));
       onResourceSelectionChange(newFindingIds);
+    }
+    if (onResourceContextSelectionChange) {
+      const selectedResources = Object.keys(newSelection)
+        .filter((key) => newSelection[key])
+        .map((idx) => resources[parseInt(idx)])
+        .filter((resource): resource is FindingResourceRow =>
+          Boolean(resource),
+        );
+      onResourceContextSelectionChange(selectedResources);
     }
   };
 

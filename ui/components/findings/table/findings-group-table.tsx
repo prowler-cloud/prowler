@@ -6,6 +6,7 @@ import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
@@ -14,9 +15,14 @@ import {
   createJiraBatchSelection,
   createJiraTargetSelection,
 } from "@/lib/jira-dispatch-selection";
+import {
+  buildFindingGroupContext,
+  buildFindingResourceContext,
+  buildFindingSummaryContext,
+} from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
-import { FindingGroupRow, MetaDataProps } from "@/types";
+import { FindingGroupRow, FindingResourceRow, MetaDataProps } from "@/types";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { FloatingSelectionActions } from "../floating-selection-actions";
@@ -129,6 +135,9 @@ const FindingsGroupTableContent = ({
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
+  const [resourceContextSelection, setResourceContextSelection] = useState<
+    FindingResourceRow[]
+  >([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
   const safeData = data ?? EMPTY_FINDING_GROUPS;
@@ -141,6 +150,9 @@ const FindingsGroupTableContent = ({
       : null;
   const expandedCheckId = expandedGroup?.checkId ?? null;
   const activeResourceSelection = expandedCheckId ? resourceSelection : [];
+  const activeResourceContextSelection = expandedCheckId
+    ? resourceContextSelection
+    : [];
   const hasResourceSelection = activeResourceSelection.length > 0;
   const filters = resolvedFilters;
 
@@ -273,6 +285,7 @@ const FindingsGroupTableContent = ({
   const handleMuteComplete = () => {
     clearSelection();
     setResourceSelection([]);
+    setResourceContextSelection([]);
     inlineRef.current?.clearSelection();
     inlineRef.current?.refresh();
     router.refresh();
@@ -290,6 +303,7 @@ const FindingsGroupTableContent = ({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
+    setResourceContextSelection([]);
   };
 
   const handleCollapse = () => {
@@ -297,6 +311,7 @@ const FindingsGroupTableContent = ({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
+    setResourceContextSelection([]);
   };
 
   // Drives the onboarding "Open a finding group" step: opens the first row when
@@ -335,6 +350,7 @@ const FindingsGroupTableContent = ({
         resourceSearch={resourceSearch}
         columnCount={columns.length}
         onResourceSelectionChange={setResourceSelection}
+        onResourceContextSelectionChange={setResourceContextSelection}
       />
     );
   };
@@ -351,6 +367,29 @@ const FindingsGroupTableContent = ({
     >
       {/* Gate the tour on having at least one finding group */}
       <div>
+        {metadata?.pagination.count !== undefined && (
+          <LighthouseContextContributor
+            key={`findings-summary-${metadata.pagination.count}`}
+            contributorId="findings-summary"
+            item={buildFindingSummaryContext(metadata.pagination.count)}
+          />
+        )}
+        {selectedFindings.slice(0, 6).map((finding) => (
+          <LighthouseContextContributor
+            key={`finding-group-${finding.id}`}
+            contributorId={`finding-group-${finding.id}`}
+            item={buildFindingGroupContext(finding)}
+          />
+        ))}
+        {activeResourceContextSelection
+          .slice(0, Math.max(0, 6 - selectedFindings.length))
+          .map((finding) => (
+            <LighthouseContextContributor
+              key={`finding-resource-${finding.findingId}`}
+              contributorId={`finding-resource-${finding.findingId}`}
+              item={buildFindingResourceContext(finding)}
+            />
+          ))}
         <Suspense fallback={null}>
           {safeData.length > 0 && (
             <OnboardingTrigger

@@ -4,9 +4,11 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
 import { ComplianceCard } from "@/components/compliance/compliance-card";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -70,6 +72,25 @@ export const ComplianceOverviewGrid = ({
 
   return (
     <>
+      {filteredFrameworks.slice(0, 7).map(({ attributes, id }) => (
+        <LighthouseContextContributor
+          key={`compliance-${id}-${attributes.requirements_passed}-${attributes.requirements_failed}`}
+          contributorId={`compliance-${id}`}
+          item={buildComplianceContext({
+            pathname: "/compliance",
+            id,
+            framework: attributes.framework,
+            version: attributes.version,
+            scanId,
+            providerUid: selectedScan?.providerInfo.uid,
+            mode: "per-scan",
+            region: searchParams.get("filter[region__in]") ?? undefined,
+            passed: attributes.requirements_passed,
+            failed: attributes.requirements_failed,
+            total: attributes.total_requirements,
+          })}
+        />
+      ))}
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
       <Suspense fallback={null}>
         <OnboardingTrigger

@@ -2,6 +2,7 @@ import { AlertTriangle, Info } from "lucide-react";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import {
   Section,
@@ -10,6 +11,7 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/shadcn/section/section";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
 import type { KnownProviderType } from "@/types/providers";
 
@@ -158,6 +160,22 @@ export const CrossProviderOverview = async ({
 
   return (
     <div className="flex flex-col gap-6">
+      {summaries.slice(0, 7).map((summary) => (
+        <LighthouseContextContributor
+          key={`cross-provider-${summary.complianceId}-${summary.requirementsPassed}-${summary.requirementsFailed}`}
+          contributorId={`cross-provider-${summary.complianceId}`}
+          item={buildComplianceContext({
+            pathname: "/compliance",
+            id: summary.complianceId,
+            framework: summary.title,
+            version: summary.version,
+            mode: "cross-provider",
+            passed: summary.requirementsPassed,
+            failed: summary.requirementsFailed,
+            total: summary.totalRequirements,
+          })}
+        />
+      ))}
       <CrossProviderFilters
         providerTypes={compatibleTypes}
         providerAccounts={providerAccounts}
