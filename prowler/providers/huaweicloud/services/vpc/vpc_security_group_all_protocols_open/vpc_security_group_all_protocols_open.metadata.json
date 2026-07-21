@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "vpc_security_group_all_protocols_open",
+  "CheckTitle": "VPC security groups should not allow ingress from 0.0.0.0/0 on all ports/protocols",
+  "CheckType": [],
+  "ServiceName": "vpc",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::VPC::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Ensure that VPC security groups do not have ingress rules that allow all protocols from 0.0.0.0/0 (i.e., rules with no port range specified).",
+  "Risk": "Security group rules that allow all protocols from 0.0.0.0/0 expose the associated resources to unrestricted inbound traffic on every port, significantly increasing the attack surface.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_Sg_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hwcloud vpc security-group-rule-delete --security-group-rule-id <rule_id>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Virtual Private Cloud > Access Control > Security Groups\n3. Select the security group\n4. Identify the ingress rule allowing all protocols from 0.0.0.0/0\n5. Delete or restrict the rule to specific ports and IP ranges",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Replace any ingress rule allowing all protocols from 0.0.0.0/0 with specific port and IP range restrictions following least-privilege principles.",
+      "Url": "https://hub.prowler.com/check/vpc_security_group_all_protocols_open"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_key_pair",
+  "CheckTitle": "ECS instances should use SSH key pairs for authentication",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances use SSH key pairs instead of password-based authentication for secure access.",
+  "Risk": "ECS instances without SSH key pairs may rely on password-based authentication, which is more susceptible to brute-force attacks and unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0120.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hwcloud ecs server-update --server-id <instance_id> --key-name <key_pair_name>",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Key Pair\n5. Bind an existing key pair or create a new one\n6. Disable password-based login",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Bind SSH key pairs to all ECS instances and disable password-based authentication.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_key_pair"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
