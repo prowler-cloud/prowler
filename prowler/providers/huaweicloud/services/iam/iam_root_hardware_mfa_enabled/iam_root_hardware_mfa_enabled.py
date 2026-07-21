@@ -3,40 +3,38 @@ from prowler.providers.huaweicloud.services.iam.iam_client import iam_client
 
 
 class iam_root_hardware_mfa_enabled(Check):
-    """Check if Huawei Cloud root account has MFA enabled."""
+    """Check if the Huawei Cloud account enforces MFA on the root account.
+
+    The account/root (domain owner) is not a listable IAM user in Huawei
+    Cloud, so root MFA is assessed through the account's operation protection
+    policy, which forces MFA verification for sensitive operations.
+    """
 
     def execute(self) -> list[CheckReportHuaweiCloud]:
         findings = []
 
-        root_user = None
-        for user in iam_client.users:
-            if user.is_domain_owner:
-                root_user = user
-                break
+        protection = iam_client.operation_protection
 
-        if root_user:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=root_user
+        report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=protection)
+        report.region = iam_client.region
+        report.resource_id = f"{iam_client.audited_account}-operation-protection"
+        report.resource_arn = (
+            f"HUAWEICLOUD::IAM::{iam_client.audited_account}:operation-protection"
+        )
+
+        if protection.enabled:
+            report.status = "PASS"
+            report.status_extended = (
+                "Root account is protected: account operation protection "
+                "(MFA verification for critical operations) is enabled."
             )
-            report.region = iam_client.region
-            report.resource_id = root_user.id
-            report.resource_arn = (
-                f"HUAWEICLOUD::IAM::{iam_client.audited_account}:root-mfa"
+        else:
+            report.status = "FAIL"
+            report.status_extended = (
+                "Root account is not protected: account operation protection "
+                "(MFA verification for critical operations) is not enabled."
             )
 
-            root_mfa_devices = [
-                device
-                for device in iam_client.mfa_devices
-                if device.user_id == root_user.id
-            ]
-
-            if root_mfa_devices:
-                report.status = "PASS"
-                report.status_extended = "Root account has MFA enabled."
-            else:
-                report.status = "FAIL"
-                report.status_extended = "Root account does not have MFA enabled."
-
-            findings.append(report)
+        findings.append(report)
 
         return findings

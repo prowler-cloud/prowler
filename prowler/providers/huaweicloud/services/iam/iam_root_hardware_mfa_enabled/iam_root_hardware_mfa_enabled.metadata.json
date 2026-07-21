@@ -1,29 +1,29 @@
 {
   "Provider": "huaweicloud",
   "CheckID": "iam_root_hardware_mfa_enabled",
-  "CheckTitle": "Root account has MFA enabled",
+  "CheckTitle": "Root account enforces MFA through operation protection",
   "CheckType": [],
   "ServiceName": "iam",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "HUAWEICLOUD::IAM::User",
+  "ResourceType": "HUAWEICLOUD::IAM::Account",
   "ResourceGroup": "IAM",
-  "Description": "Huawei Cloud root account should have MFA enabled. MFA adds an extra layer of protection on top of a username and password. With MFA enabled, when a user signs in to the Huawei Cloud console, they are prompted for their username and password as well as for an authentication code from their MFA device.",
-  "Risk": "Without MFA on the root account, a compromised password enables full account takeover. An attacker could delete resources, change policies, and disable logging, harming confidentiality, integrity, and availability.",
+  "Description": "The Huawei Cloud account (root/domain owner) should enforce MFA. Because the domain owner is not a listable IAM user, root MFA is assessed through the account's operation protection policy, which requires MFA verification (virtual MFA, SMS, or email) before critical operations such as deleting resources or managing credentials can be performed.",
+  "Risk": "Without operation protection, a compromised root password enables full account takeover with no additional verification. An attacker could delete resources, change policies, and disable logging, harming confidentiality, integrity, and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
-    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0012.html"
+    "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0002.html"
   ],
   "Remediation": {
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console as the root user.\n2. Choose IAM & Security.\n3. Click the Security Settings tab.\n4. In the Virtual MFA Device section, click Enable.\n5. Scan the QR code with a virtual MFA application (e.g., Google Authenticator).\n6. Enter two consecutive verification codes to bind the MFA device.",
+      "Other": "1. Log on to the Huawei Cloud console as the account administrator.\n2. Go to Security Settings > Critical Operations.\n3. In the Operation Protection section, click Enable.\n4. Choose the verification method (virtual MFA, SMS, or email) and save.",
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Enable MFA for the root account and avoid using root credentials for daily operations.",
+      "Text": "Enable operation protection for the account and avoid using root credentials for daily operations.",
       "Url": "https://hub.prowler.com/check/iam_root_hardware_mfa_enabled"
     }
   },

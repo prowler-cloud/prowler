@@ -6,7 +6,7 @@ ACCOUNT_ID = "123456789012"
 
 
 def _finding(
-    check_id="obs_bucket_encryption",
+    check_id="obs_bucket_public_access",
     region="cn-north-4",
     resource_id="bucket-1",
     tags=None,
@@ -30,7 +30,7 @@ class TestHuaweiCloudMutelist:
             "Accounts": {
                 ACCOUNT_ID: {
                     "Checks": {
-                        "obs_bucket_encryption": {
+                        "obs_bucket_public_access": {
                             "Regions": ["*"],
                             "Resources": ["bucket-1"],
                         }
@@ -46,7 +46,7 @@ class TestHuaweiCloudMutelist:
             "Accounts": {
                 ACCOUNT_ID: {
                     "Checks": {
-                        "obs_bucket_encryption": {
+                        "obs_bucket_public_access": {
                             "Regions": ["*"],
                             "Resources": ["other-bucket"],
                         }
@@ -69,7 +69,7 @@ class TestHuaweiCloudMutelist:
             "Accounts": {
                 ACCOUNT_ID: {
                     "Checks": {
-                        "obs_bucket_encryption": {
+                        "obs_bucket_public_access": {
                             "Regions": ["cn-east-3"],
                             "Resources": ["*"],
                         }
@@ -85,7 +85,7 @@ class TestHuaweiCloudMutelist:
             "Accounts": {
                 ACCOUNT_ID: {
                     "Checks": {
-                        "obs_bucket_encryption": {
+                        "obs_bucket_public_access": {
                             "Regions": ["*"],
                             "Resources": ["*"],
                             "Exceptions": {"Resources": ["bucket-1"]},

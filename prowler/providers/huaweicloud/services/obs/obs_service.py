@@ -43,11 +43,6 @@ class OBS(HuaweiCloudService):
                     bucket_name = getattr(bucket_data, "name", "") or ""
                     bucket_region = getattr(bucket_data, "location", None) or region
 
-                    # NOTE: huaweicloudsdkobs (v1) does NOT expose an endpoint to
-                    # read a bucket's server-side/default encryption configuration,
-                    # so encryption state cannot be determined from the SDK and is
-                    # left as False.
-                    is_encrypted = False
                     is_public = False
                     acl = ""
 
@@ -79,7 +74,6 @@ class OBS(HuaweiCloudService):
                         Bucket(
                             name=bucket_name,
                             region=bucket_region,
-                            is_encrypted=is_encrypted,
                             is_public=is_public,
                             acl=acl,
                         )
@@ -96,6 +90,5 @@ class Bucket(BaseModel):
 
     name: str
     region: str = ""
-    is_encrypted: bool = False
     is_public: bool = False
     acl: str = ""

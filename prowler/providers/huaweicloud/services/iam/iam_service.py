@@ -22,10 +22,12 @@ class IAM(HuaweiCloudService):
         self.users: List[IAMUser] = []
         self.mfa_devices: List[MFADevice] = []
         self.domain_id = provider.identity.domain_id if provider.identity else ""
+        self.operation_protection = OperationProtection(account_id=self.domain_id)
 
         self._get_password_policy()
         self._list_users()
         self._list_mfa_devices()
+        self._get_operation_protection()
 
     def _get_password_policy(self):
         """Get the domain password policy."""
@@ -150,6 +152,42 @@ class IAM(HuaweiCloudService):
                 f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _get_operation_protection(self):
+        """Get the account (domain) operation protection policy.
+
+        Operation protection is Huawei Cloud's account-level control that
+        forces MFA verification for sensitive operations performed by the
+        account/root credentials. It is the reliable, queryable equivalent of
+        "root MFA" (the domain owner is not a listable IAM user).
+        """
+        if not self.client:
+            return
+
+        region = self.region
+        client = self.client
+        logger.info(f"IAM - Getting Operation Protection Policy from {region}...")
+
+        try:
+            from huaweicloudsdkiam.v3 import ShowDomainProtectPolicyRequest
+
+            request = ShowDomainProtectPolicyRequest(domain_id=self.domain_id)
+            response = self._call_with_retries(
+                client.show_domain_protect_policy, request
+            )
+
+            if response and response.protect_policy:
+                self.operation_protection = OperationProtection(
+                    account_id=self.domain_id,
+                    enabled=bool(
+                        getattr(response.protect_policy, "operation_protection", False)
+                    ),
+                )
+
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
 
 class PasswordPolicy(BaseModel):
     """IAM Password Policy model."""
@@ -179,3 +217,10 @@ class MFADevice(BaseModel):
 
     serial_number: str
     user_id: str
+
+
+class OperationProtection(BaseModel):
+    """IAM account operation protection model."""
+
+    account_id: str = ""
+    enabled: bool = False

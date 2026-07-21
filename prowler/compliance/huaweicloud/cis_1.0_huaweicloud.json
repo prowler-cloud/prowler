@@ -176,9 +176,7 @@
     {
       "Id": "2.1",
       "Description": "Ensure OBS buckets have encryption enabled",
-      "Checks": [
-        "obs_bucket_encryption"
-      ],
+      "Checks": [],
       "Attributes": [
         {
           "Section": "2 Storage",
