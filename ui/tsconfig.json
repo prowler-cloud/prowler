@@ -24,7 +24,7 @@
     "strict": true,
     "target": "es5"
   },
-  "exclude": ["node_modules", "vitest.config.ts"],
+  "exclude": ["node_modules", "vitest.config.ts", "eslint.config.ts"],
   "include": [
     "next-env.d.ts",
     "**/*.ts",

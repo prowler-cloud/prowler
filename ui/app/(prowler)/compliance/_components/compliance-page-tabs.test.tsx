@@ -6,6 +6,7 @@ import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { COMPLIANCE_TAB } from "../_types";
+
 import { CompliancePageTabs } from "./compliance-page-tabs";
 import { getComplianceTab } from "./compliance-page-tabs.shared";
 

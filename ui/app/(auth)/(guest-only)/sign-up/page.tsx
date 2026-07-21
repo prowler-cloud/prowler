@@ -1,6 +1,9 @@
 import { AuthForm } from "@/components/auth/oss";
-import { getAuthUrl, isGithubOAuthEnabled } from "@/lib/helper";
-import { isGoogleOAuthEnabled } from "@/lib/helper";
+import {
+  getAuthUrl,
+  isGithubOAuthEnabled,
+  isGoogleOAuthEnabled,
+} from "@/lib/helper";
 import { SearchParamsProps } from "@/types";
 
 const SignUp = async ({

@@ -17,8 +17,8 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  useToast,
 } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
 import { CustomInput } from "@/components/shadcn/custom";
 import { Form } from "@/components/shadcn/form";
 import { getSafeCallbackPath } from "@/lib/auth-callback-url";
