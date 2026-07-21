@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, Cloud } from "lucide-react";
-import { useRef } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -15,29 +14,24 @@ import {
 } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 const allowInitialAutoFocus = () => {};
 
 export const CloudUpgradeModal = () => {
   const activeFeature = useCloudUpgradeStore((state) => state.activeFeature);
+  const retainedFeature = useCloudUpgradeStore(
+    (state) => state.retainedFeature,
+  );
   const closeCloudUpgrade = useCloudUpgradeStore(
     (state) => state.closeCloudUpgrade,
   );
   const returnFocusElement = useCloudUpgradeStore(
     (state) => state.returnFocusElement,
   );
-  const lastActiveFeature = useRef(
-    activeFeature ?? CLOUD_UPGRADE_FEATURE.GENERAL,
-  );
 
   if (isCloud()) return null;
 
-  if (activeFeature !== null) {
-    lastActiveFeature.current = activeFeature;
-  }
-
-  const feature = lastActiveFeature.current;
+  const feature = activeFeature ?? retainedFeature;
   const content = CLOUD_UPGRADE_CONTENT[feature];
 
   return (
