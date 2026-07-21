@@ -90,6 +90,10 @@ export interface LighthouseChatSubmission {
   context?: LighthouseContextEnvelope;
 }
 
+interface LighthouseChatSubmitOptions {
+  bypassContextGate?: boolean;
+}
+
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
 
 export function selectLighthouseChatCanSend(
@@ -128,10 +132,6 @@ export function createLighthouseChatStore(
   // later reset intentionally use null.
   let sessionIntentVersion = 0;
   let syncUrlToSession = options.syncUrlToSession;
-  // Retry must reuse the original validated snapshot even if the user has
-  // since disabled context for future messages. Kept in the store closure so
-  // the UI-facing enabled flag never flickers during the async retry.
-  let retryContextOverride: LighthouseContextEnvelope | undefined;
 
   const syncSessionUrl = (sessionId: string | null) => {
     if (!syncUrlToSession) return;
@@ -267,6 +267,93 @@ export function createLighthouseChatStore(
       return result.data.id;
     };
 
+    const submitMessageInternal = async (
+      displayText: string,
+      context?: LighthouseContextEnvelope,
+      submitOptions: LighthouseChatSubmitOptions = {},
+    ): Promise<void> => {
+      if (!displayText.trim()) return;
+      if (!get().selectedModelSelection) {
+        set({ feedback: "Select a model before sending a message." });
+        return;
+      }
+      if (!selectLighthouseChatCanSend(get())) return;
+
+      const shouldUseContext =
+        submitOptions.bypassContextGate === true || get().isContextEnabled;
+      const contextSnapshot = shouldUseContext
+        ? prepareLighthouseContext(context)
+        : undefined;
+
+      set({ isSubmitting: true });
+      try {
+        const sessionId = await ensureSession(displayText);
+        if (!sessionId || destroyed) return;
+
+        const selection = get().selectedModelSelection;
+        if (!selection) return;
+
+        const provisionalTaskId = `pending-${Date.now()}`;
+        const lastSubmission = contextSnapshot
+          ? { displayText, context: contextSnapshot }
+          : { displayText };
+        set((current) => ({
+          feedback: null,
+          blockedByConflict: false,
+          lastSubmittedText: displayText,
+          lastSubmission,
+          input: "",
+          messages: [
+            ...current.messages,
+            buildOptimisticMessage("user", displayText, contextSnapshot),
+          ],
+          streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
+        }));
+
+        // Subscribe to the same-origin SSE proxy BEFORE sending the message:
+        // the backend has no replay buffer, so the listener must be attached
+        // before the worker starts emitting.
+        startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
+
+        const result = await sendLighthouseV2Message({
+          sessionId,
+          displayText,
+          ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          provider: selection.providerType,
+          model: selection.modelId,
+        });
+        if (destroyed) return;
+
+        if ("error" in result) {
+          // Stale guard: the chat may point at another session by now, so
+          // this failure must not clobber its stream state or feedback.
+          if (get().activeSessionId !== sessionId) return;
+          closeStream();
+          set({
+            streamState: createInitialLighthouseV2StreamState(),
+            feedback: result.error,
+          });
+          if (result.status === 409) {
+            set({ blockedByConflict: true });
+          }
+          // Reconcile the optimistic user message against the server on any
+          // failure — it may or may not have been persisted.
+          await refreshMessages(sessionId);
+          return;
+        }
+
+        set((current) => ({
+          streamState:
+            current.streamState.activeTaskId === provisionalTaskId
+              ? { ...current.streamState, activeTaskId: result.data.task.id }
+              : current.streamState,
+        }));
+        notifyLighthouseV2SessionsChanged();
+      } finally {
+        set({ isSubmitting: false });
+      }
+    };
+
     return {
       config,
       activeSessionId: options.initialSessionId ?? null,
@@ -323,100 +410,19 @@ export function createLighthouseChatStore(
         }
       },
 
-      submitMessage: async (displayText, context) => {
-        if (!displayText.trim()) return;
-        if (!get().selectedModelSelection) {
-          set({ feedback: "Select a model before sending a message." });
-          return;
-        }
-        if (!selectLighthouseChatCanSend(get())) return;
-
-        const contextCandidate =
-          retryContextOverride ??
-          (get().isContextEnabled && context ? context : undefined);
-        const contextSnapshot = contextCandidate
-          ? prepareLighthouseContext(contextCandidate)
-          : undefined;
-
-        set({ isSubmitting: true });
-        try {
-          const sessionId = await ensureSession(displayText);
-          if (!sessionId || destroyed) return;
-
-          const selection = get().selectedModelSelection;
-          if (!selection) return;
-
-          const provisionalTaskId = `pending-${Date.now()}`;
-          const lastSubmission = contextSnapshot
-            ? { displayText, context: contextSnapshot }
-            : { displayText };
-          set((current) => ({
-            feedback: null,
-            blockedByConflict: false,
-            lastSubmittedText: displayText,
-            lastSubmission,
-            input: "",
-            messages: [
-              ...current.messages,
-              buildOptimisticMessage("user", displayText, contextSnapshot),
-            ],
-            streamState:
-              createInitialLighthouseV2StreamState(provisionalTaskId),
-          }));
-
-          // Subscribe to the same-origin SSE proxy BEFORE sending the message:
-          // the backend has no replay buffer, so the listener must be attached
-          // before the worker starts emitting.
-          startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
-
-          const result = await sendLighthouseV2Message({
-            sessionId,
-            displayText,
-            ...(contextSnapshot ? { context: contextSnapshot } : {}),
-            provider: selection.providerType,
-            model: selection.modelId,
-          });
-          if (destroyed) return;
-
-          if ("error" in result) {
-            // Stale guard: the chat may point at another session by now, so
-            // this failure must not clobber its stream state or feedback.
-            if (get().activeSessionId !== sessionId) return;
-            closeStream();
-            set({
-              streamState: createInitialLighthouseV2StreamState(),
-              feedback: result.error,
-            });
-            if (result.status === 409) {
-              set({ blockedByConflict: true });
-            }
-            // Reconcile the optimistic user message against the server on any
-            // failure — it may or may not have been persisted.
-            await refreshMessages(sessionId);
-            return;
-          }
-
-          set((current) => ({
-            streamState:
-              current.streamState.activeTaskId === provisionalTaskId
-                ? { ...current.streamState, activeTaskId: result.data.task.id }
-                : current.streamState,
-          }));
-          notifyLighthouseV2SessionsChanged();
-        } finally {
-          set({ isSubmitting: false });
-        }
-      },
+      submitMessage: (displayText, context) =>
+        submitMessageInternal(displayText, context),
 
       retryLastMessage: async () => {
         const submission = get().lastSubmission;
         if (!submission) return;
-        retryContextOverride = submission.context;
-        try {
-          await get().submitMessage(submission.displayText, submission.context);
-        } finally {
-          retryContextOverride = undefined;
-        }
+        await submitMessageInternal(
+          submission.displayText,
+          submission.context,
+          {
+            bypassContextGate: true,
+          },
+        );
       },
 
       openSession: async (sessionId) => {

@@ -88,7 +88,7 @@ function buildOptimisticContent(
   const apiContext = context ? toApiLighthouseContext(context) : undefined;
   return context && apiContext
     ? {
-        text: buildAgentText(displayText, context),
+        text: buildAgentText(displayText, apiContext),
         display_text: displayText,
         ui_context: apiContext,
       }
