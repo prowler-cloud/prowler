@@ -19,10 +19,10 @@ class TestEvsVolumeEncryption:
                 new=evs_client,
             ),
         ):
+            from prowler.providers.huaweicloud.services.evs.evs_service import Volume
             from prowler.providers.huaweicloud.services.evs.evs_volume_encryption.evs_volume_encryption import (
                 evs_volume_encryption,
             )
-            from prowler.providers.huaweicloud.services.evs.evs_service import Volume
 
             volume = Volume(
                 id="vol-1",
@@ -54,10 +54,10 @@ class TestEvsVolumeEncryption:
                 new=evs_client,
             ),
         ):
+            from prowler.providers.huaweicloud.services.evs.evs_service import Volume
             from prowler.providers.huaweicloud.services.evs.evs_volume_encryption.evs_volume_encryption import (
                 evs_volume_encryption,
             )
-            from prowler.providers.huaweicloud.services.evs.evs_service import Volume
 
             volume = Volume(
                 id="vol-1",

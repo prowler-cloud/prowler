@@ -19,33 +19,7 @@ class CTS(HuaweiCloudService):
 
         self.trackers: List[Tracker] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_trackers()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.trackers = [
-            Tracker(
-                id="cts-tracker-001",
-                name="system-tracker",
-                tracker_type="system",
-                is_enabled=True,
-                bucket_name="cts-bucket-001",
-                region=region,
-            ),
-            Tracker(
-                id="cts-tracker-002",
-                name="custom-tracker-disabled",
-                tracker_type="data",
-                is_enabled=False,
-                bucket_name="cts-bucket-002",
-                region=region,
-            ),
-        ]
 
     def _list_trackers(self):
         """List all CTS trackers."""

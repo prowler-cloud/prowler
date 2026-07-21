@@ -37,7 +37,9 @@ class TestIamPasswordPolicyReusePrevention:
 
             assert len(result) == 1
             assert result[0].status == "PASS"
-            assert "disallows reuse of the last 3 passwords" in result[0].status_extended
+            assert (
+                "disallows reuse of the last 3 passwords" in result[0].status_extended
+            )
 
     def test_reuse_prevention_1_fails(self):
         iam_client = mock.MagicMock()

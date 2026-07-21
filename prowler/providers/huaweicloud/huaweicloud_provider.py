@@ -153,14 +153,12 @@ class HuaweicloudProvider(Provider):
         if mutelist_content:
             self._mutelist = HuaweiCloudMutelist(
                 mutelist_content=mutelist_content,
-                account_id=self._identity.account_id,
             )
         else:
             if not mutelist_path:
                 mutelist_path = get_default_mute_file_path(self.type)
             self._mutelist = HuaweiCloudMutelist(
                 mutelist_path=mutelist_path,
-                account_id=self._identity.account_id,
             )
 
         self._audit_resources = []
@@ -211,20 +209,6 @@ class HuaweicloudProvider(Provider):
         return set([r.region_id for r in self._regions])
 
     @staticmethod
-    def is_mock_auth() -> bool:
-        """
-        Check if mock authentication is enabled via HUAWEICLOUD_MOCK_AUTH env var.
-
-        Returns:
-            bool: True if mock auth is enabled
-        """
-        return os.environ.get("HUAWEICLOUD_MOCK_AUTH", "").lower() in (
-            "true",
-            "1",
-            "yes",
-        )
-
-    @staticmethod
     def setup_session(
         access_key_id: str = None,
         secret_access_key: str = None,
@@ -255,18 +239,6 @@ class HuaweicloudProvider(Provider):
         """
         try:
             logger.debug("Creating Huawei Cloud session ...")
-
-            is_mock = HuaweicloudProvider.is_mock_auth()
-
-            if is_mock:
-                logger.info("HUAWEICLOUD_MOCK_AUTH is enabled - using mock credentials")
-                credentials = HuaweiCloudCredentials(
-                    ak="mock_access_key_id",
-                    sk="mock_secret_access_key",
-                    project_id="mock_project_id",
-                    domain_id="mock_domain_id",
-                )
-                return HuaweiCloudSession(credentials, is_mock=True)
 
             if not access_key_id:
                 if "HUAWEICLOUD_ACCESS_KEY_ID" in os.environ:
@@ -341,17 +313,6 @@ class HuaweicloudProvider(Provider):
             HuaweiCloudIdentityError: If the account identity cannot be resolved.
         """
         try:
-            if session.is_mock:
-                logger.info("Mock auth enabled - returning mock caller identity")
-                return HuaweiCloudCallerIdentity(
-                    domain_id="mock-domain-id",
-                    user_id="mock-user-id",
-                    user_name="mock-user",
-                    account_id="123456789012",
-                    account_name="mock-account",
-                    type="user",
-                )
-
             from huaweicloudsdkcore.auth.credentials import BasicCredentials
             from huaweicloudsdkiam.v3 import (
                 IamClient,
@@ -571,9 +532,6 @@ class HuaweicloudProvider(Provider):
             f"Regions: {Fore.YELLOW}{regions_str}{Style.RESET_ALL}",
         ]
 
-        if self._session.is_mock:
-            report_lines.append(f"{Fore.RED}MOCK AUTH MODE{Style.RESET_ALL}")
-
         report_title = (
             f"{Style.BRIGHT}Using the Huawei Cloud credentials below:{Style.RESET_ALL}"
         )
@@ -605,10 +563,6 @@ class HuaweicloudProvider(Provider):
             Connection: An object that contains the result of the test connection operation.
         """
         try:
-            if HuaweicloudProvider.is_mock_auth():
-                logger.info("Mock auth enabled - skipping real connection test")
-                return Connection(is_connected=True)
-
             session = HuaweicloudProvider.setup_session(
                 access_key_id=access_key_id,
                 secret_access_key=secret_access_key,

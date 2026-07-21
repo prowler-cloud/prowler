@@ -19,29 +19,7 @@ class WAF(HuaweiCloudService):
 
         self.instances: List[WAFInstance] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_instances()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.instances = [
-            WAFInstance(
-                id="waf-mock-001",
-                name="running-waf",
-                status=1,
-                region=region,
-            ),
-            WAFInstance(
-                id="waf-mock-002",
-                name="abnormal-waf",
-                status=4,
-                region=region,
-            ),
-        ]
 
     def _list_instances(self):
         """List all WAF dedicated instances across regions."""
@@ -59,11 +37,16 @@ class WAF(HuaweiCloudService):
 
                 if response and response.items:
                     for inst_data in response.items:
+                        name = (
+                            getattr(inst_data, "instancename", "")
+                            or getattr(inst_data, "instance_name", "")
+                            or ""
+                        )
                         self.instances.append(
                             WAFInstance(
-                                id=getattr(inst_data, "id", ""),
-                                name=getattr(inst_data, "name", ""),
-                                status=getattr(inst_data, "status", 0),
+                                id=getattr(inst_data, "id", "") or "",
+                                name=name,
+                                status=getattr(inst_data, "status", 0) or 0,
                                 region=region,
                             )
                         )

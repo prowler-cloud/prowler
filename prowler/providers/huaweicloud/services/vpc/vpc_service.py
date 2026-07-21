@@ -21,71 +21,8 @@ class VPC(HuaweiCloudService):
         self.vpcs = {}
         self.security_groups = {}
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self.__threading_call__(self._list_vpcs)
         self.__threading_call__(self._list_security_groups)
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.vpcs["vpc-mock-001"] = VPCs(
-            id="vpc-mock-001", name="mock-vpc-1", region=region, cidr="192.168.0.0/16"
-        )
-        self.vpcs["vpc-mock-002"] = VPCs(
-            id="vpc-mock-002", name="mock-vpc-2", region=region, cidr="10.0.0.0/16"
-        )
-        self.security_groups["sg-mock-default"] = SecurityGroups(
-            id="sg-mock-default",
-            name="default",
-            region=region,
-            vpc_id="vpc-mock-001",
-            rules=[
-                SecurityGroupRule(
-                    id="rule-001",
-                    direction="ingress",
-                    protocol="tcp",
-                    ethertype="IPv4",
-                    remote_ip_prefix="0.0.0.0/0",
-                    port_range_min=22,
-                    port_range_max=22,
-                ),
-            ],
-        )
-        self.security_groups["sg-mock-restricted"] = SecurityGroups(
-            id="sg-mock-restricted",
-            name="restricted-sg",
-            region=region,
-            vpc_id="vpc-mock-001",
-            rules=[
-                SecurityGroupRule(
-                    id="rule-002",
-                    direction="ingress",
-                    protocol="tcp",
-                    ethertype="IPv4",
-                    remote_ip_prefix="192.168.0.0/16",
-                    port_range_min=443,
-                    port_range_max=443,
-                ),
-            ],
-        )
-        self.security_groups["sg-mock-public-egress"] = SecurityGroups(
-            id="sg-mock-public-egress",
-            name="public-egress-sg",
-            region=region,
-            vpc_id="vpc-mock-002",
-            rules=[
-                SecurityGroupRule(
-                    id="rule-003",
-                    direction="egress",
-                    protocol="all",
-                    ethertype="IPv4",
-                    remote_ip_prefix="0.0.0.0/0",
-                ),
-            ],
-        )
 
     def _list_vpcs(self, regional_client):
         """List all VPCs in the region."""

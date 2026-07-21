@@ -22,7 +22,7 @@ def _finding(
 
 class TestHuaweiCloudMutelist:
     def test_empty_mutelist_not_muted(self):
-        mutelist = HuaweiCloudMutelist(mutelist_content={}, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content={})
         assert not mutelist.is_finding_muted(_finding(), ACCOUNT_ID)
 
     def test_matching_finding_is_muted(self):
@@ -38,7 +38,7 @@ class TestHuaweiCloudMutelist:
                 }
             }
         }
-        mutelist = HuaweiCloudMutelist(mutelist_content=content, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content=content)
         assert mutelist.is_finding_muted(_finding(), ACCOUNT_ID)
 
     def test_non_matching_resource_not_muted(self):
@@ -54,14 +54,14 @@ class TestHuaweiCloudMutelist:
                 }
             }
         }
-        mutelist = HuaweiCloudMutelist(mutelist_content=content, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content=content)
         assert not mutelist.is_finding_muted(_finding(), ACCOUNT_ID)
 
     def test_wildcard_account_and_check_mutes(self):
         content = {
             "Accounts": {"*": {"Checks": {"*": {"Regions": ["*"], "Resources": ["*"]}}}}
         }
-        mutelist = HuaweiCloudMutelist(mutelist_content=content, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content=content)
         assert mutelist.is_finding_muted(_finding(), ACCOUNT_ID)
 
     def test_region_filter_excludes(self):
@@ -77,7 +77,7 @@ class TestHuaweiCloudMutelist:
                 }
             }
         }
-        mutelist = HuaweiCloudMutelist(mutelist_content=content, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content=content)
         assert not mutelist.is_finding_muted(_finding(region="cn-north-4"), ACCOUNT_ID)
 
     def test_exception_resource_not_muted(self):
@@ -94,7 +94,7 @@ class TestHuaweiCloudMutelist:
                 }
             }
         }
-        mutelist = HuaweiCloudMutelist(mutelist_content=content, account_id=ACCOUNT_ID)
+        mutelist = HuaweiCloudMutelist(mutelist_content=content)
         assert not mutelist.is_finding_muted(
             _finding(resource_id="bucket-1"), ACCOUNT_ID
         )

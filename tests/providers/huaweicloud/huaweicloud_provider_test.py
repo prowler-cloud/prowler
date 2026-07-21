@@ -16,6 +16,7 @@ from prowler.providers.huaweicloud.exceptions.exceptions import (
 from prowler.providers.huaweicloud.huaweicloud_provider import HuaweicloudProvider
 from prowler.providers.huaweicloud.models import (
     HuaweiCloudCallerIdentity,
+    HuaweiCloudCredentials,
     HuaweiCloudSession,
 )
 
@@ -38,7 +39,6 @@ class TestHuaweiCloudProviderSetupSession:
             )
             assert isinstance(session, HuaweiCloudSession)
             assert session.get_credentials().ak == ACCESS_KEY
-            assert not session.is_mock
 
     def test_reads_credentials_from_env(self):
         env = {
@@ -49,19 +49,41 @@ class TestHuaweiCloudProviderSetupSession:
             session = HuaweicloudProvider.setup_session()
             assert session.get_credentials().ak == ACCESS_KEY
 
-    def test_mock_auth_returns_mock_session(self):
-        with mock.patch.dict(os.environ, {"HUAWEICLOUD_MOCK_AUTH": "true"}, clear=True):
-            session = HuaweicloudProvider.setup_session()
-            assert session.is_mock
-
 
 class TestHuaweiCloudProviderValidateCredentials:
-    def test_mock_session_returns_caller_identity(self):
-        with mock.patch.dict(os.environ, {"HUAWEICLOUD_MOCK_AUTH": "true"}, clear=True):
-            session = HuaweicloudProvider.setup_session()
+    def test_resolves_caller_identity_from_iam(self):
+        session = HuaweiCloudSession(
+            HuaweiCloudCredentials(ak=ACCESS_KEY, sk=SECRET_KEY, domain_id="domain-1")
+        )
+
+        domain = mock.MagicMock(id="domain-1")
+        domain.name = "my-account"
+        user = mock.MagicMock(id="user-1")
+        user.name = "admin"
+        iam_client = mock.MagicMock()
+        iam_client.keystone_list_auth_domains.return_value = mock.MagicMock(
+            domains=[domain]
+        )
+        iam_client.show_user.return_value = mock.MagicMock(user=user)
+
+        builder = mock.MagicMock()
+        builder.with_credentials.return_value.with_region.return_value.build.return_value = (
+            iam_client
+        )
+
+        with (
+            mock.patch(
+                "huaweicloudsdkiam.v3.IamClient.new_builder", return_value=builder
+            ),
+            mock.patch("huaweicloudsdkcore.auth.credentials.BasicCredentials"),
+            mock.patch("huaweicloudsdkiam.v3.region.iam_region.IamRegion"),
+        ):
             identity = HuaweicloudProvider.validate_credentials(session=session)
-            assert isinstance(identity, HuaweiCloudCallerIdentity)
-            assert identity.account_id == "123456789012"
+
+        assert isinstance(identity, HuaweiCloudCallerIdentity)
+        assert identity.domain_id == "domain-1"
+        assert identity.account_name == "my-account"
+        assert identity.user_name == "admin"
 
 
 class TestHuaweiCloudProviderGetRegionsToAudit:
@@ -91,11 +113,35 @@ class TestHuaweiCloudProviderGetRegionsToAudit:
 
 
 class TestHuaweiCloudProviderTestConnection:
-    def test_mock_auth_connected(self):
-        with mock.patch.dict(os.environ, {"HUAWEICLOUD_MOCK_AUTH": "true"}, clear=True):
-            connection = HuaweicloudProvider.test_connection()
-            assert connection.is_connected
-            assert connection.error is None
+    def test_successful_connection(self):
+        fake_identity = HuaweiCloudCallerIdentity(
+            domain_id="d",
+            user_id="u",
+            user_name="n",
+            account_id="123456789012",
+            account_name="acct",
+            type="user",
+        )
+        with mock.patch.dict(os.environ, {}, clear=True):
+            with (
+                mock.patch.object(
+                    HuaweicloudProvider,
+                    "setup_session",
+                    return_value=mock.MagicMock(),
+                ),
+                mock.patch.object(
+                    HuaweicloudProvider,
+                    "validate_credentials",
+                    return_value=fake_identity,
+                ),
+            ):
+                connection = HuaweicloudProvider.test_connection(
+                    access_key_id=ACCESS_KEY,
+                    secret_access_key=SECRET_KEY,
+                    provider_id="123456789012",
+                )
+                assert connection.is_connected
+                assert connection.error is None
 
     def test_provider_id_mismatch_raises(self):
         fake_identity = HuaweiCloudCallerIdentity(

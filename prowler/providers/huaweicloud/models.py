@@ -129,7 +129,6 @@ class HuaweiCloudSession:
         self,
         credentials: HuaweiCloudCredentials,
         region: str = None,
-        is_mock: bool = False,
     ):
         """
         Initialize the Huawei Cloud session.
@@ -137,22 +136,15 @@ class HuaweiCloudSession:
         Args:
             credentials: The Huawei Cloud credentials
             region: The default region for the session
-            is_mock: Whether this is a mock session (no real API calls)
         """
         self._credentials = credentials
         self._region = region or HUAWEICLOUD_DEFAULT_REGION
         self._regional_clients = {}
-        self._is_mock = is_mock
 
     @property
     def credentials(self) -> HuaweiCloudCredentials:
         """Get the Huawei Cloud credentials."""
         return self._credentials
-
-    @property
-    def is_mock(self) -> bool:
-        """Check if this is a mock session."""
-        return self._is_mock
 
     @property
     def region(self) -> str:

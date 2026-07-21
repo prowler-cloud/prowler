@@ -19,10 +19,10 @@ class TestIamUserDisabled:
                 new=iam_client,
             ),
         ):
+            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
             from prowler.providers.huaweicloud.services.iam.iam_user_disabled.iam_user_disabled import (
                 iam_user_disabled,
             )
-            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
 
             user = IAMUser(
                 id="user-1",
@@ -54,10 +54,10 @@ class TestIamUserDisabled:
                 new=iam_client,
             ),
         ):
+            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
             from prowler.providers.huaweicloud.services.iam.iam_user_disabled.iam_user_disabled import (
                 iam_user_disabled,
             )
-            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
 
             user = IAMUser(
                 id="user-1",
@@ -89,10 +89,10 @@ class TestIamUserDisabled:
                 new=iam_client,
             ),
         ):
+            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
             from prowler.providers.huaweicloud.services.iam.iam_user_disabled.iam_user_disabled import (
                 iam_user_disabled,
             )
-            from prowler.providers.huaweicloud.services.iam.iam_service import IAMUser
 
             root = IAMUser(
                 id="123456789012",

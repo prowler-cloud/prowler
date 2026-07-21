@@ -19,38 +19,7 @@ class EVS(HuaweiCloudService):
 
         self.volumes: List[Volume] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_volumes()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.volumes = [
-            Volume(
-                id="vol-mock-001",
-                name="encrypted-volume",
-                is_encrypted=True,
-                kms_key_id="kms-mock-001",
-                region=region,
-            ),
-            Volume(
-                id="vol-mock-002",
-                name="unencrypted-volume",
-                is_encrypted=False,
-                kms_key_id="",
-                region=region,
-            ),
-            Volume(
-                id="vol-mock-003",
-                name="encrypted-volume-2",
-                is_encrypted=True,
-                kms_key_id="kms-mock-002",
-                region=region,
-            ),
-        ]
 
     def _list_volumes(self):
         """List all EVS volumes across regions."""
@@ -68,14 +37,16 @@ class EVS(HuaweiCloudService):
 
                 if response and response.volumes:
                     for vol_data in response.volumes:
+                        metadata = getattr(vol_data, "metadata", None) or {}
+                        is_encrypted = bool(getattr(vol_data, "encrypted", False)) or (
+                            metadata.get("__system__encrypted") == "1"
+                        )
                         self.volumes.append(
                             Volume(
-                                id=getattr(vol_data, "id", ""),
-                                name=getattr(vol_data, "name", ""),
-                                is_encrypted=getattr(vol_data, "encrypted", False),
-                                kms_key_id=getattr(vol_data, "metadata", {}).get(
-                                    "__system__cmkid", ""
-                                ),
+                                id=getattr(vol_data, "id", "") or "",
+                                name=getattr(vol_data, "name", "") or "",
+                                is_encrypted=is_encrypted,
+                                kms_key_id=metadata.get("__system__cmkid", "") or "",
                                 region=region,
                             )
                         )

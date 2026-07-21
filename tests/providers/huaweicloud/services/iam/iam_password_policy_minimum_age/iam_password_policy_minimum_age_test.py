@@ -70,7 +70,9 @@ class TestIamPasswordPolicyMinimumAge:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
-            assert "does not enforce a minimum password age" in result[0].status_extended
+            assert (
+                "does not enforce a minimum password age" in result[0].status_extended
+            )
 
     def test_no_password_policy(self):
         iam_client = mock.MagicMock()

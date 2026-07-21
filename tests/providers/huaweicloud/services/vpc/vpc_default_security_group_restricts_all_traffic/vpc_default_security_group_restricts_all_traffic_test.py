@@ -23,8 +23,8 @@ class TestVpcDefaultSecurityGroupRestrictsAllTraffic:
                 vpc_default_security_group_restricts_all_traffic,
             )
             from prowler.providers.huaweicloud.services.vpc.vpc_service import (
-                SecurityGroups,
                 SecurityGroupRule,
+                SecurityGroups,
             )
 
             rule = SecurityGroupRule(
@@ -68,8 +68,8 @@ class TestVpcDefaultSecurityGroupRestrictsAllTraffic:
                 vpc_default_security_group_restricts_all_traffic,
             )
             from prowler.providers.huaweicloud.services.vpc.vpc_service import (
-                SecurityGroups,
                 SecurityGroupRule,
+                SecurityGroups,
             )
 
             rule = SecurityGroupRule(
@@ -112,8 +112,8 @@ class TestVpcDefaultSecurityGroupRestrictsAllTraffic:
                 vpc_default_security_group_restricts_all_traffic,
             )
             from prowler.providers.huaweicloud.services.vpc.vpc_service import (
-                SecurityGroups,
                 SecurityGroupRule,
+                SecurityGroups,
             )
 
             rule = SecurityGroupRule(

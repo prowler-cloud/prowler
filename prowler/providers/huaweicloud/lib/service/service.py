@@ -41,13 +41,6 @@ class HuaweiCloudService:
         # Thread pool for __threading_call__
         self.thread_pool = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
-        # Mock mode: skip real client creation
-        if self.session.is_mock:
-            self.regional_clients: Dict[str, Any] = {}
-            self.region = provider.get_default_region(self.service)
-            self.client = None
-            return
-
         # Generate Regional Clients
         self.regional_clients: Dict[str, Any] = {}
         if not global_service:

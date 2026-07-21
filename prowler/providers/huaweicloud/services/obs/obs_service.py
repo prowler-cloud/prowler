@@ -1,5 +1,10 @@
 from typing import List
 
+from huaweicloudsdkobs.v1 import (
+    GetBucketPolicyPublicStatusRequest,
+    GetBucketPublicStatusRequest,
+    ListBucketsRequest,
+)
 from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
@@ -19,38 +24,7 @@ class OBS(HuaweiCloudService):
 
         self.buckets: List[Bucket] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_buckets()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.buckets = [
-            Bucket(
-                name="mock-public-encrypted-bucket",
-                region=region,
-                is_encrypted=True,
-                is_public=True,
-                acl="public",
-            ),
-            Bucket(
-                name="mock-private-unencrypted-bucket",
-                region=region,
-                is_encrypted=False,
-                is_public=False,
-                acl="private",
-            ),
-            Bucket(
-                name="mock-private-encrypted-bucket",
-                region=region,
-                is_encrypted=True,
-                is_public=False,
-                acl="private",
-            ),
-        ]
 
     def _list_buckets(self):
         """List all OBS buckets."""
@@ -62,40 +36,44 @@ class OBS(HuaweiCloudService):
         logger.info(f"OBS - Listing Buckets in {region}...")
 
         try:
+            response = client.list_buckets(ListBucketsRequest())
 
-            response = client.listBuckets()
+            if response and response.buckets and response.buckets.bucket:
+                for bucket_data in response.buckets.bucket:
+                    bucket_name = getattr(bucket_data, "name", "") or ""
+                    bucket_region = getattr(bucket_data, "location", None) or region
 
-            if response and response.body and response.body.buckets:
-                for bucket_data in response.body.buckets:
-                    bucket_name = getattr(bucket_data, "name", "")
-                    bucket_region = getattr(bucket_data, "location", region)
-
+                    # NOTE: huaweicloudsdkobs (v1) does NOT expose an endpoint to
+                    # read a bucket's server-side/default encryption configuration,
+                    # so encryption state cannot be determined from the SDK and is
+                    # left as False.
                     is_encrypted = False
                     is_public = False
                     acl = ""
 
                     try:
-                        acl_response = client.getBucketAcl(bucket_name)
-                        if acl_response and acl_response.body:
-                            grants = getattr(acl_response.body, "grants", [])
-                            for grant in grants:
-                                grantee = getattr(grant, "grantee", None)
-                                if grantee:
-                                    grantee_id = getattr(grantee, "id", "")
-                                    if grantee_id == "Everyone" or grantee_id == "*":
-                                        is_public = True
-                                        acl = "public"
-                    except Exception as acl_error:
+                        public_status = client.get_bucket_public_status(
+                            GetBucketPublicStatusRequest(bucket_name=bucket_name)
+                        )
+                        if public_status and public_status.is_public:
+                            is_public = True
+                    except Exception as public_error:
                         logger.error(
-                            f"OBS - ACL check failed for bucket {bucket_name}: {acl_error}"
+                            f"OBS - Public status check failed for bucket {bucket_name}: {public_error}"
                         )
 
                     try:
-                        encryption_response = client.getBucketEncryption(bucket_name)
-                        if encryption_response and encryption_response.body:
-                            is_encrypted = True
-                    except Exception:
-                        pass
+                        policy_status = client.get_bucket_policy_public_status(
+                            GetBucketPolicyPublicStatusRequest(bucket_name=bucket_name)
+                        )
+                        if policy_status and policy_status.is_public:
+                            is_public = True
+                    except Exception as policy_error:
+                        logger.error(
+                            f"OBS - Policy public status check failed for bucket {bucket_name}: {policy_error}"
+                        )
+
+                    acl = "public" if is_public else "private"
 
                     self.buckets.append(
                         Bucket(

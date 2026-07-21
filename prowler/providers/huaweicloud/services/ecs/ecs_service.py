@@ -20,36 +20,7 @@ class ECS(HuaweiCloudService):
 
         self.instances = {}
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self.__threading_call__(self._list_servers_details)
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.instances["ecs-mock-001"] = Instance(
-            id="ecs-mock-001",
-            name="web-server-public",
-            region=region,
-            status="ACTIVE",
-            public_ip="123.45.67.89",
-        )
-        self.instances["ecs-mock-002"] = Instance(
-            id="ecs-mock-002",
-            name="app-server-private",
-            region=region,
-            status="ACTIVE",
-            public_ip="",
-        )
-        self.instances["ecs-mock-003"] = Instance(
-            id="ecs-mock-003",
-            name="db-server-private",
-            region=region,
-            status="ACTIVE",
-            public_ip="",
-        )
 
     def _list_servers_details(self, regional_client):
         """List all ECS instances in the region."""

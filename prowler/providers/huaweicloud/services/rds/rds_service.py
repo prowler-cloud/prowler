@@ -19,50 +19,7 @@ class RDS(HuaweiCloudService):
 
         self.instances: List[RDSInstance] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_instances()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.instances = [
-            RDSInstance(
-                id="rds-mock-001",
-                name="public-db-with-backup",
-                status="ACTIVE",
-                engine="mysql",
-                engine_version="8.0",
-                public_ip="123.45.67.200",
-                is_public=True,
-                backup_enabled=True,
-                region=region,
-            ),
-            RDSInstance(
-                id="rds-mock-002",
-                name="private-db-no-backup",
-                status="ACTIVE",
-                engine="postgresql",
-                engine_version="14",
-                public_ip="",
-                is_public=False,
-                backup_enabled=False,
-                region=region,
-            ),
-            RDSInstance(
-                id="rds-mock-003",
-                name="private-db-with-backup",
-                status="ACTIVE",
-                engine="mysql",
-                engine_version="8.0",
-                public_ip="",
-                is_public=False,
-                backup_enabled=True,
-                region=region,
-            ),
-        ]
 
     def _list_instances(self):
         """List all RDS instances across regions."""
@@ -80,11 +37,11 @@ class RDS(HuaweiCloudService):
 
                 if response and response.instances:
                     for inst_data in response.instances:
-                        public_ip = ""
-                        if getattr(inst_data, "public_ip", None):
-                            public_ip = inst_data.public_ip
+                        public_ips = getattr(inst_data, "public_ips", None) or []
+                        public_ips = [ip for ip in public_ips if ip and ip.strip()]
+                        public_ip = ", ".join(public_ips)
 
-                        is_public = bool(public_ip and public_ip.strip())
+                        is_public = bool(public_ips)
 
                         backup_enabled = False
                         backup_strategy = getattr(inst_data, "backup_strategy", None)

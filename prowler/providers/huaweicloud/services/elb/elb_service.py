@@ -19,41 +19,7 @@ class ELB(HuaweiCloudService):
 
         self.load_balancers: List[LoadBalancer] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_load_balancers()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.load_balancers = [
-            LoadBalancer(
-                id="elb-mock-001",
-                name="public-lb",
-                vip_address="192.168.1.10",
-                public_ip="123.45.67.100",
-                is_public=True,
-                region=region,
-            ),
-            LoadBalancer(
-                id="elb-mock-002",
-                name="internal-lb-1",
-                vip_address="192.168.1.20",
-                public_ip="",
-                is_public=False,
-                region=region,
-            ),
-            LoadBalancer(
-                id="elb-mock-003",
-                name="internal-lb-2",
-                vip_address="192.168.1.30",
-                public_ip="",
-                is_public=False,
-                region=region,
-            ),
-        ]
 
     def _list_load_balancers(self):
         """List all ELB load balancers across regions."""
@@ -71,15 +37,22 @@ class ELB(HuaweiCloudService):
 
                 if response and response.loadbalancers:
                     for lb_data in response.loadbalancers:
-                        vip_address = ""
-                        if getattr(lb_data, "vip_address", None):
-                            vip_address = lb_data.vip_address
+                        vip_address = getattr(lb_data, "vip_address", "") or ""
 
+                        # Public exposure is indicated by bound public IPs
+                        # (publicips) or EIPs (eips) on the load balancer.
                         public_ip = ""
-                        if getattr(lb_data, "publicip", None):
-                            public_ip = getattr(
-                                lb_data.publicip, "public_ip_address", ""
-                            )
+                        for public_ip_info in getattr(lb_data, "publicips", None) or []:
+                            address = getattr(public_ip_info, "publicip_address", "")
+                            if address:
+                                public_ip = address
+                                break
+                        if not public_ip:
+                            for eip_info in getattr(lb_data, "eips", None) or []:
+                                address = getattr(eip_info, "eip_address", "")
+                                if address:
+                                    public_ip = address
+                                    break
 
                         self.load_balancers.append(
                             LoadBalancer(

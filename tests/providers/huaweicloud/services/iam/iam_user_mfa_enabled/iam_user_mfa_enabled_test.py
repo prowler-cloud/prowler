@@ -19,12 +19,12 @@ class TestIamUserMfaEnabled:
                 new=iam_client,
             ),
         ):
-            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
-                iam_user_mfa_enabled,
-            )
             from prowler.providers.huaweicloud.services.iam.iam_service import (
                 IAMUser,
                 MFADevice,
+            )
+            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
+                iam_user_mfa_enabled,
             )
 
             regular_user = IAMUser(
@@ -61,11 +61,11 @@ class TestIamUserMfaEnabled:
                 new=iam_client,
             ),
         ):
-            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
-                iam_user_mfa_enabled,
-            )
             from prowler.providers.huaweicloud.services.iam.iam_service import (
                 IAMUser,
+            )
+            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
+                iam_user_mfa_enabled,
             )
 
             regular_user = IAMUser(
@@ -98,11 +98,11 @@ class TestIamUserMfaEnabled:
                 new=iam_client,
             ),
         ):
-            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
-                iam_user_mfa_enabled,
-            )
             from prowler.providers.huaweicloud.services.iam.iam_service import (
                 IAMUser,
+            )
+            from prowler.providers.huaweicloud.services.iam.iam_user_mfa_enabled.iam_user_mfa_enabled import (
+                iam_user_mfa_enabled,
             )
 
             root_user = IAMUser(

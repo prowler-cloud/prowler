@@ -23,56 +23,9 @@ class IAM(HuaweiCloudService):
         self.mfa_devices: List[MFADevice] = []
         self.domain_id = provider.identity.domain_id if provider.identity else ""
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._get_password_policy()
         self._list_users()
         self._list_mfa_devices()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        self.password_policy = PasswordPolicy(
-            minimum_password_length=8,
-            maximum_password_length=32,
-            minimum_password_age=0,
-            password_validity_period=90,
-            password_char_combination=3,
-            maximum_consecutive_identical_chars=3,
-            number_of_recent_passwords_disallowed=3,
-            password_not_username_or_invert=True,
-        )
-        self.users = [
-            IAMUser(
-                id=self.domain_id or "domain-owner-id",
-                name="root",
-                enabled=True,
-                is_domain_owner=True,
-            ),
-            IAMUser(
-                id="user-mock-001",
-                name="admin-user",
-                enabled=True,
-                is_domain_owner=False,
-            ),
-            IAMUser(
-                id="user-mock-002",
-                name="dev-user",
-                enabled=True,
-                is_domain_owner=False,
-            ),
-        ]
-        self.mfa_devices = [
-            MFADevice(
-                serial_number="iam:virtual-mfa:domain-owner-id",
-                user_id=self.domain_id or "domain-owner-id",
-            ),
-            MFADevice(
-                serial_number="iam:virtual-mfa:user-mock-001",
-                user_id="user-mock-001",
-            ),
-        ]
 
     def _get_password_policy(self):
         """Get the domain password policy."""

@@ -19,41 +19,7 @@ class KMS(HuaweiCloudService):
 
         self.keys: List[KMSKey] = []
 
-        if self.session.is_mock:
-            self._load_mock_data()
-            return
-
         self._list_keys()
-
-    def _load_mock_data(self):
-        """Load mock data for testing."""
-        region = "la-south-2"
-        self.keys = [
-            KMSKey(
-                id="kms-mock-001",
-                alias="alias/rotation-enabled",
-                state="2",
-                is_rotation_enabled=True,
-                rotation_period="30d",
-                region=region,
-            ),
-            KMSKey(
-                id="kms-mock-002",
-                alias="alias/rotation-disabled",
-                state="2",
-                is_rotation_enabled=False,
-                rotation_period="",
-                region=region,
-            ),
-            KMSKey(
-                id="kms-mock-003",
-                alias="alias/rotation-enabled-2",
-                state="2",
-                is_rotation_enabled=True,
-                rotation_period="90d",
-                region=region,
-            ),
-        ]
 
     def _list_keys(self):
         """List all KMS keys across regions."""
