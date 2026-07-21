@@ -31,20 +31,18 @@ For Prowler, the **global** scope is usually the right choice — your findings 
 
 <Steps>
   <Step title="Open the MCP settings">
-    Open **Customize** in the Cursor sidebar, then select the MCP section.
+    From Agent Window open **Customize** in the Cursor sidebar, then select the MCP section.
 
     On earlier versions, press `Cmd + Shift + J` (macOS) or `Ctrl + Shift + J` (Windows/Linux) to open Cursor Settings, then click **Tools & MCP** in the sidebar.
 
-    <Frame>
-      <img src="/images/prowler-mcp/cursor/cursor-customize-page.png" alt="Cursor Customize page with the MCP section open" />
-    </Frame>
+
   </Step>
 
   <Step title="Add a new MCP server">
     Click **New MCP Server** (or **Add Custom MCP**). Cursor opens `mcp.json` in the editor.
 
     <Frame>
-      <img src="/images/prowler-mcp/cursor/cursor-new-mcp-server.png" alt="Cursor MCP settings showing the New MCP Server button" />
+      <img src="/images/prowler-mcp/cursor/cursor-customize-page.png" alt="Cursor Customize page with the MCP section open" />
     </Frame>
   </Step>
 
@@ -71,10 +69,6 @@ For Prowler, the **global** scope is usually the right choice — your findings 
     </Frame>
   </Step>
 </Steps>
-
-<Warning>
-**Do not add a `type` field to this entry.** Cursor selects the transport from the fields you provide — `url` means remote, `command` means STDIO. Adding `"type": "streamable-http"` is tolerated by the Cursor IDE but rejected by the Cursor CLI, and a single such entry causes the CLI to silently discard your entire `mcp.json` with no error message. Omitting `type` works everywhere.
-</Warning>
 
 <Note>
 **Local server:** Replace the URL with your own HTTP endpoint. Everything else stays the same.
@@ -119,12 +113,6 @@ Return to the MCP settings. The `prowler` server should be listed as enabled, wi
 
 <Frame>
   <img src="/images/prowler-mcp/cursor/cursor-prowler-connected.png" alt="Cursor MCP settings showing the Prowler server connected with its tools listed" />
-</Frame>
-
-If the server does not appear to connect, open the Output panel with `Cmd + Shift + U` (macOS) or `Ctrl + Shift + U` (Windows/Linux) and select **MCP Logs** from the dropdown to see the connection attempt and any error returned by the server.
-
-<Frame>
-  <img src="/images/prowler-mcp/cursor/cursor-mcp-logs.png" alt="Cursor Output panel with MCP Logs selected showing a successful Prowler connection" />
 </Frame>
 
 ## Step 4: Start Using Prowler MCP
