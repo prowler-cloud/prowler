@@ -85,6 +85,38 @@ describe("CloudUpgradeModal", () => {
     );
   });
 
+  it("renders the contextual Jira dispatch upgrade", async () => {
+    // Given
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    useCloudUpgradeStore
+      .getState()
+      .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
+
+    // When
+    render(<CloudUpgradeModal />);
+
+    // Then
+    expect(
+      await screen.findByRole("dialog", {
+        name: "Send Findings to Jira at Scale",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("link", {
+        name: "Send Findings to Jira in Prowler Cloud",
+      }),
+    ).toHaveAttribute(
+      "href",
+      "https://cloud.prowler.com/sign-up?utm_source=prowler-local-server&utm_content=jira-dispatch",
+    );
+    expect(
+      screen.getByRole("link", { name: "View Plans & Pricing" }),
+    ).toHaveAttribute(
+      "href",
+      "https://prowler.com/pricing?utm_source=prowler-local-server&utm_content=jira-dispatch",
+    );
+  });
+
   it("closes the active upgrade and returns focus to its trigger", async () => {
     // Given
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");

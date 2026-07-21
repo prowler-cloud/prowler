@@ -179,7 +179,6 @@ vi.mock("../floating-mute-button", () => ({
     onSendToJira,
     canSendToJira,
     showSendToJira,
-    jiraDisabledTooltip,
   }: {
     label?: string;
     muteLabel?: string;
@@ -188,7 +187,6 @@ vi.mock("../floating-mute-button", () => ({
     onSendToJira?: () => void;
     canSendToJira?: boolean;
     showSendToJira?: boolean;
-    jiraDisabledTooltip?: string;
   }) => {
     const [isChooserOpen, setIsChooserOpen] = useState(false);
 
@@ -205,11 +203,11 @@ vi.mock("../floating-mute-button", () => ({
             {showSendToJira && (
               <button
                 type="button"
-                disabled={!canSendToJira}
-                title={!canSendToJira ? jiraDisabledTooltip : undefined}
-                onClick={onSendToJira}
+                aria-label={sendToJiraLabel ?? "Send to Jira"}
+                onClick={() => canSendToJira && onSendToJira?.()}
               >
                 {sendToJiraLabel ?? "Send to Jira"}
+                {!canSendToJira && <span>Available only in Prowler Cloud</span>}
               </button>
             )}
           </div>
@@ -915,7 +913,7 @@ describe("FindingsGroupTable", () => {
       });
     });
 
-    it("should disable selected multi-finding Jira dispatch when grouped dispatch is disabled", async () => {
+    it("should show selected multi-finding Jira upgrade when grouped dispatch is disabled", async () => {
       // Given
       isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
       const user = userEvent.setup();
@@ -950,18 +948,17 @@ describe("FindingsGroupTable", () => {
       await user.click(jiraButton);
 
       // Then
-      expect(jiraButton).toBeDisabled();
-      expect(jiraButton).toHaveAttribute(
-        "title",
-        "Available only in Prowler Cloud",
-      );
+      expect(jiraButton).not.toBeDisabled();
+      expect(
+        within(jiraButton).getByText("Available only in Prowler Cloud"),
+      ).toBeVisible();
       expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
         expect.objectContaining({ isOpen: true }),
         undefined,
       );
     });
 
-    it("should render disabled Cloud-only bulk Jira button when grouped Jira dispatch is disabled", async () => {
+    it("should render Cloud-only bulk Jira upgrade when grouped Jira dispatch is disabled", async () => {
       // Given
       const user = userEvent.setup();
       const data = [
@@ -991,11 +988,10 @@ describe("FindingsGroupTable", () => {
         name: "Send 1 Group to Jira",
       });
       expect(jiraButton).toBeVisible();
-      expect(jiraButton).toBeDisabled();
-      expect(jiraButton).toHaveAttribute(
-        "title",
-        "Available only in Prowler Cloud",
-      );
+      expect(jiraButton).not.toBeDisabled();
+      expect(
+        within(jiraButton).getByText("Available only in Prowler Cloud"),
+      ).toBeVisible();
       expect(
         screen.getByRole("button", { name: "Mute 1 Group" }),
       ).toBeInTheDocument();

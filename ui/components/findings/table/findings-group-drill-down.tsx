@@ -26,10 +26,7 @@ import {
 import { SeverityBadge, StatusFindingBadge } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
-import {
-  isGroupedJiraDispatchEnabled,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "@/lib/deployment";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import {
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
@@ -259,7 +256,6 @@ export function FindingsGroupDrillDown({
           isBulkOperation={selectedFindingIds.length > 1}
           showSendToJira
           canSendToJira={canSendSelectedFindingsToJira}
-          jiraDisabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}
           sendToJiraLabel={`Send ${selectedFindingIds.length} ${
             selectedFindingIds.length === 1 ? "Finding" : "Findings"
           } to Jira`}

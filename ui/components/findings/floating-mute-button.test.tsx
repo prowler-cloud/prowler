@@ -1,6 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks to avoid deep dependency chains
@@ -42,6 +45,7 @@ function deferredPromise<T>() {
 describe("FloatingMuteButton — onBeforeOpen error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("should reset isResolving (re-enable button) when onBeforeOpen rejects", async () => {
@@ -261,7 +265,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
   });
 
-  it("should show disabled Cloud-only Jira action in the chooser", async () => {
+  it("should show the Cloud Jira upgrade below the action label", async () => {
     // Given
     const onSendToJira = vi.fn();
     const user = userEvent.setup();
@@ -282,25 +286,21 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
 
     // Then
     expect(jiraAction).toBeVisible();
-    expect(jiraAction).toHaveAttribute("aria-disabled", "true");
-    const cloudBadgeLink = screen.getByRole("link", {
-      name: "Available only in Prowler Cloud",
-    });
-    expect(cloudBadgeLink).toHaveTextContent("Available only in Prowler Cloud");
-    expect(cloudBadgeLink).toHaveAttribute(
-      "href",
-      "https://prowler.com/pricing",
-    );
-    expect(jiraAction).toContainElement(cloudBadgeLink);
-    expect(onSendToJira).not.toHaveBeenCalled();
+    expect(jiraAction).not.toHaveAttribute("aria-disabled");
 
-    // When
-    await user.hover(jiraAction);
-
-    // Then
-    const tooltipTexts = await screen.findAllByText(
+    const jiraLabel = within(jiraAction).getByText("Send to Jira");
+    const cloudBadge = within(jiraAction).getByText(
       "Available only in Prowler Cloud",
     );
-    expect(tooltipTexts[0]).toBeVisible();
+    expect(jiraLabel.nextElementSibling).toContainElement(cloudBadge);
+
+    // When
+    await user.click(cloudBadge);
+
+    // Then
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH,
+    );
+    expect(onSendToJira).not.toHaveBeenCalled();
   });
 });

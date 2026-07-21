@@ -9,10 +9,7 @@ import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbo
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
-import {
-  isGroupedJiraDispatchEnabled,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "@/lib/deployment";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import {
   createJiraBatchSelection,
@@ -443,7 +440,6 @@ const FindingsGroupTableContent = ({
           showSendToJira={hasJiraTargets}
           canSendToJira={canSendToJira}
           sendToJiraLabel={sendToJiraLabel}
-          jiraDisabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}
           onSendToJira={() => setIsJiraModalOpen(true)}
         />
       )}

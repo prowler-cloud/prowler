@@ -13,6 +13,8 @@ import {
 } from "@/components/shadcn/dropdown/action-dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { PROWLER_CLOUD_ONLY_TOOLTIP } from "@/lib/deployment";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { MuteFindingsModal } from "./mute-findings-modal";
 
@@ -36,20 +38,10 @@ interface FloatingMuteButtonProps {
   showSendToJira?: boolean;
   /** Custom Jira action label. Defaults to "Send to Jira". */
   sendToJiraLabel?: string;
-  /** Tooltip shown when the Jira action is visible but disabled. */
-  jiraDisabledTooltip?: string;
 }
 
-const CloudFeatureBadgeLink = () => (
-  <Badge variant="cloud" asChild>
-    <a
-      href="https://prowler.com/pricing"
-      target="_blank"
-      rel="noopener noreferrer"
-    >
-      {PROWLER_CLOUD_ONLY_TOOLTIP}
-    </a>
-  </Badge>
+const CloudFeatureBadge = () => (
+  <Badge variant="cloud">{PROWLER_CLOUD_ONLY_TOOLTIP}</Badge>
 );
 
 export function FloatingMuteButton({
@@ -64,7 +56,6 @@ export function FloatingMuteButton({
   canSendToJira = false,
   showSendToJira = canSendToJira,
   sendToJiraLabel = "Send to Jira",
-  jiraDisabledTooltip = PROWLER_CLOUD_ONLY_TOOLTIP,
 }: FloatingMuteButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
@@ -73,6 +64,9 @@ export function FloatingMuteButton({
   const [mutePreparationError, setMutePreparationError] = useState<
     string | null
   >(null);
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
 
   const handleModalOpenChange = (
     nextOpen: boolean | ((previousOpen: boolean) => boolean),
@@ -117,7 +111,10 @@ export function FloatingMuteButton({
   };
 
   const handleJiraClick = () => {
-    if (!canSendToJira) return;
+    if (!canSendToJira) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
+      return;
+    }
 
     onSendToJira?.();
   };
@@ -170,15 +167,11 @@ export function FloatingMuteButton({
                     />
                     <ActionDropdownItem
                       icon={<JiraIcon size={20} />}
-                      label={
-                        <span className="flex items-center gap-2">
-                          {sendToJiraLabel}
-                          {!canSendToJira && <CloudFeatureBadgeLink />}
-                        </span>
+                      label={sendToJiraLabel}
+                      description={
+                        !canSendToJira ? <CloudFeatureBadge /> : undefined
                       }
                       aria-label={sendToJiraLabel}
-                      disabled={!canSendToJira}
-                      disabledTooltip={jiraDisabledTooltip}
                       onSelect={handleJiraClick}
                     />
                   </ActionDropdown>

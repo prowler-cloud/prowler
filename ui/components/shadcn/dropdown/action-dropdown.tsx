@@ -102,7 +102,7 @@ interface ActionDropdownItemProps
   /** Main label text */
   label: ReactNode;
   /** Optional description text below the label */
-  description?: string;
+  description?: ReactNode;
   /** Whether the item is destructive (danger styling) */
   destructive?: boolean;
   /** Tooltip shown when the item is disabled. */
