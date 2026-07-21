@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Cloud } from "lucide-react";
+import { useRef } from "react";
 
 import { Badge } from "@/components/shadcn/badge/badge";
 import { Button } from "@/components/shadcn/button/button";
@@ -26,10 +27,17 @@ export const CloudUpgradeModal = () => {
   const returnFocusElement = useCloudUpgradeStore(
     (state) => state.returnFocusElement,
   );
+  const lastActiveFeature = useRef(
+    activeFeature ?? CLOUD_UPGRADE_FEATURE.GENERAL,
+  );
 
   if (isCloud()) return null;
 
-  const feature = activeFeature ?? CLOUD_UPGRADE_FEATURE.GENERAL;
+  if (activeFeature !== null) {
+    lastActiveFeature.current = activeFeature;
+  }
+
+  const feature = lastActiveFeature.current;
   const content = CLOUD_UPGRADE_CONTENT[feature];
 
   return (
