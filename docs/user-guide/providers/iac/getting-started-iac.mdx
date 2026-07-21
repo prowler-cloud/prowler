@@ -24,7 +24,7 @@ Prowler IaC provider scans the following Infrastructure as Code configurations f
 
 ## How It Works
 
-- Prowler App leverages [Trivy](https://trivy.dev/docs/latest/guide/coverage/iac/#scanner) to scan local directories (or specified paths) for supported IaC files, or scans remote repositories.
+- Prowler Cloud leverages [Trivy](https://trivy.dev/docs/latest/guide/coverage/iac/#scanner) to scan local directories (or specified paths) for supported IaC files, or scans remote repositories.
 - No cloud credentials or authentication are required for local scans.
 - For remote repository scans, authentication can be provided via [git URL](https://git-scm.com/docs/git-clone#_git_urls), CLI flags or environment variables.
   - Check the [IaC Authentication](/user-guide/providers/iac/authentication) page for more details.
@@ -37,11 +37,11 @@ Prowler IaC provider scans the following Infrastructure as Code configurations f
 
 ### Supported Scanners
 
-Scanner selection is not configurable in Prowler App. Default scanners, misconfig and secret, run automatically during each scan.
+Scanner selection is not configurable in Prowler Cloud. Default scanners, misconfig and secret, run automatically during each scan.
 
-### Step 1: Access Prowler Cloud/App
+### Step 1: Access Prowler Cloud or Prowler Local Server
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Providers"
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)

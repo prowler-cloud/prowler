@@ -1,4 +1,4 @@
-import { Card, CardContent } from "@/components/shadcn";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { RoleData, RoleDetail } from "@/types/users";
 
 import { RoleItem } from "./role-item";
@@ -11,14 +11,16 @@ export const RolesCard = ({
   roleDetails: Record<string, RoleDetail>;
 }) => {
   return (
-    <Card variant="base" padding="none" className="p-4">
-      <CardContent>
-        <div className="mb-6 flex flex-col gap-1">
-          <h4 className="text-lg font-bold">Active roles</h4>
+    <Card variant="inner" padding="none" className="gap-4 p-4 md:p-5">
+      <CardHeader>
+        <div className="flex flex-col gap-1">
+          <CardTitle>Active roles</CardTitle>
           <p className="text-xs text-gray-500">
             Roles assigned to this user account
           </p>
         </div>
+      </CardHeader>
+      <CardContent>
         {roles.length === 0 ? (
           <div className="text-sm text-gray-500">No roles assigned.</div>
         ) : (

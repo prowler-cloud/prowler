@@ -6,7 +6,7 @@ import {
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
@@ -188,9 +188,14 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported so feature-local wrappers (e.g. the cross-provider PDF download in
+ * app/(prowler)/compliance/_lib) reuse the base64→blob handling instead of
+ * duplicating it; those wrappers cannot live here because their server
+ * actions import the @/lib barrel, which would create a cycle.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
@@ -383,21 +388,6 @@ export const checkTaskStatus = async (
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to create dictionaries by type
-export function createDict(type: string, data: any) {
-  const includedField = data?.included?.filter(
-    (item: { type: string }) => item.type === type,
-  );
-
-  if (!includedField || includedField.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    includedField.map((item: { id: string }) => [item.id, item]),
-  );
-}
-
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
@@ -448,7 +438,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all the providers and its related resources",
+      "Grants organization-wide visibility across all providers, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",

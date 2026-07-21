@@ -4,6 +4,8 @@
     {
       "Action": [
         "account:Get*",
+        "amplify:ListApps",
+        "amplify:ListBranches",
         "appstream:Describe*",
         "appstream:List*",
         "backup:List*",
@@ -15,6 +17,9 @@
         "codebuild:BatchGet*",
         "codebuild:ListReportGroups",
         "cognito-idp:GetUserPoolMfaConfig",
+        "datapipeline:DescribePipelines",
+        "datapipeline:GetPipelineDefinition",
+        "datapipeline:ListPipelines",
         "dlm:Get*",
         "drs:Describe*",
         "ds:Get*",

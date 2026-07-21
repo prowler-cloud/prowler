@@ -1,12 +1,13 @@
 "use client";
 
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import type { MetaDataProps, ScanJobsTab, ScanProps } from "@/types";
 import { SCAN_JOBS_TAB } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { AutoRefresh } from "../auto-refresh";
 import { NoScansEmptyState } from "../no-scans-empty-state";
+
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
 interface ScanJobsTableProps {

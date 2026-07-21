@@ -39,6 +39,12 @@ def mock_make_api_call(self, operation_name, kwarg):
     return make_api_call(self, operation_name, kwarg)
 
 
+def get_mocked_ec2_client():
+    ec2_client = mock.MagicMock()
+    ec2_client.audit_config = {}
+    return ec2_client
+
+
 class Test_ec2_launch_template_no_public_ip:
     @mock_aws
     def test_no_launch_templates(self):
@@ -124,7 +130,7 @@ class Test_ec2_launch_template_no_public_ip:
             assert result[0].resource_tags == []
 
     def test_launch_template_public_ip_auto_assign(self):
-        ec2_client = mock.MagicMock()
+        ec2_client = get_mocked_ec2_client()
         launch_template_name = "tester"
         launch_template_id = "lt-1234567890"
         launch_template_arn = (
@@ -190,7 +196,7 @@ class Test_ec2_launch_template_no_public_ip:
     def test_network_interface_with_public_ipv4_network_interface_autoassign_true_and_false(
         self,
     ):
-        ec2_client = mock.MagicMock()
+        ec2_client = get_mocked_ec2_client()
         launch_template_name = "tester"
         launch_template_id = "lt-1234567890"
         launch_template_arn = (
@@ -290,7 +296,7 @@ class Test_ec2_launch_template_no_public_ip:
     def test_network_interface_with_public_ipv6_network_interface_autoassign_true_and_false(
         self,
     ):
-        ec2_client = mock.MagicMock()
+        ec2_client = get_mocked_ec2_client()
         launch_template_name = "tester"
         launch_template_id = "lt-1234567890"
         launch_template_arn = (

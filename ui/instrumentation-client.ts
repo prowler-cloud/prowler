@@ -19,8 +19,12 @@ import * as Sentry from "@sentry/nextjs";
 import {
   cancelProgress,
   startProgress,
-} from "@/components/ui/navigation-progress/use-navigation-progress";
+} from "@/components/shadcn/navigation-progress/use-navigation-progress";
 import { getRuntimeConfigClient } from "@/lib/get-runtime-config.client";
+import {
+  applySentryEventPolicy,
+  SENTRY_EVENT_SOURCE,
+} from "@/sentry/event-policy";
 
 export const NAVIGATION_TYPE = {
   PUSH: "push",
@@ -96,24 +100,8 @@ if (typeof window !== "undefined" && sentryDsn) {
     ],
 
     beforeSend(event, hint) {
-      // Filter out noise: ResizeObserver errors (common browser quirk, not real bugs)
-      if (event.message?.includes("ResizeObserver")) {
-        return null; // Don't send to Sentry
-      }
-
-      // Filter out non-actionable errors
       if (event.exception) {
         const error = hint.originalException;
-
-        // Don't send cancelled requests
-        if (
-          error &&
-          typeof error === "object" &&
-          "name" in error &&
-          error.name === "AbortError"
-        ) {
-          return null;
-        }
 
         // Add additional context for API errors
         if (
@@ -130,7 +118,9 @@ if (typeof window !== "undefined" && sentryDsn) {
         }
       }
 
-      return event; // Send to Sentry
+      return applySentryEventPolicy(event, hint, {
+        source: SENTRY_EVENT_SOURCE.CLIENT,
+      });
     },
   });
 

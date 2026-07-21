@@ -93,20 +93,26 @@ describe("getRuntimeConfigClient", () => {
     // When
     const config = getRuntimeConfigClient();
 
-    // Then - exactly the eight allowlisted keys, nothing else
+    // Then - exactly the allowlisted keys, nothing else
     expect(Object.keys(config).sort()).toEqual(
       [
         "apiBaseUrl",
         "apiDocsUrl",
+        "cloudBillingEnabled",
         "googleTagManagerId",
         "posthogHost",
         "posthogKey",
         "reoDevClientId",
         "sentryDsn",
         "sentryEnvironment",
+        "stripePublishableKey",
+        "stripePublishableKeyV2",
       ].sort(),
     );
     expect(config.apiBaseUrl).toBe("https://api.example.com/api/v1");
+    // cloudBillingEnabled is a boolean flag, so it defaults to false (not null)
+    // when absent from the island.
+    expect(config.cloudBillingEnabled).toBe(false);
     expect(
       (config as unknown as Record<string, unknown>).notAllowlisted,
     ).toBeUndefined();

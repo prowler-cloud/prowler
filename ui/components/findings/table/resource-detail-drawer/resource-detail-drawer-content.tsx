@@ -36,12 +36,28 @@ import {
   TabsTrigger,
 } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
+import {
+  type FindingStatus,
+  StatusFindingBadge,
+} from "@/components/shadcn/table/status-finding-badge";
 import {
   Tooltip,
   TooltipContent,
@@ -55,25 +71,9 @@ import {
   type QueryEditorLanguage,
 } from "@/components/shared/query-code-editor";
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/ui/table/status-finding-badge";
-import { getFailingForLabel } from "@/lib/date-utils";
-import { formatDuration } from "@/lib/date-utils";
+import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
@@ -88,6 +88,7 @@ import {
   FindingTriageStatusCell,
 } from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
+
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
 
@@ -471,6 +472,16 @@ export function ResourceDetailDrawerContent({
   const overviewStatusExtended =
     currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
+  const findingAnalysisPrompt = buildFindingAnalysisPrompt({
+    findingId: currentResource?.findingId ?? f?.id,
+    providerUid,
+    resourceUid,
+    checkId: currentResource?.checkId ?? checkMeta.checkId,
+    severity: findingSeverity,
+    status: findingStatus,
+    detail: overviewStatusExtended,
+    risk: f?.risk || checkMeta.risk,
+  });
 
   const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
     await updateFindingTriage(input);
@@ -712,7 +723,10 @@ export function ResourceDetailDrawerContent({
           <>
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
-              <div className="@container flex min-w-0 flex-1 flex-col gap-4">
+              <div
+                data-responsive-container
+                className="@container flex min-w-0 flex-1 flex-col gap-4"
+              >
                 {/* Row 1: Provider, Resource, Service, Region */}
                 <div
                   className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8"
@@ -1376,7 +1390,7 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       {!isNavigating && (
         <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
+          href={`/lighthouse?${new URLSearchParams({ prompt: findingAnalysisPrompt }).toString()}`}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",

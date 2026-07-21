@@ -95,8 +95,6 @@ class TestContainerRegistryService:
 
 class Test_ContainerRegistry_get_registries:
     def test_get_container_registries_no_resource_groups(self):
-        from unittest.mock import MagicMock, patch
-
         mock_client = MagicMock()
         mock_client.registries.list.return_value = []
 
@@ -135,8 +133,6 @@ class Test_ContainerRegistry_get_registries:
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_container_registries_with_resource_group(self):
-        from unittest.mock import MagicMock, patch
-
         mock_client = MagicMock()
         mock_client.registries.list_by_resource_group.return_value = []
 
@@ -177,8 +173,6 @@ class Test_ContainerRegistry_get_registries:
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_container_registries_empty_resource_group_for_subscription(self):
-        from unittest.mock import MagicMock, patch
-
         mock_client = MagicMock()
 
         mock_provider = MagicMock()
@@ -216,8 +210,6 @@ class Test_ContainerRegistry_get_registries:
         assert result[AZURE_SUBSCRIPTION_ID] == {}
 
     def test_get_container_registries_with_multiple_resource_groups(self):
-        from unittest.mock import MagicMock, patch
-
         mock_client = MagicMock()
         mock_client.registries.list_by_resource_group.return_value = []
 
@@ -258,8 +250,6 @@ class Test_ContainerRegistry_get_registries:
         assert AZURE_SUBSCRIPTION_ID in result
 
     def test_get_container_registries_with_mixed_case_resource_group(self):
-        from unittest.mock import MagicMock, patch
-
         mock_client = MagicMock()
         mock_client.registries.list_by_resource_group.return_value = []
 

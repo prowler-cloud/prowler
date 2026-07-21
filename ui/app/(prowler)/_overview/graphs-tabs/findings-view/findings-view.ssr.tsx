@@ -1,13 +1,12 @@
 "use server";
 
 import { getLatestFindings } from "@/actions/findings/findings";
-import { LighthouseBanner } from "@/components/lighthouse/banner";
 import { LinkToFindings } from "@/components/overview";
 import { ColumnLatestFindings } from "@/components/overview/new-findings-table/table";
 import { CardTitle } from "@/components/shadcn";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { FINDINGS_FILTERED_SORT, MUTED_FILTER } from "@/lib";
-import { createDict } from "@/lib/helper";
+import { createDict } from "@/lib/utils";
 import { FindingProps, SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
@@ -45,7 +44,8 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
         const scan = scanDict[finding.relationships?.scan?.data?.id];
         const resource =
           resourceDict[finding.relationships?.resources?.data?.[0]?.id];
-        const provider = providerDict[scan?.relationships?.provider?.data?.id];
+        const provider =
+          providerDict[scan?.relationships?.provider?.data?.id ?? ""];
 
         return {
           ...finding,
@@ -61,7 +61,6 @@ export async function FindingsViewSSR({ searchParams }: FindingsViewSSRProps) {
 
   return (
     <div className="flex w-full flex-col">
-      <LighthouseBanner />
       <DataTable
         key={`dashboard-findings-${Date.now()}`}
         columns={ColumnLatestFindings}

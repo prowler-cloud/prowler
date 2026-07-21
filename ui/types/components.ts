@@ -1,5 +1,5 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 
@@ -15,43 +15,6 @@ export type IconProps = {
 };
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
-
-export type SubmenuProps = {
-  href: string;
-  target?: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-};
-
-export type MenuProps = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  submenus?: SubmenuProps[];
-  defaultOpen?: boolean;
-  target?: string;
-  tooltip?: string;
-  highlight?: boolean;
-};
-
-export type GroupProps = {
-  groupLabel: string;
-  menus: MenuProps[];
-};
-
-export interface CollapseMenuButtonProps {
-  icon: IconComponent;
-  label: string;
-  submenus: SubmenuProps[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
 
 export const NEXT_UI_VARIANTS = {
   SOLID: "solid",
@@ -317,7 +280,6 @@ export type OCICredentials = {
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
   [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
   [ProviderCredentialFields.OCI_TENANCY]: string;
-  [ProviderCredentialFields.OCI_REGION]: string;
   [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };

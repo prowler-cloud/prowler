@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/components/shadcn/modal", () => ({
   Modal: ({
@@ -31,7 +31,7 @@ vi.mock("next/navigation", () => ({
 }));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
-vi.mock("@/components/ui/custom/custom-link", () => ({
+vi.mock("@/components/shadcn/custom/custom-link", () => ({
   CustomLink: ({ href, children }: { href: string; children: ReactNode }) => (
     <a href={href}>{children}</a>
   ),
@@ -68,6 +68,8 @@ beforeAll(() => {
   });
 });
 
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
   FINDING_TRIAGE_STATUS,
@@ -97,6 +99,54 @@ function makeTriageSummary(
     ...overrides,
   };
 }
+
+afterEach(() => {
+  useCloudUpgradeStore.getState().closeCloudUpgrade();
+});
+
+it("should open finding triage upgrade from a Cloud-only status cell", async () => {
+  // Given
+  const user = userEvent.setup();
+  render(
+    <FindingTriageStatusCell
+      triage={makeTriageSummary({
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+      })}
+    />,
+  );
+
+  // When
+  await user.click(
+    screen.getByRole("button", {
+      name: "Change triage status - available in Prowler Cloud",
+    }),
+  );
+
+  // Then
+  expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+    CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+  );
+});
+
+it("should render the Cloud-only triage action with the shared button", () => {
+  // Given / When
+  render(
+    <FindingTriageStatusCell
+      triage={makeTriageSummary({
+        canEdit: false,
+        disabledReason: FINDING_TRIAGE_DISABLED_REASON.CLOUD_ONLY,
+      })}
+    />,
+  );
+
+  // Then
+  expect(
+    screen.getByRole("button", {
+      name: "Change triage status - available in Prowler Cloud",
+    }),
+  ).toHaveAttribute("data-slot", "button");
+});
 
 describe("finding triage cells", () => {
   it("should open the Note modal from the note action with the current status preselected", async () => {
@@ -373,10 +423,16 @@ describe("finding triage cells", () => {
       screen.getByRole("dialog", { name: "Add Triage Note" }),
     ).toBeVisible();
     expect(screen.getByLabelText("Note text")).toBeDisabled();
-    expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled();
-    expect(
-      screen.getByRole("link", { name: "Available in Prowler Cloud" }),
-    ).toHaveAttribute("href", "https://prowler.com/pricing");
+    const saveUpgrade = screen.getByRole("button", {
+      name: "Save - available in Prowler Cloud",
+    });
+    expect(saveUpgrade).not.toBeDisabled();
+
+    await user.click(saveUpgrade);
+
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE,
+    );
   });
 
   it("should disable Add Triage Note when no update handler is wired", async () => {

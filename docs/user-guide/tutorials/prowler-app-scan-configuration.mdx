@@ -1,5 +1,6 @@
 ---
 title: 'Scan Configuration'
+sidebarTitle: 'Configuration'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -7,7 +8,7 @@ import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.32.0" />
 
-Scan Configuration lets you override, per provider, specific values in the default configuration Prowler's checks use during a scan. Each configuration modifies how specific checks behave, e.g.: thresholds, allowed values, retention windows, and you attach it to the providers that you want to use it on their next scan.
+Scan Configuration lets you override, per provider, specific values in the default configuration Prowler's checks use during a scan. Each configuration can modify how specific checks behave, such as thresholds, allowed values, and retention windows, or exclude checks and services from the scan scope. Attach it to the providers that should use it on their next scan.
 
 <SubscriptionBanner />
 
@@ -23,7 +24,9 @@ A Scan Configuration lets you **override specific values, per provider**, on top
 - Changes take effect on the provider's **next scan** and do not re-run past scans.
 
 
+<Note>
 The full set of configurable values and their defaults lives in [`prowler/config/config.yaml`](https://github.com/prowler-cloud/prowler/blob/master/prowler/config/config.yaml). For what each key means and which checks read it, see the [Configuration File tutorial](/user-guide/cli/tutorials/configuration_file).
+</Note>
 
 ## Required Permissions
 
@@ -50,6 +53,24 @@ azure:
 gcp:
   storage_min_retention_days: 30
 ```
+
+### Limiting the Scan Scope
+
+<VersionBadge version="5.35.0" />
+
+Use `excluded_checks` to skip individual checks and `excluded_services` to skip every check in a service for the matching provider type:
+
+```yaml
+aws:
+  excluded_checks:
+    - s3_bucket_public_access
+  excluded_services:
+    - ec2
+```
+
+<Warning>
+When a Scan Configuration excludes checks or services, Prowler calculates overviews, aggregations, and other result-based information from the reduced scan scope. The displayed information reflects only the checks and services that ran, not a complete assessment of the provider. Consider the applied Scan Configuration when interpreting totals and security posture.
+</Warning>
 
 ## Creating a Scan Configuration
 

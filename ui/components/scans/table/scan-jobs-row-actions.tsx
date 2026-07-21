@@ -24,11 +24,11 @@ import {
   EditScanScheduleModal,
   type EditScanScheduleState,
 } from "@/components/scans/schedule/edit-scan-schedule-modal";
+import { useToast } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
-import { useToast } from "@/components/ui";
 import { toLocalDateString } from "@/lib/date-utils";
 import { downloadScanZip } from "@/lib/helper";
 import { getScanScheduleCapability } from "@/lib/schedules";
@@ -93,7 +93,7 @@ export function ScanJobsRowActions({
   const openFindings = () => {
     if (!isCompleted || !scanDate) return;
     router.push(
-      `/findings?filter[scan]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
+      `/findings?filter[scan__in]=${scan.id}&filter[inserted_at]=${scanDate}&filter[status__in]=FAIL`,
     );
   };
 
