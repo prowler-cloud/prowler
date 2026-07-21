@@ -2,6 +2,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+
 const { MuteFindingsModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
   () => ({
     MuteFindingsModalMock: vi.fn(() => null),
@@ -43,13 +46,19 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     onSelect,
     disabled,
     disabledTooltip,
+    tooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
     disabledTooltip?: string;
+    tooltip?: string;
   }) => (
-    <button onClick={onSelect} disabled={disabled} title={disabledTooltip}>
+    <button
+      onClick={onSelect}
+      disabled={disabled}
+      title={tooltip ?? disabledTooltip}
+    >
       {label}
     </button>
   ),
@@ -149,6 +158,7 @@ describe("DataTableRowActions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("opens the mute modal immediately in preparing state for finding groups", async () => {
@@ -319,7 +329,7 @@ describe("DataTableRowActions", () => {
     );
   });
 
-  it("shows disabled Cloud-only Jira action for finding groups outside cloud", async () => {
+  it("shows the Cloud tooltip and opens the upgrade modal for groups outside cloud", async () => {
     // Given
     isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
     const user = userEvent.setup();
@@ -359,10 +369,13 @@ describe("DataTableRowActions", () => {
 
     // Then
     expect(jiraButton).toBeVisible();
-    expect(jiraButton).toBeDisabled();
+    expect(jiraButton).toBeEnabled();
     expect(jiraButton).toHaveAttribute(
       "title",
       "Available only in Prowler Cloud",
+    );
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH,
     );
     expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
       expect.objectContaining({ isOpen: true }),

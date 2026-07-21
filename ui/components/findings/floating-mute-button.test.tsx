@@ -265,7 +265,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
   });
 
-  it("should show the Cloud Jira upgrade below the action label", async () => {
+  it("should show the Cloud Jira tooltip and open the upgrade modal", async () => {
     // Given
     const onSendToJira = vi.fn();
     const user = userEvent.setup();
@@ -287,15 +287,20 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     // Then
     expect(jiraAction).toBeVisible();
     expect(jiraAction).not.toHaveAttribute("aria-disabled");
-
-    const jiraLabel = within(jiraAction).getByText("Send to Jira");
-    const cloudBadge = within(jiraAction).getByText(
-      "Available only in Prowler Cloud",
-    );
-    expect(jiraLabel.nextElementSibling).toContainElement(cloudBadge);
+    expect(
+      within(jiraAction).queryByText("Available only in Prowler Cloud"),
+    ).not.toBeInTheDocument();
 
     // When
-    await user.click(cloudBadge);
+    await user.hover(jiraAction);
+
+    // Then
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Available only in Prowler Cloud",
+    );
+
+    // When
+    await user.click(jiraAction);
 
     // Then
     expect(useCloudUpgradeStore.getState().activeFeature).toBe(

@@ -20,6 +20,8 @@ import {
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { getOptionalText } from "@/lib/utils";
+import { useCloudUpgradeStore } from "@/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
@@ -121,6 +123,9 @@ export function DataTableRowActions<T extends FindingRowData>({
   const [mutePreparationError, setMutePreparationError] = useState<
     string | null
   >(null);
+  const openCloudUpgrade = useCloudUpgradeStore(
+    (state) => state.openCloudUpgrade,
+  );
 
   const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
   const resolvedFindingContext = findingContext ?? {
@@ -196,7 +201,7 @@ export function DataTableRowActions<T extends FindingRowData>({
     jiraTargetIds,
     jiraTargetType,
   );
-  const isJiraActionDisabled =
+  const requiresJiraUpgrade =
     (isGroup || jiraTargetIds.length > 1) && !groupedJiraDispatchEnabled;
   const selectedJiraResourceCount = isGroup
     ? (finding.resourcesFail ?? 0)
@@ -273,7 +278,10 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleJiraClick = () => {
-    if (isJiraActionDisabled) return;
+    if (requiresJiraUpgrade) {
+      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
+      return;
+    }
 
     setIsJiraModalOpen(true);
   };
@@ -332,8 +340,9 @@ export function DataTableRowActions<T extends FindingRowData>({
           <ActionDropdownItem
             icon={<JiraIcon size={20} />}
             label={getJiraLabel()}
-            disabled={isJiraActionDisabled}
-            disabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}
+            tooltip={
+              requiresJiraUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
+            }
             onSelect={handleJiraClick}
           />
         </ActionDropdown>

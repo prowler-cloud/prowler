@@ -6,7 +6,6 @@ import { createPortal } from "react-dom";
 
 import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Button } from "@/components/shadcn";
-import { Badge } from "@/components/shadcn/badge/badge";
 import {
   ActionDropdown,
   ActionDropdownItem,
@@ -39,10 +38,6 @@ interface FloatingMuteButtonProps {
   /** Custom Jira action label. Defaults to "Send to Jira". */
   sendToJiraLabel?: string;
 }
-
-const CloudFeatureBadge = () => (
-  <Badge variant="cloud">{PROWLER_CLOUD_ONLY_TOOLTIP}</Badge>
-);
 
 export function FloatingMuteButton({
   selectedCount,
@@ -168,8 +163,8 @@ export function FloatingMuteButton({
                     <ActionDropdownItem
                       icon={<JiraIcon size={20} />}
                       label={sendToJiraLabel}
-                      description={
-                        !canSendToJira ? <CloudFeatureBadge /> : undefined
+                      tooltip={
+                        !canSendToJira ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
                       }
                       aria-label={sendToJiraLabel}
                       onSelect={handleJiraClick}

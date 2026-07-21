@@ -170,7 +170,6 @@ vi.mock("./inline-resource-container", () => ({
 }));
 
 vi.mock("../floating-mute-button", () => ({
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
   FloatingMuteButton: ({
     label,
     muteLabel,
@@ -204,10 +203,12 @@ vi.mock("../floating-mute-button", () => ({
               <button
                 type="button"
                 aria-label={sendToJiraLabel ?? "Send to Jira"}
+                title={
+                  canSendToJira ? undefined : "Available only in Prowler Cloud"
+                }
                 onClick={() => canSendToJira && onSendToJira?.()}
               >
                 {sendToJiraLabel ?? "Send to Jira"}
-                {!canSendToJira && <span>Available only in Prowler Cloud</span>}
               </button>
             )}
           </div>
@@ -913,7 +914,7 @@ describe("FindingsGroupTable", () => {
       });
     });
 
-    it("should show selected multi-finding Jira upgrade when grouped dispatch is disabled", async () => {
+    it("should show selected multi-finding Jira tooltip when grouped dispatch is disabled", async () => {
       // Given
       isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
       const user = userEvent.setup();
@@ -949,16 +950,20 @@ describe("FindingsGroupTable", () => {
 
       // Then
       expect(jiraButton).not.toBeDisabled();
+      expect(jiraButton).toHaveAttribute(
+        "title",
+        "Available only in Prowler Cloud",
+      );
       expect(
-        within(jiraButton).getByText("Available only in Prowler Cloud"),
-      ).toBeVisible();
+        within(jiraButton).queryByText("Available only in Prowler Cloud"),
+      ).not.toBeInTheDocument();
       expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
         expect.objectContaining({ isOpen: true }),
         undefined,
       );
     });
 
-    it("should render Cloud-only bulk Jira upgrade when grouped Jira dispatch is disabled", async () => {
+    it("should render Cloud-only bulk Jira tooltip when grouped Jira dispatch is disabled", async () => {
       // Given
       const user = userEvent.setup();
       const data = [
@@ -989,9 +994,13 @@ describe("FindingsGroupTable", () => {
       });
       expect(jiraButton).toBeVisible();
       expect(jiraButton).not.toBeDisabled();
+      expect(jiraButton).toHaveAttribute(
+        "title",
+        "Available only in Prowler Cloud",
+      );
       expect(
-        within(jiraButton).getByText("Available only in Prowler Cloud"),
-      ).toBeVisible();
+        within(jiraButton).queryByText("Available only in Prowler Cloud"),
+      ).not.toBeInTheDocument();
       expect(
         screen.getByRole("button", { name: "Mute 1 Group" }),
       ).toBeInTheDocument();

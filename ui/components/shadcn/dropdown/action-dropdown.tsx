@@ -102,9 +102,11 @@ interface ActionDropdownItemProps
   /** Main label text */
   label: ReactNode;
   /** Optional description text below the label */
-  description?: ReactNode;
+  description?: string;
   /** Whether the item is destructive (danger styling) */
   destructive?: boolean;
+  /** Tooltip shown while the item remains interactive. */
+  tooltip?: string;
   /** Tooltip shown when the item is disabled. */
   disabledTooltip?: string;
 }
@@ -115,6 +117,7 @@ export function ActionDropdownItem({
   description,
   destructive = false,
   className,
+  tooltip,
   disabledTooltip,
   disabled,
   onSelect,
@@ -166,11 +169,13 @@ export function ActionDropdownItem({
     </DropdownMenuItem>
   );
 
-  if (disabled && disabledTooltip) {
+  const tooltipContent = tooltip ?? (disabled ? disabledTooltip : undefined);
+
+  if (tooltipContent) {
     return (
       <Tooltip>
         <TooltipTrigger asChild>{item}</TooltipTrigger>
-        <TooltipContent>{disabledTooltip}</TooltipContent>
+        <TooltipContent>{tooltipContent}</TooltipContent>
       </Tooltip>
     );
   }
