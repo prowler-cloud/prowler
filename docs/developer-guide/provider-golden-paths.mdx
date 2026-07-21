@@ -34,7 +34,7 @@ This page answers **"how far does this provider need to reach?"** (CLI-only, ext
 4. **CLI help text is also automatic for new providers.** `prowler/lib/cli/parser.py` keeps a hardcoded `known_providers` set for formatting reasons, but any provider not in that set is appended to the CLI usage/help text automatically, using a `_cli_help_text` class attribute on your provider class (empty string if unset). Set `_cli_help_text` on your provider class to get a real description instead of a blank one — you do not need to edit `parser.py` itself.
 5. **Argument parsing and instantiation are still manual today.** Every current provider is wired into the `elif` chain in `init_global_provider()` (`prowler/providers/common/provider.py`) to parse its provider-specific CLI arguments and instantiate itself correctly. The base `Provider` class exposes a `from_cli_args()` override point intended to let a provider handle this itself instead of extending that chain, but as of this writing no built-in provider implements it — treat it as an available option, not the established pattern to copy.
 6. Add SDK unit tests (see the `prowler-test-sdk` skill and [Unit Testing](./unit-testing)).
-7. **Completion criteria:** `prowler <name> --help` lists the provider with a real description; `prowler <name> -h` shows its arguments; SDK tests pass.
+7. **Completion criteria:** `prowler --help` lists the provider with a real description; `prowler <name> --help` shows its provider-specific arguments; SDK tests pass.
 
 <Warning>
 Registrations for a single provider can live in several places and drift out of sync with each other — for example, `prowler/lib/cli/parser.py`'s `known_providers` set currently includes `llm`, while the `Provider` enum in `prowler/config/config.py` does not. Don't assume one file's list is authoritative; check discovery (`prowler/providers/common/provider.py`) and the checklist above instead.
@@ -51,9 +51,14 @@ The `Provider` enum in `prowler/config/config.py` (`Step 12: Add to Config` in t
 **Checklist:**
 
 1. Same provider-class and service/check structure as a built-in provider (Scope 1, steps 1-2), packaged in your own installable Python project instead of `prowler/providers/`.
-2. Register your provider class under the `prowler.providers` entry-point group in your package's `pyproject.toml` (or equivalent), matching how `prowler/providers/common/provider.py` discovers entry points via `importlib.metadata.entry_points(group="prowler.providers")`.
-3. A built-in provider with the same name always takes precedence over an external entry-point provider.
-4. **Completion criteria:** with your package installed alongside Prowler, `prowler <name> --help` and a real scan both work, without any change to the Prowler repository itself.
+2. Register your provider class under the `prowler.providers` entry-point group in your package's `pyproject.toml` (or equivalent), matching how `prowler/providers/common/provider.py` discovers entry points via `importlib.metadata.entry_points(group="prowler.providers")`. This is discovery only: it makes the class importable, not usable from the CLI on its own.
+3. **Implement `init_parser(self)` on your provider class** to register its CLI arguments. Built-in providers expose this as a module-level function in `<name>/lib/arguments/arguments.py`, but external providers expose it on the class, because `prowler/providers/common/arguments.py` calls `cls.init_parser(self)` on each entry-point provider (guarded by `hasattr`) to build its argument subparser. Without it, `prowler <name>` has no provider-specific flags.
+4. **Implement the `from_cli_args(cls, arguments, fixer_config)` classmethod** to parse those arguments and return an initialized provider instance. Built-in providers are instead wired into the `elif` chain in `init_global_provider()`; external providers cannot be, so that method's dynamic fallback (`prowler/providers/common/provider.py`) calls `provider_class.from_cli_args(...)` for any name it does not recognize. This is the required instantiation contract for the external CLI path — the base `Provider` class raises `NotImplementedError` until you override it.
+5. A built-in provider with the same name always takes precedence over an external entry-point provider.
+6. **Completion criteria** (with your package installed alongside Prowler, and no change to the Prowler repository itself):
+    - `prowler --help` lists your provider (discovery works).
+    - `prowler <name> --help` shows your provider-specific arguments (`init_parser` ran).
+    - A real scan runs to completion (`from_cli_args` instantiated the provider correctly).
 
 <Note>
 There is currently no first-party reference implementation of this path in this repository to point to directly — NHN Cloud, the closest community-maintained example mentioned elsewhere in the docs, ships in-tree as a built-in provider rather than as an external entry point. The discovery code supports this scope, but test end to end rather than assuming parity with the built-in path.
@@ -67,7 +72,12 @@ There is currently no first-party reference implementation of this path in this 
 
 1. Complete Scope 1 in full first.
 2. Follow [Step 2: Integrate the Provider in the API](./provider#step-2-integrate-the-provider-in-the-api) — includes the `ProviderChoices` enum, serializers, views, the credentials model, and API tests.
-3. UI integration: the dedicated UI section of the full provider guide is not yet written (tracked as its own phase of [issue #12026](https://github.com/prowler-cloud/prowler/issues/12026)). Until it lands, use a recently added full-stack provider (for example Okta or Vercel) as a working reference for the UI-side changes: provider type registration, credential forms/schemas, icons, and labels.
+3. UI integration: the dedicated UI section of the full provider guide is not yet written (tracked as its own phase of [issue #12026](https://github.com/prowler-cloud/prowler/issues/12026)), so this is a checklist of the current touchpoints rather than a step-by-step guide. Use a recently added full-stack provider (for example Okta or Vercel) as a working reference and mirror its changes:
+    - **Provider type and credential schema:** register the provider type and its credential fields (`ui/types/providers.ts`, `ui/types/formSchemas.ts`, `ui/lib/provider-credentials/`).
+    - **Credential form:** add a `via-credentials/<name>-credentials-form.tsx` and wire it into the provider radio group and connect-account flow (`ui/components/providers/workflow/forms/`).
+    - **Icon, badge, and logo:** add the provider badge/icon and register it (`ui/components/icons/providers-badge/`, including its `index.ts`), plus the logo mapping (`ui/components/shadcn/entities/get-provider-logo.tsx`).
+    - **Focused tests:** the provider-type selector, provider-type icon, and provider-icon-cell component tests, plus the `ui/tests/providers/` end-to-end specs.
+    - **Completion evidence:** the provider is selectable in the add-provider UI with its icon and label, its credential form renders and validates, and the tests above pass.
 4. **Completion criteria:** see the CLI/API/UI subsections of [Checklist for New Providers](./provider#checklist-for-new-providers) in the full guide.
 
 ---

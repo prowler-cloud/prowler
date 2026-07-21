@@ -29,7 +29,7 @@ Before following the architecture pattern below, decide how far the provider nee
 - **External entry-point provider** — a separate installable package, discovered via a `prowler.providers` entry point.
 - **Full-stack provider** — a built-in provider that also integrates with the Prowler API and UI (Prowler Cloud / Local Server).
 
-Each scope has its own required registrations, tests, and completion criteria — see [Provider Golden Paths](/developer-guide/provider-golden-paths) for the checklist per scope. This skill covers the shared architecture pattern and templates; it does not duplicate that checklist.
+Each scope has its own required registrations, tests, and completion criteria — see [Provider Golden Paths](../../docs/developer-guide/provider-golden-paths.mdx) for the checklist per scope. This skill covers the shared architecture pattern and templates; it does not duplicate that checklist.
 
 ## Provider Architecture Pattern
 
