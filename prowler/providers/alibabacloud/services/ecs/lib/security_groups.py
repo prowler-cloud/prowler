@@ -220,6 +220,8 @@ def is_public_ingress_exposing_all_ports(
 def format_ports(ports: Collection[int]) -> str:
     """Return stable, human-readable port evidence."""
     ordered_ports = list(ports) if isinstance(ports, Sequence) else sorted(ports)
+    if not ordered_ports:
+        return ""
     if len(ordered_ports) == 1:
         return str(ordered_ports[0])
     if len(ordered_ports) == 2:

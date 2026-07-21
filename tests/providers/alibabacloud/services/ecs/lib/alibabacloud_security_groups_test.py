@@ -1,6 +1,7 @@
 import pytest
 
 from prowler.providers.alibabacloud.services.ecs.lib.security_groups import (
+    format_ports,
     get_publicly_exposed_tcp_ports,
     is_public_ingress_exposing_all_ports,
     port_in_range,
@@ -447,3 +448,16 @@ def test_lower_priority_partial_drop_does_not_prevent_all_port_exposure():
     ]
 
     assert is_public_ingress_exposing_all_ports(rules) is True
+
+
+@pytest.mark.parametrize(
+    "ports,expected",
+    [
+        ([], ""),
+        ((3389,), "3389"),
+        ({22, 3389}, "22 and 3389"),
+        ([22, 80, 443], "22, 80, and 443"),
+    ],
+)
+def test_format_ports(ports, expected):
+    assert format_ports(ports) == expected
