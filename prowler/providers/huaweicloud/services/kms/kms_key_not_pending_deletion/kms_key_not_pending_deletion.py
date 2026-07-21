@@ -12,9 +12,7 @@ class kms_key_not_pending_deletion(Check):
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=key)
             report.region = key.region
             report.resource_id = key.id
-            report.resource_arn = (
-                f"huaweicloud:kms:{key.region}:{kms_client.audited_account}:key/{key.id}"
-            )
+            report.resource_arn = f"huaweicloud:kms:{key.region}:{kms_client.audited_account}:key/{key.id}"
 
             if key.state == "4":
                 report.status = "FAIL"
@@ -23,9 +21,7 @@ class kms_key_not_pending_deletion(Check):
                 )
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"KMS key {key.alias} ({key.id}) is not in pending deletion state (state: {key.state})."
-                )
+                report.status_extended = f"KMS key {key.alias} ({key.id}) is not in pending deletion state (state: {key.state})."
 
             findings.append(report)
 

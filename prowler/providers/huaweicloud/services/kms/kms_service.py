@@ -30,16 +30,28 @@ class KMS(HuaweiCloudService):
         region = "la-south-2"
         self.keys = [
             KMSKey(
-                id="kms-mock-001", alias="alias/rotation-enabled", state="2",
-                is_rotation_enabled=True, rotation_period="30d", region=region,
+                id="kms-mock-001",
+                alias="alias/rotation-enabled",
+                state="2",
+                is_rotation_enabled=True,
+                rotation_period="30d",
+                region=region,
             ),
             KMSKey(
-                id="kms-mock-002", alias="alias/rotation-disabled", state="2",
-                is_rotation_enabled=False, rotation_period="", region=region,
+                id="kms-mock-002",
+                alias="alias/rotation-disabled",
+                state="2",
+                is_rotation_enabled=False,
+                rotation_period="",
+                region=region,
             ),
             KMSKey(
-                id="kms-mock-003", alias="alias/rotation-enabled-2", state="2",
-                is_rotation_enabled=True, rotation_period="90d", region=region,
+                id="kms-mock-003",
+                alias="alias/rotation-enabled-2",
+                state="2",
+                is_rotation_enabled=True,
+                rotation_period="90d",
+                region=region,
             ),
         ]
 
@@ -55,9 +67,7 @@ class KMS(HuaweiCloudService):
                 from huaweicloudsdkkms.v2 import ListKeysRequest, ListKeysRequestBody
 
                 request = ListKeysRequest(body=ListKeysRequestBody(limit="100"))
-                response = self._call_with_retries(
-                    client.list_keys, request
-                )
+                response = self._call_with_retries(client.list_keys, request)
 
                 if response and response.key_details:
                     for key_data in response.key_details:
@@ -67,8 +77,8 @@ class KMS(HuaweiCloudService):
 
                         try:
                             from huaweicloudsdkkms.v2 import (
-                                ShowKeyRotationStatusRequest,
                                 OperateKeyRequestBody,
+                                ShowKeyRotationStatusRequest,
                             )
 
                             rotation_request = ShowKeyRotationStatusRequest(

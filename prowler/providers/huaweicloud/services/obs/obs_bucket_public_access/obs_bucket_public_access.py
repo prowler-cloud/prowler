@@ -9,14 +9,10 @@ class obs_bucket_public_access(Check):
         findings = []
 
         for bucket in obs_client.buckets:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=bucket
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=bucket)
             report.region = bucket.region
             report.resource_id = bucket.name
-            report.resource_arn = (
-                f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
-            )
+            report.resource_arn = f"huaweicloud:obs:{bucket.region}:{obs_client.audited_account}:bucket/{bucket.name}"
 
             if bucket.is_public:
                 report.status = "FAIL"

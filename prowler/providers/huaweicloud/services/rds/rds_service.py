@@ -30,19 +30,37 @@ class RDS(HuaweiCloudService):
         region = "la-south-2"
         self.instances = [
             RDSInstance(
-                id="rds-mock-001", name="public-db-with-backup", status="ACTIVE",
-                engine="mysql", engine_version="8.0", public_ip="123.45.67.200",
-                is_public=True, backup_enabled=True, region=region,
+                id="rds-mock-001",
+                name="public-db-with-backup",
+                status="ACTIVE",
+                engine="mysql",
+                engine_version="8.0",
+                public_ip="123.45.67.200",
+                is_public=True,
+                backup_enabled=True,
+                region=region,
             ),
             RDSInstance(
-                id="rds-mock-002", name="private-db-no-backup", status="ACTIVE",
-                engine="postgresql", engine_version="14", public_ip="",
-                is_public=False, backup_enabled=False, region=region,
+                id="rds-mock-002",
+                name="private-db-no-backup",
+                status="ACTIVE",
+                engine="postgresql",
+                engine_version="14",
+                public_ip="",
+                is_public=False,
+                backup_enabled=False,
+                region=region,
             ),
             RDSInstance(
-                id="rds-mock-003", name="private-db-with-backup", status="ACTIVE",
-                engine="mysql", engine_version="8.0", public_ip="",
-                is_public=False, backup_enabled=True, region=region,
+                id="rds-mock-003",
+                name="private-db-with-backup",
+                status="ACTIVE",
+                engine="mysql",
+                engine_version="8.0",
+                public_ip="",
+                is_public=False,
+                backup_enabled=True,
+                region=region,
             ),
         ]
 
@@ -58,9 +76,7 @@ class RDS(HuaweiCloudService):
                 from huaweicloudsdkrds.v3 import ListInstancesRequest
 
                 request = ListInstancesRequest()
-                response = self._call_with_retries(
-                    client.list_instances, request
-                )
+                response = self._call_with_retries(client.list_instances, request)
 
                 if response and response.instances:
                     for inst_data in response.instances:
@@ -79,7 +95,9 @@ class RDS(HuaweiCloudService):
 
                         datastore = getattr(inst_data, "datastore", None)
                         engine = getattr(datastore, "type", "") if datastore else ""
-                        engine_version = getattr(datastore, "version", "") if datastore else ""
+                        engine_version = (
+                            getattr(datastore, "version", "") if datastore else ""
+                        )
 
                         self.instances.append(
                             RDSInstance(
@@ -92,7 +110,9 @@ class RDS(HuaweiCloudService):
                                 is_public=is_public,
                                 backup_enabled=backup_enabled,
                                 region=region,
-                                disk_encryption_id=getattr(inst_data, "disk_encryption_id", ""),
+                                disk_encryption_id=getattr(
+                                    inst_data, "disk_encryption_id", ""
+                                ),
                             )
                         )
 

@@ -30,10 +30,16 @@ class WAF(HuaweiCloudService):
         region = "la-south-2"
         self.instances = [
             WAFInstance(
-                id="waf-mock-001", name="running-waf", status=1, region=region,
+                id="waf-mock-001",
+                name="running-waf",
+                status=1,
+                region=region,
             ),
             WAFInstance(
-                id="waf-mock-002", name="abnormal-waf", status=4, region=region,
+                id="waf-mock-002",
+                name="abnormal-waf",
+                status=4,
+                region=region,
             ),
         ]
 
@@ -49,9 +55,7 @@ class WAF(HuaweiCloudService):
                 from huaweicloudsdkwaf.v1 import ListInstanceRequest
 
                 request = ListInstanceRequest()
-                response = self._call_with_retries(
-                    client.list_instance, request
-                )
+                response = self._call_with_retries(client.list_instance, request)
 
                 if response and response.items:
                     for inst_data in response.items:

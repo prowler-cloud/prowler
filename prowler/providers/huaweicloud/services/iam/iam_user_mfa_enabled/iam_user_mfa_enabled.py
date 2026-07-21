@@ -12,9 +12,7 @@ class iam_user_mfa_enabled(Check):
             if user.is_domain_owner:
                 continue
 
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=user
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             report.resource_id = user.id
             report.resource_arn = (
@@ -22,16 +20,12 @@ class iam_user_mfa_enabled(Check):
             )
 
             user_mfa_devices = [
-                device
-                for device in iam_client.mfa_devices
-                if device.user_id == user.id
+                device for device in iam_client.mfa_devices if device.user_id == user.id
             ]
 
             if user_mfa_devices:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"IAM user {user.name} has MFA enabled."
-                )
+                report.status_extended = f"IAM user {user.name} has MFA enabled."
             else:
                 report.status = "FAIL"
                 report.status_extended = (

@@ -30,16 +30,25 @@ class EVS(HuaweiCloudService):
         region = "la-south-2"
         self.volumes = [
             Volume(
-                id="vol-mock-001", name="encrypted-volume", is_encrypted=True,
-                kms_key_id="kms-mock-001", region=region,
+                id="vol-mock-001",
+                name="encrypted-volume",
+                is_encrypted=True,
+                kms_key_id="kms-mock-001",
+                region=region,
             ),
             Volume(
-                id="vol-mock-002", name="unencrypted-volume", is_encrypted=False,
-                kms_key_id="", region=region,
+                id="vol-mock-002",
+                name="unencrypted-volume",
+                is_encrypted=False,
+                kms_key_id="",
+                region=region,
             ),
             Volume(
-                id="vol-mock-003", name="encrypted-volume-2", is_encrypted=True,
-                kms_key_id="kms-mock-002", region=region,
+                id="vol-mock-003",
+                name="encrypted-volume-2",
+                is_encrypted=True,
+                kms_key_id="kms-mock-002",
+                region=region,
             ),
         ]
 
@@ -55,9 +64,7 @@ class EVS(HuaweiCloudService):
                 from huaweicloudsdkevs.v2 import ListVolumesRequest
 
                 request = ListVolumesRequest()
-                response = self._call_with_retries(
-                    client.list_volumes, request
-                )
+                response = self._call_with_retries(client.list_volumes, request)
 
                 if response and response.volumes:
                     for vol_data in response.volumes:
@@ -66,7 +73,9 @@ class EVS(HuaweiCloudService):
                                 id=getattr(vol_data, "id", ""),
                                 name=getattr(vol_data, "name", ""),
                                 is_encrypted=getattr(vol_data, "encrypted", False),
-                                kms_key_id=getattr(vol_data, "metadata", {}).get("__system__cmkid", ""),
+                                kms_key_id=getattr(vol_data, "metadata", {}).get(
+                                    "__system__cmkid", ""
+                                ),
                                 region=region,
                             )
                         )

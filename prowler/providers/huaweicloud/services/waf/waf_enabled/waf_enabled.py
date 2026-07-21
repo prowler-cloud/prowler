@@ -15,9 +15,7 @@ class waf_enabled(Check):
                 )
                 report.region = instance.region
                 report.resource_id = instance.id
-                report.resource_arn = (
-                    f"huaweicloud:waf:{instance.region}:{waf_client.audited_account}:instance/{instance.id}"
-                )
+                report.resource_arn = f"huaweicloud:waf:{instance.region}:{waf_client.audited_account}:instance/{instance.id}"
 
                 # status: 0 = creating, 1 = running, 2 = deleting, 3 = deleted, 4 = abnormal, 5 = freezing
                 if instance.status == 1:
@@ -35,14 +33,10 @@ class waf_enabled(Check):
 
                 findings.append(report)
         else:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource={}
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource={})
             report.region = waf_client.region
             report.resource_id = "waf"
-            report.resource_arn = (
-                f"huaweicloud:waf:{waf_client.region}:{waf_client.audited_account}:waf/global"
-            )
+            report.resource_arn = f"huaweicloud:waf:{waf_client.region}:{waf_client.audited_account}:waf/global"
             report.status = "FAIL"
             report.status_extended = (
                 "No WAF instances found. Web Application Firewall is not enabled."

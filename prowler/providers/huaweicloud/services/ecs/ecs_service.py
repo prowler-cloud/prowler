@@ -30,16 +30,25 @@ class ECS(HuaweiCloudService):
         """Load mock data for testing."""
         region = "la-south-2"
         self.instances["ecs-mock-001"] = Instance(
-            id="ecs-mock-001", name="web-server-public", region=region,
-            status="ACTIVE", public_ip="123.45.67.89",
+            id="ecs-mock-001",
+            name="web-server-public",
+            region=region,
+            status="ACTIVE",
+            public_ip="123.45.67.89",
         )
         self.instances["ecs-mock-002"] = Instance(
-            id="ecs-mock-002", name="app-server-private", region=region,
-            status="ACTIVE", public_ip="",
+            id="ecs-mock-002",
+            name="app-server-private",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
         )
         self.instances["ecs-mock-003"] = Instance(
-            id="ecs-mock-003", name="db-server-private", region=region,
-            status="ACTIVE", public_ip="",
+            id="ecs-mock-003",
+            name="db-server-private",
+            region=region,
+            status="ACTIVE",
+            public_ip="",
         )
 
     def _list_servers_details(self, regional_client):
@@ -66,13 +75,24 @@ class ECS(HuaweiCloudService):
                             server_data.id, self.audit_resources
                         ):
                             public_ip = ""
-                            if hasattr(server_data, "access_i_pv4") and server_data.access_i_pv4:
+                            if (
+                                hasattr(server_data, "access_i_pv4")
+                                and server_data.access_i_pv4
+                            ):
                                 public_ip = server_data.access_i_pv4
-                            elif hasattr(server_data, "addresses") and server_data.addresses:
-                                public_ip = self._extract_floating_ip(server_data.addresses)
+                            elif (
+                                hasattr(server_data, "addresses")
+                                and server_data.addresses
+                            ):
+                                public_ip = self._extract_floating_ip(
+                                    server_data.addresses
+                                )
 
                             security_groups = {}
-                            if hasattr(server_data, "security_groups") and server_data.security_groups:
+                            if (
+                                hasattr(server_data, "security_groups")
+                                and server_data.security_groups
+                            ):
                                 for sg in server_data.security_groups:
                                     sg_name = getattr(sg, "name", "")
                                     sg_id = getattr(sg, "id", sg_name)
@@ -87,7 +107,10 @@ class ECS(HuaweiCloudService):
                                 flavor=getattr(server_data, "flavor", None),
                                 public_ip=public_ip,
                                 vpc_id=self._extract_vpc_id(server_data),
-                                enterprise_project_id=getattr(server_data, "enterprise_project_id", None) or "",
+                                enterprise_project_id=getattr(
+                                    server_data, "enterprise_project_id", None
+                                )
+                                or "",
                                 created_at=getattr(server_data, "created", None),
                                 key_name=getattr(server_data, "key_name", None) or "",
                                 security_groups=security_groups,

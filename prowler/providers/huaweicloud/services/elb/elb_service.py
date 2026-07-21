@@ -30,16 +30,28 @@ class ELB(HuaweiCloudService):
         region = "la-south-2"
         self.load_balancers = [
             LoadBalancer(
-                id="elb-mock-001", name="public-lb", vip_address="192.168.1.10",
-                public_ip="123.45.67.100", is_public=True, region=region,
+                id="elb-mock-001",
+                name="public-lb",
+                vip_address="192.168.1.10",
+                public_ip="123.45.67.100",
+                is_public=True,
+                region=region,
             ),
             LoadBalancer(
-                id="elb-mock-002", name="internal-lb-1", vip_address="192.168.1.20",
-                public_ip="", is_public=False, region=region,
+                id="elb-mock-002",
+                name="internal-lb-1",
+                vip_address="192.168.1.20",
+                public_ip="",
+                is_public=False,
+                region=region,
             ),
             LoadBalancer(
-                id="elb-mock-003", name="internal-lb-2", vip_address="192.168.1.30",
-                public_ip="", is_public=False, region=region,
+                id="elb-mock-003",
+                name="internal-lb-2",
+                vip_address="192.168.1.30",
+                public_ip="",
+                is_public=False,
+                region=region,
             ),
         ]
 
@@ -55,9 +67,7 @@ class ELB(HuaweiCloudService):
                 from huaweicloudsdkelb.v3 import ListLoadBalancersRequest
 
                 request = ListLoadBalancersRequest()
-                response = self._call_with_retries(
-                    client.list_load_balancers, request
-                )
+                response = self._call_with_retries(client.list_load_balancers, request)
 
                 if response and response.loadbalancers:
                     for lb_data in response.loadbalancers:
@@ -67,7 +77,9 @@ class ELB(HuaweiCloudService):
 
                         public_ip = ""
                         if getattr(lb_data, "publicip", None):
-                            public_ip = getattr(lb_data.publicip, "public_ip_address", "")
+                            public_ip = getattr(
+                                lb_data.publicip, "public_ip_address", ""
+                            )
 
                         self.load_balancers.append(
                             LoadBalancer(

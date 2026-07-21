@@ -9,14 +9,10 @@ class rds_public_access(Check):
         findings = []
 
         for instance in rds_client.instances:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=instance
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=instance)
             report.region = instance.region
             report.resource_id = instance.id
-            report.resource_arn = (
-                f"huaweicloud:rds:{instance.region}:{rds_client.audited_account}:instance/{instance.id}"
-            )
+            report.resource_arn = f"huaweicloud:rds:{instance.region}:{rds_client.audited_account}:instance/{instance.id}"
 
             if instance.is_public:
                 report.status = "FAIL"

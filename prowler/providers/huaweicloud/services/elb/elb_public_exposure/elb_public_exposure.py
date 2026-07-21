@@ -14,9 +14,7 @@ class elb_public_exposure(Check):
             )
             report.region = load_balancer.region
             report.resource_id = load_balancer.id
-            report.resource_arn = (
-                f"huaweicloud:elb:{load_balancer.region}:{elb_client.audited_account}:loadbalancer/{load_balancer.id}"
-            )
+            report.resource_arn = f"huaweicloud:elb:{load_balancer.region}:{elb_client.audited_account}:loadbalancer/{load_balancer.id}"
 
             if load_balancer.is_public:
                 report.status = "FAIL"

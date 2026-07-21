@@ -12,20 +12,14 @@ class ecs_instance_public_ip(Check):
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=instance)
             report.region = instance.region
             report.resource_id = instance.id
-            report.resource_arn = (
-                f"huaweicloud:ecs:{instance.region}:{ecs_client.audited_account}:instance/{instance.id}"
-            )
+            report.resource_arn = f"huaweicloud:ecs:{instance.region}:{ecs_client.audited_account}:instance/{instance.id}"
 
             if instance.public_ip:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"ECS instance {instance.name} ({instance.id}) has a public IP: {instance.public_ip}."
-                )
+                report.status_extended = f"ECS instance {instance.name} ({instance.id}) has a public IP: {instance.public_ip}."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"ECS instance {instance.name} ({instance.id}) does not have a public IP."
-                )
+                report.status_extended = f"ECS instance {instance.name} ({instance.id}) does not have a public IP."
 
             findings.append(report)
 

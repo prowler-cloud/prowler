@@ -14,9 +14,7 @@ class vpc_security_group_open_ingress(Check):
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=sg)
             report.region = sg.region
             report.resource_id = sg.id
-            report.resource_arn = (
-                f"huaweicloud:vpc:{sg.region}:{vpc_client.audited_account}:security-group/{sg.id}"
-            )
+            report.resource_arn = f"huaweicloud:vpc:{sg.region}:{vpc_client.audited_account}:security-group/{sg.id}"
 
             open_sensitive_ports = set()
             for rule in sg.rules:
@@ -35,14 +33,10 @@ class vpc_security_group_open_ingress(Check):
             if open_sensitive_ports:
                 report.status = "FAIL"
                 ports_str = ", ".join(str(p) for p in sorted(open_sensitive_ports))
-                report.status_extended = (
-                    f"Security group {sg.name} ({sg.id}) allows open ingress (0.0.0.0/0) on sensitive port(s): {ports_str}."
-                )
+                report.status_extended = f"Security group {sg.name} ({sg.id}) allows open ingress (0.0.0.0/0) on sensitive port(s): {ports_str}."
             else:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"Security group {sg.name} ({sg.id}) does not allow open ingress on sensitive ports."
-                )
+                report.status_extended = f"Security group {sg.name} ({sg.id}) does not allow open ingress on sensitive ports."
 
             findings.append(report)
 

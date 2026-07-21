@@ -30,16 +30,25 @@ class OBS(HuaweiCloudService):
         region = "la-south-2"
         self.buckets = [
             Bucket(
-                name="mock-public-encrypted-bucket", region=region,
-                is_encrypted=True, is_public=True, acl="public",
+                name="mock-public-encrypted-bucket",
+                region=region,
+                is_encrypted=True,
+                is_public=True,
+                acl="public",
             ),
             Bucket(
-                name="mock-private-unencrypted-bucket", region=region,
-                is_encrypted=False, is_public=False, acl="private",
+                name="mock-private-unencrypted-bucket",
+                region=region,
+                is_encrypted=False,
+                is_public=False,
+                acl="private",
             ),
             Bucket(
-                name="mock-private-encrypted-bucket", region=region,
-                is_encrypted=True, is_public=False, acl="private",
+                name="mock-private-encrypted-bucket",
+                region=region,
+                is_encrypted=True,
+                is_public=False,
+                acl="private",
             ),
         ]
 

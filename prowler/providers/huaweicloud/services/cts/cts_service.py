@@ -30,12 +30,20 @@ class CTS(HuaweiCloudService):
         region = "la-south-2"
         self.trackers = [
             Tracker(
-                id="cts-tracker-001", name="system-tracker", tracker_type="system",
-                is_enabled=True, bucket_name="cts-bucket-001", region=region,
+                id="cts-tracker-001",
+                name="system-tracker",
+                tracker_type="system",
+                is_enabled=True,
+                bucket_name="cts-bucket-001",
+                region=region,
             ),
             Tracker(
-                id="cts-tracker-002", name="custom-tracker-disabled", tracker_type="data",
-                is_enabled=False, bucket_name="cts-bucket-002", region=region,
+                id="cts-tracker-002",
+                name="custom-tracker-disabled",
+                tracker_type="data",
+                is_enabled=False,
+                bucket_name="cts-bucket-002",
+                region=region,
             ),
         ]
 
@@ -52,9 +60,7 @@ class CTS(HuaweiCloudService):
             from huaweicloudsdkcts.v3 import ListTrackersRequest
 
             request = ListTrackersRequest()
-            response = self._call_with_retries(
-                client.list_trackers, request
-            )
+            response = self._call_with_retries(client.list_trackers, request)
 
             if response and response.trackers:
                 for tracker_data in response.trackers:
@@ -65,8 +71,14 @@ class CTS(HuaweiCloudService):
                             name=getattr(tracker_data, "tracker_name", ""),
                             tracker_type=getattr(tracker_data, "tracker_type", ""),
                             is_enabled=getattr(tracker_data, "status", "") == "enabled",
-                            bucket_name=getattr(obs_info, "bucket_name", "") if obs_info else "",
-                            file_prefix_name=getattr(obs_info, "file_prefix_name", "") if obs_info else "",
+                            bucket_name=(
+                                getattr(obs_info, "bucket_name", "") if obs_info else ""
+                            ),
+                            file_prefix_name=(
+                                getattr(obs_info, "file_prefix_name", "")
+                                if obs_info
+                                else ""
+                            ),
                             region=region,
                         )
                     )

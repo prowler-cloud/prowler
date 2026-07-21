@@ -9,14 +9,10 @@ class kms_key_rotation_enabled(Check):
         findings = []
 
         for key in kms_client.keys:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=key
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=key)
             report.region = key.region
             report.resource_id = key.id
-            report.resource_arn = (
-                f"huaweicloud:kms:{key.region}:{kms_client.audited_account}:key/{key.id}"
-            )
+            report.resource_arn = f"huaweicloud:kms:{key.region}:{kms_client.audited_account}:key/{key.id}"
 
             if key.is_rotation_enabled:
                 report.status = "PASS"

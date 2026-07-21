@@ -94,14 +94,36 @@ class IAM(HuaweiCloudService):
             if response and response.password_policy:
                 policy = response.password_policy
                 self.password_policy = PasswordPolicy(
-                    minimum_password_length=getattr(policy, "minimum_password_length", 0) or 0,
-                    maximum_password_length=getattr(policy, "maximum_password_length", 0) or 0,
-                    minimum_password_age=getattr(policy, "minimum_password_age", 0) or 0,
-                    password_validity_period=getattr(policy, "password_validity_period", 0) or 0,
-                    password_char_combination=getattr(policy, "password_char_combination", 0) or 0,
-                    maximum_consecutive_identical_chars=getattr(policy, "maximum_consecutive_identical_chars", 0) or 0,
-                    number_of_recent_passwords_disallowed=getattr(policy, "number_of_recent_passwords_disallowed", 0) or 0,
-                    password_not_username_or_invert=getattr(policy, "password_not_username_or_invert", False) or False,
+                    minimum_password_length=getattr(
+                        policy, "minimum_password_length", 0
+                    )
+                    or 0,
+                    maximum_password_length=getattr(
+                        policy, "maximum_password_length", 0
+                    )
+                    or 0,
+                    minimum_password_age=getattr(policy, "minimum_password_age", 0)
+                    or 0,
+                    password_validity_period=getattr(
+                        policy, "password_validity_period", 0
+                    )
+                    or 0,
+                    password_char_combination=getattr(
+                        policy, "password_char_combination", 0
+                    )
+                    or 0,
+                    maximum_consecutive_identical_chars=getattr(
+                        policy, "maximum_consecutive_identical_chars", 0
+                    )
+                    or 0,
+                    number_of_recent_passwords_disallowed=getattr(
+                        policy, "number_of_recent_passwords_disallowed", 0
+                    )
+                    or 0,
+                    password_not_username_or_invert=getattr(
+                        policy, "password_not_username_or_invert", False
+                    )
+                    or False,
                 )
 
         except Exception as error:
@@ -122,9 +144,7 @@ class IAM(HuaweiCloudService):
             from huaweicloudsdkiam.v3 import KeystoneListUsersRequest
 
             request = KeystoneListUsersRequest()
-            response = self._call_with_retries(
-                client.keystone_list_users, request
-            )
+            response = self._call_with_retries(client.keystone_list_users, request)
 
             if response and response.users:
                 for user_data in response.users:
@@ -137,7 +157,9 @@ class IAM(HuaweiCloudService):
                                 name=getattr(user_data, "name", user_data.id),
                                 enabled=getattr(user_data, "enabled", True),
                                 is_domain_owner=(user_data.id == self.domain_id),
-                                password_expires_at=getattr(user_data, "password_expires_at", None),
+                                password_expires_at=getattr(
+                                    user_data, "password_expires_at", None
+                                ),
                             )
                         )
 
@@ -159,9 +181,7 @@ class IAM(HuaweiCloudService):
             from huaweicloudsdkiam.v3 import ListUserMfaDevicesRequest
 
             request = ListUserMfaDevicesRequest()
-            response = self._call_with_retries(
-                client.list_user_mfa_devices, request
-            )
+            response = self._call_with_retries(client.list_user_mfa_devices, request)
 
             if response and response.virtual_mfa_devices:
                 for device_data in response.virtual_mfa_devices:

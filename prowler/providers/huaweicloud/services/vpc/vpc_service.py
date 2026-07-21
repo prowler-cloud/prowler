@@ -44,8 +44,13 @@ class VPC(HuaweiCloudService):
             vpc_id="vpc-mock-001",
             rules=[
                 SecurityGroupRule(
-                    id="rule-001", direction="ingress", protocol="tcp", ethertype="IPv4",
-                    remote_ip_prefix="0.0.0.0/0", port_range_min=22, port_range_max=22,
+                    id="rule-001",
+                    direction="ingress",
+                    protocol="tcp",
+                    ethertype="IPv4",
+                    remote_ip_prefix="0.0.0.0/0",
+                    port_range_min=22,
+                    port_range_max=22,
                 ),
             ],
         )
@@ -56,8 +61,13 @@ class VPC(HuaweiCloudService):
             vpc_id="vpc-mock-001",
             rules=[
                 SecurityGroupRule(
-                    id="rule-002", direction="ingress", protocol="tcp", ethertype="IPv4",
-                    remote_ip_prefix="192.168.0.0/16", port_range_min=443, port_range_max=443,
+                    id="rule-002",
+                    direction="ingress",
+                    protocol="tcp",
+                    ethertype="IPv4",
+                    remote_ip_prefix="192.168.0.0/16",
+                    port_range_min=443,
+                    port_range_max=443,
                 ),
             ],
         )
@@ -68,7 +78,10 @@ class VPC(HuaweiCloudService):
             vpc_id="vpc-mock-002",
             rules=[
                 SecurityGroupRule(
-                    id="rule-003", direction="egress", protocol="all", ethertype="IPv4",
+                    id="rule-003",
+                    direction="egress",
+                    protocol="all",
+                    ethertype="IPv4",
                     remote_ip_prefix="0.0.0.0/0",
                 ),
             ],
@@ -126,7 +139,10 @@ class VPC(HuaweiCloudService):
                     ):
                         sg_id = sg_data.id
                         rules = []
-                        if hasattr(sg_data, "security_group_rules") and sg_data.security_group_rules:
+                        if (
+                            hasattr(sg_data, "security_group_rules")
+                            and sg_data.security_group_rules
+                        ):
                             for rule_data in sg_data.security_group_rules:
                                 rules.append(
                                     SecurityGroupRule(
@@ -134,11 +150,21 @@ class VPC(HuaweiCloudService):
                                         direction=getattr(rule_data, "direction", ""),
                                         protocol=getattr(rule_data, "protocol", ""),
                                         ethertype=getattr(rule_data, "ethertype", ""),
-                                        port_range_min=getattr(rule_data, "port_range_min", None),
-                                        port_range_max=getattr(rule_data, "port_range_max", None),
-                                        remote_ip_prefix=getattr(rule_data, "remote_ip_prefix", ""),
-                                        remote_group_id=getattr(rule_data, "remote_group_id", ""),
-                                        description=getattr(rule_data, "description", ""),
+                                        port_range_min=getattr(
+                                            rule_data, "port_range_min", None
+                                        ),
+                                        port_range_max=getattr(
+                                            rule_data, "port_range_max", None
+                                        ),
+                                        remote_ip_prefix=getattr(
+                                            rule_data, "remote_ip_prefix", ""
+                                        ),
+                                        remote_group_id=getattr(
+                                            rule_data, "remote_group_id", ""
+                                        ),
+                                        description=getattr(
+                                            rule_data, "description", ""
+                                        ),
                                     )
                                 )
 

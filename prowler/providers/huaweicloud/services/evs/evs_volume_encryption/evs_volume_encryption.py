@@ -9,14 +9,10 @@ class evs_volume_encryption(Check):
         findings = []
 
         for volume in evs_client.volumes:
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=volume
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=volume)
             report.region = volume.region
             report.resource_id = volume.id
-            report.resource_arn = (
-                f"huaweicloud:evs:{volume.region}:{evs_client.audited_account}:volume/{volume.id}"
-            )
+            report.resource_arn = f"huaweicloud:evs:{volume.region}:{evs_client.audited_account}:volume/{volume.id}"
 
             if volume.is_encrypted:
                 report.status = "PASS"

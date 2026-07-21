@@ -12,9 +12,7 @@ class iam_user_disabled(Check):
             if user.is_domain_owner:
                 continue
 
-            report = CheckReportHuaweiCloud(
-                metadata=self.metadata(), resource=user
-            )
+            report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             report.resource_id = user.id
             report.resource_arn = (
@@ -23,14 +21,10 @@ class iam_user_disabled(Check):
 
             if user.enabled:
                 report.status = "PASS"
-                report.status_extended = (
-                    f"IAM user {user.name} ({user.id}) is enabled."
-                )
+                report.status_extended = f"IAM user {user.name} ({user.id}) is enabled."
             else:
                 report.status = "FAIL"
-                report.status_extended = (
-                    f"IAM user {user.name} ({user.id}) is disabled and should be reviewed for removal if no longer needed."
-                )
+                report.status_extended = f"IAM user {user.name} ({user.id}) is disabled and should be reviewed for removal if no longer needed."
 
             findings.append(report)
 
