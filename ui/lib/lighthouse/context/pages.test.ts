@@ -125,4 +125,19 @@ describe("buildLighthousePageContext", () => {
     });
     expect(providers.filters).toEqual({ connected: ["true"] });
   });
+
+  it("should discard sensitive values from allowed search parameters", () => {
+    // Given
+    const searchParams = new URLSearchParams();
+    searchParams.append("filter[search]", "security@example.com");
+    searchParams.append("filter[search]", "10.0.0.1");
+    searchParams.append("filter[search]", "Bearer sensitive-value");
+    searchParams.append("filter[search]", "public bucket");
+
+    // When
+    const context = buildLighthousePageContext("/findings", searchParams);
+
+    // Then
+    expect(context.filters).toEqual({ search: ["public bucket"] });
+  });
 });

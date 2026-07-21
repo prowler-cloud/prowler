@@ -10,7 +10,10 @@ import {
   type LighthouseScanContextItem,
 } from "@/types/lighthouse-context";
 
-import { getLighthouseScopeKey } from "./pages";
+import {
+  containsSensitiveLighthouseContextValue,
+  getLighthouseScopeKey,
+} from "./pages";
 
 const FINDINGS_SCOPE_KEY = getLighthouseScopeKey("/findings");
 const RESOURCES_SCOPE_KEY = getLighthouseScopeKey("/resources");
@@ -315,7 +318,12 @@ function sanitizeAttackPathParameters(
     Object.entries(parameters)
       .filter(
         ([key, value]) =>
-          !/password|secret|token|credential|query/i.test(key) && value !== "",
+          !/password|secret|token|credential|query/i.test(key) &&
+          value !== "" &&
+          !(
+            typeof value === "string" &&
+            containsSensitiveLighthouseContextValue(value)
+          ),
       )
       .slice(0, 8)
       .map(([key, value]) => [
