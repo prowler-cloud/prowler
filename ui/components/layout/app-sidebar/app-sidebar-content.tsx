@@ -32,7 +32,7 @@ export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
 
   return (
     <div className="relative flex h-full min-h-0 w-full flex-col overflow-hidden">
-      <div className="shrink-0 px-5 pt-6 pb-7">
+      <div className="shrink-0 px-5 pt-8 pb-7">
         <Link
           href="/"
           aria-label="Prowler home"
