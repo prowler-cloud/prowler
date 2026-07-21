@@ -1,0 +1,116 @@
+---
+title: "Huawei Cloud Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.36.0" />
+
+Prowler for Huawei Cloud authenticates against the Huawei Cloud APIs using an IAM user's **Access Key ID** and **Secret Access Key** (AK/SK). Credentials are read exclusively from environment variables to avoid exposing secrets in shell history or process listings; there are no credential CLI flags.
+
+## Required Credentials
+
+Prowler requires read access to the Huawei Cloud account. The following values are supported:
+
+| Credential | Environment Variable | Description |
+|------------|----------------------|-------------|
+| Access Key ID | `HUAWEICLOUD_ACCESS_KEY_ID` (or `HW_ACCESS_KEY`) | Permanent access key ID of the IAM user |
+| Secret Access Key | `HUAWEICLOUD_SECRET_ACCESS_KEY` (or `HW_SECRET_KEY`) | Secret access key paired with the access key ID |
+| Domain ID | `HUAWEICLOUD_DOMAIN_ID` (or `HW_DOMAIN_ID`) | Optional account (domain) ID |
+| Security Token | `HUAWEICLOUD_SECURITY_TOKEN` | Optional security token for temporary credentials |
+
+<Note>
+The per-region project ID is resolved automatically by the SDK, so no project configuration is needed. Multi-region scans work out of the box.
+</Note>
+
+---
+
+## API Credentials
+
+### Step 1: Create an Access Key (AK/SK)
+
+1. Log into the [Huawei Cloud console](https://console-intl.huaweicloud.com).
+2. Open **My Credentials** from the account menu, then select **Access Keys**.
+3. Click **Create Access Key** and complete the identity verification.
+4. Download the `credentials.csv` file — it contains the Access Key ID and Secret Access Key. The secret is not shown again.
+
+<Warning>
+Use an IAM user with read-only permissions (for example, the built-in `ReadOnly` policy) rather than the account root credentials.
+</Warning>
+
+### Step 2: Configure Authentication
+
+Export the credentials as environment variables:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+```
+
+Then run Prowler:
+
+```bash
+prowler huaweicloud
+```
+
+---
+
+## Assuming an Agency (Cross-Account)
+
+To scan a different account, assume an [agency](https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_06_0002.html) delegated to your account. Set the agency name and the target account, and Prowler exchanges the base credentials for temporary credentials scoped to the agency:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+export HUAWEICLOUD_AGENCY_NAME="your-agency-name"
+export HUAWEICLOUD_ASSUME_DOMAIN_ID="target-account-domain-id"   # or HUAWEICLOUD_ASSUME_DOMAIN_NAME
+prowler huaweicloud
+```
+
+| Environment Variable | Description |
+|----------------------|-------------|
+| `HUAWEICLOUD_AGENCY_NAME` | Name of the agency to assume in the target account |
+| `HUAWEICLOUD_ASSUME_DOMAIN_ID` | Domain ID of the target (delegating) account |
+| `HUAWEICLOUD_ASSUME_DOMAIN_NAME` | Domain name of the target account (alternative to the domain ID) |
+
+---
+
+## Verifying Authentication
+
+To confirm that Prowler can reach the account, run a scan against a single region:
+
+```bash
+prowler huaweicloud --region cn-north-4
+```
+
+A successful run reports findings for the discovered resources. A failed run displays an error message indicating the credential or connectivity issue.
+
+---
+
+## CI/CD Integration
+
+For automated pipelines, set the credentials as secret environment variables:
+
+**GitHub Actions:**
+
+```yaml
+env:
+  HUAWEICLOUD_ACCESS_KEY_ID: ${{ secrets.HUAWEICLOUD_ACCESS_KEY_ID }}
+  HUAWEICLOUD_SECRET_ACCESS_KEY: ${{ secrets.HUAWEICLOUD_SECRET_ACCESS_KEY }}
+
+steps:
+  - name: Run Prowler
+    run: prowler huaweicloud
+```
+
+**GitLab CI:**
+
+```yaml
+variables:
+  HUAWEICLOUD_ACCESS_KEY_ID: $HUAWEICLOUD_ACCESS_KEY_ID
+  HUAWEICLOUD_SECRET_ACCESS_KEY: $HUAWEICLOUD_SECRET_ACCESS_KEY
+
+prowler_scan:
+  script:
+    - prowler huaweicloud
+```

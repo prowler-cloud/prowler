@@ -334,6 +334,13 @@
                 ]
               },
               {
+                "group": "Huawei Cloud",
+                "pages": [
+                  "user-guide/providers/huaweicloud/getting-started-huaweicloud",
+                  "user-guide/providers/huaweicloud/authentication"
+                ]
+              },
+              {
                 "group": "IaC",
                 "pages": [
                   "user-guide/providers/iac/getting-started-iac",

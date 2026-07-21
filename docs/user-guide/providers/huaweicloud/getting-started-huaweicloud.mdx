@@ -1,0 +1,69 @@
+---
+title: 'Getting Started With Huawei Cloud on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.36.0" />
+
+Prowler for Huawei Cloud scans your Huawei Cloud account for security misconfigurations across compute, storage, networking, identity, encryption, database, and logging services.
+
+<Note>
+Huawei Cloud support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for Huawei Cloud with the [Huawei Cloud Authentication](/user-guide/providers/huaweicloud/authentication) guide before starting:
+
+- Create an Access Key ID and Secret Access Key (AK/SK) for an IAM user with read-only permissions
+- Prowler reads the credentials exclusively from environment variables, so secrets are never passed on the command line
+
+## Prowler CLI
+
+### Run Prowler for Huawei Cloud
+
+Once authenticated, export the credentials as environment variables and run Prowler for Huawei Cloud. Environment variables keep secrets out of shell history and process listings:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+prowler huaweicloud
+```
+
+### Run Specific Checks
+
+```bash
+prowler huaweicloud --checks obs_bucket_public_access iam_user_mfa_enabled
+```
+
+### Run a Specific Service
+
+```bash
+prowler huaweicloud --services iam
+```
+
+### Scan Specific Regions
+
+Use `--region` (aliases `--filter-region` and `-f`) to limit the scan to one or more Huawei Cloud regions. When the flag is omitted, all regions are scanned. Prowler resolves the correct project for each region automatically, so no project configuration is required for multi-region scans.
+
+```bash
+prowler huaweicloud --region cn-north-4 ap-southeast-1
+```
+
+## Available Services
+
+Prowler for Huawei Cloud currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `cts` | Cloud Trace Service trackers that record account and API activity for audit logging |
+| `ecs` | Elastic Cloud Server compute instances and their key pair, public IP, and security group configuration |
+| `elb` | Elastic Load Balance load balancers and their public exposure |
+| `evs` | Elastic Volume Service block volumes and their encryption settings |
+| `iam` | Identity and Access Management users, MFA devices, password policy, and account operation protection |
+| `kms` | Key Management Service keys, their state, and rotation configuration |
+| `obs` | Object Storage Service buckets and their public-access configuration |
+| `rds` | Relational Database Service instances and their public access, backup, and disk-encryption settings |
+| `vpc` | Virtual Private Cloud security groups and their ingress rules |
+| `waf` | Web Application Firewall instances and their status |
