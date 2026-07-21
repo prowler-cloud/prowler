@@ -1,3 +1,6 @@
+SENSITIVE_ARGUMENTS = frozenset({"--secret-access-key", "--security-token"})
+
+
 def init_parser(self):
     """Init the Huawei Cloud Provider CLI parser"""
     huaweicloud_parser = self.subparsers.add_parser(
@@ -19,7 +22,8 @@ def init_parser(self):
         "--secret-access-key",
         nargs="?",
         default=None,
-        help="Huawei Cloud Secret Access Key. Can also use HUAWEICLOUD_SECRET_ACCESS_KEY or HW_SECRET_KEY environment variable",
+        metavar="HUAWEICLOUD_SECRET_ACCESS_KEY",
+        help="Huawei Cloud Secret Access Key. Use the HUAWEICLOUD_SECRET_ACCESS_KEY or HW_SECRET_KEY environment variable instead of passing it directly",
     )
     huaweicloud_auth_subparser.add_argument(
         "--project-id",
@@ -37,7 +41,8 @@ def init_parser(self):
         "--security-token",
         nargs="?",
         default=None,
-        help="Security Token for temporary credentials. Can also use HUAWEICLOUD_SECURITY_TOKEN environment variable",
+        metavar="HUAWEICLOUD_SECURITY_TOKEN",
+        help="Security Token for temporary credentials. Use the HUAWEICLOUD_SECURITY_TOKEN environment variable instead of passing it directly",
     )
     huaweicloud_auth_subparser.add_argument(
         "--agency-name",
