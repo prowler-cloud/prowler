@@ -80,6 +80,7 @@
               {
                 "group": "Prowler for AI Agents",
                 "pages": [
+                  "user-guide/ai-agents/index",
                   "user-guide/ai-agents/claude-code",
                   "user-guide/ai-agents/claude-desktop",
                   "user-guide/ai-agents/codex",
@@ -221,6 +222,7 @@
           {
             "group": "Prowler for AI Agents",
             "pages": [
+              "user-guide/ai-agents/index",
               "user-guide/ai-agents/claude-code",
               "user-guide/ai-agents/claude-desktop",
               "user-guide/ai-agents/codex",

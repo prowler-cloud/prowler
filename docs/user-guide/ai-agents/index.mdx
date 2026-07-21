@@ -1,0 +1,49 @@
+---
+title: "Connect Your AI Agent to Prowler"
+sidebarTitle: "Overview"
+description: "Pick your AI agent and follow its guide to connect it to the Prowler Cloud MCP Server."
+---
+
+Connect your AI agent to the Prowler Cloud MCP Server at `https://mcp.prowler.com/mcp` so it can query findings, inspect security checks, and manage your Prowler providers.
+
+Pick your agent below. Each guide is a full walkthrough with screenshots, verification steps, and the caveats specific to that client.
+
+<CardGroup cols={2}>
+  <Card title="Claude Code" icon="terminal" href="/user-guide/ai-agents/claude-code">
+    Plugin vs. MCP-only, and which Claude surfaces work
+  </Card>
+  <Card title="Claude App (Chat)" icon="comment" href="/user-guide/ai-agents/claude-desktop">
+    The Chat tab, via a local bridge
+  </Card>
+  <Card title="Codex / ChatGPT" icon="code" href="/user-guide/ai-agents/codex">
+    CLI and the VS Code extension
+  </Card>
+  <Card title="Cursor" icon="arrow-pointer" href="/user-guide/ai-agents/cursor">
+    Global and project scopes
+  </Card>
+  <Card title="VS Code / Copilot" icon="microsoft" href="/user-guide/ai-agents/vscode">
+    Agent mode with secure key prompts
+  </Card>
+</CardGroup>
+
+## Before You Start
+
+All guides need the same two things:
+
+- A **Prowler Cloud account** with at least one cloud provider connected. [Sign up](https://cloud.prowler.com) if you do not have one.
+- A **Prowler API key**, created in Prowler Cloud. The key begins with `pk_` and is shown only once. See the [API Keys](/user-guide/tutorials/prowler-app-api-keys#creating-api-keys) guide.
+
+<Note>
+Using an agent that is not listed here? Any MCP-compatible client can connect. See the [generic configuration reference](/getting-started/basic-usage/prowler-mcp#cloud-mcp-server-configuration-recommended) for the raw connection details.
+</Note>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="What Is Prowler MCP" icon="cloud" href="/getting-started/products/prowler-mcp">
+    How the MCP Server fits into Prowler
+  </Card>
+  <Card title="Configuration Reference" icon="gear" href="/getting-started/basic-usage/prowler-mcp">
+    Cloud and local server options, all clients
+  </Card>
+</CardGroup>
