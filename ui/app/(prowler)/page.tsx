@@ -14,11 +14,9 @@ import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import {
-  OVERVIEW_BANNER_VARIANT,
-  OverviewBanner,
-} from "./_overview/_components/overview-banner";
+import { OverviewBanner } from "./_overview/_components/overview-banner";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
+import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,

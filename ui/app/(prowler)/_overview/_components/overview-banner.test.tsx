@@ -4,8 +4,9 @@ import { describe, expect, it } from "vitest";
 import { DOCS_URLS } from "@/lib/external-urls";
 
 import { LIGHTHOUSE_OVERVIEW_BANNER_HREF } from "../_lib/lighthouse-banner";
+import { OVERVIEW_BANNER_VARIANT } from "../_lib/overview-banner";
 
-import { OVERVIEW_BANNER_VARIANT, OverviewBanner } from "./overview-banner";
+import { OverviewBanner } from "./overview-banner";
 
 describe("OverviewBanner", () => {
   it("renders Toni copy and opens a prompted chat when connected", () => {
