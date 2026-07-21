@@ -597,18 +597,10 @@ class Provider(ABC):
                         regions=getattr(arguments, "region", None),
                     )
                 elif arguments.provider == "huaweicloud":
+                    # Credentials are read from the HUAWEICLOUD_* (or HW_*) env
+                    # vars by the provider itself; there are no credential CLI
+                    # flags to avoid leaking secrets.
                     provider_class(
-                        access_key_id=arguments.access_key_id,
-                        secret_access_key=arguments.secret_access_key,
-                        project_id=arguments.project_id,
-                        domain_id=arguments.domain_id,
-                        security_token=getattr(
-                            arguments, "security_token", None
-                        ),
-                        agency_name=getattr(arguments, "agency_name", None),
-                        delegation_domain_id=getattr(
-                            arguments, "delegation_domain_id", None
-                        ),
                         regions=(
                             set(arguments.regions)
                             if getattr(arguments, "regions", None)

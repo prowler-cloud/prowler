@@ -106,7 +106,6 @@ class TestIAMService:
         assert alice.id == "user-1"
         assert alice.name == "alice"
         assert alice.enabled is True
-        assert alice.is_domain_owner is False
         assert alice.password_expires_at == "2026-12-31T00:00:00Z"
         bob = iam.users[1]
         assert bob.name == "bob"
@@ -121,22 +120,6 @@ class TestIAMService:
         # Operation protection
         assert iam.operation_protection.enabled is True
         assert iam.operation_protection.account_id == DOMAIN_ID
-
-    def test_domain_owner_is_flagged(self):
-        users = [
-            SimpleNamespace(
-                id=DOMAIN_ID,
-                name="root",
-                enabled=True,
-                password_expires_at=None,
-            ),
-        ]
-        client = _build_client(users=users)
-
-        iam = IAM(_provider_with_client(client))
-
-        assert len(iam.users) == 1
-        assert iam.users[0].is_domain_owner is True
 
     def test_operation_protection_disabled(self):
         client = _build_client(operation_protection=False)

@@ -68,8 +68,6 @@ class HuaweicloudProvider(Provider):
         project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
-        agency_name: str = None,
-        delegation_domain_id: str = None,
         regions: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -80,14 +78,17 @@ class HuaweicloudProvider(Provider):
         """
         Initialize the HuaweicloudProvider.
 
+        Credentials are read from environment variables. The credential
+        arguments below exist for programmatic use only (they fall back to the
+        environment variables when not provided) and are never populated from
+        the CLI.
+
         Args:
             access_key_id: Huawei Cloud Access Key ID
             secret_access_key: Huawei Cloud Secret Access Key
             project_id: Huawei Cloud Project ID (required for regional services)
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
-            agency_name: Name of the agency to assume
-            delegation_domain_id: Domain ID of the delegating account
             regions: List of Huawei Cloud region IDs to audit
             config_path: Path to the configuration file
             config_content: Content of the configuration file
@@ -100,14 +101,14 @@ class HuaweicloudProvider(Provider):
             HuaweiCloudAuthenticationError: If authentication fails.
 
         Usage:
-            - Huawei Cloud credentials can be set via environment variables:
+            - Huawei Cloud credentials are set via environment variables:
                 - export HUAWEICLOUD_ACCESS_KEY_ID=<access_key>
                 - export HUAWEICLOUD_SECRET_ACCESS_KEY=<secret_key>
                 - export HUAWEICLOUD_PROJECT_ID=<project_id>
+                - export HUAWEICLOUD_DOMAIN_ID=<domain_id>
             - To create a new Huawei Cloud provider object:
                 - huaweicloud = HuaweicloudProvider()
                 - huaweicloud = HuaweicloudProvider(regions=["cn-north-4", "cn-east-3"])
-                - huaweicloud = HuaweicloudProvider(access_key_id="...", secret_access_key="...", project_id="...")
         """
         logger.info("Initializing Huawei Cloud Provider ...")
 
@@ -118,8 +119,6 @@ class HuaweicloudProvider(Provider):
             project_id=project_id,
             domain_id=domain_id,
             security_token=security_token,
-            agency_name=agency_name,
-            delegation_domain_id=delegation_domain_id,
         )
         logger.info("Huawei Cloud session configured successfully")
 
@@ -215,11 +214,12 @@ class HuaweicloudProvider(Provider):
         project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
-        agency_name: str = None,
-        delegation_domain_id: str = None,
     ) -> HuaweiCloudSession:
         """
         Set up the Huawei Cloud session.
+
+        Each credential falls back to its environment variable when not
+        provided as an argument.
 
         Args:
             access_key_id: Huawei Cloud Access Key ID
@@ -227,8 +227,6 @@ class HuaweicloudProvider(Provider):
             project_id: Huawei Cloud Project ID
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
-            agency_name: Name of the agency to assume
-            delegation_domain_id: Domain ID of the delegating account
 
         Returns:
             HuaweiCloudSession object

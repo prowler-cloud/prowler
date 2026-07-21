@@ -9,9 +9,6 @@ class iam_user_mfa_enabled(Check):
         findings = []
 
         for user in iam_client.users:
-            if user.is_domain_owner:
-                continue
-
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=user)
             report.region = iam_client.region
             report.resource_id = user.id

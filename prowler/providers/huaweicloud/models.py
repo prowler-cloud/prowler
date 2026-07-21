@@ -84,25 +84,6 @@ class HuaweiCloudCredentials(BaseModel):
     expiration: Optional[datetime] = None
 
 
-class HuaweiCloudAssumeRoleInfo(BaseModel):
-    """
-    HuaweiCloudAssumeRoleInfo stores the information for assuming an agency (role).
-
-    Attributes:
-        agency_name: The name of the agency to assume
-        domain_id: The domain ID of the delegating account
-        delegation_domain_id: The domain ID of the delegated account
-        session_duration: The duration of the assumed agency session (in seconds)
-        session_name: The session name for the assumed agency
-    """
-
-    agency_name: str
-    domain_id: str
-    delegation_domain_id: str
-    session_duration: int = 3600  # Default 1 hour
-    session_name: str = "ProwlerAssessmentSession"
-
-
 class HuaweiCloudRegion(BaseModel):
     """
     HuaweiCloudRegion stores information about a Huawei Cloud region.

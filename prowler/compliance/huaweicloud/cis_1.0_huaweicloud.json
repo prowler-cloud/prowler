@@ -175,25 +175,6 @@
     },
     {
       "Id": "2.1",
-      "Description": "Ensure OBS buckets have encryption enabled",
-      "Checks": [],
-      "Attributes": [
-        {
-          "Section": "2 Storage",
-          "Profile": "Level 1",
-          "AssessmentStatus": "Automated",
-          "Description": "Ensure all OBS buckets have server-side encryption enabled.",
-          "RationaleStatement": "Encrypting data at rest protects against unauthorized access to stored data if the underlying storage is compromised.",
-          "ImpactStatement": "",
-          "RemediationProcedure": "1. Log on to the Huawei Cloud console. 2. Go to Object Storage Service. 3. Select each bucket. 4. Enable server-side encryption. 5. Click OK.",
-          "AuditProcedure": "Run prowler to check if all OBS buckets have encryption enabled.",
-          "AdditionalInformation": "",
-          "References": "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0125.html"
-        }
-      ]
-    },
-    {
-      "Id": "2.2",
       "Description": "Ensure OBS buckets are not publicly accessible",
       "Checks": [
         "obs_bucket_public_access"
@@ -214,7 +195,7 @@
       ]
     },
     {
-      "Id": "2.3",
+      "Id": "2.2",
       "Description": "Ensure EVS volumes have encryption enabled",
       "Checks": [
         "evs_volume_encryption"

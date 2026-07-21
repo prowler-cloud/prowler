@@ -111,7 +111,6 @@ class IAM(HuaweiCloudService):
                                 id=user_data.id,
                                 name=getattr(user_data, "name", user_data.id),
                                 enabled=getattr(user_data, "enabled", True),
-                                is_domain_owner=(user_data.id == self.domain_id),
                                 password_expires_at=getattr(
                                     user_data, "password_expires_at", None
                                 ),
@@ -208,7 +207,6 @@ class IAMUser(BaseModel):
     id: str
     name: str
     enabled: bool = True
-    is_domain_owner: bool = False
     password_expires_at: Optional[str] = None
 
 
