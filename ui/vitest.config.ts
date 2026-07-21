@@ -103,6 +103,7 @@ export default defineConfig(() => {
         "next-auth/react",
         "next-auth/providers/credentials",
         "next-themes",
+        "server-only",
 
         // App component lib
         "@iconify/react",
