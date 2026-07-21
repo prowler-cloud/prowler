@@ -23,8 +23,26 @@ class OBS(HuaweiCloudService):
         super().__init__(__class__.__name__, provider, global_service=True)
 
         self.buckets: List[Bucket] = []
+        self._region_clients = {}
 
         self._list_buckets()
+
+    def _client_for_region(self, region):
+        """Return an OBS client bound to the bucket's region (cached).
+
+        Bucket-scoped operations must target the bucket's own region endpoint,
+        so a client is created per bucket region and reused. Falls back to the
+        default-region client if one cannot be created.
+        """
+        if region not in self._region_clients:
+            try:
+                self._region_clients[region] = self.session.client("obs", region)
+            except Exception as error:
+                logger.error(
+                    f"OBS - Could not create client for region {region}: {error}"
+                )
+                self._region_clients[region] = None
+        return self._region_clients[region] or self.client
 
     def _list_buckets(self):
         """List all OBS buckets."""
@@ -32,22 +50,22 @@ class OBS(HuaweiCloudService):
             return
 
         region = self.region
-        client = self.client
         logger.info(f"OBS - Listing Buckets in {region}...")
 
         try:
-            response = client.list_buckets(ListBucketsRequest())
+            response = self.client.list_buckets(ListBucketsRequest())
 
             if response and response.buckets and response.buckets.bucket:
                 for bucket_data in response.buckets.bucket:
                     bucket_name = getattr(bucket_data, "name", "") or ""
                     bucket_region = getattr(bucket_data, "location", None) or region
+                    bucket_client = self._client_for_region(bucket_region)
 
                     is_public = False
                     acl = ""
 
                     try:
-                        public_status = client.get_bucket_public_status(
+                        public_status = bucket_client.get_bucket_public_status(
                             GetBucketPublicStatusRequest(bucket_name=bucket_name)
                         )
                         if public_status and public_status.is_public:
@@ -58,7 +76,7 @@ class OBS(HuaweiCloudService):
                         )
 
                     try:
-                        policy_status = client.get_bucket_policy_public_status(
+                        policy_status = bucket_client.get_bucket_policy_public_status(
                             GetBucketPolicyPublicStatusRequest(bucket_name=bucket_name)
                         )
                         if policy_status and policy_status.is_public:

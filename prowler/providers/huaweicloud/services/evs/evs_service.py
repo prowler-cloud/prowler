@@ -19,42 +19,39 @@ class EVS(HuaweiCloudService):
 
         self.volumes: List[Volume] = []
 
-        self._list_volumes()
+        self.__threading_call__(self._list_volumes)
 
-    def _list_volumes(self):
-        """List all EVS volumes across regions."""
-        if not self.regional_clients:
-            return
+    def _list_volumes(self, regional_client):
+        """List all EVS volumes in the region."""
+        region = getattr(regional_client, "region", "unknown")
+        logger.info(f"EVS - Listing Volumes in {region}...")
 
-        for region, client in self.regional_clients.items():
-            logger.info(f"EVS - Listing Volumes in {region}...")
+        try:
+            from huaweicloudsdkevs.v2 import ListVolumesRequest
 
-            try:
-                from huaweicloudsdkevs.v2 import ListVolumesRequest
+            request = ListVolumesRequest()
+            response = self._call_with_retries(regional_client.list_volumes, request)
 
-                request = ListVolumesRequest()
-                response = self._call_with_retries(client.list_volumes, request)
-
-                if response and response.volumes:
-                    for vol_data in response.volumes:
-                        metadata = getattr(vol_data, "metadata", None) or {}
-                        is_encrypted = bool(getattr(vol_data, "encrypted", False)) or (
-                            metadata.get("__system__encrypted") == "1"
+            if response and response.volumes:
+                for vol_data in response.volumes:
+                    metadata = getattr(vol_data, "metadata", None) or {}
+                    is_encrypted = bool(getattr(vol_data, "encrypted", False)) or (
+                        metadata.get("__system__encrypted") == "1"
+                    )
+                    self.volumes.append(
+                        Volume(
+                            id=getattr(vol_data, "id", "") or "",
+                            name=getattr(vol_data, "name", "") or "",
+                            is_encrypted=is_encrypted,
+                            kms_key_id=metadata.get("__system__cmkid", "") or "",
+                            region=region,
                         )
-                        self.volumes.append(
-                            Volume(
-                                id=getattr(vol_data, "id", "") or "",
-                                name=getattr(vol_data, "name", "") or "",
-                                is_encrypted=is_encrypted,
-                                kms_key_id=metadata.get("__system__cmkid", "") or "",
-                                region=region,
-                            )
-                        )
+                    )
 
-            except Exception as error:
-                logger.error(
-                    f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
+        except Exception as error:
+            logger.error(
+                f"{region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
 
 
 class Volume(BaseModel):

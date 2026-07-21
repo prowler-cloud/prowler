@@ -15,26 +15,22 @@ class CTS(HuaweiCloudService):
     """
 
     def __init__(self, provider):
-        super().__init__(__class__.__name__, provider, global_service=True)
+        super().__init__(__class__.__name__, provider)
 
         self.trackers: List[Tracker] = []
 
-        self._list_trackers()
+        self.__threading_call__(self._list_trackers)
 
-    def _list_trackers(self):
-        """List all CTS trackers."""
-        if not self.client:
-            return
-
-        region = self.region
-        client = self.client
+    def _list_trackers(self, regional_client):
+        """List all CTS trackers in the region."""
+        region = getattr(regional_client, "region", "unknown")
         logger.info(f"CTS - Listing Trackers in {region}...")
 
         try:
             from huaweicloudsdkcts.v3 import ListTrackersRequest
 
             request = ListTrackersRequest()
-            response = self._call_with_retries(client.list_trackers, request)
+            response = self._call_with_retries(regional_client.list_trackers, request)
 
             if response and response.trackers:
                 for tracker_data in response.trackers:

@@ -9,6 +9,8 @@ from prowler.lib.logger import logger
 from prowler.providers.common.models import ProviderOutputOptions
 from prowler.providers.huaweicloud.config import (
     HUAWEICLOUD_DEFAULT_REGION,
+    HUAWEICLOUD_SDK_CONNECT_TIMEOUT,
+    HUAWEICLOUD_SDK_READ_TIMEOUT,
 )
 from prowler.providers.huaweicloud.exceptions.exceptions import (
     HuaweiCloudServiceError,
@@ -176,6 +178,7 @@ class HuaweiCloudSession:
                 return (
                     ObsClient.new_builder()
                     .with_credentials(obs_creds)
+                    .with_http_config(self._http_config())
                     .with_region(ObsRegion.value_of(client_region))
                     .build()
                 )
@@ -188,6 +191,7 @@ class HuaweiCloudSession:
                 return (
                     EcsClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(EcsRegion.value_of(client_region))
                     .build()
                 )
@@ -200,6 +204,7 @@ class HuaweiCloudSession:
                 return (
                     VpcClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(VpcRegion.value_of(client_region))
                     .build()
                 )
@@ -213,6 +218,7 @@ class HuaweiCloudSession:
                 return (
                     IamClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(IamRegion.value_of(client_region))
                     .build()
                 )
@@ -225,6 +231,7 @@ class HuaweiCloudSession:
                 return (
                     RdsClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(RdsRegion.value_of(client_region))
                     .build()
                 )
@@ -237,6 +244,7 @@ class HuaweiCloudSession:
                 return (
                     CtsClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(CtsRegion.value_of(client_region))
                     .build()
                 )
@@ -249,6 +257,7 @@ class HuaweiCloudSession:
                 return (
                     KmsClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(KmsRegion.value_of(client_region))
                     .build()
                 )
@@ -261,6 +270,7 @@ class HuaweiCloudSession:
                 return (
                     WafClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(WafRegion.value_of(client_region))
                     .build()
                 )
@@ -273,6 +283,7 @@ class HuaweiCloudSession:
                 return (
                     ElbClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(ElbRegion.value_of(client_region))
                     .build()
                 )
@@ -285,6 +296,7 @@ class HuaweiCloudSession:
                 return (
                     EvsClient.new_builder()
                     .with_credentials(self._get_basic_credentials())
+                    .with_http_config(self._http_config())
                     .with_region(EvsRegion.value_of(client_region))
                     .build()
                 )
@@ -306,6 +318,18 @@ class HuaweiCloudSession:
                 f"Failed to create Huawei Cloud client for service '{service}': {e}"
             )
             raise
+
+    @staticmethod
+    def _http_config():
+        """Build an HttpConfig with the provider's connect/read timeouts."""
+        from huaweicloudsdkcore.http.http_config import HttpConfig
+
+        config = HttpConfig.get_default_config()
+        config.timeout = (
+            HUAWEICLOUD_SDK_CONNECT_TIMEOUT,
+            HUAWEICLOUD_SDK_READ_TIMEOUT,
+        )
+        return config
 
     def _get_basic_credentials(self):
         """Get Huawei Cloud BasicCredentials from stored credentials."""

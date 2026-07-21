@@ -12,10 +12,13 @@ REGION = "la-south-2"
 def _build_cts(service_client):
     """Build a CTS service whose fetch runs against the given mocked client.
 
-    CTS is a global service, so it fetches through the single ``self.client``.
+    CTS is regional, so it fetches through the per-region clients returned by
+    ``generate_regional_clients`` and dispatched with ``__threading_call__``.
     """
     provider = set_mocked_huaweicloud_provider(region=REGION)
-    provider.session.client = mock.MagicMock(return_value=service_client)
+    provider.generate_regional_clients = mock.MagicMock(
+        return_value={REGION: service_client}
+    )
     return CTS(provider)
 
 
