@@ -342,10 +342,31 @@ export function containsSensitiveLighthouseContextValue(
   return (
     /\b[^\s@]+@[^\s@]+\.[^\s@]+\b/.test(value) ||
     /\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(value) ||
+    containsIpv6Address(value) ||
     /\bAKIA[A-Z0-9]{16}\b/.test(value) ||
     /\bbearer\s+\S+/i.test(value) ||
     /\b(?:password|secret|token|credential)\s*[:=]/i.test(value)
   );
+}
+
+function containsIpv6Address(value: string): boolean {
+  return value
+    .split(/[^0-9A-Fa-f:]+/)
+    .some((candidate) => isIpv6AddressCandidate(candidate));
+}
+
+function isIpv6AddressCandidate(candidate: string): boolean {
+  if (!candidate.includes(":") || candidate.includes(":::")) return false;
+
+  const compressedParts = candidate.split("::");
+  if (compressedParts.length > 2) return false;
+
+  const segments = candidate.split(":").filter(Boolean);
+  if (segments.some((segment) => segment.length > 4)) return false;
+
+  return compressedParts.length === 2
+    ? segments.length < 8
+    : segments.length === 8;
 }
 
 function toTitleCase(value: string): string {

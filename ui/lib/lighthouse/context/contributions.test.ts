@@ -156,6 +156,7 @@ describe("Lighthouse page contributions", () => {
           query: "MATCH (n) RETURN n",
           ownerEmail: "security@example.com",
           sourceIp: "10.0.0.1",
+          sourceIpv6: "2001:db8::1",
           authHeader: "Bearer sensitive-value",
         },
         nodeCount: 12,

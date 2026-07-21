@@ -131,13 +131,18 @@ describe("buildLighthousePageContext", () => {
     const searchParams = new URLSearchParams();
     searchParams.append("filter[search]", "security@example.com");
     searchParams.append("filter[search]", "10.0.0.1");
+    searchParams.append("filter[search]", "2001:db8::1");
     searchParams.append("filter[search]", "Bearer sensitive-value");
+    searchParams.append("filter[search]", "arn:aws:s3:::example");
+    searchParams.append("filter[search]", "12:30:00");
     searchParams.append("filter[search]", "public bucket");
 
     // When
     const context = buildLighthousePageContext("/findings", searchParams);
 
     // Then
-    expect(context.filters).toEqual({ search: ["public bucket"] });
+    expect(context.filters).toEqual({
+      search: ["arn:aws:s3:::example", "12:30:00", "public bucket"],
+    });
   });
 });
