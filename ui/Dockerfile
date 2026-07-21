@@ -4,7 +4,9 @@ FROM node:24.13.0-alpine@sha256:cd6fb7efa6490f039f3471a189214d5f548c11df1ff9e5b1
 LABEL maintainer="https://github.com/prowler-cloud"
 
 # Patch Alpine OpenSSL runtime packages before all stages inherit the base image.
-RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable
+# The build uses pnpm via corepack, so npm is unused — remove it (and npx) to drop
+# the bundled-npm CVE surface (node-tar CVE-2026-59873) from every stage, incl. prod.
+RUN apk upgrade --no-cache libcrypto3 libssl3 && corepack enable && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 # Install dependencies only when needed
 FROM base AS deps
