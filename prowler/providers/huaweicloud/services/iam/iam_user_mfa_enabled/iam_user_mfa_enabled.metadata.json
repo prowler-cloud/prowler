@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud IAM UpdateLoginProtect --user_id=<user_id> --login_protect.enabled=true --login_protect.verification_method=\"vmfa\"",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console as an administrator.\n2. Choose IAM & Security.\n3. Click Users.\n4. Select the target user.\n5. Click the Security Settings tab.\n6. In the Virtual MFA Device section, click Enable.\n7. Scan the QR code with a virtual MFA application (e.g., Google Authenticator).\n8. Enter two consecutive verification codes to bind the MFA device.",
       "Terraform": ""

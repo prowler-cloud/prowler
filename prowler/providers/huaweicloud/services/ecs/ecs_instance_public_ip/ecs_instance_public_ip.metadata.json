@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud ecs public-ip-unbind --server-id <instance_id>",
+      "CLI": "hcloud EIP DisassociatePublicips --publicip_id=<eip_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance with a public IP\n4. Unbind the EIP from the instance\n5. Use a NAT gateway or VPN for outbound connectivity if needed",
       "Terraform": ""

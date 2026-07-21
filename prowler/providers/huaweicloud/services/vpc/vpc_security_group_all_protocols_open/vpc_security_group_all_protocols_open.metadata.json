@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud vpc security-group-rule-delete --security-group-rule-id <rule_id>",
+      "CLI": "hcloud VPC DeleteSecurityGroupRule --security_group_rule_id=<rule_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Virtual Private Cloud > Access Control > Security Groups\n3. Select the security group\n4. Identify the ingress rule allowing all protocols from 0.0.0.0/0\n5. Delete or restrict the rule to specific ports and IP ranges",
       "Terraform": ""

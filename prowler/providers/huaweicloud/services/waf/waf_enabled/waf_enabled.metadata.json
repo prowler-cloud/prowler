@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud WAF CreatePolicy --name=<policy_name> --enterprise_project_id=<eps_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Web Application Firewall.\n3. Create a WAF instance (dedicated or cloud).\n4. Add protected websites/domains.\n5. Configure protection policies and rules.",
       "Terraform": ""

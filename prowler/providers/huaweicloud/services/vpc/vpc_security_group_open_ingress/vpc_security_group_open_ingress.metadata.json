@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hcloud VPC UpdateSecurityGroupRule --security_group_rule_id <rule_id> --remote_ip_prefix <restricted_cidr>",
+      "CLI": "hcloud VPC DeleteSecurityGroupRule --security_group_rule_id=<rule_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Choose VPC.\n3. Click Security Groups.\n4. Select the security group.\n5. Edit the ingress rule with 0.0.0.0/0 on a sensitive port.\n6. Restrict the source CIDR to a trusted IP range.\n7. Click OK.",
       "Terraform": ""

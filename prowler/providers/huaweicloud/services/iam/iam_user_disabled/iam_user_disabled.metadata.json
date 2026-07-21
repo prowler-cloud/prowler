@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hcloud IAM DeleteUser --user_id <user_id>",
+      "CLI": "hcloud IAM KeystoneDeleteUser --user_id=<user_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Choose IAM & Security.\n3. Click Users.\n4. Review disabled users.\n5. Delete users that are no longer needed.\n6. Click OK.",
       "Terraform": ""

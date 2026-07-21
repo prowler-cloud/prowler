@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud ecs server-update --server-id <instance_id> --security-groups <custom_sg_id>",
+      "CLI": "hcloud ECS NovaDisassociateSecurityGroup --server_id=<instance_id> --removeSecurityGroup.name=\"default\"",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Security Group\n5. Remove the default security group\n6. Attach a custom security group with restrictive rules",
       "Terraform": ""

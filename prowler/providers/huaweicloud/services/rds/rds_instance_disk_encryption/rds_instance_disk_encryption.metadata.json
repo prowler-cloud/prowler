@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud rds instance-update --instance-id <instance_id> --disk-encryption-id <kms_key_id>",
+      "CLI": "hcloud RDS CreateInstance --instance.disk_encryption_id=<kms_key_id> --instance.name=<name> --instance.datastore.type=<engine>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Relational Database Service\n3. Select the instance\n4. Click More > Manage Disk Encryption\n5. Enable disk encryption and select a KMS key",
       "Terraform": ""

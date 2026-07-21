@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud IAM UpdateDomainProtectPolicy --domain_id=<domain_id> --protect_policy.operation_protection=true",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console as the account administrator.\n2. Go to Security Settings > Critical Operations.\n3. In the Operation Protection section, click Enable.\n4. Choose the verification method (virtual MFA, SMS, or email) and save.",
       "Terraform": ""

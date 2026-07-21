@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hcloud CTS CreateTracker --tracker_name system",
+      "CLI": "hcloud CTS CreateTracker --tracker_name=\"system\" --tracker_type=\"system\"",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Trace Service.\n3. Click the Trace Management tab.\n4. Click Enable CTS.\n5. Configure the OBS bucket for trace file storage.\n6. Click OK.",
       "Terraform": ""

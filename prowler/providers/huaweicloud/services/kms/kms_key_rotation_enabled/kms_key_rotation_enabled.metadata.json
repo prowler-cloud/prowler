@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hcloud KMS EnableKeyRotation --key_id <key_id>",
+      "CLI": "hcloud KMS EnableKeyRotation --key_id=<key_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Key Management Service.\n3. Select the key.\n4. Click the Rotation tab.\n5. Enable rotation and set the rotation period.\n6. Click OK.",
       "Terraform": ""

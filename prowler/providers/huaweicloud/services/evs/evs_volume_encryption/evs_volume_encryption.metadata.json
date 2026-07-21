@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud EVS CreateVolume --volume.availability_zone=<az> --volume.size=<size> --volume.metadata.__system__encrypted=\"1\" --volume.metadata.__system__cmkid=<kms_key_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic Volume Service.\n3. Select the unencrypted volume.\n4. Create an encrypted volume from a snapshot of the unencrypted volume.\n5. Replace the old volume with the new encrypted volume.",
       "Terraform": ""

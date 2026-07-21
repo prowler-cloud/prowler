@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud ecs server-update --server-id <instance_id> --key-name <key_pair_name>",
+      "CLI": "hcloud ECS ReinstallServerWithCloudInit --server_id=<instance_id> --os-reinstall.keyname=<key_pair_name>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Key Pair\n5. Bind an existing key pair or create a new one\n6. Disable password-based login",
       "Terraform": ""

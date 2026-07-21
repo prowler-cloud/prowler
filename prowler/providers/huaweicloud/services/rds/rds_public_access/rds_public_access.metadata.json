@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "hcloud EIP DisassociatePublicips --publicip_id=<eip_id>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Unbind EIP.\n5. Confirm the unbinding.",
       "Terraform": ""

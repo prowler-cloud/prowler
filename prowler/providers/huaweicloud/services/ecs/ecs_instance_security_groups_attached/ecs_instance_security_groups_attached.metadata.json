@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "hwcloud ecs server-update --server-id <instance_id> --security-groups <sg_id>",
+      "CLI": "hcloud ECS NovaAssociateSecurityGroup --server_id=<instance_id> --addSecurityGroup.name=<sg_name>",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Security Group\n5. Attach an appropriate security group",
       "Terraform": ""

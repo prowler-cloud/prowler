@@ -17,7 +17,7 @@
   ],
   "Remediation": {
     "Code": {
-      "CLI": "",
+      "CLI": "obsutil chattri obs://<bucket_name> -acl=private",
       "NativeIaC": "",
       "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Object Storage Service.\n3. Select the bucket.\n4. Click the Permissions tab.\n5. Remove any public read or public read/write permissions.\n6. Click Save.",
       "Terraform": ""
