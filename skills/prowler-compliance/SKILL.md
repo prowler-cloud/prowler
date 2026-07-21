@@ -2,23 +2,29 @@
 name: prowler-compliance
 description: >
   Creates, syncs, audits and manages Prowler compliance frameworks end-to-end.
-  Covers the four-layer architecture (SDK models → JSON catalogs → output
-  formatters → API/UI), upstream sync workflows, cloud-auditor check-mapping
-  reviews, output formatter creation, and framework-specific attribute models.
-  Trigger: When working with compliance frameworks (CIS, NIST, PCI-DSS, SOC2,
-  GDPR, ISO27001, ENS, MITRE ATT&CK, CCC, C5, CSA CCM, KISA ISMS-P,
-  Prowler ThreatScore, FedRAMP, HIPAA), syncing with upstream catalogs,
-  auditing check-to-requirement mappings, adding output formatters, or fixing
-  compliance JSON bugs (duplicate IDs, empty Version, wrong Section, stale
-  check refs).
+  Covers the two supported JSON schemas (universal multi-provider and legacy
+  per-provider), the SDK model tree (legacy attribute classes, universal
+  ComplianceFramework, ConfigRequirements guardrails), output formatters
+  (legacy per-framework + universal data-driven), API/UI consumption, upstream
+  sync workflows, and cloud-auditor check-mapping reviews.
+  Trigger: When working with compliance frameworks (CIS, CIS Controls, NIST,
+  PCI-DSS, SOC2, GDPR, ISO27001, ENS, MITRE ATT&CK, CCC, C5, CSA CCM, DORA,
+  KISA ISMS-P, ASD Essential Eight, DISA STIG, CISA SCuBA, SecNumCloud,
+  FedRAMP, HIPAA, NIS2, Prowler ThreatScore), creating a universal
+  multi-provider framework, adding ConfigRequirements guardrails, syncing with
+  upstream catalogs, auditing check-to-requirement mappings, adding output
+  formatters, or fixing compliance JSON bugs (duplicate IDs, empty Version,
+  wrong Section, stale check refs).
 license: Apache-2.0
 metadata:
   author: prowler-cloud
-  version: "1.2"
+  version: "2.0"
   scope: [root, sdk]
   auto_invoke:
     - "Creating/updating compliance frameworks"
+    - "Creating a universal (multi-provider) compliance framework"
     - "Mapping checks to compliance controls"
+    - "Adding ConfigRequirements guardrails to compliance requirements"
     - "Syncing compliance framework with upstream catalog"
     - "Auditing check-to-requirement mappings as a cloud auditor"
     - "Adding a compliance output formatter (per-provider class + table dispatcher)"
@@ -29,527 +35,673 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 ## When to Use
 
 Use this skill when:
-- Creating a new compliance framework for any provider
+
+- Creating a new compliance framework for any provider — **decide universal vs legacy first** (see below)
 - **Syncing an existing framework with an upstream source of truth** (CIS, FINOS CCC, CSA CCM, NIST, ENS, etc.)
-- Adding requirements to existing frameworks
+- Adding requirements to existing frameworks, or extending a universal framework to a new provider
 - Mapping checks to compliance controls
-- **Auditing existing check mappings as a cloud auditor** (user asks "are these mappings correct?", "which checks apply to this requirement?", "review the mappings")
-- **Adding a new output formatter** (new framework needs a table dispatcher + per-provider classes + CSV models)
+- **Adding `ConfigRequirements` guardrails** so configurable checks can't silently satisfy a requirement with a loosened config
+- **Auditing existing check mappings as a cloud auditor** ("are these mappings correct?", "which checks apply?", "review the mappings")
+- **Adding a new legacy output formatter** (table dispatcher + per-provider classes + CSV models)
 - **Fixing JSON bugs**: duplicate IDs, empty Version, wrong Section, stale check refs, inconsistent FamilyName, padded tangential check mappings
-- **Registering a framework in the CLI table dispatcher or API export map**
 - Investigating why a finding/check isn't showing under the expected compliance framework in the UI
 - Understanding compliance framework structures and attributes
 
-## Four-Layer Architecture (Mental Model)
+The authoritative contributor doc is `docs/developer-guide/security-compliance-framework.mdx` —
+keep this skill and that doc consistent when either changes. For **reviewing**
+a compliance PR, use the sister skill
+[prowler-compliance-review](../prowler-compliance-review/SKILL.md) instead.
 
-Prowler compliance is a **four-layer system** hanging off one Pydantic model tree. Bugs usually happen where one layer doesn't match another, so know all four before touching anything.
+## Universal vs Legacy: The First Decision
+
+Prowler supports **two JSON schemas**. Choosing wrong means unnecessary Python
+code, so decide this before anything else. At load time both converge: legacy
+files are adapted into the universal `ComplianceFramework` model
+(`adapt_legacy_to_universal()`), so the difference is about **authoring cost
+and capabilities**, not about what the rest of Prowler sees.
+
+### Side-by-side comparison
+
+| | Universal (recommended for new frameworks) | Legacy provider-specific |
+|---|---|---|
+| File location | `prowler/compliance/<framework>.json` (top level) | `prowler/compliance/<provider>/<framework>_<version>_<provider>.json` |
+| Providers | Any number, one file (`checks` dict keyed by provider) | Exactly one provider per file (one file per provider to multi-cover) |
+| Key style | lowercase (`framework`, `requirements`, `checks`) | Capitalized (`Framework`, `Requirements`, `Checks`) |
+| Attribute schema | Declared **in the JSON itself** via `attributes_metadata`, validated at load | Pydantic class per framework family in `compliance_models.py` (code change for new shapes) |
+| Attributes per requirement | One flat dict (`attributes: {...}`) | List of objects (`Attributes: [{...}]`) — only `Attributes[0]` is used downstream |
+| Table/CSV/OCSF output | Data-driven from `outputs.table_config` — **zero Python changes** | Formatter package + registrations in `compliance.py`, `__main__.py`, `export.py` |
+| Guardrails field | `config_requirements` (+ mandatory `Provider` per constraint) | `ConfigRequirements` (`Provider` omitted) |
+| Loader behavior on error | Lenient: logs + skips file (`load_compliance_framework_universal`) | Fail-fast: `sys.exit(1)` (`load_compliance_framework`) |
+| Loaded by | Only `get_bulk_compliance_frameworks_universal()` | Both loaders (`Compliance.get_bulk()` + universal, via adapter) |
+| Shipped examples | `cis_controls_8.1.json`, `csa_ccm_4.0.json`, `dora_2022_2554.json` | Everything else (~105 files across 11 providers) |
+
+### When to use which
+
+**Use universal when** (any of these):
+
+- The framework is **new to Prowler** — no existing attribute class, no
+  existing formatter. This is the default: zero Python changes needed.
+- The framework spans (or will span) **more than one provider** — DORA, CSA
+  CCM, CIS Controls. One file covers all providers; extending to a new
+  provider is a one-line `checks` edit.
+- The attribute shape is **unique to this framework** — declare it in
+  `attributes_metadata` instead of adding a Pydantic class to the Union.
+
+**Use legacy only when extending an existing legacy family**:
+
+- A new **version** of a shipped legacy framework (CIS 8.0 for AWS → new
+  `cis_8.0_aws.json`, same `CIS_Requirement_Attribute`, same `cis/` formatter).
+- An existing legacy framework for a **new provider** (ENS for m365 → new
+  `ens_rd2022_m365.json` + `ens_m365.py` transformer).
+- Consistency with the family matters more than the universal benefits — a
+  lone `cis_8.0_aws` in universal format while 20+ CIS files stay legacy
+  would fragment the family.
+
+**Never**: start a brand-new single-provider framework as legacy "because it's
+only AWS today". Universal handles single-provider fine (the `checks` dict
+just has one key) and you skip 3 output files + 3 registrations.
+
+### The same requirement in both schemas
+
+Universal (`prowler/compliance/my_framework_1.0.json`):
+
+```json
+{
+  "framework": "My-Framework",
+  "name": "My Framework 1.0",
+  "version": "1.0",
+  "description": "...",
+  "attributes_metadata": [
+    {"key": "Section", "type": "str", "required": true},
+    {"key": "Service", "type": "str"}
+  ],
+  "outputs": {"table_config": {"group_by": "Section"}},
+  "requirements": [
+    {
+      "id": "MF-1.1",
+      "name": "Root MFA",
+      "description": "Root account must have MFA enabled.",
+      "attributes": {"Section": "IAM", "Service": "iam"},
+      "checks": {
+        "aws": ["iam_root_mfa_enabled"],
+        "azure": []
+      }
+    }
+  ]
+}
+```
+
+Legacy (`prowler/compliance/aws/my_framework_1.0_aws.json` — plus a second
+file per extra provider, plus formatter + registrations):
+
+```json
+{
+  "Framework": "My-Framework",
+  "Name": "My Framework 1.0 for AWS",
+  "Version": "1.0",
+  "Provider": "AWS",
+  "Description": "...",
+  "Requirements": [
+    {
+      "Id": "MF-1.1",
+      "Name": "Root MFA",
+      "Description": "Root account must have MFA enabled.",
+      "Attributes": [
+        {"ItemId": "MF-1.1", "Section": "IAM", "Service": "iam"}
+      ],
+      "Checks": ["iam_root_mfa_enabled"]
+    }
+  ]
+}
+```
+
+Same control, but the universal file already covers Azure, validates its own
+attribute schema, and renders table/CSV/OCSF with no code. Field-by-field
+references for each schema follow below.
+
+## Architecture (Mental Model)
+
+Prowler compliance is a four-layer system. Bugs usually happen where one layer
+doesn't match another, so know all four before touching anything.
 
 ### Layer 1: SDK / Core Models — `prowler/lib/check/`
 
-- **`compliance_models.py`** — Pydantic **v1** model tree (`from pydantic.v1 import`). One `*_Requirement_Attribute` class per framework type + `Generic_Compliance_Requirement_Attribute` as fallback.
-- `Compliance_Requirement.Attributes: list[Union[...]]` — **`Generic_Compliance_Requirement_Attribute` MUST be LAST** in the Union or every framework-specific attribute falls through to Generic (Pydantic v1 tries union members in order).
-- **`compliance.py`** — runtime linker. `get_check_compliance()` builds the key as `f"{Framework}-{Version}"` **only if `Version` is non-empty**. An empty Version makes the key just `"{Framework}"` — this breaks downstream filters and tests that expect the versioned key.
-- `Compliance.get_bulk(provider)` walks `prowler/compliance/{provider}/` and parses every `.json` file. No central index — just directory scan.
+All in **Pydantic v1** (`from pydantic.v1 import ...`). Three model groups live
+in `compliance_models.py`:
 
-### Layer 2: JSON Frameworks — `prowler/compliance/{provider}/`
+**Legacy tree** — `Compliance` → `Compliance_Requirement` / `Mitre_Requirement`:
 
-See "Compliance Framework Location" and "Framework-Specific Attribute Structures" sections below.
+- One `*_Requirement_Attribute` class per framework family. Registered today (Union order matters):
+  `ASDEssentialEight`, `CIS`, `ENS`, `ISO27001_2013`, `AWS_Well_Architected`,
+  `KISA_ISMSP`, `Prowler_ThreatScore`, `CCC`, `C5Germany`, `CSA_CCM`, `STIG`
+  (Okta IDaaS), and `Generic_Compliance_Requirement_Attribute` as fallback.
+- **Generic MUST stay LAST** in `Compliance_Requirement.Attributes: list[Union[...]]` —
+  Pydantic v1 tries union members in order; Generic first would swallow every
+  framework-specific attribute. NIST 800-53/CSF, PCI DSS, GDPR, HIPAA, SOC2,
+  FedRAMP, SecNumCloud etc. intentionally use Generic.
+- A `root_validator` rejects empty `Framework`, `Provider` or `Name`.
+- MITRE uses the separate `Mitre_Requirement` model (`Tactics`, `SubTechniques`,
+  `Platforms`, `TechniqueURL` at requirement top level, per-provider
+  `Mitre_Requirement_Attribute_{AWS,Azure,GCP}`).
 
-### Layer 3: Output Formatters — `prowler/lib/outputs/compliance/{framework}/`
+**Universal tree** — `ComplianceFramework` → `UniversalComplianceRequirement`:
 
-**Every framework directory follows this exact convention** — do not deviate:
+- Flat `attributes: dict` per requirement, schema declared in
+  `attributes_metadata` (key, label, type, enum, required, `enum_display`,
+  `enum_order`, `output_formats`). A `root_validator` rejects missing required
+  keys, unknown keys (drift guard), enum violations, and int/float/bool type
+  mismatches. If `attributes_metadata` is omitted, **no validation runs**.
+- `checks: dict[provider, list[check_id]]` — the provider list of the framework
+  is **derived** from these keys (`get_providers()` / `supports_provider()`);
+  the top-level `provider` field is only a fallback.
+- `outputs.table_config` (group_by, split_by, scoring, labels) drives the CLI
+  table; `outputs.pdf_config` exists in the model but **is not consumed by the
+  API PDF pipeline yet** (see Layer 4).
+
+**Guardrails** — `Compliance_Requirement_ConfigConstraint`:
+
+- Fields `Check`, `ConfigKey`, `Operator` (`lte|gte|eq|in|subset|superset`),
+  `Value`, optional `Provider` (required in universal multi-provider files).
+- A `root_validator` rejects Value/Operator type mismatches at load time.
+- Evaluation is centralized in `prowler/lib/check/compliance_config_eval.py`
+  (`evaluate_config_constraints`, `apply_config_status`, `get_effective_status`,
+  `CONFIG_NOT_VALID_PREFIX = "Configuration not valid for this requirement."`),
+  shared by CSV/OCSF/table outputs **and** the API backend. A violated
+  constraint forces the requirement to FAIL and prepends the reason to
+  `status_extended`. Constraints whose `ConfigKey` is absent from
+  `audit_config` are skipped (defaults assumed compliant).
+
+**Loaders**:
+
+- `Compliance.get_bulk(provider)` — legacy: scans only
+  `prowler/compliance/{provider}/` (+ external JSONs via the
+  `prowler.compliance` entry-point group). Does NOT see top-level universal files.
+- `get_bulk_compliance_frameworks_universal(provider)` — scans **both** the
+  top-level `prowler/compliance/` and every provider subdirectory, adapting
+  legacy files via `adapt_legacy_to_universal()` (flattens `Attributes[0]` to a
+  dict, wraps `Checks` as `{provider: [...]}`, infers `attributes_metadata`).
+  Also loads external universal frameworks via the
+  `prowler.compliance.universal` entry-point group (built-ins win collisions).
+- `get_check_compliance(finding, provider_type, bulk_checks_metadata)` lives in
+  **`prowler/lib/outputs/compliance/compliance_check.py`** (not in
+  `lib/check/compliance.py`). It builds the per-finding dict keyed
+  `f"{Framework}-{Version}"` **only when Version is non-empty** — an empty
+  Version silently produces the key `"{Framework}"` and breaks downstream
+  filters and tests.
+- `prowler/lib/check/compliance.py` now contains only
+  `update_checks_metadata_with_compliance()`.
+
+### Layer 2: JSON Catalogs — `prowler/compliance/`
+
+See "Compliance Catalog Coverage" below.
+
+### Layer 3: Output Formatters — `prowler/lib/outputs/compliance/`
+
+**Universal path** (no Python needed per framework):
+
+- `universal/universal_table.py` — `get_universal_table()`, renders the CLI
+  table from `outputs.table_config` + `attributes_metadata`.
+- `universal/universal_output.py` — `UniversalComplianceOutput`, builds the CSV
+  Pydantic model **dynamically** from `attributes_metadata`.
+- `universal/ocsf_compliance.py` — `OCSFComplianceOutput`; OCSF output is
+  **always generated** for universal frameworks regardless of `--output-formats`.
+- Orchestrated by `process_universal_compliance_frameworks()` in
+  `compliance.py`, which runs **before** any legacy dispatch and removes the
+  processed frameworks from the set.
+
+**Legacy path** — per-framework directory, usually:
 
 ```text
 {framework}/
 ├── __init__.py
-├── {framework}.py            # ONLY get_{framework}_table() — NO function docstring
-├── {framework}_{provider}.py # One class per provider (e.g., CCC_AWS, CCC_Azure, CCC_GCP)
-└── models.py                 # One Pydantic v2 BaseModel per provider (CSV columns)
+├── {framework}.py            # get_{framework}_table() summary-table function
+├── {framework}_{provider}.py # One ComplianceOutput subclass per provider
+└── models.py                 # One Pydantic CSV row model per provider
 ```
 
-- **`{framework}.py`** holds the **table dispatcher function** `get_{framework}_table()`. It prints the pass/fail/muted summary table. **Must NOT import `Finding` or `ComplianceOutput`** — doing so creates a circular import with `prowler/lib/outputs/compliance/compliance.py`. Only imports: `colorama`, `tabulate`, `prowler.config.config.orange_color`.
-- **`{framework}_{provider}.py`** holds a per-provider class like `CCC_AWS(ComplianceOutput)` with a `transform()` method that walks findings and emits rows. This file IS allowed to import `Finding` because it's not on the dispatcher import chain.
-- **`models.py`** holds one Pydantic v2 `BaseModel` per provider. Field names become CSV column headers (**public API** — renaming breaks downstream consumers).
-- **Never collapse per-provider files into a unified parameterized class**, even when DRY-tempting. Every framework in Prowler follows the per-provider file pattern and reviewers will reject the refactor. CSV columns differ per provider (`AccountId`/`Region` vs `SubscriptionId`/`Location` vs `ProjectId`/`Location`) — three classes is the convention.
-- **No function docstring on `get_{framework}_table()`** — no other framework has one; stay consistent.
-- Register in `prowler/lib/outputs/compliance/compliance.py` → `display_compliance_table()` with an `elif compliance_framework.startswith("{framework}_"):` branch. Import the table function at the top of the file.
+Directories today: `asd_essential_eight`, `aws_well_architected`, `c5`, `ccc`,
+`cis`, `cisa_scuba`, `ens`, `generic`, `iso27001`, `kisa_ismsp`,
+`mitre_attack`, `okta_idaas_stig`, `prowler_threatscore`, `universal`.
+Known deviations (don't "fix" them without a reason): `iso27001/` has no table
+file (falls to the generic table), `aws_well_architected/` has no per-provider
+files, `cisa_scuba/` only ships googleworkspace.
+
+- CSV writers emit `;`-delimited files with UPPERCASE headers
+  (`ComplianceOutput.batch_write_data_to_file`). Field names in `models.py`
+  are **public API** — renaming breaks downstream consumers.
+- **Circular import rule**: the table file (`{framework}.py`) must not import
+  `Finding` directly or transitively (`compliance.compliance` → table module →
+  `ComplianceOutput` → `Finding` → `get_check_compliance` → cycle). Keep table
+  files bare (`colorama`, `tabulate`, `prowler.config.config`); when a module
+  genuinely needs both, use `if TYPE_CHECKING:` or function-local imports (see
+  `universal_output.py` / `process_universal_compliance_frameworks`).
+- Legacy table functions have no docstrings; the universal ones do. Match the
+  style of the file family you're touching.
+- Dispatcher `display_compliance_table()` in `compliance.py` order:
+  universal (`table_config`) first → `cis_` → `ens_` → `mitre_attack` →
+  `kisa` → `prowler_threatscore_` → `c5_` → `ccc_` → `asd_essential_eight`
+  (substring) → `okta_idaas_stig` → else provider hook
+  (`provider.display_compliance_table()`, may raise `NotImplementedError`) →
+  `get_generic_compliance_table()`. iso27001, aws_well_architected and
+  cisa_scuba ride the fallback on purpose.
 
 ### Layer 4: API / UI
 
-- **API table dispatcher**: `api/src/backend/tasks/jobs/export.py` → `COMPLIANCE_CLASS_MAP` keyed by provider. Uses `startswith` predicates: `(lambda name: name.startswith("ccc_"), CCC_AWS)`. **Never use exact match** (`name == "ccc_aws"`) — it's inconsistent and breaks versioning.
-- **API lazy loader**: `api/src/backend/api/compliance.py` — `LazyComplianceTemplate` and `LazyChecksMapping` load compliance per provider on first access.
-- **UI mapper routing**: `ui/lib/compliance/compliance-mapper.ts` routes framework names → per-framework mapper.
-- **UI per-framework mapper**: `ui/lib/compliance/{framework}.tsx` flattens `Requirements` into a 3-level tree (Framework → Category → Control → Requirement) for the accordion view. Groups by `Attributes[0].FamilyName` and `Attributes[0].Section`.
-- **UI detail panel**: `ui/components/compliance/compliance-custom-details/{framework}-details.tsx`.
-- **UI types**: `ui/types/compliance.ts` — TypeScript mirrors of the attribute metadata.
+- **API lazy loaders**: `api/src/backend/api/compliance.py` —
+  `LazyComplianceTemplate` / `LazyChecksMapping` (per-provider lazy caches over
+  `get_bulk_compliance_frameworks_universal`, with Gunicorn background warm-up).
+- **API CSV export dispatch**: `COMPLIANCE_CLASS_MAP` in
+  `api/src/backend/tasks/jobs/export.py`, consumed from `tasks/tasks.py`. It is
+  a dict `provider → [(predicate, exporter_class)]` with `GenericCompliance` as
+  fallback. Predicates mix **`startswith` for multi-version families**
+  (`cis_`, `ens_`, `iso27001_`, `ccc_`, `cisa_scuba_`, ...) and **exact
+  `name == ...` for true singletons** (`mitre_attack_aws`,
+  `prowler_threatscore_*`, `asd_essential_eight_aws` — and inconsistently
+  `c5_azure`/`c5_gcp`, while aws uses `startswith("c5_")`). Rule of thumb: if
+  the framework can ever grow versions or variants, use `startswith`.
+- **API overview ingestion**: `create_compliance_requirements()` in
+  `api/src/backend/tasks/jobs/scan.py` builds per-region rows from the lazy
+  template and persists `ComplianceRequirementOverview` (COPY with bulk-create
+  fallback) plus `ComplianceOverviewSummary`.
+- **API PDF reports**: `api/src/backend/tasks/jobs/reports/` — hardcoded
+  `FRAMEWORK_REGISTRY` (own `FrameworkConfig` dataclass, NOT the SDK
+  `PDFConfig`) with one generator class per framework. Only
+  `prowler_threatscore`, `ens`, `nis2`, `csa_ccm` and `cis` have PDFs today;
+  adding one means a generator class + registry entry + wiring in `report.py`.
+- **UI mapper routing**: `ui/lib/compliance/compliance-mapper.ts` —
+  `getComplianceMappers()` keyed by the JSON's `framework` value
+  (e.g. `"CIS"`, `"CIS-Controls"`, `"DORA"`, `"Okta-IDaaS-STIG"`). Unregistered
+  frameworks **fall back to the generic mapper + `GenericCustomDetails`
+  automatically** — a dedicated mapper/detail panel is a first-class upgrade,
+  not a requirement to render.
+- **UI grouping varies per mapper**: generic/cis group by
+  `Section`/`SubSection`, iso by `Category`, ccc by `FamilyName`. All read
+  `attributes[0]` — inconsistent values within one JSON become separate tree
+  branches, so normalize before shipping.
+- **UI types**: `ui/types/compliance.ts` — one `*AttributesMetadata` interface
+  per framework, added to the `AttributesItemData` metadata union.
+- **UI icons**: `ui/components/icons/compliance/` + `IconCompliance.tsx`.
+  Registration is an ordered substring match (`COMPLIANCE_LOGOS`): put
+  framework-specific keywords **before** generic ones (`nist` before `nis2`,
+  `cisa` before `cis`; `aws` deliberately last).
 
 ### The CLI Pipeline (end-to-end)
 
 ```text
-prowler aws --compliance ccc_aws
+prowler aws --compliance cis_7.0_aws          # framework key = JSON basename
     ↓
-Compliance.get_bulk("aws")  → parses prowler/compliance/aws/*.json
+Compliance.get_bulk("aws")                      # legacy frameworks
+get_bulk_compliance_frameworks_universal("aws") # legacy (adapted) + universal
     ↓
-update_checks_metadata_with_compliance()  → attaches compliance info to CheckMetadata
+update_checks_metadata_with_compliance()        # attaches compliance to CheckMetadata
     ↓
-execute_checks()  → runs checks, produces Finding objects
+execute_checks() → Finding objects
     ↓
-get_check_compliance(finding, "aws", bulk_checks_metadata)
-    → dict "{Framework}-{Version}" → [requirement_ids]
+get_check_compliance(finding, "aws", bulk)      # dict "{Framework}-{Version}" → [req_ids]
     ↓
-CCC_AWS(findings, compliance).transform()  → per-provider class builds CSV rows
+process_universal_compliance_frameworks()       # universal: CSV + OCSF, then removed from set
+per-provider elif branches in __main__.py       # legacy: AWSCIS(...).batch_write_data_to_file()
     ↓
-batch_write_data_to_file()  → writes {output_filename}_ccc_aws.csv
-    ↓
-display_compliance_table() → get_ccc_table() → prints stdout summary
+display_compliance_table()                      # universal table first, then legacy elifs,
+                                                # then generic fallback
 ```
 
 ---
 
-## Compliance Framework Location
+## Compliance Catalog Coverage
 
-Frameworks are JSON files located in: `prowler/compliance/{provider}/{framework_name}_{provider}.json`
+Counts as of 2026-07 (109 JSON files). Regenerate before trusting them:
 
-**Supported Providers:**
-- `aws` - Amazon Web Services
-- `azure` - Microsoft Azure
-- `gcp` - Google Cloud Platform
-- `kubernetes` - Kubernetes
-- `github` - GitHub
-- `m365` - Microsoft 365
-- `alibabacloud` - Alibaba Cloud
-- `cloudflare` - Cloudflare
-- `oraclecloud` - Oracle Cloud
-- `oci` - Oracle Cloud Infrastructure
-- `nhn` - NHN Cloud
-- `mongodbatlas` - MongoDB Atlas
-- `iac` - Infrastructure as Code
-- `llm` - Large Language Models
+```bash
+for d in prowler/compliance/*/; do printf "%s: %s\n" "$(basename $d)" "$(ls $d*.json 2>/dev/null | wc -l)"; done
+ls prowler/compliance/*.json   # universal, top-level
+```
 
-## Base Framework Structure
+**Universal (top-level, multi-provider)**: `cis_controls_8.1.json` (18
+providers), `csa_ccm_4.0.json` (aws/azure/gcp/alibabacloud/oraclecloud),
+`dora_2022_2554.json` (aws/azure/gcp/alibabacloud/cloudflare).
 
-All compliance frameworks share this base structure:
+**Legacy per-provider** (families, not exhaustive versions):
+
+| Provider | # | Framework families |
+|---|---|---|
+| aws | 45 | CIS 1.4–7.0, NIST 800-53 r4/r5, NIST 800-171 r2, NIST CSF 1.1/2.0, PCI 3.2.1/4.0, ISO 27001 2013/2022, HIPAA, GDPR, SOC2, FedRAMP low/moderate r4 + 20x KSI low, ENS RD2022, MITRE ATT&CK, C5, CCC, CISA, FFIEC, RBI, Well-Architected (security/reliability), FTR, FSBP, AWS AI Security Framework, AWS Account Security Onboarding, Audit Manager Control Tower, GxP 21 CFR 11 / EU Annex 11, KISA ISMS-P 2023 (en+ko), NIS2, ASD Essential Eight, SecNumCloud 3.2, Prowler ThreatScore |
+| azure | 19 | CIS 2.0–6.0, ISO 27001 2022, ENS RD2022, MITRE ATT&CK, PCI 4.0, HIPAA, SOC2, NIS2, RBI, C5, CCC, FedRAMP 20x KSI low, SecNumCloud 3.2, Prowler ThreatScore |
+| gcp | 17 | CIS 2.0–5.0, ISO 27001 2022, ENS RD2022, MITRE ATT&CK, PCI 4.0, HIPAA, SOC2, NIS2, RBI, C5, CCC, FedRAMP 20x KSI low, SecNumCloud 3.2, Prowler ThreatScore |
+| kubernetes | 8 | CIS 1.8–2.0.1, ISO 27001 2022, PCI 4.0, Prowler ThreatScore |
+| m365 | 5 | CIS 4.0/6.0/7.0, ISO 27001 2022, Prowler ThreatScore |
+| alibabacloud | 3 | CIS 2.0, SecNumCloud 3.2, Prowler ThreatScore |
+| oraclecloud | 3 | CIS 3.0/3.1, SecNumCloud 3.2 |
+| github | 2 | CIS 1.0/1.2.0 |
+| googleworkspace | 2 | CIS 1.3, CISA SCuBA 0.6 |
+| okta | 1 | Okta IDaaS STIG V1R2 |
+| nhn | 1 | ISO 27001 2022 |
+
+Providers with a compliance directory but no frameworks yet: cloudflare, iac,
+linode, llm, mongodbatlas, openstack, stackit. Provider keys inside universal
+`checks` dicts must match directory names under `prowler/providers/` (lowercase).
+
+---
+
+## Universal Schema Reference
+
+Full spec in `docs/developer-guide/security-compliance-framework.mdx`. Skeleton:
+
+```json
+{
+  "framework": "DORA",
+  "name": "Digital Operational Resilience Act (DORA) 2022/2554",
+  "version": "2022/2554",
+  "description": "Shown in --list-compliance and PDF reports.",
+  "icon": "dora",
+  "attributes_metadata": [
+    {"key": "Pillar", "label": "Pillar", "type": "str", "required": true,
+     "enum": ["ICT Risk Management", "..."],
+     "output_formats": {"csv": true, "ocsf": true}},
+    {"key": "Article", "type": "str", "required": true}
+  ],
+  "outputs": {
+    "table_config": {"group_by": "Pillar"},
+    "pdf_config": {"group_by_field": "Pillar", "charts": ["..."]}
+  },
+  "requirements": [
+    {
+      "id": "DORA-Art5",
+      "name": "Governance and organisation",
+      "description": "Requirement text verbatim from the source.",
+      "attributes": {"Pillar": "ICT Risk Management", "Article": "Article 5"},
+      "checks": {
+        "aws": ["iam_no_root_access_key"],
+        "azure": [],
+        "gcp": []
+      },
+      "config_requirements": [
+        {"Check": "iam_user_accesskey_unused", "Provider": "aws",
+         "ConfigKey": "max_unused_access_keys_days", "Operator": "lte", "Value": 45}
+      ]
+    }
+  ]
+}
+```
+
+### Universal fields, top level (`ComplianceFramework`)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `framework` | string | Yes | Short identifier (`DORA`, `CSA-CCM`, `CIS-Controls`). This is the key the UI mapper routes on. |
+| `name` | string | Yes | Human-readable full name. |
+| `version` | string | No (never leave empty) | Framework version/edition (`8.1`, `2022/2554`). |
+| `description` | string | Yes | Shown in `--list-compliance` and PDF reports. |
+| `provider` | string | No | Fallback only — the effective provider list is derived from `checks` keys across requirements (`get_providers()`). |
+| `icon` | string | No | Short icon slug. |
+| `attributes_metadata` | array | No (strongly recommended) | Declares the schema of every `attributes` key. **If omitted, no attribute validation runs at all.** |
+| `outputs` | object | No | `table_config` (CLI table) + `pdf_config` (modeled, not yet consumed by the API). |
+| `requirements` | array | Yes | List of requirement objects (below). |
+
+### Universal fields, per requirement (`UniversalComplianceRequirement`)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | string | Yes | Unique within the framework. |
+| `description` | string | Yes | Requirement text verbatim from the source. |
+| `name` | string | No | Short title. |
+| `attributes` | dict | No (default `{}`) | Flat dict; every key must be declared in `attributes_metadata` (unknown keys are rejected at load when metadata exists). |
+| `checks` | dict | No (default `{}`) | `{provider: [check_ids]}`, lowercase keys matching `prowler/providers/` dirs. Empty list = manual requirement for that provider. |
+| `config_requirements` | array | No | Guardrails; each constraint **must** carry `Provider`. |
+| `tactics`, `sub_techniques`, `platforms`, `technique_url` | — | No | MITRE-style extras (auto-populated when adapting legacy MITRE files). |
+
+### `attributes_metadata` entry fields (`AttributeMetadata`)
+
+| Field | Type | Notes |
+|---|---|---|
+| `key` | string (required) | Attribute name as used in `requirement.attributes`. |
+| `label` | string | Human-readable label for CSV headers / PDF. |
+| `type` | string | `str` (default), `int`, `float`, `bool`, `list_str`, `list_dict`. Only int/float/bool are enforced at load; the rest are documentation. |
+| `enum` | list | Allowed values — enforced at load. Use it whenever the value set is closed. |
+| `required` | bool | Enforced at load: every requirement must carry the key non-null. |
+| `enum_display` / `enum_order` | dict / list | Per-enum-value visual metadata (label, abbreviation, color, icon) and ordering for PDF rendering. |
+| `chart_label` | string | Axis label when the attribute is used in charts. |
+| `output_formats` | object | `{"csv": bool, "ocsf": bool}`, both default `true` — toggles inclusion per output. |
+
+Key rules:
+
+- `--compliance` key = JSON basename without `.json` (`dora_2022_2554`).
+- Auto-discovered: no `__init__.py`, no formatter, no dispatcher registration.
+- `table_config.group_by`, `pdf_config.group_by_field` and every
+  `charts[].group_by` must reference a key declared in `attributes_metadata`.
+- Runtime type validation only covers `int`/`float`/`bool`; `str`/`list_str`/
+  `list_dict` are documentation-only.
+- Extending to a new provider = adding a key to `requirement.checks`. Nothing else.
+- **No automatic check-existence validation at load time** — a typo'd check id
+  silently produces a requirement with no findings. Always run the
+  check-existence cross-check (see Validation).
+- In universal files, always set `Provider` on every config constraint so a
+  guardrail authored for an AWS check never affects Azure/GCP scans of the
+  same requirement.
+
+## Legacy Schema Reference
+
+Base legacy file structure:
 
 ```json
 {
   "Framework": "FRAMEWORK_NAME",
   "Name": "Full Framework Name with Version",
   "Version": "X.X",
-  "Provider": "PROVIDER",
+  "Provider": "AWS",
   "Description": "Framework description...",
   "Requirements": [
     {
       "Id": "requirement_id",
-      "Description": "Requirement description",
       "Name": "Optional requirement name",
-      "Attributes": [...],
-      "Checks": ["check_name_1", "check_name_2"]
+      "Description": "Requirement description",
+      "Attributes": [ ... ],
+      "Checks": ["check_name_1"],
+      "ConfigRequirements": [ ... ]
     }
   ]
 }
 ```
 
-## Framework-Specific Attribute Structures
+### Legacy fields, top level (`Compliance`)
 
-Each framework type has its own attribute model. Below are the exact structures used by Prowler:
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `Framework` | string | Yes (non-empty, validated) | Canonical identifier (`CIS`, `ENS`, `NIST-800-53-Revision-5`). |
+| `Name` | string | Yes (non-empty, validated) | Human-readable name with version. |
+| `Version` | string | Optional in the model — **never leave it empty in practice** | Empty Version silently degrades the `get_check_compliance()` key to `"{Framework}"` (gotcha #4). Must match the version substring in the filename. |
+| `Provider` | string | Yes (non-empty, validated) | Upper-cased single provider (`AWS`, `AZURE`, `GCP`, `M365`, ...). One file = one provider. |
+| `Description` | string | Yes | Framework scope and purpose. |
+| `Requirements` | array | Yes | Requirement objects (below), or `Mitre_Requirement` objects for MITRE files. |
 
-### CIS (Center for Internet Security)
+### Legacy fields, per requirement (`Compliance_Requirement`)
 
-**Framework ID format:** `cis_{version}_{provider}` (e.g., `cis_5.0_aws`)
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `Id` | string | Yes | Unique within the framework; follow the source numbering exactly (`1.1`, `A.5.1`, `CCC.Core.CN01.AR01`). |
+| `Description` | string | Yes | Verbatim from the source catalog. |
+| `Name` | string | No | Optional short title (NIST-style catalogs use it). |
+| `Attributes` | array of objects | Yes | Parsed against the Union of attribute classes below; only `Attributes[0]` survives the universal adaptation and drives UI grouping. |
+| `Checks` | array of strings | Yes | Check ids automating the requirement; `[]` = manual. |
+| `ConfigRequirements` | array | No | Guardrails; `Provider` is omitted (the file is single-provider). |
+
+MITRE files use `Mitre_Requirement` instead, which adds `Tactics`,
+`SubTechniques`, `Platforms`, `TechniqueURL` at the requirement top level.
+
+### Attribute shapes per framework family
+
+Unlike universal (schema in-file), a legacy requirement's `Attributes` must
+match one of the Pydantic classes registered in
+`Compliance_Requirement.Attributes` — a shape matching no class **silently
+falls through to Generic**, dropping its specific fields. The most common
+shapes (full field sets in `compliance_models.py`):
+
+### CIS — `cis_{version}_{provider}`
 
 ```json
 {
-  "Id": "1.1",
-  "Description": "Maintain current contact details",
-  "Checks": ["account_maintain_current_contact_details"],
-  "Attributes": [
-    {
-      "Section": "1 Identity and Access Management",
-      "SubSection": "Optional subsection",
-      "Profile": "Level 1",
-      "AssessmentStatus": "Automated",
-      "Description": "Detailed attribute description",
-      "RationaleStatement": "Why this control matters",
-      "ImpactStatement": "Impact of implementing this control",
-      "RemediationProcedure": "Steps to fix the issue",
-      "AuditProcedure": "Steps to verify compliance",
-      "AdditionalInformation": "Extra notes",
-      "DefaultValue": "Default configuration value",
-      "References": "https://docs.example.com/reference"
-    }
-  ]
+  "Section": "1 Identity and Access Management",
+  "SubSection": "Optional subsection",
+  "Profile": "Level 1",
+  "AssessmentStatus": "Automated",
+  "Description": "...", "RationaleStatement": "...", "ImpactStatement": "...",
+  "RemediationProcedure": "...", "AuditProcedure": "...",
+  "AdditionalInformation": "...", "DefaultValue": "...", "References": "https://..."
 }
 ```
 
-**Profile values:** `Level 1`, `Level 2`, `E3 Level 1`, `E3 Level 2`, `E5 Level 1`, `E5 Level 2`
-**AssessmentStatus values:** `Automated`, `Manual`
+`Profile`: `Level 1|Level 2|E3 Level 1|E3 Level 2|E5 Level 1|E5 Level 2`.
+`AssessmentStatus`: `Automated|Manual`.
 
----
-
-### ISO 27001
-
-**Framework ID format:** `iso27001_{year}_{provider}` (e.g., `iso27001_2022_aws`)
+### ENS — `ens_rd2022_{provider}`
 
 ```json
 {
-  "Id": "A.5.1",
-  "Description": "Policies for information security should be defined...",
-  "Name": "Policies for information security",
-  "Checks": ["securityhub_enabled"],
-  "Attributes": [
-    {
-      "Category": "A.5 Organizational controls",
-      "Objetive_ID": "A.5.1",
-      "Objetive_Name": "Policies for information security",
-      "Check_Summary": "Summary of what is being checked"
-    }
-  ]
+  "IdGrupoControl": "op.acc.1", "Marco": "operacional",
+  "Categoria": "control de acceso", "DescripcionControl": "...",
+  "Nivel": "alto", "Tipo": "requisito",
+  "Dimensiones": ["trazabilidad", "autenticidad"],
+  "ModoEjecucion": "automatico", "Dependencias": []
 }
 ```
 
-**Note:** `Objetive_ID` and `Objetive_Name` use this exact spelling (not "Objective").
+`Nivel`: `opcional|bajo|medio|alto`. `Tipo`: `refuerzo|requisito|recomendacion|medida`.
+`Dimensiones`: `confidencialidad|integridad|trazabilidad|autenticidad|disponibilidad`.
 
----
-
-### ENS (Esquema Nacional de Seguridad - Spain)
-
-**Framework ID format:** `ens_rd2022_{provider}` (e.g., `ens_rd2022_aws`)
+### ISO 27001 — `iso27001_{year}_{provider}`
 
 ```json
 {
-  "Id": "op.acc.1.aws.iam.2",
-  "Description": "Proveedor de identidad centralizado",
-  "Checks": ["iam_check_saml_providers_sts"],
-  "Attributes": [
-    {
-      "IdGrupoControl": "op.acc.1",
-      "Marco": "operacional",
-      "Categoria": "control de acceso",
-      "DescripcionControl": "Detailed control description in Spanish",
-      "Nivel": "alto",
-      "Tipo": "requisito",
-      "Dimensiones": ["trazabilidad", "autenticidad"],
-      "ModoEjecucion": "automatico",
-      "Dependencias": []
-    }
-  ]
+  "Category": "A.5 Organizational controls",
+  "Objetive_ID": "A.5.1", "Objetive_Name": "Policies for information security",
+  "Check_Summary": "Summary of what is being checked"
 }
 ```
 
-**Nivel values:** `opcional`, `bajo`, `medio`, `alto`
-**Tipo values:** `refuerzo`, `requisito`, `recomendacion`, `medida`
-**Dimensiones values:** `confidencialidad`, `integridad`, `trazabilidad`, `autenticidad`, `disponibilidad`
+Note: `Objetive_ID` / `Objetive_Name` use this exact (mis)spelling.
 
----
-
-### MITRE ATT&CK
-
-**Framework ID format:** `mitre_attack_{provider}` (e.g., `mitre_attack_aws`)
-
-MITRE uses a different requirement structure:
+### MITRE ATT&CK — `mitre_attack_{provider}` (separate requirement model)
 
 ```json
 {
-  "Name": "Exploit Public-Facing Application",
-  "Id": "T1190",
-  "Tactics": ["Initial Access"],
-  "SubTechniques": [],
-  "Platforms": ["Containers", "IaaS", "Linux", "Network", "Windows", "macOS"],
-  "Description": "Adversaries may attempt to exploit a weakness...",
+  "Name": "Exploit Public-Facing Application", "Id": "T1190",
+  "Tactics": ["Initial Access"], "SubTechniques": [],
+  "Platforms": ["IaaS"], "Description": "...",
   "TechniqueURL": "https://attack.mitre.org/techniques/T1190/",
-  "Checks": ["guardduty_is_enabled", "inspector2_is_enabled"],
+  "Checks": ["guardduty_is_enabled"],
   "Attributes": [
-    {
-      "AWSService": "Amazon GuardDuty",
-      "Category": "Detect",
-      "Value": "Minimal",
-      "Comment": "Explanation of how this service helps..."
-    }
+    {"AWSService": "Amazon GuardDuty", "Category": "Detect",
+     "Value": "Minimal", "Comment": "..."}
   ]
 }
 ```
 
-**For Azure:** Use `AzureService` instead of `AWSService`
-**For GCP:** Use `GCPService` instead of `AWSService`
-**Category values:** `Detect`, `Protect`, `Respond`
-**Value values:** `Minimal`, `Partial`, `Significant`
+`AzureService`/`GCPService` for the other providers. `Category`:
+`Detect|Protect|Respond`. `Value`: `Minimal|Partial|Significant`.
 
----
-
-### NIST 800-53
-
-**Framework ID format:** `nist_800_53_revision_{version}_{provider}` (e.g., `nist_800_53_revision_5_aws`)
+### CCC — `ccc_{provider}`
 
 ```json
 {
-  "Id": "ac_2_1",
-  "Name": "AC-2(1) Automated System Account Management",
-  "Description": "Support the management of system accounts...",
-  "Checks": ["iam_password_policy_minimum_length_14"],
-  "Attributes": [
-    {
-      "ItemId": "ac_2_1",
-      "Section": "Access Control (AC)",
-      "SubSection": "Account Management (AC-2)",
-      "SubGroup": "AC-2(3) Disable Accounts",
-      "Service": "iam"
-    }
-  ]
+  "FamilyName": "Data", "FamilyDescription": "...",
+  "Section": "CCC.Core.CN01 Encrypt Data for Transmission", "SubSection": "",
+  "SubSectionObjective": "...",
+  "Applicability": ["tlp-green", "tlp-amber", "tlp-red"],
+  "Recommendation": "...",
+  "SectionThreatMappings": [{"ReferenceId": "CCC", "Identifiers": ["CCC.Core.TH02"]}],
+  "SectionGuidelineMappings": [{"ReferenceId": "NIST-CSF", "Identifiers": ["PR.DS-02"]}]
 }
 ```
 
----
+`Applicability` holds TLP tags (`tlp-clear|tlp-green|tlp-amber|tlp-red`).
 
-### Generic Compliance (Fallback)
-
-For frameworks without specific attribute models:
+### ASD Essential Eight — `asd_essential_eight_aws`
 
 ```json
 {
-  "Id": "requirement_id",
-  "Description": "Requirement description",
-  "Name": "Optional name",
-  "Checks": ["check_name"],
-  "Attributes": [
-    {
-      "ItemId": "item_id",
-      "Section": "Section name",
-      "SubSection": "Subsection name",
-      "SubGroup": "Subgroup name",
-      "Service": "service_name",
-      "Type": "type"
-    }
-  ]
+  "Section": "Patch applications", "MaturityLevel": "ML1",
+  "AssessmentStatus": "Automated", "CloudApplicability": "partial",
+  "MitigatedThreats": ["..."], "Description": "...",
+  "RationaleStatement": "...", "ImpactStatement": "...",
+  "RemediationProcedure": "...", "AuditProcedure": "...",
+  "AdditionalInformation": "...", "References": "..."
 }
 ```
 
----
+`MaturityLevel`: `ML1|ML2|ML3`. `CloudApplicability`: `full|partial|limited|non-applicable`.
 
-### AWS Well-Architected Framework
-
-**Framework ID format:** `aws_well_architected_framework_{pillar}_pillar_aws`
+### DISA STIG — `okta_idaas_stig_v1r2_okta`
 
 ```json
 {
-  "Id": "SEC01-BP01",
-  "Description": "Establish common guardrails...",
-  "Name": "Establish common guardrails",
-  "Checks": ["account_part_of_organizations"],
-  "Attributes": [
-    {
-      "Name": "Establish common guardrails",
-      "WellArchitectedQuestionId": "securely-operate",
-      "WellArchitectedPracticeId": "sec_securely_operate_multi_accounts",
-      "Section": "Security",
-      "SubSection": "Security foundations",
-      "LevelOfRisk": "High",
-      "AssessmentMethod": "Automated",
-      "Description": "Detailed description",
-      "ImplementationGuidanceUrl": "https://docs.aws.amazon.com/..."
-    }
-  ]
+  "Section": "...", "Severity": "high", "RuleID": "...", "StigID": "...",
+  "CCI": ["CCI-000015"], "CheckText": "...", "FixText": "..."
 }
 ```
 
----
+`Severity`: `high|medium|low` (maps to CAT I/II/III).
 
-### KISA ISMS-P (Korea)
+### Other registered shapes
 
-**Framework ID format:** `kisa_isms_p_{year}_{provider}` (e.g., `kisa_isms_p_2023_aws`)
+- **AWS Well-Architected** (`aws_well_architected_framework_{pillar}_pillar_aws`):
+  `Name`, `WellArchitectedQuestionId`, `WellArchitectedPracticeId`, `Section`,
+  `SubSection`, `LevelOfRisk`, `AssessmentMethod`, `Description`,
+  `ImplementationGuidanceUrl`.
+- **KISA ISMS-P** (`kisa_isms_p_2023_{provider}`): `Domain`, `Subdomain`,
+  `Section`, `AuditChecklist`, `RelatedRegulations`, `AuditEvidence`,
+  `NonComplianceCases`.
+- **C5** (`c5_{provider}`): `Section`, `SubSection`, `Type`, `AboutCriteria`,
+  `ComplementaryCriteria`.
+- **CSA CCM** (legacy shape; the shipped CSA CCM 4.0 is universal): `Section`,
+  `CCMLite`, `IaaS`, `PaaS`, `SaaS`, `ScopeApplicability`.
+- **Prowler ThreatScore** (`prowler_threatscore_{provider}`): `Title`,
+  `Section`, `SubSection`, `AttributeDescription`, `AdditionalInformation`,
+  `LevelOfRisk` (1–5), `Weight` (1/8/10/100/1000). Pillars: 1 IAM, 2 Attack
+  Surface, 3 Logging and Monitoring, 4 Encryption. Available for aws,
+  azure, gcp, kubernetes, m365, alibabacloud.
+- **Generic (fallback)**: `ItemId`, `Section`, `SubSection`, `SubGroup`,
+  `Service`, `Type`, `Comment` — all optional. Used by NIST, PCI, GDPR,
+  HIPAA, SOC2, FedRAMP, CISA, FFIEC, RBI, NIS2, GxP, SecNumCloud, etc.
+
+## Config Guardrails (`ConfigRequirements`)
+
+Requirements backed by [configurable checks](https://docs.prowler.com/developer-guide/configurable-checks)
+can be silently "satisfied" by a loosened `audit_config` (e.g. CIS demands
+45-day unused credentials but the scan ran with `max_unused_access_keys_days: 120`).
+Guardrails force such requirements to FAIL:
 
 ```json
-{
-  "Id": "1.1.1",
-  "Description": "Requirement description",
-  "Name": "Requirement name",
-  "Checks": ["check_name"],
-  "Attributes": [
-    {
-      "Domain": "1. Management System",
-      "Subdomain": "1.1 Management System Establishment",
-      "Section": "1.1.1 Section Name",
-      "AuditChecklist": ["Checklist item 1", "Checklist item 2"],
-      "RelatedRegulations": ["Regulation 1"],
-      "AuditEvidence": ["Evidence type 1"],
-      "NonComplianceCases": ["Non-compliance example"]
-    }
-  ]
-}
+"ConfigRequirements": [
+  {"Check": "iam_user_accesskey_unused",
+   "ConfigKey": "max_unused_access_keys_days", "Operator": "lte", "Value": 45}
+]
 ```
 
----
-
-### C5 (Germany Cloud Computing Compliance Criteria Catalogue)
-
-**Framework ID format:** `c5_{provider}` (e.g., `c5_aws`)
-
-```json
-{
-  "Id": "BCM-01",
-  "Description": "Requirement description",
-  "Name": "Requirement name",
-  "Checks": ["check_name"],
-  "Attributes": [
-    {
-      "Section": "BCM Business Continuity Management",
-      "SubSection": "BCM-01",
-      "Type": "Basic Criteria",
-      "AboutCriteria": "Description of criteria",
-      "ComplementaryCriteria": "Additional criteria"
-    }
-  ]
-}
-```
+- Operators: `lte`/`gte` (numeric thresholds), `eq` (toggles/exact — use JSON
+  booleans, not 0/1), `in` (scalar in allowed set), `subset` (allowlists —
+  widening breaks it), `superset` (denylists — removing an entry breaks it).
+- `Value` must be the **strictest** setting the control text tolerates.
+- `ConfigKey` must be spelled exactly as the check reads it; unknown keys are
+  silently skipped (defaults assumed OK).
+- Guardrails only tighten (PASS→FAIL), never relax.
+- Universal files: lowercase `config_requirements` + mandatory `Provider` per
+  constraint.
+- Tests: `tests/lib/check/compliance_config_eval_test.py`,
+  `compliance_config_constraint_model_test.py`,
+  `compliance_config_requirements_data_test.py`, plus per-output tests under
+  `tests/lib/outputs/compliance/`.
 
 ---
-
-### CCC (Cloud Computing Compliance)
-
-**Framework ID format:** `ccc_{provider}` (e.g., `ccc_aws`)
-
-```json
-{
-  "Id": "CCC.C01",
-  "Description": "Requirement description",
-  "Name": "Requirement name",
-  "Checks": ["check_name"],
-  "Attributes": [
-    {
-      "FamilyName": "Cryptography & Key Management",
-      "FamilyDescription": "Family description",
-      "Section": "CCC.C01",
-      "SubSection": "Key Management",
-      "SubSectionObjective": "Objective description",
-      "Applicability": ["IaaS", "PaaS", "SaaS"],
-      "Recommendation": "Recommended action",
-      "SectionThreatMappings": [{"threat": "T1190"}],
-      "SectionGuidelineMappings": [{"guideline": "NIST"}]
-    }
-  ]
-}
-```
-
----
-
-### Prowler ThreatScore
-
-**Framework ID format:** `prowler_threatscore_{provider}` (e.g., `prowler_threatscore_aws`)
-
-Prowler ThreatScore is a custom security scoring framework developed by Prowler that evaluates AWS account security based on **four main pillars**:
-
-| Pillar | Description |
-|--------|-------------|
-| **1. IAM** | Identity and Access Management controls (authentication, authorization, credentials) |
-| **2. Attack Surface** | Network exposure, public resources, security group rules |
-| **3. Logging and Monitoring** | Audit logging, threat detection, forensic readiness |
-| **4. Encryption** | Data at rest and in transit encryption |
-
-**Scoring System:**
-- **LevelOfRisk** (1-5): Severity of the security issue
-  - `5` = Critical (e.g., root MFA, public S3 buckets)
-  - `4` = High (e.g., user MFA, public EC2)
-  - `3` = Medium (e.g., password policies, encryption)
-  - `2` = Low
-  - `1` = Informational
-- **Weight**: Impact multiplier for score calculation
-  - `1000` = Critical controls (root security, public exposure)
-  - `100` = High-impact controls (user authentication, monitoring)
-  - `10` = Standard controls (password policies, encryption)
-  - `1` = Low-impact controls (best practices)
-
-```json
-{
-  "Id": "1.1.1",
-  "Description": "Ensure MFA is enabled for the 'root' user account",
-  "Checks": ["iam_root_mfa_enabled"],
-  "Attributes": [
-    {
-      "Title": "MFA enabled for 'root'",
-      "Section": "1. IAM",
-      "SubSection": "1.1 Authentication",
-      "AttributeDescription": "The root user account holds the highest level of privileges within an AWS account. Enabling MFA enhances security by adding an additional layer of protection.",
-      "AdditionalInformation": "Enabling MFA enhances console security by requiring the authenticating user to both possess a time-sensitive key-generating device and have knowledge of their credentials.",
-      "LevelOfRisk": 5,
-      "Weight": 1000
-    }
-  ]
-}
-```
-
-**Available for providers:** AWS, Kubernetes, M365
-
----
-
-## Available Compliance Frameworks
-
-### AWS (41 frameworks)
-
-| Framework | File Name |
-|-----------|-----------|
-| CIS 1.4, 1.5, 2.0, 3.0, 4.0, 5.0 | `cis_{version}_aws.json` |
-| ISO 27001:2013, 2022 | `iso27001_{year}_aws.json` |
-| NIST 800-53 Rev 4, 5 | `nist_800_53_revision_{version}_aws.json` |
-| NIST 800-171 Rev 2 | `nist_800_171_revision_2_aws.json` |
-| NIST CSF 1.1, 2.0 | `nist_csf_{version}_aws.json` |
-| PCI DSS 3.2.1, 4.0 | `pci_{version}_aws.json` |
-| HIPAA | `hipaa_aws.json` |
-| GDPR | `gdpr_aws.json` |
-| SOC 2 | `soc2_aws.json` |
-| FedRAMP Low/Moderate | `fedramp_{level}_revision_4_aws.json` |
-| ENS RD2022 | `ens_rd2022_aws.json` |
-| MITRE ATT&CK | `mitre_attack_aws.json` |
-| C5 Germany | `c5_aws.json` |
-| CISA | `cisa_aws.json` |
-| FFIEC | `ffiec_aws.json` |
-| RBI Cyber Security | `rbi_cyber_security_framework_aws.json` |
-| AWS Well-Architected | `aws_well_architected_framework_{pillar}_pillar_aws.json` |
-| AWS FTR | `aws_foundational_technical_review_aws.json` |
-| GxP 21 CFR Part 11, EU Annex 11 | `gxp_{standard}_aws.json` |
-| KISA ISMS-P 2023 | `kisa_isms_p_2023_aws.json` |
-| NIS2 | `nis2_aws.json` |
-
-### Azure (15+ frameworks)
-
-| Framework | File Name |
-|-----------|-----------|
-| CIS 2.0, 2.1, 3.0, 4.0 | `cis_{version}_azure.json` |
-| ISO 27001:2022 | `iso27001_2022_azure.json` |
-| ENS RD2022 | `ens_rd2022_azure.json` |
-| MITRE ATT&CK | `mitre_attack_azure.json` |
-| PCI DSS 4.0 | `pci_4.0_azure.json` |
-| NIST CSF 2.0 | `nist_csf_2.0_azure.json` |
-
-### GCP (15+ frameworks)
-
-| Framework | File Name |
-|-----------|-----------|
-| CIS 2.0, 3.0, 4.0 | `cis_{version}_gcp.json` |
-| ISO 27001:2022 | `iso27001_2022_gcp.json` |
-| HIPAA | `hipaa_gcp.json` |
-| MITRE ATT&CK | `mitre_attack_gcp.json` |
-| PCI DSS 4.0 | `pci_4.0_gcp.json` |
-| NIST CSF 2.0 | `nist_csf_2.0_gcp.json` |
-
-### Kubernetes (6 frameworks)
-
-| Framework | File Name |
-|-----------|-----------|
-| CIS 1.8, 1.10, 1.11 | `cis_{version}_kubernetes.json` |
-| ISO 27001:2022 | `iso27001_2022_kubernetes.json` |
-| PCI DSS 4.0 | `pci_4.0_kubernetes.json` |
-
-### Other Providers
-- **GitHub:** `cis_1.0_github.json`
-- **M365:** `cis_4.0_m365.json`, `iso27001_2022_m365.json`
-- **NHN:** `iso27001_2022_nhn.json`
 
 ## Workflow A: Sync a Framework With an Upstream Catalog
 
-Use when the framework is maintained upstream (CIS Benchmarks, FINOS CCC, CSA CCM, NIST, ENS, etc.) and Prowler needs to catch up.
+Use when the framework is maintained upstream (CIS Benchmarks, FINOS CCC, CSA
+CCM, NIST, ENS, etc.) and Prowler needs to catch up.
 
 ### Step 1 — Cache the upstream source
 
-Download every upstream file to a local cache so subsequent iterations don't hit the network. For FINOS CCC:
+Download every upstream file to a local cache so iterations don't hit the
+network. For FINOS CCC:
 
 ```bash
 mkdir -p /tmp/ccc_upstream
@@ -563,492 +715,479 @@ done
 
 ### Step 2 — Run the generic sync runner against a framework config
 
-The sync tooling is split into three layers so adding a new framework only takes a YAML config (and optionally a new parser module for an unfamiliar upstream format):
+The sync tooling is three layers, so adding a framework only takes a YAML
+config (plus a parser module for an unfamiliar upstream format):
 
 ```text
 skills/prowler-compliance/assets/
 ├── sync_framework.py          # generic runner — works for any framework
-├── configs/
-│   └── ccc.yaml               # per-framework config (canonical example)
-└── parsers/
-    ├── __init__.py
-    └── finos_ccc.py           # parser module for FINOS CCC YAML
+├── configs/ccc.yaml           # per-framework config (canonical example)
+└── parsers/finos_ccc.py       # parser module for FINOS CCC YAML
 ```
-
-**For frameworks that already have a config + parser** (today: FINOS CCC), run:
 
 ```bash
 python skills/prowler-compliance/assets/sync_framework.py \
        skills/prowler-compliance/assets/configs/ccc.yaml
 ```
 
-The runner loads the config, validates it, dynamically imports the parser declared in `parser.module`, calls `parser.parse_upstream(config) -> list[dict]`, then applies generic post-processing (id uniqueness safety net, `FamilyName` normalization, legacy check-mapping preservation) and writes the provider JSONs.
+The runner loads the config, dynamically imports `parser.module`, calls
+`parse_upstream(config) -> list[dict]`, then applies generic post-processing
+(id-uniqueness safety net, `FamilyName` normalization, legacy check-mapping
+preservation with config-driven fallback keys) and writes the provider JSONs
+with Pydantic post-validation.
 
 **To add a new framework sync**:
 
-1. **Write a config file** at `skills/prowler-compliance/assets/configs/{framework}.yaml`. See `configs/ccc.yaml` as the canonical example. Required top-level sections:
-   - `framework` — `name`, `display_name`, `version` (**never empty** — empty Version silently breaks `get_check_compliance()` key construction, so the runner refuses to start), `description_template` (accepts `{provider_display}`, `{provider_key}`, `{framework_name}`, `{framework_display}`, `{version}` placeholders).
-   - `providers` — list of `{key, display}` pairs, one per Prowler provider the framework targets.
-   - `output.path_template` — supports `{provider}`, `{framework}`, `{version}` placeholders. Examples: `"prowler/compliance/{provider}/ccc_{provider}.json"` for unversioned file names, `"prowler/compliance/{provider}/cis_{version}_{provider}.json"` for versioned ones.
-   - `upstream.dir` — local cache directory (populate via Step 1).
-   - `parser.module` — name of the module under `parsers/` to load (without `.py`). Everything else under `parser.` is opaque to the runner and passed to the parser as config.
-   - `post_processing.check_preservation.primary_key` — top-level field name for the primary legacy-mapping lookup (almost always `Id`).
-   - `post_processing.check_preservation.fallback_keys` — **config-driven fallback keys** for preserving check mappings when ids change. Each entry is a list of `Attributes[0]` field names composed into a tuple. Examples:
-     - CCC: `- [Section, Applicability]` (because `Applicability` is a CCC-only attribute, verified in `compliance_models.py:213`).
-     - CIS would use `- [Section, Profile]`.
-     - NIST would use `- [ItemId]`.
-     - List-valued fields (like `Applicability`) are automatically frozen to `frozenset` so the tuple is hashable.
-   - `post_processing.family_name_normalization` (optional) — map of raw → canonical `FamilyName` values. The UI groups by `Attributes[0].FamilyName` exactly, so inconsistent upstream variants otherwise become separate tree branches.
+1. Write `assets/configs/{framework}.yaml` (see `ccc.yaml`). Required sections:
+   - `framework` — `name`, `display_name`, `version` (**never empty** — the
+     runner refuses to start, because empty Version breaks the
+     `get_check_compliance()` key), `description_template`.
+   - `providers` — list of `{key, display}` pairs.
+   - `output.path_template` — e.g.
+     `"prowler/compliance/{provider}/cis_{version}_{provider}.json"`.
+   - `upstream.dir` — local cache (Step 1).
+   - `parser.module` — module under `parsers/`; the rest of `parser.` is
+     passed through opaque.
+   - `post_processing.check_preservation.primary_key` (almost always `Id`) and
+     `fallback_keys` — lists of `Attributes[0]` field names composed into
+     tuples for recovering mappings when ids change. CCC:
+     `- [Section, Applicability]`; CIS: `- [Section, Profile]`; NIST:
+     `- [ItemId]`. List-valued fields are frozen to `frozenset` automatically.
+   - `post_processing.family_name_normalization` (optional) — raw → canonical
+     map; the UI groups by the exact attribute value, so upstream variants
+     otherwise become separate tree branches.
+2. Reuse an existing parser or write `parsers/{name}.py` implementing
+   `parse_upstream(config) -> list[dict]` returning Prowler-format
+   requirements with **guaranteed-unique ids**. The runner raises on
+   duplicates — it never silently renumbers, because mutating a canonical
+   upstream id (CIS `1.1.1`, NIST `AC-2(1)`) would be catastrophic. The parser
+   owns all upstream quirks: foreign-prefix rewriting, genuine collision
+   renumbering, multi-shape handling.
 
-2. **Reuse an existing parser** if the upstream format matches one (currently only `finos_ccc` exists). Otherwise, **write a new parser** at `parsers/{name}.py` implementing:
+**Gotchas the runner already handles** (from the FINOS CCC v2025.10 sync):
 
-   ```python
-   def parse_upstream(config: dict) -> list[dict]:
-       """Return Prowler-format requirements {Id, Description, Attributes: [...], Checks: []}.
-
-       Ids MUST be unique in the returned list. The runner raises ValueError
-       on duplicates — it does NOT silently renumber, because mutating a
-       canonical upstream id (e.g. CIS '1.1.1' or NIST 'AC-2(1)') would be
-       catastrophic. The parser owns all upstream-format quirks: foreign-prefix
-       rewriting, genuine collision renumbering, shape handling.
-       """
-   ```
-
-   The parser reads its own settings from `config['upstream']` and `config['parser']`. It does NOT load existing Prowler JSONs (the runner does that for check preservation) and does NOT write output (the runner does that too).
-
-**Gotchas the runner already handles for you** (learned from the FINOS CCC v2025.10 sync — they're documented here so you don't re-discover them):
-
-- **Multiple upstream YAML shapes**. Most FINOS CCC catalogs use `control-families: [...]`, but `storage/object` uses a top-level `controls: [...]` with a `family: "CCC.X.Y"` reference id and no human-readable family name. A parser that only handles shape 1 silently drops the shape-2 catalog — this exact bug dropped ObjStor from Prowler for a full iteration. `parsers/finos_ccc.py` handles both shapes; if you write a new parser for a similar format, test with at least one file of each shape.
-- **Whitespace collapse**. Upstream YAML multi-line block scalars (`|`) preserve newlines. Prowler stores descriptions single-line. Collapse with `" ".join(value.split())` before emitting (see `parsers/finos_ccc.py::clean()`).
-- **Foreign-prefix AR id rewriting**. Upstream sometimes aliases requirements across catalogs by keeping the original prefix (e.g., `CCC.AuditLog.CN08.AR01` appears nested under `CCC.Logging.CN03`). Rewrite the foreign id to fit its parent control: `CCC.Logging.CN03.AR01`. This logic is parser-specific because the id structure varies per framework (CCC uses 3-dot depth; CIS uses numeric dots; NIST uses `AC-2(1)`).
-- **Genuine upstream collision renumbering**. Sometimes upstream has a real typo where two different requirements share the same id (e.g., `CCC.Core.CN14.AR02` defined twice for 30-day and 14-day backup variants). Renumber the second copy to the next free AR number (`.AR03`). The parser handles this; the runner asserts the final list has unique ids as a safety net.
-- **Existing check mapping preservation**. The runner uses the `primary_key` + `fallback_keys` declared in config to look up the old `Checks` list for each requirement. For CCC this means primary index by `Id` plus fallback index by `(Section, frozenset(Applicability))` — the fallback recovers mappings for requirements whose ids were rewritten or renumbered by the parser.
-- **FamilyName normalization**. Configured via `post_processing.family_name_normalization` — no code changes needed to collapse upstream variants like `"Logging & Monitoring"` → `"Logging and Monitoring"`.
-- **Populate `Version`**. The runner refuses to start on empty `framework.version` — fail-fast replaces the silent bug where `get_check_compliance()` would build the key as just `"{Framework}"`.
+- **Multiple upstream YAML shapes.** Most FINOS CCC catalogs use
+  `control-families: [...]` but `storage/object` uses top-level
+  `controls: [...]`. A single-shape parser silently drops entire catalogs —
+  this exact bug dropped ObjStor for a full iteration. Test with one file of
+  each shape.
+- **Whitespace collapse.** Upstream `|` block scalars keep newlines; Prowler
+  stores single-line. Collapse with `" ".join(value.split())`.
+- **Foreign-prefix id rewriting.** Upstream aliases requirements across
+  catalogs keeping the original prefix (`CCC.AuditLog.CN08.AR01` nested under
+  `CCC.Logging.CN03`) — rewrite to fit the parent (`CCC.Logging.CN03.AR01`).
+- **Genuine upstream collisions.** Two different requirements sharing one id
+  (upstream typo): renumber the second to the next free number; check-mapping
+  preservation recovers by the fallback keys.
+- **Populate `Version`** — fail-fast beats the silent broken-key bug.
 
 ### Step 3 — Validate before committing
 
-```python
-from prowler.lib.check.compliance_models import Compliance
-for prov in ['aws', 'azure', 'gcp']:
-    c = Compliance.parse_file(f"prowler/compliance/{prov}/ccc_{prov}.json")
-    print(f"{prov}: {len(c.Requirements)} reqs, version={c.Version}")
-```
+Run the full Validation section below (universal loader + check existence +
+CLI smoke + pytest).
 
-Any `ValidationError` means the Attribute fields don't match the `*_Requirement_Attribute` model. Either fix the JSON or extend the model in `compliance_models.py` (remember: Generic stays last).
+### Step 4 — Add an attribute model if needed
 
-### Step 4 — Verify every check id exists
-
-```python
-import json
-from pathlib import Path
-for prov in ['aws', 'azure', 'gcp']:
-    existing = {p.stem.replace('.metadata','')
-                for p in Path(f'prowler/providers/{prov}/services').rglob('*.metadata.json')}
-    with open(f'prowler/compliance/{prov}/ccc_{prov}.json') as f:
-        data = json.load(f)
-    refs = {c for r in data['Requirements'] for c in r['Checks']}
-    missing = refs - existing
-    assert not missing, f"{prov} missing: {missing}"
-```
-
-A stale check id silently becomes dead weight — no finding will ever map to it. This pre-validation **must run on every write**; bake it into the generator script.
-
-### Step 5 — Add an attribute model if needed
-
-Only if the framework has fields beyond `Generic_Compliance_Requirement_Attribute`. Add the class to `prowler/lib/check/compliance_models.py` and register it in `Compliance_Requirement.Attributes: list[Union[...]]`. **Generic stays last.**
+Only if the framework has fields beyond
+`Generic_Compliance_Requirement_Attribute` and must stay legacy. Add the class
+to `compliance_models.py` and register it in the
+`Compliance_Requirement.Attributes` Union **before Generic** (Generic stays
+last). For new frameworks, prefer universal `attributes_metadata` instead.
 
 ---
 
 ## Workflow B: Audit Check Mappings as a Cloud Auditor
 
-Use when the user asks to review existing mappings ("are these correct?", "verify that the checks apply", "audit the CCC mappings"). This is the highest-value compliance task — it surfaces padded mappings with zero actual coverage and missing mappings for legitimate coverage.
+Use when the user asks to review existing mappings. This is the
+highest-value compliance task — it surfaces padded mappings with zero actual
+coverage and missing mappings for legitimate coverage.
 
 ### The golden rule
 
-> A Prowler check's title/risk MUST **literally describe what the requirement text says**. "Related" is not enough. If no check actually addresses the requirement, leave `Checks: []` (MANUAL) — **honest MANUAL is worth more than padded coverage**.
+> A Prowler check's title/risk MUST **literally describe what the requirement
+> text says**. "Related" is not enough. If no check actually addresses the
+> requirement, leave the checks list empty (MANUAL) — **honest MANUAL is worth
+> more than padded coverage**.
 
 ### Audit process
 
-**Step 1 — Build a per-provider check inventory** (cache in `/tmp/`):
+1. **Build a per-provider check inventory** — `assets/build_inventory.py`
+   (writes `/tmp/checks_{provider}.json` for every provider discovered under
+   `prowler/providers/`).
+2. **Query it** — `assets/query_checks.py`:
 
-```python
-import json
-from pathlib import Path
-for provider in ['aws', 'azure', 'gcp']:
-    inv = {}
-    for meta in Path(f'prowler/providers/{provider}/services').rglob('*.metadata.json'):
-        with open(meta) as f:
-            d = json.load(f)
-        cid = d.get('CheckID') or meta.stem.replace('.metadata','')
-        inv[cid] = {
-            'service': d.get('ServiceName', ''),
-            'title': d.get('CheckTitle', ''),
-            'risk': d.get('Risk', ''),
-            'description': d.get('Description', ''),
-        }
-    with open(f'/tmp/checks_{provider}.json', 'w') as f:
-        json.dump(inv, f, indent=2)
-```
+   ```bash
+   python assets/query_checks.py aws encryption transit    # keyword AND-search
+   python assets/query_checks.py aws --service iam         # all iam checks
+   python assets/query_checks.py aws --id kms_cmk_rotation_enabled
+   ```
 
-**Step 2 — Keyword/service query helper** — see [assets/query_checks.py](assets/query_checks.py):
+3. **Dump a framework section with current mappings** — `assets/dump_section.py`:
 
-```bash
-python assets/query_checks.py aws encryption transit    # keyword AND-search
-python assets/query_checks.py aws --service iam         # all iam checks
-python assets/query_checks.py aws --id kms_cmk_rotation_enabled  # full metadata
-```
+   ```bash
+   python assets/dump_section.py ccc "CCC.Core."
+   python assets/dump_section.py cis_5.0_aws "1."
+   ```
 
-**Step 3 — Dump a framework section with current mappings** — see [assets/dump_section.py](assets/dump_section.py):
+4. **Encode explicit REPLACE decisions** — `assets/audit_framework_template.py`:
 
-```bash
-python assets/dump_section.py ccc "CCC.Core."      # all Core ARs across 3 providers
-python assets/dump_section.py ccc "CCC.AuditLog."  # all AuditLog ARs
-```
+   ```python
+   DECISIONS = {}
+   DECISIONS["CCC.Core.CN01.AR01"] = {
+       "aws": ["cloudfront_distributions_https_enabled", ...],
+       "azure": ["storage_secure_transfer_required_is_enabled", ...],
+       "gcp": ["cloudsql_instance_ssl_connections"],
+       # Missing provider key = leave the legacy mapping untouched
+   }
+   # Empty list = EXPLICITLY MANUAL (overwrites legacy)
+   DECISIONS["CCC.Core.CN01.AR07"] = {"aws": [], "azure": [], "gcp": []}
+   ```
 
-**Step 4 — Encode explicit REPLACE decisions** — see [assets/audit_framework_template.py](assets/audit_framework_template.py). Structure:
+   **REPLACE, not PATCH.** Full lists make the audit reproducible and surface
+   hidden assumptions in the legacy data.
+5. **Pre-validate** every check id against the inventory; the script MUST
+   abort with stderr listing typos (real audits caught
+   `storage_secure_transfer_required_enabled` →
+   `storage_secure_transfer_required_is_enabled`,
+   `sqlserver_minimum_tls_version_12` →
+   `sqlserver_recommended_minimal_tls_version`, and several checks that
+   simply don't exist).
+6. **Apply + validate + test**:
 
-```python
-DECISIONS = {}
+   ```bash
+   python /path/to/audit_script.py
+   uv run pytest -n auto tests/lib/outputs/compliance/ tests/lib/check/ -q
+   ```
 
-DECISIONS["CCC.Core.CN01.AR01"] = {
-    "aws": [
-        "cloudfront_distributions_https_enabled",
-        "cloudfront_distributions_origin_traffic_encrypted",
-        # ...
-    ],
-    "azure": [
-        "storage_secure_transfer_required_is_enabled",
-        "app_minimum_tls_version_12",
-        # ...
-    ],
-    "gcp": [
-        "cloudsql_instance_ssl_connections",
-    ],
-    # Missing provider key = leave the legacy mapping untouched
-}
-
-# Empty list = EXPLICITLY MANUAL (overwrites legacy)
-DECISIONS["CCC.Core.CN01.AR07"] = {
-    "aws": [],   # Prowler has no IANA port/protocol check
-    "azure": [],
-    "gcp": [],
-}
-```
-
-**REPLACE, not PATCH.** Encoding every mapping as a full list (not add/remove delta) makes the audit reproducible and surfaces hidden assumptions from the legacy data.
-
-**Step 5 — Pre-validation**. The audit script MUST validate every check id against the inventory and **abort with stderr listing typos**. Common typos caught during a real audit:
-
-- `fsx_file_system_encryption_at_rest_using_kms` (doesn't exist)
-- `cosmosdb_account_encryption_at_rest_with_cmk` (doesn't exist)
-- `sqlserver_geo_replication` (doesn't exist)
-- `redshift_cluster_audit_logging` (should be `redshift_cluster_encrypted_at_rest`)
-- `postgresql_flexible_server_require_secure_transport` (should be `postgresql_flexible_server_enforce_ssl_enabled`)
-- `storage_secure_transfer_required_enabled` (should be `storage_secure_transfer_required_is_enabled`)
-- `sqlserver_minimum_tls_version_12` (should be `sqlserver_recommended_minimal_tls_version`)
-
-**Step 6 — Apply + validate + test**:
-
-```bash
-python /path/to/audit_script.py   # applies decisions, pre-validates
-python -m pytest tests/lib/outputs/compliance/ tests/lib/check/ -q
-```
-
-### Audit Reference Table: Requirement Text → Prowler Checks
-
-Use this table to map CCC-style / NIST-style / ISO-style requirements to the checks that actually verify them. Built from a real audit of 172 CCC ARs × 3 providers.
-
-| Requirement text | AWS checks | Azure checks | GCP checks |
-|---|---|---|---|
-| **TLS in transit enforced** | `cloudfront_distributions_https_enabled`, `s3_bucket_secure_transport_policy`, `elbv2_ssl_listeners`, `elbv2_insecure_ssl_ciphers`, `elb_ssl_listeners`, `elb_insecure_ssl_ciphers`, `opensearch_service_domains_https_communications_enforced`, `rds_instance_transport_encrypted`, `redshift_cluster_in_transit_encryption_enabled`, `elasticache_redis_cluster_in_transit_encryption_enabled`, `dynamodb_accelerator_cluster_in_transit_encryption_enabled`, `dms_endpoint_ssl_enabled`, `kafka_cluster_in_transit_encryption_enabled`, `transfer_server_in_transit_encryption_enabled`, `glue_database_connections_ssl_enabled`, `sns_subscription_not_using_http_endpoints` | `storage_secure_transfer_required_is_enabled`, `storage_ensure_minimum_tls_version_12`, `postgresql_flexible_server_enforce_ssl_enabled`, `mysql_flexible_server_ssl_connection_enabled`, `mysql_flexible_server_minimum_tls_version_12`, `sqlserver_recommended_minimal_tls_version`, `app_minimum_tls_version_12`, `app_ensure_http_is_redirected_to_https`, `app_ftp_deployment_disabled` | `cloudsql_instance_ssl_connections` (almost only option) |
-| **TLS 1.3 specifically** | Partial: `cloudfront_distributions_using_deprecated_ssl_protocols`, `elb*_insecure_ssl_ciphers`, `*_minimum_tls_version_12` | Partial: `*_minimum_tls_version_12` checks | None — accept as MANUAL |
-| **SSH / port 22 hardening** | `ec2_instance_port_ssh_exposed_to_internet`, `ec2_securitygroup_allow_ingress_from_internet_to_tcp_port_22`, `ec2_networkacl_allow_ingress_tcp_port_22` | `network_ssh_internet_access_restricted`, `vm_linux_enforce_ssh_authentication` | `compute_firewall_ssh_access_from_the_internet_allowed`, `compute_instance_block_project_wide_ssh_keys_disabled`, `compute_project_os_login_enabled`, `compute_project_os_login_2fa_enabled` |
-| **mTLS (mutual TLS)** | `kafka_cluster_mutual_tls_authentication_enabled`, `apigateway_restapi_client_certificate_enabled` | `app_client_certificates_on` | None — MANUAL |
-| **Data at rest encrypted** | `s3_bucket_default_encryption`, `s3_bucket_kms_encryption`, `ec2_ebs_default_encryption`, `ec2_ebs_volume_encryption`, `rds_instance_storage_encrypted`, `rds_cluster_storage_encrypted`, `rds_snapshots_encrypted`, `dynamodb_tables_kms_cmk_encryption_enabled`, `redshift_cluster_encrypted_at_rest`, `neptune_cluster_storage_encrypted`, `documentdb_cluster_storage_encrypted`, `opensearch_service_domains_encryption_at_rest_enabled`, `kinesis_stream_encrypted_at_rest`, `firehose_stream_encrypted_at_rest`, `sns_topics_kms_encryption_at_rest_enabled`, `sqs_queues_server_side_encryption_enabled`, `efs_encryption_at_rest_enabled`, `athena_workgroup_encryption`, `glue_data_catalogs_metadata_encryption_enabled`, `backup_vaults_encrypted`, `backup_recovery_point_encrypted`, `cloudtrail_kms_encryption_enabled`, `cloudwatch_log_group_kms_encryption_enabled`, `eks_cluster_kms_cmk_encryption_in_secrets_enabled`, `sagemaker_notebook_instance_encryption_enabled`, `apigateway_restapi_cache_encrypted`, `kafka_cluster_encryption_at_rest_uses_cmk`, `dynamodb_accelerator_cluster_encryption_enabled`, `storagegateway_fileshare_encryption_enabled` | `storage_infrastructure_encryption_is_enabled`, `storage_ensure_encryption_with_customer_managed_keys`, `vm_ensure_attached_disks_encrypted_with_cmk`, `vm_ensure_unattached_disks_encrypted_with_cmk`, `sqlserver_tde_encryption_enabled`, `sqlserver_tde_encrypted_with_cmk`, `databricks_workspace_cmk_encryption_enabled`, `monitor_storage_account_with_activity_logs_cmk_encrypted` | `compute_instance_encryption_with_csek_enabled`, `dataproc_encrypted_with_cmks_disabled`, `bigquery_dataset_cmk_encryption`, `bigquery_table_cmk_encryption` |
-| **CMEK required (customer-managed keys)** | `kms_cmk_are_used` | `storage_ensure_encryption_with_customer_managed_keys`, `vm_ensure_attached_disks_encrypted_with_cmk`, `vm_ensure_unattached_disks_encrypted_with_cmk`, `sqlserver_tde_encrypted_with_cmk`, `databricks_workspace_cmk_encryption_enabled` | `bigquery_dataset_cmk_encryption`, `bigquery_table_cmk_encryption`, `dataproc_encrypted_with_cmks_disabled`, `compute_instance_encryption_with_csek_enabled` |
-| **Key rotation enabled** | `kms_cmk_rotation_enabled` | `keyvault_key_rotation_enabled`, `storage_key_rotation_90_days` | `kms_key_rotation_enabled` |
-| **MFA for UI access** | `iam_root_mfa_enabled`, `iam_root_hardware_mfa_enabled`, `iam_user_mfa_enabled_console_access`, `iam_user_hardware_mfa_enabled`, `iam_administrator_access_with_mfa`, `cognito_user_pool_mfa_enabled` | `entra_privileged_user_has_mfa`, `entra_non_privileged_user_has_mfa`, `entra_user_with_vm_access_has_mfa`, `entra_security_defaults_enabled` | `compute_project_os_login_2fa_enabled` |
-| **API access / credentials** | `iam_no_root_access_key`, `iam_user_no_setup_initial_access_key`, `apigateway_restapi_authorizers_enabled`, `apigateway_restapi_public_with_authorizer`, `apigatewayv2_api_authorizers_enabled` | `entra_conditional_access_policy_require_mfa_for_management_api`, `app_function_access_keys_configured`, `app_function_identity_is_configured` | `apikeys_api_restrictions_configured`, `apikeys_key_exists`, `apikeys_key_rotated_in_90_days` |
-| **Log all admin/config changes** | `cloudtrail_multi_region_enabled`, `cloudtrail_multi_region_enabled_logging_management_events`, `cloudtrail_cloudwatch_logging_enabled`, `cloudtrail_log_file_validation_enabled`, `cloudwatch_log_metric_filter_*`, `cloudwatch_changes_to_*_alarm_configured`, `config_recorder_all_regions_enabled` | `monitor_diagnostic_settings_exists`, `monitor_diagnostic_setting_with_appropriate_categories`, `monitor_alert_*` | `iam_audit_logs_enabled`, `logging_log_metric_filter_and_alert_for_*`, `logging_sink_created` |
-| **Log integrity (digital signatures)** | `cloudtrail_log_file_validation_enabled` (exact) | None | None |
-| **Public access denied** | `s3_bucket_public_access`, `s3_bucket_public_list_acl`, `s3_bucket_public_write_acl`, `s3_account_level_public_access_blocks`, `apigateway_restapi_public`, `awslambda_function_url_public`, `awslambda_function_not_publicly_accessible`, `rds_instance_no_public_access`, `rds_snapshots_public_access`, `ec2_securitygroup_allow_ingress_from_internet_to_all_ports`, `sns_topics_not_publicly_accessible`, `sqs_queues_not_publicly_accessible` | `storage_blob_public_access_level_is_disabled`, `storage_ensure_private_endpoints_in_storage_accounts`, `containerregistry_not_publicly_accessible`, `keyvault_private_endpoints`, `app_function_not_publicly_accessible`, `aks_clusters_public_access_disabled`, `network_http_internet_access_restricted` | `cloudstorage_bucket_public_access`, `compute_instance_public_ip`, `cloudsql_instance_public_ip`, `compute_firewall_*_access_from_the_internet_allowed` |
-| **IAM least privilege** | `iam_*_no_administrative_privileges`, `iam_policy_allows_privilege_escalation`, `iam_inline_policy_allows_privilege_escalation`, `iam_role_administratoraccess_policy`, `iam_group_administrator_access_policy`, `iam_user_administrator_access_policy`, `iam_policy_attached_only_to_group_or_roles`, `iam_role_cross_service_confused_deputy_prevention` | `iam_role_user_access_admin_restricted`, `iam_subscription_roles_owner_custom_not_created`, `iam_custom_role_has_permissions_to_administer_resource_locks` | `iam_sa_no_administrative_privileges`, `iam_no_service_roles_at_project_level`, `iam_role_kms_enforce_separation_of_duties`, `iam_role_sa_enforce_separation_of_duties` |
-| **Password policy** | `iam_password_policy_minimum_length_14`, `iam_password_policy_uppercase`, `iam_password_policy_lowercase`, `iam_password_policy_symbol`, `iam_password_policy_number`, `iam_password_policy_expires_passwords_within_90_days_or_less`, `iam_password_policy_reuse_24` | None | None |
-| **Credential rotation / unused** | `iam_rotate_access_key_90_days`, `iam_user_accesskey_unused`, `iam_user_console_access_unused` | None | `iam_sa_user_managed_key_rotate_90_days`, `iam_sa_user_managed_key_unused`, `iam_service_account_unused` |
-| **VPC / flow logs** | `vpc_flow_logs_enabled` | `network_flow_log_captured_sent`, `network_watcher_enabled`, `network_flow_log_more_than_90_days` | `compute_subnet_flow_logs_enabled` |
-| **Backup / DR / Multi-AZ** | `backup_vaults_exist`, `backup_plans_exist`, `backup_reportplans_exist`, `rds_instance_backup_enabled`, `rds_*_protected_by_backup_plan`, `rds_cluster_multi_az`, `neptune_cluster_backup_enabled`, `documentdb_cluster_backup_enabled`, `efs_have_backup_enabled`, `s3_bucket_cross_region_replication`, `dynamodb_table_protected_by_backup_plan` | `vm_backup_enabled`, `vm_sufficient_daily_backup_retention_period`, `storage_geo_redundant_enabled` | `cloudsql_instance_automated_backups`, `cloudstorage_bucket_log_retention_policy_lock`, `cloudstorage_bucket_sufficient_retention_period` |
-| **Access analysis / discovery** | `accessanalyzer_enabled`, `accessanalyzer_enabled_without_findings` | None specific | `iam_account_access_approval_enabled`, `iam_cloud_asset_inventory_enabled` |
-| **Object lock / retention** | `s3_bucket_object_lock`, `s3_bucket_object_versioning`, `s3_bucket_lifecycle_enabled`, `cloudtrail_bucket_requires_mfa_delete`, `s3_bucket_no_mfa_delete` | `storage_ensure_soft_delete_is_enabled`, `storage_blob_versioning_is_enabled`, `storage_ensure_file_shares_soft_delete_is_enabled` | `cloudstorage_bucket_log_retention_policy_lock`, `cloudstorage_bucket_soft_delete_enabled`, `cloudstorage_bucket_versioning_enabled`, `cloudstorage_bucket_sufficient_retention_period` |
-| **Uniform bucket-level access** | `s3_bucket_acl_prohibited` | `storage_account_key_access_disabled`, `storage_default_to_entra_authorization_enabled` | `cloudstorage_bucket_uniform_bucket_level_access` |
-| **Container vulnerability scanning** | `ecr_registry_scan_images_on_push_enabled`, `ecr_repositories_scan_vulnerabilities_in_latest_image` | `defender_container_images_scan_enabled`, `defender_container_images_resolved_vulnerabilities` | `artifacts_container_analysis_enabled`, `gcr_container_scanning_enabled` |
-| **WAF / rate limiting** | `wafv2_webacl_with_rules`, `waf_*_webacl_with_rules`, `wafv2_webacl_logging_enabled`, `waf_global_webacl_logging_enabled` | None | None |
-| **Deployment region restriction** | `organizations_scp_check_deny_regions` | None | None |
-| **Secrets automatic rotation** | `secretsmanager_automatic_rotation_enabled`, `secretsmanager_secret_rotated_periodically` | `keyvault_rbac_secret_expiration_set`, `keyvault_non_rbac_secret_expiration_set` | None |
-| **Certificate management** | `acm_certificates_expiration_check`, `acm_certificates_with_secure_key_algorithms`, `acm_certificates_transparency_logs_enabled` | `keyvault_key_expiration_set_in_non_rbac`, `keyvault_rbac_key_expiration_set`, `keyvault_non_rbac_secret_expiration_set` | None |
-| **GenAI guardrails / input/output filtering** | `bedrock_guardrail_prompt_attack_filter_enabled`, `bedrock_guardrail_sensitive_information_filter_enabled`, `bedrock_agent_guardrail_enabled`, `bedrock_model_invocation_logging_enabled`, `bedrock_api_key_no_administrative_privileges`, `bedrock_api_key_no_long_term_credentials` | None | None |
-| **ML dev environment security** | `sagemaker_notebook_instance_root_access_disabled`, `sagemaker_notebook_instance_without_direct_internet_access_configured`, `sagemaker_notebook_instance_vpc_settings_configured`, `sagemaker_models_vpc_settings_configured`, `sagemaker_training_jobs_vpc_settings_configured`, `sagemaker_training_jobs_network_isolation_enabled`, `sagemaker_training_jobs_volume_and_output_encryption_enabled` | None | None |
-| **Threat detection / anomalous behavior** | `cloudtrail_threat_detection_enumeration`, `cloudtrail_threat_detection_privilege_escalation`, `cloudtrail_threat_detection_llm_jacking`, `guardduty_is_enabled`, `guardduty_no_high_severity_findings` | None | None |
-| **Serverless private access** | `awslambda_function_inside_vpc`, `awslambda_function_not_publicly_accessible`, `awslambda_function_url_public` | `app_function_not_publicly_accessible` | None |
-
-### What Prowler Does NOT Cover (accept MANUAL honestly)
-
-Don't pad mappings for these — mark `Checks: []` and move on:
-
-- **TLS 1.3 version specifically** — Prowler verifies TLS is enforced, not always the exact version
-- **IANA port-protocol consistency** — no check for "protocol running on its assigned port"
-- **mTLS on most Azure/GCP services** — limited to App Service client certs on Azure, nothing on GCP
-- **Rate limiting** on monitoring endpoints, load balancers, serverless invocations, vector ingestion
-- **Session cookie expiry** (LB stickiness)
-- **HTTP header scrubbing** (Server, X-Powered-By)
-- **Certificate transparency verification for imports**
-- **Model version pinning, red teaming, AI quality review**
-- **Vector embedding validation, dimensional constraints, ANN vs exact search**
-- **Secret region replication** (cross-region residency)
-- **Lifecycle cleanup policies on container registries**
-- **Row-level / column-level security in data warehouses**
-- **Deployment region restriction on Azure/GCP** (AWS has `organizations_scp_check_deny_regions`, others don't)
-- **Cross-tenant alert silencing permissions**
-- **Field-level masking in logs**
-- **Managed view enforcement for database access**
-- **Automatic MFA delete on all S3 buckets** (only CloudTrail bucket variant exists for some frameworks — AWS has the generic `s3_bucket_no_mfa_delete` though)
+For the curated mapping table (requirement text → AWS/Azure/GCP checks) and
+the list of controls Prowler genuinely cannot verify, see
+[references/check-mapping-reference.md](references/check-mapping-reference.md).
 
 ---
 
-## Workflow C: Add a New Output Formatter
+## Workflow C: Add a New Universal Framework
 
-Use when a new framework needs its own CSV columns or terminal table. Follow the c5/csa/ens layout exactly:
+1. Author `prowler/compliance/{framework}_{version}.json` following the
+   Universal Schema Reference above (use `dora_2022_2554.json` or
+   `csa_ccm_4.0.json` as template).
+2. Declare every attribute in `attributes_metadata` (with `required`/`enum`
+   where possible — that's your load-time validation) and a
+   `outputs.table_config.group_by`.
+3. Map checks per provider; add `config_requirements` (with `Provider`) for
+   configurable checks; leave empty lists for manual requirements — **include
+   every requirement of the source catalog** (coverage percentages depend on
+   the full denominator).
+4. Validate (section below). No Python registration of any kind is needed for
+   CLI table/CSV/OCSF.
+5. Optional first-class UI: mapper in `ui/lib/compliance/{framework}.tsx`,
+   registration in `getComplianceMappers()` under the JSON's `framework` value,
+   detail panel, `*AttributesMetadata` type, and icon (ordered keyword!). Until
+   then the generic mapper renders it.
+6. Optional API extras: CSV exporter entry in `COMPLIANCE_CLASS_MAP`; PDF
+   generator + `FRAMEWORK_REGISTRY` entry if a PDF is required.
+7. Tests: extend `tests/lib/check/universal_compliance_models_test.py` with a
+   case loading the new JSON. The parametrized `test_loads_as_universal`
+   already picks the file up automatically.
+8. Changelog fragment `prowler/changelog.d/<slug>.added.md` + user-guide
+   tutorial under `docs/user-guide/compliance/tutorials/` for high-profile
+   frameworks.
 
-```bash
-mkdir -p prowler/lib/outputs/compliance/{framework}
-touch prowler/lib/outputs/compliance/{framework}/__init__.py
-```
+## Workflow D: Add a New Legacy Output Formatter
 
-### Step 1 — Create `{framework}.py` (table dispatcher ONLY)
+Only for new members of an existing legacy family. Follow the `c5/` or `ccc/`
+layout exactly:
 
-Copy from `prowler/lib/outputs/compliance/c5/c5.py` and change the function name + framework string. The `diff` between your file and `c5.py` should be just those two lines. **No function docstring** — other frameworks don't have one, stay consistent.
+1. `mkdir prowler/lib/outputs/compliance/{framework}` with `__init__.py`.
+2. `{framework}.py` — copy `c5/c5.py`, change function name + framework
+   string; the diff should be just those lines. No docstring (legacy style).
+3. `models.py` — one Pydantic CSV row model per provider. Column sets differ
+   per provider (`AccountId`/`Region` vs `SubscriptionId`/`Location` vs
+   `ProjectId`/`Location`); per-provider files are the convention — don't
+   collapse them into a parameterized class, reviewers will reject it.
+4. `{framework}_{provider}.py` — `{Framework}_{Provider}(ComplianceOutput)`
+   with `transform()`; this file may import `Finding`.
+5. Register:
+   - `compliance.py` → `display_compliance_table()` `elif` branch (+ top import).
+   - `prowler/__main__.py` → per-provider `elif compliance_name.startswith(...)`
+     branches instantiating the writer classes.
+   - `api/src/backend/tasks/jobs/export.py` → `COMPLIANCE_CLASS_MAP` entries
+     (`startswith` for families, exact match only for true singletons).
+6. Tests under `tests/lib/outputs/compliance/{framework}/` + fixtures in
+   `tests/lib/outputs/compliance/fixtures.py` (1 evaluated + 1 manual
+   requirement to exercise both `transform()` paths).
 
-### Step 2 — Create `models.py`
+**Circular import warning**: the table file must not import `Finding` directly
+or transitively (cycle: `compliance.compliance` → table → `ComplianceOutput` →
+`Finding` → `get_check_compliance` → `compliance.compliance`). Keep it bare;
+use `TYPE_CHECKING`/function-local imports where both are genuinely needed.
 
-One Pydantic v2 `BaseModel` per provider. Field names become CSV column headers (public API — don't rename later without a migration).
+---
 
-```python
-from typing import Optional
-from pydantic import BaseModel
+## Validation (run before every commit)
 
-class {Framework}_AWSModel(BaseModel):
-    Provider: str
-    Description: str
-    AccountId: str
-    Region: str
-    AssessmentDate: str
-    Requirements_Id: str
-    Requirements_Description: str
-    # ... provider-specific columns
-    Status: str
-    StatusExtended: str
-    ResourceId: str
-    ResourceName: str
-    CheckId: str
-    Muted: bool
-```
+1. **Schema load (both formats)**:
 
-### Step 3 — Create `{framework}_{provider}.py` for each provider
+   ```python
+   from prowler.lib.check.compliance_models import (
+       load_compliance_framework_universal,
+       get_bulk_compliance_frameworks_universal,
+   )
+   fw = load_compliance_framework_universal("prowler/compliance/<file>.json")
+   assert fw is not None, "check logs for the ValidationError"
+   print(fw.framework, len(fw.requirements), fw.get_providers())
+   assert "<file_basename>" in get_bulk_compliance_frameworks_universal("aws")
+   ```
 
-Copy from `prowler/lib/outputs/compliance/c5/c5_aws.py` etc. Contains the `{Framework}_AWS(ComplianceOutput)` class with `transform()` that walks findings and emits model rows. This file IS allowed to import `Finding`.
+   Remember: the universal loader is lenient (skips broken files with a log
+   line) — an `assert fw is not None` is mandatory, a green scan is not proof.
 
-### Step 4 — Register everywhere
+2. **Check existence** — no loader validates this; a stale id is silent dead
+   weight:
 
-**`prowler/lib/outputs/compliance/compliance.py`** (CLI table dispatcher):
-```python
-from prowler.lib.outputs.compliance.{framework}.{framework} import get_{framework}_table
+   ```python
+   import json
+   from pathlib import Path
+   for prov in ["aws", "azure", "gcp"]:
+       real = {p.stem.replace(".metadata", "")
+               for p in Path(f"prowler/providers/{prov}/services").rglob("*.metadata.json")}
+       data = json.load(open(f"prowler/compliance/{prov}/<file>.json"))
+       refs = {c for r in data["Requirements"] for c in r["Checks"]}
+       missing = refs - real
+       assert not missing, f"{prov} missing: {missing}"
+   ```
 
-def display_compliance_table(...):
-    ...
-    elif compliance_framework.startswith("{framework}_"):
-        get_{framework}_table(findings, bulk_checks_metadata,
-                              compliance_framework, output_filename,
-                              output_directory, compliance_overview)
-```
+   (For universal files iterate `r["checks"][prov]` instead.)
 
-**`prowler/__main__.py`** (CLI output writer per provider):
-Add imports at the top:
-```python
-from prowler.lib.outputs.compliance.{framework}.{framework}_aws import {Framework}_AWS
-from prowler.lib.outputs.compliance.{framework}.{framework}_azure import {Framework}_Azure
-from prowler.lib.outputs.compliance.{framework}.{framework}_gcp import {Framework}_GCP
-```
-Add provider-specific `elif compliance_name.startswith("{framework}_"):` branches that instantiate the class and call `batch_write_data_to_file()`.
+3. **CLI smoke test**:
 
-**`api/src/backend/tasks/jobs/export.py`** (API export dispatcher):
-```python
-from prowler.lib.outputs.compliance.{framework}.{framework}_aws import {Framework}_AWS
-# ... azure, gcp
+   ```bash
+   uv run python prowler-cli.py <provider> --list-compliance          # appears?
+   uv run python prowler-cli.py <provider> --compliance <key> --log-level ERROR
+   ```
 
-COMPLIANCE_CLASS_MAP = {
-    "aws": [
-        # ...
-        (lambda name: name.startswith("{framework}_"), {Framework}_AWS),
-    ],
-    # ... azure, gcp
-}
-```
+   Verify the CSV under `output/compliance/`, the summary table sections, and
+   the findings roll-up.
 
-**Always use `startswith`**, never `name == "framework_aws"`. Exact match is a regression.
+4. **Tests**:
 
-### Step 5 — Add tests
+   ```bash
+   uv run pytest -n auto tests/lib/check/universal_compliance_models_test.py \
+     tests/lib/outputs/compliance/
+   ```
 
-Create `tests/lib/outputs/compliance/{framework}/` with `{framework}_aws_test.py`, `{framework}_azure_test.py`, `{framework}_gcp_test.py`. See the test template in [references/test_template.md](references/test_template.md).
+   `test_loads_as_universal` is parametrized over **every** JSON in
+   `prowler/compliance/` (top-level + subdirectories) — a malformed file fails
+   CI here even if you never wrote a dedicated test.
 
-Add fixtures to `tests/lib/outputs/compliance/fixtures.py`: one `Compliance` object per provider with 1 evaluated + 1 manual requirement to exercise both code paths in `transform()`.
+5. **What CI/pre-commit do and don't cover**: pre-commit only guarantees
+   well-formed/pretty JSON (`check-json`, `pretty-format-json`) — no semantic
+   validation. The workflow `.github/workflows/pr-check-compliance-mapping.yml`
+   flags PRs adding new checks without mapping them to any framework (label
+   `needs-compliance-review`; skip with label `no-compliance-check`). Semantic
+   validation happens in the pytest suite above and manually via
+   `skills/prowler-compliance-review/assets/validate_compliance.py` (note:
+   that validator assumes the **legacy** schema).
 
-### Circular import warning
-
-**The table dispatcher file (`{framework}.py`) MUST NOT import `Finding`** (directly or transitively). The cycle is:
-
-```text
-compliance.compliance imports get_{framework}_table
-  → {framework}.py imports ComplianceOutput
-  → compliance_output imports Finding
-  → finding imports get_check_compliance from compliance.compliance
-  → CIRCULAR
-```
-
-Keep `{framework}.py` bare — only `colorama`, `tabulate`, `prowler.config.config`. Put anything that imports `Finding` in the per-provider `{framework}_{provider}.py` files.
+6. **Prowler Local Server**: `docker compose up` and confirm the compliance
+   page renders requirements, sections and widgets.
 
 ---
 
 ## Conventions and Hard-Won Gotchas
 
-These are lessons from the FINOS CCC v2025.10 sync + 172-AR audit pass (April 2026). Learn them once; save days of debugging.
-
-1. **Per-provider files are non-negotiable.** Never collapse `{framework}_aws.py`, `{framework}_azure.py`, `{framework}_gcp.py` into a single parameterized class, no matter how DRY-tempting. Every other framework in the codebase follows the per-provider pattern and reviewers will reject the refactor. The CSV column names differ per provider — three classes is the convention.
-2. **`{framework}.py` has NO function docstring.** Other frameworks don't have them. Don't add one to be "helpful".
-3. **Circular import protection**: the table dispatcher file MUST NOT import `Finding` (directly or transitively). Split the code so `{framework}.py` only has `get_{framework}_table()` with bare imports, and `{framework}_{provider}.py` holds the class that needs `Finding`.
-4. **`Generic_Compliance_Requirement_Attribute` is the fallback** — in the `Compliance_Requirement.Attributes` Union in `compliance_models.py`, Generic MUST be LAST because Pydantic v1 tries union members in order. Putting Generic first means every framework-specific attribute falls through to Generic and the specific model is never used.
-5. **Pydantic v1 imports.** `from pydantic.v1 import BaseModel` in `compliance_models.py` — not v2. Mixing causes validation errors. Pydantic v2 is used in the CSV models (`models.py`) — that's fine because they're separate trees.
-6. **`get_check_compliance()` key format** is `f"{Framework}-{Version}"` ONLY if Version is set. Empty Version → key is `"{Framework}"` (no version suffix). Tests that mock compliance dicts must match this exact format — when a framework ships with `Version: ""`, downstream code and tests break silently.
-7. **CSV column names from `models.py` are public API.** Don't rename a field without migrating downstream consumers — CSV headers change.
-8. **Upstream YAML multi-line scalars** (`|` block scalars) preserve newlines. Collapse to single-line with `" ".join(value.split())` before writing to JSON.
-9. **Upstream catalogs can use multiple shapes.** FINOS CCC uses `control-families: [...]` in most catalogs but `controls: [...]` at the top level in `storage/object`. Any sync script must handle both or silently drop entire catalogs.
-10. **Foreign-prefix AR ids.** Upstream sometimes "imports" requirements from one catalog into another by keeping the original id prefix (e.g., `CCC.AuditLog.CN08.AR01` appearing under `CCC.Logging.CN03`). Prowler's compliance model requires unique ids within a catalog — rewrite the foreign id to fit the parent control: `CCC.AuditLog.CN08.AR01` (inside `CCC.Logging.CN03`) → `CCC.Logging.CN03.AR01`.
-11. **Genuine upstream id collisions.** Sometimes upstream has a real typo where two different requirements share the same id (e.g., `CCC.Core.CN14.AR02` defined twice for 30-day and 14-day backup variants). Renumber the second copy to the next free AR number. Preserve check mappings by matching on `(Section, frozenset(Applicability))` since the renumbered id won't match by id.
-12. **`COMPLIANCE_CLASS_MAP` in `export.py` uses `startswith` predicates** for all modern frameworks. Exact match (`name == "ccc_aws"`) is an anti-pattern — it was present for CCC until April 2026 and was the reason CCC couldn't have versioned variants.
-13. **Pre-validate every check id** against the per-provider inventory before writing the JSON. A typo silently creates an unreferenced check that will fail when findings try to map to it. The audit script MUST abort with stderr listing typos, not swallow them.
-14. **REPLACE is better than PATCH** for audit decisions. Encoding every mapping explicitly makes the audit reproducible and surfaces hidden assumptions from the legacy data. A PATCH system that adds/removes is too easy to forget.
-15. **When no check applies, MANUAL is correct.** Do not pad mappings with tangential checks "just in case". Prowler's compliance reports are meant to be actionable — padding them with noise breaks that. Honest manual reqs can be mapped later when new checks land.
-16. **UI groups by `Attributes[0].FamilyName` and `Attributes[0].Section`.** If FamilyName has inconsistent variants within the same JSON (e.g., "Logging & Monitoring" vs "Logging and Monitoring"), the UI renders them as separate categories. Section empty → the requirement falls into an orphan control with label "". Normalize before shipping.
-17. **Provider coverage is asymmetric.** AWS has dense coverage (~586 checks across 80+ services): in-transit encryption, IAM, database encryption, backup. Azure (~167 checks) and GCP (~102 checks) are thinner especially for in-transit encryption, mTLS, and ML/AI. Accept the asymmetry in mappings — don't force GCP parity where Prowler genuinely can't verify.
+1. **Universal first.** A new framework that starts as legacy needs 3 output
+   files + 3 registrations; the same framework as universal needs zero. Only
+   extend legacy families.
+2. **`Generic_Compliance_Requirement_Attribute` stays LAST** in the legacy
+   Attributes Union — Pydantic v1 tries members in order; Generic first
+   silently swallows every specific shape.
+3. **Pydantic v1 everywhere in `compliance_models.py`**
+   (`from pydantic.v1 import ...`). Don't mix in v2.
+4. **`get_check_compliance()` lives in
+   `prowler/lib/outputs/compliance/compliance_check.py`** and keys the dict
+   `f"{Framework}-{Version}"` only when Version is non-empty. Never ship
+   `Version: ""` — the key silently degrades to `"{Framework}"` and breaks
+   filters, tests and `--compliance`. For legacy files the filename version
+   substring must match `Version` (the CLI reads
+   `compliance_framework.split("_")[1]`).
+5. **`Compliance.get_bulk()` does not see top-level universal files** — only
+   `get_bulk_compliance_frameworks_universal()` does. Wire new code paths
+   against the universal loader.
+6. **Loader leniency differs**: legacy loader exits the process on a broken
+   JSON; universal loader logs and skips. A missing framework after your edit
+   usually means the universal loader dropped it — check the logs.
+7. **Circular import protection**: legacy table dispatcher files must not
+   import `Finding` (directly or transitively). Use `TYPE_CHECKING` or
+   function-local imports when a module needs both sides (that's how the
+   universal formatter does it).
+8. **Per-provider formatter files are the legacy convention** — but know the
+   exceptions before flagging them (iso27001 has no table file,
+   aws_well_architected has no per-provider files, cisa_scuba is
+   googleworkspace-only). CSV model field names are public API.
+9. **CSV output**: `;` delimiter, UPPERCASE headers. OCSF compliance output is
+   always generated for universal frameworks regardless of `--output-formats`.
+10. **`COMPLIANCE_CLASS_MAP` mixes predicate styles**: `startswith` for
+    multi-version families, exact `==` for singletons. When in doubt use
+    `startswith` — exact match blocked versioned CCC variants until 2026.
+11. **UI grouping is per-mapper, always on `attributes[0]`**: generic/cis →
+    `Section`/`SubSection`, iso → `Category`, ccc → `FamilyName`. Inconsistent
+    values (or empty Section) create orphan/duplicate tree branches — normalize
+    before shipping.
+12. **UI has a generic fallback** — an unregistered framework still renders.
+    A dedicated mapper/panel/icon is an upgrade, not a prerequisite.
+13. **Icon registration is ordered substring matching** in
+    `IconCompliance.tsx` — specific keywords before generic (`nist` before
+    `nis2`, `cisa` before `cis`, `aws` last).
+14. **API PDF pipeline is not `PDFConfig`-driven yet** — it has its own
+    `FRAMEWORK_REGISTRY` (5 frameworks). Don't assume adding `pdf_config` to a
+    JSON produces a PDF in Prowler App.
+15. **Pre-validate every check id** against the per-provider inventory before
+    writing JSON. No loader will catch a typo; the requirement just never
+    matches a finding.
+16. **REPLACE beats PATCH** for audit decisions — full explicit lists are
+    reproducible and surface legacy assumptions.
+17. **When no check applies, MANUAL is correct.** Don't pad mappings with
+    tangential checks; compliance reports must stay actionable.
+18. **Include every requirement of the source catalog**, automated or not —
+    compliance percentages use the full requirement count as denominator.
+19. **Provider coverage is asymmetric** (AWS dense; Azure/GCP thinner; new
+    providers minimal). Accept it — don't force parity Prowler can't verify.
+20. **Guardrail authoring**: strictest tolerated `Value`, exact `ConfigKey`
+    spelling, `Provider` mandatory in universal files, booleans as JSON
+    booleans. Malformed constraints are treated as satisfied — validate with
+    the config tests, don't trust silence.
 
 ---
 
 ## Useful One-Liners
 
 ```bash
-# Count requirements per service prefix (CCC, CIS sections, etc.)
-jq -r '.Requirements[].Id | split(".")[1]' prowler/compliance/aws/ccc_aws.json | sort | uniq -c
-
-# Find duplicate requirement IDs
+# Find duplicate requirement IDs (legacy | universal)
 jq -r '.Requirements[].Id' file.json | sort | uniq -d
+jq -r '.requirements[].id' file.json | sort | uniq -d
 
-# Count manual requirements (no checks)
+# Count manual requirements (legacy | universal, per provider)
 jq '[.Requirements[] | select((.Checks | length) == 0)] | length' file.json
+jq '[.requirements[] | select((.checks.aws // [] | length) == 0)] | length' file.json
 
-# List all unique check references in a framework
+# List unique check references (legacy | universal)
 jq -r '.Requirements[].Checks[]' file.json | sort -u
+jq -r '.requirements[].checks[]? | .[]' file.json | sort -u
 
-# List all unique Sections (to spot inconsistency)
+# Providers covered by a universal framework
+jq '[.requirements[].checks | keys[]] | unique' file.json
+
+# Spot inconsistent grouping values (UI tree branches)
 jq '[.Requirements[].Attributes[0].Section] | unique' file.json
-
-# List all unique FamilyNames (to spot inconsistency)
 jq '[.Requirements[].Attributes[0].FamilyName] | unique' file.json
 
-# Diff requirement ids between two versions of the same framework
+# Requirements with config guardrails
+jq '[.Requirements[] | select(.ConfigRequirements)] | length' file.json
+
+# Diff requirement ids between two versions
 diff <(jq -r '.Requirements[].Id' a.json | sort) <(jq -r '.Requirements[].Id' b.json | sort)
 
-# Find where a check id is used across all frameworks
+# Where is a check mapped across all frameworks?
 grep -rl "my_check_name" prowler/compliance/
 
-# Check if a Prowler check exists
+# Does a check exist?
 find prowler/providers/aws/services -name "{check_id}.metadata.json"
 
-# Validate a JSON with Pydantic
-python -c "from prowler.lib.check.compliance_models import Compliance; print(Compliance.parse_file('prowler/compliance/aws/ccc_aws.json').Framework)"
+# Validate one file with the universal loader
+python -c "from prowler.lib.check.compliance_models import load_compliance_framework_universal as l; fw=l('prowler/compliance/aws/cis_7.0_aws.json'); print(fw.framework, len(fw.requirements))"
 ```
-
----
-
-## Best Practices
-
-1. **Requirement IDs**: Follow the original framework numbering exactly (e.g., "1.1", "A.5.1", "T1190", "ac_2_1")
-2. **Check Mapping**: Map to existing checks when possible. Use `Checks: []` for manual-only requirements — honest MANUAL beats padded coverage
-3. **Completeness**: Include all framework requirements, even those without automated checks
-4. **Version Control**: Include framework version in `Name` and `Version` fields. **Never leave `Version: ""`** — it breaks `get_check_compliance()` key format
-5. **File Naming**: Use format `{framework}_{version}_{provider}.json`
-6. **Validation**: Prowler validates JSON against Pydantic models at startup — invalid JSON will cause errors
-7. **Pre-validate check ids** against the provider's `*.metadata.json` inventory before every commit
-8. **Normalize FamilyName and Section** to avoid inconsistent UI tree branches
-9. **Register everywhere**: SDK model (if needed) → `compliance.py` dispatcher → `__main__.py` CLI writer → `export.py` API map → UI mapper. Skipping any layer results in silent failures
-10. **Audit, don't pad**: when reviewing mappings, apply the golden rule — the check's title/risk MUST literally describe what the requirement text says. Tangential relation doesn't count
 
 ## Commands
 
 ```bash
-# List available frameworks for a provider
 prowler {provider} --list-compliance
-
-# Run scan with specific compliance framework
-prowler aws --compliance cis_5.0_aws
-
-# Run scan with multiple frameworks
-prowler aws --compliance cis_5.0_aws pci_4.0_aws
-
-# Output compliance report in multiple formats
-prowler aws --compliance cis_5.0_aws -M csv json html
+prowler {provider} --compliance cis_7.0_aws
+prowler aws --compliance cis_7.0_aws pci_4.0_aws
+prowler aws --compliance dora_2022_2554            # universal key = file basename
+prowler aws --list-compliance-requirements cis_7.0_aws
+prowler aws --compliance cis_7.0_aws -M csv json html
 ```
 
 ## Code References
 
 ### Layer 1 — SDK / Core
-- **Compliance Models:** `prowler/lib/check/compliance_models.py` (Pydantic v1 model tree)
-- **Compliance Processing / Linker:** `prowler/lib/check/compliance.py` (`get_check_compliance`, `update_checks_metadata_with_compliance`)
-- **Check Utils:** `prowler/lib/check/utils.py` (`list_compliance_modules`)
+
+- `prowler/lib/check/compliance_models.py` — legacy + universal model trees,
+  `Compliance_Requirement_ConfigConstraint`, all loaders and the
+  legacy→universal adapter
+- `prowler/lib/check/compliance.py` — `update_checks_metadata_with_compliance`
+- `prowler/lib/check/compliance_config_eval.py` — guardrail evaluation
+  (shared with the API)
+- `prowler/lib/outputs/compliance/compliance_check.py` — `get_check_compliance`
+- `prowler/lib/check/utils.py` — `list_compliance_modules`
 
 ### Layer 2 — JSON Catalogs
-- **Framework JSONs:** `prowler/compliance/{provider}/` (auto-discovered via directory walk)
+
+- `prowler/compliance/*.json` — universal, multi-provider (auto-discovered)
+- `prowler/compliance/{provider}/` — legacy, per-provider (auto-discovered)
 
 ### Layer 3 — Output Formatters
-- **Per-framework folders:** `prowler/lib/outputs/compliance/{framework}/`
-- **Shared base class:** `prowler/lib/outputs/compliance/compliance_output.py` (`ComplianceOutput` + `batch_write_data_to_file`)
-- **CLI table dispatcher:** `prowler/lib/outputs/compliance/compliance.py` (`display_compliance_table`)
-- **Finding model:** `prowler/lib/outputs/finding.py` (**do not import transitively from table dispatcher files — circular import**)
-- **CLI writer:** `prowler/__main__.py` (per-provider `elif compliance_name.startswith(...)` branches that instantiate per-provider classes)
+
+- `prowler/lib/outputs/compliance/universal/` — `universal_table.py`,
+  `universal_output.py`, `ocsf_compliance.py`
+- `prowler/lib/outputs/compliance/{framework}/` — legacy per-framework packages
+- `prowler/lib/outputs/compliance/compliance.py` —
+  `process_universal_compliance_frameworks`, `display_compliance_table`
+- `prowler/lib/outputs/compliance/compliance_output.py` — `ComplianceOutput`
+  base + CSV writer
+- `prowler/__main__.py` — universal processing + per-provider legacy writer
+  branches
 
 ### Layer 4 — API / UI
-- **API lazy loader:** `api/src/backend/api/compliance.py` (`LazyComplianceTemplate`, `LazyChecksMapping`)
-- **API export dispatcher:** `api/src/backend/tasks/jobs/export.py` (`COMPLIANCE_CLASS_MAP` with `startswith` predicates)
-- **UI framework router:** `ui/lib/compliance/compliance-mapper.ts`
-- **UI per-framework mapper:** `ui/lib/compliance/{framework}.tsx`
-- **UI detail panel:** `ui/components/compliance/compliance-custom-details/{framework}-details.tsx`
-- **UI types:** `ui/types/compliance.ts`
-- **UI icon:** `ui/components/icons/compliance/{framework}.svg` + registration in `IconCompliance.tsx`
+
+- `api/src/backend/api/compliance.py` — `LazyComplianceTemplate`,
+  `LazyChecksMapping`, cache warm-up
+- `api/src/backend/tasks/jobs/export.py` — `COMPLIANCE_CLASS_MAP`
+- `api/src/backend/tasks/jobs/scan.py` — `create_compliance_requirements`
+  (overview ingestion)
+- `api/src/backend/tasks/jobs/reports/` — PDF generators + `FRAMEWORK_REGISTRY`
+- `ui/lib/compliance/compliance-mapper.ts` — mapper routing + generic fallback
+- `ui/lib/compliance/{framework}.tsx` — per-framework mappers
+- `ui/components/compliance/compliance-custom-details/` — detail panels
+- `ui/types/compliance.ts` — attribute metadata types
+- `ui/components/icons/compliance/` + `IconCompliance.tsx` — icons (ordered)
 
 ### Tests
-- **Output formatter tests:** `tests/lib/outputs/compliance/{framework}/{framework}_{provider}_test.py`
-- **Shared fixtures:** `tests/lib/outputs/compliance/fixtures.py`
+
+- `tests/lib/check/universal_compliance_models_test.py` — includes the
+  parametrized `test_loads_as_universal` over every shipped JSON
+- `tests/lib/check/compliance_check_test.py`,
+  `compliance_config_eval_test.py`, `compliance_config_constraint_model_test.py`,
+  `compliance_config_requirements_data_test.py`, `mitre_config_requirements_test.py`
+- `tests/lib/outputs/compliance/` — per-framework + universal + dispatcher +
+  config-status coverage tests; shared `fixtures.py`
 
 ## Resources
 
-- **JSON Templates:** See [assets/](assets/) for framework JSON templates (cis, ens, iso27001, mitre_attack, prowler_threatscore, generic)
-- **Config-driven compliance sync** (any upstream-backed framework):
-  - [assets/sync_framework.py](assets/sync_framework.py) — generic runner. Loads a YAML config, dynamically imports the declared parser, applies generic post-processing (id uniqueness safety net, `FamilyName` normalization, legacy check-mapping preservation with config-driven fallback keys), and writes the provider JSONs with Pydantic post-validation. Framework-agnostic — works for any compliance framework.
-  - [assets/configs/ccc.yaml](assets/configs/ccc.yaml) — canonical config example (FINOS CCC v2025.10). Copy and adapt for new frameworks.
-  - [assets/parsers/finos_ccc.py](assets/parsers/finos_ccc.py) — FINOS CCC YAML parser. Handles both upstream shapes (`control-families` and top-level `controls`), foreign-prefix AR rewriting, and genuine collision renumbering. Exposes `parse_upstream(config) -> list[dict]`.
-  - [assets/parsers/](assets/parsers/) — add new parser modules here for unfamiliar upstream formats (NIST OSCAL JSON, MITRE STIX, CIS Benchmarks, etc.). Each parser is a `{name}.py` file implementing `parse_upstream(config) -> list[dict]` with guaranteed-unique ids.
-- **Reusable audit tooling** (added April 2026 after the FINOS CCC v2025.10 sync):
-  - [assets/audit_framework_template.py](assets/audit_framework_template.py) — explicit REPLACE decision ledger with pre-validation against the per-provider inventory. Drop-in template for auditing any framework.
-  - [assets/query_checks.py](assets/query_checks.py) — keyword/service/id query helper over `/tmp/checks_{provider}.json`.
-  - [assets/dump_section.py](assets/dump_section.py) — dumps every AR for a given id prefix across all 3 providers with current check mappings.
-  - [assets/build_inventory.py](assets/build_inventory.py) — generates `/tmp/checks_{provider}.json` from `*.metadata.json` files.
-- **Documentation:** See [references/compliance-docs.md](references/compliance-docs.md) for additional resources
-- **Related skill:** [prowler-compliance-review](../prowler-compliance-review/SKILL.md) — PR review checklist and validator script for compliance framework PRs
+- **Docs (source of truth for contributors)**:
+  `docs/developer-guide/security-compliance-framework.mdx` (both schemas,
+  guardrails, validation, PR process),
+  `docs/user-guide/compliance/tutorials/compliance.mdx`,
+  `docs/user-guide/compliance/tutorials/cross-provider-compliance.mdx`
+- **Repo tooling** (`util/compliance/`): CSV→JSON generators
+  (`generate_json_from_csv/`), `ccc/from_yaml_to_json.py`,
+  `compliance_mapper/`, `threatscore/`
+- **Skill assets** ([assets/](assets/)):
+  - `sync_framework.py` + `configs/ccc.yaml` + `parsers/finos_ccc.py` —
+    config-driven upstream sync (Workflow A)
+  - `build_inventory.py`, `query_checks.py`, `dump_section.py`,
+    `audit_framework_template.py` — audit tooling (Workflow B)
+  - Legacy JSON templates: `cis_framework.json`, `ens_framework.json`,
+    `iso27001_framework.json`, `mitre_attack_framework.json`,
+    `prowler_threatscore_framework.json`, `generic_framework.json`
+- **References**:
+  [references/compliance-docs.md](references/compliance-docs.md) — model/loader
+  quick reference;
+  [references/check-mapping-reference.md](references/check-mapping-reference.md)
+  — curated requirement-text → checks mapping table + honest-MANUAL list
+- **Sister skill**:
+  [prowler-compliance-review](../prowler-compliance-review/SKILL.md) — PR
+  review checklist + `validate_compliance.py` (legacy-schema validator)
+- After editing this skill's frontmatter, run
+  `./skills/skill-sync/assets/sync.sh` to regenerate the AGENTS.md auto-invoke
+  tables.
