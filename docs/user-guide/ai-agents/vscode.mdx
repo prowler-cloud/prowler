@@ -1,0 +1,170 @@
+---
+title: "Connect VS Code and GitHub Copilot to Prowler MCP Server"
+sidebarTitle: "VS Code / Copilot"
+---
+
+Connect [Visual Studio Code](https://code.visualstudio.com/docs/agents/reference/mcp-configuration) and GitHub Copilot agent mode to the Prowler Cloud MCP Server at `https://mcp.prowler.com/mcp` so Copilot can query findings, inspect security checks, and manage your Prowler providers.
+
+## Prerequisites
+
+- **VS Code 1.102 or later.** MCP support became generally available in 1.102.
+- **GitHub Copilot** enabled, with access to agent mode.
+- **A Prowler Cloud account.** The free tier is enough to start. Sign up at [cloud.prowler.com](https://cloud.prowler.com).
+
+## Step 1: Get Your Prowler API Key
+
+Create an API key in Prowler Cloud and copy it. The key begins with `pk_` and is shown only once. Check the [API Keys](/user-guide/tutorials/prowler-app-api-keys#creating-api-keys) guide for details.
+
+## Step 2: Add the Prowler MCP Server
+
+VS Code stores MCP servers in an `mcp.json` file. Choose the scope that fits your use case:
+
+| Scope | How to open it | Applies to |
+|-------|----------------|------------|
+| **User** | Command palette → **MCP: Open User Configuration** | Every workspace |
+| **Workspace** | `.vscode/mcp.json` in the project root | That workspace only |
+
+For Prowler, the **user** scope is usually the right choice — your findings are not tied to a single repository, and it keeps the API key out of any project directory that might be committed.
+
+<Steps>
+  <Step title="Open the MCP configuration">
+    Open the command palette with `Cmd + Shift + P` (macOS) or `Ctrl + Shift + P` (Windows/Linux), then run **MCP: Open User Configuration**.
+
+    VS Code opens your user-level `mcp.json`. Use this command rather than navigating to the file by hand — the file lives inside your active profile folder, and the path differs per profile.
+
+    <Frame>
+      <img src="/images/prowler-mcp/vscode/vscode-command-palette.png" alt="VS Code command palette showing the MCP: Open User Configuration command" />
+    </Frame>
+  </Step>
+
+  <Step title="Add the Prowler configuration">
+    Paste the following. This version prompts you for the API key on first use and stores it securely, so the key is never written into the file:
+
+    ```json
+    {
+      "inputs": [
+        {
+          "type": "promptString",
+          "id": "prowler-api-key",
+          "description": "Prowler API Key",
+          "password": true
+        }
+      ],
+      "servers": {
+        "prowler": {
+          "type": "http",
+          "url": "https://mcp.prowler.com/mcp",
+          "headers": {
+            "Authorization": "Bearer ${input:prowler-api-key}"
+          }
+        }
+      }
+    }
+    ```
+
+    Save the file.
+
+    <Frame>
+      <img src="/images/prowler-mcp/vscode/vscode-mcp-json.png" alt="VS Code editor showing the completed mcp.json with the Prowler server entry" />
+    </Frame>
+  </Step>
+
+  <Step title="Enter your API key">
+    Start the server. VS Code prompts for the Prowler API key. Paste it and press Enter — VS Code stores it securely and does not ask again.
+
+    <Frame>
+      <img src="/images/prowler-mcp/vscode/vscode-input-prompt.png" alt="VS Code prompting for the Prowler API Key with a masked input field" />
+    </Frame>
+  </Step>
+</Steps>
+
+<Warning>
+**The root key is `servers`, not `mcpServers`.** VS Code uses a different schema from Cursor, Claude, and most other clients. Copying a `mcpServers` snippet from elsewhere silently fails to register the server.
+</Warning>
+
+<Note>
+**Local server:** Replace the URL with your own HTTP endpoint. Everything else stays the same.
+</Note>
+
+### Alternative: Hardcode the Key
+
+If you prefer not to be prompted, write the key directly. Only do this in the **user**-scoped file, never in a `.vscode/mcp.json` that could be committed:
+
+```json
+{
+  "servers": {
+    "prowler": {
+      "type": "http",
+      "url": "https://mcp.prowler.com/mcp",
+      "headers": {
+        "Authorization": "Bearer pk_your_api_key_here"
+      }
+    }
+  }
+}
+```
+
+### Alternative: Use the Guided Flow
+
+Instead of editing JSON, run **MCP: Add Server** from the command palette, choose **HTTP**, enter `https://mcp.prowler.com/mcp`, name the server `prowler`, and pick **Global** or **Workspace**. Add the `headers` block afterwards, since the guided flow does not prompt for custom headers.
+
+## Step 3: Verify the Connection
+
+Run **MCP: List Servers** from the command palette. The `prowler` server should appear as running.
+
+<Frame>
+  <img src="/images/prowler-mcp/vscode/vscode-list-servers.png" alt="VS Code MCP: List Servers output showing the Prowler server running" />
+</Frame>
+
+Select the server to start, stop, or restart it, and to view its output log if the connection fails.
+
+## Step 4: Start Using Prowler MCP
+
+Open the Chat view and switch the mode selector to **Agent**. Click the tools icon to confirm the Prowler tools are available, then ask:
+
+- *"Show me all critical findings from my AWS accounts"*
+- *"What does the S3 bucket public access check do?"*
+- *"Summarize my CIS compliance status by provider"*
+
+<Frame>
+  <img src="/images/prowler-mcp/vscode/vscode-agent-tools.png" alt="VS Code Copilot Chat in agent mode showing the Prowler tools in the tools picker" />
+</Frame>
+
+Copilot asks for confirmation before running an MCP tool for the first time.
+
+## Troubleshooting
+
+### Server Does Not Appear
+
+- Confirm the root key is `servers`, not `mcpServers`.
+- Confirm each server entry has `"type": "http"`.
+- Check that `mcp.json` is valid JSON.
+- Verify your VS Code version is 1.102 or later.
+
+### Authentication Fails With 401
+
+- Verify the header value includes the `Bearer ` prefix.
+- Confirm the key has not been revoked in Prowler Cloud.
+- If you mistyped the key at the prompt, run **MCP: List Servers**, select `prowler`, and restart it to be prompted again.
+
+### Tools Do Not Appear in Chat
+
+- Make sure the Chat view is in **Agent** mode. MCP tools are not available in Ask mode.
+- Open the tools picker and confirm the Prowler tools are enabled.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Tools Reference" icon="wrench" href="/getting-started/basic-usage/prowler-mcp-tools">
+    Explore all available tools and capabilities
+  </Card>
+  <Card title="All MCP Clients" icon="plug" href="/getting-started/basic-usage/prowler-mcp">
+    Configuration reference for every supported client
+  </Card>
+</CardGroup>
+
+## Getting Help
+
+- Search for existing [GitHub issues](https://github.com/prowler-cloud/prowler/issues)
+- Ask for help in our [Slack community](https://goto.prowler.com/slack)
+- Report a new issue on [GitHub](https://github.com/prowler-cloud/prowler/issues/new)
