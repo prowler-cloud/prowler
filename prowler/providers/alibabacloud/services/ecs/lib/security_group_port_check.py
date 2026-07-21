@@ -1,6 +1,7 @@
 from collections.abc import Collection
 
 from prowler.lib.check.models import Check, CheckReportAlibabaCloud
+from prowler.providers.alibabacloud.services.ecs.ecs_service import ECS
 from prowler.providers.alibabacloud.services.ecs.lib.security_groups import (
     format_ports,
     get_publicly_exposed_tcp_ports,
@@ -10,8 +11,19 @@ ALL_PORTS_CHECK_ID = "ecs_securitygroup_restrict_all_ports_internet"
 
 
 def execute_public_port_check(
-    check: Check, ecs_client, check_ports: Collection[int], service_name: str
+    check: Check, ecs_client: ECS, check_ports: Collection[int], service_name: str
 ) -> list[CheckReportAlibabaCloud]:
+    """Run a TCP port exposure check against every Alibaba Cloud security group.
+
+    Args:
+        check: The calling check instance for metadata access.
+        ecs_client: The Alibaba Cloud ECS client providing security group data.
+        check_ports: Collection of TCP port numbers to verify.
+        service_name: Human-readable service name used in status messages.
+
+    Returns:
+        list[CheckReportAlibabaCloud]: One report per security group.
+    """
     findings = []
     configured_ports = format_ports(check_ports)
     port_word = "port" if len(check_ports) == 1 else "ports"
