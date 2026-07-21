@@ -10,10 +10,11 @@ import {
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import { LighthouseOverviewBanner } from "./_overview/_components/lighthouse-overview-banner";
+import { OverviewBanner } from "./_overview/_components/overview-banner";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
 import {
   AttackSurfaceSkeleton,
@@ -63,11 +64,18 @@ export default async function Home({
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
 
-      {lighthouseBannerHref ? (
-        <div className="mb-6">
-          <LighthouseOverviewBanner href={lighthouseBannerHref} />
+      {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
+          local server the agents banner is the only child and fills the row. */}
+      <div className="mb-6 flex flex-col gap-6 lg:flex-row">
+        {lighthouseBannerHref ? (
+          <div className="min-w-0 lg:flex-1">
+            <OverviewBanner variant="lighthouse" href={lighthouseBannerHref} />
+          </div>
+        ) : null}
+        <div className="min-w-0 lg:flex-1">
+          <OverviewBanner variant="agents" href={DOCS_URLS.AI_AGENTS} />
         </div>
-      ) : null}
+      </div>
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>

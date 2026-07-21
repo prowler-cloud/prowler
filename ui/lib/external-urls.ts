@@ -15,6 +15,8 @@ export const DOCS_URLS = {
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-scan-configuration",
   ATTACK_PATHS_CUSTOM_QUERIES:
     "https://docs.prowler.com/user-guide/tutorials/prowler-app-attack-paths#writing-custom-opencypher-queries",
+  AI_AGENTS:
+    "https://prowler-docs-add-agents-config.mintlify.site/user-guide/ai-agents/",
 } as const;
 
 // CloudFormation template URL for the ProwlerScan role.

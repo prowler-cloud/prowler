@@ -581,8 +581,8 @@
     bottom: 3rem !important;
   }
 
-  /* Lighthouse overview banner animated gradient layers */
-  .lighthouse-banner-gradient-neutral {
+  /* Overview banner animated gradient layers */
+  .overview-banner-gradient-neutral {
     background: radial-gradient(
         circle at center,
         var(--bg-neutral-tertiary) 0,
@@ -591,7 +591,7 @@
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary {
+  .overview-banner-gradient-primary {
     background: radial-gradient(
         circle at center,
         var(--bg-button-primary) 0,
@@ -600,7 +600,7 @@
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary-hover {
+  .overview-banner-gradient-primary-hover {
     background: radial-gradient(
         circle at center,
         var(--bg-button-primary-hover) 0,
@@ -609,7 +609,7 @@
       no-repeat;
   }
 
-  .lighthouse-banner-gradient-primary-press {
+  .overview-banner-gradient-primary-press {
     background: radial-gradient(
         circle at center,
         var(--bg-button-primary-press) 0,
