@@ -184,7 +184,7 @@ describe("LighthousePanelChat", () => {
     expect(
       await screen.findByRole("textbox", { name: "Message" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Recent chats")).toBeInTheDocument();
+    expect(await screen.findByText("Recent chats")).toBeInTheDocument();
     expect(
       await screen.findByText("Counting critical findings"),
     ).toBeInTheDocument();
