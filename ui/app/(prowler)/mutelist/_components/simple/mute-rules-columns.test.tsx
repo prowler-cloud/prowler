@@ -4,11 +4,11 @@ import { describe, expect, it, vi } from "vitest";
 
 import { createMuteRulesColumns } from "./mute-rules-columns";
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   DateWithTime: () => null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
 }));
 

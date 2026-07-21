@@ -150,3 +150,93 @@ describe("addCredentialsFormSchema - okta", () => {
     );
   });
 });
+
+describe("addCredentialsFormSchema - kubernetes", () => {
+  const BASE_KUBERNETES_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-kubernetes-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "kubernetes",
+  } as const;
+
+  it("accepts kubeconfig content without exec authentication", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      token: test-token`,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("reports kubeconfig exec authentication on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      exec:
+        apiVersion: client.authentication.k8s.io/v1
+        command: kubectl`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+      }),
+    );
+  });
+
+  it("accepts malformed kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "apiVersion: [",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts non-mapping kubeconfig content for backend validation", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: "[]",
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("addCredentialsFormSchema - oraclecloud", () => {
+  const BASE_OCI_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-oci-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "oraclecloud",
+    [ProviderCredentialFields.OCI_USER]: "ocid1.user.oc1..example",
+    [ProviderCredentialFields.OCI_FINGERPRINT]: "aa:bb:cc:dd",
+    [ProviderCredentialFields.OCI_KEY_CONTENT]:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----",
+    [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
+  } as const;
+
+  it("accepts OCI API key credentials without region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(true);
+  });
+});

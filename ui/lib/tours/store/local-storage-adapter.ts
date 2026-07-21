@@ -1,4 +1,5 @@
 import type { TourCompletionRecord, TourId } from "../tour-types";
+
 import type { TourCompletionStore } from "./tour-completion-store";
 
 // All records share ONE localStorage key, keyed by `<id>.v<version>`.

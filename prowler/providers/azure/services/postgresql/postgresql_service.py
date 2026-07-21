@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
+from azure.core.exceptions import ResourceNotFoundError
 from azure.mgmt.postgresqlflexibleservers import PostgreSQLManagementClient
 
 from prowler.lib.logger import logger
@@ -19,64 +20,77 @@ class PostgreSQL(AzureService):
         for subscription, client in self.clients.items():
             try:
                 flexible_servers.update({subscription: []})
-                flexible_servers_list = client.servers.list()
+                flexible_servers_list = self.list_with_rg_scope(
+                    subscription,
+                    client.servers.list,
+                    client.servers.list_by_resource_group,
+                )
+
                 for postgresql_server in flexible_servers_list:
-                    resource_group = self._get_resource_group(postgresql_server.id)
-                    # Fetch full server object once to extract multiple properties
-                    server_details = client.servers.get(
-                        resource_group, postgresql_server.name
-                    )
-                    require_secure_transport = self._get_require_secure_transport(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    active_directory_auth = self._extract_active_directory_auth(
-                        server_details
-                    )
-                    entra_id_admins = self._get_entra_id_admins(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    log_checkpoints = self._get_log_checkpoints(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    log_disconnections = self._get_log_disconnections(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    log_connections = self._get_log_connections(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    connection_throttling = self._get_connection_throttling(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    log_retention_days = self._get_log_retention_days(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    firewall = self._get_firewall(
-                        subscription, resource_group, postgresql_server.name
-                    )
-                    location = server_details.location
-                    backup = getattr(server_details, "backup", None)
-                    ha = getattr(server_details, "high_availability", None)
-                    flexible_servers[subscription].append(
-                        Server(
-                            id=postgresql_server.id,
-                            name=postgresql_server.name,
-                            resource_group=resource_group,
-                            location=location,
-                            require_secure_transport=require_secure_transport,
-                            active_directory_auth=active_directory_auth,
-                            entra_id_admins=entra_id_admins,
-                            log_checkpoints=log_checkpoints,
-                            log_connections=log_connections,
-                            log_disconnections=log_disconnections,
-                            connection_throttling=connection_throttling,
-                            log_retention_days=log_retention_days,
-                            firewall=firewall,
-                            geo_redundant_backup=getattr(
-                                backup, "geo_redundant_backup", None
-                            ),
-                            high_availability_mode=getattr(ha, "mode", None),
+                    # Isolate each server: a failure collecting one server must
+                    # not abort collection of the remaining servers in the
+                    # subscription.
+                    try:
+                        resource_group = self._get_resource_group(postgresql_server.id)
+                        # Fetch full server object once to extract multiple properties
+                        server_details = client.servers.get(
+                            resource_group, postgresql_server.name
                         )
-                    )
+                        require_secure_transport = self._get_require_secure_transport(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        active_directory_auth = self._extract_active_directory_auth(
+                            server_details
+                        )
+                        entra_id_admins = self._get_entra_id_admins(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        log_checkpoints = self._get_log_checkpoints(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        log_disconnections = self._get_log_disconnections(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        log_connections = self._get_log_connections(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        connection_throttling = self._get_connection_throttling(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        log_retention_days = self._get_log_retention_days(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        firewall = self._get_firewall(
+                            subscription, resource_group, postgresql_server.name
+                        )
+                        location = server_details.location
+                        backup = getattr(server_details, "backup", None)
+                        ha = getattr(server_details, "high_availability", None)
+                        flexible_servers[subscription].append(
+                            Server(
+                                id=postgresql_server.id,
+                                name=postgresql_server.name,
+                                resource_group=resource_group,
+                                location=location,
+                                require_secure_transport=require_secure_transport,
+                                active_directory_auth=active_directory_auth,
+                                entra_id_admins=entra_id_admins,
+                                log_checkpoints=log_checkpoints,
+                                log_connections=log_connections,
+                                log_disconnections=log_disconnections,
+                                connection_throttling=connection_throttling,
+                                log_retention_days=log_retention_days,
+                                firewall=firewall,
+                                geo_redundant_backup=getattr(
+                                    backup, "geo_redundant_backup", None
+                                ),
+                                high_availability_mode=getattr(ha, "mode", None),
+                            )
+                        )
+                    except Exception as error:
+                        logger.error(
+                            f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
             except Exception as error:
                 logger.error(
                     f"Subscription ID: {subscription} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -166,33 +180,50 @@ class PostgreSQL(AzureService):
                 logger.error(f"Error getting Entra ID admins for {server_name}: {e}")
             return []
 
-    def _get_connection_throttling(self, subscription, resouce_group_name, server_name):
+    def _get_connection_throttling(
+        self, subscription: str, resouce_group_name: str, server_name: str
+    ) -> Optional[str]:
+        """Get the ``connection_throttle.enable`` setting for a flexible server.
+
+        The ``connection_throttle.enable`` server parameter was removed in
+        PostgreSQL 16+, so it no longer exists on newer flexible servers. When
+        the parameter is genuinely absent the Azure SDK raises
+        ``ResourceNotFoundError`` (error code ``ConfigurationNotExists``); that
+        case is treated as "not enabled" and ``None`` is returned so collection
+        of the server can continue.
+
+        Any other error (permissions, throttling, transient SDK failures) is
+        intentionally left to propagate: returning ``None`` for those would make
+        the downstream check report the server as having connection throttling
+        disabled, silently turning a collection failure into a security finding.
+
+        Args:
+            subscription: Azure subscription identifier.
+            resouce_group_name: Resource group containing the server.
+            server_name: PostgreSQL flexible server name.
+
+        Returns:
+            The uppercased throttling value, or ``None`` when the parameter does
+            not exist on the server.
+
+        Raises:
+            ResourceNotFoundError is handled; any other exception propagates to
+            the caller so it can be surfaced as a collection failure.
+        """
         client = self.clients[subscription]
         try:
             connection_throttling = client.configurations.get(
                 resouce_group_name, server_name, "connection_throttle.enable"
             )
             return connection_throttling.value.upper()
-        except Exception as error:
-            message = str(error).lower()
-            if "connection_throttle.enable" in message and (
-                "not exist" in message or "not found" in message
-            ):
-                # The "connection_throttle.enable" parameter does not exist on
-                # newer PostgreSQL versions (e.g. v18); this is expected.
-                return None
-            # Any other failure is a genuine problem: surface it, but still
-            # degrade gracefully instead of aborting the subscription inventory.
-            logger.error(
-                f"Error getting connection throttling for {server_name}: {error}"
-            )
+        except ResourceNotFoundError:
             return None
 
     def _get_log_retention_days(self, subscription, resouce_group_name, server_name):
         client = self.clients[subscription]
         try:
             log_retention_days = client.configurations.get(
-                resouce_group_name, server_name, "log_retention_days"
+                resouce_group_name, server_name, "logfiles.retention_days"
             )
             log_retention_days = log_retention_days.value
         except Exception:

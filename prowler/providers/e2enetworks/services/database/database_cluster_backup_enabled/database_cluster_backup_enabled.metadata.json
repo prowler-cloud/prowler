@@ -1,0 +1,36 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "database_cluster_backup_enabled",
+  "CheckTitle": "E2E Networks database clusters have automated backups enabled",
+  "CheckType": [],
+  "ServiceName": "database",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "database",
+  "Description": "**E2E Networks database clusters** should have automated backups enabled so data can be restored after failures, corruption, or accidental deletion. Automated backups capture point-in-time copies of the cluster on a recurring schedule.",
+  "Risk": "Database clusters without backups are vulnerable to permanent **data loss** from hardware failures, corruption, or accidental deletion, with no way to recover to a prior state.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/database/rds/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **automated backups** on every database cluster that does not currently have them configured, and validate that backups can be restored.",
+      "Url": "https://hub.prowler.com/check/database_cluster_backup_enabled"
+    }
+  },
+  "Categories": [
+    "resilience"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -2,6 +2,7 @@ import sys
 from io import TextIOWrapper
 
 import markdown
+from markupsafe import escape
 
 from prowler.config.config import (
     html_logo_url,
@@ -1386,6 +1387,46 @@ class HTML(Output):
                             </li>
                             <li class="list-group-item">
                                 <b>Authentication Method:</b> Service Account with Domain-Wide Delegation
+                            </li>
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
+    def get_e2enetworks_assessment_summary(provider: Provider) -> str:
+        """Get the HTML assessment summary for the E2E Networks provider."""
+        try:
+            locations = escape(", ".join(provider.identity.locations))
+            project_id = escape(str(provider.identity.project_id))
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Project ID:</b> {project_id}
+                            </li>
+                            <li class="list-group-item">
+                                <b>Locations:</b> {locations}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            E2E Networks Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item">
+                                <b>Authentication:</b> API Key + Bearer Token
                             </li>
                         </ul>
                     </div>

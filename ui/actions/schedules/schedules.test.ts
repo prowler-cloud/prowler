@@ -35,6 +35,7 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 import {
   getSchedule,
+  getSchedulesPage,
   removeSchedule,
   updateSchedule,
   updateSchedulesBulk,
@@ -210,5 +211,55 @@ describe("schedule write actions revalidate only on success", () => {
       error: "Invalid provider id.",
     });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("getSchedulesPage delegates pagination to the endpoint", () => {
+  beforeEach(() => {
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+    fetchMock.mockResolvedValue(new Response(null, { status: 200 }));
+    handleApiErrorMock.mockReturnValue({ error: "Failed" });
+  });
+
+  it("requests only configured schedules with native pagination and include", async () => {
+    handleApiResponseMock.mockResolvedValue({
+      data: [],
+      included: [],
+      meta: { pagination: { page: 2, pages: 4, count: 35 } },
+    });
+
+    const result = await getSchedulesPage({
+      page: 2,
+      pageSize: 10,
+      sort: "next_scan_at",
+      filters: { "filter[provider_type__in]": "aws,azure" },
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(calledUrl.pathname).toBe("/api/v1/schedules");
+    expect(calledUrl.searchParams.get("filter[configured]")).toBe("true");
+    expect(calledUrl.searchParams.get("include")).toBe("provider");
+    expect(calledUrl.searchParams.get("page[number]")).toBe("2");
+    expect(calledUrl.searchParams.get("page[size]")).toBe("10");
+    expect(calledUrl.searchParams.get("sort")).toBe("next_scan_at");
+    expect(calledUrl.searchParams.get("filter[provider_type__in]")).toBe(
+      "aws,azure",
+    );
+    // meta is propagated verbatim so the table paginates natively.
+    expect(result?.meta?.pagination?.count).toBe(35);
+  });
+
+  it("normalizes array filter values into a CSV param", async () => {
+    handleApiResponseMock.mockResolvedValue({ data: [], meta: {} });
+
+    await getSchedulesPage({
+      filters: { "filter[provider__in]": ["id-1", "id-2"] },
+    });
+
+    const calledUrl = new URL(fetchMock.mock.calls[0][0] as string);
+    expect(calledUrl.searchParams.get("filter[provider__in]")).toBe(
+      "id-1,id-2",
+    );
   });
 });

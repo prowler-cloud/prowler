@@ -11,19 +11,21 @@ import {
   saveScheduleWithInitialScan,
 } from "@/components/scans/schedule/save-schedule";
 import { ScanScheduleFields } from "@/components/scans/schedule/scan-schedule-fields";
-import { Field, FieldLabel } from "@/components/shadcn";
+import { Field, FieldLabel, ToastAction, useToast } from "@/components/shadcn";
+import { Badge } from "@/components/shadcn/badge/badge";
+import { EntityInfo } from "@/components/shadcn/entities";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { TreeStatusIcon } from "@/components/shadcn/tree-view/tree-status-icon";
+import { UsageLimitMessage } from "@/components/shared/usage-limit-message";
 import {
-  CloudFeatureBadge,
-  CloudFeatureBadgeLink,
-} from "@/components/shared/cloud-feature-badge";
-import { ToastAction, useToast } from "@/components/ui";
-import { EntityInfo } from "@/components/ui/entities";
+  type ActionErrorResult,
+  getActionErrorMessage,
+  hasActionError,
+} from "@/lib/action-errors";
 import {
   getScanScheduleCapability,
   getScheduleFormDefaults,
@@ -88,17 +90,19 @@ export function LaunchStep({
   const capability = capabilityProp ?? getScanScheduleCapability(isCloud());
   const isManualOnly = capability === SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY;
   const isAdvanced = capability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
+  const isDailyLegacy = capability === SCAN_SCHEDULE_CAPABILITY.DAILY_LEGACY;
   const isBlocked = capability === SCAN_SCHEDULE_CAPABILITY.BLOCKED;
+  const canUseScheduleMode = isAdvanced || isDailyLegacy;
   const [isLaunching, setIsLaunching] = useState(false);
   const [mode, setMode] = useState<LaunchMode>(
-    isAdvanced ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
+    canUseScheduleMode ? LAUNCH_MODE.SCHEDULE : LAUNCH_MODE.NOW,
   );
   const form = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleFormSchema),
     defaultValues: getScheduleFormDefaults(),
   });
 
-  const isScheduleMode = isAdvanced && mode === LAUNCH_MODE.SCHEDULE;
+  const isScheduleMode = canUseScheduleMode && mode === LAUNCH_MODE.SCHEDULE;
   const isLimitBlocked = mode === LAUNCH_MODE.NOW && isScanLimitReached;
   const isActionBlocked =
     isLaunching ||
@@ -124,12 +128,12 @@ export function LaunchStep({
   })();
 
   useEffect(() => {
-    if (!isAdvanced && mode !== LAUNCH_MODE.NOW) {
+    if (!canUseScheduleMode && mode !== LAUNCH_MODE.NOW) {
       setMode(LAUNCH_MODE.NOW);
     }
-  }, [isAdvanced, mode]);
+  }, [canUseScheduleMode, mode]);
 
-  const launchOnDemandScan = async (): Promise<{ error?: unknown } | null> => {
+  const launchOnDemandScan = async (): Promise<ActionErrorResult | null> => {
     if (!providerId || isBlocked) return null;
     const formData = new FormData();
     formData.set("providerId", providerId);
@@ -144,12 +148,12 @@ export function LaunchStep({
     setIsLaunching(true);
     const scanResult = await launchOnDemandScan();
 
-    if (scanResult?.error) {
+    if (hasActionError(scanResult)) {
       setIsLaunching(false);
       toast({
         variant: "destructive",
         title: "Unable to launch scan",
-        description: String(scanResult.error),
+        description: getActionErrorMessage(scanResult),
       });
       return;
     }
@@ -289,11 +293,11 @@ export function LaunchStep({
 
       <div className="flex items-center gap-3">
         <TreeStatusIcon status={TREE_ITEM_STATUS.SUCCESS} className="size-6" />
-        <h3 className="text-sm font-semibold">Account Connected!</h3>
+        <h3 className="text-sm font-semibold">Provider Connected!</h3>
       </div>
 
       <p className="text-text-neutral-secondary text-sm">
-        Your account is connected to Prowler and ready to Scan!
+        Your provider is connected to Prowler and ready to Scan!
       </p>
 
       {!providerId && (
@@ -322,33 +326,26 @@ export function LaunchStep({
             <RadioGroupItem
               value={LAUNCH_MODE.SCHEDULE}
               aria-label="On a schedule"
-              disabled={!isAdvanced}
+              disabled={!canUseScheduleMode}
             />
             On a schedule
-            {!isAdvanced &&
-              !isBlocked &&
-              (isManualOnly ? (
-                <CloudFeatureBadge label="Requires subscription" size="sm" />
-              ) : (
-                <CloudFeatureBadgeLink size="sm" />
-              ))}
+            {isManualOnly && !isBlocked && (
+              <Badge variant="warning" size="sm">
+                Requires subscription
+              </Badge>
+            )}
           </label>
         </RadioGroup>
       </Field>
 
-      {!isAdvanced && !isBlocked && (
+      {isManualOnly && !isBlocked && (
         <p className="text-text-neutral-secondary text-sm">
           Scheduled scans are not available for this account. Run now to get
           immediate findings.
         </p>
       )}
 
-      {(isLimitBlocked || isBlocked) && (
-        <p className="text-text-error-primary text-sm">
-          You have reached your scan limit, so additional scans are not
-          available right now.
-        </p>
-      )}
+      {(isLimitBlocked || isBlocked) && <UsageLimitMessage />}
 
       {isScheduleMode && (
         <ScanScheduleFields
@@ -356,6 +353,8 @@ export function LaunchStep({
           disabled={isLaunching || !providerId}
           showLaunchInitialScan
           showNextScheduledCopy
+          canUseAdvancedSchedule={isAdvanced}
+          showCloudUpgradeBadge={isDailyLegacy}
         />
       )}
     </div>

@@ -11,10 +11,14 @@ import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
-import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
+import { Button, useToast } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
+import {
+  addProviderFormSchema,
+  ApiError,
+  KnownProviderType,
+  ProviderType,
+} from "@/types";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -156,7 +160,7 @@ function applyBackStep({
 
   setPrevStep((prev) => prev - 1);
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType, {
+    form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
     setAwsMethod(null);

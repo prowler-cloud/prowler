@@ -4,9 +4,9 @@ title: "Installation"
 
 ### Installation
 
-Prowler App offers flexible installation methods tailored to various environments.
+Prowler Local Server offers flexible installation methods tailored to various environments.
 
-Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detailed usage instructions.
+Refer to the [Prowler Cloud guide](/user-guide/tutorials/prowler-app) for detailed usage instructions.
 
 <Warning>
   Prowler configuration is based on `.env` files. Every version of Prowler can have differences on that file, so, please, use the file that corresponds with that version or repository branch or tag.
@@ -109,17 +109,17 @@ Refer to the [Prowler App Tutorial](/user-guide/tutorials/prowler-app) for detai
     pnpm start
     ```
 
-    > Enjoy Prowler App at http://localhost:3000 by signing up with your email and password.
+    > Enjoy Prowler Local Server at http://localhost:3000 by signing up with your email and password.
 
     <Warning>
-      Google and GitHub authentication is only available in [Prowler Cloud](https://prowler.com).
+      Google and GitHub authentication works out of the box in [Prowler Cloud](https://prowler.com). In Prowler Local Server it requires OAuth credentials: see [Social Login Configuration](/user-guide/tutorials/prowler-app-social-login).
     </Warning>
   </Tab>
 </Tabs>
 
-### Updating Prowler App
+### Updating Prowler Local Server
 
-Upgrade Prowler App installation using one of two options:
+Upgrade Prowler Local Server installation using one of two options:
 
 #### Option 1: Updating the Environment File
 
@@ -128,12 +128,12 @@ To update the environment file:
 Edit the `.env` file and change version values:
 
 ```env
-PROWLER_UI_VERSION="5.30.0"
-PROWLER_API_VERSION="5.30.0"
+PROWLER_UI_VERSION="5.35.0"
+PROWLER_API_VERSION="5.35.0"
 ```
 
 <Note>
-  You can find the latest versions of Prowler App in the [Releases Github section](https://github.com/prowler-cloud/prowler/releases) or in the [Container Versions](#container-versions) section of this documentation.
+  You can find the latest versions of Prowler Local Server in the [Releases Github section](https://github.com/prowler-cloud/prowler/releases) or in the [Container Versions](#container-versions) section of this documentation.
 </Note>
 
 
@@ -172,7 +172,7 @@ docker compose up -d
 
 ### Container Versions
 
-The available versions of Prowler App are the following:
+The available versions of Prowler Local Server are the following:
 
 - `latest`: in sync with `master` branch (please note that it is not a stable version)
 - `v4-latest`: in sync with `v4` branch (please note that it is not a stable version)
@@ -184,6 +184,6 @@ The available versions of Prowler App are the following:
 
 The container images are available here:
 
-- Prowler App:
+- Prowler Local Server:
   - [DockerHub - Prowler UI](https://hub.docker.com/r/prowlercloud/prowler-ui/tags)
   - [DockerHub - Prowler API](https://hub.docker.com/r/prowlercloud/prowler-api/tags)

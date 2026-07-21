@@ -11,7 +11,7 @@ import {
   triggerDiscovery,
   updateOrganizationSecret,
 } from "@/actions/organizations/organizations";
-import { getSelectableAccountIds } from "@/actions/organizations/organizations.adapter";
+import { getSelectableAccountIdsForTarget } from "@/actions/organizations/organizations.adapter";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { DISCOVERY_STATUS, DiscoveryResult } from "@/types/organizations";
 
@@ -43,6 +43,9 @@ interface OrgSetupSubmissionData {
   organizationName?: string;
   awsOrgId: string;
   roleArn: string;
+  // OU or root ID the StackSet was deployed to. Used to scope the default
+  // account selection to what was actually rolled out.
+  organizationalUnitId?: string;
 }
 
 interface UseOrgSetupSubmissionProps {
@@ -295,8 +298,15 @@ export function useOrgSetupSubmission({
         return;
       }
 
-      const selectableAccountIds = getSelectableAccountIds(
+      // The deployment (management/delegated admin) account is where the local
+      // role is created; its ID is the one embedded in the Role ARN.
+      const deploymentAccountId = data.roleArn.match(
+        /^arn:aws:iam::(\d{12}):role\//,
+      )?.[1];
+      const selectableAccountIds = getSelectableAccountIdsForTarget(
         resolvedDiscoveryResult,
+        data.organizationalUnitId ?? "",
+        deploymentAccountId,
       );
       setDiscovery(discoveryId, resolvedDiscoveryResult);
       setSelectedAccountIds(selectableAccountIds);

@@ -19,3 +19,8 @@ export function readEnv(
 
   return clean(env[primary]) ?? (legacy ? clean(env[legacy]) : null);
 }
+
+// Reads a runtime boolean flag.
+export function readBoolEnv(key: keyof NodeJS.ProcessEnv): boolean {
+  return (readEnv(key) ?? "").trim() === "true";
+}

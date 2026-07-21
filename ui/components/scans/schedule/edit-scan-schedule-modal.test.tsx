@@ -26,7 +26,7 @@ vi.mock("@/actions/schedules", () => ({
   updateSchedulesBulk: updateSchedulesBulkMock,
 }));
 
-vi.mock("@/components/ui/toast", () => ({
+vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
 }));
 
@@ -40,7 +40,7 @@ vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities", () => ({
+vi.mock("@/components/shadcn/entities", () => ({
   EntityInfo: ({
     badge,
     cloudProvider,
@@ -80,6 +80,11 @@ vi.mock("@/components/shadcn/modal", () => ({
     ) : null,
 }));
 
+import {
+  ACTION_ERROR_API_MESSAGES,
+  ACTION_ERROR_MESSAGES,
+  ACTION_ERROR_STATUS,
+} from "@/lib/action-errors";
 import type { ScheduleProps } from "@/types/schedules";
 
 import {
@@ -290,6 +295,59 @@ describe("EditScanScheduleModal remove flow", () => {
         description: "The scan schedule was updated for 3 providers.",
       }),
     );
+  });
+
+  it("uses the shared subscription error copy when saving is blocked", async () => {
+    const user = userEvent.setup();
+    updateScheduleMock.mockResolvedValue({
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+
+    renderLoaded();
+
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).not.toBeInTheDocument();
+  });
+
+  it("uses the shared subscription error copy when removing is blocked", async () => {
+    const user = userEvent.setup();
+    removeScheduleMock.mockResolvedValue({
+      error: ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      status: ACTION_ERROR_STATUS.PAYMENT_REQUIRED,
+    });
+    renderLoaded();
+
+    await user.click(
+      screen.getByRole("button", { name: /remove scan schedule/i }),
+    );
+    const confirmDialog = screen.getByRole("dialog", {
+      name: "Are you absolutely sure?",
+    });
+    await user.click(
+      within(confirmDialog).getByRole("button", { name: "Remove" }),
+    );
+
+    expect(
+      await screen.findByText(
+        ACTION_ERROR_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(
+        ACTION_ERROR_API_MESSAGES[ACTION_ERROR_STATUS.PAYMENT_REQUIRED],
+      ),
+    ).not.toBeInTheDocument();
   });
 
   it("shows one logo per selected provider type in bulk mode", () => {

@@ -47,7 +47,7 @@
 
   <!-- Deploy badge -->
   <rect x="115" y="400" width="270" height="28" rx="14" fill="#FFF3E0" stroke="#F9AB00" stroke-width="1.5"/>
-  <text x="250" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#E65100">Deploy: Quick Create link or Manual</text>
+  <text x="250" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#E65100">Deploy: single stack or standalone</text>
 
   <!-- ===== Prowler Cloud connector ===== -->
   <rect x="490" y="195" width="120" height="36" rx="8" fill="#F5F5F5" stroke="#E0E0E0" stroke-width="1"/>
@@ -86,7 +86,7 @@
 
   <!-- Deploy badge -->
   <rect x="735" y="400" width="230" height="28" rx="14" fill="#E8F5E9" stroke="#66BB6A" stroke-width="1.5"/>
-  <text x="850" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#2E7D32">Deploy: via CloudFormation StackSet</text>
+  <text x="850" y="419" text-anchor="middle" font-size="12" font-weight="700" fill="#2E7D32">Deploy: StackSet (single stack)</text>
 
   <!-- Footer labels -->
   <text x="250" y="478" text-anchor="middle" font-size="14" font-weight="700" fill="#4285F4">Prowler discovers</text>

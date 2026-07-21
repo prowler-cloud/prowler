@@ -5,10 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from api.sse.utils import tenant_id_from_channel
 from django_eventstream.channelmanager import DefaultChannelManager
 from rest_framework.request import Request
-
-from api.sse.utils import tenant_id_from_channel
 
 if TYPE_CHECKING:
     from api.models import User
@@ -17,7 +16,7 @@ if TYPE_CHECKING:
 class SSEChannelManager(DefaultChannelManager):
     """Connect `django-eventstream` to the platform's SSE viewsets."""
 
-    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:  # noqa: vulture
+    def get_channels_for_request(self, request: Request, view_kwargs: dict) -> set[str]:
         """Return the request's channels scoped to the active JWT tenant.
 
         Args:
@@ -31,6 +30,7 @@ class SSEChannelManager(DefaultChannelManager):
             The subset of `request.sse_channels` whose embedded tenant
             matches the active request tenant.
         """
+        _ = view_kwargs
         try:
             request_tenant_id = UUID(str(getattr(request, "tenant_id", None)))
         except (TypeError, ValueError):
@@ -41,7 +41,7 @@ class SSEChannelManager(DefaultChannelManager):
             if tenant_id_from_channel(channel) == request_tenant_id
         }
 
-    def can_read_channel(self, user: "User | None", channel: str) -> bool:
+    def can_read_channel(self, user: User | None, channel: str) -> bool:
         """Re-verify tenant membership once the stream is established.
 
         Args:

@@ -2,7 +2,107 @@
 
 All notable changes to the **Prowler UI** are documented in this file.
 
-## [1.31.0] (Prowler UNRELEASED)
+<!-- changelog: release notes start -->
+
+## [1.35.0] (Prowler v5.35.0)
+
+### 🔄 Changed
+
+- AWS Organizations onboarding now deploys the management account role and the member-account StackSet from a single CloudFormation stack, replacing the manual StackSet console step [(#11927)](https://github.com/prowler-cloud/prowler/pull/11927)
+- Dynamic providers can now be renamed and deleted from the Providers table [(#11957)](https://github.com/prowler-cloud/prowler/pull/11957)
+- Sidebar navigation with grouped sections, clearer active states, and a responsive mobile overlay [(#11994)](https://github.com/prowler-cloud/prowler/pull/11994)
+- Core Prowler tools in Lighthouse use the `prowler_*` namespace while preserving legacy `prowler_app_*` compatibility [(#12017)](https://github.com/prowler-cloud/prowler/pull/12017)
+
+### 🐞 Fixed
+
+- The AWS S3 integration CloudFormation quick-create link now sets the bucket owner account ID, preventing a stack validation error when S3 integration is enabled [(#11927)](https://github.com/prowler-cloud/prowler/pull/11927)
+- `Scan ID` filter on the Findings page now shows the active scan when opening findings from a scan's `View Findings` action [(#11997)](https://github.com/prowler-cloud/prowler/pull/11997)
+
+### 🔐 Security
+
+- `js-yaml` to 4.3.0, `@sentry/nextjs` to 10.65.0 with `import-in-the-middle` 3.3.1, and transitive `hono`, `dompurify`, `ws`, `vite`, `@babel/core` and `@opentelemetry/core` to patched versions, resolving 13 npm audit advisories (3 high, 9 moderate, 1 low) plus `hono` CVE-2026-59896, published on NVD but not yet in the npm audit feed [(#12029)](https://github.com/prowler-cloud/prowler/pull/12029)
+
+---
+
+## [1.34.0] (Prowler v5.34.0)
+
+### 🚀 Added
+
+- Dynamically registered providers are now listed, filtered, and rendered across the UI, using a generic icon and humanized label when no bespoke assets exist, a "Custom" badge, and read-only handling for non-configurable providers [(#11869)](https://github.com/prowler-cloud/prowler/pull/11869)
+- Prowler Local Server branding and contextual Prowler Cloud upgrade prompts across navigation, scans, providers, compliance, findings, alerts, and Lighthouse AI [(#11982)](https://github.com/prowler-cloud/prowler/pull/11982)
+
+### 🔄 Changed
+
+- UI components migrated from HeroUI to shared shadcn primitives [(#11532)](https://github.com/prowler-cloud/prowler/pull/11532)
+- UI integration enable flags renamed to past tense — `UI_SENTRY_ENABLE` → `UI_SENTRY_ENABLED`, `UI_GOOGLE_TAG_MANAGER_ENABLE` → `UI_GOOGLE_TAG_MANAGER_ENABLED`, `UI_POSTHOG_ENABLE` → `UI_POSTHOG_ENABLED`; deployments that set the former names must update them [(#11917)](https://github.com/prowler-cloud/prowler/pull/11917)
+
+### 🐞 Fixed
+
+- Fixed metronome billing failing to start when PostHog was enabled, caused by a stale reference to the renamed UI_POSTHOG_ENABLED flag [(#11938)](https://github.com/prowler-cloud/prowler/pull/11938)
+- Lighthouse AI overview entry now starts a new remediation conversation, and returning to Overview restores app navigation mode [(#11955)](https://github.com/prowler-cloud/prowler/pull/11955)
+
+---
+
+## [1.33.1] (Prowler v5.33.1)
+
+### 🔄 Changed
+
+- RBAC role forms now explain Unlimited Visibility inside the Visibility section and keep the setting visible while group selection is hidden [(#11890)](https://github.com/prowler-cloud/prowler/pull/11890)
+
+### 🐞 Fixed
+
+- CIS Level 1 and Level 2 compliance filters now match profiles prefixed with a license tier (e.g. "E3 Level 1"), so M365 CIS requirements are no longer hidden [(#11924)](https://github.com/prowler-cloud/prowler/pull/11924)
+- Jira dispatch polling now reports failed issue creation tasks instead of treating partial failures as successful [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+
+---
+
+## [1.33.0] (Prowler v5.33.0)
+
+### 🚀 Added
+
+- Owners can delete their last organization from the profile page [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+
+### 🔄 Changed
+
+- Organization row actions in the profile page are aligned in fixed columns and the Active indicator now sits next to the organization name [(#11864)](https://github.com/prowler-cloud/prowler/pull/11864)
+- Sentry, Google Tag Manager, and PostHog now load their `UI_*` config only when the matching enable flag (`UI_SENTRY_ENABLE` / `UI_GOOGLE_TAG_MANAGER_ENABLE` / `UI_POSTHOG_ENABLE`) is `"true"` (default off); the deprecated legacy names (`NEXT_PUBLIC_*`, `POSTHOG_KEY`/`POSTHOG_HOST`) still activate without the flag [(#11682)](https://github.com/prowler-cloud/prowler/pull/11682)
+
+---
+
+## [1.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- Invitation callback paths are now preserved when invited users continue with Google, GitHub, or SAML authentication [(#11752)](https://github.com/prowler-cloud/prowler/pull/11752)
+
+### 🔐 Security
+
+- Kubernetes provider credential forms now reject kubeconfigs using `exec` authentication in Prowler Cloud before submission [(#11753)](https://github.com/prowler-cloud/prowler/pull/11753)
+
+---
+
+## [1.32.0] (Prowler v5.32.0)
+
+### 🚀 Added
+
+- Filter the Overview, Findings, Resources, Scans, and Providers views by provider group [(#11659)](https://github.com/prowler-cloud/prowler/pull/11659)
+- CIS Controls v8.1 compliance support, including its detail view and report mapping [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+
+### 🔄 Changed
+
+- Improve scan configuration wording and add a documentation link to clarify baseline settings and how custom scan configurations override them [(#11859)](https://github.com/prowler-cloud/prowler/pull/11859)
+
+---
+
+## [1.31.1] (Prowler v5.31.1)
+
+### 🔄 Changed
+
+- Schedule Scans provider table and launch flows now use provider schedule fields, restore OSS daily scheduling, default to the next local scan hour, and clarify provider selection in launch scan [(#11684)](https://github.com/prowler-cloud/prowler/pull/11684)
+
+---
+
+## [1.31.0] (Prowler v5.31.0)
 
 ### 🚀 Added
 

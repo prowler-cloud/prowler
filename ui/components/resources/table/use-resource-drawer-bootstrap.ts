@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react";
 
 import { getResourceDrawerData } from "@/actions/resources";
+import { applyOptimisticFindingTriageRowsUpdate } from "@/lib/finding-triage";
 import { MetaDataProps } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 import { OrganizationResource } from "@/types/organizations";
 
 import { ResourceFinding } from "./resource-findings-columns";
@@ -26,6 +28,7 @@ interface UseResourceDrawerBootstrapReturn {
   hasInitiallyLoaded: boolean;
   providerOrg: OrganizationResource | null;
   resourceTags: Record<string, string>;
+  patchTriageUpdate: (input: UpdateFindingTriageInput) => void;
 }
 
 export function useResourceDrawerBootstrap({
@@ -47,6 +50,12 @@ export function useResourceDrawerBootstrap({
   const [providerOrg, setProviderOrg] = useState<OrganizationResource | null>(
     null,
   );
+
+  const patchTriageUpdate = (input: UpdateFindingTriageInput) => {
+    setFindingsData((findings) =>
+      applyOptimisticFindingTriageRowsUpdate(findings, input),
+    );
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -111,5 +120,6 @@ export function useResourceDrawerBootstrap({
     hasInitiallyLoaded,
     providerOrg,
     resourceTags,
+    patchTriageUpdate,
   };
 }

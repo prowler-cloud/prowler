@@ -3,14 +3,32 @@ import json
 import re
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from io import StringIO
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.db_router import MainRouter
+from api.exceptions import ProviderConnectionError, ProviderDeletedException
+from api.models import (
+    Finding,
+    MuteRule,
+    Provider,
+    Resource,
+    ResourceScanSummary,
+    Scan,
+    ScanSummary,
+    StateChoices,
+    StatusChoices,
+)
+from django.db import IntegrityError, OperationalError
+from prowler.lib.check.models import Severity
+from prowler.lib.outputs.finding import Status
 from tasks.jobs.scan import (
     _ATTACK_SURFACE_MAPPING_CACHE,
+    ComplianceRowScopeError,
     _aggregate_findings_by_region,
+    _bulk_update_resource_failed_findings_counts,
     _copy_compliance_requirement_rows,
     _create_compliance_summaries,
     _create_finding_delta,
@@ -28,22 +46,6 @@ from tasks.jobs.scan import (
     update_provider_compliance_scores,
 )
 from tasks.utils import CustomEncoder
-
-from api.db_router import MainRouter
-from api.exceptions import ProviderConnectionError
-from api.models import (
-    Finding,
-    MuteRule,
-    Provider,
-    Resource,
-    ResourceScanSummary,
-    Scan,
-    ScanSummary,
-    StateChoices,
-    StatusChoices,
-)
-from prowler.lib.check.models import Severity
-from prowler.lib.outputs.finding import Status
 
 
 @contextmanager
@@ -75,7 +77,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         with (
             patch("api.db_utils.rls_transaction"),
@@ -133,7 +135,7 @@ class TestPerformScan:
 
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             # Ensure the provider type is 'aws' to match our mocks
             provider.provider = Provider.ProviderChoices.AWS
@@ -242,11 +244,11 @@ class TestPerformScan:
         mock_prowler_scan_class,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         tenant = tenants_fixture[0]
         scan = scans_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         tenant_id = str(tenant.id)
         scan_id = str(scan.id)
@@ -262,6 +264,75 @@ class TestPerformScan:
         provider.refresh_from_db()
         assert provider.connected is False
         assert isinstance(provider.connection_last_checked_at, datetime)
+
+    def test_perform_prowler_scan_provider_deleted_during_progress_update(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        aws_provider,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = aws_provider
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        def scan_results():
+            Provider.objects.filter(pk=provider_id).delete()
+            yield 50, []
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.logger.error") as mock_logger_error,
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = scan_results()
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            with pytest.raises(ProviderDeletedException):
+                perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        mock_logger_error.assert_not_called()
+        assert not Scan.objects.filter(pk=scan_id).exists()
+
+    def test_perform_prowler_scan_sets_final_progress_when_progress_updates_are_throttled(
+        self,
+        tenants_fixture,
+        scans_fixture,
+        aws_provider,
+    ):
+        tenant = tenants_fixture[0]
+        scan = scans_fixture[0]
+        provider = aws_provider
+
+        tenant_id = str(tenant.id)
+        scan_id = str(scan.id)
+        provider_id = str(provider.id)
+
+        with (
+            patch(
+                "tasks.jobs.scan.initialize_prowler_provider",
+                return_value=MagicMock(),
+            ),
+            patch("tasks.jobs.scan.ProwlerScan") as mock_prowler_scan_class,
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_DELTA", 200),
+            patch("tasks.jobs.scan.PROGRESS_THROTTLE_SECONDS", 3600),
+        ):
+            mock_prowler_scan_instance = MagicMock()
+            mock_prowler_scan_instance.scan.return_value = [(99, []), (100, [])]
+            mock_prowler_scan_class.return_value = mock_prowler_scan_instance
+
+            perform_prowler_scan(tenant_id, scan_id, provider_id, [])
+
+        scan.refresh_from_db()
+        assert scan.state == StateChoices.COMPLETED
+        assert scan.progress == 100
 
     @pytest.mark.parametrize(
         "last_status, new_status, expected_delta",
@@ -441,7 +512,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that failed findings increment the failed_findings_count"""
         with (
@@ -462,7 +533,7 @@ class TestPerformScan:
 
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             # Ensure the provider type is 'aws'
             provider.provider = Provider.ProviderChoices.AWS
@@ -519,7 +590,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that multiple FAIL findings on the same resource increment the counter correctly"""
         with (
@@ -536,7 +607,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -636,7 +707,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test that muted FAIL findings do not increment the failed_findings_count"""
         with (
@@ -653,7 +724,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -707,13 +778,13 @@ class TestPerformScan:
     def test_perform_prowler_scan_reset_failed_findings_count(
         self,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         resources_fixture,
     ):
         """Test that failed_findings_count is reset to 0 at the beginning of each scan"""
         # Use existing resource from fixture and set initial failed_findings_count
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         resource = resources_fixture[0]
 
         # Set a non-zero failed_findings_count initially
@@ -790,11 +861,103 @@ class TestPerformScan:
         # Assert that failed_findings_count was reset to 0 during the scan
         assert resource.failed_findings_count == 0
 
+    def test_failed_findings_count_update_retries_deadlock_in_stable_order(
+        self, resources_fixture, monkeypatch
+    ):
+        resource1, resource2, _ = resources_fixture
+        tenant_id = str(resource1.tenant_id)
+        resource1.failed_findings_count = 2
+        resource2.failed_findings_count = 3
+        resources_to_update = [resource2, resource1]
+        expected_order = [
+            str(resource.id)
+            for resource in sorted(resources_to_update, key=lambda item: str(item.id))
+        ]
+        original_bulk_update = Resource.objects.bulk_update
+        bulk_update_calls = []
+
+        def flaky_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            if len(bulk_update_calls) == 1:
+                raise OperationalError("deadlock detected")
+            return original_bulk_update(objects, fields, batch_size=batch_size)
+
+        monkeypatch.setattr("tasks.jobs.scan.SCAN_DB_BATCH_SIZE", 10)
+        monkeypatch.setattr(Resource.objects, "bulk_update", flaky_bulk_update)
+
+        _bulk_update_resource_failed_findings_counts(
+            tenant_id=tenant_id,
+            scan_id="scan-id",
+            resources_to_update=resources_to_update,
+        )
+
+        resource1.refresh_from_db()
+        resource2.refresh_from_db()
+        assert resource1.failed_findings_count == 2
+        assert resource2.failed_findings_count == 3
+        assert bulk_update_calls == [expected_order, expected_order]
+
+    def test_failed_findings_count_update_does_not_retry_integrity_error(
+        self, resources_fixture, monkeypatch
+    ):
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+
+        def failing_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            raise IntegrityError("constraint violation")
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", failing_bulk_update)
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        with pytest.raises(IntegrityError, match="constraint violation"):
+            _bulk_update_resource_failed_findings_counts(
+                tenant_id=str(resource.tenant_id),
+                scan_id="scan-id",
+                resources_to_update=[resource],
+            )
+
+        assert len(bulk_update_calls) == 1
+        assert sleep_calls == []
+
+    def test_failed_findings_count_update_adds_jitter_to_retry_backoff(
+        self, resources_fixture, monkeypatch
+    ):
+        from tasks.jobs import scan as scan_jobs
+
+        resource, *_ = resources_fixture
+        resource.failed_findings_count = 2
+        bulk_update_calls = []
+        sleep_calls = []
+        original_bulk_update = Resource.objects.bulk_update
+
+        def flaky_bulk_update(objects, fields, batch_size=None):
+            bulk_update_calls.append([str(obj.id) for obj in objects])
+            if len(bulk_update_calls) == 1:
+                raise OperationalError("deadlock detected")
+            return original_bulk_update(objects, fields, batch_size=batch_size)
+
+        monkeypatch.setattr(Resource.objects, "bulk_update", flaky_bulk_update)
+        monkeypatch.setattr(scan_jobs, "random", MagicMock())
+        scan_jobs.random.uniform.return_value = 0.037
+        monkeypatch.setattr("tasks.jobs.scan.time.sleep", sleep_calls.append)
+
+        _bulk_update_resource_failed_findings_counts(
+            tenant_id=str(resource.tenant_id),
+            scan_id="scan-id",
+            resources_to_update=[resource],
+        )
+
+        scan_jobs.random.uniform.assert_called_once_with(0, 0.1)
+        assert sleep_calls == [0.137]
+
     def test_perform_prowler_scan_with_active_mute_rules(
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test active MuteRule mutes findings with correct reason"""
         with (
@@ -811,7 +974,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -911,7 +1074,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test inactive MuteRule does not mute findings"""
         with (
@@ -928,7 +1091,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -997,7 +1160,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test mutelist processor takes precedence over MuteRule"""
         with (
@@ -1014,7 +1177,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1083,7 +1246,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test MuteRule with multiple finding UIDs mutes all findings"""
         with (
@@ -1100,7 +1263,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1182,7 +1345,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test scan continues when MuteRule loading fails"""
         with (
@@ -1200,7 +1363,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1265,7 +1428,7 @@ class TestPerformScan:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
     ):
         """Test muted_at timestamp is set correctly for muted findings"""
         with (
@@ -1282,7 +1445,7 @@ class TestPerformScan:
         ):
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.AWS
             provider.save()
@@ -1335,9 +1498,9 @@ class TestPerformScan:
             )
 
             # Capture time before and after scan
-            before_scan = datetime.now(timezone.utc)
+            before_scan = datetime.now(UTC)
             perform_prowler_scan(tenant_id, scan_id, provider_id, [])
-            after_scan = datetime.now(timezone.utc)
+            after_scan = datetime.now(UTC)
 
         # Verify muted_at is within the scan time window
         finding_db = Finding.objects.get(uid=finding_uid)
@@ -1473,7 +1636,7 @@ class TestProcessFindingMicroBatch:
             partition="aws-old",
         )
 
-        previous_first_seen = datetime(2024, 1, 1, tzinfo=timezone.utc)
+        previous_first_seen = datetime(2024, 1, 1, tzinfo=UTC)
 
         finding = FakeFinding(
             uid="finding-muted",
@@ -1869,7 +2032,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
         resources_fixture,
     ):
@@ -1920,7 +2083,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -1958,7 +2121,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         """Re-running compliance materialization must not raise nor duplicate rows.
@@ -2013,7 +2176,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2021,7 +2184,7 @@ class TestCreateComplianceRequirements:
         ) as mock_compliance_template:
             tenant = tenants_fixture[0]
             scan = scans_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
 
             provider.provider = Provider.ProviderChoices.KUBERNETES
             provider.save()
@@ -2059,7 +2222,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2078,7 +2241,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch("tasks.jobs.scan.return_prowler_provider") as mock_prowler_provider:
@@ -2123,7 +2286,7 @@ class TestCreateComplianceRequirements:
                 tags={},
                 check_id=existing_finding.check_id,
                 check_metadata={"CheckId": existing_finding.check_id},
-                first_seen_at=datetime.now(timezone.utc),
+                first_seen_at=datetime.now(UTC),
                 muted=False,
             )
             resource = existing_finding.resources.first()
@@ -2152,9 +2315,9 @@ class TestCreateComplianceRequirements:
             create_compliance_requirements(tenant_id, scan_id)
 
             mock_persist.assert_called_once()
-            persisted_rows = mock_persist.call_args[0][1]
+            rows_factory = mock_persist.call_args[0][2]
             requirement_row = next(
-                row for row in persisted_rows if row["requirement_id"] == "1.1"
+                row for row in rows_factory() if row["requirement_id"] == "1.1"
             )
             assert requirement_row["requirement_status"] == "FAIL"
 
@@ -2162,7 +2325,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2200,7 +2363,7 @@ class TestCreateComplianceRequirements:
         self,
         tenants_fixture,
         scans_fixture,
-        providers_fixture,
+        aws_provider,
         findings_fixture,
     ):
         with patch(
@@ -2292,18 +2455,26 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # One execute for set_config plus one for the scan's DELETE.
+        assert cursor.execute.call_count == 2
+        delete_sql, delete_params = cursor.execute.call_args_list[1][0]
+        assert "DELETE FROM compliance_requirements_overviews" in delete_sql
+        assert delete_params == [str(row["tenant_id"]), str(row["scan_id"])]
         cursor.copy_expert.assert_called_once()
+        connection.commit.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert csv_rows[0][0] == str(row["id"])
         assert csv_rows[0][5] == ""
         assert csv_rows[0][-1] == str(row["scan_id"])
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2311,9 +2482,9 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
         row = {
             "id": uuid.uuid4(),
             "tenant_id": str(uuid.uuid4()),
@@ -2332,16 +2503,22 @@ class TestComplianceRequirementCopy:
         }
 
         tenant_id = row["tenant_id"]
+        scan_id = str(row["scan_id"])
 
         ctx = MagicMock()
         ctx.__enter__.return_value = None
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [row])
 
-        mock_copy.assert_called_once_with(tenant_id, [row])
+        mock_copy.assert_called_once()
+        assert mock_copy.call_args[0][0] == tenant_id
+        assert mock_copy.call_args[0][1] == scan_id
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        # The fallback replaces the scan's rows: delete + insert atomically.
+        mock_filter.assert_called_once_with(scan_id=scan_id)
+        mock_filter.return_value.delete.assert_called_once()
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -2353,13 +2530,18 @@ class TestComplianceRequirementCopy:
 
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
-    @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
+    @patch("tasks.jobs.scan._copy_compliance_requirement_rows", return_value=0)
     def test_persist_compliance_requirement_rows_no_rows(
         self, mock_copy, mock_rls_transaction, mock_bulk_create
     ):
-        _persist_compliance_requirement_rows(str(uuid.uuid4()), [])
+        # Even with no rows the COPY path runs: it must clear the scan's
+        # previous rows so a re-run with fewer findings drops stale data.
+        total = _persist_compliance_requirement_rows(
+            str(uuid.uuid4()), str(uuid.uuid4()), lambda: []
+        )
 
-        mock_copy.assert_not_called()
+        assert total == 0
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_not_called()
         mock_bulk_create.assert_not_called()
 
@@ -2394,7 +2576,7 @@ class TestComplianceRequirementCopy:
 
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2448,11 +2630,12 @@ class TestComplianceRequirementCopy:
         ]
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(tenant_id, rows)
+            _copy_compliance_requirement_rows(tenant_id, str(scan_id), rows, 2000)
 
         mock_psycopg_connection.assert_called_once_with("admin")
         connection.cursor.assert_called_once()
-        cursor.execute.assert_called_once()
+        # set_config + DELETE of the scan's previous rows.
+        assert cursor.execute.call_count == 2
         cursor.copy_expert.assert_called_once()
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2481,6 +2664,60 @@ class TestComplianceRequirementCopy:
         assert csv_rows[2][3] == "aws_foundational_security_aws"
         assert csv_rows[2][5] == "2.0"
         assert csv_rows[2][9] == "MANUAL"
+
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_batches_share_one_transaction(
+        self, mock_psycopg_connection, settings
+    ):
+        """Every COPY batch runs on the same connection with a single commit."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        inserted_at = datetime.now(UTC)
+        rows = [
+            {
+                "id": uuid.uuid4(),
+                "tenant_id": tenant_id,
+                "inserted_at": inserted_at,
+                "compliance_id": "cisa_aws",
+                "framework": "CISA",
+                "version": "1.0",
+                "description": f"Requirement {index}",
+                "region": "us-east-1",
+                "requirement_id": f"req-{index}",
+                "requirement_status": "PASS",
+                "passed_checks": 1,
+                "failed_checks": 0,
+                "total_checks": 1,
+                "scan_id": scan_id,
+            }
+            for index in range(3)
+        ]
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            total = _copy_compliance_requirement_rows(tenant_id, scan_id, rows, 1)
+
+        assert total == 3
+        # One connection, three COPY statements, one commit for the whole scan.
+        mock_psycopg_connection.assert_called_once_with("admin")
+        assert cursor.copy_expert.call_count == 3
+        connection.commit.assert_called_once()
+        connection.rollback.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_null_values(
@@ -2529,7 +2766,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2585,7 +2824,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify CSV was generated (csv module handles escaping automatically)
         csv_rows = list(csv.reader(StringIO(captured["data"])))
@@ -2644,10 +2885,12 @@ class TestComplianceRequirementCopy:
             # Note: inserted_at is intentionally missing
         }
 
-        before_call = datetime.now(timezone.utc)
+        before_call = datetime.now(UTC)
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
-        after_call = datetime.now(timezone.utc)
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
+        after_call = datetime.now(UTC)
 
         csv_rows = list(csv.reader(StringIO(captured["data"])))
         assert len(csv_rows) == 1
@@ -2699,11 +2942,83 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="COPY command failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
         connection.commit.assert_not_called()
+
+    @pytest.mark.parametrize("mismatched_field", ["tenant_id", "scan_id"])
+    @patch("tasks.jobs.scan.psycopg_connection")
+    def test_copy_compliance_requirement_rows_rejects_out_of_scope_rows(
+        self, mock_psycopg_connection, mismatched_field, settings
+    ):
+        """COPY bypasses RLS, so rows from another tenant/scan must be rejected."""
+        settings.DATABASES.setdefault("admin", settings.DATABASES["default"])
+
+        connection = MagicMock()
+        cursor = MagicMock()
+        cursor_context = MagicMock()
+        cursor_context.__enter__.return_value = cursor
+        cursor_context.__exit__.return_value = False
+        connection.cursor.return_value = cursor_context
+        connection.__enter__.return_value = connection
+        connection.__exit__.return_value = False
+
+        context_manager = MagicMock()
+        context_manager.__enter__.return_value = connection
+        context_manager.__exit__.return_value = False
+        mock_psycopg_connection.return_value = context_manager
+
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        row = {
+            "id": uuid.uuid4(),
+            "tenant_id": tenant_id,
+            "compliance_id": "test",
+            "framework": "Test",
+            "version": "1.0",
+            "description": "desc",
+            "region": "us-east-1",
+            "requirement_id": "req-1",
+            "requirement_status": "PASS",
+            "passed_checks": 1,
+            "failed_checks": 0,
+            "total_checks": 1,
+            "scan_id": scan_id,
+        }
+        row[mismatched_field] = str(uuid.uuid4())
+
+        with patch.object(MainRouter, "admin_db", "admin"):
+            with pytest.raises(ComplianceRowScopeError):
+                _copy_compliance_requirement_rows(tenant_id, scan_id, [row], 2000)
+
+        cursor.copy_expert.assert_not_called()
+        connection.rollback.assert_called_once()
+        connection.commit.assert_not_called()
+
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview")
+    @patch("tasks.jobs.scan.rls_transaction")
+    @patch(
+        "tasks.jobs.scan._copy_compliance_requirement_rows",
+        side_effect=ComplianceRowScopeError("out of scope"),
+    )
+    def test_persist_compliance_requirement_rows_does_not_fall_back_on_scope_error(
+        self, mock_copy, mock_rls_transaction, mock_model
+    ):
+        """A scope violation is a caller bug: the ORM fallback must not persist it."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+
+        with pytest.raises(ComplianceRowScopeError):
+            _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: [])
+
+        mock_copy.assert_called_once()
+        mock_rls_transaction.assert_not_called()
+        mock_model.objects.filter.assert_not_called()
+        mock_model.objects.bulk_create.assert_not_called()
 
     @patch("tasks.jobs.scan.psycopg_connection")
     def test_copy_compliance_requirement_rows_transaction_rollback_on_set_config_error(
@@ -2747,7 +3062,9 @@ class TestComplianceRequirementCopy:
 
         with patch.object(MainRouter, "admin_db", "admin"):
             with pytest.raises(Exception, match="SET prowler.tenant_id failed"):
-                _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+                _copy_compliance_requirement_rows(
+                    str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+                )
 
         # Verify rollback was called
         connection.rollback.assert_called_once()
@@ -2793,7 +3110,9 @@ class TestComplianceRequirementCopy:
         }
 
         with patch.object(MainRouter, "admin_db", "admin"):
-            _copy_compliance_requirement_rows(str(row["tenant_id"]), [row])
+            _copy_compliance_requirement_rows(
+                str(row["tenant_id"]), str(row["scan_id"]), [row], 2000
+            )
 
         # Verify commit was called and rollback was not
         connection.commit.assert_called_once()
@@ -2804,14 +3123,15 @@ class TestComplianceRequirementCopy:
     @patch("tasks.jobs.scan._copy_compliance_requirement_rows")
     def test_persist_compliance_requirement_rows_success(self, mock_copy):
         """Test successful COPY path without fallback to ORM."""
-        mock_copy.return_value = None  # Success, no exception
+        mock_copy.return_value = 1  # Success, no exception
 
         tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
         rows = [
             {
                 "id": uuid.uuid4(),
                 "tenant_id": tenant_id,
-                "inserted_at": datetime.now(timezone.utc),
+                "inserted_at": datetime.now(UTC),
                 "compliance_id": "test",
                 "framework": "Test",
                 "version": "1.0",
@@ -2822,16 +3142,21 @@ class TestComplianceRequirementCopy:
                 "passed_checks": 1,
                 "failed_checks": 0,
                 "total_checks": 1,
-                "scan_id": uuid.uuid4(),
+                "scan_id": scan_id,
             }
         ]
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(tenant_id, scan_id, lambda: rows)
 
-        # Verify COPY was called
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 1
+        mock_copy.assert_called_once()
+        copy_args = mock_copy.call_args[0]
+        assert copy_args[0] == tenant_id
+        assert copy_args[1] == scan_id
+        assert list(copy_args[2]) == rows
 
     @patch("tasks.jobs.scan.logger")
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2839,14 +3164,19 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("COPY failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_logging(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_logger
+        self,
+        mock_copy,
+        mock_rls_transaction,
+        mock_bulk_create,
+        mock_filter,
+        mock_logger,
     ):
         """Test logger.exception is called when COPY fails and fallback occurs."""
         tenant_id = str(uuid.uuid4())
         row = {
             "id": uuid.uuid4(),
             "tenant_id": tenant_id,
-            "inserted_at": datetime.now(timezone.utc),
+            "inserted_at": datetime.now(UTC),
             "compliance_id": "test",
             "framework": "Test",
             "version": "1.0",
@@ -2865,7 +3195,9 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(
+            tenant_id, str(row["scan_id"]), lambda: [row]
+        )
 
         # Verify logger.exception was called
         mock_logger.exception.assert_called_once()
@@ -2874,6 +3206,7 @@ class TestComplianceRequirementCopy:
         assert "falling back to ORM" in args[0]
         assert kwargs.get("exc_info") is not None
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2881,12 +3214,12 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_multiple_rows(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback with multiple rows."""
         tenant_id = str(uuid.uuid4())
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         rows = [
             {
@@ -2928,10 +3261,14 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, rows)
+        total = _persist_compliance_requirement_rows(
+            tenant_id, str(scan_id), lambda: rows
+        )
 
-        mock_copy.assert_called_once_with(tenant_id, rows)
+        assert total == 2
+        mock_copy.assert_called_once()
         mock_rls_transaction.assert_called_once_with(tenant_id)
+        mock_filter.assert_called_once_with(scan_id=str(scan_id))
         mock_bulk_create.assert_called_once()
 
         args, kwargs = mock_bulk_create.call_args
@@ -2955,6 +3292,7 @@ class TestComplianceRequirementCopy:
         assert objects[1].passed_checks == 2
         assert objects[1].failed_checks == 3
 
+    @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.filter")
     @patch("tasks.jobs.scan.ComplianceRequirementOverview.objects.bulk_create")
     @patch("tasks.jobs.scan.rls_transaction")
     @patch(
@@ -2962,13 +3300,13 @@ class TestComplianceRequirementCopy:
         side_effect=Exception("copy failed"),
     )
     def test_persist_compliance_requirement_rows_fallback_all_fields(
-        self, mock_copy, mock_rls_transaction, mock_bulk_create
+        self, mock_copy, mock_rls_transaction, mock_bulk_create, mock_filter
     ):
         """Test ORM fallback correctly maps all fields from row dict to model."""
         tenant_id = str(uuid.uuid4())
         row_id = uuid.uuid4()
         scan_id = uuid.uuid4()
-        inserted_at = datetime.now(timezone.utc)
+        inserted_at = datetime.now(UTC)
 
         row = {
             "id": row_id,
@@ -2992,7 +3330,7 @@ class TestComplianceRequirementCopy:
         ctx.__exit__.return_value = False
         mock_rls_transaction.return_value = ctx
 
-        _persist_compliance_requirement_rows(tenant_id, [row])
+        _persist_compliance_requirement_rows(tenant_id, str(scan_id), lambda: [row])
 
         args, kwargs = mock_bulk_create.call_args
         objects = args[0]
@@ -3489,6 +3827,95 @@ class TestAggregateFindings:
 
         regions = {s.region for s in summaries}
         assert regions == {"us-east-1", "us-west-2"}
+
+    @patch("tasks.jobs.scan.Finding.objects.filter")
+    @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
+    @patch("tasks.jobs.scan.rls_transaction")
+    def test_aggregate_findings_orders_upserts_by_conflict_key(
+        self, mock_rls_transaction, mock_bulk_create, mock_findings_filter
+    ):
+        """Scan summaries must use a stable lock order for concurrent upserts."""
+        tenant_id = str(uuid.uuid4())
+        scan_id = str(uuid.uuid4())
+        counts = {
+            "fail": 1,
+            "_pass": 0,
+            "muted_count": 0,
+            "total": 1,
+            "new": 1,
+            "changed": 0,
+            "unchanged": 0,
+            "fail_new": 1,
+            "fail_changed": 0,
+            "pass_new": 0,
+            "pass_changed": 0,
+            "muted_new": 0,
+            "muted_changed": 0,
+        }
+
+        mock_queryset = MagicMock()
+        mock_queryset.values.return_value = mock_queryset
+        mock_queryset.annotate.return_value = [
+            {
+                "check_id": "check-b",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "sqs",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "medium",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-west-2",
+                **counts,
+            },
+            {
+                "check_id": "check-a",
+                "resources__service": "s3",
+                "severity": "high",
+                "resources__region": "us-east-1",
+                **counts,
+            },
+        ]
+
+        ctx = MagicMock()
+        ctx.__enter__.return_value = None
+        ctx.__exit__.return_value = False
+        mock_rls_transaction.return_value = ctx
+        mock_findings_filter.return_value = mock_queryset
+
+        aggregate_findings(tenant_id, scan_id)
+
+        summaries = mock_bulk_create.call_args.args[0]
+        assert isinstance(summaries, list)
+        conflict_keys = [
+            (
+                str(summary.tenant_id),
+                str(summary.scan_id),
+                summary.check_id,
+                summary.service,
+                summary.severity,
+                summary.region,
+            )
+            for summary in summaries
+        ]
+        assert len(conflict_keys) == 5
+        assert conflict_keys == sorted(conflict_keys)
 
     @patch("tasks.jobs.scan.Finding.objects.filter")
     @patch("tasks.jobs.scan.ScanSummary.objects.bulk_create")
@@ -4461,7 +4888,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4527,7 +4954,7 @@ class TestUpdateProviderComplianceScores:
         self,
         mock_psycopg_connection,
         tenants_fixture,
-        providers_fixture,
+        aws_provider,
         scans_fixture,
         settings,
     ):
@@ -4538,7 +4965,7 @@ class TestUpdateProviderComplianceScores:
         scan_id = str(scan.id)
 
         scan.state = StateChoices.COMPLETED
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         connection = MagicMock()
@@ -4591,8 +5018,9 @@ class TestScanIsFullScope:
         # If the SDK adds a new filter, this test still passes via the
         # introspection-driven derivation; if it adds a non-filter kwarg
         # (e.g. provider-like), keep the exclusion list in sync in models.py.
-        from prowler.lib.scan.scan import Scan as ProwlerScan
         import inspect
+
+        from prowler.lib.scan.scan import Scan as ProwlerScan
 
         expected = tuple(
             name
@@ -4634,7 +5062,7 @@ class TestResetEphemeralResourceFindingsCount:
         )
 
     def test_resets_only_resources_missing_from_full_scope_scan(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         tenant, *_ = tenants_fixture
         scan1, scan2, *_ = scans_fixture
@@ -4714,7 +5142,7 @@ class TestResetEphemeralResourceFindingsCount:
         assert result["reason"] == "scan not found"
 
     def test_skips_when_newer_scan_completed_for_same_provider(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         # If a newer completed scan exists for the same provider, our
         # ResourceScanSummary set is stale relative to the resources' current
@@ -4723,7 +5151,7 @@ class TestResetEphemeralResourceFindingsCount:
 
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
-        provider, *_ = providers_fixture
+        provider = aws_provider
         _, resource2, _ = resources_fixture
 
         Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)
@@ -4753,7 +5181,7 @@ class TestResetEphemeralResourceFindingsCount:
         assert resource2.failed_findings_count == 5
 
     def test_does_not_touch_other_providers_resources(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
@@ -4819,14 +5247,14 @@ class TestResetEphemeralResourceFindingsCount:
         assert resource2.failed_findings_count == 5
 
     def test_ignores_sibling_scan_with_null_completed_at(
-        self, tenants_fixture, scans_fixture, providers_fixture, resources_fixture
+        self, tenants_fixture, scans_fixture, aws_provider, resources_fixture
     ):
         # Postgres orders NULL first in DESC; a sibling COMPLETED scan with a
         # missing completed_at must not be treated as the latest scan and
         # cause us to incorrectly skip the reset.
         tenant, *_ = tenants_fixture
         scan1, *_ = scans_fixture
-        provider, *_ = providers_fixture
+        provider = aws_provider
         resource1, resource2, _ = resources_fixture
 
         Resource.objects.filter(id=resource2.id).update(failed_findings_count=5)

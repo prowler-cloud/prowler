@@ -7,13 +7,14 @@ import { Suspense, useRef, useState } from "react";
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
 import { FindingGroupRow, MetaDataProps } from "@/types";
 
 import { FloatingMuteButton } from "../floating-mute-button";
+
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { canMuteFindingGroup } from "./finding-group-selection";
 import { FindingsSelectionContext } from "./findings-selection-context";

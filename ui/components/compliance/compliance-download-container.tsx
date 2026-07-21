@@ -3,6 +3,7 @@
 import { DownloadIcon, FileJsonIcon, FileTextIcon } from "lucide-react";
 import { useState } from "react";
 
+import { toast } from "@/components/shadcn";
 import { Button } from "@/components/shadcn/button/button";
 import {
   ActionDropdown,
@@ -13,7 +14,6 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { toast } from "@/components/ui";
 import {
   type ComplianceReportType,
   isOcsfSupported,
@@ -34,6 +34,9 @@ interface ComplianceDownloadContainerProps {
   orientation?: "row" | "column";
   buttonWidth?: "auto" | "icon";
   presentation?: "buttons" | "dropdown";
+  /** Custom dropdown trigger (e.g. an outline "Report" button); only used
+   *  when presentation is "dropdown". Defaults to the dots icon. */
+  dropdownTrigger?: React.ReactNode;
 }
 
 export const ComplianceDownloadContainer = ({
@@ -45,6 +48,7 @@ export const ComplianceDownloadContainer = ({
   orientation = "row",
   buttonWidth = "auto",
   presentation = "buttons",
+  dropdownTrigger,
 }: ComplianceDownloadContainerProps) => {
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
   const [isDownloadingOcsf, setIsDownloadingOcsf] = useState(false);
@@ -116,6 +120,7 @@ export const ComplianceDownloadContainer = ({
         <ActionDropdown
           variant={isIconWidth ? "bordered" : "table"}
           ariaLabel="Open compliance export actions"
+          trigger={dropdownTrigger}
         >
           <ActionDropdownItem
             icon={
