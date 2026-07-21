@@ -152,6 +152,8 @@ class HuaweiCloudService:
         # Wait for all tasks to complete
         for future in as_completed(futures):
             try:
-                future.result()
+                future.result()  # Raises exceptions from the thread, if any
             except Exception:
+                # Per-region failures are already logged inside each called
+                # function; swallow here so one region cannot abort the scan.
                 pass

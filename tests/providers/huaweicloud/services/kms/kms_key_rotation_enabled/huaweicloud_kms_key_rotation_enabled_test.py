@@ -26,7 +26,7 @@ class TestKmsKeyRotationEnabled:
 
             key = KMSKey(
                 id="key-1",
-                name="rotated-key",
+                alias="rotated-key",
                 is_rotation_enabled=True,
                 region="la-south-2",
             )
@@ -60,7 +60,7 @@ class TestKmsKeyRotationEnabled:
 
             key = KMSKey(
                 id="key-1",
-                name="static-key",
+                alias="static-key",
                 is_rotation_enabled=False,
                 region="la-south-2",
             )
