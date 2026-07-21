@@ -418,5 +418,32 @@ describe("compileLighthouseContext", () => {
       // Then
       expect(context).toBeUndefined();
     });
+
+    it("should discard valid items together with an invalid same-scope item", () => {
+      // Given / When
+      const context = compileLighthouseContext(
+        [
+          {
+            kind: "page",
+            id: "findings",
+            source: "automatic",
+            scopeKey: "findings:/findings",
+            label: "Findings",
+            path: "/findings",
+          },
+          {
+            kind: "finding",
+            id: "finding-1",
+            source: "selection",
+            scopeKey: "findings:/findings",
+            label: "Invalid finding without findingId",
+          },
+        ],
+        "findings:/findings",
+      );
+
+      // Then
+      expect(context).toBeUndefined();
+    });
   });
 });
