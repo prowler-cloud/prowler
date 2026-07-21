@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { LIGHTHOUSE_OVERVIEW_BANNER_HREF } from "../_lib/lighthouse-banner";
+
 import { LighthouseOverviewBanner } from "./lighthouse-overview-banner";
 
 describe("LighthouseOverviewBanner", () => {
