@@ -65,6 +65,46 @@ describe("OverviewBanner", () => {
     );
   });
 
+  it("uses the purple agents palette with the same animated layers", () => {
+    // Given / When
+    render(
+      <OverviewBanner
+        variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+        href={DOCS_URLS.AI_AGENTS}
+      />,
+    );
+
+    // Then
+    const link = screen.getByRole("link", {
+      name: /Connect all your agents to Prowler Cloud/,
+    });
+    const gradient = link.querySelector(".overview-banner-gradient");
+    expect(gradient).toHaveClass("overview-banner-gradient-agents");
+    expect(gradient?.querySelector(".animate-first")).toBeInTheDocument();
+    expect(gradient?.querySelector(".animate-second")).toBeInTheDocument();
+    expect(gradient?.querySelector(".animate-third")).toBeInTheDocument();
+    expect(
+      gradient?.querySelector(".overview-banner-gradient-primary-press"),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the Lighthouse banner on the default green palette", () => {
+    // Given / When
+    render(
+      <OverviewBanner
+        variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
+        href={LIGHTHOUSE_OVERVIEW_BANNER_HREF.CHAT}
+      />,
+    );
+
+    // Then
+    const link = screen.getByRole("link", {
+      name: /Find and remediate what actually matters\./,
+    });
+    const gradient = link.querySelector(".overview-banner-gradient");
+    expect(gradient).not.toHaveClass("overview-banner-gradient-agents");
+  });
+
   it("scopes the blur filter id per instance so stacked banners keep their gradient", () => {
     // Given / When: url(#id) resolves against the FIRST match in the document,
     // so two banners sharing one id would both resolve to the same filter

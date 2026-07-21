@@ -124,7 +124,10 @@ export function OverviewBanner({ variant, href }: OverviewBannerProps) {
 
         <div
           className={cn(
-            "pointer-events-none absolute inset-0 blur-lg",
+            "overview-banner-gradient pointer-events-none absolute inset-0 blur-lg",
+            variant === OVERVIEW_BANNER_VARIANT.AGENTS
+              ? "overview-banner-gradient-agents"
+              : undefined,
             isSafari ? "blur-2xl" : undefined,
           )}
           style={
