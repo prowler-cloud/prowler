@@ -2,7 +2,7 @@
 
 > **Skills Reference**: See [`prowler-mcp`](../skills/prowler-mcp/SKILL.md)
 
-### Auto-invoke Skills
+## Auto-invoke Skills
 
 When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 
@@ -25,7 +25,7 @@ The Prowler MCP Server provides AI agents access to the Prowler ecosystem throug
 ## CRITICAL RULES
 
 ### Tool Implementation
-- ALWAYS: Extend `BaseTool` ABC for Prowler App tools (auto-registration)
+- ALWAYS: Extend `BaseTool` ABC for Prowler tools (auto-registration)
 - ALWAYS: Use `@mcp.tool()` decorator for Hub/Docs tools
 - NEVER: Manually register BaseTool subclasses
 - NEVER: Import tools directly in server.py
@@ -56,7 +56,7 @@ await prowler_mcp_server.import_server(docs_mcp_server, prefix="prowler_docs")
 ### Tool Naming
 - `prowler_hub_*` - Catalog and compliance (no auth)
 - `prowler_docs_*` - Documentation search (no auth)
-- `prowler_app_*` - Cloud/App management (auth required)
+- `prowler_*` - Prowler Cloud, Private Cloud & Local Server management (auth required)
 
 ---
 
@@ -68,7 +68,7 @@ Python 3.12+ | FastMCP 2.13.1 | httpx (async) | Pydantic | uv
 
 ## PROJECT STRUCTURE
 
-```
+```text
 mcp_server/prowler_mcp_server/
 ├── server.py                    # Main orchestration
 ├── prowler_hub/server.py        # Hub tools (no auth)

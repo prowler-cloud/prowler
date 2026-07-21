@@ -12,9 +12,6 @@ on:
     branches:
       - 'master'
       - 'v5.*'
-    paths:
-      - 'api/**'
-      - '.github/workflows/api-container-checks.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,7 +33,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -50,7 +47,7 @@ jobs:
 
       - name: Check if Dockerfile changed
         id: dockerfile-changed
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: api/Dockerfile
 
@@ -72,7 +69,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -95,6 +92,8 @@ jobs:
             _http._tcp.deb.debian.org:443
             powershellinfraartifacts-gkhedzdeaghdezhr.z01.azurefd.net:443
             get.trivy.dev:443
+            raw.githubusercontent.com:443
+            releases.astral.sh:443
 
       - name: Checkout repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -104,13 +103,14 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: api/**
           files_ignore: |
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/changelog.d/**
             api/AGENTS.md
 
       - name: Set up Docker Buildx
@@ -119,7 +119,7 @@ jobs:
 
       - name: Build container
         if: steps.check-changes.outputs.any_changed == 'true'
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ env.API_WORKING_DIR }}
           push: false
@@ -134,5 +134,5 @@ jobs:
         with:
           image-name: ${{ env.IMAGE_NAME }}
           image-tag: ${{ github.sha }}
-          fail-on-critical: 'false'
+          fail-on-critical: 'true'
           severity: 'CRITICAL'

@@ -14,6 +14,8 @@ on:
       - '.github/test-impact.yml'
       - 'ui/**'
       - 'api/**'  # API changes can affect UI E2E
+      - '!ui/CHANGELOG.md'
+      - '!api/CHANGELOG.md'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -40,7 +42,8 @@ jobs:
       AUTH_SECRET: 'fallback-ci-secret-for-testing'
       AUTH_TRUST_HOST: true
       NEXTAUTH_URL: 'http://localhost:3000'
-      NEXT_PUBLIC_API_BASE_URL: 'http://localhost:8080/api/v1'
+      AUTH_URL: 'http://localhost:3000'
+      UI_API_BASE_URL: 'http://localhost:8080/api/v1'
       E2E_ADMIN_USER: ${{ secrets.E2E_ADMIN_USER }}
       E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
       E2E_AWS_PROVIDER_ACCOUNT_ID: ${{ secrets.E2E_AWS_PROVIDER_ACCOUNT_ID }}
@@ -77,6 +80,14 @@ jobs:
       E2E_ALIBABACLOUD_ACCESS_KEY_ID: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_ID }}
       E2E_ALIBABACLOUD_ACCESS_KEY_SECRET: ${{ secrets.E2E_ALIBABACLOUD_ACCESS_KEY_SECRET }}
       E2E_ALIBABACLOUD_ROLE_ARN: ${{ secrets.E2E_ALIBABACLOUD_ROLE_ARN }}
+      E2E_OKTA_DOMAIN: ${{ secrets.E2E_OKTA_DOMAIN }}
+      E2E_OKTA_CLIENT_ID: ${{ secrets.E2E_OKTA_CLIENT_ID }}
+      E2E_OKTA_BASE64_PRIVATE_KEY: ${{ secrets.E2E_OKTA_BASE64_PRIVATE_KEY }}
+      E2E_GOOGLEWORKSPACE_CUSTOMER_ID: ${{ secrets.E2E_GOOGLEWORKSPACE_CUSTOMER_ID }}
+      E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON: ${{ secrets.E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON }}
+      E2E_GOOGLEWORKSPACE_DELEGATED_USER: ${{ secrets.E2E_GOOGLEWORKSPACE_DELEGATED_USER }}
+      E2E_VERCEL_TEAM_ID: ${{ secrets.E2E_VERCEL_TEAM_ID }}
+      E2E_VERCEL_API_TOKEN: ${{ secrets.E2E_VERCEL_API_TOKEN }}
       # Pass E2E paths from impact analysis
       E2E_TEST_PATHS: ${{ needs.impact-analysis.outputs.ui-e2e }}
       RUN_ALL_TESTS: ${{ needs.impact-analysis.outputs.run-all }}
@@ -85,7 +96,7 @@ jobs:
 
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -134,7 +145,17 @@ jobs:
         # docker-compose.yml references prowlercloud/prowler-api:latest from the registry,
         # which lags behind PR changes; build locally so E2E exercises the API image
         # produced by this PR.
-        run: docker build -t prowlercloud/prowler-api:latest ./api
+        #
+        # The image installs the SDK from git@master (api/uv.lock), so a PR changing BOTH the SDK
+        # and the API would run against the OLD SDK and crash on startup. Overlay the checkout's
+        # SDK source so both run together. New SDK dependencies still need an api/uv.lock bump.
+        run: |
+          docker build -t prowlercloud/prowler-api:pr-base ./api
+          docker build -t prowlercloud/prowler-api:latest -f - prowler <<'DOCKERFILE'
+          FROM prowlercloud/prowler-api:pr-base
+          RUN rm -rf /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          COPY --chown=prowler:prowler . /home/prowler/.venv/lib/python3.12/site-packages/prowler
+          DOCKERFILE
 
       - name: Start API services
         run: |
@@ -147,7 +168,7 @@ jobs:
           timeout=150
           elapsed=0
           while [ $elapsed -lt $timeout ]; do
-            if curl -s ${NEXT_PUBLIC_API_BASE_URL}/docs >/dev/null 2>&1; then
+            if curl -s ${UI_API_BASE_URL}/docs >/dev/null 2>&1; then
               echo "Prowler API is ready!"
               exit 0
             fi
@@ -172,7 +193,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6.3.0
         with:
-          node-version: '24.13.0'
+          node-version-file: 'ui/.nvmrc'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v5.0.0
@@ -184,7 +205,7 @@ jobs:
         run: echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
 
       - name: Setup pnpm and Next.js cache
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: |
             ${{ env.STORE_PATH }}
@@ -204,7 +225,7 @@ jobs:
         run: pnpm run build
 
       - name: Cache Playwright browsers
-        uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         id: playwright-cache
         with:
           path: ~/.cache/ms-playwright
@@ -295,7 +316,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 

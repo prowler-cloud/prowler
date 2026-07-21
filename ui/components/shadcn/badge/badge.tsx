@@ -10,18 +10,33 @@ const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border-transparent bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
+          "border-transparent bg-button-primary text-black [a&]:hover:bg-button-primary/90",
         secondary:
-          "border-transparent bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
+          "border-transparent bg-violet-600 text-white dark:bg-violet-500 [a&]:hover:bg-violet-600/90 dark:[a&]:hover:bg-violet-500/90",
         destructive:
           "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
-          "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+          "text-text-neutral-primary [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         tag: "bg-bg-tag border-border-tag text-text-neutral-primary",
+        success:
+          "border-transparent bg-bg-pass-secondary text-text-success-primary",
+        warning:
+          "border-bg-warning/30 bg-bg-warning-secondary/20 text-text-warning-primary",
+        error:
+          "border-transparent bg-bg-fail-secondary text-text-error-primary",
+        info: "border-transparent bg-bg-data-info/15 text-bg-data-info",
+        cloud:
+          "bg-feature-cloud h-6 rounded-lg border-0 px-2 py-0 text-xs leading-5 font-bold text-black",
+        new: "bg-bg-feature-new text-text-feature-new border-0 font-bold",
+      },
+      size: {
+        default: "",
+        sm: "h-5 rounded-md px-1.5 py-0 text-[10px] leading-4",
       },
     },
     defaultVariants: {
       variant: "default",
+      size: "default",
     },
   },
 );
@@ -29,6 +44,7 @@ const badgeVariants = cva(
 function Badge({
   className,
   variant,
+  size,
   asChild = false,
   ...props
 }: ComponentProps<"span"> &
@@ -38,7 +54,7 @@ function Badge({
   return (
     <Comp
       data-slot="badge"
-      className={cn(badgeVariants({ variant }), className)}
+      className={cn(badgeVariants({ variant, size }), className)}
       {...props}
     />
   );

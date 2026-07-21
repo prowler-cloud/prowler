@@ -11,18 +11,42 @@ def set_mocked_okta_provider(
     session: OktaSession = None,
     identity: OktaIdentityInfo = None,
     audit_config: dict = None,
+    rate_limiter=None,
 ):
     if session is None:
         session = OktaSession(
             org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
-            scopes=["okta.policies.read"],
+            scopes=[
+                "okta.policies.read",
+                "okta.brands.read",
+                "okta.apps.read",
+                "okta.authenticators.read",
+                "okta.networkZones.read",
+                "okta.apiTokens.read",
+                "okta.roles.read",
+                "okta.groups.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
+            ],
             private_key=OKTA_PRIVATE_KEY,
         )
     if identity is None:
         identity = OktaIdentityInfo(
             org_domain=OKTA_ORG_DOMAIN,
             client_id=OKTA_CLIENT_ID,
+            granted_scopes=[
+                "okta.policies.read",
+                "okta.brands.read",
+                "okta.apps.read",
+                "okta.authenticators.read",
+                "okta.networkZones.read",
+                "okta.apiTokens.read",
+                "okta.roles.read",
+                "okta.groups.read",
+                "okta.logStreams.read",
+                "okta.idps.read",
+            ],
         )
 
     provider = MagicMock()
@@ -31,4 +55,7 @@ def set_mocked_okta_provider(
     provider.session = session
     provider.identity = identity
     provider.audit_config = audit_config or {}
+    # Default to no throttling so service tests build a plain SDK client; tests
+    # that exercise the limiter pass one explicitly.
+    provider.rate_limiter = rate_limiter
     return provider

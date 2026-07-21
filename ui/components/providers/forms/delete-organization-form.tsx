@@ -7,8 +7,7 @@ import {
   deleteOrganizationalUnit,
 } from "@/actions/organizations/organizations";
 import { DeleteIcon } from "@/components/icons";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
+import { Button, useToast } from "@/components/shadcn";
 import {
   PROVIDERS_GROUP_KIND,
   ProvidersGroupKind,

@@ -1,3 +1,5 @@
+import type { ScheduleFrequency } from "./schedules";
+
 export const PROVIDER_TYPES = [
   "aws",
   "azure",
@@ -14,11 +16,26 @@ export const PROVIDER_TYPES = [
   "cloudflare",
   "openstack",
   "vercel",
+  "okta",
 ] as const;
 
-export type ProviderType = (typeof PROVIDER_TYPES)[number];
+/** The closed set of provider types this UI build ships bespoke assets for. */
+export type KnownProviderType = (typeof PROVIDER_TYPES)[number];
 
-export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
+// Autocomplete for predefined + open for dynamic providers
+export type ProviderType = KnownProviderType | (string & {});
+
+/** Type guard: narrows an arbitrary provider value to the known set. */
+export const isKnownProviderType = (
+  provider: string,
+): provider is KnownProviderType =>
+  (PROVIDER_TYPES as readonly string[]).includes(provider);
+
+export const isConfigurableProvider = (
+  provider: string,
+): provider is KnownProviderType => isKnownProviderType(provider);
+
+export const PROVIDER_DISPLAY_NAMES: Record<KnownProviderType, string> = {
   aws: "AWS",
   azure: "Azure",
   gcp: "Google Cloud",
@@ -34,13 +51,27 @@ export const PROVIDER_DISPLAY_NAMES: Record<ProviderType, string> = {
   cloudflare: "Cloudflare",
   openstack: "OpenStack",
   vercel: "Vercel",
+  okta: "Okta",
 };
 
+/**
+ * Turns a raw provider id into a human-readable label: splits on `-`/`_` and
+ * capitalizes each word (e.g. `template` → "Template", `local-template` →
+ * "Local Template"). Used as the display fallback for dynamic providers
+ */
+export function humanizeProviderId(id: string): string {
+  return id
+    .split(/[-_]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function getProviderDisplayName(providerId: string): string {
-  return (
-    PROVIDER_DISPLAY_NAMES[providerId.toLowerCase() as ProviderType] ||
-    providerId
-  );
+  const normalized = providerId.toLowerCase();
+  return isKnownProviderType(normalized)
+    ? PROVIDER_DISPLAY_NAMES[normalized]
+    : humanizeProviderId(normalized);
 }
 
 export interface ProviderProps {
@@ -48,6 +79,7 @@ export interface ProviderProps {
   type: "providers";
   attributes: {
     provider: ProviderType;
+    is_dynamic: boolean;
     uid: string;
     alias: string;
     status: "completed" | "pending" | "cancelled";
@@ -63,6 +95,15 @@ export interface ProviderProps {
     };
     inserted_at: string;
     updated_at: string;
+    scan_frequency?: ScheduleFrequency | null;
+    scan_hour?: number | null;
+    scan_day_of_week?: number | null;
+    scan_day_of_month?: number | null;
+    scan_interval_hours?: number | null;
+    scan_timezone?: string | null;
+    scan_enabled?: boolean | null;
+    next_scan_at?: string | null;
+    last_scan_at?: string | null;
     created_by: {
       object: string;
       id: string;

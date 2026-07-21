@@ -1,22 +1,35 @@
 import uuid
 from contextlib import contextmanager
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
+import httpx
 import openai
 import pytest
+from api.models import (
+    Integration,
+    LighthouseProviderConfiguration,
+    LighthouseProviderModels,
+    Scan,
+    StateChoices,
+    Task,
+)
 from botocore.exceptions import ClientError
+from celery import states
 from django_celery_beat.models import IntervalSchedule, PeriodicTask
 from django_celery_results.models import TaskResult
 from tasks.jobs.lighthouse_providers import (
     _create_bedrock_client,
     _extract_bedrock_credentials,
+    _LighthouseOpenAICompatibleNetworkBackend,
 )
 from tasks.tasks import (
     DJANGO_TMP_OUTPUT_DIRECTORY,
     STALE_TMP_OUTPUT_MAX_AGE_HOURS,
+    ScanReportRLSTask,
     _cleanup_orphan_scheduled_scans,
     _perform_scan_complete_tasks,
+    _scan_tmp_output_directory,
     check_integrations_task,
     check_lighthouse_provider_connection_task,
     generate_outputs_task,
@@ -27,15 +40,6 @@ from tasks.tasks import (
     refresh_lighthouse_provider_models_task,
     s3_integration_task,
     security_hub_integration_task,
-)
-
-from api.models import (
-    Integration,
-    LighthouseProviderConfiguration,
-    LighthouseProviderModels,
-    Scan,
-    StateChoices,
-    Task,
 )
 
 
@@ -321,6 +325,7 @@ class TestGenerateOutputs:
 
         mock_transformed_stats = {"some": "stats"}
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch(
                 "tasks.tasks.FindingOutput._transform_findings_stats",
                 return_value=mock_transformed_stats,
@@ -439,6 +444,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -594,6 +600,7 @@ class TestGenerateOutputs:
         ]
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_summary,
             patch(
                 "tasks.tasks.Provider.objects.get",
@@ -668,6 +675,7 @@ class TestGenerateOutputs:
         mock_provider.uid = "test-provider-uid"
 
         with (
+            patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
             patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
             patch("tasks.tasks.Provider.objects.get", return_value=mock_provider),
             patch("tasks.tasks.initialize_prowler_provider"),
@@ -769,6 +777,38 @@ class TestGenerateOutputs:
                 enabled=True,
             )
             mock_s3_task.assert_called_once()
+
+
+class TestScanReportRLSTaskOnFailure:
+    def test_on_failure_removes_scan_tmp_directory(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={"tenant_id": "t-1", "scan_id": "s-1"},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_called_once_with(
+            _scan_tmp_output_directory("t-1", "s-1"), ignore_errors=True
+        )
+
+    def test_on_failure_skips_when_missing_kwargs(self):
+        task = ScanReportRLSTask()
+
+        with patch("tasks.tasks.rmtree") as mock_rmtree:
+            task.on_failure(
+                exc=OSError("No space left on device"),
+                task_id="task-abc",
+                args=(),
+                kwargs={},
+                _einfo=None,
+            )
+
+        mock_rmtree.assert_not_called()
 
 
 class TestScanCompleteTasks:
@@ -1079,6 +1119,7 @@ class TestCheckIntegrationsTask:
             enabled=True,
         )
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1111,6 +1152,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is generated for AWS providers with SecurityHub integration."""
         # Setup
@@ -1207,6 +1249,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.s3_integration_task")
     @patch("tasks.tasks.Integration.objects.filter")
     @patch("tasks.tasks.ScanSummary.objects.filter")
@@ -1239,6 +1282,7 @@ class TestCheckIntegrationsTask:
         mock_scan_summary,
         mock_integration_filter,
         mock_s3_task,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for AWS providers without SecurityHub integration."""
         # Setup
@@ -1332,6 +1376,7 @@ class TestCheckIntegrationsTask:
 
             assert result == {"upload": True}
 
+    @patch("tasks.tasks.get_prowler_provider_compliance", return_value={})
     @patch("tasks.tasks.ScanSummary.objects.filter")
     @patch("tasks.tasks.Provider.objects.get")
     @patch("tasks.tasks.initialize_prowler_provider")
@@ -1360,6 +1405,7 @@ class TestCheckIntegrationsTask:
         mock_initialize_provider,
         mock_provider_get,
         mock_scan_summary,
+        mock_get_prowler_compliance,
     ):
         """Test that ASFF output is NOT generated for non-AWS providers (e.g., Azure, GCP)."""
         # Setup
@@ -1434,9 +1480,9 @@ class TestCheckIntegrationsTask:
             )
 
             # Verify ASFF was NOT created for non-AWS provider
-            assert (
-                "asff" not in created_writers
-            ), "ASFF writer should NOT be created for non-AWS providers"
+            assert "asff" not in created_writers, (
+                "ASFF writer should NOT be created for non-AWS providers"
+            )
             assert "csv" in created_writers, "CSV writer should be created"
             assert "ocsf" in created_writers, "OCSF writer should be created"
 
@@ -1522,7 +1568,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"connected": True, "error": None},
             ),
             (
@@ -1597,7 +1643,7 @@ class TestCheckLighthouseProviderConnectionTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-invalid"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 openai.APIConnectionError(request=MagicMock()),
             ),
             (
@@ -1711,6 +1757,166 @@ class TestCheckLighthouseProviderConnectionTask:
             provider_cfg.refresh_from_db()
             assert provider_cfg.is_active is False
 
+    def test_openai_compatible_connection_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["connected"] is False
+        assert "base url" in result["error"].lower()
+        mock_openai.assert_not_called()
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=False,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock()
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": True, "error": None}
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_openai_compatible_connection_masks_remote_http_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "Provider connection failed"}
+        assert remote_body not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_connection_masks_remote_auth_error(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = {"error": {"message": "remote auth detail"}}
+        response = httpx.Response(
+            401,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.AuthenticationError(
+                "Unauthorized",
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = check_lighthouse_provider_connection_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result == {"connected": False, "error": "API key is invalid or missing"}
+        assert "remote auth detail" not in result["error"]
+        provider_cfg.refresh_from_db()
+        assert provider_cfg.is_active is False
+
+    def test_openai_compatible_network_backend_uses_validated_ip(self, monkeypatch):
+        backend = _LighthouseOpenAICompatibleNetworkBackend()
+        stream = MagicMock()
+
+        def resolve_to_public_ip(host, port):
+            del host, port
+            return ("93.184.216.34",)
+
+        monkeypatch.setattr(
+            "tasks.jobs.lighthouse_providers.resolve_lighthouse_openai_compatible_host",
+            resolve_to_public_ip,
+        )
+
+        with patch(
+            "tasks.jobs.lighthouse_providers.httpcore.SyncBackend.connect_tcp",
+            return_value=stream,
+        ) as mock_connect_tcp:
+            result = backend.connect_tcp("provider.example", 443, timeout=1.0)
+
+        assert result is stream
+        assert mock_connect_tcp.call_args.args[:2] == ("93.184.216.34", 443)
+        assert mock_connect_tcp.call_args.kwargs["timeout"] == 1.0
+
     def test_check_connection_provider_does_not_exist(self, tenants_fixture):
         """Test that checking non-existent provider raises DoesNotExist."""
         non_existent_id = str(uuid.uuid4())
@@ -1740,7 +1946,7 @@ class TestRefreshLighthouseProviderModelsTask:
             (
                 LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
                 {"api_key": "sk-test123"},
-                "https://openrouter.ai/api/v1",
+                "https://93.184.216.34/api/v1",
                 {"model-1": "Model One", "model-2": "Model Two"},
                 2,
             ),
@@ -1819,6 +2025,106 @@ class TestRefreshLighthouseProviderModelsTask:
                 ).count()
                 == expected_count
             )
+
+    def test_refresh_models_rejects_metadata_base_url_without_request(
+        self, tenants_fixture
+    ):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://169.254.169.254/latest/meta-data",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch(
+            "tasks.jobs.lighthouse_providers._fetch_openai_compatible_models"
+        ) as mock_fetch:
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert "base url" in result["error"].lower()
+        mock_fetch.assert_not_called()
+
+    def test_refresh_models_disables_redirects(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.return_value = MagicMock(data=[])
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        http_client = mock_openai.call_args.kwargs["http_client"]
+        assert http_client.follow_redirects is False
+        assert http_client.trust_env is False
+
+    def test_refresh_models_masks_remote_http_error(self, tenants_fixture):
+        provider_cfg = LighthouseProviderConfiguration(
+            tenant_id=tenants_fixture[0].id,
+            provider_type=LighthouseProviderConfiguration.LLMProviderChoices.OPENAI_COMPATIBLE,
+            base_url="https://93.184.216.34/api/v1",
+            is_active=True,
+        )
+        provider_cfg.credentials_decoded = {"api_key": "compatible-key"}
+        provider_cfg.save()
+        remote_body = "<!DOCTYPE HTML><p>remote 404 body</p>"
+        response = httpx.Response(
+            404,
+            request=httpx.Request("GET", "https://provider.example/v1/models"),
+        )
+
+        with patch("tasks.jobs.lighthouse_providers.openai.OpenAI") as mock_openai:
+            mock_client = MagicMock()
+            mock_client.models.list.side_effect = openai.NotFoundError(
+                remote_body,
+                response=response,
+                body=remote_body,
+            )
+            mock_openai.return_value = mock_client
+
+            eager_result = refresh_lighthouse_provider_models_task.apply(
+                kwargs={
+                    "provider_config_id": str(provider_cfg.id),
+                    "tenant_id": str(tenants_fixture[0].id),
+                }
+            )
+
+        assert eager_result.successful()
+        result = eager_result.result
+        assert result["created"] == 0
+        assert result["updated"] == 0
+        assert result["deleted"] == 0
+        assert result["error"] == "Provider connection failed"
+        assert remote_body not in result["error"]
 
     def test_refresh_models_mixed_operations(self, tenants_fixture):
         """Test mixed create, update, and delete operations."""
@@ -1920,11 +2226,11 @@ class TestCleanupOrphanScheduledScans:
         )
 
     def test_cleanup_deletes_orphan_when_both_available_and_scheduled_exist(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that AVAILABLE scan is deleted when SCHEDULED also exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create orphan AVAILABLE scan
@@ -1960,11 +2266,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_does_not_delete_when_only_available_exists(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that AVAILABLE scan is NOT deleted when no SCHEDULED exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create only AVAILABLE scan (normal first scan scenario)
@@ -1989,11 +2295,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=available_scan.id).exists()
 
     def test_cleanup_does_not_delete_when_only_scheduled_exists(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that nothing is deleted when only SCHEDULED exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create only SCHEDULED scan (normal subsequent scan scenario)
@@ -2018,11 +2324,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_returns_zero_when_no_scans_exist(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that cleanup returns 0 when no scans exist."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Execute cleanup with no scans
@@ -2035,11 +2341,11 @@ class TestCleanupOrphanScheduledScans:
         assert deleted_count == 0
 
     def test_cleanup_deletes_multiple_orphan_available_scans(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that multiple AVAILABLE orphan scans are all deleted."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create multiple orphan AVAILABLE scans
@@ -2084,12 +2390,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
 
     def test_cleanup_does_not_affect_different_provider(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider_pair
     ):
         """Test that cleanup only affects scans for the specified provider."""
         tenant = tenants_fixture[0]
-        provider1 = providers_fixture[0]
-        provider2 = providers_fixture[1]
+        provider1, provider2 = aws_provider_pair
         periodic_task1 = self._create_periodic_task(provider1.id, tenant.id)
         periodic_task2 = self._create_periodic_task(provider2.id, tenant.id)
 
@@ -2134,12 +2439,10 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan_p1.id).exists()
         assert Scan.objects.filter(id=available_scan_p2.id).exists()
 
-    def test_cleanup_does_not_affect_manual_scans(
-        self, tenants_fixture, providers_fixture
-    ):
+    def test_cleanup_does_not_affect_manual_scans(self, tenants_fixture, aws_provider):
         """Test that cleanup only affects SCHEDULED trigger scans, not MANUAL."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
 
         # Create orphan AVAILABLE scheduled scan
@@ -2185,11 +2488,11 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=manual_scan.id).exists()
 
     def test_cleanup_does_not_affect_different_scheduler_task(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Test that cleanup only affects scans with the specified scheduler_task_id."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task1 = self._create_periodic_task(provider.id, tenant.id)
 
         # Create another periodic task
@@ -2243,6 +2546,51 @@ class TestCleanupOrphanScheduledScans:
         assert Scan.objects.filter(id=scheduled_scan.id).exists()
         assert Scan.objects.filter(id=available_scan_other_task.id).exists()
 
+    def test_cleanup_keeps_db_queued_scheduled_scans(
+        self, tenants_fixture, aws_provider
+    ):
+        """DB-queued scheduled scans have a task and must not be deleted as orphans."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=task_result.task_id,
+            task_runner_task=task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Queued scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+            task=queued_task,
+        )
+        scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+            scheduler_task_id=periodic_task.id,
+        )
+
+        deleted_count = _cleanup_orphan_scheduled_scans(
+            tenant_id=str(tenant.id),
+            provider_id=str(provider.id),
+            scheduler_task_id=periodic_task.id,
+        )
+
+        assert deleted_count == 0
+        assert Scan.objects.filter(id=queued_scan.id).exists()
+        assert Scan.objects.filter(id=scheduled_scan.id).exists()
+
 
 @pytest.mark.django_db
 class TestPerformScheduledScanTask:
@@ -2284,19 +2632,19 @@ class TestPerformScheduledScanTask:
             task_id=task_id,
             task_name="scan-perform-scheduled",
             status="STARTED",
-            date_created=datetime.now(timezone.utc),
+            date_created=datetime.now(UTC),
         )
         Task.objects.create(
             id=task_id, task_runner_task=task_result, tenant_id=tenant_id
         )
         return task_result
 
-    def test_skip_when_scheduled_scan_executing(
-        self, tenants_fixture, providers_fixture
+    def test_queues_scheduled_scan_when_scheduled_scan_is_executing(
+        self, tenants_fixture, aws_provider
     ):
-        """Skip a scheduled run when another scheduled scan is already executing."""
+        """Queue a scheduled run when another scheduled scan is executing."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2321,8 +2669,16 @@ class TestPerformScheduledScanTask:
 
         mock_scan.assert_not_called()
         mock_complete_tasks.assert_not_called()
-        assert result["id"] == str(executing_scan.id)
-        assert result["state"] == StateChoices.EXECUTING
+        assert result["id"] != str(executing_scan.id)
+        assert result["state"] == StateChoices.AVAILABLE
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert queued_scheduled_scan.task.task_runner_task.status == "QUEUED"
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -2330,15 +2686,141 @@ class TestPerformScheduledScanTask:
                 trigger=Scan.TriggerChoices.SCHEDULED,
                 state=StateChoices.SCHEDULED,
             ).count()
-            == 0
+            == 1
+        )
+
+    def test_queues_scheduled_scan_when_manual_scan_is_pending(
+        self, tenants_fixture, aws_provider
+    ):
+        """Queue one scheduled run when a manual scan is already dispatched."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        manual_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status=states.PENDING,
+        )
+        manual_task = Task.objects.create(
+            id=manual_task_result.task_id,
+            task_runner_task=manual_task_result,
+            tenant_id=tenant.id,
+        )
+        manual_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=manual_task,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] != str(manual_scan.id)
+        assert result["state"] == StateChoices.AVAILABLE
+        queued_scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+        )
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert queued_scheduled_scan.task.task_runner_task.status == "QUEUED"
+        scheduled_scan = Scan.objects.get(
+            tenant_id=tenant.id,
+            provider=provider,
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.SCHEDULED,
+        )
+        assert scheduled_scan.scheduled_at > datetime.now(UTC)
+
+    def test_coalesces_scheduled_scan_when_one_is_already_queued(
+        self, tenants_fixture, aws_provider
+    ):
+        """Reuse the existing queued scheduled scan instead of adding another."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        periodic_task = self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+        manual_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status=states.PENDING,
+        )
+        manual_task = Task.objects.create(
+            id=manual_task_result.task_id,
+            task_runner_task=manual_task_result,
+            tenant_id=tenant.id,
+        )
+        Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Manual scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=manual_task,
+        )
+        queued_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=queued_task_result.task_id,
+            task_runner_task=queued_task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scheduled_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Daily scheduled scan",
+            trigger=Scan.TriggerChoices.SCHEDULED,
+            state=StateChoices.AVAILABLE,
+            scheduler_task_id=periodic_task.id,
+            task=queued_task,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan") as mock_scan,
+            patch("tasks.tasks._perform_scan_complete_tasks") as mock_complete_tasks,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        mock_scan.assert_not_called()
+        mock_complete_tasks.assert_not_called()
+        assert result["id"] == str(queued_scheduled_scan.id)
+        assert (
+            Scan.objects.filter(
+                tenant_id=tenant.id,
+                provider=provider,
+                trigger=Scan.TriggerChoices.SCHEDULED,
+                state=StateChoices.AVAILABLE,
+            ).count()
+            == 1
         )
 
     def test_creates_next_scheduled_scan_after_completion(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Create a next scheduled scan after a successful run completes."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2372,7 +2854,7 @@ class TestPerformScheduledScanTask:
             state=StateChoices.SCHEDULED,
         )
         assert scheduled_scans.count() == 1
-        assert scheduled_scans.first().scheduled_at > datetime.now(timezone.utc)
+        assert scheduled_scans.first().scheduled_at > datetime.now(UTC)
         assert (
             Scan.objects.filter(
                 tenant_id=tenant.id,
@@ -2392,12 +2874,47 @@ class TestPerformScheduledScanTask:
             == 1
         )
 
+    def test_next_scheduled_scan_failure_does_not_mask_completed_scan(
+        self, tenants_fixture, aws_provider, caplog
+    ):
+        """Keep scheduled scan success when next-run creation fails."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        self._create_periodic_task(provider.id, tenant.id)
+        task_id = str(uuid.uuid4())
+        self._create_task_result(tenant.id, task_id)
+
+        def _complete_scan(tenant_id, scan_id, provider_id):
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch(
+                "tasks.tasks._get_or_create_next_scheduled_scan",
+                side_effect=RuntimeError("scheduler unavailable"),
+            ),
+            patch("tasks.tasks._dispatch_next_queued_provider_scan") as mock_dispatch,
+            self._override_task_request(perform_scheduled_scan_task, id=task_id),
+            caplog.at_level("ERROR"),
+        ):
+            result = perform_scheduled_scan_task.run(
+                tenant_id=str(tenant.id), provider_id=str(provider.id)
+            )
+
+        assert result == {"status": "ok"}
+        mock_dispatch.assert_called_once_with(str(tenant.id), str(provider.id))
+        assert "Failed to ensure next scheduled scan" in caplog.text
+
     def test_dedupes_multiple_scheduled_scans_before_run(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """Ensure duplicated scheduled scans are removed before executing."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
         periodic_task = self._create_periodic_task(provider.id, tenant.id)
         task_id = str(uuid.uuid4())
         self._create_task_result(tenant.id, task_id)
@@ -2408,7 +2925,7 @@ class TestPerformScheduledScanTask:
             name="Daily scheduled scan",
             trigger=Scan.TriggerChoices.SCHEDULED,
             state=StateChoices.SCHEDULED,
-            scheduled_at=datetime.now(timezone.utc),
+            scheduled_at=datetime.now(UTC),
             scheduler_task_id=periodic_task.id,
         )
         duplicate_scan = Scan.objects.create(
@@ -2506,6 +3023,104 @@ class TestPerformScanTask:
         mock_scan.assert_not_called()
         mock_complete_tasks.assert_not_called()
 
+    def test_dispatches_next_queued_scan_after_completion(
+        self,
+        tenants_fixture,
+        aws_provider,
+        django_capture_on_commit_callbacks,
+    ):
+        """Dispatch the next queued scan for the provider after completion."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        current_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Running scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+        queued_task_result = TaskResult.objects.create(
+            task_id=str(uuid.uuid4()),
+            task_name="scan-perform",
+            status="QUEUED",
+        )
+        queued_task = Task.objects.create(
+            id=queued_task_result.task_id,
+            task_runner_task=queued_task_result,
+            tenant_id=tenant.id,
+        )
+        queued_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Queued scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+            task=queued_task,
+        )
+
+        def _complete_scan(tenant_id, scan_id, provider_id, checks_to_execute=None):
+            scan_instance = Scan.objects.get(id=scan_id)
+            scan_instance.state = StateChoices.COMPLETED
+            scan_instance.save()
+            return {"status": "ok"}
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", side_effect=_complete_scan),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch("tasks.tasks.perform_scan_task.apply_async") as mock_apply_async,
+        ):
+            with django_capture_on_commit_callbacks(execute=True):
+                result = perform_scan_task.run(
+                    tenant_id=str(tenant.id),
+                    scan_id=str(current_scan.id),
+                    provider_id=str(provider.id),
+                )
+
+        queued_task_result.refresh_from_db()
+        assert result == {"status": "ok"}
+        assert queued_task_result.status == states.PENDING
+        mock_apply_async.assert_called_once_with(
+            kwargs={
+                "tenant_id": str(tenant.id),
+                "scan_id": str(queued_scan.id),
+                "provider_id": str(provider.id),
+            },
+            task_id=str(queued_task.id),
+        )
+
+    def test_dispatch_failure_does_not_mask_completed_scan(
+        self, tenants_fixture, aws_provider, caplog
+    ):
+        """Keep scan success when queued dispatch fails after completion."""
+        tenant = tenants_fixture[0]
+        provider = aws_provider
+        current_scan = Scan.objects.create(
+            tenant_id=tenant.id,
+            provider=provider,
+            name="Running scan",
+            trigger=Scan.TriggerChoices.MANUAL,
+            state=StateChoices.AVAILABLE,
+        )
+
+        with (
+            patch("tasks.tasks.perform_prowler_scan", return_value={"status": "ok"}),
+            patch("tasks.tasks._perform_scan_complete_tasks"),
+            patch(
+                "tasks.tasks._dispatch_next_queued_provider_scan",
+                side_effect=RuntimeError("dispatch unavailable"),
+            ) as mock_dispatch,
+            caplog.at_level("ERROR"),
+        ):
+            result = perform_scan_task.run(
+                tenant_id=str(tenant.id),
+                scan_id=str(current_scan.id),
+                provider_id=str(provider.id),
+            )
+
+        assert result == {"status": "ok"}
+        mock_dispatch.assert_called_once_with(str(tenant.id), str(provider.id))
+        assert "Failed to dispatch next queued scan" in caplog.text
+
 
 @pytest.mark.django_db
 class TestReaggregateAllFindingGroupSummaries:
@@ -2538,7 +3153,7 @@ class TestReaggregateAllFindingGroupSummaries:
         scan_id_today_p1 = uuid.uuid4()
         scan_id_yesterday_p1 = uuid.uuid4()
         scan_id_today_p2 = uuid.uuid4()
-        today = datetime.now(tz=timezone.utc)
+        today = datetime.now(tz=UTC)
         yesterday = today - timedelta(days=1)
 
         mock_outer_group_result = MagicMock()
@@ -2619,7 +3234,7 @@ class TestReaggregateAllFindingGroupSummaries:
         provider_id = uuid.uuid4()
         latest_scan_today = uuid.uuid4()
         earlier_scan_today = uuid.uuid4()
-        today_late = datetime.now(tz=timezone.utc)
+        today_late = datetime.now(tz=UTC)
         today_early = today_late - timedelta(hours=4)
 
         mock_outer_group_result = MagicMock()
@@ -2672,3 +3287,37 @@ class TestReaggregateAllFindingGroupSummaries:
         assert result == {"scans_reaggregated": 0}
         mock_group.assert_not_called()
         mock_chain.assert_not_called()
+
+
+class TestTaskTimeLimits:
+    """The per-task limits in task_annotations must actually take effect.
+
+    Celery applies a "*" annotation after the per-task one, so a "*" entry would
+    silently overwrite every specific limit and cap long scans at the default. The
+    default is set as the global limit instead, and these per-task limits must win.
+    """
+
+    def test_long_running_tasks_exceed_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "scan-perform",
+            "scan-perform-scheduled",
+            "attack-paths-scan-perform",
+            "provider-deletion",
+            "tenant-deletion",
+        ):
+            assert celery_app.tasks[name].time_limit > default
+
+    def test_connection_checks_stay_below_the_default_limit(self):
+        from config.celery import celery_app
+
+        default = celery_app.conf.task_time_limit
+        for name in (
+            "provider-connection-check",
+            "integration-connection-check",
+            "lighthouse-connection-check",
+            "lighthouse-provider-connection-check",
+        ):
+            assert celery_app.tasks[name].time_limit < default

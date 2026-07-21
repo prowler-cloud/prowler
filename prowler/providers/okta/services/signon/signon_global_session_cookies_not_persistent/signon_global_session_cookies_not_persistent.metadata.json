@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "signon_global_session_cookies_not_persistent",
+  "CheckTitle": "Default Global Session Policy has a Priority 1 non-default rule disabling persistent global session cookies",
+  "CheckType": [],
+  "ServiceName": "signon",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "governance",
+  "Description": "Every active Okta **Global Session Policy** needs a **Priority 1** rule that is **not** the built-in `Default Rule`, setting *Okta global session cookies persist across browser sessions* to `Disabled`.\n\nOkta evaluates policies by group assignment, so a permissive custom policy can govern users. Aligns with **DISA STIG V-273206 / OKTA-APP-001710**.",
+  "Risk": "Persistent global session cookies keep an authenticated Okta session alive across browser restarts.\n\n- **Surviving sessions** outlive the browsing context the user expected\n- **Cached authorization decisions** remain in effect after the browser closes\n- **Forgotten or shared devices** continue to hold authenticated access until cookies expire on their own",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/Policy/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Global Session Policy**.\n3. Open the **Default Policy** (and repeat for every other active policy).\n4. Add or edit a non-default rule.\n5. Move that rule to **Priority 1** so it is evaluated before the built-in `Default Rule`.\n6. Set *Okta global session cookies persist across browser sessions* to `Disabled`.\n7. Save the rule.",
+      "Terraform": "```hcl\nresource \"okta_policy_rule_signon\" \"<example_resource_name>\" {\n  policy_id          = okta_policy_signon.default.id\n  name               = \"<example_resource_name>\"\n  status             = \"ACTIVE\"\n  priority           = 1       # Critical: rule must sit at Priority 1 before the Default Rule\n  session_persistent = false   # Critical: disable persistent global session cookies\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Configure each active **Global Session Policy** so a non-default rule at **Priority 1**:\n- Sets *Okta global session cookies persist across browser sessions* to `Disabled`\n- Is enabled (`ACTIVE`) and evaluated before the built-in `Default Rule`\n\nReview group assignments to confirm the rule actually governs the intended users.",
+      "Url": "https://hub.prowler.com/check/signon_global_session_cookies_not_persistent"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

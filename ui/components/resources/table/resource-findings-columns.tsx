@@ -2,23 +2,32 @@
 
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table";
 
-import { DataTableRowActions } from "@/components/findings/table";
+import {
+  DataTableRowActions,
+  FindingTriageStatusCell,
+} from "@/components/findings/table";
+import type { FindingTriageUpdateHandler } from "@/components/findings/table/finding-triage-status-control";
 import {
   DeltaType,
   NotificationIndicator,
 } from "@/components/findings/table/notification-indicator";
 import { Checkbox } from "@/components/shadcn";
-import { DateWithTime } from "@/components/ui/entities";
+import { DateWithTime } from "@/components/shadcn/entities";
 import {
   DataTableColumnHeader,
   Severity,
   SeverityBadge,
   StatusFindingBadge,
-} from "@/components/ui/table";
+} from "@/components/shadcn/table";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
 
 export interface ResourceFinding {
   type: "findings";
   id: string;
+  triage?: FindingTriageSummary;
   attributes: {
     status: "PASS" | "FAIL" | "MANUAL";
     severity: Severity;
@@ -37,6 +46,10 @@ export const getResourceFindingsColumns = (
   selectableRowCount: number,
   onNavigate: (id: string) => void,
   onMuteComplete?: (findingIds: string[]) => void,
+  onTriageUpdateAction?: FindingTriageUpdateHandler,
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>,
 ): ColumnDef<ResourceFinding>[] => {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -137,10 +150,28 @@ export const getResourceFindingsColumns = (
       enableSorting: false,
     },
     {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <FindingTriageStatusCell
+          triage={row.original.triage}
+          onTriageUpdateAction={onTriageUpdateAction}
+        />
+      ),
+      enableSorting: false,
+    },
+    {
       id: "actions",
       header: () => <div className="w-10" />,
       cell: ({ row }) => (
-        <DataTableRowActions row={row} onMuteComplete={onMuteComplete} />
+        <DataTableRowActions
+          row={row}
+          onMuteComplete={onMuteComplete}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+        />
       ),
       enableSorting: false,
     },

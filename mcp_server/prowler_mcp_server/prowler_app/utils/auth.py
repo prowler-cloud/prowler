@@ -2,15 +2,15 @@ import base64
 import json
 import os
 from datetime import datetime
-from typing import Dict, Optional
 
 from fastmcp.server.dependencies import get_http_headers
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 
 
 class ProwlerAppAuth:
-    """Handles authentication for Prowler App API using API keys or JWT tokens."""
+    """Handles authentication for Prowler API using API keys or JWT tokens."""
 
     def __init__(
         self,
@@ -18,21 +18,25 @@ class ProwlerAppAuth:
         base_url: str = os.getenv("API_BASE_URL", "https://api.prowler.com/api/v1"),
     ):
         self.base_url = base_url.rstrip("/")
-        logger.info(f"Using Prowler App API base URL: {self.base_url}")
+        logger.info(f"Using Prowler API base URL: {self.base_url}")
         self.mode = mode
-        self.access_token: Optional[str] = None
-        self.api_key: Optional[str] = None
+        self.access_token: str | None = None
+        self.api_key: str | None = None
 
         if mode == "stdio":  # STDIO mode
-            self.api_key = os.getenv("PROWLER_APP_API_KEY")
+            # PROWLER_API_KEY is the current variable; PROWLER_APP_API_KEY is kept
+            # as a backward-compatible fallback so existing setups keep working.
+            self.api_key = os.getenv("PROWLER_API_KEY") or os.getenv(
+                "PROWLER_APP_API_KEY"
+            )
 
             if not self.api_key:
-                raise ValueError("PROWLER_APP_API_KEY environment variable is required")
+                raise ValueError("PROWLER_API_KEY environment variable is required")
 
             if not self.api_key.startswith("pk_"):
-                raise ValueError("Prowler App API key format is incorrect")
+                raise ValueError("Prowler API key format is incorrect")
 
-    def _parse_jwt(self, token: str) -> Optional[Dict]:
+    def _parse_jwt(self, token: str) -> dict | None:
         """Parse JWT token and return payload
 
         Args:
@@ -68,7 +72,7 @@ class ProwlerAppAuth:
     async def authenticate(self) -> str:
         """Authenticate and return token (API key for STDIO, API key or JWT for HTTP)."""
         if self.mode == "http":
-            headers = get_http_headers()
+            headers = get_http_headers(include={"authorization"})
             authorization_header = headers.get("authorization", None)
 
             if not authorization_header:
@@ -109,7 +113,7 @@ class ProwlerAppAuth:
         else:
             return await self.authenticate()
 
-    def get_headers(self, token: str) -> Dict[str, str]:
+    def get_headers(self, token: str) -> dict[str, str]:
         """Get headers for API requests with authentication."""
         if token.startswith("pk_"):
             authorization_header = f"Api-Key {token}"

@@ -1,4 +1,4 @@
-"""Attack Paths tools for Prowler App MCP Server.
+"""Attack Paths tools for Prowler MCP Server.
 
 This module provides tools for analyzing Attack Paths data from Neo4j graph database.
 Attack Paths help identify security risks by tracing potential attack vectors
@@ -7,6 +7,8 @@ through cloud infrastructure relationships.
 
 from typing import Any, Literal
 
+from pydantic import Field
+
 from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathCartographySchema,
     AttackPathQuery,
@@ -14,23 +16,22 @@ from prowler_mcp_server.prowler_app.models.attack_paths import (
     AttackPathScansListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-from pydantic import Field
 
 
 class AttackPathsTools(BaseTool):
     """Tools for Attack Paths analysis.
 
     Provides tools for:
-    - prowler_app_list_attack_paths_scans: Find completed scans ready for analysis
-    - prowler_app_list_attack_paths_queries: Discover available queries for a scan
-    - prowler_app_run_attack_paths_query: Execute query and analyze attack paths
+    - prowler_list_attack_paths_scans: Find completed scans ready for analysis
+    - prowler_list_attack_paths_queries: Discover available queries for a scan
+    - prowler_run_attack_paths_query: Execute query and analyze attack paths
     """
 
     async def list_attack_paths_scans(
         self,
         provider_id: list[str] = Field(
             default=[],
-            description="Filter by Prowler's internal UUID(s) (v4) for specific provider(s). Use `prowler_app_search_providers` tool to find provider IDs",
+            description="Filter by Prowler's internal UUID(s) (v4) for specific provider(s). Use `prowler_search_providers` tool to find provider IDs",
         ),
         provider_type: list[str] = Field(
             default=[],
@@ -72,8 +73,8 @@ class AttackPathsTools(BaseTool):
 
         Workflow:
         1. Use this tool to find completed attack paths scans
-        2. Use prowler_app_list_attack_paths_queries to see available queries for a scan
-        3. Use prowler_app_run_attack_paths_query to execute analysis
+        2. Use prowler_list_attack_paths_queries to see available queries for a scan
+        3. Use prowler_run_attack_paths_query to execute analysis
         """
         try:
             # Validate pagination
@@ -112,7 +113,7 @@ class AttackPathsTools(BaseTool):
     async def list_attack_paths_queries(
         self,
         scan_id: str = Field(
-            description="UUID of a COMPLETED attack paths scan. Use `prowler_app_list_attack_paths_scans` with state=['completed'] to find scan IDs"
+            description="UUID of a COMPLETED attack paths scan. Use `prowler_list_attack_paths_scans` with state=['completed'] to find scan IDs"
         ),
     ) -> list[dict[str, Any]]:
         """Discover available Attack Paths queries for a completed scan.
@@ -132,9 +133,9 @@ class AttackPathsTools(BaseTool):
         - aws-ec2-instances-internet-exposed: Find internet-exposed EC2 instances
 
         Workflow:
-        1. Use prowler_app_list_attack_paths_scans to find a completed scan
+        1. Use prowler_list_attack_paths_scans to find a completed scan
         2. Use this tool to discover available queries
-        3. Use prowler_app_run_attack_paths_query with query_id and any required parameters
+        3. Use prowler_run_attack_paths_query with query_id and any required parameters
         """
         try:
             api_response = await self.api_client.get(
@@ -157,7 +158,7 @@ class AttackPathsTools(BaseTool):
             description="UUID of a COMPLETED attack paths scan. The scan must be in 'completed' state"
         ),
         query_id: str = Field(
-            description="Query ID to execute (e.g., 'aws-internet-exposed-ec2-sensitive-s3-access'). Use `prowler_app_list_attack_paths_queries` to discover available queries"
+            description="Query ID to execute (e.g., 'aws-internet-exposed-ec2-sensitive-s3-access'). Use `prowler_list_attack_paths_queries` to discover available queries"
         ),
         parameters: dict[str, str] = Field(
             default_factory=dict,
@@ -193,7 +194,7 @@ class AttackPathsTools(BaseTool):
 
         Workflow:
         1. Ensure scan is completed
-        2. List available queries (use prowler_app_list_attack_paths_queries)
+        2. List available queries (use prowler_list_attack_paths_queries)
         3. Execute this tool with appropriate parameters
         4. Analyze the returned graph for security insights
         """
@@ -230,7 +231,7 @@ class AttackPathsTools(BaseTool):
     async def get_attack_paths_cartography_schema(
         self,
         scan_id: str = Field(
-            description="UUID of a COMPLETED attack paths scan. Use `prowler_app_list_attack_paths_scans` with state=['completed'] to find scan IDs"
+            description="UUID of a COMPLETED attack paths scan. Use `prowler_list_attack_paths_scans` with state=['completed'] to find scan IDs"
         ),
     ) -> dict[str, Any]:
         """Retrieve the Cartography graph schema for a completed attack paths scan.
@@ -252,10 +253,10 @@ class AttackPathsTools(BaseTool):
         - schema_content: Full Cartography schema markdown with node/relationship definitions
 
         Workflow:
-        1. Use prowler_app_list_attack_paths_scans to find a completed scan
+        1. Use prowler_list_attack_paths_scans to find a completed scan
         2. Use this tool to get the schema for the scan's provider
         3. Use the schema to craft custom openCypher queries
-        4. Execute queries with prowler_app_run_attack_paths_query
+        4. Execute queries with prowler_run_attack_paths_query
         """
         try:
             api_response = await self.api_client.get(

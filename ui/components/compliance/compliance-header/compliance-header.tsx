@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-import { DataTableFilterCustom } from "@/components/ui/table/data-table-filter-custom";
+import { DataTableFilterCustom } from "@/components/shadcn/table/data-table-filter-custom";
 import { ScanEntity } from "@/types/scans";
 
 import { ComplianceScanInfo } from "./compliance-scan-info";
@@ -76,30 +76,30 @@ export const ComplianceHeader = ({
   return (
     <>
       {hasContent && (
-        <div className="flex w-full items-start justify-between gap-6 sm:mb-8">
-          <div className="flex flex-1 flex-col justify-end gap-4">
-            {/* Showed in the details page */}
-            {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
-
-            {/* Showed in the compliance page */}
-            {!hideFilters && (allFilters.length > 0 || showProviders) && (
-              <DataTableFilterCustom
-                filters={allFilters}
-                prependElement={prependElement}
-              />
-            )}
-          </div>
-          {logoPath && complianceTitle && (
-            <div className="hidden shrink-0 sm:block">
-              <div className="relative h-24 w-24">
-                <Image
-                  src={logoPath}
-                  alt={`${complianceTitle} logo`}
-                  fill
-                  className="rounded-lg border border-gray-300 bg-white object-contain p-0"
-                />
-              </div>
+        <div className="flex w-full flex-col gap-4">
+          {/* Identity row: framework logo anchoring the scan context. */}
+          {(selectedScan || (logoPath && complianceTitle)) && (
+            <div className="flex w-full items-center gap-4">
+              {logoPath && complianceTitle && (
+                <div className="relative h-12 w-12 shrink-0">
+                  <Image
+                    src={logoPath}
+                    alt={`${complianceTitle} logo`}
+                    fill
+                    className="rounded-lg border border-gray-300 bg-white object-contain p-0"
+                  />
+                </div>
+              )}
+              {selectedScan && <ComplianceScanInfo scan={selectedScan} />}
             </div>
+          )}
+
+          {/* Filters row */}
+          {!hideFilters && (allFilters.length > 0 || showProviders) && (
+            <DataTableFilterCustom
+              filters={allFilters}
+              prependElement={prependElement}
+            />
           )}
         </div>
       )}

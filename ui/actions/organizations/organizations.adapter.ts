@@ -110,6 +110,71 @@ export function buildAccountLookup(
 }
 
 /**
+ * Returns the selectable account IDs that fall under a deployment target
+ * (an OU or root ID), optionally including the deployment account itself.
+ *
+ * The StackSet only rolls the role out to member accounts beneath the chosen
+ * target, and the deployment (management or delegated administrator) account
+ * gets the role via DeployLocalRole even though it usually lives outside that
+ * target. Pre-selecting exactly those accounts keeps the confirmation step in
+ * sync with what was actually deployed.
+ *
+ * Falls back to every selectable account when the target is empty or is not
+ * part of this discovery (e.g. a root ID), preserving the whole-organization
+ * default.
+ */
+export function getSelectableAccountIdsForTarget(
+  result: DiscoveryResult,
+  targetId: string,
+  deploymentAccountId?: string,
+): string[] {
+  const selectableAccountIds = getSelectableAccountIds(result);
+  const normalizedTarget = targetId.trim();
+
+  if (!normalizedTarget) {
+    return selectableAccountIds;
+  }
+
+  const isKnownOu = result.organizational_units.some(
+    (ou) => ou.id === normalizedTarget,
+  );
+
+  // Only a specific OU narrows the selection. A root ID (whole org) or an
+  // unknown target keeps the whole-organization default.
+  if (!isKnownOu) {
+    return selectableAccountIds;
+  }
+
+  // Collect the target OU plus all of its nested descendant OUs.
+  const scopeIds = new Set<string>([normalizedTarget]);
+  let addedNewOu = true;
+  while (addedNewOu) {
+    addedNewOu = false;
+    for (const ou of result.organizational_units) {
+      if (!scopeIds.has(ou.id) && scopeIds.has(ou.parent_id)) {
+        scopeIds.add(ou.id);
+        addedNewOu = true;
+      }
+    }
+  }
+
+  const selectableSet = new Set(selectableAccountIds);
+  const scopedIds = new Set<string>();
+
+  for (const account of result.accounts) {
+    if (scopeIds.has(account.parent_id) && selectableSet.has(account.id)) {
+      scopedIds.add(account.id);
+    }
+  }
+
+  if (deploymentAccountId && selectableSet.has(deploymentAccountId)) {
+    scopedIds.add(deploymentAccountId);
+  }
+
+  return selectableAccountIds.filter((id) => scopedIds.has(id));
+}
+
+/**
  * Given selected account IDs, returns OU IDs that are ancestors of selected accounts.
  */
 export function getOuIdsForSelectedAccounts(

@@ -60,7 +60,7 @@ jobs:
       contents: read
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -98,7 +98,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -138,15 +138,18 @@ jobs:
     permissions:
       contents: read
       packages: write
+      id-token: write
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
             api.ecr-public.us-east-1.amazonaws.com:443
             public.ecr.aws:443
+            sts.amazonaws.com:443
+            sts.us-east-1.amazonaws.com:443
             registry-1.docker.io:443
             production.cloudflare.docker.com:443
             production.cloudfront.docker.com:443
@@ -168,19 +171,21 @@ jobs:
           persist-credentials: false
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Public ECR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
-          registry: public.ecr.aws
-          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.PUBLIC_ECR_PUSH_ROLE_ARN }}
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        with:
+          registry-type: public
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
@@ -188,7 +193,7 @@ jobs:
       - name: Build and push SDK container for ${{ matrix.arch }}
         id: container-push
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: .
           file: ${{ env.DOCKERFILE_PATH }}
@@ -206,10 +211,11 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -221,22 +227,26 @@ jobs:
             github.com:443
             release-assets.githubusercontent.com:443
             api.ecr-public.us-east-1.amazonaws.com:443
+            sts.amazonaws.com:443
+            sts.us-east-1.amazonaws.com:443
 
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Login to Public ECR
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
-          registry: public.ecr.aws
-          username: ${{ secrets.PUBLIC_ECR_AWS_ACCESS_KEY_ID }}
-          password: ${{ secrets.PUBLIC_ECR_AWS_SECRET_ACCESS_KEY }}
-        env:
-          AWS_REGION: ${{ env.AWS_REGION }}
+          aws-region: us-east-1
+          role-to-assume: ${{ secrets.PUBLIC_ECR_PUSH_ROLE_ARN }}
+
+      - name: Login to Public ECR
+        uses: aws-actions/amazon-ecr-login@d539f0932e70871a027e9d5a9d8fc38589180a64 # v2.1.6
+        with:
+          registry-type: public
 
       - name: Create and push manifests for push event
         if: github.event_name == 'push'
@@ -267,7 +277,7 @@ jobs:
       # Push to toniblyx/prowler only for current version (latest/stable/release tags)
       - name: Login to DockerHub (toniblyx)
         if: needs.setup.outputs.latest_tag == 'latest'
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.TONIBLYX_DOCKERHUB_USERNAME }}
           password: ${{ secrets.TONIBLYX_DOCKERHUB_PASSWORD }}
@@ -292,14 +302,14 @@ jobs:
       # Re-login as prowlercloud for cleanup of intermediate tags
       - name: Login to DockerHub (prowlercloud)
         if: always()
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Install regctl
         if: always()
-        uses: regclient/actions/regctl-installer@da9319db8e44e8b062b3a147e1dfb2f574d41a03 # main
+        uses: regclient/actions/regctl-installer@9a2d4216180dbb3e2dccfa60d2dd4afd98e42ec5 # main
 
       - name: Cleanup intermediate architecture tags
         if: always()
@@ -320,7 +330,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 

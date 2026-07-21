@@ -4,9 +4,9 @@ title: 'Getting Started with Kubernetes'
 
 ## Prowler Cloud
 
-### Step 1: Access Prowler Cloud/App
+### Step 1: Access Prowler Cloud or Prowler Local Server
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Go to "Configuration" > "Providers"
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
@@ -21,7 +21,11 @@ title: 'Getting Started with Kubernetes'
 
 ### Step 2: Configure Kubernetes Authentication
 
-For Kubernetes, Prowler App uses a `kubeconfig` file to authenticate. Paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
+For Kubernetes, Prowler Cloud uses a `kubeconfig` file to authenticate. Paste the contents of your `kubeconfig` file into the `Kubeconfig content` field.
+
+<Note>
+Kubeconfigs that use `users[].user.exec` authentication are not supported in Prowler Cloud or Prowler Local Server. For security reasons, Prowler Cloud does not run commands declared by uploaded kubeconfigs. Use kubeconfig credentials that do not rely on `exec` authentication, such as the ServiceAccount token flow documented below.
+</Note>
 
 By default, the `kubeconfig` file is located at `~/.kube/config`.
 

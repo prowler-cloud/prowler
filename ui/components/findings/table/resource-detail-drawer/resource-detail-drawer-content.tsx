@@ -16,7 +16,11 @@ import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { getCompliancesOverview } from "@/actions/compliances";
-import type { ResourceDrawerFinding } from "@/actions/findings";
+import {
+  loadLatestFindingTriageNote,
+  type ResourceDrawerFinding,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
 import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
@@ -32,31 +36,15 @@ import {
   TabsTrigger,
 } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
+import { CodeSnippet } from "@/components/shadcn/code-snippet/code-snippet";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
-import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
-import {
-  ExternalResourceLink,
-  resolveExternalTarget,
-} from "@/components/shared/external-resource-link";
-import {
-  QUERY_EDITOR_LANGUAGE,
-  QueryCodeEditor,
-  type QueryEditorLanguage,
-} from "@/components/shared/query-code-editor";
-import { CodeSnippet } from "@/components/ui/code-snippet/code-snippet";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
 import {
   Table,
   TableBody,
@@ -64,24 +52,48 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { SeverityBadge } from "@/components/ui/table/severity-badge";
+} from "@/components/shadcn/table";
+import { SeverityBadge } from "@/components/shadcn/table/severity-badge";
 import {
   type FindingStatus,
   StatusFindingBadge,
-} from "@/components/ui/table/status-finding-badge";
-import { getFailingForLabel } from "@/lib/date-utils";
-import { formatDuration } from "@/lib/date-utils";
+} from "@/components/shadcn/table/status-finding-badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/shadcn/tooltip";
+import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
+import { resolveExternalTarget } from "@/components/shared/external-resource-link";
+import {
+  QUERY_EDITOR_LANGUAGE,
+  QueryCodeEditor,
+  type QueryEditorLanguage,
+} from "@/components/shared/query-code-editor";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
+import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import type { FindingResourceRow } from "@/types/findings-table";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 import { Muted } from "../../muted";
 import { DeltaIndicator } from "../delta-indicator";
+import {
+  FindingNoteActionItem,
+  FindingTriageStatusBadge,
+  FindingTriageStatusCell,
+} from "../finding-triage-cells";
 import { DeltaValues, NotificationIndicator } from "../notification-indicator";
+
 import { ResourceDetailSkeleton } from "./resource-detail-skeleton";
 import type { CheckMeta } from "./use-resource-detail-drawer";
+
+const OTHER_FINDINGS_ACTION_CELL_CLASS =
+  "sticky right-0 z-20 min-w-12 last:rounded-r-none! overflow-visible bg-bg-neutral-secondary before:pointer-events-none before:absolute before:inset-y-0 before:-left-8 before:w-8 before:bg-gradient-to-r before:from-transparent before:to-bg-neutral-secondary before:content-[''] group-hover:bg-bg-neutral-tertiary group-hover:before:to-bg-neutral-tertiary";
 
 /** Strip markdown code fences (```lang ... ```) so CodeSnippet shows clean code. */
 function stripCodeFences(code: string): string {
@@ -329,6 +341,7 @@ interface ResourceDetailDrawerContentProps {
   onNavigatePrev: () => void;
   onNavigateNext: () => void;
   onMuteComplete: () => void;
+  onTriageUpdate?: (input: UpdateFindingTriageInput) => void;
 }
 
 export function ResourceDetailDrawerContent({
@@ -344,6 +357,7 @@ export function ResourceDetailDrawerContent({
   onNavigatePrev,
   onNavigateNext,
   onMuteComplete,
+  onTriageUpdate,
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
@@ -413,6 +427,7 @@ export function ResourceDetailDrawerContent({
   const resourceUid = currentResource?.resourceUid ?? f?.resourceUid;
   const resourceService = currentResource?.service ?? f?.resourceService;
   const resourceRegion = currentResource?.region ?? f?.resourceRegion;
+  const findingTriage = f?.triage ?? currentResource?.triage;
   const resourceRegionLabel = resourceRegion || "-";
   const firstSeenAt = currentResource?.firstSeenAt ?? f?.firstSeenAt ?? null;
   const lastSeenAt = currentResource?.lastSeenAt ?? f?.updatedAt ?? null;
@@ -441,7 +456,6 @@ export function ResourceDetailDrawerContent({
     findingUid: f?.uid,
     region: resourceRegion,
   });
-  const hasIdAction = Boolean(externalResourceTarget);
   const findingRecommendationUrl = f?.remediation.recommendation.url;
   const checkRecommendationUrl = checkMeta.remediation.recommendation.url;
   const recommendationUrl = isNonEmptyString(findingRecommendationUrl)
@@ -458,6 +472,26 @@ export function ResourceDetailDrawerContent({
   const overviewStatusExtended =
     currentResource?.statusExtended || f?.statusExtended;
   const showOverviewStatusExtended = Boolean(overviewStatusExtended);
+  const findingAnalysisPrompt = buildFindingAnalysisPrompt({
+    findingId: currentResource?.findingId ?? f?.id,
+    providerUid,
+    resourceUid,
+    checkId: currentResource?.checkId ?? checkMeta.checkId,
+    severity: findingSeverity,
+    status: findingStatus,
+    detail: overviewStatusExtended,
+    risk: f?.risk || checkMeta.risk,
+  });
+
+  const handleDrawerTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    await updateFindingTriage(input);
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      onMuteComplete();
+      return;
+    }
+
+    onTriageUpdate?.(input);
+  };
 
   const handleOpenCompliance = async (framework: string) => {
     if (!complianceScanId || resolvingFramework) {
@@ -538,6 +572,7 @@ export function ResourceDetailDrawerContent({
           {findingIsMuted !== undefined && (
             <Muted isMuted={findingIsMuted} mutedReason={findingMutedReason} />
           )}
+          {findingTriage && <FindingTriageStatusBadge triage={findingTriage} />}
         </div>
 
         {showCheckMetaContent ? (
@@ -688,10 +723,16 @@ export function ResourceDetailDrawerContent({
           <>
             <div className="flex items-start gap-4">
               {/* Resource info grid — 4 data columns */}
-              <div className="@container flex min-w-0 flex-1 flex-col gap-4">
-                {/* Row 1: Provider (cols 1-2), Resource (cols 3-5) */}
-                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
-                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-2">
+              <div
+                data-responsive-container
+                className="@container flex min-w-0 flex-1 flex-col gap-4"
+              >
+                {/* Row 1: Provider, Resource, Service, Region */}
+                <div
+                  className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)] @md:gap-x-8"
+                  data-testid="resource-detail-primary-metadata-row"
+                >
+                  <div className="col-span-2 flex min-w-0 flex-col gap-1 @md:col-span-1">
                     <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
                       Provider
                     </span>
@@ -702,7 +743,7 @@ export function ResourceDetailDrawerContent({
                       entityId={providerUid}
                     />
                   </div>
-                  <div className="flex min-w-0 flex-col gap-1 @md:col-span-3">
+                  <div className="col-span-2 flex min-w-0 flex-col gap-1 @md:col-span-1">
                     <span className="text-text-neutral-secondary text-[10px] whitespace-nowrap">
                       Resource
                     </span>
@@ -736,44 +777,59 @@ export function ResourceDetailDrawerContent({
                           </Tooltip>
                         ) : undefined
                       }
-                      idAction={
-                        hasIdAction ? (
-                          <ExternalResourceLink
-                            providerType={providerType}
-                            resourceUid={resourceUid}
-                            providerUid={providerUid}
-                            resourceName={resourceName}
-                            findingUid={f?.uid}
-                            region={resourceRegion}
-                          />
-                        ) : undefined
-                      }
                     />
                   </div>
-                </div>
-
-                {/* Row 2: Last detected, First seen, Failing for, Service, Region */}
-                <div className="grid min-w-0 grid-cols-1 gap-4 @md:grid-cols-5 @md:gap-x-8">
-                  <InfoField label="Last detected" variant="compact">
-                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                  <InfoField
+                    label="Service"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="block truncate whitespace-nowrap">
+                      {resourceService}
+                    </span>
                   </InfoField>
-                  <InfoField label="First seen" variant="compact">
-                    <DateWithTime inline dateTime={firstSeenAt || "-"} />
-                  </InfoField>
-                  <InfoField label="Failing for" variant="compact">
-                    {getFailingForLabel(firstSeenAt) || "-"}
-                  </InfoField>
-                  <InfoField label="Service" variant="compact">
-                    {resourceService}
-                  </InfoField>
-                  <InfoField label="Region" variant="compact">
-                    <span className="flex items-center gap-1.5">
+                  <InfoField
+                    label="Region"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="flex min-w-0 items-center gap-1.5 whitespace-nowrap">
                       {getRegionFlag(resourceRegionLabel) && (
-                        <span className="translate-y-px text-base leading-none">
+                        <span className="shrink-0 translate-y-px text-base leading-none">
                           {getRegionFlag(resourceRegionLabel)}
                         </span>
                       )}
-                      {resourceRegionLabel}
+                      <span className="truncate">{resourceRegionLabel}</span>
+                    </span>
+                  </InfoField>
+                </div>
+
+                {/* Row 2: Last detected, First seen, Failing for */}
+                <div
+                  className="grid min-w-0 grid-cols-2 gap-4 @md:grid-cols-3 @md:gap-x-8"
+                  data-testid="resource-detail-secondary-metadata-row"
+                >
+                  <InfoField
+                    label="Last detected"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <DateWithTime inline dateTime={lastSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField
+                    label="First seen"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <DateWithTime inline dateTime={firstSeenAt || "-"} />
+                  </InfoField>
+                  <InfoField
+                    label="Failing for"
+                    variant="compact"
+                    className="min-w-0"
+                  >
+                    <span className="block truncate whitespace-nowrap">
+                      {getFailingForLabel(firstSeenAt) || "-"}
                     </span>
                   </InfoField>
                 </div>
@@ -786,6 +842,19 @@ export function ResourceDetailDrawerContent({
                     variant="bordered"
                     ariaLabel="Resource actions"
                   >
+                    {findingTriage && (
+                      <FindingNoteActionItem
+                        triage={findingTriage}
+                        findingContext={{
+                          title: checkMeta.checkTitle,
+                          resource: resourceName,
+                          provider: providerAlias,
+                          providerType,
+                        }}
+                        onTriageUpdateAction={handleDrawerTriageUpdate}
+                        onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                      />
+                    )}
                     <ActionDropdownItem
                       icon={
                         f.isMuted ? (
@@ -803,6 +872,19 @@ export function ResourceDetailDrawerContent({
                       label="Send to Jira"
                       onSelect={() => setIsJiraModalOpen(true)}
                     />
+                    {externalResourceTarget && (
+                      <ActionDropdownItem
+                        icon={<ExternalLink className="size-5" />}
+                        label={externalResourceTarget.label}
+                        onSelect={() =>
+                          window.open(
+                            externalResourceTarget.url,
+                            "_blank",
+                            "noopener,noreferrer",
+                          )
+                        }
+                      />
+                    )}
                   </ActionDropdown>
                 ) : (
                   <Skeleton className="size-8 rounded-md" />
@@ -843,17 +925,31 @@ export function ResourceDetailDrawerContent({
         >
           <div className="mb-4 flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="overview">Finding Overview</TabsTrigger>
-              <TabsTrigger value="remediation">Remediation</TabsTrigger>
-              <TabsTrigger value="other-findings">
-                Findings for this resource
+              <TabsTrigger value="overview" tooltip="Overview">
+                Overview
               </TabsTrigger>
-              <TabsTrigger value="scans">Scans</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="remediation" tooltip="Remediation">
+                Remediation
+              </TabsTrigger>
+              <TabsTrigger value="metadata" tooltip="Resource Metadata">
+                Evidence
+              </TabsTrigger>
+              <TabsTrigger
+                value="other-findings"
+                tooltip="Other Findings for this resource"
+              >
+                Other findings
+              </TabsTrigger>
+              <TabsTrigger value="scans" tooltip="Scans">
+                Scans
+              </TabsTrigger>
+              <TabsTrigger value="events" tooltip="Events">
+                Events
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          {/* Finding Overview — check-level data from checkMeta (always stable) */}
+          {/* Overview — check-level data from checkMeta (always stable) */}
           <TabsContent
             value="overview"
             className="minimal-scrollbar flex flex-col gap-4 overflow-y-auto"
@@ -888,19 +984,26 @@ export function ResourceDetailDrawerContent({
                       <span className="text-text-neutral-secondary text-xs">
                         References:
                       </span>
-                      <ul className="list-inside list-disc space-y-1">
-                        {checkMeta.additionalUrls.map((link, idx) => (
-                          <li key={idx}>
-                            <CustomLink
+                      <div className="flex flex-col items-start gap-1">
+                        {checkMeta.additionalUrls.map((link) => (
+                          <Button
+                            key={link}
+                            variant="link"
+                            size="link-xs"
+                            className="h-auto justify-start p-0 text-left break-all whitespace-normal!"
+                            asChild
+                          >
+                            <Link
                               href={link}
-                              size="sm"
-                              className="break-all whitespace-normal!"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              prefetch={false}
                             >
                               {link}
-                            </CustomLink>
-                          </li>
+                            </Link>
+                          </Button>
                         ))}
-                      </ul>
+                      </div>
                     </div>
                   </Card>
                 )}
@@ -982,25 +1085,38 @@ export function ResourceDetailDrawerContent({
                   {(checkMeta.remediation.recommendation.text ||
                     recommendationLink) && (
                     <div className="flex flex-col gap-1 px-1">
-                      <span className="text-text-neutral-primary text-sm font-semibold">
-                        Remediation:
-                      </span>
-                      <div className="flex items-start gap-3">
+                      <div
+                        className="flex min-w-0 items-center justify-between gap-3"
+                        data-testid="remediation-heading-row"
+                      >
+                        <span className="text-text-neutral-primary text-sm font-semibold">
+                          Remediation:
+                        </span>
+                        {recommendationLink && (
+                          <Button
+                            variant="link"
+                            size="link-xs"
+                            className="shrink-0 whitespace-nowrap"
+                            asChild
+                          >
+                            <Link
+                              href={recommendationLink.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              prefetch={false}
+                            >
+                              {recommendationLink.label}
+                            </Link>
+                          </Button>
+                        )}
+                      </div>
+                      <div>
                         {checkMeta.remediation.recommendation.text && (
-                          <div className="text-text-neutral-primary flex-1 text-sm">
+                          <div className="text-text-neutral-primary text-sm">
                             <MarkdownContainer>
                               {checkMeta.remediation.recommendation.text}
                             </MarkdownContainer>
                           </div>
-                        )}
-                        {recommendationLink && (
-                          <CustomLink
-                            href={recommendationLink.href}
-                            size="sm"
-                            className="shrink-0"
-                          >
-                            {recommendationLink.label}
-                          </CustomLink>
                         )}
                       </div>
                     </div>
@@ -1072,7 +1188,22 @@ export function ResourceDetailDrawerContent({
             )}
           </TabsContent>
 
-          {/* Findings for this resource */}
+          {/* Metadata */}
+          <TabsContent
+            value="metadata"
+            className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+          >
+            {isNavigating ? (
+              <MetadataNavigationSkeleton />
+            ) : (
+              <ResourceMetadataPanel
+                metadata={f?.resourceMetadata}
+                details={f?.resourceDetails}
+              />
+            )}
+          </TabsContent>
+
+          {/* Other findings — findings affecting this same resource */}
           <TabsContent
             value="other-findings"
             className="minimal-scrollbar flex flex-col gap-2 overflow-y-auto"
@@ -1118,6 +1249,11 @@ export function ResourceDetailDrawerContent({
                           Time
                         </span>
                       </TableHead>
+                      <TableHead>
+                        <span className="text-text-neutral-secondary text-sm font-medium">
+                          Triage
+                        </span>
+                      </TableHead>
                       <TableHead className="w-10" />
                     </TableRow>
                   </TableHeader>
@@ -1137,11 +1273,12 @@ export function ResourceDetailDrawerContent({
                               new Set(prev).add(finding.id),
                             )
                           }
+                          onTriageUpdateAction={handleDrawerTriageUpdate}
                         />
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-16 text-center">
+                        <TableCell colSpan={7} className="h-16 text-center">
                           <span className="text-text-neutral-tertiary text-sm">
                             {showSyntheticResourceHint
                               ? "No other findings are available for this IaC resource."
@@ -1253,7 +1390,7 @@ export function ResourceDetailDrawerContent({
       {/* Lighthouse AI button */}
       {!isNavigating && (
         <a
-          href={`/lighthouse?${new URLSearchParams({ prompt: `Analyze this security finding and provide remediation guidance:\n\n- **Finding**: ${checkMeta.checkTitle}\n- **Check ID**: ${checkMeta.checkId}\n- **Severity**: ${f?.severity ?? "unknown"}\n- **Status**: ${f?.status ?? "unknown"}${f?.statusExtended ? `\n- **Detail**: ${f.statusExtended}` : ""}${checkMeta.risk ? `\n- **Risk**: ${checkMeta.risk}` : ""}` }).toString()}`}
+          href={`/lighthouse?${new URLSearchParams({ prompt: findingAnalysisPrompt }).toString()}`}
           className="flex items-center gap-1.5 rounded-lg px-4 py-3 text-sm font-bold text-slate-900 transition-opacity hover:opacity-90"
           style={{
             background: "var(--gradient-lighthouse)",
@@ -1327,7 +1464,10 @@ function OtherFindingsNavigationSkeletonRows() {
           <TableCell>
             <Skeleton className="h-5 w-20 rounded" />
           </TableCell>
-          <TableCell className="w-10">
+          <TableCell>
+            <Skeleton className="h-8 w-20 rounded-lg" />
+          </TableCell>
+          <TableCell className={OTHER_FINDINGS_ACTION_CELL_CLASS}>
             <Skeleton className="h-5 w-5 rounded" />
           </TableCell>
         </TableRow>
@@ -1400,14 +1540,31 @@ function EventsNavigationSkeleton() {
   );
 }
 
+function MetadataNavigationSkeleton() {
+  return (
+    <div
+      className="flex flex-col gap-4"
+      data-testid="metadata-navigation-skeleton"
+      aria-hidden="true"
+    >
+      <Card variant="inner">
+        <OverviewCardSkeleton lineWidths={["w-20", "w-full", "w-3/4"]} />
+      </Card>
+      <Skeleton className="h-56 w-full rounded" />
+    </div>
+  );
+}
+
 function OtherFindingRow({
   finding,
   isOptimisticallyMuted,
   onMuted,
+  onTriageUpdateAction,
 }: {
   finding: ResourceDrawerFinding;
   isOptimisticallyMuted: boolean;
   onMuted: () => void;
+  onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
@@ -1435,7 +1592,7 @@ function OtherFindingRow({
         findingTitle={finding.checkTitle}
       />
       <TableRow
-        className="cursor-pointer"
+        className="group cursor-pointer"
         onClick={() => window.open(findingUrl, "_blank", "noopener,noreferrer")}
       >
         <TableCell className="w-14">
@@ -1468,9 +1625,28 @@ function OtherFindingRow({
         <TableCell>
           <DateWithTime dateTime={finding.updatedAt} />
         </TableCell>
-        <TableCell className="w-10">
+        <TableCell>
+          <FindingTriageStatusCell
+            triage={finding.triage}
+            onTriageUpdateAction={onTriageUpdateAction}
+          />
+        </TableCell>
+        <TableCell className={OTHER_FINDINGS_ACTION_CELL_CLASS}>
           <div onClick={(e) => e.stopPropagation()}>
             <ActionDropdown ariaLabel="Finding actions">
+              {finding.triage && (
+                <FindingNoteActionItem
+                  triage={finding.triage}
+                  findingContext={{
+                    title: finding.checkTitle,
+                    resource: finding.resourceName,
+                    provider: finding.providerAlias,
+                    providerType: finding.providerType,
+                  }}
+                  onTriageUpdateAction={onTriageUpdateAction}
+                  onTriageNoteLoadAction={loadLatestFindingTriageNote}
+                />
+              )}
               <ActionDropdownItem
                 icon={
                   isMuted ? (

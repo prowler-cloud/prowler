@@ -3,52 +3,21 @@
 import { Icon } from "@iconify/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { useEffect, useRef, useState } from "react";
 
 import { acceptInvitation } from "@/actions/invitations";
+import {
+  getInvitationErrorDisplay,
+  INVITATION_ERROR_FLOW,
+} from "@/app/(auth)/invitation/_lib/invitation-errors";
+import { AuthBrand } from "@/components/auth/oss/auth-brand";
 import { Button } from "@/components/shadcn";
 
 type AcceptState =
   | { kind: "no-token" }
   | { kind: "accepting" }
-  | { kind: "error"; message: string; canRetry: boolean; needsSignOut: boolean }
+  | { kind: "error"; message: string; canRetry: boolean }
   | { kind: "choose" };
-
-function mapApiError(status: number | undefined): {
-  message: string;
-  canRetry: boolean;
-  needsSignOut: boolean;
-} {
-  switch (status) {
-    case 410:
-      return {
-        message:
-          "This invitation has expired. Please contact your administrator for a new one.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 400:
-      return {
-        message: "This invitation has already been used.",
-        canRetry: false,
-        needsSignOut: false,
-      };
-    case 404:
-      return {
-        message:
-          "This invitation was sent to a different email address. Please sign in with the correct account.",
-        canRetry: false,
-        needsSignOut: true,
-      };
-    default:
-      return {
-        message: "Something went wrong while accepting the invitation.",
-        canRetry: true,
-        needsSignOut: false,
-      };
-  }
-}
 
 export function AcceptInvitationClient({
   isAuthenticated,
@@ -72,18 +41,14 @@ export function AcceptInvitationClient({
     const result = await acceptInvitation(token);
 
     if (result?.error) {
-      const { message, canRetry, needsSignOut } = mapApiError(result.status);
-      setState({ kind: "error", message, canRetry, needsSignOut });
+      const { message, canRetry } = getInvitationErrorDisplay(
+        result,
+        INVITATION_ERROR_FLOW.ACCEPT,
+      );
+      setState({ kind: "error", message, canRetry });
     } else {
       router.push("/");
     }
-  }
-
-  async function handleSignOutAndRedirect() {
-    if (!token) return;
-    const callbackPath = `/invitation/accept?invitation_token=${encodeURIComponent(token)}`;
-    await signOut({ redirect: false });
-    router.push(`/sign-in?callbackUrl=${encodeURIComponent(callbackPath)}`);
   }
 
   useEffect(() => {
@@ -105,16 +70,17 @@ export function AcceptInvitationClient({
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6 text-center">
+        <AuthBrand className="mx-auto" />
         {/* No token */}
         {state.kind === "no-token" && (
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="solar:danger-triangle-bold"
-              className="text-warning"
+              className="text-text-warning-primary"
               width={48}
             />
             <h1 className="text-xl font-semibold">Invalid Invitation Link</h1>
-            <p className="text-default-500">
+            <p className="text-text-neutral-tertiary">
               No invitation token was provided. Please check the link you
               received.
             </p>
@@ -129,11 +95,11 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="eos-icons:loading"
-              className="text-default-500"
+              className="text-text-neutral-tertiary"
               width={48}
             />
             <h1 className="text-xl font-semibold">Accepting Invitation...</h1>
-            <p className="text-default-500">
+            <p className="text-text-neutral-tertiary">
               Please wait while we process your invitation.
             </p>
           </div>
@@ -144,24 +110,18 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-4">
             <Icon
               icon="solar:danger-triangle-bold"
-              className="text-danger"
+              className="text-text-error-primary"
               width={48}
             />
             <h1 className="text-xl font-semibold">
               Could Not Accept Invitation
             </h1>
-            <p className="text-default-500">{state.message}</p>
+            <p className="text-text-neutral-tertiary">{state.message}</p>
             <div className="flex gap-3">
               {state.canRetry && <Button onClick={doAccept}>Retry</Button>}
-              {state.needsSignOut ? (
-                <Button variant="outline" onClick={handleSignOutAndRedirect}>
-                  Sign in with a different account
-                </Button>
-              ) : (
-                <Button asChild variant="outline">
-                  <Link href="/sign-in">Go to Sign In</Link>
-                </Button>
-              )}
+              <Button asChild variant="outline">
+                <Link href="/sign-in">Go to Sign In</Link>
+              </Button>
             </div>
           </div>
         )}
@@ -171,14 +131,14 @@ export function AcceptInvitationClient({
           <div className="flex flex-col items-center gap-6">
             <Icon
               icon="solar:letter-bold"
-              className="text-primary"
+              className="text-button-primary"
               width={48}
             />
             <div>
               <h1 className="text-xl font-semibold">
                 You&apos;ve Been Invited
               </h1>
-              <p className="text-default-500 mt-2">
+              <p className="text-text-neutral-tertiary mt-2">
                 You&apos;ve been invited to join a tenant on Prowler. How would
                 you like to continue?
               </p>

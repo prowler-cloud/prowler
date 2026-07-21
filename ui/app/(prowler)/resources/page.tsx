@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
-import { getProviders } from "@/actions/providers";
+import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
+import { getAllProviders } from "@/actions/providers";
 import {
   getLatestMetadataInfo,
   getLatestResources,
@@ -11,7 +12,7 @@ import {
 import { ResourcesFilters } from "@/components/resources/resources-filters";
 import { SkeletonTableResources } from "@/components/resources/skeleton/skeleton-table-resources";
 import { ResourcesTableWithSelection } from "@/components/resources/table";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { FilterTransitionWrapper } from "@/contexts";
 import {
   createDict,
@@ -37,19 +38,23 @@ export default async function Resources({
 
   const initialResourceId = resolvedSearchParams.resourceId?.toString();
 
-  const [metadataInfoData, providersData, resourceByIdData] = await Promise.all(
-    [
-      (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
-        query,
-        filters: outputFilters,
-        sort: encodedSort,
-      }),
-      getProviders({ pageSize: 50 }),
-      initialResourceId
-        ? getResourceById(initialResourceId, { include: ["provider"] })
-        : Promise.resolve(undefined),
-    ],
-  );
+  const [
+    metadataInfoData,
+    providersData,
+    providerGroupsData,
+    resourceByIdData,
+  ] = await Promise.all([
+    (hasDateOrScan ? getMetadataInfo : getLatestMetadataInfo)({
+      query,
+      filters: outputFilters,
+      sort: encodedSort,
+    }),
+    getAllProviders(),
+    getAllProviderGroups(),
+    initialResourceId
+      ? getResourceById(initialResourceId, { include: ["provider"] })
+      : Promise.resolve(undefined),
+  ]);
 
   const processedResource = resourceByIdData?.data
     ? (() => {
@@ -80,6 +85,7 @@ export default async function Resources({
         <div className="mb-6">
           <ResourcesFilters
             providers={providersData?.data || []}
+            providerGroups={providerGroupsData?.data || []}
             uniqueRegions={uniqueRegions}
             uniqueServices={uniqueServices}
             uniqueResourceTypes={uniqueResourceTypes}
@@ -166,7 +172,7 @@ const SSRDataTable = async ({
   return (
     <>
       {resourcesData?.errors && (
-        <div className="text-small mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-red-700">
+        <div className="mb-4 flex rounded-lg border border-red-500 bg-red-100 p-2 text-sm text-red-700">
           <p className="mr-2 font-semibold">Error:</p>
           <p>{resourcesData.errors[0].detail}</p>
         </div>

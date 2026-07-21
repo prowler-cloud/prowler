@@ -1,0 +1,109 @@
+# Trivy ignore file for prowlercloud/prowler SDK container image.
+# Each entry below documents (a) the affected package and why it ships in the
+# image, (b) why the CVE is not exploitable in Prowler's runtime, and (c) the
+# upstream fix status. Entries carry an expiry so they auto-force re-review.
+# Entries are scoped per-package so suppressions cannot drift onto unrelated
+# packages that may be assigned the same CVE in the future.
+#
+# Scanned by: .github/actions/trivy-scan via .github/workflows/sdk-container-checks.yml
+
+# CVE-2026-42496 — perl-archive-tar path traversal via crafted symlinks.
+# CVE-2026-8376  — perl heap buffer overflow when compiling regex.
+# Packages: perl, perl-base, perl-modules-5.36, libperl5.36.
+# Why ignored: perl-base is part of Debian's "Essential: yes" set; it cannot be
+# removed without breaking dpkg. The Prowler SDK does not invoke perl at runtime;
+# neither vulnerable code path (Archive::Tar parsing or regex compilation of
+# attacker-controlled input) is reachable from Prowler. No Debian bookworm fix
+# is available yet.
+CVE-2026-42496 pkg:perl exp:2026-08-15
+CVE-2026-42496 pkg:perl-base exp:2026-08-15
+CVE-2026-42496 pkg:perl-modules-5.36 exp:2026-08-15
+CVE-2026-42496 pkg:libperl5.36 exp:2026-08-15
+CVE-2026-8376 pkg:perl exp:2026-08-15
+CVE-2026-8376 pkg:perl-base exp:2026-08-15
+CVE-2026-8376 pkg:perl-modules-5.36 exp:2026-08-15
+CVE-2026-8376 pkg:libperl5.36 exp:2026-08-15
+
+# CVE-2026-13221 - Perl regex trie overflow.
+# Packages: perl, perl-base, perl-modules-5.36, libperl5.36.
+# Why ignored: upstream confirms Perl 5.36.0 is not affected; the regression
+# was introduced after this version. Debian currently marks bookworm as
+# vulnerable, which causes Trivy to report a false positive.
+# Ref: https://github.com/Perl/perl5/issues/23388
+CVE-2026-13221 pkg:perl exp:2026-08-15
+CVE-2026-13221 pkg:perl-base exp:2026-08-15
+CVE-2026-13221 pkg:perl-modules-5.36 exp:2026-08-15
+CVE-2026-13221 pkg:libperl5.36 exp:2026-08-15
+
+# CVE-2025-7458 — SQLite integer overflow.
+# Package: libsqlite3-0.
+# Why ignored: transitive dependency of CPython's stdlib sqlite3 module. The
+# Prowler SDK does not open user-supplied SQLite databases; SQLite usage is
+# internal and bounded. No Debian bookworm fix is available.
+CVE-2025-7458 pkg:libsqlite3-0 exp:2026-08-15
+
+# CVE-2026-43185 — Linux kernel ksmbd signedness bug.
+# Package: linux-libc-dev.
+# Why ignored: linux-libc-dev ships kernel headers for build-time compilation,
+# not a running kernel. Containers execute against the host kernel, so these
+# headers are inert at runtime. The upstream fix landed in kernel 7.0-rc2 and
+# has not been backported to Debian's 6.1 LTS line.
+CVE-2026-43185 pkg:linux-libc-dev exp:2026-08-15
+
+# CVE-2023-45853 — zlib MiniZip integer overflow / heap overflow in
+# zipOpenNewFileInZip4_64.
+# Packages: zlib1g, zlib1g-dev.
+# Why ignored: Debian Security Tracker status for bookworm is <ignored>, with
+# the published rationale "contrib/minizip not built and src:zlib not producing
+# binary packages" — i.e. the vulnerable symbol is not present in the libz.so
+# shipped by Debian. Real-not-affected, not unpatched. Upstream fix is in
+# zlib 1.3.1, available in Debian trixie (13); migrating the base image would
+# clear it fully.
+# Ref: https://security-tracker.debian.org/tracker/CVE-2023-45853
+CVE-2023-45853 pkg:zlib1g exp:2026-08-15
+CVE-2023-45853 pkg:zlib1g-dev exp:2026-08-15
+
+# CVE-2026-55200 — libssh2 out-of-bounds write in ssh2_transport_read() due to
+# an unchecked packet_length field in transport.c (heap corruption, possible RCE).
+# Package: libssh2-1.
+# Why ignored: libssh2-1 is pulled in only as a transitive dependency of libcurl4
+# (installed in the SDK Dockerfile for the networking/PowerShell stack). The
+# vulnerable path is reached exclusively when libssh2 acts as an SSH/SCP/SFTP
+# client parsing transport packets from a server. Prowler never uses libcurl's
+# SSH/SCP/SFTP transports; it talks to cloud provider HTTPS endpoints only, so the
+# affected code is unreachable at runtime. Fixed upstream in libssh2 commit
+# 97acf3df (PR #2052); no Debian bookworm fix is available yet.
+# Ref: https://security-tracker.debian.org/tracker/CVE-2026-55200
+CVE-2026-55200 pkg:libssh2-1 exp:2026-08-15
+
+# --- API container image (api/Dockerfile) ---
+# The entries below are specific to the Prowler API image, which ships
+# PowerShell and additional build tooling on top of the same bookworm base.
+
+# CVE-2026-7210 — CPython/Expat hash-flooding denial of service in
+# `xml.parsers.expat` and `xml.etree.ElementTree`.
+# Packages: the Debian system Python 3.11 (python3.11*, libpython3.11*).
+# Why ignored: the API runs under the Python 3.12 interpreter shipped in its
+# `.venv`; the system `python3.11` is only present because `python3-dev` is
+# pulled in to compile native extensions (xmlsec, lxml) and is never executed
+# at runtime. The vulnerable path requires parsing attacker-controlled XML with
+# the affected interpreter, which Prowler does not do with the system Python.
+# Full mitigation also needs libexpat >= 2.8.0; no Debian bookworm fix yet.
+CVE-2026-7210 pkg:python3.11 exp:2026-08-15
+CVE-2026-7210 pkg:python3.11-dev exp:2026-08-15
+CVE-2026-7210 pkg:python3.11-minimal exp:2026-08-15
+CVE-2026-7210 pkg:libpython3.11 exp:2026-08-15
+CVE-2026-7210 pkg:libpython3.11-dev exp:2026-08-15
+CVE-2026-7210 pkg:libpython3.11-minimal exp:2026-08-15
+CVE-2026-7210 pkg:libpython3.11-stdlib exp:2026-08-15
+
+# CVE-2026-33278 — Unbound DNSSEC validator use-after-free (DoS, possible RCE).
+# CVE-2026-42960 — Unbound DNS cache poisoning via promiscuous additional records.
+# Package: libunbound8.
+# Why ignored: libunbound8 is a transitive apt dependency of the TLS/networking
+# stack (GnuTLS DANE support); only the shared library ships in the image. Both
+# vulnerabilities require operating a live Unbound recursive DNSSEC validator
+# that processes attacker-influenced DNS responses. Prowler never starts an
+# Unbound resolver, so neither code path is reachable. No Debian bookworm fix yet.
+CVE-2026-33278 pkg:libunbound8 exp:2026-08-15
+CVE-2026-42960 pkg:libunbound8 exp:2026-08-15

@@ -180,7 +180,6 @@ export const useCredentialsForm = ({
           [ProviderCredentialFields.OCI_FINGERPRINT]: "",
           [ProviderCredentialFields.OCI_KEY_CONTENT]: "",
           [ProviderCredentialFields.OCI_TENANCY]: providerUid || "",
-          [ProviderCredentialFields.OCI_REGION]: "",
           [ProviderCredentialFields.OCI_PASS_PHRASE]: "",
         };
       case "mongodbatlas":
@@ -247,6 +246,12 @@ export const useCredentialsForm = ({
         return {
           ...baseDefaults,
           [ProviderCredentialFields.VERCEL_API_TOKEN]: "",
+        };
+      case "okta":
+        return {
+          ...baseDefaults,
+          [ProviderCredentialFields.OKTA_CLIENT_ID]: "",
+          [ProviderCredentialFields.OKTA_PRIVATE_KEY]: "",
         };
       default:
         return baseDefaults;

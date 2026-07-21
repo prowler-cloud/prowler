@@ -1,3 +1,4 @@
+import fcntl
 import gc
 import os
 import re
@@ -7,9 +8,16 @@ from pathlib import Path
 from shutil import rmtree
 from uuid import UUID
 
-import fcntl
+from api.db_router import READ_REPLICA_ALIAS, MainRouter
+from api.db_utils import rls_transaction
+from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
 from celery.utils.log import get_task_logger
 from config.django.base import DJANGO_TMP_OUTPUT_DIRECTORY
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    get_bulk_compliance_frameworks_universal,
+)
+from prowler.lib.outputs.finding import Finding as FindingOutput
 from tasks.jobs.export import _generate_compliance_output_directory, _upload_to_s3
 from tasks.jobs.reports import (
     FRAMEWORK_REGISTRY,
@@ -18,19 +26,13 @@ from tasks.jobs.reports import (
     ENSReportGenerator,
     NIS2ReportGenerator,
     ThreatScoreReportGenerator,
+    build_provider_metadata,
 )
 from tasks.jobs.threatscore import compute_threatscore_metrics
 from tasks.jobs.threatscore_utils import (
     _aggregate_requirement_statistics_from_database,
     _get_compliance_check_ids,
 )
-
-from api.db_router import READ_REPLICA_ALIAS, MainRouter
-from api.db_utils import rls_transaction
-from api.models import Provider, Scan, ScanSummary, StateChoices, ThreatScoreSnapshot
-from api.utils import initialize_prowler_provider
-from prowler.lib.check.compliance_models import Compliance
-from prowler.lib.outputs.finding import Finding as FindingOutput
 
 logger = get_task_logger(__name__)
 STALE_TMP_OUTPUT_MAX_AGE_HOURS = 48
@@ -571,7 +573,7 @@ def generate_csa_report(
     Args:
         tenant_id: The tenant ID for Row-Level Security context.
         scan_id: ID of the scan executed by Prowler.
-        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0_aws").
+        compliance_id: ID of the compliance framework (e.g., "csa_ccm_4.0").
         output_path: Output PDF file path.
         provider_id: Provider ID for the scan.
         only_failed: If True, only include failed requirements in detailed section.
@@ -839,24 +841,12 @@ def generate_compliance_reports(
         tenant_id, scan_id
     )
 
-    # Initialize the Prowler provider once for the whole report batch. Each
-    # generator used to re-init this in _load_compliance_data, paying the
-    # boto3/Azure-SDK construction cost 5 times per scan. The instance is
-    # only used by FindingOutput.transform_api_finding to enrich findings,
-    # so a single shared instance is correct.
-    logger.info("Initializing prowler_provider once for all reports (scan %s)", scan_id)
-    try:
-        with rls_transaction(tenant_id, using=READ_REPLICA_ALIAS):
-            prowler_provider = initialize_prowler_provider(provider_obj)
-    except Exception as init_error:
-        # If init fails the generators will fall back to lazy init in
-        # _load_compliance_data; we just log and continue.
-        logger.warning(
-            "Could not pre-initialize prowler_provider for scan %s: %s",
-            scan_id,
-            init_error,
-        )
-        prowler_provider = None
+    # Build a credential-free provider metadata stub once for the whole
+    # report batch. FindingOutput.transform_api_finding only reads static
+    # attributes (type plus a few identity fields), so reports never decrypt
+    # the ProviderSecret nor construct a cloud SDK session — generation keeps
+    # working after credentials are deleted or invalidated (PROWLER-2145).
+    prowler_provider = build_provider_metadata(provider_obj)
 
     # Create shared findings cache up front so the eviction closure below
     # can reference it. Defined BEFORE the closure to avoid the UnboundLocalError
@@ -883,9 +873,11 @@ def generate_compliance_reports(
             frameworks_bulk.get(f"nis2_{provider_type}")
         )
     if generate_csa:
-        pending_checks_by_framework["csa"] = _get_compliance_check_ids(
-            frameworks_bulk.get(f"csa_ccm_4.0_{provider_type}")
-        )
+        # csa_ccm_4.0 lives at the top level, not under compliance/{provider}/.
+        csa_framework = frameworks_bulk.get(
+            "csa_ccm_4.0"
+        ) or get_bulk_compliance_frameworks_universal(provider_type).get("csa_ccm_4.0")
+        pending_checks_by_framework["csa"] = _get_compliance_check_ids(csa_framework)
     if generate_cis and latest_cis:
         pending_checks_by_framework["cis"] = _get_compliance_check_ids(
             frameworks_bulk.get(latest_cis)
@@ -1183,7 +1175,7 @@ def generate_compliance_reports(
     if generate_csa:
         generated_report_keys.append("csa")
         csa_path = output_paths["csa"]
-        compliance_id_csa = f"csa_ccm_4.0_{provider_type}"
+        compliance_id_csa = "csa_ccm_4.0"
         pdf_path_csa = f"{csa_path}_csa_report.pdf"
         logger.info("Generating CSA CCM report with compliance %s", compliance_id_csa)
 

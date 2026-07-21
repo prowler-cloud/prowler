@@ -13,7 +13,7 @@ export const ApiKeyLinkCard = () => {
       learnMoreUrl="https://docs.prowler.com/user-guide/tutorials/prowler-app-api-keys"
       learnMoreAriaLabel="Learn more about API Keys"
       bodyText="API Key management is available in your User Profile. Create and manage API keys to authenticate with the Prowler API for automation and integrations."
-      linkHref="/profile"
+      linkHref="/profile#api-keys"
       linkText="Go to Profile"
     />
   );

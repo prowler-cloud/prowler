@@ -29,10 +29,11 @@ jobs:
           - '3.10'
           - '3.11'
           - '3.12'
+          - '3.13'
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -48,12 +49,13 @@ jobs:
 
       - name: Check for SDK changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: ./**
           files_ignore: |
             .github/**
             prowler/CHANGELOG.md
+            prowler/changelog.d/**
             docs/**
             permissions/**
             api/**

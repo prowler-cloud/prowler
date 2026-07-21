@@ -4,10 +4,13 @@ import { Row, RowSelectionState } from "@tanstack/react-table";
 import { Container, CornerDownRight, Link } from "lucide-react";
 import { useState } from "react";
 
+import {
+  loadLatestFindingTriageNote,
+  updateFindingTriage,
+} from "@/actions/findings";
 import { FloatingMuteButton } from "@/components/findings/floating-mute-button";
 import { FindingDetailDrawer } from "@/components/findings/table";
 import {
-  Card,
   Tabs,
   TabsContent,
   TabsList,
@@ -15,25 +18,25 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  BreadcrumbNavigation,
+  CustomBreadcrumbItem,
 } from "@/components/shadcn";
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import {
   InfoField,
   InfoTooltip,
 } from "@/components/shadcn/info-field/info-field";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
+import { DataTable } from "@/components/shadcn/table";
 import { EventsTimeline } from "@/components/shared/events-timeline/events-timeline";
 import { ExternalResourceLink } from "@/components/shared/external-resource-link";
-import {
-  QUERY_EDITOR_LANGUAGE,
-  QueryCodeEditor,
-} from "@/components/shared/query-code-editor";
-import { BreadcrumbNavigation, CustomBreadcrumbItem } from "@/components/ui";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { DataTable } from "@/components/ui/table";
+import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { getGroupLabel } from "@/lib/categories";
+import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { getRegionFlag } from "@/lib/region-flags";
 import { ProviderType, ResourceProps } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 import {
   getResourceFindingsColumns,
@@ -44,29 +47,6 @@ import { useResourceDrawerBootstrap } from "./use-resource-drawer-bootstrap";
 
 const renderValue = (value: string | null | undefined) => {
   return value && value.trim() !== "" ? value : "-";
-};
-
-const parseMetadata = (
-  metadata: Record<string, unknown> | string | null | undefined,
-): Record<string, unknown> | null => {
-  if (!metadata) return null;
-
-  if (typeof metadata === "string") {
-    try {
-      const parsed = JSON.parse(metadata);
-      return typeof parsed === "object" && parsed !== null ? parsed : null;
-    } catch {
-      return null;
-    }
-  }
-
-  // After the !metadata check above, metadata can only be object at this point
-  // (null was already filtered, string was handled)
-  if (typeof metadata === "object") {
-    return metadata as Record<string, unknown>;
-  }
-
-  return null;
 };
 
 const buildCustomBreadcrumbs = (
@@ -127,6 +107,7 @@ export const ResourceDetailContent = ({
     hasInitiallyLoaded,
     providerOrg,
     resourceTags,
+    patchTriageUpdate,
   } = useResourceDrawerBootstrap({
     resourceId,
     resourceUid: attributes.uid,
@@ -167,6 +148,17 @@ export const ResourceDetailContent = ({
     if (ids.length > 0) setFindingsReloadNonce((v) => v + 1);
   };
 
+  const handleTriageUpdate = async (input: UpdateFindingTriageInput) => {
+    await updateFindingTriage(input);
+
+    if (shouldRefreshAfterTriageUpdate(input)) {
+      setFindingsReloadNonce((value) => value + 1);
+      return;
+    }
+
+    patchTriageUpdate(input);
+  };
+
   const failedFindings = findingsData;
 
   const selectableRowCount = failedFindings.filter(
@@ -188,6 +180,8 @@ export const ResourceDetailContent = ({
     selectableRowCount,
     navigateToFinding,
     handleMuteComplete,
+    handleTriageUpdate,
+    loadLatestFindingTriageNote,
   );
 
   const findingTitle =
@@ -202,9 +196,6 @@ export const ResourceDetailContent = ({
     attributes.groups && attributes.groups.length > 0
       ? attributes.groups.map(getGroupLabel).join(", ")
       : "-";
-  const parsedMetadata = parseMetadata(attributes.metadata);
-  const hasMetadata =
-    parsedMetadata !== null && Object.entries(parsedMetadata).length > 0;
   const tagEntries = Object.entries(resourceTags);
   const hasTags = tagEntries.length > 0;
 
@@ -258,19 +249,20 @@ export const ResourceDetailContent = ({
               </TooltipTrigger>
               <TooltipContent>Copy resource link to clipboard</TooltipContent>
             </Tooltip>
-            <ExternalResourceLink
-              providerType={providerData.provider}
-              resourceUid={attributes.uid}
-              providerUid={providerData.uid}
-              resourceName={attributes.name}
-              region={attributes.region}
-            />
           </div>
+          <ExternalResourceLink
+            providerType={providerData.provider}
+            resourceUid={attributes.uid}
+            providerUid={providerData.uid}
+            resourceName={attributes.name}
+            region={attributes.region}
+            className="justify-start self-start"
+          />
         </div>
       </div>
 
       <div className="border-border-neutral-secondary bg-bg-neutral-secondary flex min-h-0 flex-1 flex-col gap-4 overflow-hidden rounded-lg border p-4">
-        <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
+        <div className="grid min-w-0 grid-cols-2 gap-4 md:grid-cols-4 md:gap-x-8 md:gap-y-4">
           {providerOrg ? (
             <div className="col-span-2 flex flex-col gap-1">
               <EntityInfo
@@ -288,13 +280,21 @@ export const ResourceDetailContent = ({
               </div>
             </div>
           ) : (
-            <EntityInfo
-              cloudProvider={providerData.provider as ProviderType}
-              entityAlias={providerData.alias ?? undefined}
-              entityId={providerData.uid}
-            />
+            <div className="col-span-2 md:col-span-1">
+              <EntityInfo
+                cloudProvider={providerData.provider as ProviderType}
+                entityAlias={providerData.alias ?? undefined}
+                entityId={providerData.uid}
+              />
+            </div>
           )}
-          <div className={providerOrg ? "self-end" : undefined}>
+          <div
+            className={
+              providerOrg
+                ? "col-span-2 self-end md:col-span-1"
+                : "col-span-2 md:col-span-1"
+            }
+          >
             <EntityInfo
               nameIcon={<Container className="size-4" />}
               entityAlias={resourceName}
@@ -329,10 +329,18 @@ export const ResourceDetailContent = ({
             {renderValue(attributes.partition)}
           </InfoField>
 
-          <InfoField label="Created At" variant="compact">
+          <InfoField
+            label="Created At"
+            variant="compact"
+            className="col-start-1 min-w-0"
+          >
             <DateWithTime inline dateTime={attributes.inserted_at || "-"} />
           </InfoField>
-          <InfoField label="Last Updated" variant="compact">
+          <InfoField
+            label="Last Updated"
+            variant="compact"
+            className="col-start-2 min-w-0"
+          >
             <DateWithTime inline dateTime={attributes.updated_at || "-"} />
           </InfoField>
         </div>
@@ -350,9 +358,15 @@ export const ResourceDetailContent = ({
                   <InfoTooltip content="This table also includes muted findings" />
                 </span>
               </TabsTrigger>
-              <TabsTrigger value="metadata">Metadata</TabsTrigger>
-              <TabsTrigger value="tags">Tags</TabsTrigger>
-              <TabsTrigger value="events">Events</TabsTrigger>
+              <TabsTrigger value="metadata" tooltip="Resource Metadata">
+                Evidence
+              </TabsTrigger>
+              <TabsTrigger value="tags" tooltip="Tags">
+                Tags
+              </TabsTrigger>
+              <TabsTrigger value="events" tooltip="Events">
+                Events
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -402,39 +416,14 @@ export const ResourceDetailContent = ({
               )}
             </TabsContent>
 
-            <TabsContent value="metadata" className="flex flex-col gap-4">
-              {attributes.details && attributes.details.trim() !== "" && (
-                <Card variant="inner">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-text-neutral-secondary text-sm font-semibold">
-                      Details:
-                    </span>
-                    <p className="text-text-neutral-primary text-sm break-words whitespace-pre-wrap">
-                      {attributes.details}
-                    </p>
-                  </div>
-                </Card>
-              )}
-
-              {hasMetadata && parsedMetadata && (
-                <QueryCodeEditor
-                  ariaLabel="Resource metadata"
-                  visibleLabel={null}
-                  language={QUERY_EDITOR_LANGUAGE.JSON}
-                  value={JSON.stringify(parsedMetadata, null, 2)}
-                  copyValue={JSON.stringify(parsedMetadata, null, 2)}
-                  editable={false}
-                  minHeight={220}
-                  showCopyButton
-                  onChange={() => {}}
-                />
-              )}
-
-              {!attributes.details?.trim() && !hasMetadata && (
-                <p className="text-text-neutral-tertiary py-8 text-center text-sm">
-                  No metadata available for this resource.
-                </p>
-              )}
+            <TabsContent
+              value="metadata"
+              className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
+            >
+              <ResourceMetadataPanel
+                metadata={attributes.metadata}
+                details={attributes.details}
+              />
             </TabsContent>
 
             <TabsContent value="tags" className="flex flex-col gap-4">

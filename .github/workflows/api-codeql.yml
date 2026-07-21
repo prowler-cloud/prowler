@@ -9,6 +9,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-codeql.yml'
       - '.github/codeql/api-codeql-config.yml'
+      - '!api/CHANGELOG.md'
   pull_request:
     branches:
       - 'master'
@@ -17,6 +18,7 @@ on:
       - 'api/**'
       - '.github/workflows/api-codeql.yml'
       - '.github/codeql/api-codeql-config.yml'
+      - '!api/CHANGELOG.md'
   schedule:
     - cron: '00 12 * * *'
 
@@ -44,7 +46,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -61,12 +63,12 @@ jobs:
           persist-credentials: false
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        uses: github/codeql-action/init@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql/api-codeql-config.yml
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v4.32.4
+        uses: github/codeql-action/analyze@68bde559dea0fdcac2102bfdf6230c5f70eb485e # v4.35.4
         with:
           category: '/language:${{ matrix.language }}'

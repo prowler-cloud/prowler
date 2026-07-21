@@ -1,7 +1,9 @@
 import { LucideIcon } from "lucide-react";
-import { MouseEvent, SVGProps } from "react";
+import { SVGProps } from "react";
 
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
+
+import type { FindingTriageSummary } from "./findings-triage";
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
@@ -13,43 +15,6 @@ export type IconProps = {
 };
 
 export type IconComponent = LucideIcon | React.FC<IconSvgProps>;
-
-export type SubmenuProps = {
-  href: string;
-  target?: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  disabled?: boolean;
-  highlight?: boolean;
-  cloudOnly?: boolean;
-  onClick?: (event: MouseEvent<HTMLAnchorElement>) => void;
-};
-
-export type MenuProps = {
-  href: string;
-  label: string;
-  active?: boolean;
-  icon: IconComponent;
-  submenus?: SubmenuProps[];
-  defaultOpen?: boolean;
-  target?: string;
-  tooltip?: string;
-  highlight?: boolean;
-};
-
-export type GroupProps = {
-  groupLabel: string;
-  menus: MenuProps[];
-};
-
-export interface CollapseMenuButtonProps {
-  icon: IconComponent;
-  label: string;
-  submenus: SubmenuProps[];
-  defaultOpen: boolean;
-  isOpen: boolean | undefined;
-}
 
 export const NEXT_UI_VARIANTS = {
   SOLID: "solid",
@@ -228,22 +193,6 @@ export interface FindingsSeverityOverview {
   };
 }
 
-export interface TaskDetails {
-  attributes: {
-    state: string;
-    completed_at: string;
-    result: {
-      exc_type?: string;
-      exc_message?: string[];
-      exc_module?: string;
-    };
-    task_args: {
-      scan_id: string;
-      provider_id: string;
-      checks_to_execute: string[];
-    };
-  };
-}
 export const AWS_CREDENTIALS_TYPE = {
   AWS_SDK_DEFAULT: "aws-sdk-default",
   ACCESS_SECRET_KEY: "access-secret-key",
@@ -331,7 +280,6 @@ export type OCICredentials = {
   [ProviderCredentialFields.OCI_FINGERPRINT]: string;
   [ProviderCredentialFields.OCI_KEY_CONTENT]: string;
   [ProviderCredentialFields.OCI_TENANCY]: string;
-  [ProviderCredentialFields.OCI_REGION]: string;
   [ProviderCredentialFields.OCI_PASS_PHRASE]?: string;
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
@@ -389,6 +337,12 @@ export type VercelCredentials = {
   [ProviderCredentialFields.PROVIDER_ID]: string;
 };
 
+export type OktaCredentials = {
+  [ProviderCredentialFields.OKTA_CLIENT_ID]: string;
+  [ProviderCredentialFields.OKTA_PRIVATE_KEY]: string;
+  [ProviderCredentialFields.PROVIDER_ID]: string;
+};
+
 export type CredentialsFormSchema =
   | AWSCredentials
   | AWSCredentialsRole
@@ -406,19 +360,22 @@ export type CredentialsFormSchema =
   | CloudflareCredentials
   | OpenStackCredentials
   | GoogleWorkspaceCredentials
-  | VercelCredentials;
+  | VercelCredentials
+  | OktaCredentials;
 
 export interface SearchParamsProps {
   [key: string]: string | string[] | undefined;
 }
 
+export interface ApiErrorSource {
+  pointer?: string;
+}
+
 export interface ApiError {
   detail: string;
-  status: string;
-  source: {
-    pointer: string;
-  };
-  code: string;
+  status?: string;
+  source?: ApiErrorSource;
+  code?: string;
 }
 
 export type ApiResponse = {
@@ -619,6 +576,7 @@ export interface FindingsResponse {
 export interface FindingProps {
   type: "findings";
   id: string;
+  triage?: FindingTriageSummary;
   attributes: {
     uid: string;
     delta: FindingDelta;

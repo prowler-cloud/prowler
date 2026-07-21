@@ -1,17 +1,19 @@
-from dataclasses import dataclass
-from typing import Callable
+from collections.abc import Callable
 from uuid import UUID
 
 from config.env import env
-from tasks.jobs.attack_paths import aws
+from tasks.jobs.attack_paths import provider_config as _provider_config
 
-# Batch size for Neo4j write operations (resource labeling, cleanup)
-BATCH_SIZE = env.int("ATTACK_PATHS_BATCH_SIZE", 1000)
+# Re-export provider config objects so existing imports keep working.
+AWS_CONFIG = _provider_config.AWS_CONFIG
+NormalizedList = _provider_config.NormalizedList
+PROVIDER_CONFIGS = _provider_config.PROVIDER_CONFIGS
+ProviderConfig = _provider_config.ProviderConfig
+
+# Batch size for graph mutation operations (resource labeling and subgraph deletion)
+GRAPH_MUTATION_BATCH_SIZE = env.int("ATTACK_PATHS_GRAPH_MUTATION_BATCH_SIZE", 1000)
 # Batch size for Postgres findings fetch (keyset pagination page size)
 FINDINGS_BATCH_SIZE = env.int("ATTACK_PATHS_FINDINGS_BATCH_SIZE", 1000)
-# Batch size for temp-to-tenant graph sync (nodes and relationships per cursor page)
-SYNC_BATCH_SIZE = env.int("ATTACK_PATHS_SYNC_BATCH_SIZE", 1000)
-
 # Neo4j internal labels (Prowler-specific, not provider-specific)
 # - `Internet`: Singleton node representing external internet access for exposed-resource queries
 # - `ProwlerFinding`: Label for finding nodes created by Prowler and linked to cloud resources
@@ -21,41 +23,11 @@ PROWLER_FINDING_LABEL = "ProwlerFinding"
 PROVIDER_RESOURCE_LABEL = "_ProviderResource"
 
 # Dynamic isolation labels that contain entity UUIDs and are added to every synced node during sync
-# Format: _Tenant_{uuid_no_hyphens}, _Provider_{uuid_no_hyphens}
+# Format: `_Tenant_{uuid_no_hyphens}`, `_Provider_{uuid_no_hyphens}`
 TENANT_LABEL_PREFIX = "_Tenant_"
 PROVIDER_LABEL_PREFIX = "_Provider_"
 DYNAMIC_ISOLATION_PREFIXES = [TENANT_LABEL_PREFIX, PROVIDER_LABEL_PREFIX]
 
-
-@dataclass(frozen=True)
-class ProviderConfig:
-    """Configuration for a cloud provider's Attack Paths integration."""
-
-    name: str
-    root_node_label: str  # e.g., "AWSAccount"
-    uid_field: str  # e.g., "arn"
-    # Label for resources connected to the account node, enabling indexed finding lookups.
-    resource_label: str  # e.g., "_AWSResource"
-    ingestion_function: Callable
-    # Maps a Postgres resource UID (e.g. full ARN) to the short-id form Cartography stores on some node types (e.g. `i-xxx` for EC2Instance).
-    short_uid_extractor: Callable[[str], str]
-
-
-# Provider Configurations
-# -----------------------
-
-AWS_CONFIG = ProviderConfig(
-    name="aws",
-    root_node_label="AWSAccount",
-    uid_field="arn",
-    resource_label="_AWSResource",
-    ingestion_function=aws.start_aws_ingestion,
-    short_uid_extractor=aws.extract_short_uid,
-)
-
-PROVIDER_CONFIGS: dict[str, ProviderConfig] = {
-    "aws": AWS_CONFIG,
-}
 
 # Labels added by Prowler that should be filtered from API responses
 # Derived from provider configs + common internal labels
@@ -87,7 +59,6 @@ INTERNAL_PROPERTIES: list[str] = [
 
 
 # Provider Config Accessors
-# -------------------------
 
 
 def is_provider_available(provider_type: str) -> bool:
@@ -135,7 +106,6 @@ def get_short_uid_extractor(provider_type: str) -> Callable[[str], str]:
 
 
 # Dynamic Isolation Label Helpers
-# --------------------------------
 
 
 def _normalize_uuid(value: str | UUID) -> str:

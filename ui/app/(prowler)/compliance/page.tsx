@@ -16,8 +16,9 @@ import { ComplianceFilters } from "@/components/compliance/compliance-header/com
 import { ComplianceOverviewGrid } from "@/components/compliance/compliance-overview-grid";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { Card, CardContent } from "@/components/shadcn/card/card";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { pickLatestCisPerProvider } from "@/lib/compliance/compliance-report-types";
+import { isCloud } from "@/lib/shared/env";
 import {
   ExpandedScanData,
   ScanEntity,
@@ -26,6 +27,11 @@ import {
 } from "@/types";
 import { ComplianceOverviewData } from "@/types/compliance";
 
+import { CompliancePageTabs } from "./_components/compliance-page-tabs";
+import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
+import { CrossProviderOverview } from "./_components/cross-provider-overview";
+import { COMPLIANCE_TAB } from "./_types";
+
 export default async function Compliance({
   searchParams,
 }: {
@@ -33,6 +39,44 @@ export default async function Compliance({
 }) {
   const resolvedSearchParams = await searchParams;
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
+
+  // Cross-Provider is Prowler Cloud-only (the OSS API has no
+  // cross-provider-compliance-overviews endpoint): in OSS the tab renders
+  // disabled with the upsell badge and Per Scan is forced active.
+  const crossProviderEnabled = isCloud();
+  const activeTab = crossProviderEnabled
+    ? getComplianceTab(resolvedSearchParams.tab)
+    : COMPLIANCE_TAB.PER_SCAN;
+
+  // Only the active tab's payload is built: switching tabs is a real
+  // navigation, so pre-building the inactive tab buys nothing.
+  if (activeTab === COMPLIANCE_TAB.CROSS_PROVIDER) {
+    return (
+      <ContentLayout
+        title="Compliance"
+        icon="lucide:shield-check"
+        onboardingAction={{ flowId: "view-compliance" }}
+      >
+        <CompliancePageTabs
+          activeTab={activeTab}
+          crossProviderEnabled={crossProviderEnabled}
+          perScanContent={null}
+          crossProviderContent={
+            <Suspense
+              key={`cross-provider-${searchParamsKey}`}
+              fallback={
+                <ComplianceOverviewPanel>
+                  <ComplianceSkeletonGrid />
+                </ComplianceOverviewPanel>
+              }
+            >
+              <CrossProviderOverview searchParams={resolvedSearchParams} />
+            </Suspense>
+          }
+        />
+      </ContentLayout>
+    );
+  }
 
   const scansData = await getScans({
     filters: {
@@ -46,16 +90,31 @@ export default async function Compliance({
   });
 
   if (!scansData?.data) {
-    return <NoScansAvailable />;
+    return (
+      <ContentLayout
+        title="Compliance"
+        icon="lucide:shield-check"
+        onboardingAction={{
+          flowId: "view-compliance",
+          fallbackFlowId: "view-first-scan",
+          useFallback: true,
+        }}
+      >
+        <CompliancePageTabs
+          activeTab={activeTab}
+          crossProviderEnabled={crossProviderEnabled}
+          perScanContent={<NoScansAvailable />}
+          crossProviderContent={null}
+        />
+      </ContentLayout>
+    );
   }
 
-  // Process scans with provider information from included data
   const expandedScansData: ExpandedScanData[] = scansData.data
     .filter((scan: ScanProps) => scan.relationships?.provider?.data?.id)
     .map((scan: ScanProps) => {
       const providerId = scan.relationships!.provider!.data!.id;
 
-      // Find the provider data in the included array
       const providerData = scansData.included?.find(
         (item: { type: string; id: string }) =>
           item.type === "providers" && item.id === providerId,
@@ -76,15 +135,20 @@ export default async function Compliance({
     })
     .filter(Boolean) as ExpandedScanData[];
 
-  // Use scanId from URL, or select the first scan if not provided
   const scanIdParam = resolvedSearchParams.scanId;
   const scanIdFromUrl = Array.isArray(scanIdParam)
     ? scanIdParam[0]
     : scanIdParam;
   const selectedScanId: string | null =
     scanIdFromUrl || expandedScansData[0]?.id || null;
+  const onboardingAction = selectedScanId
+    ? { flowId: "view-compliance" }
+    : {
+        flowId: "view-compliance",
+        fallbackFlowId: "view-first-scan",
+        useFallback: true,
+      };
 
-  // Find the selected scan
   const selectedScan = expandedScansData.find(
     (scan) => scan.id === selectedScanId,
   );
@@ -100,7 +164,6 @@ export default async function Compliance({
       }
     : undefined;
 
-  // Fetch metadata if we have a selected scan
   const metadataInfoData = selectedScanId
     ? await getComplianceOverviewMetadataInfo({
         filters: {
@@ -111,7 +174,6 @@ export default async function Compliance({
 
   const uniqueRegions = metadataInfoData?.data?.attributes?.regions || [];
 
-  // Fetch ThreatScore data from API if we have a selected scan
   let threatScoreData = null;
   if (selectedScanId && typeof selectedScanId === "string") {
     const threatScoreResponse = await getThreatScore({
@@ -127,67 +189,76 @@ export default async function Compliance({
     }
   }
 
-  return (
-    <ContentLayout title="Compliance" icon="lucide:shield-check">
-      {selectedScanId ? (
-        <>
-          {/* Row 1: Filters */}
+  const perScanContent = selectedScanId ? (
+    <>
+      <div className="mb-6">
+        <ComplianceFilters
+          scans={expandedScansData}
+          uniqueRegions={uniqueRegions}
+          selectedScanId={selectedScanId}
+        />
+      </div>
+
+      {threatScoreData &&
+        typeof selectedScanId === "string" &&
+        selectedScan && (
           <div className="mb-6">
-            <ComplianceFilters
-              scans={expandedScansData}
-              uniqueRegions={uniqueRegions}
-              selectedScanId={selectedScanId}
+            <ThreatScoreBadge
+              score={threatScoreData.score}
+              scanId={selectedScanId}
+              provider={selectedScan.providerInfo.provider}
+              selectedScan={selectedScanData}
+              sectionScores={threatScoreData.sectionScores}
             />
           </div>
+        )}
 
-          {/* Row 2: ThreatScore card — full width, horizontal */}
-          {threatScoreData &&
-            typeof selectedScanId === "string" &&
-            selectedScan && (
-              <div className="mb-6">
-                <ThreatScoreBadge
-                  score={threatScoreData.score}
-                  scanId={selectedScanId}
-                  provider={selectedScan.providerInfo.provider}
-                  selectedScan={selectedScanData}
-                  sectionScores={threatScoreData.sectionScores}
-                />
-              </div>
-            )}
+      <Suspense
+        key={searchParamsKey}
+        fallback={
+          <ComplianceOverviewPanel>
+            <ComplianceSkeletonGrid />
+          </ComplianceOverviewPanel>
+        }
+      >
+        <SSRComplianceGrid
+          searchParams={resolvedSearchParams}
+          scanId={selectedScanId}
+          selectedScan={selectedScanData}
+        />
+      </Suspense>
+    </>
+  ) : (
+    <NoScansAvailable />
+  );
 
-          {/* Row 3: Compliance grid with client-side search */}
-          <Suspense
-            key={searchParamsKey}
-            fallback={
-              <ComplianceOverviewPanel>
-                <ComplianceSkeletonGrid />
-              </ComplianceOverviewPanel>
-            }
-          >
-            <SSRComplianceGrid
-              searchParams={resolvedSearchParams}
-              selectedScan={selectedScanData}
-            />
-          </Suspense>
-        </>
-      ) : (
-        <NoScansAvailable />
-      )}
+  return (
+    <ContentLayout
+      title="Compliance"
+      icon="lucide:shield-check"
+      onboardingAction={onboardingAction}
+    >
+      <CompliancePageTabs
+        activeTab={activeTab}
+        crossProviderEnabled={crossProviderEnabled}
+        perScanContent={perScanContent}
+        crossProviderContent={null}
+      />
     </ContentLayout>
   );
 }
 
 const SSRComplianceGrid = async ({
   searchParams,
+  scanId,
   selectedScan,
 }: {
   searchParams: SearchParamsProps;
+  scanId: string | null;
   selectedScan?: ScanEntity;
 }) => {
-  const scanId = searchParams.scanId?.toString() || "";
   const regionFilter = searchParams["filter[region__in]"]?.toString() || "";
 
-  // Only fetch compliance data if we have a valid scanId
   const compliancesData =
     scanId && scanId.trim() !== ""
       ? await getCompliancesOverview({
@@ -205,7 +276,6 @@ const SSRComplianceGrid = async ({
       a.attributes.framework.localeCompare(b.attributes.framework),
     );
 
-  // Check if the response contains no data
   if (
     !compliancesData ||
     !compliancesData.data ||
@@ -223,7 +293,6 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  // Handle errors returned by the API
   if (compliancesData?.errors?.length > 0) {
     return (
       <Alert variant="info">
@@ -233,10 +302,7 @@ const SSRComplianceGrid = async ({
     );
   }
 
-  // Compute the set of latest CIS variants per provider once, so each card
-  // can gate its PDF button without re-parsing on every render. The backend
-  // only generates a CIS PDF for the latest version per provider, so any
-  // other CIS card must not expose the PDF download button.
+  // Backend only generates CIS PDFs for the latest version per provider.
   const latestCisIds = pickLatestCisPerProvider(
     compliancesData.data.map(
       (compliance: ComplianceOverviewData) => compliance.id,
@@ -247,7 +313,7 @@ const SSRComplianceGrid = async ({
     <ComplianceOverviewPanel>
       <ComplianceOverviewGrid
         frameworks={frameworks}
-        scanId={scanId}
+        scanId={scanId ?? ""}
         selectedScan={selectedScan}
         latestCisIds={latestCisIds}
       />
@@ -264,7 +330,7 @@ const ComplianceOverviewPanel = ({
     <Card
       variant="base"
       padding="none"
-      className="minimal-scrollbar shadow-small relative z-0 w-full gap-4 overflow-auto"
+      className="minimal-scrollbar relative z-0 w-full gap-4 overflow-auto shadow-sm"
     >
       <CardContent className="flex flex-col gap-4 p-4">{children}</CardContent>
     </Card>

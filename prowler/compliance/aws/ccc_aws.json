@@ -49,6 +49,10 @@
         "elb_insecure_ssl_ciphers",
         "elb_ssl_listeners",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_ssl_listeners",
         "elbv2_nlb_tls_termination_enabled",
         "s3_bucket_secure_transport_policy",
@@ -272,6 +276,17 @@
         "acm_certificates_expiration_check",
         "acm_certificates_with_secure_key_algorithms",
         "acm_certificates_transparency_logs_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -791,6 +806,17 @@
       ],
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -1501,6 +1527,14 @@
         "iam_policy_no_full_access_to_kms",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_attached_only_to_group_or_roles"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1663,6 +1697,14 @@
         "cloudwatch_changes_to_network_route_tables_alarm_configured",
         "cloudwatch_changes_to_vpcs_alarm_configured",
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1788,6 +1830,14 @@
         "cloudtrail_threat_detection_enumeration",
         "guardduty_is_enabled",
         "guardduty_no_high_severity_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -4308,6 +4358,14 @@
       ],
       "Checks": [
         "acm_certificates_expiration_check"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_expiration_check",
+          "ConfigKey": "days_to_expire_threshold",
+          "Operator": "gte",
+          "Value": 30
+        }
       ]
     },
     {
@@ -6173,6 +6231,20 @@
       "Checks": [
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 90
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 90
+        }
       ]
     },
     {
@@ -6269,6 +6341,14 @@
         "cloudwatch_log_metric_filter_root_usage",
         "cloudwatch_log_metric_filter_sign_in_without_mfa",
         "guardduty_is_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -6371,6 +6451,14 @@
       "Checks": [
         "accessanalyzer_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

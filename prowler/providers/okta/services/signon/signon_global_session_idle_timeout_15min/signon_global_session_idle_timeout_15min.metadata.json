@@ -9,8 +9,8 @@
   "Severity": "medium",
   "ResourceType": "NotDefined",
   "ResourceGroup": "governance",
-  "Description": "The **Default Global Session Policy** must have a **Priority 1** rule that is **not** the built-in `Default Rule`, and that rule must set **Maximum Okta global session idle time** to 15 minutes or less. The threshold defaults to 15 minutes and is overridable via the `okta_max_session_idle_minutes` key in the audit config.",
-  "Risk": "Without a 15-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely, allowing an attacker physical or remote access to take over the user's identity and pivot into every downstream application that trusts Okta SSO.",
+  "Description": "Every active Okta **Global Session Policy** needs a **Priority 1** rule that is **not** the built-in `Default Rule`, setting *Maximum Okta global session idle time* to `15` minutes or less.\n\nOkta evaluates policies by group assignment, so a permissive custom policy can govern users. Threshold override: `okta_max_session_idle_minutes`. Aligns with **DISA STIG V-273186**.",
+  "Risk": "Without a `15`-minute idle timeout, an unattended workstation leaves an authenticated Okta session open indefinitely.\n\n- **Session takeover** of the user's identity by anyone with physical or remote access\n- **Lateral movement** into every downstream application that trusts Okta SSO\n- **Bypassed reauthentication** even after the user has stepped away",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://help.okta.com/oie/en-us/content/topics/identity-engine/policies/about-okta-sign-on-policies.htm",
@@ -20,11 +20,11 @@
     "Code": {
       "CLI": "",
       "NativeIaC": "",
-      "Other": "1. Sign in to the Okta Admin Console as a Super Admin\n2. Go to Security > Global Session Policy\n3. Open the Default Policy\n4. Add or edit a non-default rule\n5. Move that rule to Priority 1 so it is evaluated before the built-in Default Rule\n6. Set 'Maximum Okta global session idle time' to 15 minutes or less\n7. Save the rule",
-      "Terraform": "resource \"okta_policy_rule_signon\" \"prowler_idle_timeout_15min\" {\n  policy_id           = okta_policy_signon.default.id\n  name                = \"Prowler-enforced idle timeout\"\n  status              = \"ACTIVE\"\n  session_idle        = 15\n  session_persistent  = false\n}\n"
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Global Session Policy**.\n3. Open the **Default Policy** (and repeat for every other active policy).\n4. Add or edit a non-default rule.\n5. Move that rule to **Priority 1** so it is evaluated before the built-in `Default Rule`.\n6. Set *Maximum Okta global session idle time* to `15` minutes or less.\n7. Save the rule.",
+      "Terraform": "```hcl\nresource \"okta_policy_rule_signon\" \"<example_resource_name>\" {\n  policy_id          = okta_policy_signon.default.id\n  name               = \"<example_resource_name>\"\n  status             = \"ACTIVE\"\n  priority           = 1       # Critical: rule must sit at Priority 1 before the Default Rule\n  session_idle       = 15      # Critical: enforce idle timeout at 15 minutes or less\n  session_persistent = false   # Critical: avoid persistent global session cookies\n}\n```"
     },
     "Recommendation": {
-      "Text": "Configure the Default Global Session Policy so its Priority 1 non-default rule sets the Maximum Okta global session idle time to 15 minutes or less.",
+      "Text": "Configure each active **Global Session Policy** so a non-default rule at **Priority 1**:\n- Sets *Maximum Okta global session idle time* to `15` minutes or less\n- Is enabled (`ACTIVE`) and evaluated before the built-in `Default Rule`\n\nReview group assignments to confirm the rule actually governs the intended users.",
       "Url": "https://hub.prowler.com/check/signon_global_session_idle_timeout_15min"
     }
   },

@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 
 import { getLatestMetadataInfo } from "@/actions/findings";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { getScans } from "@/actions/scans";
 import { getAlert, listAlerts } from "@/app/(prowler)/alerts/_actions";
 import { AlertsManager } from "@/app/(prowler)/alerts/_components/alerts-manager";
-import { ContentLayout } from "@/components/ui";
+import { ContentLayout } from "@/components/shadcn/content-layout";
 import { createScanDetailsMapping } from "@/lib";
+import { isCloud } from "@/lib/shared/env";
 import type { MetaDataProps, ScanEntity, ScanProps } from "@/types";
 
 interface AlertsPageProps {
@@ -49,7 +50,7 @@ const toAlertsSearchParams = (
 };
 
 export default async function AlertsPage({ searchParams }: AlertsPageProps) {
-  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true") {
+  if (!isCloud()) {
     redirect("/");
   }
 
@@ -58,7 +59,7 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
   const [result, providersData, scansData, metadataInfoData, editResult] =
     await Promise.all([
       listAlerts(toAlertsSearchParams(resolvedSearchParams)),
-      getProviders({ pageSize: 50 }),
+      getAllProviders(),
       getScans({ pageSize: 50 }),
       getLatestMetadataInfo({}),
       editAlertId ? getAlert(editAlertId) : Promise.resolve(null),

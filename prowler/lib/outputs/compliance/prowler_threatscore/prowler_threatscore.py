@@ -2,6 +2,13 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    accumulate_group_status,
+    accumulate_overview_status,
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 
 
@@ -20,22 +27,33 @@ def get_prowler_threatscore_table(
         "Score": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
     pillars = {}
+    pillar_seen = {}
+    provider = ""
     generic_score = 0
     max_generic_score = 0
-    counted_findings_generic = []
+    counted_findings_generic = {}
     score_per_pillar = {}
     max_score_per_pillar = {}
     counted_findings_per_pillar = {}
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "ProwlerThreatScore":
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         pillar = attribute.Section
 
@@ -48,60 +66,68 @@ def get_prowler_threatscore_table(
                         ):
                             score_per_pillar[pillar] = 0
                             max_score_per_pillar[pillar] = 0
-                            counted_findings_per_pillar[pillar] = []
+                            counted_findings_per_pillar[pillar] = {}
 
-                        if (
-                            index not in counted_findings_per_pillar[pillar]
-                            and not finding.muted
-                        ):
-                            if finding.status == "PASS":
-                                score_per_pillar[pillar] += (
-                                    attribute.LevelOfRisk * attribute.Weight
-                                )
-                            max_score_per_pillar[pillar] += (
-                                attribute.LevelOfRisk * attribute.Weight
-                            )
-                            counted_findings_per_pillar[pillar].append(index)
+                        # Revoke an earlier PASS score if a later requirement FAILs.
+                        if not finding.muted:
+                            contribution = attribute.LevelOfRisk * attribute.Weight
+                            counted = counted_findings_per_pillar[pillar]
+                            if index not in counted:
+                                max_score_per_pillar[pillar] += contribution
+                                if effective_status == "PASS":
+                                    score_per_pillar[pillar] += contribution
+                                    counted[index] = contribution
+                                else:
+                                    counted[index] = 0
+                            elif effective_status == "FAIL" and counted[index]:
+                                score_per_pillar[pillar] -= counted[index]
+                                counted[index] = 0
 
                         if pillar not in pillars:
                             pillars[pillar] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                            pillar_seen[pillar] = {}
 
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                                pillars[pillar]["Muted"] += 1
-                        else:
-                            if finding.status == "FAIL" and index not in fail_count:
-                                fail_count.append(index)
-                                pillars[pillar]["FAIL"] += 1
-                            elif finding.status == "PASS" and index not in pass_count:
-                                pass_count.append(index)
-                                pillars[pillar]["PASS"] += 1
+                        status = "Muted" if finding.muted else effective_status
+                        accumulate_overview_status(
+                            index, status, pass_count, fail_count, muted_count
+                        )
+                        accumulate_group_status(
+                            index, status, pillars[pillar], pillar_seen[pillar]
+                        )
 
-                        # Generic score
-                        if index not in counted_findings_generic and not finding.muted:
-                            if finding.status == "PASS":
-                                generic_score += (
-                                    attribute.LevelOfRisk * attribute.Weight
-                                )
-                            max_generic_score += (
-                                attribute.LevelOfRisk * attribute.Weight
-                            )
-                            counted_findings_generic.append(index)
+                        # Generic score, with the same PASS-revocation on FAIL.
+                        if not finding.muted:
+                            contribution = attribute.LevelOfRisk * attribute.Weight
+                            if index not in counted_findings_generic:
+                                max_generic_score += contribution
+                                if effective_status == "PASS":
+                                    generic_score += contribution
+                                    counted_findings_generic[index] = contribution
+                                else:
+                                    counted_findings_generic[index] = 0
+                            elif (
+                                effective_status == "FAIL"
+                                and counted_findings_generic[index]
+                            ):
+                                generic_score -= counted_findings_generic[index]
+                                counted_findings_generic[index] = 0
 
     no_findings_pillars = []
-    bulk_compliance = Compliance.get_bulk(provider=compliance.Provider.lower()).get(
-        compliance_framework
+    bulk_compliance = (
+        Compliance.get_bulk(provider=provider.lower()).get(compliance_framework)
+        if provider
+        else None
     )
-    for requirement in bulk_compliance.Requirements:
-        for attribute in requirement.Attributes:
-            pillar = attribute.Section
-            if pillar not in pillars.keys() and pillar not in no_findings_pillars:
-                no_findings_pillars.append(pillar)
+    if bulk_compliance:
+        for requirement in bulk_compliance.Requirements:
+            for attribute in requirement.Attributes:
+                pillar = attribute.Section
+                if pillar not in pillars.keys() and pillar not in no_findings_pillars:
+                    no_findings_pillars.append(pillar)
 
     pillars = dict(sorted(pillars.items()))
     for pillar in pillars:
-        pillar_table["Provider"].append(compliance.Provider)
+        pillar_table["Provider"].append(provider)
         pillar_table["Pillar"].append(pillar)
         if max_score_per_pillar[pillar] == 0:
             pillar_score = 100.0
@@ -127,7 +153,7 @@ def get_prowler_threatscore_table(
         )
 
     for pillar in no_findings_pillars:
-        pillar_table["Provider"].append(compliance.Provider)
+        pillar_table["Provider"].append(provider)
         pillar_table["Pillar"].append(pillar)
         pillar_table["Score"].append(f"{Style.BRIGHT}{Fore.GREEN}100%{Style.RESET_ALL}")
         pillar_table["Status"].append(f"{Fore.GREEN}PASS{Style.RESET_ALL}")

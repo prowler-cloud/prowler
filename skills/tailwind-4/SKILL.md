@@ -14,7 +14,7 @@ allowed-tools: Read, Edit, Write, Glob, Grep, Bash, WebFetch, WebSearch, Task
 
 ## Styling Decision Tree
 
-```
+```text
 Tailwind class exists?  → className="..."
 Dynamic value?          → style={{ width: `${x}%` }}
 Conditional styles?     → cn("base", condition && "variant")

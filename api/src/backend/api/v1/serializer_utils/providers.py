@@ -213,7 +213,8 @@ from rest_framework_json_api import serializers
                 "properties": {
                     "kubeconfig_content": {
                         "type": "string",
-                        "description": "The content of the Kubernetes kubeconfig file, encoded as a string.",
+                        "description": "The content of the Kubernetes kubeconfig file, encoded as a string. "
+                        "Kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.",
                     }
                 },
                 "required": ["kubeconfig_content"],
@@ -294,16 +295,21 @@ from rest_framework_json_api import serializers
                         "type": "string",
                         "description": "The OCID of the tenancy.",
                     },
-                    "region": {
-                        "type": "string",
-                        "description": "The OCI region identifier (e.g., us-ashburn-1, us-phoenix-1).",
-                    },
                     "pass_phrase": {
                         "type": "string",
                         "description": "The passphrase for the private key, if encrypted.",
                     },
+                    "region": {
+                        "type": "string",
+                        "deprecated": True,
+                        "description": "Legacy OCI region field accepted for backwards compatibility but ignored; OCI scans all regions.",
+                    },
                 },
-                "required": ["user", "fingerprint", "tenancy", "region"],
+                "required": ["user", "fingerprint", "tenancy"],
+                "anyOf": [
+                    {"required": ["key_file"]},
+                    {"required": ["key_content"]},
+                ],
             },
             {
                 "type": "object",
@@ -403,6 +409,26 @@ from rest_framework_json_api import serializers
                     },
                 },
                 "required": ["clouds_yaml_content", "clouds_yaml_cloud"],
+            },
+            {
+                "type": "object",
+                "title": "Okta OAuth Credentials",
+                "properties": {
+                    "okta_client_id": {
+                        "type": "string",
+                        "description": "Client ID of the Okta API Services app used for OAuth 2.0 private-key JWT authentication.",
+                    },
+                    "okta_private_key": {
+                        "type": "string",
+                        "description": "PEM-encoded private key whose matching public key (JWK) is registered on the Okta service app.",
+                    },
+                    "okta_scopes": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "OAuth scopes to request. Optional; defaults to the minimum set required to run the currently enabled Okta checks.",
+                    },
+                },
+                "required": ["okta_client_id", "okta_private_key"],
             },
             {
                 "type": "object",

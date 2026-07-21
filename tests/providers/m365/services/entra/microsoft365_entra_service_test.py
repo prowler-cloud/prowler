@@ -1,39 +1,40 @@
 import asyncio
+import importlib
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from prowler.providers.m365.models import M365IdentityInfo
-from prowler.providers.m365.services.entra.entra_service import (
-    AdminConsentPolicy,
-    AdminRoles,
-    ApplicationEnforcedRestrictions,
-    ApplicationsConditions,
-    AppManagementRestrictions,
-    AuthorizationPolicy,
-    AuthPolicyRoles,
-    ConditionalAccessGrantControl,
-    ConditionalAccessPolicy,
-    ConditionalAccessPolicyState,
-    Conditions,
-    CredentialRestriction,
-    DefaultAppManagementPolicy,
-    DefaultUserRolePermissions,
-    Entra,
-    GrantControlOperator,
-    GrantControls,
-    InvitationsFrom,
-    Organization,
-    PersistentBrowser,
-    SessionControls,
-    SignInFrequency,
-    SignInFrequencyInterval,
-    SignInFrequencyType,
-    User,
-    UserAction,
-    UsersConditions,
-)
+from prowler.providers.m365.services.entra import entra_service
 from tests.providers.m365.m365_fixtures import DOMAIN, set_mocked_m365_provider
+
+AdminConsentPolicy = entra_service.AdminConsentPolicy
+AdminRoles = entra_service.AdminRoles
+ApplicationEnforcedRestrictions = entra_service.ApplicationEnforcedRestrictions
+ApplicationsConditions = entra_service.ApplicationsConditions
+AppManagementRestrictions = entra_service.AppManagementRestrictions
+AuthorizationPolicy = entra_service.AuthorizationPolicy
+AuthPolicyRoles = entra_service.AuthPolicyRoles
+ConditionalAccessGrantControl = entra_service.ConditionalAccessGrantControl
+ConditionalAccessPolicy = entra_service.ConditionalAccessPolicy
+ConditionalAccessPolicyState = entra_service.ConditionalAccessPolicyState
+Conditions = entra_service.Conditions
+CredentialRestriction = entra_service.CredentialRestriction
+DefaultAppManagementPolicy = entra_service.DefaultAppManagementPolicy
+DefaultUserRolePermissions = entra_service.DefaultUserRolePermissions
+Entra = entra_service.Entra
+GrantControlOperator = entra_service.GrantControlOperator
+GrantControls = entra_service.GrantControls
+InvitationsFrom = entra_service.InvitationsFrom
+Organization = entra_service.Organization
+PersistentBrowser = entra_service.PersistentBrowser
+SessionControls = entra_service.SessionControls
+SignInFrequency = entra_service.SignInFrequency
+SignInFrequencyInterval = entra_service.SignInFrequencyInterval
+SignInFrequencyType = entra_service.SignInFrequencyType
+User = entra_service.User
+UserAction = entra_service.UserAction
+UsersConditions = entra_service.UsersConditions
 
 
 async def mock_entra_get_authorization_policy(_):
@@ -411,6 +412,7 @@ class Test_Entra_Service:
                 id="user-1",
                 display_name="User 1",
                 on_premises_sync_enabled=True,
+                employee_hire_date=datetime(2026, 6, 10, tzinfo=timezone.utc),
             ),
             SimpleNamespace(
                 id="user-2",
@@ -535,6 +537,7 @@ class Test_Entra_Service:
             "userType",
             "accountEnabled",
             "onPremisesSyncEnabled",
+            "employeeHireDate",
         }
         with_url_mock.assert_called_once_with("next-link")
         assert users["user-1"].directory_roles_ids == ["role-template-1"]
@@ -548,6 +551,9 @@ class Test_Entra_Service:
         assert users["user-1"].authentication_methods == ["fido2SecurityKey"]
         assert users["user-6"].authentication_methods == ["mobilePhone"]
         assert users["user-2"].authentication_methods == []
+        assert users["user-1"].employee_hire_date == datetime(
+            2026, 6, 10, tzinfo=timezone.utc
+        )
 
     def test__get_users_uses_graph_account_enabled_for_disabled_guests(self):
         """Regression test for https://github.com/prowler-cloud/prowler/issues/10921.
@@ -692,9 +698,12 @@ class Test_Entra_Service:
         a descriptive error message naming the missing AuditLog.Read.All permission.
         """
         from msgraph.generated.models.o_data_errors.main_error import MainError
-        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
 
-        odata_error = ODataError()
+        o_data_error = importlib.import_module(
+            "msgraph.generated.models.o_data_errors.o_data_error"
+        )
+
+        odata_error = o_data_error.ODataError()
         odata_error.error = MainError()
         odata_error.error.code = "Authorization_RequestDenied"
 
@@ -873,3 +882,317 @@ class Test_Entra_Service:
         assert merged.password_credentials[0].key_id == "cred-app"
         assert merged.password_credentials[0].display_name == "app-level-secret"
         assert merged.password_credentials[0].is_active()
+
+    def test__get_exchange_mailbox_permission_service_principals(self):
+        """Service principals with Exchange Graph application roles are returned."""
+        graph_sp_id = "graph-sp-id"
+        mail_read_role_id = "11111111-1111-1111-1111-111111111111"
+        user_read_role_id = "22222222-2222-2222-2222-222222222222"
+
+        graph_sp = SimpleNamespace(
+            id=graph_sp_id,
+            display_name="Microsoft Graph",
+            app_id="00000003-0000-0000-c000-000000000000",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[
+                SimpleNamespace(
+                    id=mail_read_role_id,
+                    value="Mail.Read",
+                    allowed_member_types=["Application"],
+                ),
+                SimpleNamespace(
+                    id=user_read_role_id,
+                    value="User.Read.All",
+                    allowed_member_types=["Application"],
+                ),
+            ],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        mailbox_app = SimpleNamespace(
+            id="sp-mailbox",
+            display_name="Mailbox App",
+            app_id="app-mailbox",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+        disabled_app = SimpleNamespace(
+            id="sp-disabled",
+            display_name="Disabled App",
+            app_id="app-disabled",
+            app_owner_organization_id="33333333-3333-3333-3333-333333333333",
+            app_roles=[],
+            account_enabled=False,
+            service_principal_type="Application",
+        )
+        first_party_app = SimpleNamespace(
+            id="sp-first-party",
+            display_name="Microsoft App",
+            app_id="app-first-party",
+            app_owner_organization_id="f8cdef31-a31e-4b4a-93e4-5f571e91255a",
+            app_roles=[],
+            account_enabled=True,
+            service_principal_type="Application",
+        )
+
+        app_role_assignments = {
+            "sp-mailbox": SimpleNamespace(
+                value=[
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=mail_read_role_id,
+                    ),
+                    SimpleNamespace(
+                        resource_id=graph_sp_id,
+                        app_role_id=user_read_role_id,
+                    ),
+                ],
+                odata_next_link=None,
+            )
+        }
+
+        def by_service_principal_id(service_principal_id):
+            return SimpleNamespace(
+                app_role_assignments=SimpleNamespace(
+                    get=AsyncMock(
+                        return_value=app_role_assignments.get(
+                            service_principal_id,
+                            SimpleNamespace(value=[], odata_next_link=None),
+                        )
+                    ),
+                    with_url=MagicMock(),
+                )
+            )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(
+                    return_value=SimpleNamespace(
+                        value=[graph_sp, mailbox_app, disabled_app, first_party_app],
+                        odata_next_link=None,
+                    )
+                ),
+                with_url=MagicMock(),
+                by_service_principal_id=MagicMock(side_effect=by_service_principal_id),
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert set(result.keys()) == {"sp-mailbox"}
+        assert result["sp-mailbox"].app_id == "app-mailbox"
+        assert result["sp-mailbox"].exchange_mailbox_permissions == ["Mail.Read"]
+
+    def test__get_exchange_mailbox_permission_service_principals_records_error(self):
+        """
+        Graph collection failures preserve unavailable state separately from empty results.
+        """
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            service_principals=SimpleNamespace(
+                get=AsyncMock(side_effect=RuntimeError("Graph unavailable"))
+            )
+        )
+
+        result = asyncio.run(
+            entra_service._get_exchange_mailbox_permission_service_principals()
+        )
+
+        assert result == {}
+        assert "RuntimeError" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+        assert "Graph unavailable" in (
+            entra_service.exchange_mailbox_permission_service_principals_error
+        )
+
+    def test__resolve_identifiers_for_type_flags_only_404(self):
+        """Only HTTP 404 / Request_ResourceNotFound mark an id as deleted.
+
+        Transient errors (5xx, throttling) and successful resolutions must
+        never be added to the unresolved set — that is the contract the check
+        relies on to avoid false positives during Graph outages.
+        """
+        from msgraph.generated.models.o_data_errors.main_error import MainError
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_by_status = "deleted-status-404"
+        deleted_by_code = "deleted-code-rnf"
+        transient = "transient-503"
+        live = "live-user"
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None  # status code alone is enough
+
+        error_rnf = ODataError()
+        error_rnf.response_status_code = None
+        error_rnf.error = MainError()
+        error_rnf.error.code = "Request_ResourceNotFound"
+
+        error_503 = ODataError()
+        error_503.response_status_code = 503
+        error_503.error = MainError()
+        error_503.error.code = "ServiceUnavailable"
+
+        user_builders = {
+            deleted_by_status: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            deleted_by_code: SimpleNamespace(get=AsyncMock(side_effect=error_rnf)),
+            transient: SimpleNamespace(get=AsyncMock(side_effect=error_503)),
+            live: SimpleNamespace(get=AsyncMock(return_value=SimpleNamespace(id=live))),
+        }
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            users=SimpleNamespace(
+                by_user_id=MagicMock(side_effect=lambda uid: user_builders[uid])
+            )
+        )
+
+        unresolved = set()
+        errored = set()
+        asyncio.run(
+            entra_service._resolve_identifiers_for_type(
+                "user", set(user_builders), unresolved, errored
+            )
+        )
+
+        assert unresolved == {
+            ("user", deleted_by_status),
+            ("user", deleted_by_code),
+        }
+        # The transient 503 must be recorded as errored (unverified), never as
+        # deleted and never silently dropped.
+        assert errored == {("user", transient)}
+
+    def test__resolve_identifiers_for_type_role_uses_role_definitions_endpoint(self):
+        """A deleted role is resolved against the roleDefinitions endpoint."""
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_role = "deleted-role-id"
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None
+
+        by_role_id = MagicMock(
+            return_value=SimpleNamespace(get=AsyncMock(side_effect=error_404))
+        )
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            role_management=SimpleNamespace(
+                directory=SimpleNamespace(
+                    role_definitions=SimpleNamespace(
+                        by_unified_role_definition_id=by_role_id
+                    )
+                )
+            )
+        )
+
+        unresolved = set()
+        errored = set()
+        asyncio.run(
+            entra_service._resolve_identifiers_for_type(
+                "role", {deleted_role}, unresolved, errored
+            )
+        )
+
+        assert unresolved == {("role", deleted_role)}
+        assert errored == set()
+        by_role_id.assert_called_once_with(deleted_role)
+
+    def test__resolve_directory_object_references_skips_sentinels_and_dedups(self):
+        """End-to-end resolver: sentinels are never queried, ids are deduped
+        across policies, and only deleted ids land in the unresolved set."""
+        from msgraph.generated.models.o_data_errors.o_data_error import ODataError
+
+        deleted_user = "deleted-user-id"
+        live_user = "live-user-id"
+        deleted_group = "deleted-group-id"
+        errored_group = "errored-group-id"
+
+        def _user_conditions(**kwargs):
+            base = {
+                "included_users": [],
+                "excluded_users": [],
+                "included_groups": [],
+                "excluded_groups": [],
+                "included_roles": [],
+                "excluded_roles": [],
+            }
+            base.update(kwargs)
+            return SimpleNamespace(**base)
+
+        def _policy(user_conditions):
+            return SimpleNamespace(
+                conditions=SimpleNamespace(user_conditions=user_conditions)
+            )
+
+        policies = {
+            "policy-a": _policy(
+                _user_conditions(
+                    included_users=["All", deleted_user, live_user],
+                    excluded_groups=[deleted_group, errored_group],
+                )
+            ),
+            # Same deleted_user referenced again — must be resolved only once.
+            "policy-b": _policy(
+                _user_conditions(
+                    included_users=[deleted_user],
+                    excluded_users=["GuestsOrExternalUsers"],
+                )
+            ),
+            # Policy without user conditions must be skipped without error.
+            "policy-c": SimpleNamespace(
+                conditions=SimpleNamespace(user_conditions=None)
+            ),
+        }
+
+        error_404 = ODataError()
+        error_404.response_status_code = 404
+        error_404.error = None
+
+        error_503 = ODataError()
+        error_503.response_status_code = 503
+        error_503.error = None
+
+        user_builders = {
+            deleted_user: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            live_user: SimpleNamespace(
+                get=AsyncMock(return_value=SimpleNamespace(id=live_user))
+            ),
+        }
+        group_builders = {
+            deleted_group: SimpleNamespace(get=AsyncMock(side_effect=error_404)),
+            errored_group: SimpleNamespace(get=AsyncMock(side_effect=error_503)),
+        }
+        by_user_id = MagicMock(side_effect=lambda uid: user_builders[uid])
+        by_group_id = MagicMock(side_effect=lambda gid: group_builders[gid])
+
+        entra_service = Entra.__new__(Entra)
+        entra_service.client = SimpleNamespace(
+            users=SimpleNamespace(by_user_id=by_user_id),
+            groups=SimpleNamespace(by_group_id=by_group_id),
+        )
+
+        unresolved, errored = asyncio.run(
+            entra_service._resolve_directory_object_references(policies)
+        )
+
+        assert unresolved == {
+            ("user", deleted_user),
+            ("group", deleted_group),
+        }
+        # The 503 group is unverified, not deleted — it lands in errored.
+        assert errored == {("group", errored_group)}
+        # Sentinels are filtered before any Graph call; only the two real user
+        # ids are queried, and the deduped deleted_user is queried exactly once.
+        queried_users = {call.args[0] for call in by_user_id.call_args_list}
+        assert queried_users == {deleted_user, live_user}
+        assert user_builders[deleted_user].get.await_count == 1

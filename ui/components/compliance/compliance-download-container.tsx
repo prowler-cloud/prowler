@@ -1,8 +1,9 @@
 "use client";
 
-import { DownloadIcon, FileTextIcon } from "lucide-react";
+import { DownloadIcon, FileJsonIcon, FileTextIcon } from "lucide-react";
 import { useState } from "react";
 
+import { toast } from "@/components/shadcn";
 import { Button } from "@/components/shadcn/button/button";
 import {
   ActionDropdown,
@@ -13,9 +14,15 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { toast } from "@/components/ui";
-import type { ComplianceReportType } from "@/lib/compliance/compliance-report-types";
-import { downloadComplianceCsv, downloadCompliancePdf } from "@/lib/helper";
+import {
+  type ComplianceReportType,
+  isOcsfSupported,
+} from "@/lib/compliance/compliance-report-types";
+import {
+  downloadComplianceCsv,
+  downloadComplianceOcsf,
+  downloadCompliancePdf,
+} from "@/lib/helper";
 import { cn } from "@/lib/utils";
 
 interface ComplianceDownloadContainerProps {
@@ -27,6 +34,9 @@ interface ComplianceDownloadContainerProps {
   orientation?: "row" | "column";
   buttonWidth?: "auto" | "icon";
   presentation?: "buttons" | "dropdown";
+  /** Custom dropdown trigger (e.g. an outline "Report" button); only used
+   *  when presentation is "dropdown". Defaults to the dots icon. */
+  dropdownTrigger?: React.ReactNode;
 }
 
 export const ComplianceDownloadContainer = ({
@@ -38,11 +48,17 @@ export const ComplianceDownloadContainer = ({
   orientation = "row",
   buttonWidth = "auto",
   presentation = "buttons",
+  dropdownTrigger,
 }: ComplianceDownloadContainerProps) => {
   const [isDownloadingCsv, setIsDownloadingCsv] = useState(false);
+  const [isDownloadingOcsf, setIsDownloadingOcsf] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const isIconWidth = buttonWidth === "icon";
   const isDropdown = presentation === "dropdown";
+  // Only universal frameworks declaring an ``outputs`` block expose a
+  // per-framework OCSF artifact (today: DORA, CSA CCM 4.0). Hide the
+  // action everywhere else so the user never hits a guaranteed 404.
+  const ocsfAvailable = isOcsfSupported(complianceId);
 
   const handleDownloadCsv = async () => {
     if (isDownloadingCsv) return;
@@ -51,6 +67,16 @@ export const ComplianceDownloadContainer = ({
       await downloadComplianceCsv(scanId, complianceId, toast);
     } finally {
       setIsDownloadingCsv(false);
+    }
+  };
+
+  const handleDownloadOcsf = async () => {
+    if (!ocsfAvailable || isDownloadingOcsf) return;
+    setIsDownloadingOcsf(true);
+    try {
+      await downloadComplianceOcsf(scanId, complianceId, toast);
+    } finally {
+      setIsDownloadingOcsf(false);
     }
   };
 
@@ -94,6 +120,7 @@ export const ComplianceDownloadContainer = ({
         <ActionDropdown
           variant={isIconWidth ? "bordered" : "table"}
           ariaLabel="Open compliance export actions"
+          trigger={dropdownTrigger}
         >
           <ActionDropdownItem
             icon={
@@ -105,6 +132,18 @@ export const ComplianceDownloadContainer = ({
             onSelect={handleDownloadCsv}
             disabled={disabled || isDownloadingCsv}
           />
+          {ocsfAvailable && (
+            <ActionDropdownItem
+              icon={
+                <FileJsonIcon
+                  className={isDownloadingOcsf ? "animate-download-icon" : ""}
+                />
+              }
+              label="Download OCSF report"
+              onSelect={handleDownloadOcsf}
+              disabled={disabled || isDownloadingOcsf}
+            />
+          )}
           {reportType && (
             <ActionDropdownItem
               icon={
@@ -152,6 +191,29 @@ export const ComplianceDownloadContainer = ({
               <TooltipContent>Download CSV report</TooltipContent>
             )}
           </Tooltip>
+          {ocsfAvailable && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className={buttonClassName}
+                  onClick={handleDownloadOcsf}
+                  disabled={disabled || isDownloadingOcsf}
+                  aria-label="Download compliance OCSF report"
+                >
+                  <FileJsonIcon
+                    size={14}
+                    className={isDownloadingOcsf ? "animate-download-icon" : ""}
+                  />
+                  <span className={labelClassName}>OCSF</span>
+                </Button>
+              </TooltipTrigger>
+              {showTooltip && (
+                <TooltipContent>Download OCSF report</TooltipContent>
+              )}
+            </Tooltip>
+          )}
           {reportType && (
             <Tooltip>
               <TooltipTrigger asChild>

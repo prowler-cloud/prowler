@@ -11,6 +11,7 @@
 Use these skills for detailed patterns on-demand:
 
 ### Generic Skills (Any Project)
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `typescript` | Const types, flat interfaces, utility types | [SKILL.md](skills/typescript/SKILL.md) |
@@ -28,6 +29,7 @@ Use these skills for detailed patterns on-demand:
 | `tdd` | Test-Driven Development workflow | [SKILL.md](skills/tdd/SKILL.md) |
 
 ### Prowler-Specific Skills
+
 | Skill | Description | URL |
 |-------|-------------|-----|
 | `prowler` | Project overview, component navigation | [SKILL.md](skills/prowler/SKILL.md) |
@@ -49,6 +51,7 @@ Use these skills for detailed patterns on-demand:
 | `django-migration-psql` | Django migration best practices for PostgreSQL | [SKILL.md](skills/django-migration-psql/SKILL.md) |
 | `postgresql-indexing` | PostgreSQL indexing, EXPLAIN, monitoring, maintenance | [SKILL.md](skills/postgresql-indexing/SKILL.md) |
 | `prowler-attack-paths-query` | Create Attack Paths openCypher queries | [SKILL.md](skills/prowler-attack-paths-query/SKILL.md) |
+| `prowler-tour` | Keep product-tour definitions aligned with the UI | [SKILL.md](skills/prowler-tour/SKILL.md) |
 | `gh-aw` | GitHub Agentic Workflows (gh-aw) | [SKILL.md](skills/gh-aw/SKILL.md) |
 | `skill-creator` | Create new AI agent skills | [SKILL.md](skills/skill-creator/SKILL.md) |
 
@@ -59,16 +62,19 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Action | Skill |
 |--------|-------|
 | Add changelog entry for a PR or feature | `prowler-changelog` |
+| Adding ConfigRequirements guardrails to compliance requirements | `prowler-compliance` |
 | Adding DRF pagination or permissions | `django-drf` |
 | Adding a compliance output formatter (per-provider class + table dispatcher) | `prowler-compliance` |
 | Adding indexes or constraints to database tables | `django-migration-psql` |
 | Adding new providers | `prowler-provider` |
 | Adding privilege escalation detection queries | `prowler-attack-paths-query` |
 | Adding services to existing providers | `prowler-provider` |
+| Adding, updating, or removing a tour definition (*.tour.ts) | `prowler-tour` |
 | After creating/modifying a skill | `skill-sync` |
 | App Router / Server Actions | `nextjs-16` |
 | Auditing check-to-requirement mappings as a cloud auditor | `prowler-compliance` |
 | Building AI chat features | `ai-sdk-5` |
+| Changing button labels or section headings on a tour-covered page | `prowler-tour` |
 | Committing changes | `prowler-commit` |
 | Configuring MCP servers in agentic workflows | `gh-aw` |
 | Create PR that requires changelog entry | `prowler-changelog` |
@@ -79,6 +85,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating ViewSets, serializers, or filters in api/ | `django-drf` |
 | Creating Zod schemas | `zod-4` |
 | Creating a git commit | `prowler-commit` |
+| Creating a universal (multi-provider) compliance framework | `prowler-compliance` |
 | Creating new checks | `prowler-sdk-check` |
 | Creating new skills | `skill-creator` |
 | Creating or reviewing Django migrations | `django-migration-psql` |
@@ -87,6 +94,7 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Creating/updating compliance frameworks | `prowler-compliance` |
 | Debug why a GitHub Actions job is failing | `prowler-ci` |
 | Debugging gh-aw compilation errors | `gh-aw` |
+| Editing a UI file containing data-tour-id attributes | `prowler-tour` |
 | Fill .github/pull_request_template.md (Context/Description/Steps to review/Checklist) | `prowler-pr` |
 | Fixing bug | `tdd` |
 | Fixing compliance JSON bugs (duplicate IDs, empty Section, stale refs) | `prowler-compliance` |
@@ -103,9 +111,12 @@ When performing these actions, ALWAYS invoke the corresponding skill FIRST:
 | Modifying gh-aw workflow frontmatter or safe-outputs | `gh-aw` |
 | Refactoring code | `tdd` |
 | Regenerate AGENTS.md Auto-invoke tables (sync.sh) | `skill-sync` |
+| Renaming or removing a data-tour-id attribute value | `prowler-tour` |
+| Restructuring routes or layouts covered by a tour | `prowler-tour` |
 | Review PR requirements: template, title conventions, changelog gate | `prowler-pr` |
 | Review changelog format and conventions | `prowler-changelog` |
 | Reviewing JSON:API compliance | `jsonapi` |
+| Reviewing Prowler UI components | `prowler-ui` |
 | Reviewing compliance framework PRs | `prowler-compliance-review` |
 | Running makemigrations or pgmakemigrations | `django-migration-psql` |
 | Syncing compliance framework with upstream catalog | `prowler-compliance` |

@@ -75,7 +75,57 @@ describe("loading the page", () => {
   });
 });
 
+describe("waiting states", () => {
+  test("a pending scan shows the scan-in-progress message", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.scanPending());
+    expect(await graph.emptyStateMessage()).toMatch(/scan in progress/i);
+  });
+
+  test("a building graph shows the preparing message with progress", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.graphBuilding());
+    const message = await graph.emptyStateMessage();
+    expect(message).toMatch(/preparing attack paths data/i);
+    expect(message).toMatch(/45%/);
+  });
+
+  test("a completed scan with no graph shows the no-data message", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.noGraphData());
+    expect(await graph.emptyStateMessage()).toMatch(/no attack paths data/i);
+  });
+});
+
 describe("running a query", () => {
+  test("the query builder surface uses the shared card primitive", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith();
+
+    const card = await graph.waitFor(() => graph.queryBuilderCard, 10000);
+
+    expect(card).toHaveAttribute("data-slot", "card");
+    expect(card).toHaveClass("rounded-xl");
+  });
+
+  test("a parameterized query shows its required inputs after selection", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.parameterizedQuery());
+
+    await graph.selectQuery();
+
+    expect(graph.containsText(/Query Parameters/i)).toBe(true);
+    expect(graph.containsText(/Tag key/i)).toBe(true);
+    expect(graph.getInputByName("tag_key")).toBeTruthy();
+    expect(graph.containsText(/Tag value/i)).toBe(true);
+    expect(graph.getInputByName("tag_value")).toBeTruthy();
+  });
+
   test("the graph renders with a background, a minimap, and a viewport", async ({
     mountWith,
   }) => {

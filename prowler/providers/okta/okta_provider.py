@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import json
 import os
 import re
 from os import environ
@@ -22,14 +24,30 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaInsufficientPermissionsError,
     OktaInvalidCredentialsError,
     OktaInvalidOrgDomainError,
+    OktaInvalidProviderIdError,
     OktaPrivateKeyFileError,
     OktaSetUpIdentityError,
     OktaSetUpSessionError,
 )
 from prowler.providers.okta.lib.mutelist.mutelist import OktaMutelist
+from prowler.providers.okta.lib.service.rate_limiter import (
+    DEFAULT_REQUESTS_PER_SECOND,
+    OktaRateLimiter,
+)
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 
-DEFAULT_SCOPES = ["okta.policies.read"]
+DEFAULT_SCOPES = [
+    "okta.policies.read",
+    "okta.brands.read",
+    "okta.apps.read",
+    "okta.authenticators.read",
+    "okta.networkZones.read",
+    "okta.apiTokens.read",
+    "okta.roles.read",
+    "okta.groups.read",
+    "okta.logStreams.read",
+    "okta.idps.read",
+]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and
 # Prowler's audience overwhelmingly uses Okta-managed hosts. The TLDs below
@@ -64,12 +82,14 @@ class OktaProvider(Provider):
     """
 
     _type: str = "okta"
+    sdk_only: bool = False
     _auth_method: str = None
     _session: OktaSession
     _identity: OktaIdentityInfo
     _audit_config: dict
     _fixer_config: dict
     _mutelist: Mutelist
+    _rate_limiter: Optional[OktaRateLimiter]
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -79,6 +99,8 @@ class OktaProvider(Provider):
         okta_private_key: str = "",
         okta_private_key_file: str = "",
         okta_scopes: Optional[Union[str, list[str]]] = None,
+        okta_retries_max_attempts: int = None,
+        okta_requests_per_second: float = None,
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -110,6 +132,30 @@ class OktaProvider(Provider):
             if not config_path:
                 config_path = default_config_file_path
             self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # CLI flags take precedence over config.yaml for the Okta API rate-limit
+        # settings. Services read these from audit_config when building the SDK
+        # client, so override the loaded values here.
+        if okta_retries_max_attempts is not None:
+            self._audit_config["okta_max_retries"] = okta_retries_max_attempts
+            logger.info(f"Okta max retries set to {okta_retries_max_attempts}")
+        if okta_requests_per_second is not None:
+            self._audit_config["okta_requests_per_second"] = okta_requests_per_second
+
+        # Build the shared request limiter once, here, so every service client
+        # paces against the same token bucket. A value of 0 (or below) disables
+        # throttling.
+        requests_per_second = self._audit_config.get(
+            "okta_requests_per_second", DEFAULT_REQUESTS_PER_SECOND
+        )
+        if requests_per_second and requests_per_second > 0:
+            self._rate_limiter = OktaRateLimiter(requests_per_second)
+            logger.info(
+                f"Okta request throttling enabled at {requests_per_second} req/s"
+            )
+        else:
+            self._rate_limiter = None
+
         self._fixer_config = fixer_config
 
         if mutelist_content:
@@ -148,6 +194,10 @@ class OktaProvider(Provider):
     @property
     def mutelist(self) -> OktaMutelist:
         return self._mutelist
+
+    @property
+    def rate_limiter(self) -> Optional[OktaRateLimiter]:
+        return self._rate_limiter
 
     @staticmethod
     def validate_arguments(
@@ -284,14 +334,32 @@ class OktaProvider(Provider):
         org URL plus the service-app client ID. We still hit the cheapest
         scope-covered endpoint (`list_policies` with limit=1) to fail loud
         when credentials, scopes, or the granted admin role are wrong.
+
+        After the probe succeeds, the access token's `scp` claim is
+        decoded and exposed on the identity. Services compare it against
+        their required scope so checks can emit "missing scope X" rather
+        than a misleading "no resources returned" finding.
         """
 
         async def _probe():
             client = OktaSDKClient(session.to_sdk_config())
-            return await client.list_policies(type="OKTA_SIGN_ON", limit="1")
+            result = await client.list_policies(type="OKTA_SIGN_ON", limit="1")
+            access_token = None
+            # The OAuth helper caches the token on `_access_token` after
+            # the first authenticated call. Reach through `_request_executor`
+            # — a documented internal but a moving target across SDK
+            # versions, so any failure here degrades silently to empty
+            # granted_scopes (services then fall back to attempting calls).
+            try:
+                oauth = getattr(client._request_executor, "_oauth", None)
+                if oauth is not None:
+                    access_token = getattr(oauth, "_access_token", None)
+            except Exception:
+                access_token = None
+            return result, access_token
 
         try:
-            result = asyncio.run(_probe())
+            result, access_token = asyncio.run(_probe())
             # SDK returns (items, resp, err) on the normal path and (items, err)
             # only on early request-creation errors. The error is always last.
             err = result[-1]
@@ -304,6 +372,11 @@ class OktaProvider(Provider):
                     "forbidden",
                     "not authorized",
                     "permission",
+                    # Okta emits HTTP 400 `consent_required` when none of the
+                    # requested scopes are consented on the service app —
+                    # semantically a permission gap, not a credential one.
+                    "consent_required",
+                    "not allowed",
                 )
                 if any(signal in err_text for signal in permission_signals):
                     raise OktaInsufficientPermissionsError(
@@ -320,6 +393,7 @@ class OktaProvider(Provider):
             return OktaIdentityInfo(
                 org_domain=session.org_domain,
                 client_id=session.client_id,
+                granted_scopes=OktaProvider._decode_token_scopes(access_token),
             )
         except (OktaInvalidCredentialsError, OktaInsufficientPermissionsError):
             raise
@@ -328,6 +402,40 @@ class OktaProvider(Provider):
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise OktaSetUpIdentityError(original_exception=error)
+
+    @staticmethod
+    def _decode_token_scopes(access_token: Optional[str]) -> list[str]:
+        """Return the `scp` claim from a JWT access token, or `[]` on failure.
+
+        No signature verification: the token came from Okta over TLS via
+        the SDK's OAuth handshake, so the only thing we extract is the
+        scope claim. Any decode error returns an empty list — callers
+        must treat empty as "unknown" rather than "no scopes granted".
+        """
+        if not access_token:
+            return []
+        try:
+            parts = access_token.split(".")
+            if len(parts) < 2:
+                return []
+            payload_b64 = parts[1]
+            # Base64url pad to a multiple of 4 — JWT segments are
+            # unpadded per RFC 7515.
+            padding = "=" * (-len(payload_b64) % 4)
+            payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
+            payload = json.loads(payload_bytes)
+            scp = payload.get("scp")
+            if isinstance(scp, list):
+                return [str(s) for s in scp if s]
+            if isinstance(scp, str):
+                return [s for s in scp.split(" ") if s]
+            return []
+        except Exception as error:
+            logger.warning(
+                f"Could not decode Okta access token scopes: "
+                f"{error.__class__.__name__}: {error}"
+            )
+            return []
 
     def print_credentials(self):
         report_lines = [
@@ -348,8 +456,17 @@ class OktaProvider(Provider):
         okta_private_key_file: str = "",
         okta_scopes: Optional[Union[str, list[str]]] = None,
         raise_on_exception: bool = True,
+        provider_id: str = None,
     ) -> Connection:
-        """Test the connection to Okta with the provided OAuth credentials."""
+        """Test the connection to Okta with the provided OAuth credentials.
+
+        Args:
+            provider_id: The provider ID (Okta org domain). When supplied, the
+                authenticated org domain must match it — guards against the
+                stored provider UID drifting from the org the credentials were
+                actually issued for. Compared case-insensitively, matching the
+                normalization applied during session setup.
+        """
         try:
             OktaProvider.validate_arguments(
                 okta_org_domain=okta_org_domain,
@@ -364,7 +481,17 @@ class OktaProvider(Provider):
                 private_key_file=okta_private_key_file,
                 scopes=okta_scopes,
             )
-            OktaProvider.setup_identity(session)
+            identity = OktaProvider.setup_identity(session)
+
+            if provider_id and provider_id.strip().lower() != identity.org_domain:
+                raise OktaInvalidProviderIdError(
+                    file=os.path.basename(__file__),
+                    message=(
+                        f"The provider ID '{provider_id}' does not match the "
+                        f"authenticated Okta org domain '{identity.org_domain}'."
+                    ),
+                )
+
             return Connection(is_connected=True)
         except Exception as error:
             logger.critical(

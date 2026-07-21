@@ -1,6 +1,79 @@
+# pnpm 11+ workspace config. .npmrc is auth/registry only; everything else lives here.
 # Reference: https://pnpm.io/supply-chain-security
 
 packages: []
+
+# Refuse to install on Node/pnpm outside the `engines` block in package.json.
+engineStrict: true
+
+# Default `pnpm add` to exact versions — matches package.json convention.
+saveExact: true
+
+# --- Dependency overrides ---
+overrides:
+  "@react-types/shared": "3.26.0"
+  "@internationalized/date": "3.10.0"
+  "@react-aria/ssr>react": "19.2.7"
+  "@react-aria/ssr>react-dom": "19.2.7"
+  "@react-aria/visually-hidden>react": "19.2.7"
+  "@react-aria/interactions>react": "19.2.7"
+  "lodash": "4.18.1"
+  "lodash-es": "4.18.1"
+  # GHSA-88fw-hqm2-52qc (CORS reflects any Origin with credentials) + 4 moderate
+  # advisories (serve-static path traversal, Lambda Set-Cookie merge, body-limit
+  # bypass, Lambda@Edge repeated-header loss), all fixed in 4.12.25, plus
+  # CVE-2026-59896 (hono/jsx SSR context leak across concurrent requests; in NVD
+  # but not yet in the npm audit feed), fixed in 4.12.27. Not 4.12.29: it is
+  # still inside StepSecurity's 7-day npm cooldown gate.
+  "hono": "4.12.28"
+  "@hono/node-server": "1.19.14"
+  "@isaacs/brace-expansion": "5.0.1"
+  "fast-xml-parser": "5.8.0"
+  "serialize-javascript": "7.0.5"
+  "postcss": "8.5.14"
+  "esbuild": "0.28.1"
+  "rollup@>=4": "4.59.0"
+  # GHSA-fx2h-pf6j-xcff (server.fs.deny bypass on Windows alternate paths, high) +
+  # GHSA-v6wh-96g9-6wx3 (launch-editor NTLMv2 hash disclosure). Dev-only tooling
+  # (vitest/@vitejs/plugin-react); consumers allow ^7 but never resolve past 7.3.2
+  # without a nudge.
+  "vite@>=7 <8": "7.3.5"
+  # GHSA-96hv-2xvq-fx4p (memory exhaustion DoS from tiny fragments, high) +
+  # GHSA-58qx-3vcg-4xpx (uninitialized memory disclosure), both fixed in 8.21.0.
+  # Not 8.21.1: it is still inside StepSecurity's 7-day npm cooldown gate.
+  "ws@>=8 <9": "8.21.0"
+  # Pulled by @sentry/server-utils bundler plugins (^2.1.0). Pinned because the
+  # latest 2.3.1 is still inside StepSecurity's 7-day npm cooldown gate; safe to
+  # drop this pin after 2026-07-20.
+  "es-module-lexer": "2.3.0"
+  # GHSA-4x5r-pxfx-6jf8 (arbitrary file read via sourceMappingURL comment, low),
+  # fixed in 7.29.1. An override instead of `pnpm update` so the rest of the
+  # babel/browserslist subtree keeps its existing lockfile resolutions.
+  "@babel/core": "7.29.7"
+  # Ephemeral cooldown pins: the @babel/helper-compilation-targets refresh pulls
+  # browserslist-ecosystem releases newer than StepSecurity's 7-day npm cooldown.
+  # Safe to drop after 2026-07-20.
+  "browserslist": "4.28.2"
+  "caniuse-lite": "1.0.30001792"
+  "baseline-browser-mapping": "2.10.29"
+  "minimatch@<4": "3.1.4"
+  "minimatch@>=9 <10": "9.0.7"
+  "minimatch@>=10": "10.2.3"
+  "ajv@<7": "6.14.0"
+  "ajv@>=8": "8.18.0"
+  "qs": "6.15.2"
+  # 8.2.2 dropped provenance attestation; 8.3.1+ restored it. Pinned to skip 8.2.2
+  # under `trustPolicy: no-downgrade`.
+  "express-rate-limit": "8.5.1"
+  # GHSA-w5hq-g745-h8pq: missing bounds check in v3/v5/v6 with buf, fixed in
+  # 11.1.1. Transitive consumers (@sentry/webpack-plugin@9, @langchain/langgraph@10)
+  # use the random v4 generator only, so the bug isn't reachable in practice,
+  # but the override unifies the tree on a patched version.
+  "uuid": "11.1.1"
+  # GHSA-vxr8-fq34-vvx9 (+ several related XSS sanitization bypasses): DOMPurify < 3.4.9,
+  # pulled in transitively via streamdown > mermaid (which wants ^3.3.1). Bumped to 3.4.11
+  # for GHSA-cmwh-pvxp-8882 (permanent ALLOWED_ATTR pollution via setConfig()).
+  "dompurify": "3.4.11"
 
 # --- Level 1: Minimum Release Age ---
 # Packages must be published for at least 1 day before they can be installed.
@@ -23,8 +96,6 @@ allowBuilds:
   "@sentry/cli": true
   # esbuild: Go binary. Downloads the pre-compiled binary matching the current platform/architecture.
   esbuild: true
-  # @heroui/shared-utils: Demi pattern — detects React/Next.js version at install time and copies the compatible bundle (React 18 vs 19).
-  "@heroui/shared-utils": true
   # unrs-resolver: Rust module resolver (NAPI-RS). Verifies the correct native binding is available for the platform.
   unrs-resolver: true
   # msw: Copies mockServiceWorker.js into the directories listed in package.json's `msw.workerDirectory` (here: `public/`) so the runtime worker stays in sync with the installed msw version. Pure file copy — no native binary, no network access. Required for vitest browser tests to intercept fetches via the service worker.
@@ -33,7 +104,15 @@ allowBuilds:
 # --- Level 3: Trust Policy + Exotic Subdeps ---
 # Fail when a package's trust evidence is downgraded (e.g., new publisher).
 trustPolicy: no-downgrade
-trustPolicyExclude: []
+# False positives — packages that don't publish provenance for real releases.
+# Pin to the version range that lacks provenance so a bump fails until reviewed.
+trustPolicyExclude:
+  # next-auth: only one one-off manual test release (`0.0.0-manual.2824fa11`) has
+  # provenance; real beta/stable releases don't. Scoped to current beta line.
+  - "next-auth@5.0.0-beta.30"
+  # semver: legacy major 6.x never had provenance (added in 7.5.1+). Pinned
+  # to the exact 6.x version pulled transitively (via @babel/helper-compilation-targets).
+  - "semver@6.3.1"
 
 # Block transitive dependencies from using exotic specifiers (git URLs, tarballs).
 blockExoticSubdeps: true

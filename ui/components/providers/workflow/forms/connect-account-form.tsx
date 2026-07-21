@@ -11,10 +11,14 @@ import { addProvider } from "@/actions/providers/providers";
 import { AwsMethodSelector } from "@/components/providers/organizations/aws-method-selector";
 import { WizardInputField } from "@/components/providers/workflow/forms/fields";
 import { ProviderTitleDocs } from "@/components/providers/workflow/provider-title-docs";
-import { Button } from "@/components/shadcn";
-import { useToast } from "@/components/ui";
-import { Form } from "@/components/ui/form";
-import { addProviderFormSchema, ApiError, ProviderType } from "@/types";
+import { Button, useToast } from "@/components/shadcn";
+import { Form } from "@/components/shadcn/form";
+import {
+  addProviderFormSchema,
+  ApiError,
+  KnownProviderType,
+  ProviderType,
+} from "@/types";
 
 import { RadioGroupProvider } from "../../radio-group-provider";
 
@@ -121,6 +125,11 @@ const getProviderFieldDetails = (providerType?: ProviderType) => {
         label: "Team ID",
         placeholder: "e.g. team_xxxxxxxxxxxxxxxxxxxxxxxx",
       };
+    case "okta":
+      return {
+        label: "Org Domain",
+        placeholder: "e.g. your-org.okta.com",
+      };
     default:
       return {
         label: "Provider UID",
@@ -142,7 +151,6 @@ function applyBackStep({
   setPrevStep: Dispatch<SetStateAction<number>>;
   setAwsMethod: Dispatch<SetStateAction<"single" | null>>;
 }) {
-  // If in UID form after choosing single, go back to method selector
   if (prevStep === 2 && awsMethod === "single") {
     setAwsMethod(null);
     form.setValue("providerUid", "", { shouldValidate: false });
@@ -151,17 +159,14 @@ function applyBackStep({
   }
 
   setPrevStep((prev) => prev - 1);
-  // Deselect the providerType if the user is going back to the first step
   if (prevStep === 2) {
-    form.setValue("providerType", undefined as unknown as ProviderType, {
+    form.setValue("providerType", undefined as unknown as KnownProviderType, {
       shouldValidate: false,
     });
     setAwsMethod(null);
   }
-  // Reset the providerUid and providerAlias fields when going back
   form.setValue("providerUid", "", { shouldValidate: false });
   form.setValue("providerAlias", "", { shouldValidate: false });
-  // Clear all validation errors so the radio buttons don't show red borders
   form.clearErrors();
 }
 
@@ -210,7 +215,6 @@ export const ConnectAccountForm = ({
       const data = await addProvider(formData);
 
       if (data?.errors && data.errors.length > 0) {
-        // Handle server-side validation errors
         data.errors.forEach((error: ApiError) => {
           const errorMessage = error.detail;
           const pointer = error.source?.pointer;
@@ -245,7 +249,6 @@ export const ConnectAccountForm = ({
         });
         return;
       } else {
-        // Go to the next step after successful submission
         const {
           id,
           attributes: { provider: createdProviderType, uid, alias },
@@ -342,11 +345,13 @@ export const ConnectAccountForm = ({
       >
         {/* Step 1: Provider selection */}
         {prevStep === 1 && (
-          <RadioGroupProvider
-            control={form.control}
-            isInvalid={!!form.formState.errors.providerType}
-            errorMessage={form.formState.errors.providerType?.message}
-          />
+          <div data-tour-id="add-provider-provider-type">
+            <RadioGroupProvider
+              control={form.control}
+              isInvalid={!!form.formState.errors.providerType}
+              errorMessage={form.formState.errors.providerType?.message}
+            />
+          </div>
         )}
         {/* Step 2: AWS method selector (only for AWS, before choosing method) */}
         {prevStep === 2 && providerType === "aws" && awsMethod === null && (

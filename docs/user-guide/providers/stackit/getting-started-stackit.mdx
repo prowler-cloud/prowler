@@ -1,0 +1,141 @@
+---
+title: 'Getting Started With StackIT'
+---
+
+Prowler supports [StackIT](https://www.stackit.de/) from the CLI. This guide walks you through the requirements and how to run scans.
+
+<Note>
+StackIT support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Before running Prowler with the StackIT provider, ensure you have:
+
+1. A StackIT account with at least one project
+2. A StackIT service account key file with permissions on the project (`iaas.viewer` is enough for the currently shipped IaaS checks; `project.owner` works for any future service). See the [Authentication guide](/user-guide/providers/stackit/authentication) for the full setup.
+3. Access to Prowler CLI (see [Installation](/getting-started/installation/prowler-cli))
+
+## Prowler CLI
+
+### Step 1: Point Prowler at the Service Account Key
+
+Prowler authenticates with a StackIT service account key. The SDK signs the RSA challenge in the key and refreshes access tokens internally for the life of the scan, so there is no manual token rotation.
+
+**On a workstation or persistent agent** (key on disk):
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_KEY_PATH="$HOME/.stackit/sa-key.json"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+```
+
+**In CI/CD** (key in a secret manager, never written to disk):
+
+```bash
+export STACKIT_SERVICE_ACCOUNT_KEY="$(vault kv get -field=key stackit/sa)"
+export STACKIT_PROJECT_ID="12345678-1234-1234-1234-123456789abc"
+```
+
+CLI flags work too:
+
+```bash
+prowler stackit \
+  --stackit-service-account-key-path ~/.stackit/sa-key.json \
+  --stackit-project-id 12345678-1234-1234-1234-123456789abc
+```
+
+<Note>
+For the inline key, prefer the `STACKIT_SERVICE_ACCOUNT_KEY` env var over the matching CLI flag; passing the secret on the command line leaks it through process listings and shell history.
+
+Keep the key file outside of source control and lock it down with `chmod 600 ~/.stackit/sa-key.json`. Anyone with the JSON can mint access tokens for the service account.
+</Note>
+
+### Step 2: Run Your First Scan
+
+```bash
+prowler stackit
+```
+
+Prowler will discover and audit the project's IaaS security groups across the available StackIT regions.
+
+**Scan specific regions:**
+
+```bash
+prowler stackit --stackit-region eu01 eu02
+```
+
+**Run specific security checks:**
+
+```bash
+prowler stackit --checks iaas_security_group_ssh_unrestricted
+
+# List all available checks
+prowler stackit --list-checks
+```
+
+**Filter by check severity:**
+
+```bash
+prowler stackit --severity critical high
+```
+
+**Generate specific output formats:**
+
+```bash
+# JSON only
+prowler stackit --output-modes json
+
+# CSV and HTML
+prowler stackit --output-modes csv html
+
+# Custom output directory
+prowler stackit --output-directory /path/to/reports/
+```
+
+**Use a mutelist to suppress findings:**
+
+```yaml
+# mutelist.yaml
+Mutelist:
+  Accounts:
+    "12345678-1234-1234-1234-123456789abc":
+      Checks:
+        iaas_security_group_ssh_unrestricted:
+          Regions:
+            - "*"
+          Resources:
+            - "test-sg-id"
+          Tags: []
+```
+
+```bash
+prowler stackit --mutelist-file mutelist.yaml
+```
+
+### Step 3: Review the Results
+
+Prowler outputs findings to the console and writes reports to the `output/` directory by default:
+
+- CSV: `output/prowler-output-stackit-{project_id}-{timestamp}.csv`
+- JSON: `output/prowler-output-stackit-{project_id}-{timestamp}.json`
+- HTML: `output/prowler-output-stackit-{project_id}-{timestamp}.html`
+
+## Supported StackIT Services
+
+| Service | StackIT API | Description | Example Checks |
+|---------|-------------|-------------|----------------|
+| **IaaS** | `iaas` | Virtual machines, network interfaces, security groups | `iaas_security_group_ssh_unrestricted`, `iaas_security_group_rdp_unrestricted`, `iaas_security_group_database_unrestricted`, `iaas_security_group_all_traffic_unrestricted` |
+
+Additional services will be added in future releases. Track progress in the [Prowler release notes](https://github.com/prowler-cloud/prowler/releases).
+
+## Troubleshooting
+
+### Authentication Errors
+
+If the scan fails with a 401 error, the service account key is no longer valid (revoked, rotated or the key file is incomplete). Re-issue the key in the [StackIT portal](https://portal.stackit.cloud/) and update `STACKIT_SERVICE_ACCOUNT_KEY_PATH`.
+
+### Permission Errors
+
+If checks fail with a 403 error, the service account is missing the required role on the project. Re-check the role assignment in the StackIT portal (`iaas.viewer` is the minimum for the shipped IaaS checks).
+
+For detailed setup steps, see the [Authentication guide](/user-guide/providers/stackit/authentication).

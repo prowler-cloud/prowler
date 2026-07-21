@@ -1,10 +1,4 @@
 from allauth.socialaccount.providers.saml.views import ACSView, MetadataView, SLSView
-from django.http import JsonResponse
-from django.urls import include, path
-from django.views.decorators.csrf import csrf_exempt
-from drf_spectacular.views import SpectacularRedocView
-from rest_framework_nested import routers
-
 from api.v1.views import (
     AttackPathsScanViewSet,
     ComplianceOverviewViewSet,
@@ -49,6 +43,11 @@ from api.v1.views import (
     UserRoleRelationshipView,
     UserViewSet,
 )
+from django.http import JsonResponse
+from django.urls import include, path
+from django.views.decorators.csrf import csrf_exempt
+from drf_spectacular.views import SpectacularRedocView
+from rest_framework_nested import routers
 
 
 # This helper view is used to block any endpoints that should not be available

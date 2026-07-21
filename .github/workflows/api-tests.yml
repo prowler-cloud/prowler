@@ -48,7 +48,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:17@sha256:2cd82735a36356842d5eb1ef80db3ae8f1154172f0f653db48fde079b2a0b7f7
+        image: postgres:17@sha256:5c855ad7b85e68e48a62f34662853f38b57c1c1d80f3a927ab58034fd6d31c5e
         env:
           POSTGRES_HOST: ${{ env.POSTGRES_HOST }}
           POSTGRES_PORT: ${{ env.POSTGRES_PORT }}
@@ -63,7 +63,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
       valkey:
-        image: valkey/valkey:7-alpine3.19
+        image: valkey/valkey:7-alpine3.19@sha256:4054fe7fc607b9326ac7c4691ed26e9670d2ff17a9fb28c2577adecf928acbcc
         env:
           VALKEY_HOST: ${{ env.VALKEY_HOST }}
           VALKEY_PORT: ${{ env.VALKEY_PORT }}
@@ -78,7 +78,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -102,7 +102,7 @@ jobs:
 
       - name: Check for API changes
         id: check-changes
-        uses: tj-actions/changed-files@22103cc46bda19c2b464ffe86db46df6922fd323 # v47.0.5
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
         with:
           files: |
             api/**
@@ -111,6 +111,7 @@ jobs:
             api/docs/**
             api/README.md
             api/CHANGELOG.md
+            api/changelog.d/**
             api/AGENTS.md
 
       - name: Setup Python with uv

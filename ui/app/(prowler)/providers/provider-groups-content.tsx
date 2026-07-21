@@ -2,11 +2,11 @@ import {
   getProviderGroupInfoById,
   getProviderGroups,
 } from "@/actions/manage-groups/manage-groups";
-import { getProviders } from "@/actions/providers";
+import { getAllProviders } from "@/actions/providers";
 import { getRoles } from "@/actions/roles";
 import { AddGroupForm, EditGroupForm } from "@/components/manage-groups/forms";
 import { ColumnGroups } from "@/components/manage-groups/table";
-import { DataTable } from "@/components/ui/table";
+import { DataTable } from "@/components/shadcn/table";
 import { ProviderProps, Role, SearchParamsProps } from "@/types";
 
 export const ProviderGroupsContent = async ({
@@ -19,7 +19,7 @@ export const ProviderGroupsContent = async ({
   // Fetch all data in parallel
   const [providersResponse, rolesResponse, providerGroupsData, editGroupData] =
     await Promise.all([
-      getProviders({ pageSize: 50 }),
+      getAllProviders(),
       getRoles({}),
       fetchGroupsTableData(searchParams),
       providerGroupId && !Array.isArray(providerGroupId)

@@ -22,6 +22,8 @@ const {
   mockClipboardWriteText,
   mockSearchParamsState,
   mockNotificationIndicator,
+  mockUpdateFindingTriage,
+  mockLoadLatestFindingTriageNote,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
@@ -29,6 +31,8 @@ const {
   mockClipboardWriteText: vi.fn(),
   mockSearchParamsState: { value: "" },
   mockNotificationIndicator: vi.fn(),
+  mockUpdateFindingTriage: vi.fn(),
+  mockLoadLatestFindingTriageNote: vi.fn(),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -60,11 +64,12 @@ vi.mock("next/link", () => ({
 }));
 
 // Mock the entire shadcn barrel to avoid auth import chain
-vi.mock("@/components/shadcn", () => {
+vi.mock("@/components/shadcn", async (importOriginal) => {
   const Passthrough = ({ children }: { children?: ReactNode }) => (
     <>{children}</>
   );
   return {
+    ...(await importOriginal<Record<string, unknown>>()),
     Badge: ({
       children,
       className,
@@ -91,12 +96,14 @@ vi.mock("@/components/shadcn", () => {
     InfoField: ({
       children,
       label,
+      className,
     }: {
       children: ReactNode;
       label: string;
       variant?: string;
+      className?: string;
     }) => (
-      <div>
+      <div className={className}>
         <span>{label}</span>
         {children}
       </div>
@@ -123,7 +130,8 @@ vi.mock("@/components/shadcn", () => {
   };
 });
 
-vi.mock("@/components/shadcn/card/card", () => ({
+vi.mock("@/components/shadcn/card/card", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Card: ({ children, variant }: { children: ReactNode; variant?: string }) => (
     <div data-slot="card" data-variant={variant}>
       {children}
@@ -215,6 +223,7 @@ vi.mock("@/components/shared/query-code-editor", () => ({
     HCL: "hcl",
     BICEP: "bicep",
     YAML: "yaml",
+    JSON: "json",
   },
   QueryCodeEditor: ({
     ariaLabel,
@@ -252,6 +261,11 @@ vi.mock("@/actions/compliances", () => ({
   getCompliancesOverview: mockGetCompliancesOverview,
 }));
 
+vi.mock("@/actions/findings", () => ({
+  updateFindingTriage: mockUpdateFindingTriage,
+  loadLatestFindingTriageNote: mockLoadLatestFindingTriageNote,
+}));
+
 vi.mock("@/components/icons", () => ({
   getComplianceIcon: mockGetComplianceIcon,
 }));
@@ -260,7 +274,7 @@ vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,
@@ -279,17 +293,11 @@ vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/custom/custom-link", () => ({
-  CustomLink: ({ children, href }: { children: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
-}));
-
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     nameAction,
     idAction,
@@ -307,13 +315,17 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
     ) : null,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   Table: ({ children }: { children: ReactNode }) => <table>{children}</table>,
   TableBody: ({ children }: { children: ReactNode }) => (
     <tbody>{children}</tbody>
   ),
-  TableCell: ({ children }: { children: ReactNode }) => <td>{children}</td>,
-  TableHead: ({ children }: { children: ReactNode }) => <th>{children}</th>,
+  TableCell: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <td {...props}>{children}</td>
+  ),
+  TableHead: ({ children, ...props }: HTMLAttributes<HTMLTableCellElement>) => (
+    <th {...props}>{children}</th>
+  ),
   TableHeader: ({ children }: { children: ReactNode }) => (
     <thead>{children}</thead>
   ),
@@ -322,13 +334,13 @@ vi.mock("@/components/ui/table", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/table/severity-badge", () => ({
+vi.mock("@/components/shadcn/table/severity-badge", () => ({
   SeverityBadge: ({ severity }: { severity: string }) => (
     <span>{severity}</span>
   ),
 }));
 
-vi.mock("@/components/ui/table/status-finding-badge", () => ({
+vi.mock("@/components/shadcn/table/status-finding-badge", () => ({
   FindingStatus: {},
   StatusFindingBadge: ({ status }: { status: string }) => <span>{status}</span>,
 }));
@@ -363,6 +375,102 @@ vi.mock("../notification-indicator", () => ({
   DeltaValues: { NEW: "new", CHANGED: "changed", NONE: "none" } as const,
 }));
 
+vi.mock("../finding-triage-cells", () => ({
+  FindingNoteActionItem: ({
+    triage,
+    onTriageUpdateAction,
+  }: {
+    triage?: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      label: string;
+      isMuted: boolean;
+    };
+    onTriageUpdateAction?: (input: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      previousStatus: string;
+      isMuted: boolean;
+      note: string;
+    }) => Promise<void>;
+  }) =>
+    triage ? (
+      <button
+        type="button"
+        onClick={() =>
+          onTriageUpdateAction?.({
+            findingId: triage.findingId,
+            findingUid: triage.findingUid,
+            triageId: triage.triageId,
+            notesCount: triage.notesCount,
+            status: "remediating",
+            previousStatus: triage.status,
+            isMuted: triage.isMuted,
+            note: "Investigating",
+          })
+        }
+      >
+        Add Triage Note
+      </button>
+    ) : null,
+  FindingTriageStatusCell: ({
+    triage,
+    onTriageUpdateAction,
+  }: {
+    triage?: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      label: string;
+      isMuted: boolean;
+    };
+    onTriageUpdateAction?: (input: {
+      findingId: string;
+      findingUid: string;
+      triageId: string | null;
+      notesCount: number;
+      status: string;
+      previousStatus: string;
+      isMuted: boolean;
+    }) => Promise<void>;
+  }) =>
+    triage ? (
+      <button
+        type="button"
+        aria-label="Triage status"
+        onClick={() =>
+          onTriageUpdateAction?.({
+            findingId: triage.findingId,
+            findingUid: triage.findingUid,
+            triageId: triage.triageId,
+            notesCount: triage.notesCount,
+            status: "remediating",
+            previousStatus: triage.status,
+            isMuted: triage.isMuted,
+          })
+        }
+      >
+        {triage.label}
+      </button>
+    ) : (
+      <span>-</span>
+    ),
+  FindingTriageStatusBadge: ({ triage }: { triage: { label: string } }) => (
+    <div>
+      <span>Triage:</span>
+      <span>{triage.label}</span>
+    </div>
+  ),
+}));
+
 vi.mock("./resource-detail-skeleton", () => ({
   ResourceDetailSkeleton: () => <div data-testid="skeleton" />,
 }));
@@ -377,6 +485,10 @@ vi.mock("../../muted", () => ({
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import type { FindingResourceRow } from "@/types";
+import {
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { ResourceDetailDrawerContent } from "./resource-detail-drawer-content";
 import type { CheckMeta } from "./use-resource-detail-drawer";
@@ -407,6 +519,24 @@ const mockCheckMeta: CheckMeta = {
   additionalUrls: [],
 };
 
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "prowler-finding-uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
+    ...overrides,
+  };
+}
+
 const mockFinding: ResourceDrawerFinding = {
   id: "finding-1",
   uid: "uid-1",
@@ -426,6 +556,8 @@ const mockFinding: ResourceDrawerFinding = {
   resourceRegion: "us-east-1",
   resourceType: "Bucket",
   resourceGroup: "default",
+  resourceDetails: null,
+  resourceMetadata: null,
   providerType: "aws",
   providerAlias: "prod",
   providerUid: "123456789",
@@ -480,6 +612,147 @@ describe("ResourceDetailDrawerContent — resource navigation", () => {
     expect(srOnlyLabel).toHaveTextContent("View Resource");
   });
 });
+
+describe("ResourceDetailDrawerContent — triage drawer actions", () => {
+  it("should render Triage and Add Triage Note for other findings rows", () => {
+    // Given
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      triage: makeTriageSummary({
+        findingId: "finding-2",
+        findingUid: "uid-2",
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        label: "Remediating",
+      }),
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const row = screen.getByText("EC2 Check").closest("tr");
+    expect(row).not.toBeNull();
+
+    // Then
+    expect(screen.getByText("Triage")).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Triage status",
+      }),
+    ).toHaveTextContent("Remediating");
+    expect(
+      within(row as HTMLElement).getByRole("button", {
+        name: "Add Triage Note",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", { name: "Mute" }),
+    ).toBeInTheDocument();
+    expect(
+      within(row as HTMLElement).getByRole("button", { name: "Send to Jira" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should keep the other findings actions cell sticky on the right edge", () => {
+    // Given
+    const otherFinding: ResourceDrawerFinding = {
+      ...mockFinding,
+      id: "finding-2",
+      uid: "uid-2",
+      checkId: "ec2_check",
+      checkTitle: "EC2 Check",
+      triage: makeTriageSummary({
+        findingId: "finding-2",
+        findingUid: "uid-2",
+      }),
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[otherFinding]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // When
+    const row = screen.getByText("EC2 Check").closest("tr");
+    expect(row).not.toBeNull();
+    const actionsCell = within(row as HTMLElement)
+      .getByRole("button", { name: "Send to Jira" })
+      .closest("td");
+
+    // Then
+    expect(actionsCell).toHaveClass("sticky");
+    expect(actionsCell).toHaveClass("right-0");
+    expect(actionsCell).toHaveClass("z-20");
+    expect(actionsCell).toHaveClass("bg-bg-neutral-secondary");
+    expect(actionsCell).toHaveClass("before:bg-gradient-to-r");
+    expect(actionsCell).toHaveClass("before:to-bg-neutral-secondary");
+  });
+
+  it("should update simple drawer triage without using the mute refresh path", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onMuteComplete = vi.fn();
+    mockUpdateFindingTriage.mockResolvedValue(undefined);
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={{
+          ...mockFinding,
+          triage: makeTriageSummary(),
+        }}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={onMuteComplete}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Add Triage Note" }));
+
+    // Then
+    expect(mockUpdateFindingTriage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        note: "Investigating",
+      }),
+    );
+    expect(onMuteComplete).not.toHaveBeenCalled();
+  });
+});
+
 const mockResourceRow: FindingResourceRow = {
   id: "row-1",
   rowType: "resource",
@@ -781,12 +1054,19 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
     );
 
     expect(screen.getByText(statusExtendedWithFixVersions)).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "View in Prowler Hub" }),
-    ).toHaveAttribute(
+    const hubLink = screen.getByRole("link", { name: "View in Prowler Hub" });
+    expect(hubLink).toHaveAttribute(
       "href",
       "https://hub.prowler.com/check/image_vulnerability",
     );
+    expect(hubLink).toHaveAttribute("target", "_blank");
+    expect(hubLink).toHaveAttribute("rel", "noopener noreferrer");
+    const headingRow = screen.getByTestId("remediation-heading-row");
+    expect(within(headingRow).getByText("Remediation:")).toBeInTheDocument();
+    expect(hubLink).toHaveClass("shrink-0", "whitespace-nowrap");
+    expect(
+      within(headingRow).queryByText("Open the check in Hub"),
+    ).not.toBeInTheDocument();
   });
 
   it("should render the official CVE reference", () => {
@@ -833,10 +1113,12 @@ describe("ResourceDetailDrawerContent — CVE recommendation button", () => {
       "href",
       externalCveUrl,
     );
-    expect(screen.getByRole("link", { name: externalCveUrl })).toHaveAttribute(
-      "href",
-      externalCveUrl,
-    );
+    const referenceLink = screen.getByRole("link", { name: externalCveUrl });
+    expect(referenceLink).toHaveAttribute("href", externalCveUrl);
+    expect(referenceLink).toHaveAttribute("target", "_blank");
+    expect(referenceLink).toHaveAttribute("rel", "noopener noreferrer");
+    expect(referenceLink).toHaveClass("break-all", "text-left");
+    expect(screen.queryByRole("list")).not.toBeInTheDocument();
   });
 
   it("should render View Advisory when the recommendation URL points to GitHub Security Advisories", () => {
@@ -991,69 +1273,6 @@ describe("ResourceDetailDrawerContent — Risk section styling", () => {
     expect(headingSpans.length).toBeGreaterThan(0);
     const riskHeading = headingSpans[0];
     expect(riskHeading.className).not.toContain("text-xs");
-  });
-});
-
-// ---------------------------------------------------------------------------
-// Fix 4: Compliance icon styling should match master
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — compliance icon styling", () => {
-  it("should render framework icons inside the same white chip used in master", () => {
-    // Given
-    mockGetComplianceIcon.mockImplementation((framework: string) =>
-      framework === "CIS-1.4" ? "/cis.svg" : null,
-    );
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const icon = screen.getByRole("img", { name: "CIS-1.4" });
-    const chip = icon.closest("div");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
-  });
-
-  it("should render framework fallback pills with the same master styling", () => {
-    // Given
-    mockGetComplianceIcon.mockReturnValue(null);
-
-    render(
-      <ResourceDetailDrawerContent
-        isLoading={false}
-        isNavigating={false}
-        checkMeta={mockCheckMeta}
-        currentIndex={0}
-        totalResources={1}
-        currentFinding={mockFinding}
-        otherFindings={[]}
-        onNavigatePrev={vi.fn()}
-        onNavigateNext={vi.fn()}
-        onMuteComplete={vi.fn()}
-      />,
-    );
-
-    // When
-    const chip = screen.getByText("PCI-DSS");
-
-    // Then
-    expect(chip).toHaveClass("bg-white");
-    expect(chip).toHaveClass("border-gray-300");
   });
 });
 
@@ -1342,6 +1561,64 @@ describe("ResourceDetailDrawerContent — synthetic resource empty state", () =>
 });
 
 describe("ResourceDetailDrawerContent — current resource row display", () => {
+  it("should place service and region in the primary metadata row after provider and resource", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    const primaryMetadataRow = screen.getByTestId(
+      "resource-detail-primary-metadata-row",
+    );
+    expect(primaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(primaryMetadataRow).toHaveClass(
+      "@md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.55fr)_minmax(0,0.7fr)]",
+    );
+    expect(
+      within(primaryMetadataRow).getByText("Provider"),
+    ).toBeInTheDocument();
+    expect(
+      within(primaryMetadataRow).getByText("Resource"),
+    ).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Service")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("Region")).toBeInTheDocument();
+    expect(within(primaryMetadataRow).getByText("s3")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+    expect(within(primaryMetadataRow).getByText("us-east-1")).toHaveClass(
+      "truncate",
+    );
+
+    const secondaryMetadataRow = screen.getByTestId(
+      "resource-detail-secondary-metadata-row",
+    );
+    expect(secondaryMetadataRow).toHaveClass("grid-cols-2");
+    expect(secondaryMetadataRow).toHaveClass("@md:grid-cols-3");
+    expect(
+      within(secondaryMetadataRow).queryByText("Service"),
+    ).not.toBeInTheDocument();
+    expect(
+      within(secondaryMetadataRow).queryByText("Region"),
+    ).not.toBeInTheDocument();
+    expect(within(secondaryMetadataRow).getByText("2 days")).toHaveClass(
+      "truncate",
+      "whitespace-nowrap",
+    );
+  });
+
   it("should render resource card fields from the current resource row instead of the fetched finding", () => {
     // Given
     const currentResource: FindingResourceRow = {
@@ -1478,10 +1755,10 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.getByText("ec2")).toBeInTheDocument();
     expect(screen.getByText("eu-west-1")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Findings for this resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(screen.queryByText("Status extended")).not.toBeInTheDocument();
@@ -1591,10 +1868,10 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Description:")).not.toBeInTheDocument();
     expect(screen.queryByText("Remediation:")).not.toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Finding Overview" }),
+      screen.getByRole("button", { name: "Overview" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: "Findings for this resource" }),
+      screen.getByRole("button", { name: "Other findings" }),
     ).toBeInTheDocument();
   });
 
@@ -1762,5 +2039,162 @@ describe("ResourceDetailDrawerContent — other findings delta/muted indicator",
       mutedReason: "False positive",
       showDeltaWhenMuted: true,
     });
+  });
+});
+
+describe("ResourceDetailDrawerContent — Metadata tab", () => {
+  const getMetadataEditor = () =>
+    screen
+      .queryAllByTestId("query-code-editor")
+      .find(
+        (editor) =>
+          editor.getAttribute("data-aria-label") === "Resource metadata",
+      );
+
+  it("should render a Metadata tab trigger", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Evidence" }),
+    ).toBeInTheDocument();
+  });
+
+  it("should render the resource metadata as formatted JSON and copy it to the clipboard", async () => {
+    // Given
+    const user = userEvent.setup();
+    const findingWithMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceDetails: "Python",
+      resourceMetadata: {
+        VulnerabilityID: "CVE-2026-0001",
+        PkgName: "requests",
+      },
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then — Details section + JSON editor are rendered
+    expect(screen.getByText("Details:")).toBeInTheDocument();
+    expect(screen.getByText("Python")).toBeInTheDocument();
+
+    const metadataEditor = getMetadataEditor();
+    expect(metadataEditor).toBeDefined();
+    expect(metadataEditor).toHaveAttribute("data-language", "json");
+    expect(metadataEditor?.textContent).toContain("CVE-2026-0001");
+
+    // When — copy the metadata JSON
+    await user.click(
+      screen.getByRole("button", { name: "Copy Resource metadata" }),
+    );
+
+    // Then
+    expect(mockClipboardWriteText).toHaveBeenCalledWith(
+      JSON.stringify(findingWithMetadata.resourceMetadata, null, 2),
+    );
+  });
+
+  it("should parse stringified resource metadata", () => {
+    // Given
+    const findingWithStringMetadata: ResourceDrawerFinding = {
+      ...mockFinding,
+      resourceMetadata: '{"PkgName":"requests"}',
+    };
+
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={findingWithStringMetadata}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(getMetadataEditor()?.textContent).toContain("requests");
+  });
+
+  it("should show an empty state when no metadata or details are available", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByText("No metadata available for this resource."),
+    ).toBeInTheDocument();
+    expect(getMetadataEditor()).toBeUndefined();
+  });
+
+  it("should show a metadata skeleton while navigating", () => {
+    // Given/When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={2}
+        currentResource={mockResourceRow}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.getByTestId("metadata-navigation-skeleton"),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No metadata available for this resource."),
+    ).not.toBeInTheDocument();
   });
 });

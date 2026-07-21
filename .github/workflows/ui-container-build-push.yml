@@ -32,9 +32,6 @@ env:
   PROWLERCLOUD_DOCKERHUB_REPOSITORY: prowlercloud
   PROWLERCLOUD_DOCKERHUB_IMAGE: prowler-ui
 
-  # Build args
-  NEXT_PUBLIC_API_BASE_URL: http://prowler-api:8080/api/v1
-
 permissions: {}
 
 jobs:
@@ -48,7 +45,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -67,7 +64,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -110,7 +107,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -130,7 +127,7 @@ jobs:
           persist-credentials: false
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -141,12 +138,11 @@ jobs:
       - name: Build and push UI container for ${{ matrix.arch }}
         id: container-push
         if: github.event_name == 'push' || github.event_name == 'release' || github.event_name == 'workflow_dispatch'
-        uses: docker/build-push-action@d08e5c354a6adb9ed34480a06d141179aa583294 # v7.0.0
+        uses: docker/build-push-action@bcafcacb16a39f128d818304e6c9c0c18556b85f # v7.1.0
         with:
           context: ${{ env.WORKING_DIRECTORY }}
           build-args: |
             NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${{ (github.event_name == 'release' || github.event_name == 'workflow_dispatch') && format('v{0}', env.RELEASE_TAG) || needs.setup.outputs.short-sha }}
-            NEXT_PUBLIC_API_BASE_URL=${{ env.NEXT_PUBLIC_API_BASE_URL }}
           push: true
           platforms: ${{ matrix.platform }}
           tags: |
@@ -164,7 +160,7 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
@@ -176,7 +172,7 @@ jobs:
             production.cloudfront.docker.com:443
 
       - name: Login to DockerHub
-        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # v4.0.0
+        uses: docker/login-action@4907a6ddec9925e35a0a9e82d7399ccc52663121 # v4.1.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -205,7 +201,7 @@ jobs:
 
       - name: Install regctl
         if: always()
-        uses: regclient/actions/regctl-installer@da9319db8e44e8b062b3a147e1dfb2f574d41a03 # main
+        uses: regclient/actions/regctl-installer@9a2d4216180dbb3e2dccfa60d2dd4afd98e42ec5 # main
 
       - name: Cleanup intermediate architecture tags
         if: always()
@@ -226,7 +222,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: audit
 
@@ -262,27 +258,3 @@ jobs:
           payload-file-path: "./.github/scripts/slack-messages/container-release-completed.json"
           step-outcome: ${{ steps.outcome.outputs.outcome }}
           update-ts: ${{ needs.notify-release-started.outputs.message-ts }}
-
-  trigger-deployment:
-    needs: [setup, container-build-push]
-    if: always() && github.event_name == 'push' && needs.setup.result == 'success' && needs.container-build-push.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    permissions:
-      contents: read
-
-    steps:
-      - name: Harden Runner
-        uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
-        with:
-          egress-policy: block
-          allowed-endpoints: >
-            api.github.com:443
-
-      - name: Trigger UI deployment
-        uses: peter-evans/repository-dispatch@28959ce8df70de7be546dd1250a005dd32156697 # v4.0.1
-        with:
-          token: ${{ secrets.PROWLER_BOT_ACCESS_TOKEN }}
-          repository: ${{ secrets.CLOUD_DISPATCH }}
-          event-type: ui-prowler-deployment
-          client-payload: '{"sha": "${{ github.sha }}", "short_sha": "${{ needs.setup.outputs.short-sha }}"}'

@@ -1,12 +1,14 @@
-FROM python:3.12.11-slim-bookworm@sha256:519591d6871b7bc437060736b9f7456b8731f1499a57e22e6c285135ae657bf7 AS build
+FROM python:3.12.13-slim-bookworm@sha256:8a7e7cc04fd3e2bd787f7f24e22d5d119aa590d429b50c95dfe12b3abe52f48b AS build
 
 LABEL maintainer="https://github.com/prowler-cloud/prowler"
 LABEL org.opencontainers.image.source="https://github.com/prowler-cloud/prowler"
 
 ARG POWERSHELL_VERSION=7.5.0
 ENV POWERSHELL_VERSION=${POWERSHELL_VERSION}
+# Opt out of PowerShell telemetry (Application Insights -> dc.services.visualstudio.com)
+ENV POWERSHELL_TELEMETRY_OPTOUT=1
 
-ARG TRIVY_VERSION=0.70.0
+ARG TRIVY_VERSION=0.71.2
 ENV TRIVY_VERSION=${TRIVY_VERSION}
 
 ARG ZIZMOR_VERSION=1.24.1
@@ -95,9 +97,21 @@ RUN uv sync --locked --compile-bytecode && \
 # Install PowerShell modules
 RUN .venv/bin/python prowler/providers/m365/lib/powershell/m365_powershell.py
 
+USER root
+
+# Remove build-only packages from the final image after Python dependencies are installed.
+RUN apt-get purge -y --auto-remove \
+    build-essential \
+    pkg-config \
+    libzstd-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+USER prowler
+
 # Remove deprecated dash dependencies
 RUN pip uninstall dash-html-components -y && \
     pip uninstall dash-core-components -y
 
 USER prowler
-ENTRYPOINT [".venv/bin/prowler"]
+ENTRYPOINT ["/home/prowler/.venv/bin/prowler"]

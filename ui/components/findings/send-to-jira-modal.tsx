@@ -12,13 +12,13 @@ import {
   pollJiraDispatchTask,
   sendFindingToJira,
 } from "@/actions/integrations/jira-dispatch";
+import { useToast } from "@/components/shadcn";
+import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
+import { Form, FormField, FormMessage } from "@/components/shadcn/form";
+import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import { Modal } from "@/components/shadcn/modal";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { useToast } from "@/components/ui";
-import { CustomBanner } from "@/components/ui/custom/custom-banner";
-import { Form, FormField, FormMessage } from "@/components/ui/form";
-import { FormButtons } from "@/components/ui/form/form-buttons";
 import { IntegrationProps } from "@/types/integrations";
 
 interface SendToJiraModalProps {
