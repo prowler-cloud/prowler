@@ -31,7 +31,6 @@ import { RESOURCE_DRAWER_OTHER_FINDINGS_SORT } from "@/lib/findings-sort";
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
 }));
 

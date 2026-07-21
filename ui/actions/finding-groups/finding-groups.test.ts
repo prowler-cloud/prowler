@@ -29,7 +29,6 @@ import {
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   composeSort,
   FG_FAIL_FIRST,
   FG_RECENT_LAST_SEEN,

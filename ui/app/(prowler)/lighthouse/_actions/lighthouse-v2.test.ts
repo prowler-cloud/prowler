@@ -15,9 +15,6 @@ vi.mock("@sentry/nextjs", () => ({
 // keeping the revalidate gate (the behavior under test) running for real.
 vi.mock("@/lib/helper", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: vi
-    .fn()
-    .mockResolvedValue({ Authorization: "Bearer token-123" }),
   parseStringify: (value: unknown) => JSON.parse(JSON.stringify(value)),
   getErrorMessage: (error: unknown) => String(error),
   sanitizeErrorMessage: (message: string) => message,

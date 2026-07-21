@@ -27,7 +27,6 @@ import {
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   GENERIC_SERVER_ERROR_MESSAGE:
     "Server is temporarily unavailable. Please try again in a few minutes.",
   sanitizeErrorMessage: (message: string, fallback: string) =>

@@ -25,7 +25,6 @@ vi.mock("next/cache", () => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
 }));
 
 vi.mock("@/lib/auth-headers", () => ({

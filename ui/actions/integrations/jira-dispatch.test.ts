@@ -10,7 +10,6 @@ vi.mock("@/actions/task/poll", () => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: vi.fn(),
 }));
 
 vi.mock("@/lib/auth-headers", () => ({

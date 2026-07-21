@@ -22,7 +22,6 @@ vi.mock("next/navigation", () => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
-  getAuthHeaders: getAuthHeadersMock,
   getErrorMessage: vi.fn(),
 }));
 
