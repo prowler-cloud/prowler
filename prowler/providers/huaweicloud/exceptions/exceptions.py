@@ -34,6 +34,10 @@ class HuaweiCloudBaseException(ProwlerException):
             "message": "Huawei Cloud service error",
             "remediation": "Review the requested service and region, and check the Huawei Cloud API documentation for more details.",
         },
+        (19007, "HuaweiCloudAssumeRoleError"): {
+            "message": "Failed to assume the Huawei Cloud agency",
+            "remediation": "Verify HUAWEICLOUD_AGENCY_NAME and the target account (HUAWEICLOUD_ASSUME_DOMAIN_ID or HUAWEICLOUD_ASSUME_DOMAIN_NAME), and ensure the agency delegates the required permissions to the authenticated account.",
+        },
     }
 
     def __init__(self, code, file=None, original_exception=None, message=None):
@@ -116,4 +120,13 @@ class HuaweiCloudServiceError(HuaweiCloudBaseException):
     def __init__(self, file=None, original_exception=None, message=None):
         super().__init__(
             19006, file=file, original_exception=original_exception, message=message
+        )
+
+
+class HuaweiCloudAssumeRoleError(HuaweiCloudBaseException):
+    """Exception for Huawei Cloud agency (assume-role) errors."""
+
+    def __init__(self, file=None, original_exception=None, message=None):
+        super().__init__(
+            19007, file=file, original_exception=original_exception, message=message
         )

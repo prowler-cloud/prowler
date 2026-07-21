@@ -17,6 +17,7 @@ from prowler.providers.huaweicloud.config import (
     HUAWEICLOUD_REGIONS,
 )
 from prowler.providers.huaweicloud.exceptions.exceptions import (
+    HuaweiCloudAssumeRoleError,
     HuaweiCloudAuthenticationError,
     HuaweiCloudCredentialsError,
     HuaweiCloudIdentityError,
@@ -68,6 +69,9 @@ class HuaweicloudProvider(Provider):
         project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
+        agency_name: str = None,
+        assume_domain_id: str = None,
+        assume_domain_name: str = None,
         regions: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -89,6 +93,9 @@ class HuaweicloudProvider(Provider):
             project_id: Huawei Cloud Project ID (required for regional services)
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
+            agency_name: Name of the agency to assume in the target account
+            assume_domain_id: Domain ID of the target (delegating) account
+            assume_domain_name: Domain name of the target (delegating) account
             regions: List of Huawei Cloud region IDs to audit
             config_path: Path to the configuration file
             config_content: Content of the configuration file
@@ -106,6 +113,10 @@ class HuaweicloudProvider(Provider):
                 - export HUAWEICLOUD_SECRET_ACCESS_KEY=<secret_key>
                 - export HUAWEICLOUD_PROJECT_ID=<project_id>
                 - export HUAWEICLOUD_DOMAIN_ID=<domain_id>
+            - To assume an agency in a target account, additionally set:
+                - export HUAWEICLOUD_AGENCY_NAME=<agency_name>
+                - export HUAWEICLOUD_ASSUME_DOMAIN_ID=<target_domain_id>
+                  (or HUAWEICLOUD_ASSUME_DOMAIN_NAME=<target_domain_name>)
             - To create a new Huawei Cloud provider object:
                 - huaweicloud = HuaweicloudProvider()
                 - huaweicloud = HuaweicloudProvider(regions=["cn-north-4", "cn-east-3"])
@@ -119,6 +130,9 @@ class HuaweicloudProvider(Provider):
             project_id=project_id,
             domain_id=domain_id,
             security_token=security_token,
+            agency_name=agency_name,
+            assume_domain_id=assume_domain_id,
+            assume_domain_name=assume_domain_name,
         )
         logger.info("Huawei Cloud session configured successfully")
 
@@ -214,12 +228,18 @@ class HuaweicloudProvider(Provider):
         project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
+        agency_name: str = None,
+        assume_domain_id: str = None,
+        assume_domain_name: str = None,
     ) -> HuaweiCloudSession:
         """
         Set up the Huawei Cloud session.
 
-        Each credential falls back to its environment variable when not
-        provided as an argument.
+        Each argument falls back to its environment variable when not provided.
+        When an agency name is supplied (HUAWEICLOUD_AGENCY_NAME) the base
+        credentials are used to assume the agency in the target account
+        (HUAWEICLOUD_ASSUME_DOMAIN_ID or HUAWEICLOUD_ASSUME_DOMAIN_NAME) and the
+        session uses the resulting temporary credentials.
 
         Args:
             access_key_id: Huawei Cloud Access Key ID
@@ -227,6 +247,9 @@ class HuaweicloudProvider(Provider):
             project_id: Huawei Cloud Project ID
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
+            agency_name: Name of the agency to assume in the target account
+            assume_domain_id: Domain ID of the target (delegating) account
+            assume_domain_name: Domain name of the target (delegating) account
 
         Returns:
             HuaweiCloudSession object
@@ -234,6 +257,7 @@ class HuaweicloudProvider(Provider):
         Raises:
             HuaweiCloudSetUpSessionError: If session setup fails
             HuaweiCloudCredentialsError: If no credentials are found
+            HuaweiCloudAssumeRoleError: If assuming the agency fails
         """
         try:
             logger.debug("Creating Huawei Cloud session ...")
@@ -265,6 +289,13 @@ class HuaweicloudProvider(Provider):
             if not security_token and "HUAWEICLOUD_SECURITY_TOKEN" in os.environ:
                 security_token = os.environ["HUAWEICLOUD_SECURITY_TOKEN"]
 
+            if not agency_name:
+                agency_name = os.environ.get("HUAWEICLOUD_AGENCY_NAME")
+            if not assume_domain_id:
+                assume_domain_id = os.environ.get("HUAWEICLOUD_ASSUME_DOMAIN_ID")
+            if not assume_domain_name:
+                assume_domain_name = os.environ.get("HUAWEICLOUD_ASSUME_DOMAIN_NAME")
+
             if not access_key_id or not secret_access_key:
                 raise HuaweiCloudCredentialsError(
                     file=pathlib.Path(__file__).name,
@@ -278,15 +309,131 @@ class HuaweicloudProvider(Provider):
                 domain_id=domain_id,
             )
 
+            if agency_name:
+                credentials = HuaweicloudProvider.assume_agency(
+                    credentials=credentials,
+                    agency_name=agency_name,
+                    assume_domain_id=assume_domain_id,
+                    assume_domain_name=assume_domain_name,
+                )
+
             return HuaweiCloudSession(credentials)
 
-        except HuaweiCloudCredentialsError:
+        except (HuaweiCloudCredentialsError, HuaweiCloudAssumeRoleError):
             raise
         except Exception as error:
             logger.critical(
                 f"HuaweiCloudSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise HuaweiCloudSetUpSessionError(
+                file=pathlib.Path(__file__).name,
+                original_exception=error,
+            )
+
+    @staticmethod
+    def assume_agency(
+        credentials: HuaweiCloudCredentials,
+        agency_name: str,
+        assume_domain_id: str = None,
+        assume_domain_name: str = None,
+        region: str = HUAWEICLOUD_DEFAULT_REGION,
+    ) -> HuaweiCloudCredentials:
+        """
+        Assume a Huawei Cloud agency in the target account.
+
+        Uses the base credentials to call CreateTemporaryAccessKeyByAgency and
+        returns temporary credentials scoped to the agency in the target
+        (delegating) account.
+
+        Args:
+            credentials: The base Huawei Cloud credentials.
+            agency_name: The agency to assume.
+            assume_domain_id: Domain ID of the target (delegating) account.
+            assume_domain_name: Domain name of the target (delegating) account.
+            region: The region used for the IAM call.
+
+        Returns:
+            HuaweiCloudCredentials: Temporary credentials for the agency.
+
+        Raises:
+            HuaweiCloudAssumeRoleError: If the target account is not specified
+                or the agency assumption fails.
+        """
+        if not assume_domain_id and not assume_domain_name:
+            raise HuaweiCloudAssumeRoleError(
+                file=pathlib.Path(__file__).name,
+                message="To assume an agency, set HUAWEICLOUD_ASSUME_DOMAIN_ID or HUAWEICLOUD_ASSUME_DOMAIN_NAME to the target account.",
+            )
+
+        try:
+            from huaweicloudsdkcore.auth.credentials import BasicCredentials
+            from huaweicloudsdkiam.v3 import (
+                AgencyAuth,
+                AgencyAuthIdentity,
+                CreateTemporaryAccessKeyByAgencyRequest,
+                CreateTemporaryAccessKeyByAgencyRequestBody,
+                IamClient,
+                IdentityAssumerole,
+            )
+            from huaweicloudsdkiam.v3.region.iam_region import IamRegion
+
+            basic_creds = BasicCredentials(
+                ak=credentials.ak,
+                sk=credentials.sk,
+            )
+            if credentials.domain_id:
+                basic_creds.domain_id = credentials.domain_id
+
+            iam_client = (
+                IamClient.new_builder()
+                .with_credentials(basic_creds)
+                .with_region(IamRegion.value_of(region))
+                .build()
+            )
+
+            assume_role = IdentityAssumerole(
+                agency_name=agency_name,
+                duration_seconds=3600,
+            )
+            if assume_domain_id:
+                assume_role.domain_id = assume_domain_id
+            else:
+                assume_role.domain_name = assume_domain_name
+
+            body = CreateTemporaryAccessKeyByAgencyRequestBody(
+                auth=AgencyAuth(
+                    identity=AgencyAuthIdentity(
+                        methods=["assume_role"],
+                        assume_role=assume_role,
+                    )
+                )
+            )
+
+            response = iam_client.create_temporary_access_key_by_agency(
+                CreateTemporaryAccessKeyByAgencyRequest(body=body)
+            )
+            temp = response.credential
+
+            logger.info(
+                f"Assumed Huawei Cloud agency '{agency_name}' in target account "
+                f"{assume_domain_id or assume_domain_name}"
+            )
+
+            return HuaweiCloudCredentials(
+                ak=temp.access,
+                sk=temp.secret,
+                security_token=temp.securitytoken,
+                project_id=credentials.project_id,
+                domain_id=assume_domain_id or credentials.domain_id,
+            )
+
+        except HuaweiCloudAssumeRoleError:
+            raise
+        except Exception as error:
+            logger.error(
+                f"Could not assume Huawei Cloud agency '{agency_name}': {error}"
+            )
+            raise HuaweiCloudAssumeRoleError(
                 file=pathlib.Path(__file__).name,
                 original_exception=error,
             )

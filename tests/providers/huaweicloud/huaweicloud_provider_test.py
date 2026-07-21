@@ -1,9 +1,11 @@
 import os
+from types import SimpleNamespace
 from unittest import mock
 
 import pytest
 
 from prowler.providers.huaweicloud.exceptions.exceptions import (
+    HuaweiCloudAssumeRoleError,
     HuaweiCloudAuthenticationError,
     HuaweiCloudBaseException,
     HuaweiCloudCredentialsError,
@@ -180,6 +182,108 @@ class TestHuaweiCloudProviderTestConnection:
             assert connection.error is not None
 
 
+def _agency_builder(credential):
+    """Return a mocked IamClient builder chain for agency assumption."""
+    client = mock.MagicMock()
+    client.create_temporary_access_key_by_agency.return_value = SimpleNamespace(
+        credential=credential
+    )
+    builder = mock.MagicMock()
+    builder.with_credentials.return_value.with_region.return_value.build.return_value = (
+        client
+    )
+    return builder, client
+
+
+class TestHuaweiCloudProviderAssumeAgency:
+    def test_returns_temporary_credentials(self):
+        credential = SimpleNamespace(
+            access="tmp-ak",
+            secret="tmp-sk",
+            securitytoken="tmp-token",
+            expires_at="2026-01-01T00:00:00Z",
+        )
+        builder, client = _agency_builder(credential)
+        base = HuaweiCloudCredentials(
+            ak="base-ak", sk="base-sk", project_id="pid", domain_id="base-domain"
+        )
+
+        with (
+            mock.patch(
+                "huaweicloudsdkiam.v3.IamClient.new_builder", return_value=builder
+            ),
+            mock.patch("huaweicloudsdkiam.v3.region.iam_region.IamRegion"),
+        ):
+            result = HuaweicloudProvider.assume_agency(
+                credentials=base,
+                agency_name="prowler-agency",
+                assume_domain_id="target-domain",
+            )
+
+        assert result.ak == "tmp-ak"
+        assert result.sk == "tmp-sk"
+        assert result.security_token == "tmp-token"
+        assert result.project_id == "pid"
+        assert result.domain_id == "target-domain"
+
+        request = client.create_temporary_access_key_by_agency.call_args[0][0]
+        assume_role = request.body.auth.identity.assume_role
+        assert assume_role.agency_name == "prowler-agency"
+        assert assume_role.domain_id == "target-domain"
+
+    def test_requires_target_domain(self):
+        base = HuaweiCloudCredentials(ak="a", sk="b")
+        with pytest.raises(HuaweiCloudAssumeRoleError):
+            HuaweicloudProvider.assume_agency(
+                credentials=base, agency_name="prowler-agency"
+            )
+
+    def test_sdk_failure_raises_assume_role_error(self):
+        builder, client = _agency_builder(None)
+        client.create_temporary_access_key_by_agency.side_effect = Exception("denied")
+        base = HuaweiCloudCredentials(ak="a", sk="b")
+
+        with (
+            mock.patch(
+                "huaweicloudsdkiam.v3.IamClient.new_builder", return_value=builder
+            ),
+            mock.patch("huaweicloudsdkiam.v3.region.iam_region.IamRegion"),
+        ):
+            with pytest.raises(HuaweiCloudAssumeRoleError):
+                HuaweicloudProvider.assume_agency(
+                    credentials=base,
+                    agency_name="prowler-agency",
+                    assume_domain_name="target-account",
+                )
+
+    def test_setup_session_assumes_agency_from_env(self):
+        credential = SimpleNamespace(
+            access="tmp-ak",
+            secret="tmp-sk",
+            securitytoken="tmp-token",
+            expires_at="",
+        )
+        builder, _ = _agency_builder(credential)
+        env = {
+            "HUAWEICLOUD_ACCESS_KEY_ID": ACCESS_KEY,
+            "HUAWEICLOUD_SECRET_ACCESS_KEY": SECRET_KEY,
+            "HUAWEICLOUD_AGENCY_NAME": "prowler-agency",
+            "HUAWEICLOUD_ASSUME_DOMAIN_ID": "target-domain",
+        }
+
+        with (
+            mock.patch.dict(os.environ, env, clear=True),
+            mock.patch(
+                "huaweicloudsdkiam.v3.IamClient.new_builder", return_value=builder
+            ),
+            mock.patch("huaweicloudsdkiam.v3.region.iam_region.IamRegion"),
+        ):
+            session = HuaweicloudProvider.setup_session()
+
+        assert session.get_credentials().ak == "tmp-ak"
+        assert session.get_credentials().security_token == "tmp-token"
+
+
 class TestHuaweiCloudExceptions:
     def test_error_codes_are_unique_and_in_reserved_range(self):
         classes = [
@@ -190,6 +294,7 @@ class TestHuaweiCloudExceptions:
             HuaweiCloudInvalidRegionError,
             HuaweiCloudInvalidProviderIdError,
             HuaweiCloudServiceError,
+            HuaweiCloudAssumeRoleError,
         ]
         codes = set()
         for cls in classes:

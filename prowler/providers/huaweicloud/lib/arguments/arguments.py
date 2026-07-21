@@ -8,6 +8,10 @@ def init_parser(self):
       - HUAWEICLOUD_PROJECT_ID (or HW_PROJECT_ID)
       - HUAWEICLOUD_DOMAIN_ID (or HW_DOMAIN_ID)
       - HUAWEICLOUD_SECURITY_TOKEN (optional, for temporary credentials)
+
+    To assume an agency in a target account, additionally set:
+      - HUAWEICLOUD_AGENCY_NAME
+      - HUAWEICLOUD_ASSUME_DOMAIN_ID (or HUAWEICLOUD_ASSUME_DOMAIN_NAME)
     """
     huaweicloud_parser = self.subparsers.add_parser(
         "huaweicloud",
