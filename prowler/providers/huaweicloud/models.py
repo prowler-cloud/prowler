@@ -73,7 +73,6 @@ class HuaweiCloudCredentials(BaseModel):
         ak: The Access Key ID
         sk: The Secret Access Key
         security_token: The Security Token (for temporary credentials)
-        project_id: The Huawei Cloud project ID (required for regional services)
         domain_id: The Huawei Cloud domain ID
         expiration: The expiration time for temporary credentials
     """
@@ -81,7 +80,6 @@ class HuaweiCloudCredentials(BaseModel):
     ak: str
     sk: str
     security_token: Optional[str] = None
-    project_id: Optional[str] = None
     domain_id: Optional[str] = None
     expiration: Optional[datetime] = None
 
@@ -332,18 +330,18 @@ class HuaweiCloudSession:
         return config
 
     def _get_basic_credentials(self):
-        """Get Huawei Cloud BasicCredentials from stored credentials."""
+        """Get Huawei Cloud BasicCredentials from stored credentials.
+
+        The project_id is intentionally left unset: the SDK resolves the
+        correct project_id for each region automatically (cached per region),
+        which is required for multi-region scans since each region has its own
+        project. Pinning a single project_id would break every other region.
+        """
         from huaweicloudsdkcore.auth.credentials import BasicCredentials
 
         creds = self._credentials
 
-        # Create BasicCredentials with AK/SK
-        # BasicCredentials only accepts ak, sk, project_id in __init__
-        basic_creds = BasicCredentials(
-            ak=creds.ak,
-            sk=creds.sk,
-            project_id=creds.project_id,
-        )
+        basic_creds = BasicCredentials(ak=creds.ak, sk=creds.sk)
 
         # security_token is a settable property (for temporary credentials)
         if creds.security_token:

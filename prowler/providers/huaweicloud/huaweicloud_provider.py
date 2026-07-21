@@ -66,7 +66,6 @@ class HuaweicloudProvider(Provider):
         self,
         access_key_id: str = None,
         secret_access_key: str = None,
-        project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
         agency_name: str = None,
@@ -90,7 +89,6 @@ class HuaweicloudProvider(Provider):
         Args:
             access_key_id: Huawei Cloud Access Key ID
             secret_access_key: Huawei Cloud Secret Access Key
-            project_id: Huawei Cloud Project ID (required for regional services)
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
             agency_name: Name of the agency to assume in the target account
@@ -111,8 +109,8 @@ class HuaweicloudProvider(Provider):
             - Huawei Cloud credentials are set via environment variables:
                 - export HUAWEICLOUD_ACCESS_KEY_ID=<access_key>
                 - export HUAWEICLOUD_SECRET_ACCESS_KEY=<secret_key>
-                - export HUAWEICLOUD_PROJECT_ID=<project_id>
                 - export HUAWEICLOUD_DOMAIN_ID=<domain_id>
+              The per-region project_id is resolved automatically by the SDK.
             - To assume an agency in a target account, additionally set:
                 - export HUAWEICLOUD_AGENCY_NAME=<agency_name>
                 - export HUAWEICLOUD_ASSUME_DOMAIN_ID=<target_domain_id>
@@ -127,7 +125,6 @@ class HuaweicloudProvider(Provider):
         self._session = self.setup_session(
             access_key_id=access_key_id,
             secret_access_key=secret_access_key,
-            project_id=project_id,
             domain_id=domain_id,
             security_token=security_token,
             agency_name=agency_name,
@@ -225,7 +222,6 @@ class HuaweicloudProvider(Provider):
     def setup_session(
         access_key_id: str = None,
         secret_access_key: str = None,
-        project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
         agency_name: str = None,
@@ -244,7 +240,6 @@ class HuaweicloudProvider(Provider):
         Args:
             access_key_id: Huawei Cloud Access Key ID
             secret_access_key: Huawei Cloud Secret Access Key
-            project_id: Huawei Cloud Project ID
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
             agency_name: Name of the agency to assume in the target account
@@ -274,12 +269,6 @@ class HuaweicloudProvider(Provider):
                 elif "HW_SECRET_KEY" in os.environ:
                     secret_access_key = os.environ["HW_SECRET_KEY"]
 
-            if not project_id:
-                if "HUAWEICLOUD_PROJECT_ID" in os.environ:
-                    project_id = os.environ["HUAWEICLOUD_PROJECT_ID"]
-                elif "HW_PROJECT_ID" in os.environ:
-                    project_id = os.environ["HW_PROJECT_ID"]
-
             if not domain_id:
                 if "HUAWEICLOUD_DOMAIN_ID" in os.environ:
                     domain_id = os.environ["HUAWEICLOUD_DOMAIN_ID"]
@@ -305,7 +294,6 @@ class HuaweicloudProvider(Provider):
                 ak=access_key_id,
                 sk=secret_access_key,
                 security_token=security_token,
-                project_id=project_id,
                 domain_id=domain_id,
             )
 
@@ -423,7 +411,6 @@ class HuaweicloudProvider(Provider):
                 ak=temp.access,
                 sk=temp.secret,
                 security_token=temp.securitytoken,
-                project_id=credentials.project_id,
                 domain_id=assume_domain_id or credentials.domain_id,
             )
 
@@ -468,11 +455,7 @@ class HuaweicloudProvider(Provider):
 
             creds = session.get_credentials()
 
-            basic_creds = BasicCredentials(
-                ak=creds.ak,
-                sk=creds.sk,
-                project_id=creds.project_id,
-            )
+            basic_creds = BasicCredentials(ak=creds.ak, sk=creds.sk)
             if creds.security_token:
                 basic_creds.security_token = creds.security_token
             if creds.domain_id:
@@ -686,7 +669,6 @@ class HuaweicloudProvider(Provider):
     def test_connection(
         access_key_id: str = None,
         secret_access_key: str = None,
-        project_id: str = None,
         domain_id: str = None,
         security_token: str = None,
         raise_on_exception: bool = True,
@@ -698,7 +680,6 @@ class HuaweicloudProvider(Provider):
         Args:
             access_key_id: Huawei Cloud Access Key ID
             secret_access_key: Huawei Cloud Secret Access Key
-            project_id: Huawei Cloud Project ID
             domain_id: Huawei Cloud Domain ID
             security_token: Security Token (for temporary credentials)
             raise_on_exception: Whether to raise an exception if an error occurs
@@ -711,7 +692,6 @@ class HuaweicloudProvider(Provider):
             session = HuaweicloudProvider.setup_session(
                 access_key_id=access_key_id,
                 secret_access_key=secret_access_key,
-                project_id=project_id,
                 domain_id=domain_id,
                 security_token=security_token,
             )

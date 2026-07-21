@@ -37,7 +37,6 @@ class TestHuaweiCloudProviderSetupSession:
             session = HuaweicloudProvider.setup_session(
                 access_key_id=ACCESS_KEY,
                 secret_access_key=SECRET_KEY,
-                project_id="pid",
             )
             assert isinstance(session, HuaweiCloudSession)
             assert session.get_credentials().ak == ACCESS_KEY
@@ -205,7 +204,7 @@ class TestHuaweiCloudProviderAssumeAgency:
         )
         builder, client = _agency_builder(credential)
         base = HuaweiCloudCredentials(
-            ak="base-ak", sk="base-sk", project_id="pid", domain_id="base-domain"
+            ak="base-ak", sk="base-sk", domain_id="base-domain"
         )
 
         with (
@@ -223,7 +222,6 @@ class TestHuaweiCloudProviderAssumeAgency:
         assert result.ak == "tmp-ak"
         assert result.sk == "tmp-sk"
         assert result.security_token == "tmp-token"
-        assert result.project_id == "pid"
         assert result.domain_id == "target-domain"
 
         request = client.create_temporary_access_key_by_agency.call_args[0][0]

@@ -5,9 +5,11 @@ def init_parser(self):
     to avoid leaking secrets on the command line:
       - HUAWEICLOUD_ACCESS_KEY_ID (or HW_ACCESS_KEY)
       - HUAWEICLOUD_SECRET_ACCESS_KEY (or HW_SECRET_KEY)
-      - HUAWEICLOUD_PROJECT_ID (or HW_PROJECT_ID)
       - HUAWEICLOUD_DOMAIN_ID (or HW_DOMAIN_ID)
       - HUAWEICLOUD_SECURITY_TOKEN (optional, for temporary credentials)
+
+    The per-region project_id is resolved automatically by the SDK, so
+    multi-region scans work without any project configuration.
 
     To assume an agency in a target account, additionally set:
       - HUAWEICLOUD_AGENCY_NAME
