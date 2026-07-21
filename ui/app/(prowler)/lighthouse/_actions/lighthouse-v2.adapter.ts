@@ -264,14 +264,13 @@ export function buildLighthouseV2MessagePayload(input: {
   const apiContext = input.context
     ? toApiLighthouseContext(input.context)
     : undefined;
-  const content =
-    input.context && apiContext
-      ? {
-          text: buildAgentText(input.displayText, input.context),
-          display_text: input.displayText,
-          ui_context: apiContext,
-        }
-      : { text: input.displayText };
+  const content = apiContext
+    ? {
+        text: buildAgentText(input.displayText, apiContext),
+        display_text: input.displayText,
+        ui_context: apiContext,
+      }
+    : { text: input.displayText };
 
   return {
     data: {

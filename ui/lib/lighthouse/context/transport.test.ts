@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
-import { buildAgentText } from "./transport";
+import { buildAgentText, toApiLighthouseContext } from "./transport";
 
 describe("buildAgentText", () => {
   it("should serialize contextual metadata without altering the user text", () => {
@@ -25,7 +25,10 @@ describe("buildAgentText", () => {
     const displayText = "  Which findings should I prioritize?  ";
 
     // When
-    const agentText = buildAgentText(displayText, context);
+    const apiContext = toApiLighthouseContext(context);
+    expect(apiContext).toBeDefined();
+    if (!apiContext) throw new Error("Expected valid API context");
+    const agentText = buildAgentText(displayText, apiContext);
 
     // Then
     expect(agentText).toBe(
