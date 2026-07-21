@@ -17,8 +17,11 @@ from prowler.providers.huaweicloud.config import (
     HUAWEICLOUD_REGIONS,
 )
 from prowler.providers.huaweicloud.exceptions.exceptions import (
-    HuaweiCloudInvalidCredentialsError,
-    HuaweiCloudNoCredentialsError,
+    HuaweiCloudAuthenticationError,
+    HuaweiCloudCredentialsError,
+    HuaweiCloudIdentityError,
+    HuaweiCloudInvalidProviderIdError,
+    HuaweiCloudInvalidRegionError,
     HuaweiCloudSetUpSessionError,
 )
 from prowler.providers.huaweicloud.lib.mutelist.mutelist import HuaweiCloudMutelist
@@ -94,7 +97,7 @@ class HuaweicloudProvider(Provider):
 
         Raises:
             HuaweiCloudSetUpSessionError: If an error occurs during the setup process.
-            HuaweiCloudInvalidCredentialsError: If authentication fails.
+            HuaweiCloudAuthenticationError: If authentication fails.
 
         Usage:
             - Huawei Cloud credentials can be set via environment variables:
@@ -248,7 +251,7 @@ class HuaweicloudProvider(Provider):
 
         Raises:
             HuaweiCloudSetUpSessionError: If session setup fails
-            HuaweiCloudNoCredentialsError: If no credentials are found
+            HuaweiCloudCredentialsError: If no credentials are found
         """
         try:
             logger.debug("Creating Huawei Cloud session ...")
@@ -293,7 +296,7 @@ class HuaweicloudProvider(Provider):
                 security_token = os.environ["HUAWEICLOUD_SECURITY_TOKEN"]
 
             if not access_key_id or not secret_access_key:
-                raise HuaweiCloudNoCredentialsError(
+                raise HuaweiCloudCredentialsError(
                     file=pathlib.Path(__file__).name,
                 )
 
@@ -307,7 +310,7 @@ class HuaweicloudProvider(Provider):
 
             return HuaweiCloudSession(credentials)
 
-        except HuaweiCloudNoCredentialsError:
+        except HuaweiCloudCredentialsError:
             raise
         except Exception as error:
             logger.critical(
@@ -334,7 +337,8 @@ class HuaweicloudProvider(Provider):
             HuaweiCloudCallerIdentity: An object containing the caller identity information.
 
         Raises:
-            HuaweiCloudInvalidCredentialsError: If credentials are invalid.
+            HuaweiCloudAuthenticationError: If credentials are invalid.
+            HuaweiCloudIdentityError: If the account identity cannot be resolved.
         """
         try:
             if session.is_mock:
@@ -407,7 +411,13 @@ class HuaweicloudProvider(Provider):
                 logger.debug(f"Could not get current user info: {user_error}")
 
             if not account_id:
-                account_id = domain_id or "unknown"
+                account_id = domain_id
+
+            if not account_id:
+                raise HuaweiCloudIdentityError(
+                    file=pathlib.Path(__file__).name,
+                    message="Could not determine the Huawei Cloud account or domain id from IAM",
+                )
 
             logger.debug(
                 f"Huawei Cloud IAM validation - Domain ID: {domain_id}, Account ID: {account_id}, User: {user_name}"
@@ -422,11 +432,11 @@ class HuaweicloudProvider(Provider):
                 type="user",
             )
 
-        except HuaweiCloudInvalidCredentialsError:
+        except (HuaweiCloudAuthenticationError, HuaweiCloudIdentityError):
             raise
         except Exception as iam_error:
             logger.error(f"Could not validate credentials with IAM: {iam_error}")
-            raise HuaweiCloudInvalidCredentialsError(
+            raise HuaweiCloudAuthenticationError(
                 file=pathlib.Path(__file__).name,
                 original_exception=iam_error,
             )
@@ -488,6 +498,9 @@ class HuaweicloudProvider(Provider):
 
         Returns:
             list: The list of HuaweiCloudRegion objects to audit.
+
+        Raises:
+            HuaweiCloudInvalidRegionError: If none of the requested regions are valid.
         """
         from prowler.providers.huaweicloud.models import HuaweiCloudRegion
 
@@ -504,6 +517,11 @@ class HuaweicloudProvider(Provider):
                     )
                 else:
                     logger.warning(f"Invalid region: {region_id}. Skipping.")
+            if not region_list:
+                raise HuaweiCloudInvalidRegionError(
+                    file=pathlib.Path(__file__).name,
+                    message=f"None of the requested regions are valid: {regions}",
+                )
         else:
             for region_id, region_name in HUAWEICLOUD_REGIONS.items():
                 region_list.append(
@@ -605,7 +623,7 @@ class HuaweicloudProvider(Provider):
             )
 
             if provider_id and caller_identity.account_id != provider_id:
-                raise HuaweiCloudInvalidCredentialsError(
+                raise HuaweiCloudInvalidProviderIdError(
                     file=pathlib.Path(__file__).name,
                     message=f"Provider ID mismatch: expected '{provider_id}', got '{caller_identity.account_id}'",
                 )
@@ -624,13 +642,21 @@ class HuaweicloudProvider(Provider):
                 raise setup_error
             return Connection(error=setup_error)
 
-        except HuaweiCloudInvalidCredentialsError as auth_error:
+        except HuaweiCloudAuthenticationError as auth_error:
             logger.error(
                 f"{auth_error.__class__.__name__}[{auth_error.__traceback__.tb_lineno}]: {auth_error}"
             )
             if raise_on_exception:
                 raise auth_error
             return Connection(error=auth_error)
+
+        except HuaweiCloudInvalidProviderIdError as provider_id_error:
+            logger.error(
+                f"{provider_id_error.__class__.__name__}[{provider_id_error.__traceback__.tb_lineno}]: {provider_id_error}"
+            )
+            if raise_on_exception:
+                raise provider_id_error
+            return Connection(error=provider_id_error)
 
         except Exception as error:
             logger.critical(
