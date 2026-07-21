@@ -311,7 +311,10 @@ function buildFilters(
       .getAll(param)
       .flatMap((value) => value.split(","))
       .map((value) => value.trim())
-      .filter((value) => value.length > 0 && !containsSensitiveValue(value))
+      .filter(
+        (value) =>
+          value.length > 0 && !containsSensitiveLighthouseContextValue(value),
+      )
       .map((value) => value.slice(0, 256))
       .slice(0, remainingValues);
     if (values.length === 0) continue;
@@ -333,12 +336,15 @@ function toContextFilterKey(param: string): string {
   return param.slice(7, -1).replace(/__in$/, "");
 }
 
-function containsSensitiveValue(value: string): boolean {
+export function containsSensitiveLighthouseContextValue(
+  value: string,
+): boolean {
   return (
     /\b[^\s@]+@[^\s@]+\.[^\s@]+\b/.test(value) ||
     /\b(?:\d{1,3}\.){3}\d{1,3}\b/.test(value) ||
     /\bAKIA[A-Z0-9]{16}\b/.test(value) ||
-    /\b(?:bearer|password|secret|token)\s*[:=]/i.test(value)
+    /\bbearer\s+\S+/i.test(value) ||
+    /\b(?:password|secret|token|credential)\s*[:=]/i.test(value)
   );
 }
 
