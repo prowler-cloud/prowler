@@ -105,11 +105,12 @@ export const signUpSchema = baseAuthSchema
     }),
     company: z.string().optional(),
     invitationToken: z.string().optional(),
-    termsAndConditions: isCloud()
-      ? z.boolean().refine((value) => value === true, {
-          message: "You must accept the terms and conditions.",
-        })
-      : z.boolean().optional(),
+    termsAndConditions: z
+      .boolean()
+      .optional()
+      .refine((value) => !isCloud() || value === true, {
+        error: "You must accept the terms and conditions.",
+      }),
   })
   .refine(
     (data) => {
