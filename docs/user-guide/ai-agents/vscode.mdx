@@ -63,19 +63,16 @@ For Prowler, the **user** scope is usually the right choice — your findings ar
     ```
 
     Save the file.
-
-    <Frame>
-      <img src="/images/prowler-mcp/vscode/vscode-mcp-json.png" alt="VS Code editor showing the completed mcp.json with the Prowler server entry" />
-    </Frame>
   </Step>
 
   <Step title="Enter your API key">
     Start the server. VS Code prompts for the Prowler API key. Paste it and press Enter — VS Code stores it securely and does not ask again.
-
-    <Frame>
-      <img src="/images/prowler-mcp/vscode/vscode-input-prompt.png" alt="VS Code prompting for the Prowler API Key with a masked input field" />
-    </Frame>
   </Step>
+
+  <Frame>
+    <img src="/images/prowler-mcp/vscode/vscode-mcp-json.png" alt="VS Code editor showing the completed mcp.json with the Prowler server entry" />
+  </Frame>
+
 </Steps>
 
 <Warning>
@@ -85,28 +82,6 @@ For Prowler, the **user** scope is usually the right choice — your findings ar
 <Note>
 **Local server:** Replace the URL with your own HTTP endpoint. Everything else stays the same.
 </Note>
-
-### Alternative: Hardcode the Key
-
-If you prefer not to be prompted, write the key directly. Only do this in the **user**-scoped file, never in a `.vscode/mcp.json` that could be committed:
-
-```json
-{
-  "servers": {
-    "prowler": {
-      "type": "http",
-      "url": "https://mcp.prowler.com/mcp",
-      "headers": {
-        "Authorization": "Bearer pk_your_api_key_here"
-      }
-    }
-  }
-}
-```
-
-### Alternative: Use the Guided Flow
-
-Instead of editing JSON, run **MCP: Add Server** from the command palette, choose **HTTP**, enter `https://mcp.prowler.com/mcp`, name the server `prowler`, and pick **Global** or **Workspace**. Add the `headers` block afterwards, since the guided flow does not prompt for custom headers.
 
 ## Step 3: Verify the Connection
 
