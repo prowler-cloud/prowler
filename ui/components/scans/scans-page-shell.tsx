@@ -108,12 +108,13 @@ export function ScansPageShell({
 
   return (
     <div className="flex flex-col gap-[18px]">
-      {/* Only start the scan tour when a provider is connected: its primary target
-          (Launch Scan) is disabled otherwise, so a `?onboarding=view-first-scan`
-          URL or active sequence would anchor to an unusable button. The navbar
-          replay falls back to the add-provider flow in this state (see page.tsx). */}
+      {/* Gate on the full launch condition: the tour anchors on Launch Scan, which is
+          disabled without a connected provider AND manage_scans — starting it would
+          point at an unusable button. Every start path (?onboarding= URL, active
+          sequence, navbar replay) funnels through this trigger, so gating here covers
+          them all. */}
       {/* Suspense required: OnboardingTrigger reads useSearchParams */}
-      {hasConnectedProviders && (
+      {!launchDisabled && (
         <Suspense fallback={null}>
           <OnboardingTrigger
             flow={{

@@ -575,6 +575,21 @@ describe("ScansPageShell", () => {
     expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
   });
 
+  it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Launch Scan is disabled without manage_scans, so the tour must not anchor to it.
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
   it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
     vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
 

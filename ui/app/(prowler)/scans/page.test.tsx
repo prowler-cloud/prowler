@@ -63,11 +63,11 @@ vi.mock("@/components/shadcn/content-layout", () => ({
 }));
 vi.mock("@/components/scans/scans-page-shell", () => ({
   ScansPageShell: (props: {
-    children: unknown;
+    children: ReactNode;
     providers: ProviderProps[];
   }) => {
     scansPageShellSpy(props);
-    return <div data-testid="scans-page-shell" />;
+    return <div data-testid="scans-page-shell">{props.children}</div>;
   },
 }));
 
@@ -123,8 +123,8 @@ describe("scans page rendering", () => {
 
       const shellProps = scansPageShellSpy.mock.calls.at(-1)?.[0];
       expect(shellProps?.providers).toEqual(providers);
-      // The table subtree is always wired, regardless of provider connection state.
-      expect(shellProps?.children).toBeTruthy();
+      // The scans table subtree actually renders, regardless of provider state.
+      expect(await screen.findByRole("table")).toBeInTheDocument();
     },
   );
 
