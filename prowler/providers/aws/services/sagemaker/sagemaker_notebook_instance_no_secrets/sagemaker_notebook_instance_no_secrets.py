@@ -1,6 +1,3 @@
-import base64
-
-from prowler.lib.logger import logger
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.lib.utils.utils import (
     SecretsScanError,
@@ -17,7 +14,8 @@ class sagemaker_notebook_instance_no_secrets(Check):
 
     Scans the OnCreate and OnStart lifecycle configuration scripts of each
     SageMaker notebook instance for hardcoded secrets such as API keys,
-    passwords, tokens, and connection strings.
+    passwords, tokens, and connection strings. The scripts are fetched and
+    decoded by the SageMaker service; this check only consumes that data.
     """
 
     def execute(self):
@@ -37,56 +35,19 @@ class sagemaker_notebook_instance_no_secrets(Check):
         )
         validate = sagemaker_client.audit_config.get("secrets_validate", False)
 
-        manual_review_resources = set()
+        # Instances that actually contribute a script to the batch. Only these
+        # (plus instances whose describe/decode failed) may be marked MANUAL on
+        # a batch scan failure; instances with nothing to scan must PASS.
+        scanned_resources = {
+            notebook_instance.arn
+            for notebook_instance in notebook_instances
+            if notebook_instance.lifecycle_scripts
+        }
 
         def payloads():
             for notebook_instance in notebook_instances:
-                if not notebook_instance.lifecycle_config_name:
-                    continue
-
-                try:
-                    regional_client = sagemaker_client.regional_clients[
-                        notebook_instance.region
-                    ]
-                    lifecycle_config = (
-                        regional_client.describe_notebook_instance_lifecycle_config(
-                            NotebookInstanceLifecycleConfigName=notebook_instance.lifecycle_config_name
-                        )
-                    )
-                except Exception as error:
-                    logger.error(
-                        f"{notebook_instance.region} -- {error.__class__.__name__}: "
-                        f"Could not describe lifecycle configuration "
-                        f"{notebook_instance.lifecycle_config_name} for notebook "
-                        f"instance {notebook_instance.name}: {error}"
-                    )
-                    manual_review_resources.add(notebook_instance.arn)
-                    continue
-
-                for hook_name in ("OnCreate", "OnStart"):
-                    scripts = lifecycle_config.get(hook_name, [])
-                    for script_index, script in enumerate(scripts):
-                        content_b64 = script.get("Content")
-                        if not content_b64:
-                            continue
-
-                        try:
-                            decoded = base64.b64decode(content_b64).decode(
-                                "utf-8", errors="ignore"
-                            )
-                        except Exception as error:
-                            logger.error(
-                                f"{notebook_instance.region} -- {error.__class__.__name__}: "
-                                f"Could not decode {hook_name}[{script_index}] script "
-                                f"for notebook instance {notebook_instance.name}: {error}"
-                            )
-                            manual_review_resources.add(notebook_instance.arn)
-                            continue
-
-                        yield (
-                            notebook_instance.arn,
-                            f"{hook_name}[{script_index}]",
-                        ), decoded
+                for fragment, script in notebook_instance.lifecycle_scripts.items():
+                    yield (notebook_instance.arn, fragment), script
 
         scan_error = None
         try:
@@ -98,20 +59,6 @@ class sagemaker_notebook_instance_no_secrets(Check):
         except SecretsScanError as error:
             batch_results = {}
             scan_error = error
-
-        if scan_error:
-            for notebook_instance in notebook_instances:
-                report = Check_Report_AWS(
-                    metadata=self.metadata(), resource=notebook_instance
-                )
-                report.status = "MANUAL"
-                report.status_extended = (
-                    f"Could not scan SageMaker notebook instance "
-                    f"{notebook_instance.name} lifecycle config for secrets: "
-                    f"{scan_error}; manual review is required."
-                )
-                findings.append(report)
-            return findings
 
         findings_by_instance = {}
         for (
@@ -127,7 +74,13 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 metadata=self.metadata(), resource=notebook_instance
             )
 
-            if notebook_instance.arn in manual_review_resources:
+            # MANUAL when the instance could not be fully scanned: either the
+            # lifecycle config describe/decode failed, or the batch scan failed
+            # for an instance that actually had scripts queued for scanning.
+            batch_failed = (
+                scan_error is not None and notebook_instance.arn in scanned_resources
+            )
+            if notebook_instance.lifecycle_scan_failed or batch_failed:
                 report.status = "MANUAL"
                 report.status_extended = (
                     f"Could not fully scan SageMaker notebook instance "
@@ -137,9 +90,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                 findings.append(report)
                 continue
 
-            # This block was previously un-indented
             report.status = "PASS"
-
             if not notebook_instance.lifecycle_config_name:
                 report.status_extended = (
                     f"SageMaker notebook instance {notebook_instance.name} "
@@ -151,9 +102,7 @@ class sagemaker_notebook_instance_no_secrets(Check):
                     f"{notebook_instance.name} lifecycle configuration."
                 )
 
-            fragments_with_secrets = findings_by_instance.get(
-                notebook_instance.arn
-            )
+            fragments_with_secrets = findings_by_instance.get(notebook_instance.arn)
 
             if fragments_with_secrets:
                 all_secrets = []
