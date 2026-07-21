@@ -487,36 +487,37 @@ def send_findings_to_jira(
 
     num_tickets_created = 0
     error_messages = []
+    failed_finding_ids = []
     for finding_id in finding_ids:
         with rls_transaction(tenant_id):
-            finding_instance = (
-                Finding.all_objects.select_related("scan__provider")
-                .prefetch_related("resources")
-                .get(id=finding_id)
-            )
-
-            # Extract resource information
-            resource = (
-                finding_instance.resources.first()
-                if finding_instance.resources.exists()
-                else None
-            )
-            resource_uid = resource.uid if resource else ""
-            resource_name = resource.name if resource else ""
-            resource_tags = {}
-            if resource and hasattr(resource, "tags"):
-                resource_tags = resource.get_tags(tenant_id)
-
-            # Get region
-            region = resource.region if resource and resource.region else ""
-
-            # Extract remediation information from check_metadata
-            check_metadata = finding_instance.check_metadata
-            remediation = check_metadata.get("remediation", {})
-            recommendation = remediation.get("recommendation", {})
-            remediation_code = remediation.get("code", {})
-
             try:
+                finding_instance = (
+                    Finding.all_objects.select_related("scan__provider")
+                    .prefetch_related("resources")
+                    .get(id=finding_id)
+                )
+
+                # Extract resource information
+                resource = (
+                    finding_instance.resources.first()
+                    if finding_instance.resources.exists()
+                    else None
+                )
+                resource_uid = resource.uid if resource else ""
+                resource_name = resource.name if resource else ""
+                resource_tags = {}
+                if resource and hasattr(resource, "tags"):
+                    resource_tags = resource.get_tags(tenant_id)
+
+                # Get region
+                region = resource.region if resource and resource.region else ""
+
+                # Extract remediation information from check_metadata
+                check_metadata = finding_instance.check_metadata
+                remediation = check_metadata.get("remediation", {})
+                recommendation = remediation.get("recommendation", {})
+                remediation_code = remediation.get("code", {})
+
                 # Send the individual finding to Jira
                 result = jira_integration.send_finding(
                     check_id=finding_instance.check_id,
@@ -546,18 +547,21 @@ def send_findings_to_jira(
                     "Failed to send finding %s to Jira: %s", finding_id, error_message
                 )
                 error_messages.append(error_message)
+                failed_finding_ids.append(finding_id)
                 continue
             except Exception:
                 logger.exception("Failed to send finding %s to Jira", finding_id)
                 error_messages.append(JIRA_GENERIC_SEND_ERROR)
+                failed_finding_ids.append(finding_id)
                 continue
 
-            if result:
-                num_tickets_created += 1
-            else:
-                error_message = JIRA_GENERIC_SEND_ERROR
-                logger.error(error_message)
-                error_messages.append(error_message)
+        if result:
+            num_tickets_created += 1
+        else:
+            error_message = JIRA_GENERIC_SEND_ERROR
+            logger.error(error_message)
+            error_messages.append(error_message)
+            failed_finding_ids.append(finding_id)
 
     result = {
         "created_count": num_tickets_created,
@@ -565,5 +569,6 @@ def send_findings_to_jira(
     }
     if error_messages:
         result["error"] = "; ".join(dict.fromkeys(error_messages))
+        result["failed_finding_ids"] = failed_finding_ids
 
     return result
