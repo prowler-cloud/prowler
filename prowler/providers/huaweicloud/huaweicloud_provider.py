@@ -10,6 +10,8 @@ from prowler.config.config import (
 )
 from prowler.lib.logger import logger
 from prowler.lib.utils.utils import print_boxes
+from prowler.providers.common.models import Audit_Metadata, Connection
+from prowler.providers.common.provider import Provider
 from prowler.providers.huaweicloud.config import (
     HUAWEICLOUD_DEFAULT_REGION,
     HUAWEICLOUD_REGIONS,
@@ -26,8 +28,6 @@ from prowler.providers.huaweicloud.models import (
     HuaweiCloudIdentityInfo,
     HuaweiCloudSession,
 )
-from prowler.providers.common.models import Audit_Metadata, Connection
-from prowler.providers.common.provider import Provider
 
 
 class HuaweicloudProvider(Provider):
@@ -215,7 +215,11 @@ class HuaweicloudProvider(Provider):
         Returns:
             bool: True if mock auth is enabled
         """
-        return os.environ.get("HUAWEICLOUD_MOCK_AUTH", "").lower() in ("true", "1", "yes")
+        return os.environ.get("HUAWEICLOUD_MOCK_AUTH", "").lower() in (
+            "true",
+            "1",
+            "yes",
+        )
 
     @staticmethod
     def setup_session(
@@ -344,10 +348,13 @@ class HuaweicloudProvider(Provider):
                     type="user",
                 )
 
-            from huaweicloudsdkiam.v3 import IamClient
-            from huaweicloudsdkiam.v3.region.iam_region import IamRegion
-            from huaweicloudsdkiam.v3 import KeystoneListAuthProjectsRequest, KeystoneListAuthDomainsRequest
             from huaweicloudsdkcore.auth.credentials import BasicCredentials
+            from huaweicloudsdkiam.v3 import (
+                IamClient,
+                KeystoneListAuthDomainsRequest,
+                KeystoneListAuthProjectsRequest,
+            )
+            from huaweicloudsdkiam.v3.region.iam_region import IamRegion
 
             creds = session.get_credentials()
 
@@ -368,9 +375,7 @@ class HuaweicloudProvider(Provider):
                 .build()
             )
 
-            iam_client.keystone_list_auth_projects(
-                KeystoneListAuthProjectsRequest()
-            )
+            iam_client.keystone_list_auth_projects(KeystoneListAuthProjectsRequest())
 
             domain_id = creds.domain_id or ""
             user_id = ""
@@ -389,23 +394,17 @@ class HuaweicloudProvider(Provider):
                         if not account_name:
                             account_name = getattr(domain, "name", "")
             except Exception as domain_error:
-                logger.debug(
-                    f"Could not list auth domains: {domain_error}"
-                )
+                logger.debug(f"Could not list auth domains: {domain_error}")
 
             try:
                 from huaweicloudsdkiam.v3 import ShowUserRequest
 
-                user_response = iam_client.show_user(
-                    ShowUserRequest(user_id="self")
-                )
+                user_response = iam_client.show_user(ShowUserRequest(user_id="self"))
                 if hasattr(user_response, "user") and user_response.user:
                     user_id = getattr(user_response.user, "id", "")
                     user_name = getattr(user_response.user, "name", "")
             except Exception as user_error:
-                logger.debug(
-                    f"Could not get current user info: {user_error}"
-                )
+                logger.debug(f"Could not get current user info: {user_error}")
 
             if not account_id:
                 account_id = domain_id or "unknown"
@@ -464,7 +463,9 @@ class HuaweicloudProvider(Provider):
         logger.info(
             f"Huawei Cloud Caller Identity Account ID: {caller_identity.account_id}"
         )
-        logger.info(f"Huawei Cloud Caller Identity Domain ID: {caller_identity.domain_id}")
+        logger.info(
+            f"Huawei Cloud Caller Identity Domain ID: {caller_identity.domain_id}"
+        )
 
         return HuaweiCloudIdentityInfo(
             account_id=caller_identity.account_id,
@@ -559,76 +560,6 @@ class HuaweicloudProvider(Provider):
             f"{Style.BRIGHT}Using the Huawei Cloud credentials below:{Style.RESET_ALL}"
         )
         print_boxes(report_lines, report_title)
-
-    def get_html_assessment_summary(self) -> str:
-        """
-        get_html_assessment_summary gets the HTML assessment summary for the Huawei Cloud provider.
-
-        Returns:
-            str: the HTML assessment summary
-        """
-        try:
-            profile = (
-                self.identity.profile
-                if self.identity.profile is not None
-                else "default"
-            )
-            if isinstance(self.identity.regions, set):
-                audited_regions = ", ".join(sorted(self.identity.regions))
-            elif not self.identity.regions:
-                audited_regions = "All Regions"
-            else:
-                audited_regions = ", ".join(self.identity.regions)
-            return f"""
-                <div class="col-md-2">
-                    <div class="card">
-                        <div class="card-header">
-                            Huawei Cloud Assessment Summary
-                        </div>
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item">
-                                <b>Account ID:</b> {self.identity.account_id}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Account Name:</b> {self.identity.account_name}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Profile:</b> {profile}
-                            </li>
-                            <li class="list-group-item">
-                                <b>Audited Regions:</b> {audited_regions}
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        Huawei Cloud Credentials
-                    </div>
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item">
-                            <b>Domain ID:</b> {self.identity.domain_id}
-                        </li>
-                        <li class="list-group-item">
-                            <b>User ID:</b> {self.identity.user_id}
-                        </li>
-                        <li class="list-group-item">
-                            <b>User Name:</b> {self.identity.user_name}
-                        </li>
-                        <li class="list-group-item">
-                            <b>Identity Type:</b> {self.identity.identity_type}
-                        </li>
-                    </ul>
-                </div>
-                </div>"""
-        except Exception as error:
-            from loguru import logger
-
-            logger.error(
-                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
-            )
-            return ""
 
     @staticmethod
     def test_connection(

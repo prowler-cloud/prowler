@@ -143,6 +143,7 @@ from prowler.providers.common.quick_inventory import run_provider_quick_inventor
 from prowler.providers.gcp.models import GCPOutputOptions
 from prowler.providers.github.models import GithubOutputOptions
 from prowler.providers.googleworkspace.models import GoogleWorkspaceOutputOptions
+from prowler.providers.huaweicloud.models import HuaweiCloudOutputOptions
 from prowler.providers.iac.models import IACOutputOptions
 from prowler.providers.image.exceptions.exceptions import ImageBaseException
 from prowler.providers.image.models import ImageOutputOptions
@@ -442,6 +443,10 @@ def prowler():
         )
     elif provider == "linode":
         output_options = LinodeOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "huaweicloud":
+        output_options = HuaweiCloudOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     else:

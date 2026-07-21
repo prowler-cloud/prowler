@@ -52,6 +52,7 @@ class ProwlerArgumentParser:
             "scaleway",
             "stackit",
             "linode",
+            "huaweicloud",
         }
         all_providers = set(Provider.get_available_providers())
         new_providers = sorted(all_providers - known_providers)
@@ -74,10 +75,10 @@ class ProwlerArgumentParser:
         self.parser = argparse.ArgumentParser(
             prog="prowler",
             formatter_class=RawTextHelpFormatter,
-            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,dashboard,iac,image,llm{extra_providers_csv}}} ...",
+            usage=f"prowler [-h] [--version] {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud,dashboard,iac,image,llm{extra_providers_csv}}} ...",
             epilog=f"""
 Available Cloud Providers:
-  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode{extra_providers_csv}}}
+  {{aws,azure,gcp,kubernetes,m365,github,googleworkspace,okta,iac,llm,image,nhn,mongodbatlas,oraclecloud,alibabacloud,cloudflare,openstack,scaleway,stackit,vercel,linode,huaweicloud{extra_providers_csv}}}
     aws                 AWS Provider
     azure               Azure Provider
     gcp                 GCP Provider
@@ -98,7 +99,8 @@ Available Cloud Providers:
     mongodbatlas        MongoDB Atlas Provider
     scaleway            Scaleway Provider
     vercel              Vercel Provider
-    linode              Linode Provider{extra_providers_text}
+    linode              Linode Provider
+    huaweicloud         Huawei Cloud Provider{extra_providers_text}
 
 
 Available components:
