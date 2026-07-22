@@ -17,19 +17,15 @@ HUAWEICLOUD_REGIONS = {
     "cn-east-3": "China (Shanghai-1)",
     "cn-south-1": "China (Guangzhou)",
     "cn-south-2": "China (Guangzhou-2)",
-    "cn-south-4": "China (Guangzhou-4)",
     "cn-southwest-2": "China (Guiyang)",
     "cn-north-9": "China (Ulanqab)",
     "cn-north-2": "China (Beijing-2)",
     "cn-east-5": "China (Shanghai-5)",
-    "cn-south-5": "China (Guangzhou-5)",
     # Asia-Pacific Regions
     "ap-southeast-1": "Hong Kong",
     "ap-southeast-2": "Singapore",
     "ap-southeast-3": "Thailand",
     "ap-southeast-4": "Malaysia",
-    "ap-southeast-5": "Indonesia",
-    "ap-south-1": "India",
     # Africa Regions
     "af-south-1": "South Africa",
     # South America Regions
@@ -39,11 +35,9 @@ HUAWEICLOUD_REGIONS = {
     # Europe Regions
     "eu-west-0": "Ireland",
     "eu-west-101": "Ireland (Dublin)",
-    "eu-central-2": "Germany (Berlin)",
     # Middle East Regions
     "me-east-1": "UAE (Dubai)",
     # Russia Regions
-    "ru-northwest-2": "Russia (Moscow)",
     "ru-moscow-1": "Russia (Moscow-1)",
 }
 
