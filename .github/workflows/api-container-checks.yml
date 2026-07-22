@@ -113,6 +113,15 @@ jobs:
             api/changelog.d/**
             api/AGENTS.md
 
+      # api-container-build-push.yml resolves the SDK pin to the branch tip
+      # before building, so match it here and scan what ships. Push only: PRs
+      # stay deterministic against the committed lock.
+      - name: Refresh prowler SDK pin to current branch tip
+        if: steps.check-changes.outputs.any_changed == 'true' && github.event_name == 'push'
+        run: |
+          pip install --no-cache-dir "uv==0.11.14"
+          (cd api && uv lock --upgrade-package prowler)
+
       - name: Set up Docker Buildx
         if: steps.check-changes.outputs.any_changed == 'true'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
