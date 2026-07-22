@@ -13,7 +13,10 @@ import {
 import { accountDisplayLabel } from "../_lib/cross-account-adapter";
 import type { AccountStatusMap, CrossAccountAccountRef } from "../_types";
 
-import { RequirementStatusSummary } from "./requirement-status-summary";
+import {
+  REQUIREMENT_ENTITY_LABEL,
+  RequirementStatusSummary,
+} from "./requirement-status-summary";
 
 interface RequirementAccountChipsProps {
   accounts: AccountStatusMap;
@@ -40,7 +43,7 @@ export const RequirementAccountChips = ({
   if (entries.length > MAX_INLINE_ACCOUNT_CHIPS) {
     return (
       <RequirementStatusSummary
-        entityLabel="accounts"
+        entityLabel={REQUIREMENT_ENTITY_LABEL.ACCOUNTS}
         entries={entries.map((account) => ({
           key: account.id,
           label: accountDisplayLabel(account),

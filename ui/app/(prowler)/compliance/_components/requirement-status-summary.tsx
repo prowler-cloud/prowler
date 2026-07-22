@@ -30,6 +30,14 @@ const STATUS_ORDER: readonly CrossProviderStatus[] = ["FAIL", "MANUAL", "PASS"];
 
 const SCROLLABLE_BREAKDOWN_MIN_ROWS = 13;
 
+export const REQUIREMENT_ENTITY_LABEL = {
+  ACCOUNTS: "accounts",
+  PROVIDERS: "providers",
+} as const;
+
+type RequirementEntityLabel =
+  (typeof REQUIREMENT_ENTITY_LABEL)[keyof typeof REQUIREMENT_ENTITY_LABEL];
+
 /**
  * Aggregated per-status counts for a requirement row whose column axis has
  * too many members to chip inline (many accounts of one provider type, or
@@ -39,10 +47,10 @@ const SCROLLABLE_BREAKDOWN_MIN_ROWS = 13;
  */
 export const RequirementStatusSummary = ({
   entries,
-  entityLabel = "providers",
+  entityLabel = REQUIREMENT_ENTITY_LABEL.PROVIDERS,
 }: {
   entries: RequirementStatusEntry[];
-  entityLabel?: "accounts" | "providers";
+  entityLabel?: RequirementEntityLabel;
 }) => {
   const counts = STATUS_ORDER.map((status) => ({
     status,
