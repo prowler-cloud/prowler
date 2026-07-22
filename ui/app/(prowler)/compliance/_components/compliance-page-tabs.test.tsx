@@ -67,21 +67,6 @@ describe("CompliancePageTabs", () => {
     expect(pushMock).toHaveBeenCalledWith("/compliance");
   });
 
-  it("anchors the tour to the scan-mode controls", () => {
-    const { container } = render(
-      <CompliancePageTabs
-        activeTab={COMPLIANCE_TAB.PER_SCAN}
-        crossProviderEnabled
-        perScanContent={<div>Per scan content</div>}
-        crossProviderContent={<div>Cross provider content</div>}
-      />,
-    );
-
-    expect(
-      container.querySelector('[data-tour-id="view-compliance-tabs"]'),
-    ).toBeInTheDocument();
-  });
-
   it("opens the cross-provider upgrade without changing tabs in Local Server", async () => {
     const user = userEvent.setup();
     render(

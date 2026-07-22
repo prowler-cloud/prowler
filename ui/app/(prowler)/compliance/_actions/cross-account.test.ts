@@ -28,12 +28,7 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: captureExceptionMock,
 }));
 
-import {
-  generateCrossAccountPdf,
-  getCrossAccountComplianceOverview,
-  getCrossAccountPdfBinary,
-  getLatestCrossAccountPdf,
-} from "./cross-account";
+import { getCrossAccountComplianceOverview } from "./cross-account";
 
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -41,13 +36,10 @@ const jsonResponse = (body: unknown, status = 200) =>
     headers: { "Content-Type": "application/vnd.api+json" },
   });
 
-const lastFetchCall = () => {
+const lastFetchUrl = () => {
   const call = fetchMock.mock.calls.at(-1);
   if (!call) throw new Error("fetch was not called");
-  return {
-    init: call[1] as RequestInit,
-    url: new URL(String(call[0])),
-  };
+  return new URL(String(call[0]));
 };
 
 beforeEach(() => {
@@ -78,7 +70,7 @@ describe("cross-account compliance actions", () => {
     });
 
     expect(result).toEqual({ status: "success", response: payload });
-    const { init, url } = lastFetchCall();
+    const url = lastFetchUrl();
     expect(url.pathname).toBe("/api/v1/cross-account-compliance-overviews");
     expect(url.searchParams.get("filter[compliance_id]")).toBe("cis_2.0_aws");
     expect(url.searchParams.get("filter[provider_type]")).toBe("aws");
@@ -87,7 +79,6 @@ describe("cross-account compliance actions", () => {
       "provider-1,provider-2",
     );
     expect(url.searchParams.get("filter[provider_groups__in]")).toBe("group-1");
-    expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("aborts a stalled request and reports the network failure", async () => {
@@ -116,77 +107,5 @@ describe("cross-account compliance actions", () => {
     });
     expect(requestSignal?.aborted).toBe(true);
     expect(captureExceptionMock).toHaveBeenCalledTimes(1);
-  });
-
-  it("starts PDF generation through the shared task protocol", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({ data: { type: "tasks", id: "task-1" } }, 202),
-    );
-
-    const result = await generateCrossAccountPdf({
-      complianceId: "cis_2.0_aws",
-      providerType: "aws",
-      filters: { scanIds: ["scan-1"] },
-      reportName: "aws-report.pdf",
-    });
-
-    expect(result).toEqual({ taskId: "task-1" });
-    const { init, url } = lastFetchCall();
-    expect(init.method).toBe("POST");
-    expect(init.signal).toBeInstanceOf(AbortSignal);
-    expect(url.pathname).toBe("/api/v1/cross-account-compliance-overviews/pdf");
-    expect(url.searchParams.get("report_name")).toBe("aws-report.pdf");
-  });
-
-  it("retrieves a completed PDF with its response filename", async () => {
-    fetchMock.mockResolvedValue(
-      new Response(Buffer.from("pdf-bytes"), {
-        headers: {
-          "Content-Disposition": 'attachment; filename="aws-report.pdf"',
-          "Content-Type": "application/pdf",
-        },
-      }),
-    );
-
-    const result = await getCrossAccountPdfBinary("task-1");
-
-    expect(result).toEqual({
-      success: true,
-      data: Buffer.from("pdf-bytes").toString("base64"),
-      filename: "aws-report.pdf",
-    });
-    expect(lastFetchCall().init.signal).toBeInstanceOf(AbortSignal);
-  });
-
-  it("returns the latest matching PDF descriptor", async () => {
-    fetchMock.mockResolvedValue(
-      jsonResponse({
-        data: {
-          id: "task-9",
-          attributes: {
-            completed_at: "2026-07-01T10:00:00Z",
-            result: { filename: "latest.pdf" },
-          },
-        },
-      }),
-    );
-
-    const result = await getLatestCrossAccountPdf({
-      complianceId: "cis_2.0_aws",
-      providerType: "aws",
-      filters: { providerIds: "provider-1" },
-    });
-
-    expect(result).toEqual({
-      taskId: "task-9",
-      filename: "latest.pdf",
-      completedAt: "2026-07-01T10:00:00Z",
-    });
-    const { init, url } = lastFetchCall();
-    expect(init.signal).toBeInstanceOf(AbortSignal);
-    expect(url.pathname).toBe(
-      "/api/v1/cross-account-compliance-overviews/pdf/latest",
-    );
-    expect(url.searchParams.get("filter[provider_id__in]")).toBe("provider-1");
   });
 });

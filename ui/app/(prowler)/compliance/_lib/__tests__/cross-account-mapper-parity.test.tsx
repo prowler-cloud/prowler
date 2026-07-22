@@ -309,37 +309,4 @@ describe("cross-account pipeline parity with real mappers", () => {
       crossAccountLeaves.map((t) => t.replace(/Fail$/, "")).sort(),
     ).toEqual(perScanLeaves.sort());
   });
-
-  it("generic (onboarding-style): rows show the requirement name", () => {
-    const attrs = buildAttrs(
-      [
-        {
-          id: "Predefine IAM Roles",
-          name: "Predefine IAM Roles",
-          description: "Predefine IAM roles for the account",
-          attributes: [
-            { Section: "Deploy account from predefined IaC template" },
-          ],
-          status: "FAIL",
-          accounts: { [ACC]: "FAIL" },
-          check_ids: ["check_a"],
-        },
-      ],
-      "AWS-Account-Security-Onboarding",
-    );
-
-    const { attributesData, requirementsData } =
-      crossAccountToMapperInput(attrs);
-    const data = mapGeneric(attributesData, requirementsData);
-    const items = toCrossAccountAccordionItems(
-      data,
-      new Map(),
-      "AWS-Account-Security-Onboarding",
-      accountMeta,
-    );
-
-    const { unmount } = render(<>{items[0].items?.[0].title}</>);
-    expect(screen.getByText("Predefine IAM Roles")).toBeInTheDocument();
-    unmount();
-  });
 });

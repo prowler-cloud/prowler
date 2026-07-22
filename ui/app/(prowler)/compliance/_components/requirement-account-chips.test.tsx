@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
-import type { CrossAccountAccountRef } from "../_types";
+import type { AccountStatusMap, CrossAccountAccountRef } from "../_types";
 
 import { RequirementAccountChips } from "./requirement-account-chips";
 
@@ -28,32 +29,33 @@ describe("RequirementAccountChips", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("collapses to per-status counts beyond two accounts", () => {
-    const meta = [
-      account(1, "prod"),
-      account(2, "staging"),
-      account(3, "dev"),
-      account(4, null),
-    ];
-    render(
-      <RequirementAccountChips
-        accounts={{
-          [meta[0].id]: "FAIL",
-          [meta[1].id]: "FAIL",
-          [meta[2].id]: "PASS",
-          [meta[3].id]: "MANUAL",
-        }}
-        accountMeta={meta}
-      />,
+  it("collapses many accounts without hiding the full breakdown", async () => {
+    const user = userEvent.setup();
+    const meta = Array.from({ length: 13 }, (_, index) =>
+      account(index + 1, `account-${index + 1}`),
+    );
+    const accounts: AccountStatusMap = Object.fromEntries(
+      meta.map((entry, index) => {
+        const status = index < 2 ? "FAIL" : index === 2 ? "MANUAL" : "PASS";
+        return [entry.id, status];
+      }),
     );
 
-    // Constant-footprint summary: one count per status present, no
-    // per-account labels inline.
-    const summary = screen.getByTestId("requirement-status-summary");
+    render(<RequirementAccountChips accounts={accounts} accountMeta={meta} />);
+
+    const summary = screen.getByRole("button", {
+      name: "Show status breakdown for 13 providers",
+    });
     expect(summary).toHaveTextContent("Fail×2");
     expect(summary).toHaveTextContent("Manual×1");
-    expect(summary).toHaveTextContent("Pass×1");
-    expect(screen.queryByText("prod")).not.toBeInTheDocument();
+    expect(summary).toHaveTextContent("Pass×10");
+    expect(screen.queryByText("account-1")).not.toBeInTheDocument();
+
+    await user.click(summary);
+
+    expect(screen.getByText(/^account-1 \(/)).toBeVisible();
+    expect(screen.getByText(/^account-13 \(/)).toBeVisible();
+    expect(screen.queryByText(/more/)).not.toBeInTheDocument();
   });
 
   it("only counts accounts that contributed a status", () => {
