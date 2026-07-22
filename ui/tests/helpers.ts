@@ -142,7 +142,7 @@ async function findProviderRow(
   );
 
   const providerRow = page.providersTable
-    .locator("tbody tr")
+    .getByRole("row")
     .filter({ hasText: providerUID })
     .first();
   const noResults = page.providersTable.getByRole("cell", {
