@@ -127,8 +127,9 @@ class Test_ec2_instance_stopped_older_than_specific_days:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags is None
             assert search(
-                f"EC2 Instance {instance.id} is stopped for", result[0].status_extended
+                f"EC2 Instance {instance.id} was launched", result[0].status_extended
             )
+            assert "is currently stopped" in result[0].status_extended
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
@@ -177,8 +178,9 @@ class Test_ec2_instance_stopped_older_than_specific_days:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags is None
             assert search(
-                f"EC2 Instance {instance.id} is stopped for", result[0].status_extended
+                f"EC2 Instance {instance.id} was launched", result[0].status_extended
             )
+            assert "is currently stopped" in result[0].status_extended
             assert result[0].resource_id == instance.id
             assert (
                 result[0].resource_arn
