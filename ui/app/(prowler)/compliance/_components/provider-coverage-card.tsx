@@ -3,10 +3,7 @@
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn";
 import { Progress } from "@/components/shadcn/progress";
-import {
-  getScoreColor,
-  getScoreIndicatorClass,
-} from "@/lib/compliance/score-utils";
+import { getScoreColor } from "@/lib/compliance/score-utils";
 import type { KnownProviderType } from "@/types/providers";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 
@@ -57,43 +54,47 @@ export const ProviderCoverageCard = ({
       }));
 
   return (
-    <Card variant="base" className="flex h-full min-h-[372px] flex-col">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      {/* Capped + scrollable so a long list never stretches the sibling
-          chart cards in the same grid row. */}
-      <CardContent className="minimal-scrollbar flex max-h-[300px] flex-col gap-4 overflow-y-auto">
-        {resolvedRows.length === 0 && (
-          <p className="text-text-neutral-secondary text-sm">{emptyMessage}</p>
-        )}
-        {resolvedRows.map((entry) => (
-          <div key={entry.key} data-testid={`coverage-row-${entry.key}`}>
-            <div className="flex items-center justify-between gap-3 text-sm">
-              <span className="flex min-w-0 items-center gap-2">
-                <ProviderTypeIcon type={entry.iconType} size={18} />
-                <span className="truncate">{entry.label}</span>
-              </span>
-              <span className="text-text-neutral-secondary text-xs">
-                {entry.score}%
-              </span>
-            </div>
-            <div className="mt-1.5 flex items-center gap-3">
-              <Progress
-                aria-label={`${entry.label} passing score`}
-                value={entry.score}
-                className="border-border-neutral-secondary h-2 border"
-                indicatorClassName={getScoreIndicatorClass(
-                  getScoreColor(entry.score),
-                )}
-              />
-              <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
-                {entry.pass}/{entry.pass + entry.fail} · {entry.manual} manual
-              </span>
-            </div>
+    <Card variant="base">
+      <div className="flex min-h-[340px] flex-col gap-6">
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {/* Capped + scrollable so a long list never stretches the sibling
+              chart cards in the same grid row. */}
+          <div className="minimal-scrollbar flex max-h-[300px] flex-col gap-4 overflow-y-auto">
+            {resolvedRows.length === 0 && (
+              <p className="text-text-neutral-secondary text-sm">
+                {emptyMessage}
+              </p>
+            )}
+            {resolvedRows.map((entry) => (
+              <div key={entry.key} data-testid={`coverage-row-${entry.key}`}>
+                <div className="flex items-center justify-between gap-3 text-sm">
+                  <span className="flex min-w-0 items-center gap-2">
+                    <ProviderTypeIcon type={entry.iconType} size={18} />
+                    <span className="truncate">{entry.label}</span>
+                  </span>
+                  <span className="text-text-neutral-secondary text-xs">
+                    {entry.score}%
+                  </span>
+                </div>
+                <div className="mt-1.5 flex items-center gap-3">
+                  <Progress
+                    aria-label={`${entry.label} passing score`}
+                    value={entry.score}
+                    variant={getScoreColor(entry.score)}
+                  />
+                  <span className="text-text-neutral-tertiary text-xs whitespace-nowrap">
+                    {entry.pass}/{entry.pass + entry.fail} · {entry.manual}{" "}
+                    manual
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </CardContent>
+        </CardContent>
+      </div>
     </Card>
   );
 };

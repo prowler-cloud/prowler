@@ -1,201 +1,31 @@
-import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
 import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
-import { InfoTooltip } from "@/components/shadcn/info-field/info-field";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/shadcn/table/status-finding-badge";
-import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
-import type { Control, Framework, Requirement } from "@/types/compliance";
+import type { Framework } from "@/types/compliance";
 
 import { CrossProviderRequirementContent } from "../_components/cross-provider-requirement-content";
 import { RequirementProviderChips } from "../_components/requirement-provider-chips";
 import type { CrossProviderRequirementExtras } from "../_types";
 
-/**
- * Accordion assembly for the cross-provider detail. Mirrors the per-scan
- * mappers' `toAccordionItems` (same section key scheme, so `?section=` deep
- * links behave identically) but swaps the per-scan findings content for the
- * per-provider fan-out. Each requirement's status is shown once, on the same
- * row as the name and the expand chevron: via the per-provider chips when a
- * breakdown exists, or a single roll-up badge as a fallback. `extras` is the
- * map produced by `buildRequirementExtrasMap`, keyed by the mapper-composed
- * requirement name.
- *
- * Row titles and hierarchy mirror what each mapper's OWN per-scan
- * `toAccordionItems` renders (see the cross-account sibling for the full
- * rationale): flat mappers keep requirement rows, single-requirement
- * controls with a distinct label (CIS style) use that richer label as the
- * row title, labeled multi-requirement controls (ENS style) keep the
- * control as a nested accordion level, and multi-framework data keeps the
- * framework as the top level.
- */
+import { toAggregatedComplianceAccordionItems } from "./aggregated-compliance-accordion";
+
 export const toCrossProviderAccordionItems = (
   data: Framework[],
   extras: Map<string, CrossProviderRequirementExtras>,
   framework: string,
-): AccordionItemProps[] => {
-  const requirementItem = (
-    requirement: Requirement,
-    itemKey: string,
-    rowTitle: string,
-  ): AccordionItemProps => {
-    const requirementExtras = extras.get(requirement.name as string);
-    const requirementType =
-      typeof requirement.type === "string" ? requirement.type : "";
-
-    return {
-      key: itemKey,
-      title: (
-        <div className="flex w-full items-center justify-between gap-3">
-          {/* Same left-side composition as the per-scan
-              ComplianceAccordionRequirementTitle (type chip + name +
-              invalid-config note); only the right side differs (per-provider
-              chips instead of one status badge). */}
-          <div className="flex min-w-0 items-center gap-2">
-            {requirementType && (
-              <span className="bg-button-primary/10 text-button-primary rounded-md px-2 py-0.5 text-xs font-medium">
-                {requirementType}
-              </span>
-            )}
-            <span className="min-w-0 truncate">{rowTitle}</span>
-            {requirement.invalid_config && (
-              <InfoTooltip content={INVALID_CONFIG_NOTE} />
-            )}
-          </div>
-          {requirementExtras ? (
-            <RequirementProviderChips providers={requirementExtras.providers} />
-          ) : (
-            <StatusFindingBadge status={requirement.status as FindingStatus} />
-          )}
-        </div>
-      ),
-      // Explicit key on the content element, matching the per-scan mappers
-      // (csa.tsx et al.): these elements travel to the client inside the
-      // serialized `items` array, where React's Flight layer warns about
-      // un-keyed elements ("Each child in a list…").
-      content: requirementExtras ? (
-        <CrossProviderRequirementContent
-          key={`content-${itemKey}`}
-          requirement={requirement}
-          extras={requirementExtras}
-          framework={framework}
-        />
-      ) : (
-        <p key={`content-${itemKey}`} className="text-sm">
-          No per-provider breakdown is available for this requirement.
-        </p>
-      ),
-      items: [],
-    };
-  };
-
-  const controlItems = (
-    control: Control,
-    categoryName: string,
-    baseKey: string,
-  ): AccordionItemProps[] => {
-    const groupLabel =
-      control.label && control.label !== categoryName
-        ? control.label
-        : undefined;
-
-    if (groupLabel && control.requirements.length > 1) {
-      return [
-        {
-          key: baseKey,
-          title: (
-            <ComplianceAccordionTitle
-              label={groupLabel}
-              pass={control.pass}
-              fail={control.fail}
-              manual={control.manual}
-            />
-          ),
-          content: "",
-          items: control.requirements.map((requirement, reqIndex) =>
-            requirementItem(
-              requirement,
-              `${baseKey}-req-${reqIndex}`,
-              requirement.name as string,
-            ),
-          ),
-        },
-      ];
-    }
-
-    return control.requirements.map((requirement, reqIndex) =>
-      requirementItem(
-        requirement,
-        `${baseKey}-req-${reqIndex}`,
-        (groupLabel ?? requirement.name) as string,
-      ),
-    );
-  };
-
-  const categoryItems = (frameworkData: Framework): AccordionItemProps[] =>
-    frameworkData.categories.map((category) => ({
-      key: `${frameworkData.name}-${category.name}`,
-      title: (
-        <ComplianceAccordionTitle
-          label={category.name}
-          pass={category.pass}
-          fail={category.fail}
-          manual={category.manual}
-          isParentLevel={data.length === 1}
-        />
-      ),
-      content: "",
-      // The control index participates in the key: a category can hold
-      // several controls whose requirement lists all start at index 0, so
-      // keying on the requirement index alone collides across controls
-      // (React "two children with the same key").
-      items: category.controls.flatMap((control, controlIndex) =>
-        controlItems(
-          control,
-          category.name,
-          `${frameworkData.name}-${category.name}-c${controlIndex}`,
-        ),
-      ),
-    }));
-
-  const frameworkItems = (frameworkData: Framework): AccordionItemProps[] => {
-    // Flat generic-mapper structure (e.g. GDPR): requirements hang directly
-    // off the framework with no categories — that mapper's per-scan
-    // toAccordionItems renders them as top-level rows, so mirror it.
-    const directRequirements =
-      (frameworkData as { requirements?: Requirement[] }).requirements ?? [];
-    if (directRequirements.length > 0) {
-      return directRequirements.map((requirement, reqIndex) =>
-        requirementItem(
-          requirement,
-          `${frameworkData.name}-req-${reqIndex}`,
-          requirement.name as string,
-        ),
-      );
-    }
-    return categoryItems(frameworkData);
-  };
-
-  // Multi-framework data (ENS marcos: Operacional, Organizativo…) keeps the
-  // framework as the top accordion level, exactly like that mapper's own
-  // per-scan toAccordionItems; single-framework data starts at categories.
-  if (data.length > 1) {
-    return data.map((frameworkData) => ({
-      key: frameworkData.name,
-      title: (
-        <ComplianceAccordionTitle
-          label={frameworkData.name}
-          pass={frameworkData.pass}
-          fail={frameworkData.fail}
-          manual={frameworkData.manual}
-          isParentLevel={true}
-        />
-      ),
-      content: "",
-      items: frameworkItems(frameworkData),
-    }));
-  }
-
-  return data.flatMap(frameworkItems);
-};
+): AccordionItemProps[] =>
+  toAggregatedComplianceAccordionItems({
+    data,
+    extras,
+    renderStatus: (requirementExtras) => (
+      <RequirementProviderChips providers={requirementExtras.providers} />
+    ),
+    renderContent: (requirement, requirementExtras, itemKey) => (
+      <CrossProviderRequirementContent
+        key={`content-${itemKey}`}
+        requirement={requirement}
+        extras={requirementExtras}
+        framework={framework}
+      />
+    ),
+    missingBreakdownMessage:
+      "No per-provider breakdown is available for this requirement.",
+  });

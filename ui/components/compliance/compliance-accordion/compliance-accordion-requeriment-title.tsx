@@ -1,5 +1,11 @@
+import type { ReactNode } from "react";
+
+import { Badge } from "@/components/shadcn/badge/badge";
 import { InfoTooltip } from "@/components/shadcn/info-field/info-field";
-import { FindingStatus, StatusFindingBadge } from "@/components/shadcn/table";
+import {
+  type FindingStatus,
+  StatusFindingBadge,
+} from "@/components/shadcn/table/status-finding-badge";
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 
 interface ComplianceAccordionRequirementTitleProps {
@@ -7,6 +13,7 @@ interface ComplianceAccordionRequirementTitleProps {
   name: string;
   status: FindingStatus;
   invalidConfig?: boolean;
+  statusContent?: ReactNode;
 }
 
 export const ComplianceAccordionRequirementTitle = ({
@@ -14,19 +21,20 @@ export const ComplianceAccordionRequirementTitle = ({
   name,
   status,
   invalidConfig = false,
+  statusContent,
 }: ComplianceAccordionRequirementTitleProps) => {
   return (
     <div className="flex w-full items-center justify-between gap-2">
       <div className="flex w-5/6 items-center gap-2">
         {type && (
-          <span className="bg-button-primary/10 text-button-primary rounded-md px-2 py-0.5 text-xs font-medium">
+          <Badge variant="tag" size="sm">
             {type}
-          </span>
+          </Badge>
         )}
         <span>{name}</span>
         {invalidConfig && <InfoTooltip content={INVALID_CONFIG_NOTE} />}
       </div>
-      <StatusFindingBadge status={status} />
+      {statusContent ?? <StatusFindingBadge status={status} />}
     </div>
   );
 };

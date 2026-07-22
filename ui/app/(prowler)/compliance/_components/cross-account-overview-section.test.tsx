@@ -164,4 +164,94 @@ describe("CrossAccountOverviewSection", () => {
     expect(container).toBeEmptyDOMElement();
     expect(getCompliancesOverview).not.toHaveBeenCalled();
   });
+
+  it("scopes provider counts to the active account and group filters", async () => {
+    // Given: three AWS providers exist, but only two match the active filters.
+    vi.mocked(getAllProviders).mockImplementation(async ({ filters } = {}) => {
+      const isFiltered =
+        filters?.["filter[id__in]"] === "aws-1,aws-2" &&
+        filters?.["filter[provider_groups__in]"] === "group-1";
+
+      return providersResponse(
+        isFiltered
+          ? [
+              { id: "aws-1", type: "aws" },
+              { id: "aws-2", type: "aws" },
+            ]
+          : [
+              { id: "aws-1", type: "aws" },
+              { id: "aws-2", type: "aws" },
+              { id: "aws-3", type: "aws" },
+            ],
+      );
+    });
+    vi.mocked(getScans).mockResolvedValue(
+      scansFor([{ id: "scan-1", providerId: "aws-1" }]),
+    );
+    vi.mocked(getCompliancesOverview).mockResolvedValue({
+      data: [
+        {
+          id: "cis_2.0_aws",
+          attributes: { framework: "CIS", version: "2.0" },
+        },
+      ],
+    });
+
+    // When
+    await renderSection({
+      "filter[provider_id__in]": "aws-1,aws-2",
+      "filter[provider_groups__in]": "group-1",
+    });
+
+    // Then: the overview count matches the same provider set as the detail.
+    expect(screen.getByText("1 framework · 2 providers")).toBeInTheDocument();
+    expect(screen.queryByText(/3 providers/)).not.toBeInTheDocument();
+  });
+
+  it("loads one representative completed scan for every eligible provider type", async () => {
+    // Given: two eligible types whose representative scans must be resolved
+    // independently, regardless of how many other scans the tenant has.
+    vi.mocked(getAllProviders).mockResolvedValue(
+      providersResponse([
+        { id: "aws-1", type: "aws" },
+        { id: "aws-2", type: "aws" },
+        { id: "gcp-1", type: "gcp" },
+        { id: "gcp-2", type: "gcp" },
+      ]),
+    );
+    vi.mocked(getScans).mockImplementation(async ({ filters }) => {
+      const providerType = (
+        filters as Record<string, string | undefined> | undefined
+      )?.["filter[provider_type]"];
+      if (providerType === "aws") {
+        return scansFor([{ id: "scan-aws", providerId: "aws-1" }]);
+      }
+      if (providerType === "gcp") {
+        return scansFor([{ id: "scan-gcp", providerId: "gcp-1" }]);
+      }
+      return scansFor([]);
+    });
+    vi.mocked(getCompliancesOverview).mockResolvedValue({
+      data: [
+        {
+          id: "framework-1",
+          attributes: { framework: "Framework", version: "1.0" },
+        },
+      ],
+    });
+
+    // When
+    await renderSection();
+
+    // Then
+    expect(screen.getByText("AWS")).toBeInTheDocument();
+    expect(screen.getByText("Google Cloud")).toBeInTheDocument();
+    expect(getScans).toHaveBeenCalledTimes(2);
+    expect(getCompliancesOverview).toHaveBeenCalledWith({
+      scanId: "scan-aws",
+    });
+    expect(getCompliancesOverview).toHaveBeenCalledWith({
+      scanId: "scan-gcp",
+    });
+  });
 });

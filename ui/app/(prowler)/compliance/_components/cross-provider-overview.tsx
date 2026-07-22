@@ -3,6 +3,13 @@ import { AlertTriangle, Info } from "lucide-react";
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import {
+  Section,
+  SectionContent,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/shadcn/section/section";
 import { SearchParamsProps } from "@/types";
 import type { KnownProviderType } from "@/types/providers";
 
@@ -16,7 +23,6 @@ import {
 import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
 
-import { ComplianceSectionHeader } from "./compliance-section-header";
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
@@ -181,20 +187,25 @@ export const CrossProviderOverview = async ({
           </Alert>
         )}
 
-      <section className="flex flex-col gap-4">
-        <ComplianceSectionHeader
-          title="Across provider types"
-          description="Universal frameworks aggregated across every compatible provider type, using the latest completed scan of each provider."
-        />
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-          {summaries.map((summary) => (
-            <CrossProviderFrameworkCard
-              key={summary.complianceId}
-              {...summary}
-            />
-          ))}
-        </div>
-      </section>
+      <Section>
+        <SectionHeader>
+          <SectionTitle>Across provider types</SectionTitle>
+          <SectionDescription>
+            Universal frameworks aggregated across every compatible provider
+            type, using the latest completed scan of each provider.
+          </SectionDescription>
+        </SectionHeader>
+        <SectionContent>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+            {summaries.map((summary) => (
+              <CrossProviderFrameworkCard
+                key={summary.complianceId}
+                {...summary}
+              />
+            ))}
+          </div>
+        </SectionContent>
+      </Section>
     </div>
   );
 };

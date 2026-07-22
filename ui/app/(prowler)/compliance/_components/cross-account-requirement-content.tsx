@@ -1,12 +1,13 @@
 "use client";
 
-import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import type { Requirement } from "@/types/compliance";
 
 import type {
   CrossAccountAccountRef,
   CrossAccountRequirementExtras,
 } from "../_types";
+
+import { AggregatedRequirementContent } from "./aggregated-requirement-content";
 
 interface CrossAccountRequirementContentProps {
   /** The requirement as produced by the framework mapper (roll-up level). */
@@ -34,15 +35,6 @@ export const CrossAccountRequirementContent = ({
     (account) => extras.accounts[account.id],
   );
 
-  if (contributingAccounts.length === 0) {
-    return (
-      <p className="text-sm">
-        No account scan contributed to this requirement with the current
-        filters.
-      </p>
-    );
-  }
-
   const scanIds = Array.from(
     new Set(
       contributingAccounts.flatMap(
@@ -52,11 +44,11 @@ export const CrossAccountRequirementContent = ({
   );
 
   return (
-    <ClientAccordionContent
+    <AggregatedRequirementContent
       requirement={requirement}
       scanIds={scanIds}
       framework={framework}
-      disableFindings={requirement.check_ids.length === 0}
+      emptyMessage="No account scan contributed to this requirement with the current filters."
     />
   );
 };

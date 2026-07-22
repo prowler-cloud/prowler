@@ -21,8 +21,17 @@ vi.mock(
   () => ({
     // Render the row name so parity assertions can compare the per-scan
     // accordion's visible titles against the cross-account builder's.
-    ComplianceAccordionRequirementTitle: ({ name }: { name: string }) => (
-      <span>{name}</span>
+    ComplianceAccordionRequirementTitle: ({
+      name,
+      type,
+    }: {
+      name: string;
+      type: string;
+    }) => (
+      <>
+        {type && <span>{type}</span>}
+        <span>{name}</span>
+      </>
     ),
   }),
 );

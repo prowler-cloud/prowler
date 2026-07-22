@@ -4,7 +4,14 @@ import { getScans } from "@/actions/scans";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
 import { Accordion } from "@/components/shadcn/accordion/Accordion";
-import type { ScanProps, SearchParamsProps } from "@/types";
+import {
+  Section,
+  SectionContent,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+} from "@/components/shadcn/section/section";
+import type { SearchParamsProps } from "@/types";
 import type { ComplianceOverviewData } from "@/types/compliance";
 import {
   isKnownProviderType,
@@ -15,7 +22,6 @@ import {
 import { CROSS_PROVIDER_FRAMEWORKS } from "../_lib/cross-provider-frameworks";
 import type { CrossAccountFrameworkEntry } from "../_types";
 
-import { ComplianceSectionHeader } from "./compliance-section-header";
 import { CrossAccountFrameworkCard } from "./cross-account-framework-card";
 
 /** Only provider types with at least this many accounts get cross-account
@@ -27,9 +33,9 @@ const MIN_ACCOUNTS = 2;
  * for every provider type with 2+ accounts, lists the regular (per-provider)
  * frameworks that can be viewed aggregated across that type's accounts.
  *
- * The framework list per type comes from the latest completed scan of any
- * account of that type (frameworks are a property of the provider type, not
- * of the account). Universal frameworks are excluded — they already have
+ * The framework list per type comes from a completed scan of any account of
+ * that type (frameworks are a property of the provider type, not of the
+ * account). Universal frameworks are excluded — they already have
  * their own cross-provider cards above. Renders nothing when no provider
  * type qualifies, keeping the tab unchanged for single-account tenants.
  * Best-effort by design: a type whose scan or framework list fails to load
@@ -40,88 +46,95 @@ export const CrossAccountOverviewSection = async ({
 }: {
   searchParams: SearchParamsProps;
 }) => {
+  const providerFilters = {
+    "filter[provider_type__in]":
+      searchParams["filter[provider_type__in]"]?.toString(),
+    "filter[id__in]": searchParams["filter[provider_id__in]"]?.toString(),
+    "filter[provider_groups__in]":
+      searchParams["filter[provider_groups__in]"]?.toString(),
+  };
   const providerTypeFilter =
-    searchParams["filter[provider_type__in]"]
-      ?.toString()
-      .split(",")
-      .filter(Boolean) ?? [];
-
-  const [providersData, scansData] = await Promise.all([
-    getAllProviders(),
-    getScans({
-      filters: { "filter[state]": "completed" },
-      pageSize: 50,
-      fields: { scans: "name,completed_at,provider" },
-      include: "provider",
-    }),
-  ]);
+    providerFilters["filter[provider_type__in]"]?.split(",").filter(Boolean) ??
+    [];
+  const providersData = await getAllProviders({ filters: providerFilters });
 
   const accountCounts = new Map<KnownProviderType, number>();
+  const providerIdsByType = new Map<KnownProviderType, string[]>();
   for (const provider of providersData?.data || []) {
     const type = provider.attributes.provider;
     if (!isKnownProviderType(type)) continue;
     accountCounts.set(type, (accountCounts.get(type) ?? 0) + 1);
+    providerIdsByType.set(type, [
+      ...(providerIdsByType.get(type) ?? []),
+      provider.id,
+    ]);
   }
 
   const eligibleTypes = Array.from(accountCounts.entries())
-    .filter(([type, count]) => {
-      if (count < MIN_ACCOUNTS) return false;
-      return (
-        providerTypeFilter.length === 0 || providerTypeFilter.includes(type)
-      );
-    })
+    .filter(
+      ([type, count]) =>
+        count >= MIN_ACCOUNTS &&
+        (providerTypeFilter.length === 0 || providerTypeFilter.includes(type)),
+    )
     .map(([type]) => type)
     .sort();
 
   if (eligibleTypes.length === 0) return null;
 
-  // Latest completed scan per eligible type (the API returns scans newest
-  // first). One representative scan per type is enough to enumerate the
-  // type's frameworks.
-  const latestScanByType = new Map<KnownProviderType, string>();
-  for (const scan of (scansData?.data || []) as ScanProps[]) {
-    const providerId = scan.relationships?.provider?.data?.id;
-    if (!providerId) continue;
-    const providerData = scansData.included?.find(
-      (item: { type: string; id: string }) =>
-        item.type === "providers" && item.id === providerId,
-    );
-    const type = providerData?.attributes?.provider;
-    if (!isKnownProviderType(type)) continue;
-    if (!eligibleTypes.includes(type) || latestScanByType.has(type)) continue;
-    latestScanByType.set(type, scan.id);
-  }
+  // Resolve one representative scan independently for every eligible type.
+  // A single global scans page can omit less-recent provider types on tenants
+  // with a large scan history.
+  const scansByType = await Promise.all(
+    eligibleTypes.map(async (type) => {
+      const scansData = await getScans({
+        filters: {
+          "filter[state]": "completed",
+          "filter[provider_type]": type,
+          "filter[provider__in]": (providerIdsByType.get(type) ?? []).join(","),
+        },
+        pageSize: 1,
+        fields: { scans: "name" },
+      });
+      const scanId = scansData?.data?.[0]?.id;
+      return scanId ? ([type, scanId] as const) : null;
+    }),
+  );
+  const representativeScanByType = new Map(
+    scansByType.filter((entry) => entry !== null),
+  );
 
   const universalIds = new Set(
     CROSS_PROVIDER_FRAMEWORKS.map((entry) => entry.complianceId),
   );
 
   const entriesByType = await Promise.all(
-    Array.from(latestScanByType.entries()).map(async ([type, scanId]) => {
-      const compliancesData = await getCompliancesOverview({ scanId });
-      const frameworks: ComplianceOverviewData[] = Array.isArray(
-        compliancesData?.data,
-      )
-        ? compliancesData.data
-        : [];
+    Array.from(representativeScanByType.entries()).map(
+      async ([type, scanId]) => {
+        const compliancesData = await getCompliancesOverview({ scanId });
+        const frameworks: ComplianceOverviewData[] = Array.isArray(
+          compliancesData?.data,
+        )
+          ? compliancesData.data
+          : [];
 
-      return frameworks
-        .filter(
-          (compliance) =>
-            compliance.attributes.framework !== "ProwlerThreatScore" &&
-            !universalIds.has(compliance.id),
-        )
-        .map(
-          (compliance): CrossAccountFrameworkEntry => ({
-            complianceId: compliance.id,
-            title: compliance.attributes.framework,
-            version: compliance.attributes.version,
-            providerType: type,
-            accountCount: accountCounts.get(type) ?? 0,
-          }),
-        )
-        .sort((a, b) => a.title.localeCompare(b.title));
-    }),
+        return frameworks
+          .filter(
+            (compliance) =>
+              compliance.attributes.framework !== "ProwlerThreatScore" &&
+              !universalIds.has(compliance.id),
+          )
+          .map(
+            (compliance): CrossAccountFrameworkEntry => ({
+              complianceId: compliance.id,
+              title: compliance.attributes.framework,
+              version: compliance.attributes.version,
+              providerType: type,
+              accountCount: accountCounts.get(type) ?? 0,
+            }),
+          )
+          .sort((a, b) => a.title.localeCompare(b.title));
+      },
+    ),
   );
 
   const groups = entriesByType
@@ -160,12 +173,18 @@ export const CrossAccountOverviewSection = async ({
   });
 
   return (
-    <section className="flex flex-col gap-4">
-      <ComplianceSectionHeader
-        title="Across providers"
-        description="Single-provider frameworks aggregated across every provider of the same type, using each provider's latest completed scan. Expand a provider type to browse its frameworks."
-      />
-      <Accordion items={accordionItems} selectionMode="multiple" />
-    </section>
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Across providers</SectionTitle>
+        <SectionDescription>
+          Single-provider frameworks aggregated across every provider of the
+          same type, using each provider&apos;s latest completed scan. Expand a
+          provider type to browse its frameworks.
+        </SectionDescription>
+      </SectionHeader>
+      <SectionContent>
+        <Accordion items={accordionItems} selectionMode="multiple" />
+      </SectionContent>
+    </Section>
   );
 };

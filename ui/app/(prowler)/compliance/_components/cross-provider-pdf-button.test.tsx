@@ -30,6 +30,7 @@ const {
   generateAccountPdfMock,
   trackAndPollMock,
   downloadPdfMock,
+  downloadAccountPdfMock,
   toastMock,
   storeState,
 } = vi.hoisted(() => ({
@@ -37,6 +38,7 @@ const {
   generateAccountPdfMock: vi.fn(),
   trackAndPollMock: vi.fn(),
   downloadPdfMock: vi.fn(),
+  downloadAccountPdfMock: vi.fn(),
   toastMock: vi.fn(),
   storeState: {
     tasks: {} as Record<
@@ -70,7 +72,7 @@ vi.mock("../_lib/cross-provider-pdf", () => ({
 vi.mock("../_lib/cross-account-pdf", () => ({
   CROSS_ACCOUNT_PDF_TASK_KIND: "cross-account-pdf",
   buildCrossAccountPdfTaskScope: vi.fn(() => "account-scope-1"),
-  downloadCrossAccountPdf: vi.fn(),
+  downloadCrossAccountPdf: downloadAccountPdfMock,
   crossAccountPdfHandler: { onReady: vi.fn(), onError: vi.fn() },
 }));
 
@@ -245,6 +247,27 @@ describe("CrossProviderPdfButton", () => {
       kind: "cross-account-pdf",
       meta: expect.objectContaining({ scopeKey: "account-scope-1" }),
     });
+  });
+
+  it("downloads the latest report through the cross-account action", async () => {
+    const user = userEvent.setup();
+    render(
+      <CrossProviderPdfButton
+        {...props}
+        providerType="aws"
+        latestPdf={{ taskId: "task-acc-7", filename: "aws-latest.pdf" }}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /report/i }));
+    await user.click(
+      await screen.findByRole("menuitem", { name: /download latest/i }),
+    );
+
+    await waitFor(() =>
+      expect(downloadAccountPdfMock).toHaveBeenCalledWith("task-acc-7"),
+    );
+    expect(downloadPdfMock).not.toHaveBeenCalled();
   });
 
   it("does not offer a completed report from a different filter scope", async () => {

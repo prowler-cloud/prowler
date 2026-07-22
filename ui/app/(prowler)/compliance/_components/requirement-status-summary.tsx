@@ -2,23 +2,25 @@
 
 import type { ReactNode } from "react";
 
+import { Button } from "@/components/shadcn/button/button";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/shadcn/popover";
+import { ScrollArea } from "@/components/shadcn/scroll-area";
 import {
   type FindingStatus,
   StatusFindingBadge,
 } from "@/components/shadcn/table/status-finding-badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/shadcn/tooltip";
 
 import type { CrossProviderStatus } from "../_types";
 
 export interface RequirementStatusEntry {
   key: string;
-  /** Short label shown in the hover breakdown list. */
+  /** Short label shown in the breakdown popover. */
   label: string;
-  /** Optional icon rendered before the label in the breakdown list. */
+  /** Optional icon rendered before the label in the breakdown popover. */
   icon?: ReactNode;
   status: CrossProviderStatus;
 }
@@ -26,15 +28,14 @@ export interface RequirementStatusEntry {
 /** Statuses in triage order — failures first, evidence last. */
 const STATUS_ORDER: readonly CrossProviderStatus[] = ["FAIL", "MANUAL", "PASS"];
 
-/** Hover breakdown stays glanceable; beyond this it points at the row's
- *  drill-down instead of becoming a scrolling list inside a tooltip. */
-const MAX_BREAKDOWN_ROWS = 12;
+const SCROLLABLE_BREAKDOWN_MIN_ROWS = 13;
 
 /**
  * Aggregated per-status counts for a requirement row whose column axis has
  * too many members to chip inline (many accounts of one provider type, or
  * many provider types). Constant footprint regardless of N: one count badge
- * per status present, with the full per-member breakdown on hover.
+ * per status present, with the full per-member breakdown in an accessible
+ * popover.
  */
 export const RequirementStatusSummary = ({
   entries,
@@ -46,15 +47,35 @@ export const RequirementStatusSummary = ({
     count: entries.filter((entry) => entry.status === status).length,
   })).filter(({ count }) => count > 0);
 
-  const breakdown = entries.slice(0, MAX_BREAKDOWN_ROWS);
-  const hidden = entries.length - breakdown.length;
+  const breakdownList = (
+    <div className="flex flex-col gap-1.5">
+      {entries.map((entry) => (
+        <span
+          key={entry.key}
+          className="flex items-center justify-between gap-3"
+        >
+          <span className="flex min-w-0 items-center gap-1.5">
+            {entry.icon}
+            <span className="max-w-48 truncate text-xs">{entry.label}</span>
+          </span>
+          <StatusFindingBadge
+            status={entry.status as FindingStatus}
+            size="sm"
+          />
+        </span>
+      ))}
+    </div>
+  );
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="bare"
+          size="link-xs"
+          aria-label={`Show status breakdown for ${entries.length} providers`}
           data-testid="requirement-status-summary"
-          className="flex shrink-0 items-center gap-2"
         >
           {counts.map(({ status, count }) => (
             <span key={status} className="inline-flex items-center gap-1">
@@ -64,32 +85,15 @@ export const RequirementStatusSummary = ({
               </span>
             </span>
           ))}
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>
-        <div className="flex flex-col gap-1.5">
-          {breakdown.map((entry) => (
-            <span
-              key={entry.key}
-              className="flex items-center justify-between gap-3"
-            >
-              <span className="flex min-w-0 items-center gap-1.5">
-                {entry.icon}
-                <span className="max-w-48 truncate text-xs">{entry.label}</span>
-              </span>
-              <StatusFindingBadge
-                status={entry.status as FindingStatus}
-                size="sm"
-              />
-            </span>
-          ))}
-          {hidden > 0 && (
-            <span className="text-text-neutral-tertiary text-xs">
-              +{hidden} more — expand the requirement for the full breakdown
-            </span>
-          )}
-        </div>
-      </TooltipContent>
-    </Tooltip>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end">
+        {entries.length >= SCROLLABLE_BREAKDOWN_MIN_ROWS ? (
+          <ScrollArea size="md">{breakdownList}</ScrollArea>
+        ) : (
+          breakdownList
+        )}
+      </PopoverContent>
+    </Popover>
   );
 };

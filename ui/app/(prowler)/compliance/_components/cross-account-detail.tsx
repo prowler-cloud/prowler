@@ -1,19 +1,11 @@
 import { Info } from "lucide-react";
-import Image from "next/image";
 
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
-import {
-  ClientAccordionWrapper,
-  RequirementsStatusCard,
-  TopFailedSectionsCard,
-} from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
 import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
-import { Card } from "@/components/shadcn/card/card";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
-import type { Framework, RequirementsTotals } from "@/types/compliance";
 import {
   type KnownProviderType,
   PROVIDER_DISPLAY_NAMES,
@@ -23,6 +15,10 @@ import {
   getCrossAccountComplianceOverview,
   getLatestCrossAccountPdf,
 } from "../_actions/cross-account";
+import {
+  getAggregatedInitialExpandedKeys,
+  getAggregatedRequirementsTotals,
+} from "../_lib/aggregated-compliance-detail";
 import { toCrossAccountAccordionItems } from "../_lib/cross-account-accordion";
 import {
   buildAccountExtrasMap,
@@ -32,6 +28,7 @@ import {
 import { parseCrossAccountFilters } from "../_lib/cross-account-frameworks";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
 
+import { AggregatedComplianceDetail } from "./aggregated-compliance-detail";
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
@@ -132,14 +129,7 @@ export const CrossAccountDetail = async ({
     }),
   );
 
-  const totals: RequirementsTotals = data.reduce(
-    (acc: RequirementsTotals, framework: Framework) => ({
-      pass: acc.pass + framework.pass,
-      fail: acc.fail + framework.fail,
-      manual: acc.manual + framework.manual,
-    }),
-    { pass: 0, fail: 0, manual: 0 },
-  );
+  const totals = getAggregatedRequirementsTotals(data);
   const accordionItems = toCrossAccountAccordionItems(
     data,
     extras,
@@ -148,18 +138,11 @@ export const CrossAccountDetail = async ({
   );
   const topFailedResult = mapper.getTopFailedSections(data);
 
-  // Same `${framework.name}-${category.name}` key scheme as the per-scan
-  // detail, so ?section= deep links (e.g. from Top Failed Sections) work.
-  const initialExpandedKeys: string[] = [];
-  if (targetSection) {
-    const candidates = new Set(
-      data.map((framework: Framework) => `${framework.name}-${targetSection}`),
-    );
-    const match = accordionItems.find((item) => candidates.has(item.key));
-    if (match) {
-      initialExpandedKeys.push(match.key);
-    }
-  }
+  const initialExpandedKeys = getAggregatedInitialExpandedKeys(
+    data,
+    accordionItems,
+    targetSection,
+  );
 
   const logoPath = getComplianceIcon(compliancetitle);
 
@@ -180,79 +163,52 @@ export const CrossAccountDetail = async ({
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Header card — same structure as the cross-provider detail: identity
-          row (logo + context), filters below. */}
-      <Card variant="base" className="w-full gap-4 p-4 md:p-5">
-        <div className="flex w-full flex-col gap-4">
-          <div className="flex w-full items-center justify-between gap-4">
-            <div className="flex min-w-0 items-center gap-4">
-              {logoPath && (
-                <div className="relative h-12 w-12 shrink-0">
-                  <Image
-                    src={logoPath}
-                    alt={`${compliancetitle} logo`}
-                    fill
-                    className="rounded-lg border border-gray-300 bg-white object-contain p-0"
-                  />
-                </div>
-              )}
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <span className="truncate text-sm font-medium">
-                  {attrs.name || compliancetitle.split("-").join(" ")}
-                </span>
-                <p className="text-text-neutral-tertiary flex items-center gap-1.5 text-xs">
-                  <ProviderTypeIcon type={providerType} size={14} />
-                  {PROVIDER_DISPLAY_NAMES[providerType]} ·{" "}
-                  {attrs.accounts.length}{" "}
-                  {attrs.accounts.length === 1 ? "account" : "accounts"}{" "}
-                  aggregated · {attrs.scan_ids.length}{" "}
-                  {attrs.scan_ids.length === 1 ? "scan" : "scans"}
-                </p>
-              </div>
-            </div>
-            <div className="shrink-0">
-              <CrossProviderPdfButton
-                complianceId={complianceId}
-                providerType={providerType}
-                filters={{ ...filters, scanIds: attrs.scan_ids }}
-                latestPdf={latestPdf}
-              />
-            </div>
-          </div>
-
-          {/* No providerTypes: the type select is meaningless here — the
-              provider type is fixed by the framework being viewed. */}
-          <CrossProviderFilters
-            providerAccounts={providerAccounts}
-            providerGroups={providerGroups}
-          />
-        </div>
-      </Card>
-
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-[minmax(280px,400px)_minmax(280px,360px)_1fr]">
-        <RequirementsStatusCard
-          pass={totals.pass}
-          fail={totals.fail}
-          manual={totals.manual}
+    <AggregatedComplianceDetail
+      compliancetitle={compliancetitle}
+      logoPath={logoPath}
+      title={
+        <span className="truncate text-sm font-medium">
+          {attrs.name || compliancetitle.split("-").join(" ")}
+        </span>
+      }
+      description={
+        <p className="text-text-neutral-tertiary flex items-center gap-1.5 text-xs">
+          <ProviderTypeIcon type={providerType} size={14} />
+          {PROVIDER_DISPLAY_NAMES[providerType]} · {attrs.accounts.length}{" "}
+          {attrs.accounts.length === 1 ? "account" : "accounts"} aggregated ·{" "}
+          {attrs.scan_ids.length}{" "}
+          {attrs.scan_ids.length === 1 ? "scan" : "scans"}
+        </p>
+      }
+      reportAction={
+        <CrossProviderPdfButton
+          complianceId={complianceId}
+          providerType={providerType}
+          filters={{ ...filters, scanIds: attrs.scan_ids }}
+          latestPdf={latestPdf}
         />
+      }
+      filters={
+        <CrossProviderFilters
+          providerAccounts={providerAccounts}
+          providerGroups={providerGroups}
+        />
+      }
+      totals={totals}
+      coverage={
         <ProviderCoverageCard
           rows={coverageRows}
           title="Account Coverage"
           emptyMessage="No scanned accounts for this framework yet."
         />
-        <TopFailedSectionsCard
-          sections={topFailedResult.items}
-          dataType={topFailedResult.type}
-          prepopulated={topFailedResult.prepopulated}
-        />
-      </div>
-
-      <ClientAccordionWrapper
-        items={accordionItems}
-        defaultExpandedKeys={initialExpandedKeys}
-        scrollToKey={initialExpandedKeys[0]}
-      />
-    </div>
+      }
+      topFailed={{
+        sections: topFailedResult.items,
+        dataType: topFailedResult.type,
+        prepopulated: topFailedResult.prepopulated,
+      }}
+      accordionItems={accordionItems}
+      initialExpandedKeys={initialExpandedKeys}
+    />
   );
 };

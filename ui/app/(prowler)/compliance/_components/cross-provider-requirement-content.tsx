@@ -1,11 +1,12 @@
 "use client";
 
-import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import type { Requirement } from "@/types/compliance";
 import { PROVIDER_TYPES } from "@/types/providers";
 
 import { invertCheckIdsByProvider } from "../_lib/cross-provider-adapter";
 import type { CrossProviderRequirementExtras } from "../_types";
+
+import { AggregatedRequirementContent } from "./aggregated-requirement-content";
 
 interface CrossProviderRequirementContentProps {
   /** The requirement as produced by the framework mapper (roll-up level). */
@@ -31,15 +32,6 @@ export const CrossProviderRequirementContent = ({
     (type) => extras.providers[type],
   );
 
-  if (contributingTypes.length === 0) {
-    return (
-      <p className="text-sm">
-        No provider scan contributed to this requirement with the current
-        filters.
-      </p>
-    );
-  }
-
   const scanIds = Array.from(
     new Set(
       contributingTypes.flatMap((type) => extras.scanIdsByProvider[type] ?? []),
@@ -47,12 +39,12 @@ export const CrossProviderRequirementContent = ({
   );
 
   return (
-    <ClientAccordionContent
+    <AggregatedRequirementContent
       requirement={requirement}
       scanIds={scanIds}
       framework={framework}
       checkProviders={invertCheckIdsByProvider(extras.checkIdsByProvider)}
-      disableFindings={requirement.check_ids.length === 0}
+      emptyMessage="No provider scan contributed to this requirement with the current filters."
     />
   );
 };
