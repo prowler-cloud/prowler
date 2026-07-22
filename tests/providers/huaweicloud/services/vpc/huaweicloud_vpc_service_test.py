@@ -87,6 +87,58 @@ class TestVPCService:
         assert parsed_rule.port_range_min == 22
         assert parsed_rule.port_range_max == 22
 
+    def test_rule_fields_none_from_sdk_are_coerced(self):
+        # The Huawei SDK returns optional rule fields explicitly set to None
+        # (protocol/remote_ip_prefix/description), which must not raise a
+        # pydantic ValidationError.
+        rule = SimpleNamespace(
+            id="rule-1",
+            direction=None,
+            protocol=None,
+            ethertype=None,
+            port_range_min=None,
+            port_range_max=None,
+            remote_ip_prefix=None,
+            remote_group_id=None,
+            description=None,
+        )
+        sg = SimpleNamespace(
+            id="sg-1",
+            name=None,
+            vpc_id=None,
+            description=None,
+            security_group_rules=[rule],
+        )
+        vpc = SimpleNamespace(
+            id="vpc-1",
+            name=None,
+            cidr=None,
+            status=None,
+            description=None,
+            created_at=None,
+        )
+
+        regional_client = mock.MagicMock(region=REGION)
+        regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[vpc])
+        regional_client.list_security_groups.return_value = SimpleNamespace(
+            security_groups=[sg]
+        )
+
+        vpc_service = VPC(_provider_with_client(regional_client))
+
+        parsed_vpc = vpc_service.vpcs["vpc-1"]
+        assert parsed_vpc.name == "vpc-1"  # falls back to id
+        assert parsed_vpc.cidr == ""
+
+        parsed_sg = vpc_service.security_groups["sg-1"]
+        assert parsed_sg.name == "sg-1"  # falls back to id
+        assert parsed_sg.vpc_id == ""
+        parsed_rule = parsed_sg.rules[0]
+        assert parsed_rule.protocol == ""
+        assert parsed_rule.remote_ip_prefix == ""
+        assert parsed_rule.description == ""
+        assert parsed_rule.direction == ""
+
     def test_list_security_groups_empty(self):
         regional_client = mock.MagicMock(region=REGION)
         regional_client.list_vpcs.return_value = SimpleNamespace(vpcs=[])

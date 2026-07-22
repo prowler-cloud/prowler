@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class KMS(HuaweiCloudService):
@@ -34,7 +33,7 @@ class KMS(HuaweiCloudService):
 
             if response and response.key_details:
                 for key_data in response.key_details:
-                    key_id = getattr(key_data, "key_id", "")
+                    key_id = getattr(key_data, "key_id", None) or ""
                     is_rotation_enabled = False
                     rotation_period = ""
 
@@ -80,7 +79,7 @@ class KMS(HuaweiCloudService):
             )
 
 
-class KMSKey(BaseModel):
+class KMSKey(HuaweiCloudBaseModel):
     """KMS Key model."""
 
     id: str

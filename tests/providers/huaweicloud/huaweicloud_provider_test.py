@@ -219,6 +219,39 @@ class TestHuaweiCloudProviderRegionsForCloud:
         assert HuaweicloudProvider._regions_for_cloud("mars") == []
 
 
+class TestHuaweiCloudBaseModel:
+    def test_none_coerced_to_default_for_str_fields(self):
+        from typing import Optional
+
+        from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
+
+        class _Resource(HuaweiCloudBaseModel):
+            required_str: str
+            defaulted_str: str = "d"
+            optional_str: Optional[str] = None
+            optional_int: Optional[int] = None
+
+        # None on required and defaulted str fields is coerced, not rejected.
+        resource = _Resource(
+            required_str=None,
+            defaulted_str=None,
+            optional_str=None,
+            optional_int=None,
+        )
+        assert resource.required_str == ""
+        assert resource.defaulted_str == "d"  # falls back to the field default
+        assert resource.optional_str is None  # Optional still accepts None
+        assert resource.optional_int is None
+
+    def test_real_values_pass_through(self):
+        from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
+
+        class _Resource(HuaweiCloudBaseModel):
+            name: str = ""
+
+        assert _Resource(name="prod").name == "prod"
+
+
 class TestHuaweiCloudEndpointAlignment:
     def test_eu_region_corrects_com_service_endpoint(self):
         from prowler.providers.huaweicloud.models import _align_endpoint_tld

@@ -1,10 +1,9 @@
 from typing import List, Optional
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class IAM(HuaweiCloudService):
@@ -109,7 +108,7 @@ class IAM(HuaweiCloudService):
                         self.users.append(
                             IAMUser(
                                 id=user_data.id,
-                                name=getattr(user_data, "name", user_data.id),
+                                name=getattr(user_data, "name", None) or user_data.id,
                                 enabled=getattr(user_data, "enabled", True),
                                 password_expires_at=getattr(
                                     user_data, "password_expires_at", None
@@ -141,8 +140,9 @@ class IAM(HuaweiCloudService):
                 for device_data in response.virtual_mfa_devices:
                     self.mfa_devices.append(
                         MFADevice(
-                            serial_number=getattr(device_data, "serial_number", ""),
-                            user_id=getattr(device_data, "user_id", ""),
+                            serial_number=getattr(device_data, "serial_number", None)
+                            or "",
+                            user_id=getattr(device_data, "user_id", None) or "",
                         )
                     )
 
@@ -188,7 +188,7 @@ class IAM(HuaweiCloudService):
             )
 
 
-class PasswordPolicy(BaseModel):
+class PasswordPolicy(HuaweiCloudBaseModel):
     """IAM Password Policy model."""
 
     minimum_password_length: int = 0
@@ -201,7 +201,7 @@ class PasswordPolicy(BaseModel):
     password_not_username_or_invert: bool = False
 
 
-class IAMUser(BaseModel):
+class IAMUser(HuaweiCloudBaseModel):
     """IAM User model."""
 
     id: str
@@ -210,14 +210,14 @@ class IAMUser(BaseModel):
     password_expires_at: Optional[str] = None
 
 
-class MFADevice(BaseModel):
+class MFADevice(HuaweiCloudBaseModel):
     """IAM MFA Device model."""
 
     serial_number: str
     user_id: str
 
 
-class OperationProtection(BaseModel):
+class OperationProtection(HuaweiCloudBaseModel):
     """IAM account operation protection model."""
 
     account_id: str = ""

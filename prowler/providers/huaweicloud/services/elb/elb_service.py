@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class ELB(HuaweiCloudService):
@@ -55,8 +54,8 @@ class ELB(HuaweiCloudService):
 
                     self.load_balancers.append(
                         LoadBalancer(
-                            id=getattr(lb_data, "id", ""),
-                            name=getattr(lb_data, "name", ""),
+                            id=getattr(lb_data, "id", None) or "",
+                            name=getattr(lb_data, "name", None) or "",
                             vip_address=vip_address,
                             public_ip=public_ip,
                             is_public=bool(public_ip),
@@ -70,7 +69,7 @@ class ELB(HuaweiCloudService):
             )
 
 
-class LoadBalancer(BaseModel):
+class LoadBalancer(HuaweiCloudBaseModel):
     """ELB Load Balancer model."""
 
     id: str

@@ -1,10 +1,9 @@
 from typing import Dict, Optional
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class ECS(HuaweiCloudService):
@@ -122,7 +121,7 @@ class ECS(HuaweiCloudService):
         return ""
 
 
-class Instance(BaseModel):
+class Instance(HuaweiCloudBaseModel):
     """ECS Instance model."""
 
     id: str

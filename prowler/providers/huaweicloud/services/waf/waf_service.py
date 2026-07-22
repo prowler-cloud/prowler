@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class WAF(HuaweiCloudService):
@@ -54,7 +53,7 @@ class WAF(HuaweiCloudService):
             )
 
 
-class WAFInstance(BaseModel):
+class WAFInstance(HuaweiCloudBaseModel):
     """WAF Instance model."""
 
     id: str

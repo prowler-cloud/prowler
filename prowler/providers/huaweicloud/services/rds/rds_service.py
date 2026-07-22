@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class RDS(HuaweiCloudService):
@@ -55,9 +54,9 @@ class RDS(HuaweiCloudService):
 
                     self.instances.append(
                         RDSInstance(
-                            id=getattr(inst_data, "id", ""),
-                            name=getattr(inst_data, "name", ""),
-                            status=getattr(inst_data, "status", ""),
+                            id=getattr(inst_data, "id", None) or "",
+                            name=getattr(inst_data, "name", None) or "",
+                            status=getattr(inst_data, "status", None) or "",
                             engine=engine,
                             engine_version=engine_version,
                             public_ip=public_ip,
@@ -76,7 +75,7 @@ class RDS(HuaweiCloudService):
             )
 
 
-class RDSInstance(BaseModel):
+class RDSInstance(HuaweiCloudBaseModel):
     """RDS Instance model."""
 
     id: str

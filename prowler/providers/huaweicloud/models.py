@@ -3,7 +3,7 @@
 from datetime import datetime
 from typing import Any, Optional
 
-from pydantic.v1 import BaseModel
+from pydantic.v1 import BaseModel, validator
 
 from prowler.lib.logger import logger
 from prowler.providers.common.models import ProviderOutputOptions
@@ -68,6 +68,23 @@ def _aligned_region(region_cls, region_id: str):
     from huaweicloudsdkcore.region.region import Region
 
     return Region(region_id, aligned)
+
+
+class HuaweiCloudBaseModel(BaseModel):
+    """Base model for Huawei Cloud service resources.
+
+    The Huawei Cloud SDK regularly returns optional attributes explicitly set
+    to None. Passing None to a non-optional ``str`` field (whether required or
+    with a default) raises a pydantic ValidationError, so coerce those None
+    values to the field's default (an empty string) before validation.
+    ``Optional[...]`` fields keep accepting None.
+    """
+
+    @validator("*", pre=True)
+    def _coerce_none_for_non_optional_str(cls, value, field):
+        if value is None and not field.allow_none and field.type_ is str:
+            return field.default if field.default is not None else ""
+        return value
 
 
 class HuaweiCloudCallerIdentity(BaseModel):

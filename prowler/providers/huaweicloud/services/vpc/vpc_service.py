@@ -1,10 +1,9 @@
 from typing import List, Optional
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.lib.scan_filters.scan_filters import is_resource_filtered
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class VPC(HuaweiCloudService):
@@ -41,13 +40,16 @@ class VPC(HuaweiCloudService):
                         vpc_data.id, self.audit_resources
                     ):
                         vpc_id = vpc_data.id
+                        # The SDK returns attributes explicitly set to None, so
+                        # `getattr(..., default)` alone is not enough; coerce
+                        # None to the field default with `or`.
                         self.vpcs[vpc_id] = VPCs(
                             id=vpc_id,
-                            name=getattr(vpc_data, "name", vpc_id),
+                            name=getattr(vpc_data, "name", None) or vpc_id,
                             region=region,
-                            cidr=getattr(vpc_data, "cidr", ""),
-                            status=getattr(vpc_data, "status", ""),
-                            description=getattr(vpc_data, "description", ""),
+                            cidr=getattr(vpc_data, "cidr", None) or "",
+                            status=getattr(vpc_data, "status", None) or "",
+                            description=getattr(vpc_data, "description", None) or "",
                             created_at=getattr(vpc_data, "created_at", None),
                         )
 
@@ -81,12 +83,18 @@ class VPC(HuaweiCloudService):
                             and sg_data.security_group_rules
                         ):
                             for rule_data in sg_data.security_group_rules:
+                                # The SDK sets optional fields (protocol,
+                                # remote_ip_prefix, description, ...) to None;
+                                # coerce to the field default with `or`.
                                 rules.append(
                                     SecurityGroupRule(
-                                        id=rule_data.id,
-                                        direction=getattr(rule_data, "direction", ""),
-                                        protocol=getattr(rule_data, "protocol", ""),
-                                        ethertype=getattr(rule_data, "ethertype", ""),
+                                        id=getattr(rule_data, "id", None) or "",
+                                        direction=getattr(rule_data, "direction", None)
+                                        or "",
+                                        protocol=getattr(rule_data, "protocol", None)
+                                        or "",
+                                        ethertype=getattr(rule_data, "ethertype", None)
+                                        or "",
                                         port_range_min=getattr(
                                             rule_data, "port_range_min", None
                                         ),
@@ -94,23 +102,26 @@ class VPC(HuaweiCloudService):
                                             rule_data, "port_range_max", None
                                         ),
                                         remote_ip_prefix=getattr(
-                                            rule_data, "remote_ip_prefix", ""
-                                        ),
+                                            rule_data, "remote_ip_prefix", None
+                                        )
+                                        or "",
                                         remote_group_id=getattr(
-                                            rule_data, "remote_group_id", ""
-                                        ),
+                                            rule_data, "remote_group_id", None
+                                        )
+                                        or "",
                                         description=getattr(
-                                            rule_data, "description", ""
-                                        ),
+                                            rule_data, "description", None
+                                        )
+                                        or "",
                                     )
                                 )
 
                         self.security_groups[sg_id] = SecurityGroups(
                             id=sg_id,
-                            name=getattr(sg_data, "name", sg_id),
+                            name=getattr(sg_data, "name", None) or sg_id,
                             region=region,
-                            vpc_id=getattr(sg_data, "vpc_id", ""),
-                            description=getattr(sg_data, "description", ""),
+                            vpc_id=getattr(sg_data, "vpc_id", None) or "",
+                            description=getattr(sg_data, "description", None) or "",
                             rules=rules,
                         )
 
@@ -120,7 +131,7 @@ class VPC(HuaweiCloudService):
             )
 
 
-class VPCs(BaseModel):
+class VPCs(HuaweiCloudBaseModel):
     """VPC model."""
 
     id: str
@@ -132,7 +143,7 @@ class VPCs(BaseModel):
     created_at: Optional[str] = None
 
 
-class SecurityGroupRule(BaseModel):
+class SecurityGroupRule(HuaweiCloudBaseModel):
     """Security Group Rule model."""
 
     id: str
@@ -146,7 +157,7 @@ class SecurityGroupRule(BaseModel):
     description: str = ""
 
 
-class SecurityGroups(BaseModel):
+class SecurityGroups(HuaweiCloudBaseModel):
     """Security Group model."""
 
     id: str

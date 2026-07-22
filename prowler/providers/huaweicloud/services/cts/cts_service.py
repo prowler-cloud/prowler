@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class CTS(HuaweiCloudService):
@@ -37,8 +36,8 @@ class CTS(HuaweiCloudService):
                     obs_info = getattr(tracker_data, "obs_info", None)
                     self.trackers.append(
                         Tracker(
-                            id=getattr(tracker_data, "id", ""),
-                            name=getattr(tracker_data, "tracker_name", ""),
+                            id=getattr(tracker_data, "id", None) or "",
+                            name=getattr(tracker_data, "tracker_name", None) or "",
                             tracker_type=getattr(tracker_data, "tracker_type", ""),
                             is_enabled=getattr(tracker_data, "status", "") == "enabled",
                             bucket_name=(
@@ -59,7 +58,7 @@ class CTS(HuaweiCloudService):
             )
 
 
-class Tracker(BaseModel):
+class Tracker(HuaweiCloudBaseModel):
     """CTS Tracker model."""
 
     id: str

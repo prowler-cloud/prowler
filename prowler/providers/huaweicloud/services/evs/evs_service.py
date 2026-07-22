@@ -1,9 +1,8 @@
 from typing import List
 
-from pydantic.v1 import BaseModel
-
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class EVS(HuaweiCloudService):
@@ -54,7 +53,7 @@ class EVS(HuaweiCloudService):
             )
 
 
-class Volume(BaseModel):
+class Volume(HuaweiCloudBaseModel):
     """EVS Volume model."""
 
     id: str

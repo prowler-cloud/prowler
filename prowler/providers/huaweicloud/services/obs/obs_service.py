@@ -5,10 +5,10 @@ from huaweicloudsdkobs.v1 import (
     GetBucketPublicStatusRequest,
     ListBucketsRequest,
 )
-from pydantic.v1 import BaseModel
 
 from prowler.lib.logger import logger
 from prowler.providers.huaweicloud.lib.service.service import HuaweiCloudService
+from prowler.providers.huaweicloud.models import HuaweiCloudBaseModel
 
 
 class OBS(HuaweiCloudService):
@@ -103,7 +103,7 @@ class OBS(HuaweiCloudService):
             )
 
 
-class Bucket(BaseModel):
+class Bucket(HuaweiCloudBaseModel):
     """OBS Bucket model."""
 
     name: str
