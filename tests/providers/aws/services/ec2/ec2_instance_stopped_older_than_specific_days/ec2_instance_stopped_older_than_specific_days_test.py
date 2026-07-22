@@ -186,3 +186,90 @@ class Test_ec2_instance_stopped_older_than_specific_days:
                 result[0].resource_arn
                 == f"arn:{aws_provider.identity.partition}:ec2:{AWS_REGION_US_EAST_1}:{aws_provider.identity.account}:instance/{instance.id}"
             )
+
+    @mock_aws
+    def test_one_stopped_ec2_just_under_threshold(self):
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        instance = ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1,
+            UserData="This is some user_data",
+        )[0]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        aws_provider._audit_config = {"max_ec2_stopped_instance_age_in_days": 30}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days.ec2_client",
+                new=EC2(aws_provider),
+            ) as service_client,
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days import (
+                ec2_instance_stopped_older_than_specific_days,
+            )
+
+            now = datetime.datetime.now(datetime.timezone.utc)
+            service_client.instances[0].launch_time = now - datetime.timedelta(
+                days=29, hours=23
+            )
+            service_client.instances[0].state = "stopped"
+
+            check = ec2_instance_stopped_older_than_specific_days()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert "is currently stopped" in result[0].status_extended
+            assert "within" in result[0].status_extended
+
+    @mock_aws
+    def test_one_stopped_ec2_just_over_threshold(self):
+        ec2 = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        instance = ec2.create_instances(
+            ImageId=EXAMPLE_AMI_ID, MinCount=1, MaxCount=1,
+            UserData="This is some user_data",
+        )[0]
+
+        from prowler.providers.aws.services.ec2.ec2_service import EC2
+
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_EU_WEST_1, AWS_REGION_US_EAST_1]
+        )
+        aws_provider._audit_config = {"max_ec2_stopped_instance_age_in_days": 30}
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=aws_provider,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days.ec2_client",
+                new=EC2(aws_provider),
+            ) as service_client,
+        ):
+            from prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days import (
+                ec2_instance_stopped_older_than_specific_days,
+            )
+
+            now = datetime.datetime.now(datetime.timezone.utc)
+            service_client.instances[0].launch_time = now - datetime.timedelta(
+                days=30, hours=1
+            )
+            service_client.instances[0].state = "stopped"
+
+            check = ec2_instance_stopped_older_than_specific_days()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "FAIL"
+            assert result[0].region == AWS_REGION_US_EAST_1
+            assert "is currently stopped" in result[0].status_extended

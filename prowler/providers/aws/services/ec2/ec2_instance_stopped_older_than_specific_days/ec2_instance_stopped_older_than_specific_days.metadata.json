@@ -12,7 +12,7 @@
   "ResourceType": "AwsEc2Instance",
   "ResourceGroup": "compute",
   "Description": "EC2 instances that are currently in `stopped` state and were launched more than the configurable number of days ago (`max_ec2_stopped_instance_age_in_days`, default `30`) are flagged.",
-  "Risk": "Instances that were launched long ago and remain stopped may indicate forgotten or abandoned resources that retain stale security configurations.",
+  "Risk": "Instances that were launched long ago and are currently stopped may indicate forgotten or abandoned resources that retain stale security configurations.",
   "RelatedUrl": "",
   "AdditionalURLs": [],
   "Remediation": {
@@ -23,7 +23,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Review instances that were launched long ago and remain stopped. Terminate them if no longer needed.",
+      "Text": "Review instances that were launched long ago and are currently stopped. Terminate them if no longer needed.",
       "Url": "https://hub.prowler.com/check/ec2_instance_stopped_older_than_specific_days"
     }
   },

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.ec2.ec2_client import ec2_client
@@ -29,10 +29,9 @@ class ec2_instance_stopped_older_than_specific_days(Check):
             report.status = "PASS"
             report.status_extended = f"EC2 Instance {instance.id} is not stopped."
             if instance.state == "stopped":
-                days_since_launch = (
-                    datetime.now(timezone.utc) - instance.launch_time
-                ).days
-                if days_since_launch > max_ec2_stopped_instance_age_in_days:
+                instance_age = datetime.now(timezone.utc) - instance.launch_time
+                days_since_launch = instance_age.days
+                if instance_age > timedelta(days=max_ec2_stopped_instance_age_in_days):
                     report.status = "FAIL"
                     report.status_extended = (
                         f"EC2 Instance {instance.id} was launched {days_since_launch} days ago and is currently stopped."
