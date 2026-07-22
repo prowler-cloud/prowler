@@ -13,11 +13,15 @@ from unittest.mock import call, patch
 import pytest
 
 from prowler.config.scan_config_schema import (
+    SCAN_CONFIG_SCHEMA,
+    _build_aggregated_schema,
     _get_provider_check_ids,
     _get_provider_services,
     validate_and_normalize_scan_config,
     validate_scan_config,
 )
+from prowler.config.schema.registry import SCHEMAS
+from prowler.providers.common.provider import Provider
 
 
 @pytest.fixture(autouse=True)
@@ -391,3 +395,38 @@ class Test_Backward_Compatible_Wrapper:
                 "message": "Scan config must be a mapping with provider sections.",
             }
         ]
+
+
+class Test_Aggregated_Schema_Is_App_Facing:
+    """``SCAN_CONFIG_SCHEMA`` is served by the app
+    (``/scan-configurations/schema``) and consumed by the UI editor, so it must
+    expose only app providers (``sdk_only = False``). SDK/CLI-only providers
+    must not leak into it, even when they have a config schema registered in
+    ``SCHEMAS`` for CLI ``config.yaml`` validation."""
+
+    def test_sdk_only_provider_is_absent_from_schema(self):
+        # ``e2enetworks`` is ``sdk_only = True`` yet has a schema registered in
+        # ``SCHEMAS``; it must not surface in the app-facing aggregated schema.
+        assert "e2enetworks" not in SCAN_CONFIG_SCHEMA["properties"]
+
+    def test_schema_contains_only_app_providers(self):
+        app_providers = set(Provider.get_app_providers())
+        assert set(SCAN_CONFIG_SCHEMA["properties"]).issubset(app_providers)
+
+    def test_app_provider_with_registered_schema_is_present(self):
+        assert "aws" in SCAN_CONFIG_SCHEMA["properties"]
+
+    def test_registry_still_registers_sdk_only_provider_for_cli(self):
+        # Guard against "fixing" the leak by dropping ``e2enetworks`` from
+        # ``SCHEMAS``: ``load_and_validate_config_file()`` relies on
+        # ``SCHEMAS.get(provider)`` and a missing schema silently disables
+        # ``config.yaml`` validation for that provider on the CLI.
+        assert "e2enetworks" in SCHEMAS
+
+    def test_build_filters_registry_by_app_providers(self):
+        # Deterministic mechanism check: only providers returned by
+        # ``get_app_providers()`` survive the aggregation, regardless of what
+        # ``SCHEMAS`` contains.
+        with patch.object(Provider, "get_app_providers", return_value=["aws"]):
+            schema = _build_aggregated_schema()
+        assert set(schema["properties"]) == {"aws"}
