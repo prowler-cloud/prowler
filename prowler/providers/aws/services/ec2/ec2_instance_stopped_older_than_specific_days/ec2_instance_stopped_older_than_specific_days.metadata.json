@@ -9,7 +9,7 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "arn:partition:ec2:region:account-id:instance/instance-id",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsEc2Instance",
   "ResourceGroup": "compute",
   "Description": "**EC2 instances** in the `stopped` state are evaluated for how long they have remained stopped. Instances stopped beyond the configurable limit (`max_ec2_instance_stopped_days`, default `30`) are flagged. Running, pending, and other non-stopped instances pass.",
