@@ -147,7 +147,6 @@ function ChatComposer({
       />
       <div className="flex items-center justify-between gap-3 px-3 pb-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
-          {contextControl}
           <Button type="button" variant="outline" size="icon-sm" asChild>
             <Link
               href={LIGHTHOUSE_ROUTE.SETTINGS}
@@ -157,6 +156,7 @@ function ChatComposer({
             </Link>
           </Button>
           {modelSelector}
+          {contextControl}
         </div>
         {isStreaming ? (
           <div
