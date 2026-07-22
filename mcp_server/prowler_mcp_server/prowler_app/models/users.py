@@ -14,30 +14,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
 
 from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
-
-
-def _extract_relationship_ids(
-    relationships: dict[str, Any], relationship_name: str
-) -> list[str]:
-    """Extract related resource IDs from a JSON:API relationship.
-
-    Handles both to-one (``data`` is an object) and to-many (``data`` is a list)
-    relationships, returning a flat list of IDs in either case.
-
-    Args:
-        relationships: The ``relationships`` object from a JSON:API resource
-        relationship_name: The relationship key to read (e.g. ``"roles"``)
-
-    Returns:
-        List of related resource IDs (empty if the relationship is absent/empty)
-    """
-    data = relationships.get(relationship_name, {}).get("data")
-    if not data:
-        return []
-    if isinstance(data, list):
-        return [item["id"] for item in data if item and item.get("id")]
-    # to-one relationship
-    return [data["id"]] if data.get("id") else []
+from prowler_mcp_server.prowler_app.models.utils import extract_relationship_ids
 
 
 class SimplifiedUser(MinimalSerializerMixin, BaseModel):
@@ -131,8 +108,8 @@ class DetailedUser(SimplifiedUser):
             company_name=attributes.get("company_name"),
             is_verified=attributes.get("is_verified"),
             date_joined=attributes.get("date_joined"),
-            role_ids=_extract_relationship_ids(relationships, "roles"),
-            membership_ids=_extract_relationship_ids(relationships, "memberships"),
+            role_ids=extract_relationship_ids(relationships, "roles"),
+            membership_ids=extract_relationship_ids(relationships, "memberships"),
         )
 
 

@@ -176,13 +176,19 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         )
 
     async def delete(
-        self, path: str, params: dict[str, any] | None = None
+        self,
+        path: str,
+        params: dict[str, any] | None = None,
+        json_data: dict[str, any] | None = None,
     ) -> dict[str, any]:
         """Make DELETE request.
 
         Args:
             path: API endpoint path
             params: Optional query parameters
+            json_data: Optional JSON body data. Some JSON:API relationship
+                endpoints (e.g. ``/users/{id}/relationships/roles``) accept a
+                body listing the specific members to remove.
 
         Returns:
             API response as dictionary
@@ -190,7 +196,9 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         Raises:
             Exception: If API request fails
         """
-        return await self._make_request(HTTPMethod.DELETE, path, params=params)
+        return await self._make_request(
+            HTTPMethod.DELETE, path, params=params, json_data=json_data
+        )
 
     async def fetch_external_url(self, url: str) -> str:
         """Fetch content from an allowed external URL (unauthenticated).
