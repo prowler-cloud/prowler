@@ -180,4 +180,30 @@ describe("SendToJiraModal", () => {
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it("closes the modal before navigating to Jira configuration", async () => {
+    // Given
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    getJiraIntegrationsMock.mockResolvedValueOnce({
+      success: true,
+      data: [],
+    });
+    render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        selection={selection}
+      />,
+    );
+    const configureLink = await screen.findByRole("link", {
+      name: "Configure",
+    });
+
+    // When
+    await user.click(configureLink);
+
+    // Then
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
 });

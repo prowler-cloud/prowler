@@ -506,6 +506,7 @@ const SendToJiraModalContent = ({
               message="Please add or connect an integration first"
               buttonLabel="Configure"
               buttonLink="/integrations/jira"
+              onButtonClick={() => onOpenChange(false)}
             />
           ) : (
             <FormButtons
