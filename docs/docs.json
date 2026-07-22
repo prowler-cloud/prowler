@@ -80,7 +80,12 @@
               {
                 "group": "Prowler for AI Agents",
                 "pages": [
-                  "getting-started/products/prowler-claude-code-plugin"
+                  "user-guide/ai-agents/index",
+                  "user-guide/ai-agents/claude-code",
+                  "user-guide/ai-agents/claude-desktop",
+                  "user-guide/ai-agents/codex",
+                  "user-guide/ai-agents/cursor",
+                  "user-guide/ai-agents/vscode"
                 ]
               }
             ]
@@ -217,7 +222,12 @@
           {
             "group": "Prowler for AI Agents",
             "pages": [
-              "getting-started/products/prowler-claude-code-plugin"
+              "user-guide/ai-agents/index",
+              "user-guide/ai-agents/claude-code",
+              "user-guide/ai-agents/claude-desktop",
+              "user-guide/ai-agents/codex",
+              "user-guide/ai-agents/cursor",
+              "user-guide/ai-agents/vscode"
             ]
           },
           {
@@ -660,6 +670,10 @@
     {
       "source": "/user-guide/tutorials/prowler-cloud-public-ips",
       "destination": "/security/networking"
+    },
+    {
+      "source": "/getting-started/products/prowler-claude-code-plugin",
+      "destination": "/user-guide/ai-agents/claude-code"
     }
   ]
 }

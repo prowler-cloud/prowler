@@ -3,6 +3,7 @@ import type { NextAuthRequest } from "next-auth";
 
 import { auth } from "@/auth.config";
 import { readEnv } from "@/lib/runtime-env";
+import { isCloud } from "@/lib/shared/env";
 
 const publicRoutes = [
   "/sign-in",
@@ -43,7 +44,9 @@ export default auth((req: NextAuthRequest) => {
 
   if (
     pathname.startsWith("/billing") &&
-    (!cloudBillingEnabled || user?.permissions?.manage_billing !== true)
+    (!isCloud() ||
+      !cloudBillingEnabled ||
+      user?.permissions?.manage_billing !== true)
   ) {
     return NextResponse.redirect(new URL("/profile", req.url));
   }

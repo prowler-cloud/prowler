@@ -4,8 +4,7 @@ import { useState } from "react";
 
 import { toggleMuteRule } from "@/actions/mute-rules";
 import { MuteRuleData } from "@/actions/mute-rules/types";
-import { Switch } from "@/components/shadcn";
-import { useToast } from "@/components/shadcn";
+import { Switch, useToast } from "@/components/shadcn";
 
 interface MuteRuleEnabledToggleProps {
   muteRule: MuteRuleData;

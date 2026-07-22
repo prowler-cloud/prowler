@@ -5,6 +5,7 @@ import { Suspense } from "react";
 
 import { SelectModel } from "@/components/lighthouse-v1/select-model";
 import { LIGHTHOUSE_ROUTE } from "@/lib/lighthouse-routes";
+import { isCloud } from "@/lib/shared/env";
 import type { LighthouseProvider } from "@/types/lighthouse-v1";
 
 function SelectModelContent() {
@@ -27,7 +28,7 @@ function SelectModelContent() {
 }
 
 export default function SelectModelPage() {
-  if (process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true") {
+  if (isCloud()) {
     redirect(LIGHTHOUSE_ROUTE.SETTINGS);
   }
 

@@ -1,4 +1,6 @@
 import { test } from "@playwright/test";
+
+import { isCloud } from "@/lib/shared/env";
 import {
   ProvidersPage,
   AWSProviderData,
@@ -281,7 +283,7 @@ test.describe("Add Provider", () => {
         // so this test must never run in the OSS CI. Gate explicitly on the
         // Cloud env flag instead of relying on the org env vars being absent.
         test.skip(
-          process.env.NEXT_PUBLIC_IS_CLOUD_ENV !== "true",
+          !isCloud(),
           "AWS Organizations multi-account onboarding is a Cloud-only feature",
         );
 

@@ -84,7 +84,7 @@ describe("OnboardingTrigger", () => {
     useDriverTourMock.mockClear();
     capturedOnClosed = undefined;
     // Trigger only resolves in cloud.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     searchParamsValue = new URLSearchParams();
     sliceState = {
       active: false,
@@ -196,7 +196,7 @@ describe("OnboardingTrigger", () => {
 
   describe("in self-hosted (OSS) deployments", () => {
     it("renders null and never starts the tour, even with a matching param", async () => {
-      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
       searchParamsValue = new URLSearchParams("onboarding=add-provider");
 
       const { container } = render(
@@ -208,7 +208,7 @@ describe("OnboardingTrigger", () => {
     });
 
     it("ignores an active sequence slice in OSS", async () => {
-      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      vi.stubEnv("UI_CLOUD_ENABLED", "false");
       setSlice({
         active: true,
         currentFlowId: "add-provider",
