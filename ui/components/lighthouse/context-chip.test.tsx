@@ -10,72 +10,74 @@ import {
 } from "./context-chip";
 
 describe("LighthouseContextControl", () => {
-  it("should show the current page, selection count, and accessible details", async () => {
+  it("should show enabled context as a pressed badge and explain disabling it", async () => {
     // Given
     const user = userEvent.setup();
+    const onDisable = vi.fn();
     render(
       <LighthouseContextControl
         context={findingsContext()}
         pageLabel="Findings"
         enabled
         selectionCount={1}
-        onDisable={vi.fn()}
+        onDisable={onDisable}
         onEnable={vi.fn()}
       />,
     );
+    const contextControl = screen.getByRole("button", {
+      name: "Disable Findings context",
+    });
 
     // When
-    await user.hover(screen.getByText("@ Findings +1"));
+    await user.hover(contextControl);
 
     // Then
+    expect(contextControl).toHaveAttribute("aria-pressed", "true");
+    expect(contextControl).toHaveTextContent("@ Findings +1");
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Filters: severity: critical",
-    );
-    expect(screen.getByRole("tooltip")).toHaveTextContent(
-      "Included types: page, finding",
-    );
-  });
-
-  it("should disable and restore context through explicit actions", async () => {
-    // Given
-    const user = userEvent.setup();
-    const onDisable = vi.fn();
-    const onEnable = vi.fn();
-    const view = render(
-      <LighthouseContextControl
-        context={findingsContext()}
-        pageLabel="Findings"
-        enabled
-        selectionCount={1}
-        onDisable={onDisable}
-        onEnable={onEnable}
-      />,
+      "Click to stop including Findings context in new messages.",
     );
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: "Remove Findings context" }),
-    );
+    await user.click(contextControl);
 
     // Then
     expect(onDisable).toHaveBeenCalledOnce();
+  });
 
+  it("should keep the same badge label when disabled and explain enabling it", async () => {
     // Given
-    view.rerender(
+    const user = userEvent.setup();
+    const onEnable = vi.fn();
+    render(
       <LighthouseContextControl
         context={findingsContext()}
         pageLabel="Findings"
         enabled={false}
         selectionCount={1}
-        onDisable={onDisable}
+        onDisable={vi.fn()}
         onEnable={onEnable}
       />,
     );
+    const contextControl = screen.getByRole("button", {
+      name: "Enable Findings context",
+    });
 
     // When
-    await user.click(
-      screen.getByRole("button", { name: "Add Findings context" }),
+    await user.hover(contextControl);
+
+    // Then
+    expect(contextControl).toHaveAttribute("aria-pressed", "false");
+    expect(contextControl).toHaveTextContent("@ Findings +1");
+    expect(
+      screen.queryByText("+ Add Findings context"),
+    ).not.toBeInTheDocument();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Click to include Findings context in new messages.",
     );
+
+    // When
+    await user.click(contextControl);
 
     // Then
     expect(onEnable).toHaveBeenCalledOnce();
@@ -90,7 +92,7 @@ describe("LighthouseContextBadge", () => {
     // Then
     expect(screen.getByText("@ Findings +1")).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /Remove Findings context/ }),
+      screen.queryByRole("button", { name: /Findings context/ }),
     ).not.toBeInTheDocument();
   });
 });
