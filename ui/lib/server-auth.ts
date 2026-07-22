@@ -15,10 +15,12 @@ export const redirectToSignIn = async (): Promise<never> => {
   redirect(`/sign-in?${searchParams.toString()}`);
 };
 
+type SessionError = "RefreshAccessTokenError" | (string & {});
+
 export const getRequiredAuthHeaders = async (
   accessToken: string | undefined,
   options?: { contentType?: boolean },
-  sessionError?: string,
+  sessionError?: SessionError,
 ) => {
   if (!accessToken || sessionError === "RefreshAccessTokenError") {
     return redirectToSignIn();
