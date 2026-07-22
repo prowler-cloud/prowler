@@ -313,10 +313,26 @@ export const authConfig = {
 
       // Handle tenant switch: update tokens from client-side useSession().update()
       if (trigger === "update" && session?.accessToken) {
-        authToken.accessToken = session.accessToken;
-        authToken.refreshToken = session.refreshToken;
-        applyDecodedClaims(authToken, authToken.accessToken, "tenant switch");
-        return authToken;
+        const newAccessToken = session.accessToken;
+
+        try {
+          const userMeResponse = await getUserByMe(newAccessToken);
+          const nextAuthToken: AuthToken = {
+            ...authToken,
+            accessToken: newAccessToken,
+            refreshToken: session.refreshToken,
+            user: tokenUserFromApi(userMeResponse),
+            error: undefined,
+          };
+
+          applyDecodedClaims(nextAuthToken, newAccessToken, "tenant switch");
+
+          return nextAuthToken;
+        } catch (error) {
+          // eslint-disable-next-line no-console
+          console.warn("Error refreshing user after tenant switch:", error);
+          return authToken;
+        }
       }
 
       applyDecodedClaims(authToken, authToken.accessToken);
