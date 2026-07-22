@@ -15,6 +15,7 @@ import {
 } from "../_lib/cross-provider-frameworks";
 import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
+import { ComplianceSectionHeader } from "./compliance-section-header";
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,
@@ -179,11 +180,20 @@ export const CrossProviderOverview = async ({
           </Alert>
         )}
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {summaries.map((summary) => (
-          <CrossProviderFrameworkCard key={summary.complianceId} {...summary} />
-        ))}
-      </div>
+      <section className="flex flex-col gap-4">
+        <ComplianceSectionHeader
+          title="Across provider types"
+          description="Universal frameworks aggregated across every compatible provider type, using the latest completed scan of each provider."
+        />
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+          {summaries.map((summary) => (
+            <CrossProviderFrameworkCard
+              key={summary.complianceId}
+              {...summary}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 };

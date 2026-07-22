@@ -7,45 +7,72 @@ import {
   getScoreColor,
   getScoreIndicatorClass,
 } from "@/lib/compliance/score-utils";
+import type { KnownProviderType } from "@/types/providers";
 import { PROVIDER_DISPLAY_NAMES } from "@/types/providers";
 
 import type { ProviderBreakdownEntry } from "../_types";
 
-interface ProviderCoverageCardProps {
-  breakdown: ProviderBreakdownEntry[];
+/** Pre-labeled coverage row — the cross-account detail feeds one per
+ *  account, with the fixed provider type as the icon. */
+export interface CoverageRow {
+  key: string;
+  label: string;
+  iconType: KnownProviderType;
+  pass: number;
+  fail: number;
+  manual: number;
+  score: number;
 }
 
-/** Per-provider pass score for the cross-provider detail: one row per
- *  provider with a completed scan. */
+interface ProviderCoverageCardProps {
+  /** Cross-provider breakdown (one row per scanned provider type). */
+  breakdown?: ProviderBreakdownEntry[];
+  /** Pre-labeled rows (cross-account: one per account). Wins over
+   *  `breakdown` when both are given. */
+  rows?: CoverageRow[];
+  title?: string;
+  emptyMessage?: string;
+}
+
+/** Per-column pass score for the cross-provider/cross-account details: one
+ *  row per provider type (or account) with a completed scan. */
 export const ProviderCoverageCard = ({
   breakdown,
+  rows,
+  title = "Provider Coverage",
+  emptyMessage = "No scanned providers for this framework yet.",
 }: ProviderCoverageCardProps) => {
-  const scannedProviders = breakdown.filter((entry) => !entry.unscanned);
+  const resolvedRows: CoverageRow[] =
+    rows ??
+    (breakdown ?? [])
+      .filter((entry) => !entry.unscanned)
+      .map((entry) => ({
+        key: entry.provider,
+        label: PROVIDER_DISPLAY_NAMES[entry.provider],
+        iconType: entry.provider,
+        pass: entry.pass,
+        fail: entry.fail,
+        manual: entry.manual,
+        score: entry.score,
+      }));
 
   return (
     <Card variant="base" className="flex h-full min-h-[372px] flex-col">
       <CardHeader>
-        <CardTitle>Provider Coverage</CardTitle>
+        <CardTitle>{title}</CardTitle>
       </CardHeader>
-      {/* Capped + scrollable so a long provider list never stretches the
-          sibling chart cards in the same grid row. */}
+      {/* Capped + scrollable so a long list never stretches the sibling
+          chart cards in the same grid row. */}
       <CardContent className="minimal-scrollbar flex max-h-[300px] flex-col gap-4 overflow-y-auto">
-        {scannedProviders.length === 0 && (
-          <p className="text-text-neutral-secondary text-sm">
-            No scanned providers for this framework yet.
-          </p>
+        {resolvedRows.length === 0 && (
+          <p className="text-text-neutral-secondary text-sm">{emptyMessage}</p>
         )}
-        {scannedProviders.map((entry) => (
-          <div
-            key={entry.provider}
-            data-testid={`coverage-row-${entry.provider}`}
-          >
+        {resolvedRows.map((entry) => (
+          <div key={entry.key} data-testid={`coverage-row-${entry.key}`}>
             <div className="flex items-center justify-between gap-3 text-sm">
               <span className="flex min-w-0 items-center gap-2">
-                <ProviderTypeIcon type={entry.provider} size={18} />
-                <span className="truncate">
-                  {PROVIDER_DISPLAY_NAMES[entry.provider]}
-                </span>
+                <ProviderTypeIcon type={entry.iconType} size={18} />
+                <span className="truncate">{entry.label}</span>
               </span>
               <span className="text-text-neutral-secondary text-xs">
                 {entry.score}%
@@ -53,7 +80,7 @@ export const ProviderCoverageCard = ({
             </div>
             <div className="mt-1.5 flex items-center gap-3">
               <Progress
-                aria-label={`${PROVIDER_DISPLAY_NAMES[entry.provider]} passing score`}
+                aria-label={`${entry.label} passing score`}
                 value={entry.score}
                 className="border-border-neutral-secondary h-2 border"
                 indicatorClassName={getScoreIndicatorClass(

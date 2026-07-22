@@ -87,6 +87,72 @@ describe("toCrossProviderAccordionItems", () => {
     expect(items[0].items).toHaveLength(2);
   });
 
+  it("uses the control label as the row title for CIS-style 1:1 controls", () => {
+    const cisStyle: Framework[] = [
+      {
+        ...data[0],
+        categories: [
+          {
+            ...data[0].categories[0],
+            controls: [
+              {
+                label: "2.1.1 - Ensure centralized root access",
+                pass: 0,
+                fail: 1,
+                manual: 0,
+                requirements: [
+                  {
+                    ...data[0].categories[0].controls[0].requirements[0],
+                    name: "2.1.1",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const cisItems = toCrossProviderAccordionItems(cisStyle, new Map(), "CIS");
+    const { unmount } = render(<>{cisItems[0].items?.[0].title}</>);
+
+    expect(
+      screen.getByText("2.1.1 - Ensure centralized root access"),
+    ).toBeInTheDocument();
+    unmount();
+  });
+
+  it("generates unique requirement keys across controls of one category", () => {
+    // Two controls whose requirement lists both start at index 0 — keying
+    // on the requirement index alone would collide (React duplicate-key
+    // warning seen on the cross-account sibling with CIS categories).
+    const twoControls: Framework[] = [
+      {
+        ...data[0],
+        categories: [
+          {
+            ...data[0].categories[0],
+            controls: [
+              data[0].categories[0].controls[0],
+              {
+                ...data[0].categories[0].controls[0],
+                label: "another control",
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    const keys = toCrossProviderAccordionItems(
+      twoControls,
+      extras,
+      "CSA-CCM",
+    )[0].items!.map((item) => item.key);
+
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
   it("shows the status only once via the provider chips (no duplicate roll-up badge)", () => {
     // A&A-01 has a single provider (aws FAIL): its status must appear once,
     // in the chip — not also as a separate roll-up badge.

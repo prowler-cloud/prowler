@@ -8,32 +8,40 @@ import {
 import { INVALID_CONFIG_NOTE } from "@/lib/compliance/commons";
 import type { Control, Framework, Requirement } from "@/types/compliance";
 
-import { CrossProviderRequirementContent } from "../_components/cross-provider-requirement-content";
-import { RequirementProviderChips } from "../_components/requirement-provider-chips";
-import type { CrossProviderRequirementExtras } from "../_types";
+import { CrossAccountRequirementContent } from "../_components/cross-account-requirement-content";
+import { RequirementAccountChips } from "../_components/requirement-account-chips";
+import type {
+  CrossAccountAccountRef,
+  CrossAccountRequirementExtras,
+} from "../_types";
 
 /**
- * Accordion assembly for the cross-provider detail. Mirrors the per-scan
- * mappers' `toAccordionItems` (same section key scheme, so `?section=` deep
- * links behave identically) but swaps the per-scan findings content for the
- * per-provider fan-out. Each requirement's status is shown once, on the same
- * row as the name and the expand chevron: via the per-provider chips when a
- * breakdown exists, or a single roll-up badge as a fallback. `extras` is the
- * map produced by `buildRequirementExtrasMap`, keyed by the mapper-composed
- * requirement name.
+ * Accordion assembly for the cross-account detail — the account-axis sibling
+ * of `toCrossProviderAccordionItems` (same section key scheme, so `?section=`
+ * deep links behave identically). Each requirement's status is shown once,
+ * on the title row: via the per-account chips when a breakdown exists, or a
+ * single roll-up badge as a fallback. `extras` is the map produced by
+ * `buildAccountExtrasMap`, keyed by the mapper-composed requirement name.
  *
  * Row titles and hierarchy mirror what each mapper's OWN per-scan
- * `toAccordionItems` renders (see the cross-account sibling for the full
- * rationale): flat mappers keep requirement rows, single-requirement
- * controls with a distinct label (CIS style) use that richer label as the
- * row title, labeled multi-requirement controls (ENS style) keep the
- * control as a nested accordion level, and multi-framework data keeps the
- * framework as the top level.
+ * `toAccordionItems` renders, so a framework looks the same here as in the
+ * Single Scan view:
+ * - CSA/CIS-Controls/DORA-style mappers put every requirement (already
+ *   richly named `id - title`) under one control labeled like its category
+ *   → flatten to requirement rows.
+ * - The CIS mapper creates one control PER requirement whose label carries
+ *   the full `id - description` while `requirement.name` is the bare id
+ *   → use the control label as the row title.
+ * - ENS-style mappers group frameworks (marcos) above categories and
+ *   several requirements under a labeled control → keep both extra levels,
+ *   like per-scan does, and show each requirement's type chip
+ *   (requisito/recomendación/refuerzo).
  */
-export const toCrossProviderAccordionItems = (
+export const toCrossAccountAccordionItems = (
   data: Framework[],
-  extras: Map<string, CrossProviderRequirementExtras>,
+  extras: Map<string, CrossAccountRequirementExtras>,
   framework: string,
+  accountMeta: CrossAccountAccountRef[],
 ): AccordionItemProps[] => {
   const requirementItem = (
     requirement: Requirement,
@@ -50,7 +58,7 @@ export const toCrossProviderAccordionItems = (
         <div className="flex w-full items-center justify-between gap-3">
           {/* Same left-side composition as the per-scan
               ComplianceAccordionRequirementTitle (type chip + name +
-              invalid-config note); only the right side differs (per-provider
+              invalid-config note); only the right side differs (per-account
               chips instead of one status badge). */}
           <div className="flex min-w-0 items-center gap-2">
             {requirementType && (
@@ -64,7 +72,10 @@ export const toCrossProviderAccordionItems = (
             )}
           </div>
           {requirementExtras ? (
-            <RequirementProviderChips providers={requirementExtras.providers} />
+            <RequirementAccountChips
+              accounts={requirementExtras.accounts}
+              accountMeta={accountMeta}
+            />
           ) : (
             <StatusFindingBadge status={requirement.status as FindingStatus} />
           )}
@@ -75,15 +86,16 @@ export const toCrossProviderAccordionItems = (
       // serialized `items` array, where React's Flight layer warns about
       // un-keyed elements ("Each child in a list…").
       content: requirementExtras ? (
-        <CrossProviderRequirementContent
+        <CrossAccountRequirementContent
           key={`content-${itemKey}`}
           requirement={requirement}
           extras={requirementExtras}
+          accountMeta={accountMeta}
           framework={framework}
         />
       ) : (
         <p key={`content-${itemKey}`} className="text-sm">
-          No per-provider breakdown is available for this requirement.
+          No per-account breakdown is available for this requirement.
         </p>
       ),
       items: [],
@@ -95,12 +107,16 @@ export const toCrossProviderAccordionItems = (
     categoryName: string,
     baseKey: string,
   ): AccordionItemProps[] => {
+    // A label that just repeats the category (the flat-mapper convention)
+    // carries no information; a distinct one is the mapper's richer title.
     const groupLabel =
       control.label && control.label !== categoryName
         ? control.label
         : undefined;
 
     if (groupLabel && control.requirements.length > 1) {
+      // ENS-style group: keep the control as its own accordion level, the
+      // way that mapper's per-scan toAccordionItems renders it.
       return [
         {
           key: baseKey,
@@ -128,6 +144,9 @@ export const toCrossProviderAccordionItems = (
       requirementItem(
         requirement,
         `${baseKey}-req-${reqIndex}`,
+        // Single-requirement controls (CIS style) carry the full
+        // `id - description` in the control label while requirement.name is
+        // the bare id — prefer the richer title, like the per-scan view.
         (groupLabel ?? requirement.name) as string,
       ),
     );

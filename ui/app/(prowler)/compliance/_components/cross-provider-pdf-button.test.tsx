@@ -27,12 +27,14 @@ beforeAll(() => {
 
 const {
   generatePdfMock,
+  generateAccountPdfMock,
   trackAndPollMock,
   downloadPdfMock,
   toastMock,
   storeState,
 } = vi.hoisted(() => ({
   generatePdfMock: vi.fn(),
+  generateAccountPdfMock: vi.fn(),
   trackAndPollMock: vi.fn(),
   downloadPdfMock: vi.fn(),
   toastMock: vi.fn(),
@@ -54,11 +56,22 @@ vi.mock("../_actions/cross-provider", () => ({
   generateCrossProviderPdf: generatePdfMock,
 }));
 
+vi.mock("../_actions/cross-account", () => ({
+  generateCrossAccountPdf: generateAccountPdfMock,
+}));
+
 vi.mock("../_lib/cross-provider-pdf", () => ({
   CROSS_PROVIDER_PDF_TASK_KIND: "cross-provider-pdf",
   buildCrossProviderPdfTaskScope: vi.fn(() => "scope-1"),
   downloadCrossProviderPdf: downloadPdfMock,
   crossProviderPdfHandler: { onReady: vi.fn(), onError: vi.fn() },
+}));
+
+vi.mock("../_lib/cross-account-pdf", () => ({
+  CROSS_ACCOUNT_PDF_TASK_KIND: "cross-account-pdf",
+  buildCrossAccountPdfTaskScope: vi.fn(() => "account-scope-1"),
+  downloadCrossAccountPdf: vi.fn(),
+  crossAccountPdfHandler: { onReady: vi.fn(), onError: vi.fn() },
 }));
 
 vi.mock("@/store/task-watcher/store", () => ({
@@ -203,6 +216,35 @@ describe("CrossProviderPdfButton", () => {
 
     // Then
     await waitFor(() => expect(downloadPdfMock).toHaveBeenCalledWith("task-8"));
+  });
+
+  it("switches to the cross-account plumbing when providerType is set", async () => {
+    // Given
+    generateAccountPdfMock.mockResolvedValue({ taskId: "task-acc-1" });
+    const user = userEvent.setup();
+    render(<CrossProviderPdfButton {...props} providerType="aws" />);
+
+    // When
+    await openGenerateModal(user);
+    await user.click(screen.getByRole("button", { name: /^generate$/i }));
+
+    // Then — the cross-account action and task kind are used, not the
+    // cross-provider ones.
+    await waitFor(() =>
+      expect(generateAccountPdfMock).toHaveBeenCalledTimes(1),
+    );
+    expect(generateAccountPdfMock).toHaveBeenCalledWith({
+      complianceId: "csa_ccm_4.0",
+      providerType: "aws",
+      filters: props.filters,
+      reportName: undefined,
+    });
+    expect(generatePdfMock).not.toHaveBeenCalled();
+    expect(trackAndPollMock).toHaveBeenCalledWith({
+      taskId: "task-acc-1",
+      kind: "cross-account-pdf",
+      meta: expect.objectContaining({ scopeKey: "account-scope-1" }),
+    });
   });
 
   it("does not offer a completed report from a different filter scope", async () => {

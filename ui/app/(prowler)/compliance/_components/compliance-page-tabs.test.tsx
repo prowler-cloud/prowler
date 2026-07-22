@@ -50,7 +50,7 @@ describe("CompliancePageTabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("tab", { name: /cross-provider/i }));
+    await user.click(screen.getByRole("tab", { name: /multiple scans/i }));
     expect(pushMock).toHaveBeenCalledWith("/compliance?tab=cross-provider");
 
     rerender(
@@ -62,7 +62,7 @@ describe("CompliancePageTabs", () => {
       />,
     );
 
-    await user.click(screen.getByRole("tab", { name: /per scan/i }));
+    await user.click(screen.getByRole("tab", { name: /single scan/i }));
     expect(pushMock).toHaveBeenCalledWith("/compliance");
   });
 
@@ -78,7 +78,7 @@ describe("CompliancePageTabs", () => {
     );
 
     const crossProviderTab = screen.getByRole("tab", {
-      name: /cross-provider/i,
+      name: /multiple scans/i,
     });
     await user.click(crossProviderTab);
 

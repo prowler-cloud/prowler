@@ -1,6 +1,10 @@
 "use client";
 
 import {
+  CROSS_ACCOUNT_PDF_TASK_KIND,
+  crossAccountPdfHandler,
+} from "@/app/(prowler)/compliance/_lib/cross-account-pdf";
+import {
   CROSS_PROVIDER_PDF_TASK_KIND,
   crossProviderPdfHandler,
 } from "@/app/(prowler)/compliance/_lib/cross-provider-pdf";
@@ -14,6 +18,7 @@ import {
 // this tab. Adding a new watched task kind (integration tests, scan exports,
 // …) is one line here plus a handler next to the feature that owns it.
 registerTaskKindHandler(CROSS_PROVIDER_PDF_TASK_KIND, crossProviderPdfHandler);
+registerTaskKindHandler(CROSS_ACCOUNT_PDF_TASK_KIND, crossAccountPdfHandler);
 
 /**
  * Mounted once in the app layout (next to `Toaster`): resumes polling any

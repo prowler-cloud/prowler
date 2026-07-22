@@ -64,7 +64,7 @@ export const CompliancePageTabs = ({
       className="flex flex-col gap-[18px]"
     >
       <TabsList className="overflow-x-auto">
-        <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Per Scan</TabsTrigger>
+        <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Single Scan</TabsTrigger>
         <TabsTrigger
           value={COMPLIANCE_TAB.CROSS_PROVIDER}
           adornment={
@@ -73,7 +73,7 @@ export const CompliancePageTabs = ({
             ) : undefined
           }
         >
-          Cross-Provider
+          Multiple Scans
         </TabsTrigger>
       </TabsList>
 
