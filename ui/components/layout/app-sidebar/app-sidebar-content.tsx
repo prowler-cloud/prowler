@@ -24,10 +24,15 @@ interface AppSidebarContentProps {
 export function AppSidebarContent({ onSelect }: AppSidebarContentProps) {
   const pathname = usePathname();
   const { permissions } = useAuth();
-  const { apiDocsUrl } = useRuntimeConfig();
+  const { apiDocsUrl, cloudBillingEnabled } = useRuntimeConfig();
   const mode = useAppSidebarMode((state) => state.mode);
   const isCloudEnvironment = isCloud();
-  const sections = getNavigationConfig({ pathname, apiDocsUrl, permissions });
+  const sections = getNavigationConfig({
+    pathname,
+    apiDocsUrl,
+    cloudBillingEnabled,
+    permissions,
+  });
   const showChat = isCloudEnvironment && mode === APP_SIDEBAR_MODE.CHAT;
 
   return (
