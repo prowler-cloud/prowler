@@ -31,7 +31,7 @@ import {
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
 import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
@@ -116,18 +116,13 @@ export function FindingsGroupDrillDown({
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
-  const jiraSelection = createJiraTargetSelection(
-    selectedFindingIds,
-    JIRA_DISPATCH_TARGET.FINDING_ID,
-  );
-  const jiraPayload = jiraSelection
-    ? {
-        selection: jiraSelection,
-        findingTitle: group.checkTitle,
-        selectedResourceCount: selectedFindingIds.length,
-        isFindingGroupSelection: true,
-      }
-    : undefined;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: selectedFindingIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: group.checkTitle,
+    selectedResourceCount: selectedFindingIds.length,
+    isFindingGroupSelection: true,
+  });
 
   return (
     <FindingsSelectionContext.Provider

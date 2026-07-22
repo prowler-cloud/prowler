@@ -14,7 +14,7 @@ import {
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getOptionalText } from "@/lib/utils";
 import type {
   FindingTriageLoadedNote,
@@ -151,50 +151,32 @@ export function DataTableRowActions<T extends FindingRowData>({
   const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
 
-  const getDisplayIds = (): string[] => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      return selectedFindingIds;
-    }
-    return [muteKey];
-  };
+  const actionTargetIds =
+    isCurrentSelected && hasMultipleSelected ? selectedFindingIds : [muteKey];
 
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    const ids = getDisplayIds();
-    if (ids.length > 1) {
-      return `Mute ${ids.length} ${isGroup ? "Finding Groups" : "Findings"}`;
+    if (actionTargetIds.length > 1) {
+      return `Mute ${actionTargetIds.length} ${isGroup ? "Finding Groups" : "Findings"}`;
     }
     return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
 
-  const getJiraTargetIds = (): string[] => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      return selectedFindingIds;
-    }
-    return [muteKey];
-  };
-
-  const jiraTargetIds = getJiraTargetIds();
   const jiraTargetType = isGroup
     ? JIRA_DISPATCH_TARGET.CHECK_ID
     : JIRA_DISPATCH_TARGET.FINDING_ID;
-  const jiraSelection = createJiraTargetSelection(
-    jiraTargetIds,
-    jiraTargetType,
-  );
   const selectedJiraResourceCount = isGroup
     ? (finding.resourcesFail ?? 0)
     : undefined;
-  const jiraPayload = jiraSelection
-    ? {
-        selection: jiraSelection,
-        findingTitle,
-        selectedResourceCount: selectedJiraResourceCount,
-      }
-    : undefined;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: actionTargetIds,
+    targetType: jiraTargetType,
+    findingTitle,
+    selectedResourceCount: selectedJiraResourceCount,
+  });
   const jiraLabel = buildJiraActionLabel({
-    findingGroupCount: isGroup ? jiraTargetIds.length : 0,
-    findingCount: isGroup ? 0 : jiraTargetIds.length,
+    findingGroupCount: isGroup ? actionTargetIds.length : 0,
+    findingCount: isGroup ? 0 : actionTargetIds.length,
   });
 
   const handleMuteModalOpenChange = (
@@ -212,8 +194,6 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteClick = async () => {
-    const displayIds = getDisplayIds();
-
     if (resolveMuteIds) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -221,7 +201,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       setIsMuteModalOpen(true);
       setIsResolving(true);
       try {
-        const ids = await resolveMuteIds(displayIds);
+        const ids = await resolveMuteIds(actionTargetIds);
         setResolvedIds(ids);
         setMutePreparationError(
           ids.length === 0
@@ -238,7 +218,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       }
     } else {
       // Regular findings — IDs are already valid finding UUIDs
-      setResolvedIds(displayIds);
+      setResolvedIds(actionTargetIds);
       setIsMuteModalOpen(true);
     }
   };
@@ -250,7 +230,7 @@ export function DataTableRowActions<T extends FindingRowData>({
     clearSelection();
     setResolvedIds([]);
     if (onMuteComplete) {
-      onMuteComplete(getDisplayIds());
+      onMuteComplete(actionTargetIds);
       return;
     }
 

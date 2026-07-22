@@ -19,7 +19,7 @@ import { SeverityBadge } from "@/components/shadcn/table";
 import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
 import { getFailingForLabel } from "@/lib/date-utils";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
@@ -81,18 +81,13 @@ const ResourceRowActions = ({
     return "Mute";
   };
   const displayIds = getDisplayIds();
-  const jiraSelection = createJiraTargetSelection(
-    displayIds,
-    JIRA_DISPATCH_TARGET.FINDING_ID,
-  );
-  const jiraPayload = jiraSelection
-    ? {
-        selection: jiraSelection,
-        findingTitle: findingTitle || resource.checkId,
-        selectedResourceCount: displayIds.length,
-        isFindingGroupSelection: true,
-      }
-    : undefined;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: displayIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: findingTitle || resource.checkId,
+    selectedResourceCount: displayIds.length,
+    isFindingGroupSelection: true,
+  });
 
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();

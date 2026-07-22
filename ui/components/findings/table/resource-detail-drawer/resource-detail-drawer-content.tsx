@@ -73,7 +73,7 @@ import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-pan
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
 import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
@@ -412,15 +412,11 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
-  const jiraSelection = f
-    ? createJiraTargetSelection([f.id], JIRA_DISPATCH_TARGET.FINDING_ID)
-    : null;
-  const jiraPayload = jiraSelection
-    ? {
-        selection: jiraSelection,
-        findingTitle: checkMeta.checkTitle,
-      }
-    : null;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: f ? [f.id] : [],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: checkMeta.checkTitle,
+  });
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
   const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
@@ -1568,10 +1564,11 @@ function OtherFindingRow({
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
-  const jiraSelection = createJiraTargetSelection(
-    [finding.id],
-    JIRA_DISPATCH_TARGET.FINDING_ID,
-  );
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: [finding.id],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: finding.checkTitle,
+  });
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1658,14 +1655,7 @@ function OtherFindingRow({
               />
               <JiraDispatchActionItem
                 label={buildJiraActionLabel({ findingCount: 1 })}
-                payload={
-                  jiraSelection
-                    ? {
-                        selection: jiraSelection,
-                        findingTitle: finding.checkTitle,
-                      }
-                    : null
-                }
+                payload={jiraPayload}
               />
             </ActionDropdown>
           </div>
