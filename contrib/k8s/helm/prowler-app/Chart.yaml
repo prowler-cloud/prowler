@@ -20,7 +20,7 @@ maintainers:
 dependencies:
   # https://artifacthub.io/packages/helm/bitnami/postgresql
   - name: postgresql
-    version: 18.2.0
+    version: 18.8.0
     repository: oci://registry-1.docker.io/bitnamicharts
     condition: postgresql.enabled
   # https://valkey.io/valkey-helm/
