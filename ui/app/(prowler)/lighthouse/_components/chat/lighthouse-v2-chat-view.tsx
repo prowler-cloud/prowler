@@ -21,7 +21,7 @@ import {
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
-import { LighthouseContextControl } from "@/components/lighthouse/context-chip";
+import { LighthouseCurrentContextBadge } from "@/components/lighthouse/context-chip";
 import { Card } from "@/components/shadcn";
 import {
   Combobox,
@@ -68,14 +68,11 @@ export function LighthouseV2ChatView({
     lastSubmission,
     selectedModelSelection,
     modelPreferenceSaving,
-    isContextEnabled,
     setInput,
     dismissFeedback,
     selectModel,
     submitMessage,
     retryLastMessage,
-    disableContext,
-    enableContext,
   } = state;
   const { modelsByProvider, supportedProviders } = config;
   const connectedConfigurations = config.configurations.filter(
@@ -146,14 +143,7 @@ export function LighthouseV2ChatView({
     onRetry: () => void retryLastMessage(),
     onDismissFeedback: dismissFeedback,
     contextControl: supportsAutomaticContext ? (
-      <LighthouseContextControl
-        context={currentContext.context}
-        pageLabel={currentContext.page.label}
-        enabled={isContextEnabled}
-        selectionCount={currentContext.selectionCount}
-        onDisable={disableContext}
-        onEnable={enableContext}
-      />
+      <LighthouseCurrentContextBadge context={currentContext.context} />
     ) : undefined,
     canSend,
     input,
@@ -224,9 +214,7 @@ export function LighthouseV2ChatView({
       footer={emptyStateFooter}
       compact={surface === LIGHTHOUSE_CHAT_SURFACE.PANEL}
       suggestions={
-        supportsAutomaticContext && isContextEnabled
-          ? currentContext.page.suggestions
-          : undefined
+        supportsAutomaticContext ? currentContext.page.suggestions : undefined
       }
     />
   );

@@ -198,10 +198,8 @@ describe("LighthousePanelChat", () => {
     const modelControl = await screen.findByLabelText(
       "Current model: OpenAI gpt-5.1",
     );
-    const contextControl = screen.getByRole("button", {
-      name: "Disable Findings context",
-    });
-    expect(modelControl.nextElementSibling).toBe(contextControl);
+    const contextBadge = screen.getByLabelText("Findings context");
+    expect(modelControl.nextElementSibling).toBe(contextBadge);
   });
 
   it("sends the current page context from the side panel", async () => {
@@ -242,53 +240,6 @@ describe("LighthousePanelChat", () => {
           }),
         }),
       ),
-    );
-  });
-
-  it("keeps context disabled and restores global suggestions for the conversation", async () => {
-    // Given
-    const user = userEvent.setup();
-    createSessionMock.mockResolvedValue({
-      data: session("session-without-context", "Question"),
-    });
-    sendMessageMock.mockResolvedValue({
-      data: {
-        task: {
-          id: "task-without-context",
-          name: "lighthouse-run",
-          state: "executing",
-        },
-      },
-    });
-    render(<LighthousePanelChat />);
-    const input = await screen.findByRole("textbox", { name: "Message" });
-
-    // When
-    await user.click(
-      screen.getByRole("button", { name: "Disable Findings context" }),
-    );
-
-    // Then
-    const disabledContext = screen.getByRole("button", {
-      name: "Enable Findings context",
-    });
-    expect(disabledContext).toHaveAttribute("aria-pressed", "false");
-    expect(disabledContext).toHaveTextContent("@ Findings");
-    expect(
-      screen.getByRole("button", { name: "Critical findings" }),
-    ).toBeInTheDocument();
-
-    // When
-    await user.type(input, "Question{Enter}");
-
-    // Then
-    await waitFor(() =>
-      expect(sendMessageMock).toHaveBeenCalledWith({
-        sessionId: "session-without-context",
-        displayText: "Question",
-        provider: "openai",
-        model: "gpt-5.1",
-      }),
     );
   });
 

@@ -185,51 +185,6 @@ describe("createLighthouseChatStore", () => {
     });
   });
 
-  it("retries with the original snapshot even when current context was disabled", async () => {
-    const store = makeStore();
-    const context = findingsContext();
-    await store.getState().submitMessage("Prioritize findings", context);
-    eventSources[0].fail(2 /* EventSource.CLOSED */);
-    store.getState().disableContext();
-
-    await store.getState().retryLastMessage();
-
-    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
-      sessionId: "session-1",
-      displayText: "Prioritize findings",
-      context,
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-    expect(store.getState().isContextEnabled).toBe(false);
-  });
-
-  it("keeps context disabled for the conversation and restores it for a new chat", async () => {
-    // Given
-    const store = makeStore();
-    store.getState().disableContext();
-
-    // When
-    await store
-      .getState()
-      .submitMessage("Question without context", findingsContext());
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(false);
-    expect(sendMessageMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      displayText: "Question without context",
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-
-    // When
-    store.getState().resetToNewChat();
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(true);
-  });
-
   it("degrades oversized context before sending without blocking the message", async () => {
     // Given
     const store = makeStore();
