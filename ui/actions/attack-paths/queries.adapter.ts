@@ -24,9 +24,8 @@ import {
  * Decide whether a query should appear in the selector.
  *
  * Empty-query filtering is a Prowler Cloud feature: outside Cloud
- * (`NEXT_PUBLIC_IS_CLOUD_ENV !== "true"`) the queries API does not precompute
- * result summaries, so every query is shown, matching current self-hosted
- * behaviour.
+ * (`isCloud()` is false) the queries API does not precompute result summaries,
+ * so every query is shown, matching current self-hosted behaviour.
  *
  * In Cloud, hide only queries the scan precomputed and found empty
  * (`has_data === false`). Everything else stays visible: parameterized queries
