@@ -349,6 +349,8 @@ class Test_EC2_Service:
         assert ec2.instances[0].state == "running"
         assert re.match(r"ami-[0-9a-z]{8}", ec2.instances[0].image_id)
         assert ec2.instances[0].launch_time == MOCK_DATETIME
+        # Running instances typically have an empty StateTransitionReason
+        assert ec2.instances[0].state_transition_reason in (None, "")
         assert not ec2.instances[0].user_data
         assert ec2.instances[0].http_tokens == "optional"
         assert ec2.instances[0].http_endpoint == "enabled"
