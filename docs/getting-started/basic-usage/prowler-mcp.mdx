@@ -31,6 +31,9 @@ The tabs below are a quick configuration reference. For a walkthrough with scree
   <Card title="Claude Code" icon="terminal" href="/user-guide/ai-agents/claude-code">
     Plugin vs. MCP-only, and which Claude surfaces work
   </Card>
+  <Card title="Claude Desktop App (Chat)" icon="comment" href="/user-guide/ai-agents/claude-desktop">
+    The Chat tab, via a local bridge
+  </Card>
   <Card title="Codex" icon="code" href="/user-guide/ai-agents/codex">
     CLI and the VS Code extension
   </Card>
@@ -95,128 +98,6 @@ Connect to the **Cloud MCP Server** at `https://mcp.prowler.com/mcp` over HTTP. 
     The `mcp-remote` tool acts as a bridge for clients that don't support HTTP natively. Learn more at [mcp-remote on npm](https://www.npmjs.com/package/mcp-remote).
     </Info>
   </Tab>
-
-  <Tab title="Claude App (Chat)">
-    <Warning>
-    The Claude app's **Settings → Connectors → Add custom connector** dialog does not work with a Prowler API key: connectors authenticate with OAuth by default, and they reach your server from Anthropic's cloud rather than your machine. Use a local bridge instead, as below. See the [Claude app guide](/user-guide/ai-agents/claude-desktop#why-add-custom-connector-does-not-work) for the full explanation.
-    </Warning>
-
-    1. Open Claude app settings
-    2. Go to the "Developer" tab
-    3. Click the "Edit Config" button
-    4. Edit the `claude_desktop_config.json` file with your favorite editor
-    5. Install a reviewed version of `mcp-remote` in a dedicated local workspace:
-    ```bash
-    mkdir -p ~/.local/share/prowler-mcp-bridge
-    cd ~/.local/share/prowler-mcp-bridge
-    npm init -y
-    npm install --save-exact mcp-remote@0.1.38
-    ```
-    6. Add the following configuration:
-    ```json
-    {
-      "mcpServers": {
-        "prowler": {
-          "command": "/absolute/path/to/.local/share/prowler-mcp-bridge/node_modules/.bin/mcp-remote",
-          "args": [
-            "https://mcp.prowler.com/mcp",
-            "--header",
-            "Authorization: Bearer ${PROWLER_API_KEY}"
-          ],
-          "env": {
-            "PROWLER_API_KEY": "<your-api-key-here>"
-          }
-        }
-      }
-    }
-    ```
-  </Tab>
-
-  <Tab title="Claude Code (CLI)">
-    <Note>
-    The [Prowler plugin](/user-guide/ai-agents/claude-code#option-1-install-the-prowler-plugin) already registers this MCP server for you and adds a compliance triage skill. Use the command below only if you want the MCP connection **without** the plugin — do not do both.
-    </Note>
-
-    Run the following command:
-    ```bash
-    export PROWLER_API_KEY="<your-api-key-here>"
-    claude mcp add --transport http prowler https://mcp.prowler.com/mcp --header "Authorization: Bearer $PROWLER_API_KEY" --scope user
-    ```
-
-    <Warning>
-    **This applies to the Claude Code CLI**, and to the **Code tab** of the Claude desktop app, which reads the same `~/.claude.json`. It does **not** apply to the app's **Chat** tab, claude.ai, or Claude mobile — those surfaces use connectors and cannot see servers added this way. See the [Claude Code guide](/user-guide/ai-agents/claude-code#where-claude-code-runs).
-    </Warning>
-
-    <Note>
-    Keep `--scope user`. The default scope is `local`, which binds the server to the single directory you ran the command in.
-    </Note>
-
-    Full walkthrough: [Connect Claude Code](/user-guide/ai-agents/claude-code).
-  </Tab>
-
-  <Tab title="Codex">
-    Export the API key in your shell profile, then register the server:
-    ```bash
-    export PROWLER_API_KEY="<your-api-key-here>"
-    codex mcp add prowler --url https://mcp.prowler.com/mcp --bearer-token-env-var PROWLER_API_KEY
-    ```
-
-    <Note>
-    Codex has no `--header` flag. It reads the bearer token from an environment variable and sends it as `Authorization: Bearer <value>`. Requires Codex 0.46.0 or later.
-    </Note>
-
-    Verify with `codex mcp list`. Full walkthrough: [Connect Codex](/user-guide/ai-agents/codex).
-  </Tab>
-
-  <Tab title="Cursor">
-    1. Open **Customize** in the Cursor sidebar and select the MCP section. On earlier versions, press `Cmd/Ctrl + Shift + J` and click **Tools & MCP**
-    2. Click **New MCP Server**
-    3. Add the following to `mcp.json`:
-    ```json
-    {
-      "mcpServers": {
-        "prowler": {
-          "url": "https://mcp.prowler.com/mcp",
-          "headers": {
-            "Authorization": "Bearer <your-api-key-here>"
-          }
-        }
-      }
-    }
-    ```
-
-    <Warning>
-    Do not add a `type` field. Cursor selects the transport from the fields present, and a `"type": "streamable-http"` entry causes the Cursor CLI to silently discard the entire `mcp.json`.
-    </Warning>
-
-    Full walkthrough: [Connect Cursor](/user-guide/ai-agents/cursor).
-  </Tab>
-
-  <Tab title="VS Code / Copilot">
-    1. Run **MCP: Open User Configuration** from the command palette
-    2. Add the following:
-    ```json
-    {
-      "servers": {
-        "prowler": {
-          "type": "http",
-          "url": "https://mcp.prowler.com/mcp",
-          "headers": {
-            "Authorization": "Bearer <your-api-key-here>"
-          }
-        }
-      }
-    }
-    ```
-
-    <Warning>
-    VS Code uses `servers` as the root key, not `mcpServers`, and requires `"type": "http"`. Snippets written for other clients do not work here.
-    </Warning>
-
-    Full walkthrough: [Connect VS Code / Copilot](/user-guide/ai-agents/vscode).
-  </Tab>
-
-
 </Tabs>
 
 ## Local MCP Server Configuration
