@@ -41,27 +41,15 @@ export function compileLighthouseContext(
 
   const seen = new Set<string>();
   const items = parsedItems
+    .sort((left, right) => getItemOrder(left) - getItemOrder(right))
     .filter((item) => {
       const key = `${item.kind}:${item.id}`;
       if (seen.has(key)) return false;
       seen.add(key);
       return true;
-    })
-    .sort((left, right) => getItemOrder(left) - getItemOrder(right));
+    });
 
-  const completeContext = buildEnvelopeWithinLimits(items);
-  if (completeContext) return completeContext;
-
-  const withoutSummaries = items.filter(
-    (item) =>
-      item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE ||
-      item.source !== LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
-  );
-  const selectionContext = buildEnvelopeWithinLimits(withoutSummaries);
-  if (selectionContext) return selectionContext;
-
-  const page = items.find((item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE);
-  return page ? buildEnvelopeWithinLimits([page]) : undefined;
+  return buildEnvelopeWithProgressiveDegradation(items);
 }
 
 function hasDifferentScope(candidate: unknown, scopeKey: string): boolean {
@@ -76,7 +64,8 @@ function hasDifferentScope(candidate: unknown, scopeKey: string): boolean {
 
 function getItemOrder(item: LighthouseContextItem): number {
   if (item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE) return 0;
-  return item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC ? 2 : 1;
+  if (item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED) return 1;
+  return item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC ? 3 : 2;
 }
 
 function buildEnvelopeWithinLimits(
@@ -93,4 +82,18 @@ function buildEnvelopeWithinLimits(
 
   const byteLength = getApiLighthouseContextByteLength(result.data);
   return byteLength <= LIGHTHOUSE_CONTEXT_MAX_BYTES ? result.data : undefined;
+}
+
+function buildEnvelopeWithProgressiveDegradation(
+  items: LighthouseContextItem[],
+): LighthouseContextEnvelope | undefined {
+  const retainedItems = items.slice(0, 8);
+
+  while (retainedItems.length > 0) {
+    const context = buildEnvelopeWithinLimits(retainedItems);
+    if (context) return context;
+    retainedItems.pop();
+  }
+
+  return undefined;
 }
