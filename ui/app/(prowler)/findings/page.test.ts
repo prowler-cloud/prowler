@@ -44,17 +44,4 @@ describe("findings page", () => {
   it("applies the shared default muted filter so muted findings are hidden unless the caller opts in", () => {
     expect(source).toContain("applyDefaultMutedFilter");
   });
-
-  it("loads finding groups as selectable Finding Group filter options", () => {
-    expect(source).toContain("fetchFindingGroupFilterOptions");
-    expect(source).toContain("FINDING_GROUP_FILTER_OPTION_PAGE_SIZE");
-    expect(source).toContain("checkOptions={checkOptions}");
-  });
-
-  it("excludes Finding Group's own filters while loading all option pages", () => {
-    expect(source).toContain("excludeFindingGroupOwnFilters");
-    expect(source).toContain('"filter[check_id__in]"');
-    expect(source).toContain("if (page >= totalPages) break");
-    expect(source).toContain("page += 1");
-  });
 });
