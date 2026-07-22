@@ -1,7 +1,7 @@
 [dependency-groups]
 dev = [
   "bandit==1.7.9",
-  "coverage==7.5.4",
+  "coverage==7.15.2",
   "django-silk==5.3.2",
   "docker==7.1.0",
   "filelock==3.20.3",
