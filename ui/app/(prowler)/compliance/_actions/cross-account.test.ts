@@ -28,7 +28,12 @@ vi.mock("@sentry/nextjs", () => ({
   captureException: captureExceptionMock,
 }));
 
-import { getCrossAccountComplianceOverview } from "./cross-account";
+import {
+  generateCrossAccountPdf,
+  getCrossAccountComplianceOverview,
+  getCrossAccountPdfBinary,
+  getLatestCrossAccountPdf,
+} from "./cross-account";
 
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -40,6 +45,15 @@ const lastFetchUrl = () => {
   const call = fetchMock.mock.calls.at(-1);
   if (!call) throw new Error("fetch was not called");
   return new URL(String(call[0]));
+};
+
+const fetchCallAt = (index: number) => {
+  const call = fetchMock.mock.calls[index];
+  if (!call) throw new Error(`fetch call ${index} was not found`);
+  return {
+    init: call[1] as RequestInit,
+    url: new URL(String(call[0])),
+  };
 };
 
 beforeEach(() => {
@@ -79,6 +93,73 @@ describe("cross-account compliance actions", () => {
       "provider-1,provider-2",
     );
     expect(url.searchParams.get("filter[provider_groups__in]")).toBe("group-1");
+  });
+
+  it("routes PDF operations through the cross-account endpoints", async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        jsonResponse({ data: { type: "tasks", id: "task-1" } }, 202),
+      )
+      .mockResolvedValueOnce(
+        new Response(Buffer.from("pdf-bytes"), {
+          headers: {
+            "Content-Disposition": 'attachment; filename="report.pdf"',
+            "Content-Type": "application/pdf",
+          },
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: {
+            id: "task-2",
+            attributes: { result: { filename: "latest.pdf" } },
+          },
+        }),
+      );
+
+    await generateCrossAccountPdf({
+      complianceId: "cis_2.0_aws",
+      providerType: "aws",
+      filters: { scanIds: ["scan-1"] },
+      reportName: "report.pdf",
+    });
+    await getCrossAccountPdfBinary("task-1");
+    await getLatestCrossAccountPdf({
+      complianceId: "cis_2.0_aws",
+      providerType: "aws",
+      filters: { providerIds: "provider-1" },
+    });
+
+    const generation = fetchCallAt(0);
+    expect(generation.init.method).toBe("POST");
+    expect(generation.url.pathname).toBe(
+      "/api/v1/cross-account-compliance-overviews/pdf",
+    );
+    expect(generation.url.searchParams.get("filter[compliance_id]")).toBe(
+      "cis_2.0_aws",
+    );
+    expect(generation.url.searchParams.get("filter[provider_type]")).toBe(
+      "aws",
+    );
+    expect(generation.url.searchParams.get("filter[scan__in]")).toBe("scan-1");
+    expect(generation.url.searchParams.get("report_name")).toBe("report.pdf");
+
+    const binary = fetchCallAt(1);
+    expect(binary.url.pathname).toBe(
+      "/api/v1/cross-account-compliance-overviews/pdf/task-1",
+    );
+
+    const latest = fetchCallAt(2);
+    expect(latest.url.pathname).toBe(
+      "/api/v1/cross-account-compliance-overviews/pdf/latest",
+    );
+    expect(latest.url.searchParams.get("filter[provider_id__in]")).toBe(
+      "provider-1",
+    );
+
+    expect([generation, binary, latest].every(({ init }) => init.signal)).toBe(
+      true,
+    );
   });
 
   it("aborts a stalled request and reports the network failure", async () => {

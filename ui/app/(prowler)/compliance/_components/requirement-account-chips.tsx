@@ -40,6 +40,7 @@ export const RequirementAccountChips = ({
   if (entries.length > MAX_INLINE_ACCOUNT_CHIPS) {
     return (
       <RequirementStatusSummary
+        entityLabel="accounts"
         entries={entries.map((account) => ({
           key: account.id,
           label: accountDisplayLabel(account),

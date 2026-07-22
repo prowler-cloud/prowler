@@ -23,6 +23,21 @@ export const getAggregatedInitialExpandedKeys = (
   const candidates = new Set(
     data.map((framework) => `${framework.name}-${targetSection}`),
   );
-  const match = accordionItems.find((item) => candidates.has(item.key));
-  return match ? [match.key] : [];
+
+  const findExpandedPath = (
+    items: AccordionItemProps[],
+    ancestors: string[] = [],
+  ): string[] | undefined => {
+    for (const item of items) {
+      const path = [...ancestors, item.key];
+      if (candidates.has(item.key)) return path;
+
+      const nestedMatch = findExpandedPath(item.items ?? [], path);
+      if (nestedMatch) return nestedMatch;
+    }
+
+    return undefined;
+  };
+
+  return findExpandedPath(accordionItems) ?? [];
 };

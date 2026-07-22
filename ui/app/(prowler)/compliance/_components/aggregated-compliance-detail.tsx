@@ -77,7 +77,7 @@ export const AggregatedComplianceDetail = ({
     <ClientAccordionWrapper
       items={accordionItems}
       defaultExpandedKeys={initialExpandedKeys}
-      scrollToKey={initialExpandedKeys[0]}
+      scrollToKey={initialExpandedKeys.at(-1)}
     />
   </div>
 );

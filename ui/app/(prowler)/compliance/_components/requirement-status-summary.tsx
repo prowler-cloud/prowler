@@ -39,8 +39,10 @@ const SCROLLABLE_BREAKDOWN_MIN_ROWS = 13;
  */
 export const RequirementStatusSummary = ({
   entries,
+  entityLabel = "providers",
 }: {
   entries: RequirementStatusEntry[];
+  entityLabel?: "accounts" | "providers";
 }) => {
   const counts = STATUS_ORDER.map((status) => ({
     status,
@@ -74,7 +76,7 @@ export const RequirementStatusSummary = ({
           type="button"
           variant="bare"
           size="link-xs"
-          aria-label={`Show status breakdown for ${entries.length} providers`}
+          aria-label={`Show status breakdown for ${entries.length} ${entityLabel}`}
           data-testid="requirement-status-summary"
         >
           {counts.map(({ status, count }) => (

@@ -44,7 +44,7 @@ describe("RequirementAccountChips", () => {
     render(<RequirementAccountChips accounts={accounts} accountMeta={meta} />);
 
     const summary = screen.getByRole("button", {
-      name: "Show status breakdown for 13 providers",
+      name: "Show status breakdown for 13 accounts",
     });
     expect(summary).toHaveTextContent("Fail×2");
     expect(summary).toHaveTextContent("Manual×1");
