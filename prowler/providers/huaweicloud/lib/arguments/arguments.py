@@ -11,6 +11,12 @@ def init_parser(self):
     The per-region project_id is resolved automatically by the SDK, so
     multi-region scans work without any project configuration.
 
+    The region determines the Huawei Cloud endpoint domain (.com for China and
+    International, .eu for Huawei Cloud Europe). Set it with the --region flag
+    or the HUAWEICLOUD_REGION (or HW_REGION) environment variable; --region
+    takes precedence. Non-China accounts (International, Europe) must select a
+    region they can reach, e.g. eu-west-101 for Huawei Cloud Europe.
+
     To assume an agency in a target account, additionally set:
       - HUAWEICLOUD_AGENCY_NAME
       - HUAWEICLOUD_ASSUME_DOMAIN_ID (or HUAWEICLOUD_ASSUME_DOMAIN_NAME)
@@ -30,7 +36,7 @@ def init_parser(self):
         "-f",
         nargs="+",
         dest="regions",
-        help="Huawei Cloud region IDs to run Prowler against (e.g., cn-north-4, cn-east-3)",
+        help="Huawei Cloud region IDs to run Prowler against (e.g., eu-west-101, ap-southeast-1, cn-north-4). Overrides the HUAWEICLOUD_REGION environment variable.",
     )
 
     huaweicloud_parser.set_defaults(provider="huaweicloud")

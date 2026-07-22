@@ -113,6 +113,41 @@ class TestHuaweiCloudProviderGetRegionsToAudit:
         assert [r.region_id for r in regions] == ["cn-north-4"]
 
 
+class TestHuaweiCloudProviderResolveRegions:
+    def test_flag_takes_precedence_over_env(self):
+        with mock.patch.dict(
+            os.environ, {"HUAWEICLOUD_REGION": "eu-west-101"}, clear=True
+        ):
+            assert HuaweicloudProvider._resolve_regions(["ap-southeast-1"]) == [
+                "ap-southeast-1"
+            ]
+
+    def test_falls_back_to_env_region(self):
+        with mock.patch.dict(
+            os.environ, {"HUAWEICLOUD_REGION": "eu-west-101"}, clear=True
+        ):
+            assert HuaweicloudProvider._resolve_regions(None) == ["eu-west-101"]
+
+    def test_env_region_supports_multiple(self):
+        with mock.patch.dict(
+            os.environ,
+            {"HUAWEICLOUD_REGION": "eu-west-101, ap-southeast-1"},
+            clear=True,
+        ):
+            assert HuaweicloudProvider._resolve_regions(None) == [
+                "eu-west-101",
+                "ap-southeast-1",
+            ]
+
+    def test_hw_region_alias(self):
+        with mock.patch.dict(os.environ, {"HW_REGION": "eu-west-0"}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(None) == ["eu-west-0"]
+
+    def test_no_flag_no_env_returns_none(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(None) is None
+
+
 class TestHuaweiCloudProviderTestConnection:
     def test_successful_connection(self):
         fake_identity = HuaweiCloudCallerIdentity(

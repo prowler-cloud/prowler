@@ -122,6 +122,11 @@ class HuaweicloudProvider(Provider):
         """
         logger.info("Initializing Huawei Cloud Provider ...")
 
+        # The --region flag takes precedence; otherwise fall back to the
+        # HUAWEICLOUD_REGION (or HW_REGION) env var so non-China accounts do not
+        # need to pass --region on every run.
+        regions = self._resolve_regions(regions)
+
         logger.info("Setting up Huawei Cloud session ...")
         self._session = self.setup_session(
             access_key_id=access_key_id,
@@ -224,6 +229,22 @@ class HuaweicloudProvider(Provider):
     @property
     def enabled_regions(self) -> set:
         return set([r.region_id for r in self._regions])
+
+    @staticmethod
+    def _resolve_regions(regions):
+        """Resolve the regions to audit.
+
+        The --region flag (passed as ``regions``) takes precedence. When it is
+        not provided, fall back to the HUAWEICLOUD_REGION (or HW_REGION)
+        environment variable, which may hold one or more comma/space-separated
+        region ids.
+        """
+        if regions:
+            return regions
+        env_region = os.environ.get("HUAWEICLOUD_REGION") or os.environ.get("HW_REGION")
+        if env_region:
+            return env_region.replace(",", " ").split()
+        return regions
 
     @staticmethod
     def setup_session(

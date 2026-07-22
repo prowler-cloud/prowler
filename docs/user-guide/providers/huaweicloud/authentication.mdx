@@ -18,10 +18,15 @@ Prowler requires read access to the Huawei Cloud account. The following values a
 | Secret Access Key | `HUAWEICLOUD_SECRET_ACCESS_KEY` (or `HW_SECRET_KEY`) | Secret access key paired with the access key ID |
 | Domain ID | `HUAWEICLOUD_DOMAIN_ID` (or `HW_DOMAIN_ID`) | Optional account (domain) ID |
 | Security Token | `HUAWEICLOUD_SECURITY_TOKEN` | Optional security token for temporary credentials |
+| Region | `HUAWEICLOUD_REGION` (or `HW_REGION`) | Default region when `--region` is not passed (e.g. `eu-west-101`) |
 
 <Note>
 The per-region project ID is resolved automatically by the SDK, so no project configuration is needed. Multi-region scans work out of the box.
 </Note>
+
+<Warning>
+Huawei Cloud runs separate clouds: **International** and **China** (`.com` endpoints) and **Huawei Cloud Europe** (`.eu` endpoints). The region you select determines the endpoint, so accounts outside China must pass a region they can reach — for example `eu-west-101` for a Huawei Cloud Europe account. Credentials from one cloud do not work against another.
+</Warning>
 
 ---
 

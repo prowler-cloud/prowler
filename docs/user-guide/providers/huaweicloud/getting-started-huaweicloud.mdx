@@ -43,12 +43,19 @@ prowler huaweicloud --checks obs_bucket_public_access iam_user_mfa_enabled
 prowler huaweicloud --services iam
 ```
 
-### Scan Specific Regions
+### Select Regions
 
-Use `--region` (aliases `--filter-region` and `-f`) to limit the scan to one or more Huawei Cloud regions. When the flag is omitted, all regions are scanned. Prowler resolves the correct project for each region automatically, so no project configuration is required for multi-region scans.
+The region determines the Huawei Cloud endpoint domain — `.com` for China and International accounts, `.eu` for Huawei Cloud Europe — so accounts outside China must select a region they can reach (for example `eu-west-101` for Europe or `ap-southeast-1` for International).
+
+Set the region with the `--region` flag (aliases `--filter-region` and `-f`) or the `HUAWEICLOUD_REGION` environment variable; the flag takes precedence. Prowler resolves the correct project for each region automatically, so no project configuration is required.
 
 ```bash
-prowler huaweicloud --region cn-north-4 ap-southeast-1
+# Flag (one or more regions)
+prowler huaweicloud --region eu-west-101 ap-southeast-1
+
+# Or set a default region once via environment variable
+export HUAWEICLOUD_REGION="eu-west-101"
+prowler huaweicloud
 ```
 
 ## Available Services
