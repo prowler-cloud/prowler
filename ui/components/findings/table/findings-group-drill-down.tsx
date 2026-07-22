@@ -7,13 +7,11 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
 
 import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
@@ -27,17 +25,17 @@ import {
 } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import {
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
-import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { FloatingSelectionActions } from "../floating-selection-actions";
 
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -56,8 +54,6 @@ export function FindingsGroupDrillDown({
   onCollapse,
 }: FindingsGroupDrillDownProps) {
   const searchParams = useSearchParams();
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
-  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
   // Keep drill-down endpoint selection aligned with the grouped findings page.
   const currentParams = Object.fromEntries(searchParams.entries());
@@ -120,12 +116,18 @@ export function FindingsGroupDrillDown({
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
-  const canSendSelectedFindingsToJira =
-    selectedFindingIds.length === 1 || groupedJiraDispatchEnabled;
   const jiraSelection = createJiraTargetSelection(
     selectedFindingIds,
     JIRA_DISPATCH_TARGET.FINDING_ID,
   );
+  const jiraPayload = jiraSelection
+    ? {
+        selection: jiraSelection,
+        findingTitle: group.checkTitle,
+        selectedResourceCount: selectedFindingIds.length,
+        isFindingGroupSelection: true,
+      }
+    : undefined;
 
   return (
     <FindingsSelectionContext.Provider
@@ -244,8 +246,8 @@ export function FindingsGroupDrillDown({
         </div>
       </div>
 
-      {selectedFindingIds.length > 0 && (
-        <FloatingMuteButton
+      {selectedFindingIds.length > 0 && jiraPayload && (
+        <FloatingSelectionActions
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
           muteLabel={`Mute ${selectedFindingIds.length} ${
@@ -256,29 +258,10 @@ export function FindingsGroupDrillDown({
           }}
           onComplete={handleMuteComplete}
           isBulkOperation={selectedFindingIds.length > 1}
-          showSendToJira
-          canSendToJira={canSendSelectedFindingsToJira}
-          sendToJiraLabel={`Send ${selectedFindingIds.length} ${
-            selectedFindingIds.length === 1 ? "Finding" : "Findings"
-          } to Jira`}
-          onSendToJira={() => setIsJiraModalOpen(true)}
-        />
-      )}
-
-      {jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          selection={jiraSelection}
-          findingTitle={group.checkTitle}
-          defaultDispatchMode={
-            selectedFindingIds.length > 1
-              ? JIRA_DISPATCH_MODE.GROUPED
-              : JIRA_DISPATCH_MODE.INDIVIDUAL
-          }
-          canChooseGroupedDispatch={
-            selectedFindingIds.length > 1 && groupedJiraDispatchEnabled
-          }
+          jiraPayload={jiraPayload}
+          jiraLabel={buildJiraActionLabel({
+            findingCount: selectedFindingIds.length,
+          })}
         />
       )}
 

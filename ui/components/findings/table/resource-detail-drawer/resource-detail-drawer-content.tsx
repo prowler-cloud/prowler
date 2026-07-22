@@ -21,11 +21,10 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
   Button,
@@ -73,6 +72,7 @@ import {
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
@@ -363,7 +363,6 @@ export function ResourceDetailDrawerContent({
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
@@ -415,6 +414,12 @@ export function ResourceDetailDrawerContent({
   const f = isNavigating ? null : currentFinding;
   const jiraSelection = f
     ? createJiraTargetSelection([f.id], JIRA_DISPATCH_TARGET.FINDING_ID)
+    : null;
+  const jiraPayload = jiraSelection
+    ? {
+        selection: jiraSelection,
+        findingTitle: checkMeta.checkTitle,
+      }
     : null;
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
@@ -550,15 +555,6 @@ export function ResourceDetailDrawerContent({
           }}
         />
       )}
-      {f && jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          selection={jiraSelection}
-          findingTitle={checkMeta.checkTitle}
-        />
-      )}
-
       {/* Header: keep row-backed badges visible; only hide stale check metadata */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
@@ -872,10 +868,9 @@ export function ResourceDetailDrawerContent({
                       disabled={f.isMuted}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label="Send to Jira"
-                      onSelect={() => setIsJiraModalOpen(true)}
+                    <JiraDispatchActionItem
+                      label={buildJiraActionLabel({ findingCount: 1 })}
+                      payload={jiraPayload}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1572,7 +1567,6 @@ function OtherFindingRow({
   onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
   const jiraSelection = createJiraTargetSelection(
     [finding.id],
@@ -1592,14 +1586,6 @@ function OtherFindingRow({
             setIsMuteModalOpen(false);
             onMuted();
           }}
-        />
-      )}
-      {jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          selection={jiraSelection}
-          findingTitle={finding.checkTitle}
         />
       )}
       <TableRow
@@ -1670,10 +1656,16 @@ function OtherFindingRow({
                 disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<JiraIcon size={20} />}
-                label="Send to Jira"
-                onSelect={() => setIsJiraModalOpen(true)}
+              <JiraDispatchActionItem
+                label={buildJiraActionLabel({ findingCount: 1 })}
+                payload={
+                  jiraSelection
+                    ? {
+                        selection: jiraSelection,
+                        findingTitle: finding.checkTitle,
+                      }
+                    : null
+                }
               />
             </ActionDropdown>
           </div>

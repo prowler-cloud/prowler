@@ -7,23 +7,9 @@ import type {
 } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-interface JiraModalMockProps {
-  selection: { targetId?: string };
-  isOpen: boolean;
-}
-
-const { SendToJiraModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
-  () => ({
-    SendToJiraModalMock: vi.fn(({ selection, isOpen }: JiraModalMockProps) => (
-      <div
-        data-testid="jira-modal"
-        data-finding-id={selection.targetId}
-        data-open={isOpen ? "true" : "false"}
-      />
-    )),
-    isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
-  }),
-);
+const { isGroupedJiraDispatchEnabledMock } = vi.hoisted(() => ({
+  isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+}));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -56,10 +42,6 @@ vi.mock("@/components/shadcn", () => ({
 
 vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
-}));
-
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: SendToJiraModalMock,
 }));
 
 vi.mock("@/components/icons/services/IconServices", () => ({
@@ -196,6 +178,7 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -208,7 +191,6 @@ import {
   CLOUD_ONLY_TOOLTIP_COPY,
   EDITING_UNAVAILABLE_COPY,
 } from "./finding-triage-cells";
-import { FindingsSelectionContext } from "./findings-selection-context";
 
 function makeTriageSummary(
   overrides?: Partial<FindingTriageSummary>,
@@ -300,6 +282,7 @@ describe("column-finding-resources", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
   });
 
   it("should render actions as the last visible column after Triage without Notes", () => {
@@ -492,7 +475,7 @@ describe("column-finding-resources", () => {
     expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
   });
 
-  it("should open Send to Jira modal with finding UUID directly", async () => {
+  it("should open Jira dispatch with the finding UUID directly", async () => {
     // Given
     const user = userEvent.setup();
 
@@ -525,119 +508,15 @@ describe("column-finding-resources", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    );
 
     // Then
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-finding-id",
-      "real-finding-uuid",
-    );
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
-  });
-
-  it("should pass selected same-group affected failing resources as grouped Jira targets", async () => {
-    // Given
-    const user = userEvent.setup();
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 2,
+    expect(useJiraDispatchStore.getState().activePayload?.selection).toEqual({
+      kind: "single",
+      targetId: "real-finding-uuid",
+      targetType: "finding_id",
     });
-    const actionColumn = columns.find(
-      (col) => (col as { id?: string }).id === "actions",
-    );
-    if (!actionColumn?.cell) {
-      throw new Error("actions column not found");
-    }
-    const CellComponent = actionColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    render(
-      <FindingsSelectionContext.Provider
-        value={{
-          selectedFindingIds: ["finding-1", "finding-2"],
-          selectedFindings: [],
-          clearSelection: vi.fn(),
-          isSelected: vi.fn(),
-        }}
-      >
-        {CellComponent({
-          row: {
-            original: makeResource({ findingId: "finding-1" }),
-          },
-        })}
-      </FindingsSelectionContext.Provider>,
-    );
-
-    // When
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
-
-    // Then
-    expect(SendToJiraModalMock).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        selection: {
-          kind: "target-list",
-          targetIds: ["finding-1", "finding-2"],
-          targetType: "finding_id",
-        },
-        defaultDispatchMode: "grouped",
-        canChooseGroupedDispatch: true,
-      }),
-      undefined,
-    );
-  });
-
-  it("should disable selected multi-finding Jira dispatch outside cloud", async () => {
-    // Given
-    isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
-    const user = userEvent.setup();
-    const columns = getColumnFindingResources({
-      rowSelection: {},
-      selectableRowCount: 2,
-    });
-    const actionColumn = columns.find(
-      (col) => (col as { id?: string }).id === "actions",
-    );
-    if (!actionColumn?.cell) {
-      throw new Error("actions column not found");
-    }
-    const CellComponent = actionColumn.cell as (props: {
-      row: { original: FindingResourceRow };
-    }) => ReactNode;
-
-    render(
-      <FindingsSelectionContext.Provider
-        value={{
-          selectedFindingIds: ["finding-1", "finding-2"],
-          selectedFindings: [],
-          clearSelection: vi.fn(),
-          isSelected: vi.fn(),
-        }}
-      >
-        {CellComponent({
-          row: {
-            original: makeResource({ findingId: "finding-1" }),
-          },
-        })}
-      </FindingsSelectionContext.Provider>,
-    );
-
-    // When
-    const jiraButton = screen.getByRole("button", { name: "Send to Jira" });
-    await user.click(jiraButton);
-
-    // Then
-    expect(jiraButton).toBeDisabled();
-    expect(jiraButton).toHaveAttribute(
-      "title",
-      "Available only in Prowler Cloud",
-    );
-    expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
-      expect.objectContaining({ isOpen: true }),
-      undefined,
-    );
   });
 });
