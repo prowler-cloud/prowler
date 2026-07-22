@@ -145,10 +145,9 @@ class HuaweicloudProvider(Provider):
 
         # Validate credentials against a region the account can actually reach.
         # The default (cn-north-4) is a China region that international accounts
-        # cannot access, so honor the first requested --region when provided.
-        validation_region = (
-            sorted(regions)[0] if regions else HUAWEICLOUD_DEFAULT_REGION
-        )
+        # cannot access, so honor the requested regions; the region must also
+        # expose an IAM endpoint (some dedicated regions do not).
+        validation_region = self._validation_region(regions)
         logger.info(f"Validating credentials in region {validation_region} ...")
         caller_identity = self.validate_credentials(
             session=self._session,
@@ -293,6 +292,30 @@ class HuaweicloudProvider(Provider):
             if cloud_regions:
                 return cloud_regions
         return regions
+
+    @staticmethod
+    def _validation_region(regions):
+        """Pick a region to validate credentials against.
+
+        Credential validation builds an IAM client, so the region must expose
+        an IAM endpoint. Some Huawei Cloud regions (e.g. dedicated ones) are
+        not in the IAM SDK; when only such regions are requested, validate
+        against an IAM-capable region in the same cloud so the right endpoint
+        is used.
+        """
+        if not regions:
+            return HUAWEICLOUD_DEFAULT_REGION
+        for region in sorted(regions):
+            if _iam_endpoint_for_region(region):
+                return region
+        # None of the requested regions expose IAM. Fall back to an IAM-capable
+        # region in the same cloud (inferred from the cn- prefix; Europe's only
+        # region is IAM-capable, so it is already handled above).
+        cloud = "china" if sorted(regions)[0].startswith("cn-") else "international"
+        for region in HuaweicloudProvider._regions_for_cloud(cloud):
+            if _iam_endpoint_for_region(region):
+                return region
+        return HUAWEICLOUD_DEFAULT_REGION
 
     @staticmethod
     def setup_session(
@@ -866,15 +889,29 @@ class HuaweicloudProvider(Provider):
         """
         Get the default region for a service.
 
+        Returns the first enabled region whose client the service can actually
+        build. Not every region is offered by every service (for example, some
+        regions have no OBS or KMS endpoint), so the alphabetically-first region
+        may be unusable for a given service; probing avoids picking it.
+
         Args:
             service: The service name
 
         Returns:
             The default region ID
         """
-        if self.enabled_regions:
-            return sorted(list(self.enabled_regions))[0]
-        return HUAWEICLOUD_DEFAULT_REGION
+        candidates = (
+            sorted(self.enabled_regions)
+            if self.enabled_regions
+            else [HUAWEICLOUD_DEFAULT_REGION]
+        )
+        for region in candidates:
+            try:
+                self._session.client(service, region)
+                return region
+            except Exception:
+                continue
+        return candidates[0]
 
     def get_checks_to_execute_by_audit_resources(self):
         """

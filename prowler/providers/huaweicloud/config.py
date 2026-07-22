@@ -15,28 +15,39 @@ HUAWEICLOUD_REGIONS = {
     "cn-north-4": "China (Beijing-4)",
     "cn-east-2": "China (Shanghai-2)",
     "cn-east-3": "China (Shanghai-1)",
+    "cn-east-4": "China (Shanghai-4)",
     "cn-south-1": "China (Guangzhou)",
     "cn-south-2": "China (Guangzhou-2)",
+    "cn-south-4": "China (Guangzhou-4)",
     "cn-southwest-2": "China (Guiyang)",
+    "cn-southwest-3": "China (Guiyang-3)",
     "cn-north-9": "China (Ulanqab)",
     "cn-north-2": "China (Beijing-2)",
+    "cn-north-11": "China (Ulanqab-11)",
+    "cn-north-12": "China (Ulanqab-12)",
     "cn-east-5": "China (Shanghai-5)",
     # Asia-Pacific Regions
     "ap-southeast-1": "Hong Kong",
     "ap-southeast-2": "Singapore",
     "ap-southeast-3": "Thailand",
     "ap-southeast-4": "Malaysia",
+    "ap-southeast-5": "Indonesia (Jakarta)",
+    "my-kualalumpur-1": "Malaysia (Kuala Lumpur)",
     # Africa Regions
     "af-south-1": "South Africa",
-    # South America Regions
+    "af-north-1": "Egypt (Cairo)",
+    # Americas Regions
     "sa-brazil-1": "Brazil",
     "la-north-2": "Mexico",
     "la-south-2": "Chile (Santiago)",
+    "na-mexico-1": "Mexico (Mexico City)",
     # Europe Regions
     "eu-west-0": "Ireland",
     "eu-west-101": "Ireland (Dublin)",
     # Middle East Regions
     "me-east-1": "UAE (Dubai)",
+    "ae-ad-1": "UAE (Abu Dhabi)",
+    "tr-west-1": "Türkiye (Istanbul)",
     # Russia Regions
     "ru-moscow-1": "Russia (Moscow-1)",
 }

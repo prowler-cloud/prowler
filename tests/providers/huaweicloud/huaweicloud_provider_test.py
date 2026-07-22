@@ -219,6 +219,45 @@ class TestHuaweiCloudProviderRegionsForCloud:
         assert HuaweicloudProvider._regions_for_cloud("mars") == []
 
 
+class TestHuaweiCloudProviderValidationRegion:
+    def test_no_regions_uses_default(self):
+        from prowler.providers.huaweicloud.config import HUAWEICLOUD_DEFAULT_REGION
+
+        assert (
+            HuaweicloudProvider._validation_region(None) == HUAWEICLOUD_DEFAULT_REGION
+        )
+
+    def test_picks_first_iam_capable_requested_region(self):
+        assert (
+            HuaweicloudProvider._validation_region(["ap-southeast-1", "af-south-1"])
+            == "af-south-1"
+        )
+
+    def test_skips_non_iam_regions_when_iam_region_present(self):
+        # af-north-1 has no IAM endpoint; ap-southeast-1 does and sorts after it,
+        # so validation must skip the non-IAM region.
+        assert (
+            HuaweicloudProvider._validation_region(["af-north-1", "ap-southeast-1"])
+            == "ap-southeast-1"
+        )
+
+    def test_falls_back_to_same_cloud_iam_region_international(self):
+        # Only a non-IAM International region requested -> validate against an
+        # IAM-capable International region.
+        region = HuaweicloudProvider._validation_region(["af-north-1"])
+        from prowler.providers.huaweicloud.models import _iam_endpoint_for_region
+
+        assert _iam_endpoint_for_region(region)
+        assert not region.startswith("cn-")
+
+    def test_falls_back_to_same_cloud_iam_region_china(self):
+        region = HuaweicloudProvider._validation_region(["cn-south-4"])
+        from prowler.providers.huaweicloud.models import _iam_endpoint_for_region
+
+        assert _iam_endpoint_for_region(region)
+        assert region.startswith("cn-")
+
+
 class TestHuaweiCloudProviderTestConnection:
     def test_successful_connection(self):
         fake_identity = HuaweiCloudCallerIdentity(

@@ -79,6 +79,8 @@ An explicit `--region` (or `HUAWEICLOUD_REGION`) always overrides `--cloud`.
 A single set of credentials belongs to one cloud, so `--cloud` selects which one to scan — it cannot authenticate against both `.com` and `.eu` at once. To scan accounts on different clouds, run Prowler once per account with that account's credentials.
 </Note>
 
+Prowler automatically skips any region a given service does not offer, so scanning a whole cloud never fails on regions where a service is unavailable.
+
 ## Available Services
 
 Prowler for Huawei Cloud currently supports the following services:

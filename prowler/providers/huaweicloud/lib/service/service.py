@@ -46,9 +46,30 @@ class HuaweiCloudService:
         if not global_service:
             self.regional_clients = provider.generate_regional_clients(self.service)
 
-        # Get default region and client
+        # Get default region and client. get_default_region already probes for
+        # a region the service supports, but fall back defensively so a service
+        # that no enabled region offers cannot abort the whole scan at
+        # construction time.
         self.region = provider.get_default_region(self.service)
-        self.client = self.session.client(self.service, self.region)
+        try:
+            self.client = self.session.client(self.service, self.region)
+        except Exception:
+            if self.regional_clients:
+                self.region = next(iter(self.regional_clients))
+                self.client = self.regional_clients[self.region]
+            else:
+                from prowler.providers.huaweicloud.config import (
+                    HUAWEICLOUD_DEFAULT_REGION,
+                )
+
+                logger.error(
+                    f"{self.service.upper()} - No enabled region offers this "
+                    f"service; falling back to {HUAWEICLOUD_DEFAULT_REGION}"
+                )
+                self.region = HUAWEICLOUD_DEFAULT_REGION
+                self.client = self.session.client(
+                    self.service, HUAWEICLOUD_DEFAULT_REGION
+                )
 
     def __get_session__(self):
         """Get the session."""
