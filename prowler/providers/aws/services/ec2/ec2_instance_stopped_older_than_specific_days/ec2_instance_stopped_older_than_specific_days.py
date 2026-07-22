@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from prowler.lib.check.models import Check, Check_Report_AWS
@@ -68,12 +68,15 @@ class ec2_instance_stopped_older_than_specific_days(Check):
                     )
                 else:
                     time_stopped = datetime.now(timezone.utc) - stop_time
+                    max_stopped_duration = timedelta(
+                        days=max_ec2_instance_stopped_days
+                    )
                     report.status_extended = (
                         f"EC2 Instance {instance.id} has not been stopped longer "
                         f"than {max_ec2_instance_stopped_days} days "
                         f"({time_stopped.days} days)."
                     )
-                    if time_stopped.days > max_ec2_instance_stopped_days:
+                    if time_stopped > max_stopped_duration:
                         report.status = "FAIL"
                         report.status_extended = (
                             f"EC2 Instance {instance.id} has been stopped longer "
