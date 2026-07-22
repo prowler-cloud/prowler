@@ -26,6 +26,7 @@ from tests.providers.aws.utils import (
 
 EXAMPLE_AMI_ID = "ami-12c6146b"
 MOCK_DATETIME = datetime(2023, 1, 4, 7, 27, 30, tzinfo=tzutc())
+MOCK_STATE_TRANSITION_REASON = "User initiated (2021-11-01 17:18:00 GMT)"
 
 make_api_call = botocore.client.BaseClient._make_api_call
 
@@ -64,6 +65,15 @@ def mock_make_api_call(self, operation_name, kwarg):
             ]
         }
     return make_api_call(self, operation_name, kwarg)
+
+
+def mock_make_api_call_with_state_transition_reason(self, operation_name, kwarg):
+    response = make_api_call(self, operation_name, kwarg)
+    if operation_name == "DescribeInstances":
+        for reservation in response.get("Reservations", []):
+            for instance in reservation.get("Instances", []):
+                instance["StateTransitionReason"] = MOCK_STATE_TRANSITION_REASON
+    return response
 
 
 class Test_EC2_Service:
@@ -319,6 +329,10 @@ class Test_EC2_Service:
         assert ec2.images_by_id == {}
 
     # Test EC2 Describe Instances
+    @mock.patch(
+        "botocore.client.BaseClient._make_api_call",
+        new=mock_make_api_call_with_state_transition_reason,
+    )
     @mock_aws
     @freeze_time(MOCK_DATETIME)
     def test_describe_instances(self):
@@ -349,8 +363,9 @@ class Test_EC2_Service:
         assert ec2.instances[0].state == "running"
         assert re.match(r"ami-[0-9a-z]{8}", ec2.instances[0].image_id)
         assert ec2.instances[0].launch_time == MOCK_DATETIME
-        # Running instances typically have an empty StateTransitionReason
-        assert ec2.instances[0].state_transition_reason in (None, "")
+        assert (
+            ec2.instances[0].state_transition_reason == MOCK_STATE_TRANSITION_REASON
+        )
         assert not ec2.instances[0].user_data
         assert ec2.instances[0].http_tokens == "optional"
         assert ec2.instances[0].http_endpoint == "enabled"
