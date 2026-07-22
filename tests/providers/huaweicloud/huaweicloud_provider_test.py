@@ -219,6 +219,47 @@ class TestHuaweiCloudProviderRegionsForCloud:
         assert HuaweicloudProvider._regions_for_cloud("mars") == []
 
 
+class TestHuaweiCloudEndpointAlignment:
+    def test_eu_region_corrects_com_service_endpoint(self):
+        from prowler.providers.huaweicloud.models import _align_endpoint_tld
+
+        # ECS/VPC/ELB/EVS/WAF ship .com endpoints for the Europe (.eu) region.
+        assert (
+            _align_endpoint_tld(
+                "eu-west-101", "https://ecs.eu-west-101.myhuaweicloud.com"
+            )
+            == "https://ecs.eu-west-101.myhuaweicloud.eu"
+        )
+
+    def test_eu_region_leaves_correct_eu_endpoint(self):
+        from prowler.providers.huaweicloud.models import _align_endpoint_tld
+
+        endpoint = "https://iam.eu-west-101.myhuaweicloud.eu"
+        assert _align_endpoint_tld("eu-west-101", endpoint) == endpoint
+
+    def test_com_region_is_untouched(self):
+        from prowler.providers.huaweicloud.models import _align_endpoint_tld
+
+        for region in ("ap-southeast-1", "cn-north-4"):
+            endpoint = f"https://ecs.{region}.myhuaweicloud.com"
+            assert _align_endpoint_tld(region, endpoint) == endpoint
+
+    def test_aligned_region_returns_region_with_eu_endpoint(self):
+        from huaweicloudsdkecs.v2.region.ecs_region import EcsRegion
+
+        from prowler.providers.huaweicloud.models import _aligned_region
+
+        region = _aligned_region(EcsRegion, "eu-west-101")
+        assert region.endpoints[0] == "https://ecs.eu-west-101.myhuaweicloud.eu"
+
+    def test_aligned_region_unknown_region_falls_through(self):
+        from prowler.providers.huaweicloud.models import _align_endpoint_tld
+
+        # A region with no IAM endpoint cannot be classified; leave as-is.
+        endpoint = "https://ecs.af-north-1.myhuaweicloud.com"
+        assert _align_endpoint_tld("af-north-1", endpoint) == endpoint
+
+
 class TestHuaweiCloudProviderValidationRegion:
     def test_no_regions_uses_default(self):
         from prowler.providers.huaweicloud.config import HUAWEICLOUD_DEFAULT_REGION

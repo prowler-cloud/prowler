@@ -14,6 +14,7 @@ class iam_password_policy_minimum_age(Check):
             )
             report.region = iam_client.region
             report.resource_id = f"{iam_client.audited_account}-password-policy"
+            report.resource_name = report.resource_id
             report.resource_arn = (
                 f"HUAWEICLOUD::IAM::{iam_client.audited_account}:password-policy"
             )

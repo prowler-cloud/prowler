@@ -33,6 +33,43 @@ def _iam_endpoint_for_region(region: str):
         return None
 
 
+def _align_endpoint_tld(region: str, endpoint: str) -> str:
+    """Align a service endpoint's TLD to the region's cloud.
+
+    The cloud a region belongs to (International/China on .com, Europe on .eu)
+    is a property of the region, and IAM is authoritative for it. Some Huawei
+    Cloud services still ship the .com endpoint for Europe (.eu) regions in
+    their bundled region metadata (e.g. ECS/VPC/ELB/EVS/WAF for eu-west-101),
+    which rejects .eu accounts with InvalidAccessKeyId. Rewrite the TLD to
+    match the region's IAM endpoint so every service targets the right cloud.
+    """
+    iam_endpoint = _iam_endpoint_for_region(region)
+    if not iam_endpoint or not endpoint:
+        return endpoint
+    if ".myhuaweicloud.eu" in iam_endpoint:
+        return endpoint.replace(".myhuaweicloud.com", ".myhuaweicloud.eu")
+    if ".myhuaweicloud.com" in iam_endpoint:
+        return endpoint.replace(".myhuaweicloud.eu", ".myhuaweicloud.com")
+    return endpoint
+
+
+def _aligned_region(region_cls, region_id: str):
+    """Return the service Region for ``region_id`` with a cloud-aligned endpoint.
+
+    Uses the service's own region metadata, but corrects the endpoint TLD when
+    the service lags behind the region's actual cloud (see _align_endpoint_tld).
+    Returns the unmodified region object when no correction is needed.
+    """
+    sdk_region = region_cls.value_of(region_id)
+    endpoint = sdk_region.endpoints[0]
+    aligned = _align_endpoint_tld(region_id, endpoint)
+    if aligned == endpoint:
+        return sdk_region
+    from huaweicloudsdkcore.region.region import Region
+
+    return Region(region_id, aligned)
+
+
 class HuaweiCloudCallerIdentity(BaseModel):
     """
     HuaweiCloudCallerIdentity stores the caller identity information from IAM.
@@ -206,7 +243,7 @@ class HuaweiCloudSession:
                     EcsClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(EcsRegion.value_of(client_region))
+                    .with_region(_aligned_region(EcsRegion, client_region))
                     .build()
                 )
 
@@ -219,7 +256,7 @@ class HuaweiCloudSession:
                     VpcClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(VpcRegion.value_of(client_region))
+                    .with_region(_aligned_region(VpcRegion, client_region))
                     .build()
                 )
 
@@ -233,7 +270,7 @@ class HuaweiCloudSession:
                     IamClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(IamRegion.value_of(client_region))
+                    .with_region(_aligned_region(IamRegion, client_region))
                     .build()
                 )
 
@@ -246,7 +283,7 @@ class HuaweiCloudSession:
                     RdsClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(RdsRegion.value_of(client_region))
+                    .with_region(_aligned_region(RdsRegion, client_region))
                     .build()
                 )
 
@@ -259,7 +296,7 @@ class HuaweiCloudSession:
                     CtsClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(CtsRegion.value_of(client_region))
+                    .with_region(_aligned_region(CtsRegion, client_region))
                     .build()
                 )
 
@@ -272,7 +309,7 @@ class HuaweiCloudSession:
                     KmsClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(KmsRegion.value_of(client_region))
+                    .with_region(_aligned_region(KmsRegion, client_region))
                     .build()
                 )
 
@@ -285,7 +322,7 @@ class HuaweiCloudSession:
                     WafClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(WafRegion.value_of(client_region))
+                    .with_region(_aligned_region(WafRegion, client_region))
                     .build()
                 )
 
@@ -298,7 +335,7 @@ class HuaweiCloudSession:
                     ElbClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(ElbRegion.value_of(client_region))
+                    .with_region(_aligned_region(ElbRegion, client_region))
                     .build()
                 )
 
@@ -311,7 +348,7 @@ class HuaweiCloudSession:
                     EvsClient.new_builder()
                     .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
-                    .with_region(EvsRegion.value_of(client_region))
+                    .with_region(_aligned_region(EvsRegion, client_region))
                     .build()
                 )
 

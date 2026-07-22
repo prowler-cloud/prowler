@@ -12,6 +12,7 @@ class cts_enabled(Check):
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource={})
             report.region = cts_client.region
             report.resource_id = f"{cts_client.audited_account}-cts-tracker"
+            report.resource_name = report.resource_id
             report.resource_arn = (
                 f"HUAWEICLOUD::CTS::{cts_client.audited_account}:tracker"
             )

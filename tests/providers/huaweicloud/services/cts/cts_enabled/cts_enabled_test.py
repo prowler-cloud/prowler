@@ -102,3 +102,7 @@ class TestCtsEnabled:
 
             assert len(result) == 1
             assert result[0].status == "FAIL"
+            # Singleton finding must carry a resource_name so reporting does
+            # not emit "has no resource_name".
+            assert result[0].resource_name == "123456789012-cts-tracker"
+            assert result[0].resource_id == "123456789012-cts-tracker"

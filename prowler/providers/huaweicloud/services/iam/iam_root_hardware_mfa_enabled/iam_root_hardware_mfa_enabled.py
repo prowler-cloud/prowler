@@ -18,6 +18,7 @@ class iam_root_hardware_mfa_enabled(Check):
         report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=protection)
         report.region = iam_client.region
         report.resource_id = f"{iam_client.audited_account}-operation-protection"
+        report.resource_name = report.resource_id
         report.resource_arn = (
             f"HUAWEICLOUD::IAM::{iam_client.audited_account}:operation-protection"
         )
