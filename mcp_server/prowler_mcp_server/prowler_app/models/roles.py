@@ -107,13 +107,19 @@ class DetailedRole(SimplifiedRole):
     def _should_exclude(self, key: str, value: Any) -> bool:
         """Keep fields whose "empty" form carries meaning.
 
-        ``unlimited_visibility`` is kept even when ``False``, and the
-        relationship lists are kept even when empty so that an empty
-        ``user_ids``/``provider_group_ids`` explicitly signals "not assigned to
-        any user / not scoped to any provider group" instead of looking like an
-        omitted, unknown field to an agent.
+        ``unlimited_visibility`` is kept even when ``False``, and ``permissions``
+        and the relationship lists are kept even when empty so that an empty
+        ``permissions``/``user_ids``/``provider_group_ids`` explicitly signals
+        "grants no capabilities / not assigned to any user / not scoped to any
+        provider group" instead of looking like an omitted, unknown field to an
+        agent.
         """
-        if key in ("unlimited_visibility", "user_ids", "provider_group_ids"):
+        if key in (
+            "unlimited_visibility",
+            "permissions",
+            "user_ids",
+            "provider_group_ids",
+        ):
             return value is None
         return super()._should_exclude(key, value)
 

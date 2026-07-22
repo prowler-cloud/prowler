@@ -83,8 +83,14 @@ class DetailedUser(SimplifiedUser):
     )
 
     def _should_exclude(self, key: str, value: Any) -> bool:
-        """Always include is_verified even when it is False."""
-        if key == "is_verified":
+        """Keep fields whose "empty" form carries meaning.
+
+        ``is_verified`` is kept even when ``False``, and ``role_ids`` /
+        ``membership_ids`` are kept even when empty so that an empty list
+        explicitly signals "not assigned to any role / not a member of any
+        tenant" instead of looking like an omitted, unknown field to an agent.
+        """
+        if key in ("is_verified", "role_ids", "membership_ids"):
             return value is None
         return super()._should_exclude(key, value)
 
