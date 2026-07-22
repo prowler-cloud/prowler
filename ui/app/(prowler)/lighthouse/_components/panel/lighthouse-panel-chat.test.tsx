@@ -190,6 +190,20 @@ describe("LighthousePanelChat", () => {
     ).toBeInTheDocument();
   });
 
+  it("places the current page context immediately after the model control", async () => {
+    // Given / When
+    render(<LighthousePanelChat />);
+
+    // Then
+    const modelControl = await screen.findByLabelText(
+      "Current model: OpenAI gpt-5.1",
+    );
+    const contextControl = screen.getByRole("button", {
+      name: "Disable Findings context",
+    });
+    expect(modelControl.nextElementSibling).toBe(contextControl);
+  });
+
   it("sends the current page context from the side panel", async () => {
     // Given
     const user = userEvent.setup();
