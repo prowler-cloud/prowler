@@ -133,10 +133,16 @@ class HuaweicloudProvider(Provider):
         )
         logger.info("Huawei Cloud session configured successfully")
 
-        logger.info("Validating credentials ...")
+        # Validate credentials against a region the account can actually reach.
+        # The default (cn-north-4) is a China region that international accounts
+        # cannot access, so honor the first requested --region when provided.
+        validation_region = (
+            sorted(regions)[0] if regions else HUAWEICLOUD_DEFAULT_REGION
+        )
+        logger.info(f"Validating credentials in region {validation_region} ...")
         caller_identity = self.validate_credentials(
             session=self._session,
-            region=HUAWEICLOUD_DEFAULT_REGION,
+            region=validation_region,
         )
         logger.info("Credentials validated")
 
