@@ -198,6 +198,32 @@ users:
     );
   });
 
+  it("reports kubeconfig auth-provider cmd-path on kubeconfig_content field", () => {
+    const schema = addCredentialsFormSchema("kubernetes");
+
+    const result = schema.safeParse({
+      ...BASE_KUBERNETES_VALUES,
+      [ProviderCredentialFields.KUBECONFIG_CONTENT]: `apiVersion: v1
+kind: Config
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: gcp
+        config:
+          cmd-path: /bin/sh`,
+    });
+
+    expect(result.success).toBe(false);
+    if (result.success) return;
+
+    expect(result.error.issues).toContainEqual(
+      expect.objectContaining({
+        path: [ProviderCredentialFields.KUBECONFIG_CONTENT],
+      }),
+    );
+  });
+
   it("accepts malformed kubeconfig content for backend validation", () => {
     const schema = addCredentialsFormSchema("kubernetes");
 
