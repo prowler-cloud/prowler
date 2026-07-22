@@ -1,9 +1,6 @@
 "use client";
 
-import { X } from "lucide-react";
-
 import { Badge } from "@/components/shadcn/badge/badge";
-import { Button } from "@/components/shadcn/button/button";
 import {
   Tooltip,
   TooltipContent,
@@ -34,39 +31,25 @@ export function LighthouseContextControl({
 }: LighthouseContextControlProps) {
   if (!context) return null;
 
-  if (!enabled) {
-    return (
-      <Button
-        type="button"
-        variant="link"
-        size="link-xs"
-        aria-label={`Add ${pageLabel} context`}
-        onClick={onEnable}
-      >
-        + Add {pageLabel} context
-      </Button>
-    );
-  }
-
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Badge asChild variant="tag">
-          <div tabIndex={0} aria-label={`${pageLabel} message context`}>
-            <span>{buildContextLabel(pageLabel, selectionCount)}</span>
-            <Button
-              type="button"
-              variant="bare"
-              size="icon-xs"
-              aria-label={`Remove ${pageLabel} context`}
-              onClick={onDisable}
-            >
-              <X />
-            </Button>
-          </div>
+        <Badge asChild variant={enabled ? "tag" : "outline"}>
+          <button
+            type="button"
+            aria-label={`${enabled ? "Disable" : "Enable"} ${pageLabel} context`}
+            aria-pressed={enabled}
+            onClick={enabled ? onDisable : onEnable}
+          >
+            {buildContextLabel(pageLabel, selectionCount)}
+          </button>
         </Badge>
       </TooltipTrigger>
-      <LighthouseContextTooltip context={context} />
+      <TooltipContent>
+        {enabled
+          ? `Click to stop including ${pageLabel} context in new messages.`
+          : `Click to include ${pageLabel} context in new messages.`}
+      </TooltipContent>
     </Tooltip>
   );
 }

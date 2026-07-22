@@ -251,13 +251,15 @@ describe("LighthousePanelChat", () => {
 
     // When
     await user.click(
-      screen.getByRole("button", { name: "Remove Findings context" }),
+      screen.getByRole("button", { name: "Disable Findings context" }),
     );
 
     // Then
-    expect(
-      screen.getByRole("button", { name: "Add Findings context" }),
-    ).toBeInTheDocument();
+    const disabledContext = screen.getByRole("button", {
+      name: "Enable Findings context",
+    });
+    expect(disabledContext).toHaveAttribute("aria-pressed", "false");
+    expect(disabledContext).toHaveTextContent("@ Findings");
     expect(
       screen.getByRole("button", { name: "Critical findings" }),
     ).toBeInTheDocument();
