@@ -72,6 +72,7 @@ class HuaweicloudProvider(Provider):
         agency_name: str = None,
         assume_domain_id: str = None,
         assume_domain_name: str = None,
+        cloud: str = None,
         regions: list = None,
         config_path: str = None,
         config_content: dict = None,
@@ -95,6 +96,8 @@ class HuaweicloudProvider(Provider):
             agency_name: Name of the agency to assume in the target account
             assume_domain_id: Domain ID of the target (delegating) account
             assume_domain_name: Domain name of the target (delegating) account
+            cloud: Huawei Cloud instance to scan (international, europe, china)
+                when no explicit regions are given; expands to that cloud's regions
             regions: List of Huawei Cloud region IDs to audit
             config_path: Path to the configuration file
             config_content: Content of the configuration file
@@ -123,9 +126,10 @@ class HuaweicloudProvider(Provider):
         logger.info("Initializing Huawei Cloud Provider ...")
 
         # The --region flag takes precedence; otherwise fall back to the
-        # HUAWEICLOUD_REGION (or HW_REGION) env var so non-China accounts do not
-        # need to pass --region on every run.
-        regions = self._resolve_regions(regions)
+        # HUAWEICLOUD_REGION (or HW_REGION) env var, then the --cloud selector
+        # (or HUAWEICLOUD_CLOUD), which expands to every region of that Huawei
+        # Cloud instance so non-China accounts do not need to list regions.
+        regions = self._resolve_regions(regions, cloud)
 
         logger.info("Setting up Huawei Cloud session ...")
         self._session = self.setup_session(
@@ -230,20 +234,64 @@ class HuaweicloudProvider(Provider):
     def enabled_regions(self) -> set:
         return set([r.region_id for r in self._regions])
 
+    # Huawei Cloud runs separate clouds. International and China share the .com
+    # endpoints (China regions are the cn-* ones); Europe uses the .eu
+    # endpoints. An account belongs to a single cloud and can only reach that
+    # cloud's regions.
+    CLOUDS = ("international", "europe", "china")
+    CLOUD_ALIASES = {
+        "eu": "europe",
+        "intl": "international",
+        "com": "international",
+        "cn": "china",
+    }
+
     @staticmethod
-    def _resolve_regions(regions):
+    def _regions_for_cloud(cloud):
+        """Return the region ids that belong to a Huawei Cloud instance.
+
+        The cloud each region belongs to is derived from its IAM endpoint (.eu
+        for Europe, .com otherwise) and the cn-* prefix (China), so the mapping
+        stays accurate as the SDK's region list changes.
+        """
+        cloud = HuaweicloudProvider.CLOUD_ALIASES.get(cloud, cloud)
+        result = []
+        for region in HUAWEICLOUD_REGIONS:
+            endpoint = _iam_endpoint_for_region(region) or ""
+            is_europe = ".myhuaweicloud.eu" in endpoint
+            is_china = region.startswith("cn-")
+            if cloud == "europe" and is_europe:
+                result.append(region)
+            elif cloud == "china" and is_china:
+                result.append(region)
+            elif cloud == "international" and not is_europe and not is_china:
+                result.append(region)
+        return sorted(result)
+
+    @staticmethod
+    def _resolve_regions(regions, cloud=None):
         """Resolve the regions to audit.
 
-        The --region flag (passed as ``regions``) takes precedence. When it is
-        not provided, fall back to the HUAWEICLOUD_REGION (or HW_REGION)
-        environment variable, which may hold one or more comma/space-separated
-        region ids.
+        Precedence: the --region flag (``regions``) wins; then the
+        HUAWEICLOUD_REGION (or HW_REGION) environment variable (one or more
+        comma/space-separated region ids); then the --cloud selector (or
+        HUAWEICLOUD_CLOUD / HW_CLOUD), which expands to every region of that
+        Huawei Cloud instance.
         """
         if regions:
             return regions
         env_region = os.environ.get("HUAWEICLOUD_REGION") or os.environ.get("HW_REGION")
         if env_region:
             return env_region.replace(",", " ").split()
+        cloud = (
+            cloud or os.environ.get("HUAWEICLOUD_CLOUD") or os.environ.get("HW_CLOUD")
+        )
+        if cloud:
+            cloud_regions = HuaweicloudProvider._regions_for_cloud(
+                cloud.strip().lower()
+            )
+            if cloud_regions:
+                return cloud_regions
         return regions
 
     @staticmethod

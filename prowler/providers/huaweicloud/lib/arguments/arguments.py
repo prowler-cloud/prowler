@@ -17,6 +17,11 @@ def init_parser(self):
     takes precedence. Non-China accounts (International, Europe) must select a
     region they can reach, e.g. eu-west-101 for Huawei Cloud Europe.
 
+    To scan every region of a Huawei Cloud instance without listing them, use
+    the --cloud selector (or the HUAWEICLOUD_CLOUD env var): international,
+    europe, or china. It auto-selects that cloud's regions and endpoint. An
+    explicit --region (or HUAWEICLOUD_REGION) overrides it.
+
     To assume an agency in a target account, additionally set:
       - HUAWEICLOUD_AGENCY_NAME
       - HUAWEICLOUD_ASSUME_DOMAIN_ID (or HUAWEICLOUD_ASSUME_DOMAIN_NAME)
@@ -36,7 +41,14 @@ def init_parser(self):
         "-f",
         nargs="+",
         dest="regions",
-        help="Huawei Cloud region IDs to run Prowler against (e.g., eu-west-101, ap-southeast-1, cn-north-4). Overrides the HUAWEICLOUD_REGION environment variable.",
+        help="Huawei Cloud region IDs to run Prowler against (e.g., eu-west-101, ap-southeast-1, cn-north-4). Overrides the HUAWEICLOUD_REGION environment variable and the --cloud selector.",
+    )
+    huaweicloud_regions_subparser.add_argument(
+        "--cloud",
+        dest="cloud",
+        choices=["international", "europe", "china"],
+        default=None,
+        help="Scan every region of a Huawei Cloud instance (international, europe, or china) without listing regions. Also selects the matching endpoint (.eu for europe, .com otherwise). Overridden by --region. Defaults to the HUAWEICLOUD_CLOUD environment variable.",
     )
 
     huaweicloud_parser.set_defaults(provider="huaweicloud")

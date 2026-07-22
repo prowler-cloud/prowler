@@ -58,6 +58,27 @@ export HUAWEICLOUD_REGION="eu-west-101"
 prowler huaweicloud
 ```
 
+### Scan a Whole Cloud
+
+Huawei Cloud runs as separate clouds, and each account belongs to exactly one of them: **International** and **China** on the `.com` endpoints, and **Huawei Cloud Europe** on the `.eu` endpoints. To scan every region of the account's cloud without listing regions, use the `--cloud` selector (or the `HUAWEICLOUD_CLOUD` environment variable). Prowler expands it to that cloud's regions and selects the matching endpoint automatically:
+
+```bash
+# Scan all Huawei Cloud Europe regions (.eu endpoint)
+prowler huaweicloud --cloud europe
+
+# Scan all International regions (.com endpoint)
+prowler huaweicloud --cloud international
+
+# Scan all China regions (.com endpoint)
+prowler huaweicloud --cloud china
+```
+
+An explicit `--region` (or `HUAWEICLOUD_REGION`) always overrides `--cloud`.
+
+<Note>
+A single set of credentials belongs to one cloud, so `--cloud` selects which one to scan — it cannot authenticate against both `.com` and `.eu` at once. To scan accounts on different clouds, run Prowler once per account with that account's credentials.
+</Note>
+
 ## Available Services
 
 Prowler for Huawei Cloud currently supports the following services:

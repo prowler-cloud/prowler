@@ -681,6 +681,7 @@ class Provider(ABC):
                     # vars by the provider itself; there are no credential CLI
                     # flags to avoid leaking secrets.
                     provider_class(
+                        cloud=getattr(arguments, "cloud", None),
                         regions=(
                             set(arguments.regions)
                             if getattr(arguments, "regions", None)

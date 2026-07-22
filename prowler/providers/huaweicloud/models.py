@@ -204,7 +204,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     EcsClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(EcsRegion.value_of(client_region))
                     .build()
@@ -217,7 +217,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     VpcClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(VpcRegion.value_of(client_region))
                     .build()
@@ -231,7 +231,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     IamClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(IamRegion.value_of(client_region))
                     .build()
@@ -244,7 +244,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     RdsClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(RdsRegion.value_of(client_region))
                     .build()
@@ -257,7 +257,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     CtsClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(CtsRegion.value_of(client_region))
                     .build()
@@ -270,7 +270,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     KmsClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(KmsRegion.value_of(client_region))
                     .build()
@@ -283,7 +283,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     WafClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(WafRegion.value_of(client_region))
                     .build()
@@ -296,7 +296,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     ElbClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(ElbRegion.value_of(client_region))
                     .build()
@@ -309,7 +309,7 @@ class HuaweiCloudSession:
                 client_region = region or self._region
                 return (
                     EvsClient.new_builder()
-                    .with_credentials(self._get_basic_credentials())
+                    .with_credentials(self._get_basic_credentials(client_region))
                     .with_http_config(self._http_config())
                     .with_region(EvsRegion.value_of(client_region))
                     .build()
@@ -345,13 +345,19 @@ class HuaweiCloudSession:
         )
         return config
 
-    def _get_basic_credentials(self):
+    def _get_basic_credentials(self, region: str = None):
         """Get Huawei Cloud BasicCredentials from stored credentials.
 
         The project_id is intentionally left unset: the SDK resolves the
         correct project_id for each region automatically (cached per region),
         which is required for multi-region scans since each region has its own
         project. Pinning a single project_id would break every other region.
+
+        Args:
+            region: The region the resulting client targets. Defaults to the
+                session's region. It selects the IAM endpoint used for project
+                auto-resolution, so multi-region scans point each regional
+                client at its own region's endpoint.
         """
         from huaweicloudsdkcore.auth.credentials import BasicCredentials
 
@@ -362,7 +368,7 @@ class HuaweiCloudSession:
         # Point the SDK's per-region project auto-resolution at the region's
         # own IAM endpoint. It otherwise defaults to the .com (International)
         # global endpoint, which rejects Huawei Cloud Europe (.eu) accounts.
-        iam_endpoint = _iam_endpoint_for_region(self._region)
+        iam_endpoint = _iam_endpoint_for_region(region or self._region)
         if iam_endpoint:
             basic_creds.iam_endpoint = iam_endpoint
 

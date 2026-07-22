@@ -147,6 +147,77 @@ class TestHuaweiCloudProviderResolveRegions:
         with mock.patch.dict(os.environ, {}, clear=True):
             assert HuaweicloudProvider._resolve_regions(None) is None
 
+    def test_cloud_selector_expands_to_cloud_regions(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(None, "europe") == [
+                "eu-west-101"
+            ]
+
+    def test_cloud_selector_from_env(self):
+        with mock.patch.dict(os.environ, {"HUAWEICLOUD_CLOUD": "europe"}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(None) == ["eu-west-101"]
+
+    def test_region_overrides_cloud_selector(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(
+                ["ap-southeast-1"], "europe"
+            ) == ["ap-southeast-1"]
+
+    def test_env_region_overrides_cloud_env(self):
+        with mock.patch.dict(
+            os.environ,
+            {"HUAWEICLOUD_REGION": "eu-west-101", "HUAWEICLOUD_CLOUD": "china"},
+            clear=True,
+        ):
+            assert HuaweicloudProvider._resolve_regions(None) == ["eu-west-101"]
+
+    def test_cloud_alias_and_case_insensitive(self):
+        with mock.patch.dict(os.environ, {}, clear=True):
+            assert HuaweicloudProvider._resolve_regions(None, "EU") == ["eu-west-101"]
+
+
+class TestHuaweiCloudProviderRegionsForCloud:
+    def test_europe_is_only_eu_endpoint_regions(self):
+        assert HuaweicloudProvider._regions_for_cloud("europe") == ["eu-west-101"]
+
+    def test_china_is_cn_prefixed_regions(self):
+        regions = HuaweicloudProvider._regions_for_cloud("china")
+        assert regions
+        assert all(region.startswith("cn-") for region in regions)
+
+    def test_international_excludes_china_and_europe(self):
+        regions = HuaweicloudProvider._regions_for_cloud("international")
+        assert regions
+        assert all(not region.startswith("cn-") for region in regions)
+        assert "eu-west-101" not in regions
+        # eu-west-0 is an International (.com) region despite the eu- prefix
+        assert "eu-west-0" in regions
+
+    def test_clouds_partition_all_regions_without_overlap(self):
+        from prowler.providers.huaweicloud.config import HUAWEICLOUD_REGIONS
+
+        europe = set(HuaweicloudProvider._regions_for_cloud("europe"))
+        china = set(HuaweicloudProvider._regions_for_cloud("china"))
+        international = set(HuaweicloudProvider._regions_for_cloud("international"))
+        assert europe & china == set()
+        assert europe & international == set()
+        assert china & international == set()
+        assert europe | china | international == set(HUAWEICLOUD_REGIONS)
+
+    def test_alias_maps_to_canonical_cloud(self):
+        assert HuaweicloudProvider._regions_for_cloud(
+            "intl"
+        ) == HuaweicloudProvider._regions_for_cloud("international")
+        assert HuaweicloudProvider._regions_for_cloud(
+            "com"
+        ) == HuaweicloudProvider._regions_for_cloud("international")
+        assert HuaweicloudProvider._regions_for_cloud(
+            "cn"
+        ) == HuaweicloudProvider._regions_for_cloud("china")
+
+    def test_unknown_cloud_returns_empty(self):
+        assert HuaweicloudProvider._regions_for_cloud("mars") == []
+
 
 class TestHuaweiCloudProviderTestConnection:
     def test_successful_connection(self):
