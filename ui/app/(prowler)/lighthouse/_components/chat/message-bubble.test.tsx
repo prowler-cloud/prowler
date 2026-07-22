@@ -105,6 +105,15 @@ describe("MessageBubble", () => {
                   label: "Findings",
                   path: "/findings",
                 },
+                {
+                  kind: "finding",
+                  id: "finding-1",
+                  source: "focused",
+                  scope_key: "findings:/findings",
+                  label: "Focused finding",
+                  finding_id: "finding-1",
+                  check_id: "aws_s3_bucket_public_access",
+                },
               ],
             },
           },
@@ -119,7 +128,7 @@ describe("MessageBubble", () => {
     render(<MessageBubble message={userMessage} />);
 
     // Then
-    expect(screen.getByText("@ Findings")).toBeInTheDocument();
+    expect(screen.getByText("@ Findings +1")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Remove Findings context/ }),
     ).not.toBeInTheDocument();

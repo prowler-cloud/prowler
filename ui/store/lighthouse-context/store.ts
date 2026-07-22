@@ -4,17 +4,26 @@ import type { LighthouseContextItem } from "@/types/lighthouse-context";
 
 export interface LighthouseContextStoreState {
   contributions: Record<string, LighthouseContextItem>;
+  focused: LighthouseContextItem | null;
+  focusedOwnerToken: number;
   registerContribution: (
     contributorId: string,
     item: LighthouseContextItem,
   ) => void;
   removeContribution: (contributorId: string) => void;
+  setFocusedContext: (
+    ownerToken: number,
+    item: LighthouseContextItem | null,
+  ) => void;
+  clearFocusedContext: (ownerToken: number) => void;
   resetContributions: () => void;
 }
 
 export const useLighthouseContextStore = create<LighthouseContextStoreState>(
   (set) => ({
     contributions: {},
+    focused: null,
+    focusedOwnerToken: 0,
     registerContribution: (contributorId, item) =>
       set((state) => ({
         contributions: {
@@ -30,7 +39,16 @@ export const useLighthouseContextStore = create<LighthouseContextStoreState>(
           ),
         ),
       })),
-    resetContributions: () => set({ contributions: {} }),
+    setFocusedContext: (ownerToken, focused) =>
+      set({ focused, focusedOwnerToken: ownerToken }),
+    clearFocusedContext: (ownerToken) =>
+      set((state) =>
+        state.focusedOwnerToken === ownerToken
+          ? { focused: null, focusedOwnerToken: 0 }
+          : state,
+      ),
+    resetContributions: () =>
+      set({ contributions: {}, focused: null, focusedOwnerToken: 0 }),
   }),
 );
 

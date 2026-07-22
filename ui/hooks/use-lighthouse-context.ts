@@ -29,11 +29,13 @@ export function useLighthouseCurrentContext(): LighthouseCurrentContext {
   const contributions = useLighthouseContextStore(
     (state) => state.contributions,
   );
+  const focused = useLighthouseContextStore((state) => state.focused);
 
   return buildCurrentLighthouseContext(
     pathname,
     new URLSearchParams(searchParams.toString()),
     Object.values(contributions),
+    focused ?? undefined,
   );
 }
 
@@ -41,6 +43,7 @@ export function buildCurrentLighthouseContext(
   pathname: string,
   searchParams: URLSearchParams,
   contributions: LighthouseContextItem[],
+  focused?: LighthouseContextItem,
 ): LighthouseCurrentContext {
   const page = resolveLighthousePage(pathname);
   const scopeKey = getLighthouseScopeKey(pathname);
@@ -49,7 +52,7 @@ export function buildCurrentLighthouseContext(
     (item) => item.scopeKey === scopeKey,
   );
   const context = compileLighthouseContext(
-    [pageContext, ...scopedContributions],
+    [pageContext, ...(focused ? [focused] : []), ...scopedContributions],
     scopeKey,
   );
 
@@ -59,7 +62,9 @@ export function buildCurrentLighthouseContext(
     scopeKey,
     selectionCount:
       context?.items.filter(
-        (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
+        (item) =>
+          item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED ||
+          item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
       ).length ?? 0,
   };
 }

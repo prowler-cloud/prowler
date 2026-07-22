@@ -40,4 +40,46 @@ describe("buildCurrentLighthouseContext", () => {
     expect(current.page.label).toBe("Findings");
     expect(current.selectionCount).toBe(0);
   });
+
+  it("should combine the page, focused detail, and parent attack path", () => {
+    // Given
+    const parentContext = {
+      kind: "attack_path" as const,
+      id: "current-query",
+      source: "automatic" as const,
+      scopeKey: "attack-paths:/attack-paths",
+      label: "Internet-exposed resources",
+      scanId: "scan-1",
+      queryId: "query-1",
+    };
+    const focusedContext = {
+      kind: "finding" as const,
+      id: "finding-1",
+      source: "focused" as const,
+      scopeKey: "attack-paths:/attack-paths",
+      label: "Focused finding",
+      findingId: "finding-1",
+      checkId: "aws_s3_bucket_public_access",
+    };
+
+    // When
+    const current = buildCurrentLighthouseContext(
+      "/attack-paths",
+      new URLSearchParams("scanId=scan-1"),
+      [parentContext],
+      focusedContext,
+    );
+
+    // Then
+    expect(current.context?.items.map((item) => item.id)).toEqual([
+      "attack-paths",
+      "finding-1",
+      "current-query",
+    ]);
+    expect(current.context?.items[0]).toMatchObject({
+      kind: "page",
+      filters: { scanId: ["scan-1"] },
+    });
+    expect(current.selectionCount).toBe(1);
+  });
 });

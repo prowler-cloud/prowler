@@ -6,6 +6,8 @@ import {
   buildFindingGroupContext,
   buildFindingResourceContext,
   buildFindingSummaryContext,
+  buildFocusedFindingContext,
+  buildFocusedResourceContext,
   buildProviderContext,
   buildProviderSummaryContext,
   buildResourceContext,
@@ -69,6 +71,36 @@ describe("Lighthouse page contributions", () => {
     });
   });
 
+  it("builds a focused finding for the owning page scope", () => {
+    // Given / When
+    const context = buildFocusedFindingContext({
+      pathname: "/attack-paths",
+      findingId: "finding-2",
+      checkId: "aws_s3_bucket_public_access",
+      severity: "critical",
+      status: "FAIL",
+      providerUid: "123456789012",
+      resourceUid: "arn:aws:s3:::example",
+      region: "eu-west-1",
+    });
+
+    // Then
+    expect(context).toEqual({
+      kind: "finding",
+      id: "finding-2",
+      source: "focused",
+      scopeKey: "attack-paths:/attack-paths",
+      label: "Focused finding",
+      findingId: "finding-2",
+      checkId: "aws_s3_bucket_public_access",
+      severity: "critical",
+      status: "FAIL",
+      providerUid: "123456789012",
+      resourceUid: "arn:aws:s3:::example",
+      region: "eu-west-1",
+    });
+  });
+
   it("builds resource summary and selected resource snapshots", () => {
     expect(buildResourceSummaryContext(17)).toMatchObject({
       kind: "resource",
@@ -97,6 +129,38 @@ describe("Lighthouse page contributions", () => {
       source: "selection",
       scopeKey: "resources:/resources",
       label: "Selected resource",
+      resourceId: "resource-1",
+      resourceUid: "arn:aws:s3:::example",
+      providerUid: "123456789012",
+      service: "s3",
+      region: "eu-west-1",
+      resourceType: "AwsS3Bucket",
+      failedFindingsCount: 3,
+    });
+  });
+
+  it("builds a focused resource for the owning page scope", () => {
+    // Given / When
+    const context = buildFocusedResourceContext({
+      pathname: "/resources",
+      id: "resource-1",
+      attributes: {
+        uid: "arn:aws:s3:::example",
+        service: "s3",
+        region: "eu-west-1",
+        type: "AwsS3Bucket",
+        failed_findings_count: 3,
+      },
+      providerUid: "123456789012",
+    });
+
+    // Then
+    expect(context).toEqual({
+      kind: "resource",
+      id: "resource-1",
+      source: "focused",
+      scopeKey: "resources:/resources",
+      label: "Focused resource",
       resourceId: "resource-1",
       resourceUid: "arn:aws:s3:::example",
       providerUid: "123456789012",

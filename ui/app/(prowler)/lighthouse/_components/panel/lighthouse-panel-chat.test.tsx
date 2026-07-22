@@ -11,6 +11,11 @@ import type {
   LighthouseV2Session,
   LighthouseV2SupportedModel,
 } from "@/app/(prowler)/lighthouse/_types";
+import {
+  buildAttackPathContext,
+  buildFocusedFindingContext,
+} from "@/lib/lighthouse/context/contributions";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
 
 import {
   LighthousePanelChat,
@@ -101,6 +106,7 @@ describe("LighthousePanelChat", () => {
     stubEventSource();
     resetPanelChatStoreForTests();
     resetPanelChatConfigCacheForTests();
+    useLighthouseContextStore.getState().resetContributions();
 
     getConfigurationsMock.mockResolvedValue({ data: configurations });
     getSupportedProvidersMock.mockResolvedValue({
@@ -237,6 +243,82 @@ describe("LighthousePanelChat", () => {
                 filters: { severity: ["critical"] },
               }),
             ]),
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("sends page, focused finding, and parent Attack Path context together", async () => {
+    // Given
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/attack-paths?scanId=scan-1");
+    const contextStore = useLighthouseContextStore.getState();
+    contextStore.registerContribution(
+      "attack-path-current",
+      buildAttackPathContext({
+        pathname: "/attack-paths",
+        scanId: "scan-1",
+        queryId: "query-1",
+        queryLabel: "Internet-exposed resources",
+      }),
+    );
+    contextStore.setFocusedContext(
+      1,
+      buildFocusedFindingContext({
+        pathname: "/attack-paths",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
+        severity: "critical",
+        status: "FAIL",
+        providerUid: "123456789012",
+        resourceUid: "arn:aws:s3:::example",
+        region: "eu-west-1",
+      }),
+    );
+    createSessionMock.mockResolvedValue({
+      data: session("session-context", "Explain this finding"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    render(<LighthousePanelChat />);
+    const input = await screen.findByRole("textbox", { name: "Message" });
+    expect(screen.getByText("@ Attack Paths +1")).toBeInTheDocument();
+
+    // When
+    await user.type(input, "Explain this finding{Enter}");
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayText: "Explain this finding",
+          context: expect.objectContaining({
+            items: [
+              expect.objectContaining({
+                kind: "page",
+                id: "attack-paths",
+                filters: { scanId: ["scan-1"] },
+              }),
+              expect.objectContaining({
+                kind: "finding",
+                id: "finding-1",
+                source: "focused",
+              }),
+              expect.objectContaining({
+                kind: "attack_path",
+                id: "current-query",
+                scanId: "scan-1",
+                queryId: "query-1",
+              }),
+            ],
           }),
         }),
       ),

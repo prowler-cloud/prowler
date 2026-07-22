@@ -5,10 +5,7 @@ import { useState } from "react";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { ResourceDetailsSheet } from "@/components/resources/resource-details-sheet";
 import { DataTable } from "@/components/shadcn/table";
-import {
-  buildResourceContext,
-  buildResourceSummaryContext,
-} from "@/lib/lighthouse/context/contributions";
+import { buildResourceSummaryContext } from "@/lib/lighthouse/context/contributions";
 import { MetaDataProps, ResourceProps } from "@/types";
 
 import { getColumnResources } from "./column-resources";
@@ -44,18 +41,6 @@ export function ResourcesTableWithSelection({
           key={`resources-summary-${metadata.pagination.count}`}
           contributorId="resources-summary"
           item={buildResourceSummaryContext(metadata.pagination.count)}
-        />
-      )}
-      {selectedResource && (
-        <LighthouseContextContributor
-          key={`resource-${selectedResource.id}`}
-          contributorId={`resource-${selectedResource.id}`}
-          item={buildResourceContext({
-            id: selectedResource.id,
-            attributes: selectedResource.attributes,
-            providerUid:
-              selectedResource.relationships.provider.data.attributes.uid,
-          })}
         />
       )}
       <DataTable
