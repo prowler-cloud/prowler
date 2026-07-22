@@ -315,6 +315,17 @@ ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES = env.int(
     "ATTACK_PATHS_SCAN_STALE_THRESHOLD_MINUTES", 2880
 )  # 48h
 
+# Stale scan cleanup. A scan whose worker dies mid-run is stranded in
+# `executing`; because scans run one-at-a-time per provider (#11848), that also
+# blocks every queued scan for the provider. The periodic `scan-cleanup-stale-scans`
+# task fails such scans and drains the queue. A scan on a live worker is only
+# reaped after the stale ceiling (matched to the long hard time-limit); a scan
+# whose worker is gone is reaped after the shorter inactivity window.
+SCAN_INACTIVITY_THRESHOLD_MINUTES = env.int("SCAN_INACTIVITY_THRESHOLD_MINUTES", 30)
+SCAN_STALE_THRESHOLD_MINUTES = env.int(
+    "SCAN_STALE_THRESHOLD_MINUTES", 2880
+)  # 48h
+
 # Selects where the persistent attack-paths graph is stored. The scan
 # temporary database is always Neo4j; only the sink is configurable.
 # Valid values: "neo4j" (default, OSS and local dev), "neptune" (hosted).

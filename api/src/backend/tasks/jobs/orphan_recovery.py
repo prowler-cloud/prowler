@@ -85,6 +85,7 @@ _SKIP_RECOVERY = {
     "scan-perform-scheduled",
     "attack-paths-scan-perform",
     "attack-paths-cleanup-stale-scans",
+    "scan-cleanup-stale-scans",
     "reconcile-orphan-tasks",
 }
 
