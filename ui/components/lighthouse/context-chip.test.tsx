@@ -1,86 +1,32 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
   LighthouseContextBadge,
-  LighthouseContextControl,
+  LighthouseCurrentContextBadge,
 } from "./context-chip";
 
-describe("LighthouseContextControl", () => {
-  it("should show enabled context as a pressed badge and explain disabling it", async () => {
+describe("LighthouseCurrentContextBadge", () => {
+  it("should show current context as read-only and explain automatic inclusion", async () => {
     // Given
     const user = userEvent.setup();
-    const onDisable = vi.fn();
-    render(
-      <LighthouseContextControl
-        context={findingsContext()}
-        pageLabel="Findings"
-        enabled
-        selectionCount={1}
-        onDisable={onDisable}
-        onEnable={vi.fn()}
-      />,
-    );
-    const contextControl = screen.getByRole("button", {
-      name: "Disable Findings context",
-    });
+    render(<LighthouseCurrentContextBadge context={findingsContext()} />);
+    const contextBadge = screen.getByLabelText("Findings context");
 
     // When
-    await user.hover(contextControl);
+    await user.hover(contextBadge);
 
     // Then
-    expect(contextControl).toHaveAttribute("aria-pressed", "true");
-    expect(contextControl).toHaveTextContent("@ Findings +1");
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Click to stop including Findings context in new messages.",
-    );
-
-    // When
-    await user.click(contextControl);
-
-    // Then
-    expect(onDisable).toHaveBeenCalledOnce();
-  });
-
-  it("should keep the same badge label when disabled and explain enabling it", async () => {
-    // Given
-    const user = userEvent.setup();
-    const onEnable = vi.fn();
-    render(
-      <LighthouseContextControl
-        context={findingsContext()}
-        pageLabel="Findings"
-        enabled={false}
-        selectionCount={1}
-        onDisable={vi.fn()}
-        onEnable={onEnable}
-      />,
-    );
-    const contextControl = screen.getByRole("button", {
-      name: "Enable Findings context",
-    });
-
-    // When
-    await user.hover(contextControl);
-
-    // Then
-    expect(contextControl).toHaveAttribute("aria-pressed", "false");
-    expect(contextControl).toHaveTextContent("@ Findings +1");
+    expect(contextBadge).toHaveTextContent("@ Findings +1");
     expect(
-      screen.queryByText("+ Add Findings context"),
+      screen.queryByRole("button", { name: /Findings context/ }),
     ).not.toBeInTheDocument();
     expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Click to include Findings context in new messages.",
+      "Findings context will be included in your next message.",
     );
-
-    // When
-    await user.click(contextControl);
-
-    // Then
-    expect(onEnable).toHaveBeenCalledOnce();
   });
 });
 

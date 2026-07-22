@@ -12,43 +12,27 @@ import {
   type LighthouseContextEnvelope,
 } from "@/types/lighthouse-context";
 
-interface LighthouseContextControlProps {
+interface LighthouseCurrentContextBadgeProps {
   context: LighthouseContextEnvelope | undefined;
-  pageLabel: string;
-  enabled: boolean;
-  selectionCount: number;
-  onDisable: () => void;
-  onEnable: () => void;
 }
 
-export function LighthouseContextControl({
+export function LighthouseCurrentContextBadge({
   context,
-  pageLabel,
-  enabled,
-  selectionCount,
-  onDisable,
-  onEnable,
-}: LighthouseContextControlProps) {
+}: LighthouseCurrentContextBadgeProps) {
   if (!context) return null;
+  const { pageLabel, selectionCount } = getContextBadgeContent(context);
 
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
-        <Badge asChild variant={enabled ? "tag" : "outline"}>
-          <button
-            type="button"
-            aria-label={`${enabled ? "Disable" : "Enable"} ${pageLabel} context`}
-            aria-pressed={enabled}
-            onClick={enabled ? onDisable : onEnable}
-          >
+        <Badge asChild variant="tag">
+          <span tabIndex={0} aria-label={`${pageLabel} context`}>
             {buildContextLabel(pageLabel, selectionCount)}
-          </button>
+          </span>
         </Badge>
       </TooltipTrigger>
       <TooltipContent>
-        {enabled
-          ? `Click to stop including ${pageLabel} context in new messages.`
-          : `Click to include ${pageLabel} context in new messages.`}
+        {pageLabel} context will be included in your next message.
       </TooltipContent>
     </Tooltip>
   );
@@ -59,13 +43,7 @@ export function LighthouseContextBadge({
 }: {
   context: LighthouseContextEnvelope;
 }) {
-  const page = context.items.find(
-    (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
-  );
-  const pageLabel = page?.label ?? "Context";
-  const selectionCount = context.items.filter(
-    (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
-  ).length;
+  const { pageLabel, selectionCount } = getContextBadgeContent(context);
 
   return (
     <Tooltip delayDuration={100}>
@@ -79,6 +57,18 @@ export function LighthouseContextBadge({
       <LighthouseContextTooltip context={context} />
     </Tooltip>
   );
+}
+
+function getContextBadgeContent(context: LighthouseContextEnvelope) {
+  const page = context.items.find(
+    (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
+  );
+  const pageLabel = page?.label ?? "Context";
+  const selectionCount = context.items.filter(
+    (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
+  ).length;
+
+  return { pageLabel, selectionCount };
 }
 
 function LighthouseContextTooltip({
