@@ -47,7 +47,7 @@ describe("CloudUpgradeModal", () => {
 
   it("renders the active contextual upgrade in Local Server", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
@@ -76,7 +76,7 @@ describe("CloudUpgradeModal", () => {
 
   it("uses the standard equal-width CTA layout", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS);
@@ -118,7 +118,7 @@ describe("CloudUpgradeModal", () => {
 
   it("closes the active upgrade and returns focus to its trigger", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
 
     render(
@@ -189,7 +189,7 @@ describe("CloudUpgradeModal", () => {
 
   it("does not render upgrade UI in Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);

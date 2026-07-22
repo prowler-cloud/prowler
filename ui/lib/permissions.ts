@@ -1,3 +1,4 @@
+import { isCloud } from "@/lib/shared/env";
 import { RolePermissionAttributes } from "@/types/users";
 
 /**
@@ -30,7 +31,7 @@ export const isUserOwnerAndHasManageAccount = (
  * @returns The permissions for the user role
  */
 export const getRolePermissions = (attributes: RolePermissionAttributes) => {
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   const permissions = [
     {
