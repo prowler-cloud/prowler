@@ -12,6 +12,7 @@ import {
 
 import { accountDisplayLabel } from "../_lib/cross-account-adapter";
 import type { AccountStatusMap, CrossAccountAccountRef } from "../_types";
+
 import { RequirementStatusSummary } from "./requirement-status-summary";
 
 interface RequirementAccountChipsProps {

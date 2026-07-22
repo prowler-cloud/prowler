@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import type { CrossAccountAccountRef } from "../_types";
+
 import { RequirementAccountChips } from "./requirement-account-chips";
 
 const account = (n: number, alias: string | null): CrossAccountAccountRef => ({

@@ -15,8 +15,8 @@ import {
 } from "../_lib/cross-provider-frameworks";
 import type { CrossProviderFrameworkSummary } from "../_types";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
-import { ComplianceSectionHeader } from "./compliance-section-header";
 
+import { ComplianceSectionHeader } from "./compliance-section-header";
 import { CrossProviderErrorAlert } from "./cross-provider-error-alert";
 import type {
   CrossProviderAccountOption,

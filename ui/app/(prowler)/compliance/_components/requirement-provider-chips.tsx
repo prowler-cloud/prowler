@@ -13,6 +13,7 @@ import {
 import { PROVIDER_DISPLAY_NAMES, PROVIDER_TYPES } from "@/types/providers";
 
 import type { ProviderStatusMap } from "../_types";
+
 import { RequirementStatusSummary } from "./requirement-status-summary";
 
 interface RequirementProviderChipsProps {
