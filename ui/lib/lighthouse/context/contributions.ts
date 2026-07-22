@@ -38,6 +38,10 @@ interface FindingResourceContextInput {
   region?: string;
 }
 
+interface FocusedFindingContextInput extends FindingResourceContextInput {
+  pathname: string;
+}
+
 interface ResourceContextInput {
   id: string;
   attributes: {
@@ -48,6 +52,10 @@ interface ResourceContextInput {
     failed_findings_count: number;
   };
   providerUid?: string;
+}
+
+interface FocusedResourceContextInput extends ResourceContextInput {
+  pathname: string;
 }
 
 interface ComplianceContextInput {
@@ -140,6 +148,26 @@ export function buildFindingResourceContext(
   };
 }
 
+export function buildFocusedFindingContext(
+  finding: FocusedFindingContextInput,
+): LighthouseFindingContextItem {
+  const safeFindingId = toBoundedString(finding.findingId);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.FINDING,
+    id: safeFindingId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+    scopeKey: getLighthouseScopeKey(finding.pathname),
+    label: "Focused finding",
+    findingId: safeFindingId,
+    checkId: optionalBoundedString(finding.checkId),
+    severity: optionalBoundedString(finding.severity),
+    status: optionalBoundedString(finding.status),
+    providerUid: optionalBoundedString(finding.providerUid),
+    resourceUid: optionalBoundedString(finding.resourceUid),
+    region: optionalBoundedString(finding.region),
+  };
+}
+
 export function buildResourceSummaryContext(
   total: number,
 ): LighthouseResourceContextItem {
@@ -164,6 +192,25 @@ export function buildResourceContext(
     source: LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
     scopeKey: RESOURCES_SCOPE_KEY,
     label: "Selected resource",
+    resourceId: toBoundedString(resource.id),
+    resourceUid: toBoundedString(resource.attributes.uid),
+    providerUid: optionalBoundedString(resource.providerUid),
+    service: toBoundedString(resource.attributes.service),
+    region: toBoundedString(resource.attributes.region),
+    resourceType: toBoundedString(resource.attributes.type),
+    failedFindingsCount: toSafeCount(resource.attributes.failed_findings_count),
+  };
+}
+
+export function buildFocusedResourceContext(
+  resource: FocusedResourceContextInput,
+): LighthouseResourceContextItem {
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.RESOURCE,
+    id: toBoundedString(resource.id),
+    source: LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+    scopeKey: getLighthouseScopeKey(resource.pathname),
+    label: "Focused resource",
     resourceId: toBoundedString(resource.id),
     resourceUid: toBoundedString(resource.attributes.uid),
     providerUid: optionalBoundedString(resource.providerUid),

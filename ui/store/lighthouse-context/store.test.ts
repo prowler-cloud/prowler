@@ -72,4 +72,38 @@ describe("useLighthouseContextStore", () => {
       ).map((item) => item.id),
     ).toEqual(["resource-2"]);
   });
+
+  it("should keep focused context owned by the latest detail panel", () => {
+    // Given
+    const { setFocusedContext, clearFocusedContext } =
+      useLighthouseContextStore.getState();
+    setFocusedContext(1, {
+      kind: "finding",
+      id: "finding-1",
+      source: "focused",
+      scopeKey: "findings:/findings",
+      label: "Focused finding",
+      findingId: "finding-1",
+    });
+
+    // When
+    setFocusedContext(2, {
+      kind: "resource",
+      id: "resource-2",
+      source: "focused",
+      scopeKey: "resources:/resources",
+      label: "Focused resource",
+      resourceId: "resource-2",
+    });
+    clearFocusedContext(1);
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("resource-2");
+
+    // When
+    clearFocusedContext(2);
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused).toBeNull();
+  });
 });

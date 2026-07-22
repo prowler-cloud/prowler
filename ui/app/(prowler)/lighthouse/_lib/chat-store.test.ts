@@ -184,9 +184,9 @@ describe("createLighthouseChatStore", () => {
   it("retries with the original context snapshot", async () => {
     // Given
     const store = makeStore();
-    const context = findingsContext();
+    const context = focusedFindingsContext();
     await store.getState().submitMessage("Prioritize findings", context);
-    context.items[0].label = "Mutated after send";
+    context.items[1].label = "Mutated after send";
     eventSources[0].fail(2 /* EventSource.CLOSED */);
     sendMessageMock.mockResolvedValueOnce({
       data: {
@@ -201,7 +201,7 @@ describe("createLighthouseChatStore", () => {
     expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
       sessionId: "session-1",
       displayText: "Prioritize findings",
-      context: findingsContext(),
+      context: focusedFindingsContext(),
       provider: "openai",
       model: "gpt-5.1",
     });
@@ -645,6 +645,25 @@ function findingsContext(): LighthouseContextEnvelope {
         scopeKey: "findings:/findings",
         label: "Findings",
         path: "/findings",
+      },
+    ],
+  };
+}
+
+function focusedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "findings:/findings",
+        label: "Focused finding",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
       },
     ],
   };
