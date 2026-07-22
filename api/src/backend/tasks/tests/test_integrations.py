@@ -1837,7 +1837,6 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 2,
             "failed_count": 1,
-            "failed_finding_ids": ["finding-2"],
             "error": "Failed to create Jira issue.",
         }
 
@@ -1904,7 +1903,6 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 0,
             "failed_count": 1,
-            "failed_finding_ids": ["finding-1"],
             "error": error_message,
         }
         mock_logger.exception.assert_called_with(
@@ -1973,7 +1971,6 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 0,
             "failed_count": 1,
-            "failed_finding_ids": ["finding-1"],
             "error": error_message,
         }
         mock_logger.exception.assert_called_with(
@@ -2038,7 +2035,6 @@ class TestJiraIntegration:
         assert result == {
             "created_count": 0,
             "failed_count": 1,
-            "failed_finding_ids": ["finding-1"],
             "error": "Failed to create Jira issue.",
         }
         assert "secret-value" not in result["error"]
