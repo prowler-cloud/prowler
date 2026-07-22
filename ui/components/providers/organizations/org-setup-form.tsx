@@ -41,7 +41,7 @@ const orgSetupSchema = z.object({
   roleArn: z
     .string()
     .trim()
-    .min(1, "Role ARN is required")
+    .min(1, "IAM Role ARN is required")
     .regex(
       /^arn:aws:iam::\d{12}:role\//,
       "Must be a valid IAM Role ARN (e.g., arn:aws:iam::123456789012:role/ProwlerScan)",
@@ -400,7 +400,7 @@ export function OrgSetupForm({
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 1) Choose the AWS <strong>Organizational Unit</strong> (or root)
-                to deploy to. Prowler creates the role in your deployment
+                to deploy to. Prowler creates the IAM Role in your deployment
                 account and rolls it out to every member account under this
                 target.
               </p>
@@ -422,7 +422,7 @@ export function OrgSetupForm({
                 to the whole organization, or an <strong>OU ID</strong> (starts
                 with <code>ou-</code>) to target a specific unit.
               </p>
-              <div className="flex items-start gap-4">
+              <div className="flex items-center gap-3">
                 <Controller
                   name="deployFromDelegatedAdmin"
                   control={control}
@@ -430,7 +430,7 @@ export function OrgSetupForm({
                     <>
                       <Checkbox
                         id="deployFromDelegatedAdmin"
-                        className="mt-0.5"
+                        size="sm"
                         checked={field.value}
                         onCheckedChange={(checked) =>
                           field.onChange(Boolean(checked))
@@ -438,10 +438,10 @@ export function OrgSetupForm({
                       />
                       <label
                         htmlFor="deployFromDelegatedAdmin"
-                        className="text-text-neutral-tertiary text-xs leading-5 font-normal"
+                        className="text-text-neutral-secondary text-sm leading-5 font-medium"
                       >
-                        I&apos;m deploying from a delegated administrator
-                        account (not the Organization management account)
+                        I&apos;m deploying from a Delegated Administrator
+                        Account (not the Management Account)
                       </label>
                     </>
                   )}
@@ -454,12 +454,12 @@ export function OrgSetupForm({
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
                 2) Create the CloudFormation Stack in your{" "}
                 <strong>{deploymentAccountName}</strong>. It deploys the
-                ProwlerScan role and a service-managed StackSet that rolls the
-                role out to your member accounts in one step.
+                ProwlerScan IAM Role and a service-managed StackSet that rolls
+                the IAM Role out to your member accounts in one step.
               </p>
               {orgQuickLink ? (
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="xl"
                   className="w-full justify-start"
                   asChild
@@ -476,7 +476,7 @@ export function OrgSetupForm({
               ) : (
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   size="xl"
                   className="w-full justify-start"
                   disabled
@@ -486,7 +486,7 @@ export function OrgSetupForm({
                 </Button>
               )}
               {!isOrgUnitIdValid && (
-                <p className="text-text-neutral-tertiary text-xs leading-5">
+                <p className="text-text-error-primary text-xs leading-5">
                   Enter a valid Organizational Unit or Root ID above to enable
                   deployment.
                 </p>
@@ -496,15 +496,15 @@ export function OrgSetupForm({
             {/* Step 3: Role ARN + confirm */}
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-primary text-sm leading-7 font-normal">
-                3) Paste the {deploymentAccountName} Role ARN and confirm the
-                deployment is complete.
+                3) Paste the {deploymentAccountName} IAM Role ARN and confirm
+                the deployment is complete.
               </p>
             </div>
 
             <WizardInputField
               control={control}
               name="roleArn"
-              label={`${deploymentAccountLabel} Role ARN`}
+              label={`${deploymentAccountLabel} IAM Role ARN`}
               labelPlacement="outside"
               placeholder="e.g. arn:aws:iam::123456789012:role/ProwlerScan"
               isRequired={false}
@@ -516,7 +516,7 @@ export function OrgSetupForm({
               ARN
             </p>
 
-            <div className="flex items-start gap-4">
+            <div className="flex items-center gap-3">
               <Controller
                 name="stackSetDeployed"
                 control={control}
@@ -524,7 +524,7 @@ export function OrgSetupForm({
                   <>
                     <Checkbox
                       id="stackSetDeployed"
-                      className="mt-0.5"
+                      size="sm"
                       checked={field.value}
                       onCheckedChange={(checked) =>
                         field.onChange(Boolean(checked))

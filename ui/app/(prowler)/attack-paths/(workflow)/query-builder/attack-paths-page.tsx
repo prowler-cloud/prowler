@@ -28,13 +28,13 @@ import {
 import { StatusAlert } from "@/components/shared/status-alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
+import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import {
   attackPathsTour,
   type AttackPathsTourTarget,
   pickDemoQuery,
   pickDemoScan,
 } from "@/lib/tours/attack-paths.tour";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,

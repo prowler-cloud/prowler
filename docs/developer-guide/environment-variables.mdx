@@ -36,6 +36,9 @@ The former build-time variables map to the new runtime variables as follows:
 | `NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID` | `UI_GOOGLE_TAG_MANAGER_ID` |
 | `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN` | `UI_SENTRY_DSN` |
 | `NEXT_PUBLIC_SENTRY_ENVIRONMENT`, `SENTRY_ENVIRONMENT` | `UI_SENTRY_ENVIRONMENT` |
+| `NEXT_PUBLIC_IS_CLOUD_ENV` | `UI_CLOUD_ENABLED` |
+
+`UI_CLOUD_ENABLED` is a plain runtime boolean flag that enables Prowler Cloud behavior when set to the exact string `"true"` and defaults to off; unlike the other renamed variables it has no legacy fallback, so `NEXT_PUBLIC_IS_CLOUD_ENV` is no longer read.
 
 The build-time-only Sentry variables used for source-map upload — `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, and `SENTRY_RELEASE` — keep their names, as they are not part of Prowler Local Server's runtime configuration.
 

@@ -10,6 +10,7 @@ import { SCAN_JOBS_TAB, type ScanJobsTab, type ScanProps } from "@/types";
 import type { ScanScheduleCapability } from "@/types/schedules";
 
 import { formatScanDuration } from "../scans.utils";
+
 import {
   AccountCell,
   ProgressCell,

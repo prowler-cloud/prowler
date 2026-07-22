@@ -12,7 +12,7 @@ describe("useScanScheduleCapability", () => {
 
   it("returns DAILY_LEGACY for OSS without loading", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const { result } = renderHook(() => useScanScheduleCapability());
@@ -26,7 +26,7 @@ describe("useScanScheduleCapability", () => {
 
   it("returns ADVANCED for Cloud env without loading", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const { result } = renderHook(() => useScanScheduleCapability());

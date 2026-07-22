@@ -7,16 +7,47 @@ import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 import { CloudUpgradeModal } from "./cloud-upgrade-modal";
 
+const modalTestState = vi.hoisted(() => ({
+  keepContentMounted: false,
+}));
+
+vi.mock("@/components/shadcn/modal", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/components/shadcn/modal")>();
+  const { createElement } = await import("react");
+
+  return {
+    ...actual,
+    Modal: (props: Parameters<typeof actual.Modal>[0]) => {
+      if (!modalTestState.keepContentMounted) {
+        return createElement(actual.Modal, props);
+      }
+
+      return createElement(
+        "div",
+        { "aria-label": props.title, role: "dialog" },
+        createElement(
+          "button",
+          { onClick: () => props.onOpenChange?.(false), type: "button" },
+          "Close",
+        ),
+        props.children,
+      );
+    },
+  };
+});
+
 describe("CloudUpgradeModal", () => {
   afterEach(() => {
     cleanup();
+    modalTestState.keepContentMounted = false;
     vi.unstubAllEnvs();
     useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("renders the active contextual upgrade in Local Server", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);
@@ -45,7 +76,7 @@ describe("CloudUpgradeModal", () => {
 
   it("uses the standard equal-width CTA layout", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS);
@@ -119,7 +150,7 @@ describe("CloudUpgradeModal", () => {
 
   it("closes the active upgrade and returns focus to its trigger", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
 
     render(
@@ -152,9 +183,45 @@ describe("CloudUpgradeModal", () => {
     expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
   });
 
+  it.each([
+    {
+      feature: CLOUD_UPGRADE_FEATURE.ALERTS,
+      otherTitle: "Add Your Entire AWS Organization",
+      title: "Turn Findings into Alerts",
+    },
+    {
+      feature: CLOUD_UPGRADE_FEATURE.AWS_ORGANIZATIONS,
+      otherTitle: "Turn Findings into Alerts",
+      title: "Add Your Entire AWS Organization",
+    },
+  ])(
+    "does not replace $title with another upgrade while closing",
+    async ({ feature, otherTitle, title }) => {
+      // Given
+      vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+      modalTestState.keepContentMounted = true;
+      const user = userEvent.setup();
+      useCloudUpgradeStore.getState().openCloudUpgrade(feature);
+
+      render(<CloudUpgradeModal />);
+      expect(screen.getByRole("dialog", { name: title })).toBeVisible();
+
+      // When
+      await user.click(screen.getByRole("button", { name: "Close" }));
+
+      // Then
+      expect(useCloudUpgradeStore.getState().activeFeature).toBeNull();
+      expect(screen.getByRole("dialog", { name: title })).toBeVisible();
+      expect(
+        screen.queryByText("Scale Prowler Without Operating It"),
+      ).not.toBeInTheDocument();
+      expect(screen.queryByText(otherTitle)).not.toBeInTheDocument();
+    },
+  );
+
   it("does not render upgrade UI in Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useCloudUpgradeStore
       .getState()
       .openCloudUpgrade(CLOUD_UPGRADE_FEATURE.ALERTS);

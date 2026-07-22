@@ -3,7 +3,12 @@ from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
     S3ConfigSerializer,
 )
-from api.v1.serializers import ImageProviderSecret, KubernetesProviderSecret
+from api.v1.serializer_utils.providers import ProviderSecretField
+from api.v1.serializers import (
+    ImageProviderSecret,
+    KubernetesProviderSecret,
+    OracleCloudProviderSecret,
+)
 from rest_framework.exceptions import ValidationError
 
 
@@ -188,6 +193,64 @@ class TestImageProviderSecret:
         serializer = ImageProviderSecret(data={"registry_password": "pass"})
         assert not serializer.is_valid()
         assert "non_field_errors" in serializer.errors
+
+
+class TestOracleCloudProviderSecret:
+    def valid_secret(self, **overrides):
+        secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "aa:bb:cc:dd:ee:ff:00:11:22:33:44:55:66:77:88:99",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        secret.update(overrides)
+        return secret
+
+    def test_accepts_regionless_secret(self):
+        serializer = OracleCloudProviderSecret(data=self.valid_secret())
+
+        assert serializer.is_valid(), serializer.errors
+        assert "region" not in serializer.validated_data
+
+    def test_accepts_and_ignores_region_field(self):
+        secret = self.valid_secret(region="us-phoenix-1")
+        serializer = OracleCloudProviderSecret(data=secret)
+
+        assert serializer.is_valid(), serializer.errors
+
+        assert "region" not in serializer.validated_data
+
+    @pytest.mark.parametrize(
+        "legacy_field, legacy_value",
+        [
+            ("region", None),
+            ("region", ""),
+            ("region", {"name": "us-ashburn-1"}),
+        ],
+    )
+    def test_accepts_and_ignores_any_legacy_region_value(
+        self, legacy_field, legacy_value
+    ):
+        serializer = OracleCloudProviderSecret(
+            data=self.valid_secret(**{legacy_field: legacy_value})
+        )
+
+        assert serializer.is_valid(), serializer.errors
+
+        assert legacy_field not in serializer.validated_data
+
+
+class TestProviderSecretFieldSchema:
+    def test_oraclecloud_schema_includes_legacy_region_field(self):
+        schema = ProviderSecretField._spectacular_annotation["field"]
+        oraclecloud_schema = next(
+            credential_schema
+            for credential_schema in schema["oneOf"]
+            if credential_schema["title"]
+            == "Oracle Cloud Infrastructure (OCI) API Key Credentials"
+        )
+
+        assert oraclecloud_schema["properties"]["region"]["deprecated"] is True
 
 
 class TestKubernetesProviderSecret:

@@ -4,6 +4,17 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import {
+  FINDING_TRIAGE_DISABLED_REASON,
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
+
+import {
+  DataTableRowActions,
+  type FindingRowData,
+} from "./data-table-row-actions";
+import { FindingsSelectionContext } from "./findings-selection-context";
 
 const { MuteFindingsModalMock, isGroupedJiraDispatchEnabledMock } = vi.hoisted(
   () => ({
@@ -96,18 +107,6 @@ vi.mock("./finding-note-modal", () => ({
       </div>
     ) : null,
 }));
-
-import {
-  FINDING_TRIAGE_DISABLED_REASON,
-  FINDING_TRIAGE_STATUS,
-  type FindingTriageSummary,
-} from "@/types/findings-triage";
-
-import {
-  DataTableRowActions,
-  type FindingRowData,
-} from "./data-table-row-actions";
-import { FindingsSelectionContext } from "./findings-selection-context";
 
 function deferredPromise<T>() {
   let resolve!: (value: T) => void;

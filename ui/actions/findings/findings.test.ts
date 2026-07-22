@@ -55,7 +55,7 @@ describe("findings actions triage projection", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
     fetchMock.mockResolvedValue(new Response("", { status: 200 }));
     handleApiResponseMock.mockResolvedValue(findingsResponse);
@@ -83,7 +83,7 @@ describe("findings actions triage projection", () => {
 
   it("should attach domain triage DTOs to latest findings responses", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const result = await getLatestFindings({ page: 1, pageSize: 10 });

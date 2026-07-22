@@ -4,6 +4,20 @@ All notable changes to the **Prowler API** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [1.36.0] (Prowler v5.35.0)
+
+### 🐞 Fixed
+
+- `attack-paths-scan-perform` Celery tasks now use the configurable long-task time limits instead of the six-hour defaults [(#12009)](https://github.com/prowler-cloud/prowler/pull/12009)
+- Attack Paths scans handle provider deletion races cleanly, detect stale tasks after 16 hours, use backend-specific graph synchronization batches, and report exhausted Neptune write retries with the original database error [(#12019)](https://github.com/prowler-cloud/prowler/pull/12019)
+
+### 🔐 Security
+
+- Jira integration credentials only accept bare Atlassian site names containing letters, numbers, and hyphens [(#12012)](https://github.com/prowler-cloud/prowler/pull/12012)
+- Social account linking requires a verified matching email from both the identity provider and the existing user account without sending account connection notifications [(#12013)](https://github.com/prowler-cloud/prowler/pull/12013)
+
+---
+
 ## [1.35.0] (Prowler v5.34.0)
 
 ### 🐞 Fixed

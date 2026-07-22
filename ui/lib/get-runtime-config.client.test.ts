@@ -62,6 +62,20 @@ describe("getRuntimeConfigClient", () => {
     expect(config.reoDevClientId).toBeNull();
   });
 
+  it("reads the cloudEnabled flag from the island", async () => {
+    // Given
+    writeIsland(JSON.stringify({ cloudEnabled: true }));
+    const { getRuntimeConfigClient } = await import(
+      "./get-runtime-config.client"
+    );
+
+    // When
+    const config = getRuntimeConfigClient();
+
+    // Then
+    expect(config.cloudEnabled).toBe(true);
+  });
+
   it("falls back to an all-null config when the island is malformed JSON", async () => {
     // Given
     writeIsland("{ not valid json");
@@ -99,18 +113,22 @@ describe("getRuntimeConfigClient", () => {
         "apiBaseUrl",
         "apiDocsUrl",
         "cloudBillingEnabled",
+        "cloudEnabled",
         "googleTagManagerId",
         "posthogHost",
         "posthogKey",
         "reoDevClientId",
         "sentryDsn",
         "sentryEnvironment",
+        "stripePublishableKey",
+        "stripePublishableKeyV2",
       ].sort(),
     );
     expect(config.apiBaseUrl).toBe("https://api.example.com/api/v1");
-    // cloudBillingEnabled is a boolean flag, so it defaults to false (not null)
-    // when absent from the island.
+    // cloudBillingEnabled and cloudEnabled are boolean flags, so they default to
+    // false (not null) when absent from the island.
     expect(config.cloudBillingEnabled).toBe(false);
+    expect(config.cloudEnabled).toBe(false);
     expect(
       (config as unknown as Record<string, unknown>).notAllowlisted,
     ).toBeUndefined();

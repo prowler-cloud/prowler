@@ -1,7 +1,14 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { SocialButtons } from "./social-buttons";
+
+// Stub Iconify: the real <Icon> fetches icon data over the network and its
+// retry timers can fire after the jsdom environment is torn down, crashing the
+// worker with "window is not defined".
+vi.mock("@iconify/react", () => ({
+  Icon: ({ icon }: { icon: string }) => <span aria-label={icon} />,
+}));
 
 describe("SocialButtons", () => {
   it("renders icon-only provider links that keep their accessible names", () => {

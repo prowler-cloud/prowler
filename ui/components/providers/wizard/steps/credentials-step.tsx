@@ -22,6 +22,7 @@ import {
 import { SelectViaGitHub } from "../../workflow/forms/select-credentials-type/github";
 import { SelectViaM365 } from "../../workflow/forms/select-credentials-type/m365";
 import { UpdateViaServiceAccountForm } from "../../workflow/forms/update-via-service-account-key-form";
+
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,

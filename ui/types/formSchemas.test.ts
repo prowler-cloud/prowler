@@ -220,3 +220,23 @@ users:
     expect(result.success).toBe(true);
   });
 });
+
+describe("addCredentialsFormSchema - oraclecloud", () => {
+  const BASE_OCI_VALUES = {
+    [ProviderCredentialFields.PROVIDER_ID]: "provider-oci-1",
+    [ProviderCredentialFields.PROVIDER_TYPE]: "oraclecloud",
+    [ProviderCredentialFields.OCI_USER]: "ocid1.user.oc1..example",
+    [ProviderCredentialFields.OCI_FINGERPRINT]: "aa:bb:cc:dd",
+    [ProviderCredentialFields.OCI_KEY_CONTENT]:
+      "-----BEGIN PRIVATE KEY-----\nMIIEvQ...\n-----END PRIVATE KEY-----",
+    [ProviderCredentialFields.OCI_TENANCY]: "ocid1.tenancy.oc1..example",
+  } as const;
+
+  it("accepts OCI API key credentials without region", () => {
+    const schema = addCredentialsFormSchema("oraclecloud");
+
+    const result = schema.safeParse(BASE_OCI_VALUES);
+
+    expect(result.success).toBe(true);
+  });
+});

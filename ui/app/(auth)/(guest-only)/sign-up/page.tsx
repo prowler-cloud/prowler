@@ -1,6 +1,10 @@
 import { AuthForm } from "@/components/auth/oss";
-import { getAuthUrl, isGithubOAuthEnabled } from "@/lib/helper";
-import { isGoogleOAuthEnabled } from "@/lib/helper";
+import {
+  getAuthUrl,
+  isGithubOAuthEnabled,
+  isGoogleOAuthEnabled,
+} from "@/lib/helper";
+import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
 const SignUp = async ({
@@ -13,7 +17,7 @@ const SignUp = async ({
     typeof resolvedSearchParams?.invitation_token === "string"
       ? resolvedSearchParams.invitation_token
       : null;
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
 
   const GOOGLE_AUTH_URL = getAuthUrl("google");
   const GITHUB_AUTH_URL = getAuthUrl("github");

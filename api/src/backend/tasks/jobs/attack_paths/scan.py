@@ -372,7 +372,19 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
 
     except Exception as e:
         exception_message = utils.stringify_exception(e, "Attack Paths scan failed")
-        logger.exception(exception_message)
+        temporary_database_missing = (
+            isinstance(e, graph_database.GraphDatabaseQueryException)
+            and e.code == graph_database.DATABASE_NOT_FOUND_CODE
+            and tmp_database_name in str(e)
+        )
+        if temporary_database_missing:
+            logger.warning(exception_message)
+        else:
+            logger.exception(exception_message)
+        cleanup_log_level = (
+            logging.WARNING if temporary_database_missing else logging.ERROR
+        )
+        cleanup_exc_info = not temporary_database_missing
         ingestion_exceptions["global_error"] = exception_message
 
         # Recover `graph_data_ready` based on how far the swap got
@@ -387,19 +399,24 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
                 )
 
         except Exception:
-            logger.error(
-                f"Failed to recover `graph_data_ready` for provider {attack_paths_scan.provider_id}",
-                exc_info=True,
+            logger.log(
+                cleanup_log_level,
+                "Failed to recover `graph_data_ready` for provider "
+                f"{attack_paths_scan.provider_id}",
+                exc_info=cleanup_exc_info,
             )
 
         # Dropping the temporary database if it still exists
         try:
             graph_database.drop_database(tmp_cartography_config.neo4j_database)
 
-        except Exception as e:
-            logger.error(
-                f"Failed to drop temporary Neo4j database `{tmp_cartography_config.neo4j_database}` during cleanup: {e}",
-                exc_info=True,
+        except Exception as cleanup_error:
+            logger.log(
+                cleanup_log_level,
+                "Failed to drop temporary Neo4j database "
+                f"`{tmp_cartography_config.neo4j_database}` during cleanup: "
+                f"{cleanup_error}",
+                exc_info=cleanup_exc_info,
             )
 
         # Set Attack Paths scan state to FAILED
@@ -407,10 +424,12 @@ def run(tenant_id: str, scan_id: str, task_id: str) -> dict[str, Any]:
             db_utils.finish_attack_paths_scan(
                 attack_paths_scan, StateChoices.FAILED, ingestion_exceptions
             )
-        except Exception as e:
-            logger.error(
-                f"Could not mark Attack Paths scan {attack_paths_scan.id} as `FAILED` (row may have been deleted): {e}",
-                exc_info=True,
+        except Exception as cleanup_error:
+            logger.log(
+                cleanup_log_level,
+                f"Could not mark Attack Paths scan {attack_paths_scan.id} as `FAILED` "
+                f"(row may have been deleted): {cleanup_error}",
+                exc_info=cleanup_exc_info,
             )
 
         raise

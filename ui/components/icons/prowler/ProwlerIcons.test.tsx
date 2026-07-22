@@ -11,7 +11,7 @@ describe("ProwlerBrand", () => {
 
   it("should render the Local Server lockups outside Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<ProwlerBrand />);
@@ -30,7 +30,7 @@ describe("ProwlerBrand", () => {
 
   it("should render the Prowler Cloud lockups in Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<ProwlerBrand />);

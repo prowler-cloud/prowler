@@ -15,7 +15,7 @@ describe("AwsMethodSelector", () => {
 
   it("opens the AWS Organizations upgrade in Local Server", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const user = userEvent.setup();
     const onSelectOrganizations = vi.fn();
 

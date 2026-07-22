@@ -11,6 +11,7 @@ from api.compliance import (
 from api.db_router import READ_REPLICA_ALIAS
 from api.db_utils import delete_related_daily_task, rls_transaction
 from api.decorators import handle_provider_deletion, set_tenant
+from api.exceptions import ProviderDeletedException
 from api.models import (
     Finding,
     Integration,
@@ -666,7 +667,13 @@ class AttackPathsScanRLSTask(RLSTask):
         scan_id = kwargs.get("scan_id")
 
         if tenant_id and scan_id:
-            logger.error(f"Attack paths scan task {task_id} failed: {exc}")
+            if isinstance(exc, ProviderDeletedException):
+                logger.warning(
+                    f"Attack paths scan task {task_id} stopped because its provider "
+                    f"or tenant was deleted: {exc}"
+                )
+            else:
+                logger.error(f"Attack paths scan task {task_id} failed: {exc}")
             attack_paths_db_utils.fail_attack_paths_scan(tenant_id, scan_id, str(exc))
 
 

@@ -28,8 +28,9 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
+  ToastAction,
+  useToast,
 } from "@/components/shadcn";
-import { ToastAction, useToast } from "@/components/shadcn";
 import { useCloudUpgradeStore } from "@/store";
 import type { ScanEntity } from "@/types";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";

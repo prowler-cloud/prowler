@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Prowler API
-  version: 1.36.0
+  version: 1.37.0
   description: |-
     Prowler API specification.
 
@@ -6629,8 +6629,10 @@ paths:
   /api/v1/integrations:
     get:
       operationId: api_v1_integrations_list
-      description: Retrieve a list of all configured integrations with options for
-        filtering by various criteria.
+      description: |-
+        Retrieve a list of all configured integrations with options for filtering by various criteria.
+
+        Integrations attached to one or more providers are only returned when the role can access at least one of those providers, and each integration lists only the providers visible to the role. Integrations not attached to any provider, such as Jira, are tenant-wide and are returned for every role.
       summary: List all integrations
       parameters:
       - in: query
@@ -6781,7 +6783,8 @@ paths:
     post:
       operationId: api_v1_integrations_create
       description: Register a new integration with the system, providing necessary
-        configuration details.
+        configuration details. Only providers visible to the role can be attached
+        to the integration.
       summary: Create a new integration
       tags:
       - Integration
@@ -6810,7 +6813,7 @@ paths:
     post:
       operationId: api_v1_integrations_jira_dispatches_create
       description: |-
-        Send a set of filtered findings to the given integration. At least one finding filter must be provided.
+        Send a set of filtered findings to the given integration. At least one finding filter must be provided. Jira integrations are tenant-wide and do not require unlimited visibility, while the findings sent are limited to the providers the role can access.
 
         ## Known Limitations
 
@@ -6883,7 +6886,8 @@ paths:
     get:
       operationId: api_v1_integrations_jira_issue_types_retrieve
       description: Fetch the available issue types from Jira for a given project key
-        and update the integration configuration.
+        and update the integration configuration. Jira integrations are tenant-wide
+        and do not require unlimited visibility.
       summary: Get available issue types for a Jira project
       parameters:
       - in: query
@@ -6924,7 +6928,8 @@ paths:
     get:
       operationId: api_v1_integrations_retrieve
       description: Fetch detailed information about a specific integration by its
-        ID.
+        ID. Integrations outside the provider visibility of the role are reported
+        the same way as one that does not exist.
       summary: Retrieve integration details
       parameters:
       - in: query
@@ -6978,7 +6983,8 @@ paths:
     patch:
       operationId: api_v1_integrations_partial_update
       description: Modify certain fields of an existing integration without affecting
-        other settings.
+        other settings. Integrations attached to providers outside the visibility
+        of the role cannot be modified by it.
       summary: Partially update an integration
       parameters:
       - in: path
@@ -7013,7 +7019,8 @@ paths:
           description: ''
     delete:
       operationId: api_v1_integrations_destroy
-      description: Remove an integration from the system by its ID.
+      description: Remove an integration from the system by its ID. Integrations attached
+        to providers outside the visibility of the role cannot be deleted by it.
       summary: Delete an integration
       parameters:
       - in: path
@@ -7033,7 +7040,9 @@ paths:
   /api/v1/integrations/{id}/connection:
     post:
       operationId: api_v1_integrations_connection_create
-      description: Try to verify integration connection
+      description: Try to verify integration connection. Integrations outside the
+        provider visibility of the role are reported the same way as one that does
+        not exist.
       summary: Check integration connection
       parameters:
       - in: path

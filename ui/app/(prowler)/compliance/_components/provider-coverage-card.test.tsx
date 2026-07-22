@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { ProviderBreakdownEntry } from "../_types";
+
 import { ProviderCoverageCard } from "./provider-coverage-card";
 
 vi.mock("@/components/icons/providers-badge/provider-type-icon", () => ({

@@ -4,8 +4,9 @@ import { makeSuffix } from "../helpers";
 import { SignUpPage } from "../sign-up/sign-up-page";
 import { SignInPage } from "../sign-in-base/sign-in-base-page";
 import { UserProfilePage } from "../profile/profile-page";
+import { isCloud } from "@/lib/shared/env";
 
-const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+const isCloudEnv = isCloud();
 
 test.describe("New user invitation", () => {
   let invitationsPage: InvitationsPage;
