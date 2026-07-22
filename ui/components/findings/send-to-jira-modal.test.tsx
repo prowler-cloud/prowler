@@ -1,11 +1,16 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { type ComponentProps } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createJiraBatchSelection } from "@/lib/jira-dispatch-selection";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { SendToJiraModal } from "./send-to-jira-modal";
+
+interface ToastActionMockProps extends ComponentProps<"button"> {
+  altText: string;
+}
 
 const {
   executeJiraDispatchBatchesMock,
@@ -30,9 +35,11 @@ vi.mock("@/lib/jira-dispatch-execution", () => ({
 
 vi.mock("@/components/shadcn/toast", () => ({
   toast: toastMock,
-  ToastAction: ({ children }: { children: React.ReactNode }) => (
-    <button>{children}</button>
-  ),
+  ToastAction: ({
+    altText: _altText,
+    children,
+    ...props
+  }: ToastActionMockProps) => <button {...props}>{children}</button>,
 }));
 
 vi.mock("@/components/shadcn/select/enhanced-multi-select", () => ({
@@ -179,6 +186,83 @@ describe("SendToJiraModal", () => {
       ),
     );
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("retries only the failed Jira dispatch batch", async () => {
+    // Given
+    const user = userEvent.setup();
+    const retryBatch = {
+      targetIds: ["finding-2"],
+      targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+      dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
+    } as const;
+    executeJiraDispatchBatchesMock
+      .mockResolvedValueOnce({
+        startedTaskCount: 1,
+        successfulTaskCount: 1,
+        successfulIssueCount: 1,
+        successMessage: "1 Jira issue was created successfully.",
+        warnings: ["1 Jira issue failed."],
+        errors: [],
+        retryBatch,
+      })
+      .mockResolvedValueOnce({
+        startedTaskCount: 1,
+        successfulTaskCount: 1,
+        successfulIssueCount: 1,
+        successMessage: "1 Jira issue was created successfully.",
+        warnings: [],
+        errors: [],
+      });
+    const onOpenChange = vi.fn();
+    const { rerender } = render(
+      <SendToJiraModal
+        isOpen
+        onOpenChange={onOpenChange}
+        selection={selection}
+        defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
+      />,
+    );
+    await waitFor(() => expect(getJiraIntegrationsMock).toHaveBeenCalled());
+    await user.click(
+      screen.getByRole("button", { name: "Select a Jira project" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Select an issue type" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await waitFor(() =>
+      expect(executeJiraDispatchBatchesMock).toHaveBeenCalledTimes(1),
+    );
+    const partialToast = toastMock.mock.calls.find(
+      ([toast]) => toast.title === "Partial success",
+    )?.[0];
+    rerender(
+      <SendToJiraModal
+        isOpen={false}
+        onOpenChange={onOpenChange}
+        selection={selection}
+        defaultDispatchMode={JIRA_DISPATCH_MODE.GROUPED}
+      />,
+    );
+    render(partialToast.action);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Retry failed" }));
+
+    // Then
+    await waitFor(() =>
+      expect(executeJiraDispatchBatchesMock).toHaveBeenNthCalledWith(
+        2,
+        [retryBatch],
+        {
+          integrationId: "jira-1",
+          projectKey: "SEC",
+          issueType: "Task",
+          dispatchMode: JIRA_DISPATCH_MODE.GROUPED,
+        },
+      ),
+    );
   });
 
   it("closes the modal before navigating to Jira configuration", async () => {
