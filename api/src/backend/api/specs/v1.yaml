@@ -6983,8 +6983,8 @@ paths:
     patch:
       operationId: api_v1_integrations_partial_update
       description: Modify certain fields of an existing integration without affecting
-        other settings. Replacing the attached providers only affects the ones visible
-        to the role.
+        other settings. Integrations attached to providers outside the visibility
+        of the role cannot be modified by it.
       summary: Partially update an integration
       parameters:
       - in: path

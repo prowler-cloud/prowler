@@ -6678,8 +6678,8 @@ class ScheduleViewSet(BaseRLSViewSet):
     partial_update=extend_schema(
         tags=["Integration"],
         summary="Partially update an integration",
-        description="Modify certain fields of an existing integration without affecting other settings. Replacing "
-        "the attached providers only affects the ones visible to the role.",
+        description="Modify certain fields of an existing integration without affecting other settings. Integrations "
+        "attached to providers outside the visibility of the role cannot be modified by it.",
     ),
     destroy=extend_schema(
         tags=["Integration"],
@@ -6733,11 +6733,13 @@ class IntegrationViewSet(BaseRLSViewSet):
         context["allowed_providers"] = self.allowed_providers
         return context
 
-    def perform_destroy(self, instance):
-        # Deleting is not a way around the provider scoping applied when updating: an
-        # integration shared with providers hidden to the role cannot be removed by it
+    def get_object(self):
+        instance = super().get_object()
+        # Writes on an integration shared with providers hidden to the role would reach
+        # beyond its visibility, so both editing and deleting are rejected consistently
         if (
-            self.allowed_providers is not None
+            self.action in ("partial_update", "destroy")
+            and self.allowed_providers is not None
             and instance.providers.exclude(
                 id__in=self.allowed_providers.values("id")
             ).exists()
@@ -6745,7 +6747,7 @@ class IntegrationViewSet(BaseRLSViewSet):
             raise PermissionDenied(
                 "The integration is attached to providers outside the visibility of your role."
             )
-        super().perform_destroy(instance)
+        return instance
 
     @extend_schema(
         tags=["Integration"],

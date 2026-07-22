@@ -47,6 +47,7 @@ from api.v1.serializer_utils.integrations import (
     JiraCredentialSerializer,
     S3ConfigSerializer,
     SecurityHubConfigSerializer,
+    replace_integration_providers,
 )
 from api.v1.serializer_utils.lighthouse import (
     BedrockCredentialsSerializer,
@@ -2999,16 +3000,7 @@ class IntegrationCreateSerializer(
 
         providers = validated_data.pop("providers", [])
         integration = Integration.objects.create(tenant_id=tenant_id, **validated_data)
-
-        through_model_instances = [
-            IntegrationProviderRelationship(
-                integration=integration,
-                provider=provider,
-                tenant_id=tenant_id,
-            )
-            for provider in providers
-        ]
-        IntegrationProviderRelationship.objects.bulk_create(through_model_instances)
+        replace_integration_providers(integration, providers, tenant_id)
 
         return integration
 
@@ -3061,26 +3053,12 @@ class IntegrationUpdateSerializer(
     def update(self, instance, validated_data):
         tenant_id = self.context.get("tenant_id")
         # Relationships are replaced here, so they are kept out of the default
-        # `ModelSerializer.update()`, which would otherwise reset them all
+        # `ModelSerializer.update()`, which would otherwise reset them all. The view
+        # rejects updates on integrations shared with providers hidden to the role, so
+        # every existing relationship is visible to the requester at this point
         providers = validated_data.pop("providers", None)
         if providers is not None:
-            relationships = IntegrationProviderRelationship.objects.filter(
-                integration=instance
-            )
-            allowed_providers = self.context.get("allowed_providers")
-            if allowed_providers is not None:
-                # Roles with limited visibility only replace the providers they can see,
-                # so they never detach an integration from providers hidden to them
-                relationships = relationships.filter(provider__in=allowed_providers)
-            relationships.delete()
-
-            new_relationships = [
-                IntegrationProviderRelationship(
-                    integration=instance, provider=provider, tenant_id=tenant_id
-                )
-                for provider in providers
-            ]
-            IntegrationProviderRelationship.objects.bulk_create(new_relationships)
+            replace_integration_providers(instance, providers, tenant_id)
 
         # Preserve regions field for Security Hub integrations
         if instance.integration_type == Integration.IntegrationChoices.AWS_SECURITY_HUB:

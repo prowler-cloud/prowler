@@ -815,11 +815,11 @@ class TestLimitedVisibility:
 
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
-    def test_integration_update_hides_out_of_scope_providers(
-        self, authenticated_client_rbac_limited, integrations_fixture
+    def test_integration_update_allowed_when_fully_visible(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
     ):
-        # Integration 2 is related to provider1 and provider2, this user cannot see provider2
-        integration = integrations_fixture[1]
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
         payload = {
             "data": {
                 "type": "integrations",
@@ -843,8 +843,27 @@ class TestLimitedVisibility:
         )
 
         assert response.status_code == status.HTTP_200_OK
-        assert integration.providers.count() == 2
-        assert len(response.json()["data"]["relationships"]["providers"]["data"]) == 1
+        integration.refresh_from_db()
+        assert integration.enabled is False
+
+        # Tenant-wide integrations have no provider restricting the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": jira_integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        jira_integration.refresh_from_db()
+        assert jira_integration.enabled is False
 
     def test_integration_create_rejects_out_of_scope_provider(
         self, authenticated_client_rbac_limited, aws_provider_pair
@@ -884,26 +903,24 @@ class TestLimitedVisibility:
         ).exists()
 
     @pytest.mark.parametrize("submitted_providers", [True, False])
-    def test_integration_update_keeps_out_of_scope_providers(
+    def test_integration_update_denied_when_shared_with_hidden_provider(
         self,
         authenticated_client_rbac_limited,
         integrations_fixture,
         aws_provider_pair,
         submitted_providers,
     ):
-        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible).
+        # Editing it would reach beyond the visibility of the role, just like deleting
+        # it, so both are rejected consistently
         integration = integrations_fixture[1]
         visible_provider, hidden_provider = aws_provider_pair
-        providers_data = (
-            [{"type": "providers", "id": str(visible_provider.id)}]
-            if submitted_providers
-            else []
-        )
         payload = {
             "data": {
                 "type": "integrations",
                 "id": str(integration.id),
                 "attributes": {
+                    "enabled": False,
                     # integration_type is `amazon_s3`
                     "credentials": {"aws_access_key_id": "new_value"},
                     "configuration": {
@@ -911,9 +928,14 @@ class TestLimitedVisibility:
                         "output_directory": "new_output_directory",
                     },
                 },
-                "relationships": {"providers": {"data": providers_data}},
             }
         }
+        if submitted_providers:
+            payload["data"]["relationships"] = {
+                "providers": {
+                    "data": [{"type": "providers", "id": str(visible_provider.id)}]
+                }
+            }
 
         response = authenticated_client_rbac_limited.patch(
             reverse("integration-detail", kwargs={"pk": integration.id}),
@@ -921,13 +943,11 @@ class TestLimitedVisibility:
             content_type="application/vnd.api+json",
         )
 
-        assert response.status_code == status.HTTP_200_OK
-        # The relationship to the provider the role cannot see is left untouched
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        integration.refresh_from_db()
+        assert integration.enabled is True
         assert integration.providers.filter(id=hidden_provider.id).exists()
-        assert (
-            integration.providers.filter(id=visible_provider.id).exists()
-            is submitted_providers
-        )
+        assert integration.providers.filter(id=visible_provider.id).exists()
 
     def test_integration_delete_denied_when_shared_with_hidden_provider(
         self, authenticated_client_rbac_limited, integrations_fixture

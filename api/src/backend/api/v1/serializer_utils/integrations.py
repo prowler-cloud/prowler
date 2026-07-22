@@ -1,6 +1,7 @@
 import os
 import re
 
+from api.models import Integration, IntegrationProviderRelationship, Provider
 from api.v1.serializer_utils.base import BaseValidateSerializer
 from drf_spectacular.utils import extend_schema_field
 from rest_framework_json_api import serializers
@@ -8,6 +9,21 @@ from rest_framework_json_api import serializers
 ATLASSIAN_SITE_NAME_REGEX = re.compile(
     r"\A[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\Z"
 )
+
+
+def replace_integration_providers(
+    integration: Integration, providers: list[Provider], tenant_id: str
+) -> None:
+    """Replace the provider relationships of an integration with the given set."""
+    IntegrationProviderRelationship.objects.filter(integration=integration).delete()
+    IntegrationProviderRelationship.objects.bulk_create(
+        [
+            IntegrationProviderRelationship(
+                integration=integration, provider=provider, tenant_id=tenant_id
+            )
+            for provider in providers
+        ]
+    )
 
 
 class S3ConfigSerializer(BaseValidateSerializer):
