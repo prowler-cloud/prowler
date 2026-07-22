@@ -128,7 +128,7 @@ To resend the invitation to the user, it is necessary to explicitly **delete the
 
 ## Managing Groups and Roles
 
-Roles combine administrative permissions with provider visibility. Administrative permissions control the actions a role can perform. Provider Groups and Unlimited Visibility control the providers, resources, findings, scans, and compliance results the role can access.
+Roles combine administrative permissions with provider visibility. Administrative permissions control the actions a role can perform. Provider Groups and Unlimited Visibility control the providers, resources, findings, scans, compliance results, and integrations the role can access.
 
 <Note>
 **Only users that have the _Manage Account_ or _admin_ permission can access this section.**
@@ -141,6 +141,12 @@ Provider Groups limit visibility to selected providers. Assigning one or more Pr
 New roles have no provider visibility by default. Assign at least one Provider Group or enable **Unlimited Visibility** before assigning the role to users who need access to provider data.
 
 **Unlimited Visibility** grants organization-wide visibility across every provider, regardless of the Provider Groups assigned to the role. It does not grant administrative permissions.
+
+#### Integration Visibility
+
+<VersionBadge version="5.36.0" />
+
+Integrations follow the visibility of the providers attached to them: a role can see an integration when it can access at least one of its providers, and only the providers visible to that role are listed on the integration. Editing or deleting an integration attached to providers outside the visibility of the role is not allowed. Integrations that are not attached to any provider, such as Jira, are tenant-wide and remain available to every role with the **Manage Integrations** permission.
 
 #### Creating a Provider Group
 
