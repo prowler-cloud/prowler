@@ -2,49 +2,138 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Send } from "lucide-react";
-import { type Dispatch, type SetStateAction, useEffect, useState } from "react";
+import { type Dispatch, type SetStateAction, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
 import {
   getJiraIntegrations,
   getJiraIssueTypes,
-  pollJiraDispatchTask,
   sendFindingToJira,
+  sendJiraDispatch,
 } from "@/actions/integrations/jira-dispatch";
-import { useToast } from "@/components/shadcn";
 import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
+import { CustomRadio } from "@/components/shadcn/custom/custom-radio";
 import { Form, FormField, FormMessage } from "@/components/shadcn/form";
 import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import { Modal } from "@/components/shadcn/modal";
+import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
 import { EnhancedMultiSelect } from "@/components/shadcn/select/enhanced-multi-select";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
-import { IntegrationProps } from "@/types/integrations";
+import { toast, ToastAction } from "@/components/shadcn/toast";
+import { useMountEffect } from "@/hooks/use-mount-effect";
+import {
+  evaluateJiraDispatchTask,
+  getJiraDispatchSuccessCount,
+} from "@/lib/jira-dispatch-result";
+import { getJiraSelectionBatches } from "@/lib/jira-dispatch-selection";
+import { buildJiraDispatchTaskMeta } from "@/lib/jira-dispatch-task";
+import {
+  TASK_WATCHER_STATUS,
+  type TaskTrackingResult,
+  trackAndPollTask,
+} from "@/store/task-watcher/store";
+import {
+  type IntegrationProps,
+  JIRA_DISPATCH_MODE,
+  JIRA_DISPATCH_TARGET,
+  JIRA_DISPATCH_TASK_KIND,
+  type JiraDispatchMode,
+  type JiraDispatchTargetBatch,
+  type JiraDispatchTaskResult,
+  type JiraSelection,
+} from "@/types/integrations";
 
-interface SendToJiraModalProps {
+import {
+  buildJiraDispatchChoiceCopy,
+  JIRA_SELECTION_KIND,
+} from "./send-to-jira-modal-copy";
+
+export interface SendToJiraModalProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  findingId: string;
+  selection: JiraSelection;
   findingTitle?: string;
+  defaultDispatchMode?: JiraDispatchMode;
+  canChooseGroupedDispatch?: boolean;
+  isFindingGroupSelection?: boolean;
+  selectedResourceCount?: number;
+  description?: string;
+}
+
+interface JiraDispatchSettings {
+  integrationId: string;
+  projectKey: string;
+  issueType: string;
+  dispatchMode: JiraDispatchMode;
+}
+
+interface StartedJiraTask {
+  taskId: string;
+  dispatchMode: JiraDispatchMode;
+}
+
+interface JiraTrackedOutcome {
+  success: boolean;
+  message?: string;
+  error?: string;
+  warning?: string;
+  retryBatch?: JiraDispatchTargetBatch;
+  successfulCount?: number;
 }
 
 const sendToJiraSchema = z.object({
   integration: z.string().min(1, "Please select a Jira integration"),
   project: z.string().min(1, "Please select a project"),
   issueType: z.string().min(1, "Please select an issue type"),
+  dispatchMode: z.enum([
+    JIRA_DISPATCH_MODE.GROUPED,
+    JIRA_DISPATCH_MODE.INDIVIDUAL,
+  ]),
 });
 
 type SendToJiraFormData = z.infer<typeof sendToJiraSchema>;
 
-export const SendToJiraModal = ({
-  isOpen,
+const getConfiguredIssueTypes = (
+  integration: IntegrationProps | undefined,
+  projectKey: string,
+) => {
+  const configuredIssueTypes = integration?.attributes.configuration
+    .issue_types as Record<string, string[]> | undefined;
+
+  return configuredIssueTypes &&
+    typeof configuredIssueTypes === "object" &&
+    !Array.isArray(configuredIssueTypes)
+    ? (configuredIssueTypes[projectKey] ?? [])
+    : [];
+};
+
+const getRetryBatch = (
+  failedFindingIds: string[] | undefined,
+): JiraDispatchTargetBatch | undefined => {
+  const [firstFindingId, ...remainingFindingIds] =
+    failedFindingIds?.filter(Boolean) ?? [];
+  if (!firstFindingId) return undefined;
+
+  return {
+    targetIds: [firstFindingId, ...remainingFindingIds],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
+  };
+};
+
+const SendToJiraModalContent = ({
   onOpenChange,
-  findingId,
+  selection,
   findingTitle,
-}: SendToJiraModalProps) => {
-  const { toast } = useToast();
+  defaultDispatchMode = JIRA_DISPATCH_MODE.INDIVIDUAL,
+  canChooseGroupedDispatch = false,
+  isFindingGroupSelection = false,
+  selectedResourceCount,
+  description,
+}: Omit<SendToJiraModalProps, "isOpen">) => {
   const [integrations, setIntegrations] = useState<IntegrationProps[]>([]);
-  const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(false);
+  const [isFetchingIntegrations, setIsFetchingIntegrations] = useState(true);
   const [fetchedIssueTypes, setFetchedIssueTypes] = useState<
     Record<string, string[]>
   >({});
@@ -56,191 +145,342 @@ export const SendToJiraModal = ({
       integration: "",
       project: "",
       issueType: "",
+      dispatchMode: defaultDispatchMode,
     },
   });
 
-  const selectedIntegration = form.watch("integration");
+  const jiraTargetBatches = getJiraSelectionBatches(selection);
+  const findingTargetCount = jiraTargetBatches
+    .filter((batch) => batch.targetType === JIRA_DISPATCH_TARGET.FINDING_ID)
+    .reduce((count, batch) => count + batch.targetIds.length, 0);
+  const jiraSelectedResourceCount = selectedResourceCount ?? findingTargetCount;
+  const shouldShowDispatchChoice =
+    (canChooseGroupedDispatch || findingTargetCount > 1) &&
+    (findingTargetCount > 1 || jiraSelectedResourceCount > 1);
+  const checkIdBatches = jiraTargetBatches.filter(
+    (batch) => batch.targetType === JIRA_DISPATCH_TARGET.CHECK_ID,
+  );
+  const hasOnlySingleFindingGroupBatch =
+    jiraTargetBatches.length === 1 &&
+    checkIdBatches.length === 1 &&
+    checkIdBatches[0].targetIds.length === 1;
+  const isSelectedFindingGroupFlow =
+    shouldShowDispatchChoice &&
+    (isFindingGroupSelection || hasOnlySingleFindingGroupBatch);
+  const jiraDispatchChoiceCopy = buildJiraDispatchChoiceCopy({
+    selectedCount:
+      findingTargetCount > 1 ? findingTargetCount : jiraSelectedResourceCount,
+    isSelectedFindingGroupFlow,
+    selectionKind:
+      findingTargetCount > 1
+        ? JIRA_SELECTION_KIND.FINDINGS
+        : JIRA_SELECTION_KIND.RESOURCES,
+  });
 
+  const selectedIntegration = form.watch("integration");
+  const selectedProject = form.watch("project");
+  const selectedIntegrationData = integrations.find(
+    (integration) => integration.id === selectedIntegration,
+  );
+  const projects =
+    selectedIntegrationData?.attributes.configuration.projects ?? {};
+  const projectEntries = Object.entries(projects);
+  const configuredIssueTypes = getConfiguredIssueTypes(
+    selectedIntegrationData,
+    selectedProject,
+  );
+  const issueTypesForProject =
+    configuredIssueTypes.length > 0
+      ? configuredIssueTypes
+      : (fetchedIssueTypes[`${selectedIntegration}:${selectedProject}`] ?? []);
   const hasConnectedIntegration = integrations.some(
-    (i) => i.attributes.connected === true,
+    (integration) => integration.attributes.connected === true,
   );
 
-  const setOpenForFormButtons: Dispatch<SetStateAction<boolean>> = (value) => {
-    const next = typeof value === "function" ? value(isOpen) : value;
-    onOpenChange(next);
-  };
-
-  // Fetch Jira integrations when modal opens
-  useEffect(() => {
-    if (isOpen) {
-      const fetchJiraIntegrations = async () => {
-        setIsFetchingIntegrations(true);
-
-        try {
-          const result = await getJiraIntegrations();
-          if (!result.success) {
-            throw new Error(
-              result.error || "Unable to fetch Jira integrations",
-            );
-          }
-          setIntegrations(result.data);
-          // Auto-select if only one integration
-          if (result.data.length === 1) {
-            form.setValue("integration", result.data[0].id);
-          }
-        } catch (error) {
-          const message =
-            error instanceof Error && error.message
-              ? error.message
-              : "Failed to load Jira integrations";
-          toast({
-            variant: "destructive",
-            title: "Failed to load integrations",
-            description: message,
-          });
-        } finally {
-          setIsFetchingIntegrations(false);
-        }
-      };
-
-      fetchJiraIntegrations();
-    } else {
-      // Reset form and fetched data when modal closes
-      form.reset();
-      setFetchedIssueTypes({});
-    }
-  }, [isOpen, form, toast]);
-
-  const handleSubmit = async (data: SendToJiraFormData) => {
-    // Close modal immediately; continue processing in background
-    onOpenChange(false);
+  useMountEffect(() => {
+    let active = true;
 
     void (async () => {
       try {
-        // Send the finding to Jira
-        const result = await sendFindingToJira(
-          data.integration,
-          findingId,
-          data.project,
-          data.issueType,
-        );
-
+        const result = await getJiraIntegrations();
+        if (!active) return;
         if (!result.success) {
-          throw new Error(result.error || "Failed to send to Jira");
+          throw new Error(result.error || "Unable to fetch Jira integrations");
         }
 
-        // Poll for task completion and notify once
-        const taskResult = await pollJiraDispatchTask(result.taskId);
-
-        if (!taskResult.success) {
-          throw new Error(taskResult.error || "Failed to create Jira issue");
+        setIntegrations(result.data);
+        if (result.data.length === 1) {
+          form.setValue("integration", result.data[0].id);
         }
-
-        toast({
-          title: "Success!",
-          description:
-            taskResult.message || "Finding sent to Jira successfully",
-        });
       } catch (error) {
+        if (!active) return;
         const message =
           error instanceof Error && error.message
             ? error.message
-            : "Failed to send finding to Jira";
+            : "Failed to load Jira integrations";
         toast({
           variant: "destructive",
-          title: "Error",
+          title: "Failed to load integrations",
           description: message,
         });
+      } finally {
+        if (active) setIsFetchingIntegrations(false);
       }
     })();
-  };
-
-  const selectedProject = form.watch("project");
-
-  const selectedIntegrationData = integrations.find(
-    (i) => i.id === selectedIntegration,
-  );
-
-  const projects: Record<string, string> =
-    selectedIntegrationData?.attributes.configuration.projects ??
-    ({} as Record<string, string>);
-
-  const projectEntries = Object.entries(projects);
-
-  // Get issue types from config (new dict format), falling back to fetched data
-  const configIssueTypes = selectedIntegrationData?.attributes.configuration
-    .issue_types as Record<string, string[]> | undefined;
-  const issueTypesFromConfig =
-    configIssueTypes &&
-    typeof configIssueTypes === "object" &&
-    !Array.isArray(configIssueTypes)
-      ? (configIssueTypes[selectedProject] ?? [])
-      : [];
-  const issueTypesForProject =
-    issueTypesFromConfig.length > 0
-      ? issueTypesFromConfig
-      : (fetchedIssueTypes[selectedProject] ?? []);
-
-  // Fetch issue types from API when project is selected but no types are available
-  useEffect(() => {
-    let ignore = false;
-
-    if (
-      selectedIntegration &&
-      selectedProject &&
-      issueTypesFromConfig.length === 0 &&
-      !fetchedIssueTypes[selectedProject]
-    ) {
-      const fetchIssueTypes = async () => {
-        setIsFetchingIssueTypes(true);
-        try {
-          const result = await getJiraIssueTypes(
-            selectedIntegration,
-            selectedProject,
-          );
-          if (ignore) return;
-          if (result.success) {
-            setFetchedIssueTypes((prev) => ({
-              ...prev,
-              [selectedProject]: result.issueTypes,
-            }));
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Failed to load issue types",
-              description:
-                result.error || "Unable to fetch issue types for this project",
-            });
-          }
-        } finally {
-          if (!ignore) setIsFetchingIssueTypes(false);
-        }
-      };
-
-      fetchIssueTypes();
-    }
 
     return () => {
-      ignore = true;
+      active = false;
     };
-  }, [
-    selectedIntegration,
-    selectedProject,
-    issueTypesFromConfig.length,
-    fetchedIssueTypes,
-    toast,
-  ]);
+  });
+
+  const setOpenForFormButtons: Dispatch<SetStateAction<boolean>> = (value) => {
+    const nextOpen = typeof value === "function" ? value(true) : value;
+    onOpenChange(nextOpen);
+  };
+
+  const loadIssueTypes = async (integrationId: string, projectKey: string) => {
+    const integration = integrations.find((item) => item.id === integrationId);
+    if (
+      !integrationId ||
+      !projectKey ||
+      getConfiguredIssueTypes(integration, projectKey).length > 0 ||
+      fetchedIssueTypes[`${integrationId}:${projectKey}`]
+    ) {
+      return;
+    }
+
+    setIsFetchingIssueTypes(true);
+    try {
+      const result = await getJiraIssueTypes(integrationId, projectKey);
+      if (result.success) {
+        setFetchedIssueTypes((current) => ({
+          ...current,
+          [`${integrationId}:${projectKey}`]: result.issueTypes,
+        }));
+        return;
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Failed to load issue types",
+        description:
+          result.error || "Unable to fetch issue types for this project",
+      });
+    } catch {
+      toast({
+        variant: "destructive",
+        title: "Failed to load issue types",
+        description: "Unable to fetch issue types for this project",
+      });
+    } finally {
+      setIsFetchingIssueTypes(false);
+    }
+  };
+
+  async function processBatches(
+    batches: JiraDispatchTargetBatch[],
+    settings: JiraDispatchSettings,
+  ) {
+    const startedTasks: StartedJiraTask[] = [];
+    const launchErrors: string[] = [];
+    const unknownLaunchErrors: string[] = [];
+
+    for (const batch of batches) {
+      const dispatchMode = batch.dispatchMode ?? settings.dispatchMode;
+      try {
+        const result =
+          batch.targetIds.length === 1 &&
+          batch.targetType === JIRA_DISPATCH_TARGET.FINDING_ID &&
+          dispatchMode === JIRA_DISPATCH_MODE.INDIVIDUAL
+            ? await sendFindingToJira(
+                settings.integrationId,
+                batch.targetIds[0],
+                settings.projectKey,
+                settings.issueType,
+              )
+            : await sendJiraDispatch({
+                integrationId: settings.integrationId,
+                targetIds: batch.targetIds,
+                filter: batch.targetType,
+                projectKey: settings.projectKey,
+                issueType: settings.issueType,
+                dispatchMode,
+              });
+
+        if (!result.success) {
+          launchErrors.push(result.error || "Failed to send to Jira");
+          continue;
+        }
+
+        startedTasks.push({ taskId: result.taskId, dispatchMode });
+      } catch {
+        // The request may have reached the server before the RPC failed. Do
+        // not offer an automatic retry because that could create duplicates.
+        unknownLaunchErrors.push(
+          "The Jira dispatch status is unknown after a connection error. Check Jira before retrying.",
+        );
+      }
+    }
+
+    const trackedOutcomes = await Promise.all(
+      startedTasks.map(async ({ taskId, dispatchMode }) => {
+        let trackedTask: TaskTrackingResult<JiraDispatchTaskResult>;
+        try {
+          trackedTask = await trackAndPollTask<JiraDispatchTaskResult>({
+            taskId,
+            kind: JIRA_DISPATCH_TASK_KIND,
+            meta: buildJiraDispatchTaskMeta({
+              integrationId: settings.integrationId,
+              projectKey: settings.projectKey,
+              issueType: settings.issueType,
+              dispatchMode,
+            }),
+            notifyHandler: false,
+          });
+        } catch {
+          return {
+            success: false,
+            error:
+              "Tracking the Jira dispatch failed unexpectedly. Check Jira before retrying.",
+          } satisfies JiraTrackedOutcome;
+        }
+
+        if (trackedTask.status !== TASK_WATCHER_STATUS.READY) {
+          return {
+            success: false,
+            error: trackedTask.error || "Failed to track Jira issue creation.",
+          } satisfies JiraTrackedOutcome;
+        }
+
+        const outcome = evaluateJiraDispatchTask(
+          "completed",
+          trackedTask.result,
+        );
+        if (outcome.success) {
+          return {
+            success: true,
+            message: outcome.message,
+            warning: outcome.warning,
+            retryBatch: getRetryBatch(outcome.failedFindingIds),
+            successfulCount: getJiraDispatchSuccessCount(trackedTask.result),
+          } satisfies JiraTrackedOutcome;
+        }
+
+        return {
+          success: false,
+          error: outcome.error,
+          retryBatch: getRetryBatch(outcome.failedFindingIds),
+        } satisfies JiraTrackedOutcome;
+      }),
+    );
+
+    const successfulOutcomes = trackedOutcomes.filter(
+      (outcome) => outcome.success,
+    );
+    const warnings = Array.from(
+      new Set(
+        trackedOutcomes.flatMap((outcome) =>
+          outcome.warning ? [outcome.warning] : [],
+        ),
+      ),
+    );
+    const successfulIssueCount = successfulOutcomes.reduce(
+      (count, outcome) => count + (outcome.successfulCount ?? 0),
+      0,
+    );
+    const successMessage =
+      successfulOutcomes.length === 1
+        ? successfulOutcomes[0].message
+        : `${successfulIssueCount} Jira issues were created or updated successfully.`;
+    const errors = Array.from(
+      new Set([
+        ...trackedOutcomes.flatMap((outcome) =>
+          outcome.error ? [outcome.error] : [],
+        ),
+        ...launchErrors,
+        ...unknownLaunchErrors,
+      ]),
+    );
+    const retryBatch = getRetryBatch(
+      Array.from(
+        new Set(
+          trackedOutcomes.flatMap(
+            (outcome) => outcome.retryBatch?.targetIds ?? [],
+          ),
+        ),
+      ),
+    );
+    const retryBatches = retryBatch ? [retryBatch] : [];
+    const retryAction =
+      retryBatches.length > 0 ? (
+        <ToastAction
+          altText="Retry failed Jira dispatches"
+          onClick={async () => {
+            toast({
+              title: "Retry started",
+              description: "Retrying only the Jira dispatches that failed.",
+            });
+            await processBatches(retryBatches, settings);
+          }}
+        >
+          Retry failed
+        </ToastAction>
+      ) : undefined;
+
+    if (errors.length > 0 || warnings.length > 0) {
+      if (successfulOutcomes.length > 0) {
+        toast({
+          title: "Partial success",
+          description: `${successMessage || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${[
+            ...warnings,
+            ...errors,
+          ].join(" ")}`,
+          ...(retryAction ? { action: retryAction } : {}),
+        });
+        return;
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: [...warnings, ...errors].join(" "),
+        ...(retryAction ? { action: retryAction } : {}),
+      });
+      return;
+    }
+
+    toast({
+      title: "Success!",
+      description: successMessage || "Finding sent to Jira successfully",
+    });
+  }
+
+  const handleSubmit = async (data: SendToJiraFormData) => {
+    onOpenChange(false);
+
+    void processBatches(jiraTargetBatches, {
+      integrationId: data.integration,
+      projectKey: data.project,
+      issueType: data.issueType,
+      dispatchMode: data.dispatchMode,
+    }).catch(() => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description:
+          "The Jira dispatch could not be processed. Check Jira before retrying.",
+      });
+    });
+  };
 
   const issueTypeOptions = issueTypesForProject.map((type) => ({
     value: type,
     label: type,
   }));
-
   const integrationOptions = integrations.map((integration) => ({
     value: integration.id,
     label: integration.attributes.configuration.domain || integration.id,
   }));
-
   const projectOptions = projectEntries.map(([key, name]) => ({
     value: key,
     label: `${key} - ${name}`,
@@ -248,13 +488,17 @@ export const SendToJiraModal = ({
 
   return (
     <Modal
-      open={isOpen}
+      open
       onOpenChange={onOpenChange}
       title="Send Finding to Jira"
       description={
-        findingTitle
-          ? `Create a Jira issue for: "${findingTitle}"`
-          : "Select integration, project and issue type to create a Jira issue"
+        description
+          ? description
+          : shouldShowDispatchChoice
+            ? jiraDispatchChoiceCopy.description
+            : findingTitle
+              ? `Create a Jira issue for: "${findingTitle}"`
+              : "Select integration, project and issue type to create a Jira issue"
       }
     >
       <Form {...form}>
@@ -262,7 +506,6 @@ export const SendToJiraModal = ({
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex flex-col gap-4"
         >
-          {/* Loading skeleton for project selector */}
           {isFetchingIntegrations && (
             <div className="flex flex-col gap-1.5">
               <Skeleton className="h-3 w-16" />
@@ -270,7 +513,6 @@ export const SendToJiraModal = ({
             </div>
           )}
 
-          {/* Integration Selection */}
           {!isFetchingIntegrations && integrations.length > 1 && (
             <FormField
               control={form.control}
@@ -287,22 +529,20 @@ export const SendToJiraModal = ({
                     id="jira-integration-select"
                     options={integrationOptions}
                     onValueChange={(values) => {
-                      const selectedValue = values.at(-1) ?? "";
-                      field.onChange(selectedValue);
-                      // Reset dependent fields
+                      field.onChange(values.at(-1) ?? "");
                       form.setValue("project", "");
                       form.setValue("issueType", "");
                       setFetchedIssueTypes({});
                     }}
                     defaultValue={field.value ? [field.value] : []}
                     placeholder="Select a Jira integration"
-                    searchable={true}
+                    searchable
                     emptyIndicator="No integrations found."
                     disabled={isFetchingIntegrations}
-                    hideSelectAll={true}
+                    hideSelectAll
                     maxCount={1}
-                    closeOnSelect={true}
-                    resetOnDefaultValueChange={true}
+                    closeOnSelect
+                    resetOnDefaultValueChange
                   />
                   <FormMessage className="text-text-error text-xs" />
                 </div>
@@ -310,7 +550,6 @@ export const SendToJiraModal = ({
             />
           )}
 
-          {/* Project Selection */}
           {!isFetchingIntegrations &&
             selectedIntegration &&
             projectEntries.length > 0 && (
@@ -329,19 +568,19 @@ export const SendToJiraModal = ({
                       id="jira-project-select"
                       options={projectOptions}
                       onValueChange={(values) => {
-                        const selectedValue = values.at(-1) ?? "";
-                        field.onChange(selectedValue);
-                        // Reset issue type when project changes
+                        const projectKey = values.at(-1) ?? "";
+                        field.onChange(projectKey);
                         form.setValue("issueType", "");
+                        void loadIssueTypes(selectedIntegration, projectKey);
                       }}
                       defaultValue={field.value ? [field.value] : []}
                       placeholder="Select a Jira project"
-                      searchable={true}
+                      searchable
                       emptyIndicator="No projects found."
-                      hideSelectAll={true}
+                      hideSelectAll
                       maxCount={1}
-                      closeOnSelect={true}
-                      resetOnDefaultValueChange={true}
+                      closeOnSelect
+                      resetOnDefaultValueChange
                     />
                     <FormMessage className="text-text-error text-xs" />
                   </div>
@@ -349,7 +588,6 @@ export const SendToJiraModal = ({
               />
             )}
 
-          {/* Issue Type Selection */}
           {selectedProject && (
             <FormField
               control={form.control}
@@ -365,23 +603,22 @@ export const SendToJiraModal = ({
                   <EnhancedMultiSelect
                     id="jira-issue-type-select"
                     options={issueTypeOptions}
-                    onValueChange={(values) => {
-                      const selectedValue = values.at(-1) ?? "";
-                      field.onChange(selectedValue);
-                    }}
+                    onValueChange={(values) =>
+                      field.onChange(values.at(-1) ?? "")
+                    }
                     defaultValue={field.value ? [field.value] : []}
                     placeholder={
                       isFetchingIssueTypes
                         ? "Loading issue types..."
                         : "Select an issue type"
                     }
-                    searchable={true}
+                    searchable
                     emptyIndicator="No issue types found."
                     disabled={isFetchingIssueTypes}
-                    hideSelectAll={true}
+                    hideSelectAll
                     maxCount={1}
-                    closeOnSelect={true}
-                    resetOnDefaultValueChange={true}
+                    closeOnSelect
+                    resetOnDefaultValueChange
                   />
                   <FormMessage className="text-text-error text-xs" />
                 </div>
@@ -389,7 +626,52 @@ export const SendToJiraModal = ({
             />
           )}
 
-          {/* No integrations or none connected message */}
+          {shouldShowDispatchChoice && (
+            <FormField
+              control={form.control}
+              name="dispatchMode"
+              render={({ field }) => (
+                <div className="flex flex-col gap-2">
+                  <span className="text-text-neutral-secondary text-xs font-light tracking-tight">
+                    Jira issue creation mode
+                  </span>
+                  <RadioGroup
+                    value={field.value}
+                    onValueChange={field.onChange}
+                  >
+                    <CustomRadio
+                      value={JIRA_DISPATCH_MODE.GROUPED}
+                      ariaLabel="Create one Jira issue"
+                    >
+                      <span className="flex flex-col gap-1">
+                        <span className="text-text-neutral-primary text-sm font-medium">
+                          {jiraDispatchChoiceCopy.groupedTitle}
+                        </span>
+                        <span className="text-text-neutral-secondary text-xs">
+                          {jiraDispatchChoiceCopy.groupedHelp}
+                        </span>
+                      </span>
+                    </CustomRadio>
+                    <CustomRadio
+                      value={JIRA_DISPATCH_MODE.INDIVIDUAL}
+                      ariaLabel="Create separate Jira issues"
+                    >
+                      <span className="flex flex-col gap-1">
+                        <span className="text-text-neutral-primary text-sm font-medium">
+                          Create separate Jira issues
+                        </span>
+                        <span className="text-text-neutral-secondary text-xs">
+                          {jiraDispatchChoiceCopy.individualHelp}
+                        </span>
+                      </span>
+                    </CustomRadio>
+                  </RadioGroup>
+                  <FormMessage className="text-text-error text-xs" />
+                </div>
+              )}
+            />
+          )}
+
           {!isFetchingIntegrations &&
           (integrations.length === 0 || !hasConnectedIntegration) ? (
             <CustomBanner
@@ -420,4 +702,10 @@ export const SendToJiraModal = ({
       </Form>
     </Modal>
   );
+};
+
+export const SendToJiraModal = ({ isOpen, ...props }: SendToJiraModalProps) => {
+  if (!isOpen) return null;
+
+  return <SendToJiraModalContent {...props} />;
 };

@@ -2,12 +2,26 @@
 
 import { pollTaskUntilSettled } from "@/actions/task/poll";
 import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { evaluateJiraDispatchTask } from "@/lib/jira-dispatch-result";
 import { handleApiError } from "@/lib/server-actions-helper";
 import type {
   IntegrationProps,
+  JiraDispatchMode,
   JiraDispatchRequest,
   JiraDispatchResponse,
+  JiraDispatchTarget,
+  JiraDispatchTaskResult,
 } from "@/types/integrations";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+
+interface JiraDispatchInput {
+  integrationId: string;
+  targetIds: string[];
+  filter: JiraDispatchTarget;
+  projectKey: string;
+  issueType: string;
+  dispatchMode?: JiraDispatchMode;
+}
 
 export const getJiraIssueTypes = async (
   integrationId: string,
@@ -88,13 +102,36 @@ export const sendFindingToJira = async (
   | { success: true; taskId: string; message: string }
   | { success: false; error: string }
 > => {
+  return sendJiraDispatch({
+    integrationId,
+    targetIds: [findingId],
+    filter: JIRA_DISPATCH_TARGET.FINDING_ID,
+    projectKey,
+    issueType,
+  });
+};
+
+export const sendJiraDispatch = async ({
+  integrationId,
+  targetIds,
+  filter,
+  projectKey,
+  issueType,
+  dispatchMode = JIRA_DISPATCH_MODE.INDIVIDUAL,
+}: JiraDispatchInput): Promise<
+  | { success: true; taskId: string; message: string }
+  | { success: false; error: string }
+> => {
   const headers = await getAuthHeaders({ contentType: true });
   const url = new URL(
     `${apiBaseUrl}/integrations/${integrationId}/jira/dispatches`,
   );
 
-  // Single finding: use direct filter without array notation
-  url.searchParams.append("filter[finding_id]", findingId);
+  if (targetIds.length === 1) {
+    url.searchParams.append(`filter[${filter}]`, targetIds[0]);
+  } else {
+    url.searchParams.append(`filter[${filter}__in]`, targetIds.join(","));
+  }
 
   const payload: JiraDispatchRequest = {
     data: {
@@ -102,6 +139,7 @@ export const sendFindingToJira = async (
       attributes: {
         project_key: projectKey,
         issue_type: issueType,
+        dispatch_mode: dispatchMode,
       },
     },
   };
@@ -145,38 +183,18 @@ export const sendFindingToJira = async (
 export const pollJiraDispatchTask = async (
   taskId: string,
 ): Promise<
-  { success: true; message: string } | { success: false; error: string }
+  | { success: true; message: string; warning?: string }
+  | { success: false; error: string }
 > => {
   const res = await pollTaskUntilSettled(taskId, {
-    maxAttempts: 30,
+    maxAttempts: 5,
     delayMs: 2000,
   });
   if (!res.ok) {
     return { success: false, error: res.error };
   }
-  const { state, result } = res;
-  type JiraTaskResult = JiraDispatchResponse["data"]["attributes"]["result"];
-  const jiraResult = result as JiraTaskResult | undefined;
-
-  if (state === "completed") {
-    const createdCount = jiraResult?.created_count ?? 0;
-    const failedCount = jiraResult?.failed_count ?? 0;
-    if (!jiraResult?.error && failedCount === 0 && createdCount > 0) {
-      return { success: true, message: "Finding successfully sent to Jira!" };
-    }
-    return {
-      success: false,
-      error:
-        jiraResult?.error ||
-        (failedCount > 1
-          ? `Failed to create ${failedCount} Jira issues.`
-          : "Failed to create Jira issue."),
-    };
-  }
-
-  if (state === "failed") {
-    return { success: false, error: jiraResult?.error || "Task failed." };
-  }
-
-  return { success: false, error: `Unknown task state: ${state}` };
+  return evaluateJiraDispatchTask(
+    res.state,
+    res.result as JiraDispatchTaskResult | undefined,
+  );
 };

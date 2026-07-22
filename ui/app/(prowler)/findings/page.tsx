@@ -29,6 +29,60 @@ import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
 
+const FINDING_GROUP_FILTER_OPTION_PAGE_SIZE = 100;
+const FINDING_GROUP_OWN_FILTER_KEYS = [
+  "filter[check_id]",
+  "filter[check_id__in]",
+] as const;
+
+type FindingGroupFilterFetcher = typeof getFindingGroups;
+
+function excludeFindingGroupOwnFilters(
+  filters: Record<string, string | string[] | undefined>,
+) {
+  return Object.fromEntries(
+    Object.entries(filters).filter(
+      ([key]) =>
+        !FINDING_GROUP_OWN_FILTER_KEYS.includes(
+          key as (typeof FINDING_GROUP_OWN_FILTER_KEYS)[number],
+        ),
+    ),
+  );
+}
+
+async function getFindingGroupFilterOptions({
+  fetchFindingGroups,
+  filters,
+}: {
+  fetchFindingGroups: FindingGroupFilterFetcher;
+  filters: Record<string, string | string[] | undefined>;
+}) {
+  const optionFilters = excludeFindingGroupOwnFilters(filters);
+  const options = new Map<string, { checkId: string; checkTitle: string }>();
+  let page = 1;
+
+  while (true) {
+    const response = await fetchFindingGroups({
+      filters: optionFilters,
+      page,
+      pageSize: FINDING_GROUP_FILTER_OPTION_PAGE_SIZE,
+    });
+
+    for (const group of adaptFindingGroupsResponse(response)) {
+      options.set(group.checkId, {
+        checkId: group.checkId,
+        checkTitle: group.checkTitle,
+      });
+    }
+
+    const totalPages = response?.meta?.pagination?.pages ?? page;
+    if (page >= totalPages) break;
+    page += 1;
+  }
+
+  return Array.from(options.values());
+}
+
 export default async function Findings({
   searchParams,
 }: {
@@ -68,6 +122,13 @@ export default async function Findings({
     metadataInfoData?.data?.attributes?.resource_types || [];
   const uniqueCategories = metadataInfoData?.data?.attributes?.categories || [];
   const uniqueGroups = metadataInfoData?.data?.attributes?.groups || [];
+  const fetchFindingGroupFilterOptions = hasHistoricalData
+    ? getFindingGroups
+    : getLatestFindingGroups;
+  const checkOptions = await getFindingGroupFilterOptions({
+    fetchFindingGroups: fetchFindingGroupFilterOptions,
+    filters: resolvedFilters,
+  });
 
   const completedScans = scansData?.data?.filter(
     (scan: ScanProps) =>
@@ -110,6 +171,7 @@ export default async function Findings({
             uniqueResourceTypes={uniqueResourceTypes}
             uniqueCategories={uniqueCategories}
             uniqueGroups={uniqueGroups}
+            checkOptions={checkOptions}
             trailingControls={
               <SeedFromFindingsButton
                 filterBag={filters}
@@ -145,6 +207,10 @@ const SSRDataTable = async ({
 }) => {
   const page = parseInt(searchParams.page?.toString() || "1", 10);
   const pageSize = parseInt(searchParams.pageSize?.toString() || "10", 10);
+  const expandedCheckIdParam = searchParams.expandedCheckId;
+  const expandedCheckId = Array.isArray(expandedCheckIdParam)
+    ? expandedCheckIdParam[0]
+    : expandedCheckIdParam;
 
   const { encodedSort } = extractSortAndKey(searchParams);
   const hasHistoricalData = hasDateOrScanFilter(filters);
@@ -178,6 +244,7 @@ const SSRDataTable = async ({
         metadata={findingGroupsData?.meta}
         resolvedFilters={filters}
         hasHistoricalData={hasHistoricalData}
+        expandedCheckId={expandedCheckId}
       />
     </>
   );

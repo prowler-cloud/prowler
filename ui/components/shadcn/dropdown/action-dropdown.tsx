@@ -5,6 +5,8 @@ import { ComponentProps, ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,6 +106,10 @@ interface ActionDropdownItemProps
   description?: string;
   /** Whether the item is destructive (danger styling) */
   destructive?: boolean;
+  /** Tooltip shown while the item remains interactive. */
+  tooltip?: string;
+  /** Tooltip shown when the item is disabled. */
+  disabledTooltip?: string;
 }
 
 export function ActionDropdownItem({
@@ -112,9 +118,13 @@ export function ActionDropdownItem({
   description,
   destructive = false,
   className,
+  tooltip,
+  disabledTooltip,
+  disabled,
+  onSelect,
   ...props
 }: ActionDropdownItemProps) {
-  return (
+  const item = (
     <DropdownMenuItem
       className={cn(
         "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
@@ -122,6 +132,16 @@ export function ActionDropdownItem({
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
       )}
+      aria-disabled={disabled || undefined}
+      disabled={disabled && !disabledTooltip}
+      onSelect={(event) => {
+        if (disabled) {
+          event.preventDefault();
+          return;
+        }
+
+        onSelect?.(event);
+      }}
       {...props}
     >
       {icon && (
@@ -149,6 +169,19 @@ export function ActionDropdownItem({
       </div>
     </DropdownMenuItem>
   );
+
+  const tooltipContent = tooltip ?? (disabled ? disabledTooltip : undefined);
+
+  if (tooltipContent) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{item}</TooltipTrigger>
+        <TooltipContent>{tooltipContent}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return item;
 }
 
 export function ActionDropdownDangerZone({

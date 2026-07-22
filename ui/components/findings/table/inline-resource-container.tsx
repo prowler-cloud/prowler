@@ -91,11 +91,7 @@ function ResourceSkeletonRow({
           <div className="bg-bg-input-primary border-border-input-primary size-5 rounded-sm border shadow-[0_1px_2px_0_rgba(0,0,0,0.1)]" />
         </div>
       </TableCell>
-      {/* Status */}
-      <TableCell className={cellClassName}>
-        <Skeleton className="h-6 w-11 rounded-md" />
-      </TableCell>
-      {/* Resource: name + uid */}
+      {/* Affected failing resource: name + uid */}
       <TableCell className={cellClassName}>
         <div className="space-y-1.5">
           <Skeleton className="h-4 w-32 rounded" />

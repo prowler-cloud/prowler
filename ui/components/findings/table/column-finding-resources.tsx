@@ -18,16 +18,18 @@ import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
 import { SeverityBadge } from "@/components/shadcn/table";
 import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/shadcn/table/status-finding-badge";
 import { getFailingForLabel } from "@/lib/date-utils";
+import {
+  isGroupedJiraDispatchEnabled,
+  PROWLER_CLOUD_ONLY_TOOLTIP,
+} from "@/lib/deployment";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
 import {
@@ -69,6 +71,7 @@ const ResourceRowActions = ({
 
   const isCurrentSelected = selectedFindingIds.includes(resource.findingId);
   const hasMultipleSelected = selectedFindingIds.length > 1;
+  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
   const getDisplayIds = (): string[] => {
     if (isCurrentSelected && hasMultipleSelected) {
@@ -83,6 +86,12 @@ const ResourceRowActions = ({
     if (ids.length > 1) return `Mute ${ids.length}`;
     return "Mute";
   };
+  const displayIds = getDisplayIds();
+  const canSendToJira = displayIds.length === 1 || groupedJiraDispatchEnabled;
+  const jiraSelection = createJiraTargetSelection(
+    displayIds,
+    JIRA_DISPATCH_TARGET.FINDING_ID,
+  );
 
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
@@ -123,12 +132,22 @@ const ResourceRowActions = ({
           onComplete={handleMuteComplete}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={resource.findingId}
-        findingTitle={resource.checkId}
-      />
+      {jiraSelection && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          selection={jiraSelection}
+          findingTitle={resource.checkId}
+          defaultDispatchMode={
+            displayIds.length > 1
+              ? JIRA_DISPATCH_MODE.GROUPED
+              : JIRA_DISPATCH_MODE.INDIVIDUAL
+          }
+          canChooseGroupedDispatch={
+            displayIds.length > 1 && groupedJiraDispatchEnabled
+          }
+        />
+      )}
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
@@ -162,7 +181,11 @@ const ResourceRowActions = ({
           <ActionDropdownItem
             icon={<JiraIcon size={20} />}
             label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
+            disabled={!canSendToJira}
+            disabledTooltip={PROWLER_CLOUD_ONLY_TOOLTIP}
+            onSelect={() => {
+              if (canSendToJira) setIsJiraModalOpen(true);
+            }}
           />
         </ActionDropdown>
       </div>
@@ -243,24 +266,14 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Status
-    {
-      id: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        return (
-          <StatusFindingBadge status={row.original.status as FindingStatus} />
-        );
-      },
-      enableSorting: false,
-    },
-    // Resource — name + uid
+    // Affected failing resource — name + uid
     {
       id: "resource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resource" />
+        <DataTableColumnHeader
+          column={column}
+          title="Affected failing resource"
+        />
       ),
       cell: ({ row }) => (
         <div className="max-w-[240px]">
