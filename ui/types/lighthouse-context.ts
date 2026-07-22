@@ -13,6 +13,7 @@ export type LighthouseContextKind =
 
 export const LIGHTHOUSE_CONTEXT_SOURCE = {
   AUTOMATIC: "automatic",
+  FOCUSED: "focused",
   SELECTION: "selection",
   MANUAL: "manual",
 } as const;

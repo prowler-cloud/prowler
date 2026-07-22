@@ -244,10 +244,51 @@ describe("compileLighthouseContext", () => {
         "finding:finding-1",
       ]);
     });
+
+    it("should retain the highest-priority duplicate", () => {
+      // Given
+      const scopeKey = "findings:/findings";
+      const items = [
+        {
+          kind: "page",
+          id: "findings",
+          source: "automatic",
+          scopeKey,
+          label: "Findings",
+          path: "/findings",
+        },
+        {
+          kind: "finding",
+          id: "finding-1",
+          source: "selection",
+          scopeKey,
+          label: "Selected finding",
+          findingId: "finding-1",
+        },
+        {
+          kind: "finding",
+          id: "finding-1",
+          source: "focused",
+          scopeKey,
+          label: "Focused finding",
+          findingId: "finding-1",
+        },
+      ];
+
+      // When
+      const context = compileLighthouseContext(items, scopeKey);
+
+      // Then
+      expect(context?.items[1]).toMatchObject({
+        id: "finding-1",
+        source: "focused",
+        label: "Focused finding",
+      });
+    });
   });
 
   describe("when contributors arrive in render order", () => {
-    it("should order page, selection, and summary items deterministically", () => {
+    it("should order page, focused, selection, and summary items deterministically", () => {
       // Given
       const scopeKey = "findings:/findings";
       const items = [
@@ -269,6 +310,14 @@ describe("compileLighthouseContext", () => {
           findingId: "finding-1",
         },
         {
+          kind: "finding",
+          id: "finding-focused",
+          source: "focused",
+          scopeKey,
+          label: "Focused finding",
+          findingId: "finding-focused",
+        },
+        {
           kind: "page",
           id: "findings",
           source: "automatic",
@@ -284,6 +333,7 @@ describe("compileLighthouseContext", () => {
       // Then
       expect(context?.items.map((item) => item.id)).toEqual([
         "findings",
+        "finding-focused",
         "finding-1",
         "findings-summary",
       ]);
@@ -291,7 +341,7 @@ describe("compileLighthouseContext", () => {
   });
 
   describe("when serialized context exceeds 2 KiB", () => {
-    it("should remove automatic summaries before dropping the selection", () => {
+    it("should drop lowest-priority items until the context fits", () => {
       // Given
       const scopeKey = "findings:/findings";
       const page = {
@@ -332,6 +382,7 @@ describe("compileLighthouseContext", () => {
       expect(context?.items.map((item) => item.id)).toEqual([
         "findings",
         "finding-1",
+        "summary-0",
       ]);
     });
 
@@ -366,6 +417,64 @@ describe("compileLighthouseContext", () => {
 
       // Then
       expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+    });
+  });
+
+  describe("when context exceeds the eight-item limit", () => {
+    it("should progressively drop only the lowest-priority items", () => {
+      // Given
+      const scopeKey = "findings:/findings";
+      const page = {
+        kind: "page",
+        id: "findings",
+        source: "automatic",
+        scopeKey,
+        label: "Findings",
+        path: "/findings",
+      };
+      const focused = {
+        kind: "finding",
+        id: "focused",
+        source: "focused",
+        scopeKey,
+        label: "Focused finding",
+        findingId: "focused",
+      };
+      const selections = Array.from({ length: 2 }, (_, index) => ({
+        kind: "finding",
+        id: `selection-${index}`,
+        source: "selection",
+        scopeKey,
+        label: `Selected finding ${index}`,
+        findingId: `selection-${index}`,
+      }));
+      const summaries = Array.from({ length: 6 }, (_, index) => ({
+        kind: "finding",
+        id: `summary-${index}`,
+        source: "automatic",
+        scopeKey,
+        label: `Summary ${index}`,
+        findingId: `summary-${index}`,
+        total: index,
+      }));
+
+      // When
+      const context = compileLighthouseContext(
+        [page, ...summaries, ...selections, focused],
+        scopeKey,
+      );
+
+      // Then
+      expect(context?.items.map((item) => item.id)).toEqual([
+        "findings",
+        "focused",
+        "selection-0",
+        "selection-1",
+        "summary-0",
+        "summary-1",
+        "summary-2",
+        "summary-3",
+      ]);
     });
   });
 
