@@ -108,7 +108,10 @@ class Test_ec2_instance_stopped_older_than_specific_days:
         )
         aws_provider._audit_config = {"max_ec2_instance_stopped_days": 30}
 
-        recent_stop = datetime.now(timezone.utc) - timedelta(days=5)
+        # Boundary: stopped exactly 30 days ago must remain PASS
+        # (threshold is exclusive: time_stopped > timedelta(days=30)).
+        fixed_now = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
+        recent_stop = fixed_now - timedelta(days=30)
         stop_reason = recent_stop.strftime("User initiated (%Y-%m-%d %H:%M:%S GMT)")
 
         with (
@@ -120,10 +123,16 @@ class Test_ec2_instance_stopped_older_than_specific_days:
                 "prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days.ec2_client",
                 new=EC2(aws_provider),
             ) as service_client,
+            mock.patch(
+                "prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days.datetime"
+            ) as mock_datetime,
         ):
             from prowler.providers.aws.services.ec2.ec2_instance_stopped_older_than_specific_days.ec2_instance_stopped_older_than_specific_days import (
                 ec2_instance_stopped_older_than_specific_days,
             )
+
+            mock_datetime.now.return_value = fixed_now
+            mock_datetime.strptime = datetime.strptime
 
             service_client.instances[0].state = "stopped"
             service_client.instances[0].state_transition_reason = stop_reason
