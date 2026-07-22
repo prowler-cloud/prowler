@@ -17,6 +17,22 @@ from prowler.providers.huaweicloud.exceptions.exceptions import (
 )
 
 
+def _iam_endpoint_for_region(region: str):
+    """Return the IAM endpoint for a region, or None if unknown.
+
+    Huawei Cloud runs separate clouds per TLD (International .com, Europe .eu,
+    China). The region-specific IAM endpoint (e.g. iam.eu-west-101.myhuawei
+    cloud.eu) is the only one that recognizes that cloud's accounts, so it must
+    be used for credential validation and per-region project resolution.
+    """
+    try:
+        from huaweicloudsdkiam.v3.region.iam_region import IamRegion
+
+        return IamRegion.value_of(region).endpoints[0]
+    except Exception:
+        return None
+
+
 class HuaweiCloudCallerIdentity(BaseModel):
     """
     HuaweiCloudCallerIdentity stores the caller identity information from IAM.
@@ -342,6 +358,13 @@ class HuaweiCloudSession:
         creds = self._credentials
 
         basic_creds = BasicCredentials(ak=creds.ak, sk=creds.sk)
+
+        # Point the SDK's per-region project auto-resolution at the region's
+        # own IAM endpoint. It otherwise defaults to the .com (International)
+        # global endpoint, which rejects Huawei Cloud Europe (.eu) accounts.
+        iam_endpoint = _iam_endpoint_for_region(self._region)
+        if iam_endpoint:
+            basic_creds.iam_endpoint = iam_endpoint
 
         # security_token is a settable property (for temporary credentials)
         if creds.security_token:

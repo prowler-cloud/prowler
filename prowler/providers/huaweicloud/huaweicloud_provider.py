@@ -31,6 +31,7 @@ from prowler.providers.huaweicloud.models import (
     HuaweiCloudCredentials,
     HuaweiCloudIdentityInfo,
     HuaweiCloudSession,
+    _iam_endpoint_for_region,
 )
 
 
@@ -375,6 +376,9 @@ class HuaweicloudProvider(Provider):
                 ak=credentials.ak,
                 sk=credentials.sk,
             )
+            iam_endpoint = _iam_endpoint_for_region(region)
+            if iam_endpoint:
+                basic_creds.iam_endpoint = iam_endpoint
             if credentials.domain_id:
                 basic_creds.domain_id = credentials.domain_id
 
@@ -462,6 +466,12 @@ class HuaweicloudProvider(Provider):
             creds = session.get_credentials()
 
             basic_creds = BasicCredentials(ak=creds.ak, sk=creds.sk)
+            # Resolve projects against the region's own IAM endpoint so Huawei
+            # Cloud Europe (.eu) accounts are not rejected by the default .com
+            # global endpoint.
+            iam_endpoint = _iam_endpoint_for_region(region)
+            if iam_endpoint:
+                basic_creds.iam_endpoint = iam_endpoint
             if creds.security_token:
                 basic_creds.security_token = creds.security_token
             if creds.domain_id:
