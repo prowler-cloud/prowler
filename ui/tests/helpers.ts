@@ -129,56 +129,50 @@ export async function addAWSProvider(
 }
 
 /**
- * Waits for the providers page to settle and reports whether the data table is
- * present. With zero providers the page renders a full-page empty state
- * ("No Providers Configured") instead of the table, so callers must not assume
- * the table is always there.
+ * Finds a provider after the filtered providers page reaches a loaded state.
+ * The loading skeleton also renders a table, so table visibility alone cannot
+ * prove that provider data is ready.
  */
-async function providersTableVisibleOrEmptyState(
+async function findProviderRow(
   page: ProvidersPage,
-): Promise<boolean> {
+  providerUID: string,
+): Promise<Locator | null> {
+  await page.page.goto(
+    `/providers?filter%5Bsearch%5D=${encodeURIComponent(providerUID)}`,
+  );
+
+  const providerRow = page.providersTable
+    .locator("tbody tr")
+    .filter({ hasText: providerUID })
+    .first();
+  const noResults = page.providersTable.getByRole("cell", {
+    name: "No results.",
+    exact: true,
+  });
   const emptyState = page.page.getByRole("region", {
     name: /no providers configured/i,
   });
-  await expect(page.providersTable.or(emptyState)).toBeVisible({
+
+  await expect(providerRow.or(noResults).or(emptyState)).toBeVisible({
     timeout: 10000,
   });
-  return page.providersTable.isVisible().catch(() => false);
+
+  if (await providerRow.isVisible().catch(() => false)) {
+    return providerRow;
+  }
+
+  return null;
 }
 
 export async function deleteProviderIfExists(
   page: ProvidersPage,
   providerUID: string,
 ): Promise<void> {
-  // Delete the provider if it exists
-
-  // Navigate to providers page
-  await page.goto();
-  // With zero providers the page shows the empty state, not the table, so there
-  // is nothing to delete.
-  if (!(await providersTableVisibleOrEmptyState(page))) {
-    return;
-  }
-
-  const allRows = page.providersTable.locator("tbody tr");
-
-  const findProviderRow = async (): Promise<Locator | null> => {
-    const providerRow = allRows.filter({ hasText: providerUID }).first();
-    if ((await providerRow.count()) > 0) {
-      return providerRow;
-    }
-
-    return null;
-  };
-
   // Find the provider row
-  const targetRow = await findProviderRow();
+  const targetRow = await findProviderRow(page, providerUID);
 
   if (!targetRow) {
     // Provider not found, nothing to delete
-    // Navigate back to providers page to ensure clean state
-    await page.goto();
-    await providersTableVisibleOrEmptyState(page);
     return;
   }
 
@@ -219,8 +213,17 @@ export async function deleteProviderIfExists(
   // Wait for modal to close (this indicates deletion was initiated)
   await expect(modal).not.toBeVisible({ timeout: 10000 });
 
-  // Navigate back to providers page to ensure clean state. Deleting the last
-  // provider reveals the empty state instead of an empty table.
-  await page.goto();
-  await providersTableVisibleOrEmptyState(page);
+  // The success notification is shown only after the delete request completes.
+  await expect(
+    page.page.getByText("The provider was removed successfully.", {
+      exact: true,
+    }),
+  ).toBeVisible({ timeout: 10000 });
+
+  // Reload a server-filtered view and prove the provider no longer exists.
+  const deletedProviderRow = await findProviderRow(page, providerUID);
+  expect(
+    deletedProviderRow,
+    `Provider ${providerUID} still exists after deletion`,
+  ).toBeNull();
 }
