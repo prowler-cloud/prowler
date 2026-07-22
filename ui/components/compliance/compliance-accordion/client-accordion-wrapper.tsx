@@ -2,8 +2,7 @@
 
 import { useRef, useState } from "react";
 
-import { Button } from "@/components/shadcn";
-import { Accordion, AccordionItemProps } from "@/components/shadcn";
+import { Button, Accordion, AccordionItemProps } from "@/components/shadcn";
 import { Card } from "@/components/shadcn/card/card";
 
 export const ClientAccordionWrapper = ({

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CheckProviderTypesMap, Requirement } from "@/types/compliance";
 
 import type { CrossProviderRequirementExtras } from "../_types";
+
 import { CrossProviderRequirementContent } from "./cross-provider-requirement-content";
 
 const { clientAccordionContentMock } = vi.hoisted(() => ({

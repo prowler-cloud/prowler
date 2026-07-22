@@ -34,6 +34,7 @@ import {
   resolveHiddenFindingIds,
 } from "../../_lib";
 import { isFindingNode, layoutWithDagre } from "../../_lib/layout";
+
 import { FindingNode } from "./nodes/finding-node";
 import { InternetNode } from "./nodes/internet-node";
 import { ResourceNode } from "./nodes/resource-node";

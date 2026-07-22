@@ -1,0 +1,1 @@
+`sagemaker_notebook_instance_no_secrets` check for AWS provider, scanning SageMaker notebook instance lifecycle configuration scripts (`OnCreate` and `OnStart`) for hardcoded secrets such as API keys, passwords, tokens, and connection strings
