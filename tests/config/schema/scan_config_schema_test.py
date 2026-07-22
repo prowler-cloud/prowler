@@ -411,7 +411,8 @@ class Test_Aggregated_Schema_Is_App_Facing:
 
     def test_schema_contains_only_app_providers(self):
         app_providers = set(Provider.get_app_providers())
-        assert set(SCAN_CONFIG_SCHEMA["properties"]).issubset(app_providers)
+        registered_app_providers = app_providers & set(SCHEMAS)
+        assert set(SCAN_CONFIG_SCHEMA["properties"]) == registered_app_providers
 
     def test_app_provider_with_registered_schema_is_present(self):
         assert "aws" in SCAN_CONFIG_SCHEMA["properties"]

@@ -15,6 +15,7 @@ from prowler.config.scan_config_schema import SCAN_CONFIG_SCHEMA
 from prowler.config.schema.aws import AWSProviderConfig
 from prowler.config.schema.registry import SCHEMAS
 from prowler.config.schema.validator import validate_provider_config
+from prowler.providers.common.provider import Provider
 
 EXCLUSION_FIELDS = ("excluded_checks", "excluded_services")
 
@@ -23,7 +24,9 @@ class Test_JSON_Schema_Exposes_Exclusion_Fields:
     # The aggregated schema is app-facing and only carries app providers
     # (``sdk_only = False``); iterate exactly what it exposes so SDK/CLI-only
     # providers (still in ``SCHEMAS`` for CLI validation) are not asserted here.
-    @pytest.mark.parametrize("provider", sorted(SCAN_CONFIG_SCHEMA["properties"]))
+    @pytest.mark.parametrize(
+        "provider", sorted(set(Provider.get_app_providers()) & set(SCHEMAS))
+    )
     @pytest.mark.parametrize("field", EXCLUSION_FIELDS)
     def test_field_shape(self, provider, field):
         field_schema = SCAN_CONFIG_SCHEMA["properties"][provider]["properties"][field]
