@@ -26,6 +26,7 @@ const CLOUD_UPGRADE_UTM_CONTENT = {
   [CLOUD_UPGRADE_FEATURE.CROSS_PROVIDER_COMPLIANCE]:
     "cross-provider-compliance",
   [CLOUD_UPGRADE_FEATURE.FINDING_TRIAGE]: "findings",
+  [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: "jira-dispatch",
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: "lighthouse-ai",
   [CLOUD_UPGRADE_FEATURE.GENERAL]: "general",
   [CLOUD_UPGRADE_FEATURE.SCAN_CONFIGURATION]: "scan-configuration",
@@ -97,6 +98,17 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Keep triage history with future scans",
     ],
     primaryCta: "Triage Findings in Prowler Cloud",
+  },
+  [CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH]: {
+    title: "Send Findings to Jira at Scale",
+    description:
+      "Create Jira issues from selected findings and finding groups without handling each item separately.",
+    benefits: [
+      "Send selected findings or finding groups in one action",
+      "Choose between grouped and individual Jira issues",
+      "Track dispatch progress and retry failed findings",
+    ],
+    primaryCta: "Send Findings to Jira in Prowler Cloud",
   },
   [CLOUD_UPGRADE_FEATURE.LIGHTHOUSE_AI]: {
     title: "Use The Agent Cloud Defender",

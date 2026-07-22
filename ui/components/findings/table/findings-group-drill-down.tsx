@@ -7,11 +7,13 @@ import {
 } from "@tanstack/react-table";
 import { ChevronLeft } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { useState } from "react";
 
 import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
+import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import {
   Table,
@@ -25,12 +27,15 @@ import {
 } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { cn, hasHistoricalFindingFilter } from "@/lib";
+import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import {
   getFilteredFindingGroupDelta,
   getFindingGroupImpactedCounts,
   isFindingGroupMuted,
 } from "@/lib/findings-groups";
+import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
 import { FindingGroupRow } from "@/types";
+import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { FloatingMuteButton } from "../floating-mute-button";
 
@@ -51,6 +56,8 @@ export function FindingsGroupDrillDown({
   onCollapse,
 }: FindingsGroupDrillDownProps) {
   const searchParams = useSearchParams();
+  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
+  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
   // Keep drill-down endpoint selection aligned with the grouped findings page.
   const currentParams = Object.fromEntries(searchParams.entries());
@@ -113,6 +120,12 @@ export function FindingsGroupDrillDown({
   const impactedCounts = getFindingGroupImpactedCounts(group);
 
   const rows = table.getRowModel().rows;
+  const canSendSelectedFindingsToJira =
+    selectedFindingIds.length === 1 || groupedJiraDispatchEnabled;
+  const jiraSelection = createJiraTargetSelection(
+    selectedFindingIds,
+    JIRA_DISPATCH_TARGET.FINDING_ID,
+  );
 
   return (
     <FindingsSelectionContext.Provider
@@ -127,7 +140,7 @@ export function FindingsGroupDrillDown({
     >
       <div
         className={cn(
-          "minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-secondary rounded-[14px] shadow-sm",
+          "minimal-scrollbar rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary",
           "flex w-full flex-col overflow-auto border",
         )}
       >
@@ -235,11 +248,37 @@ export function FindingsGroupDrillDown({
         <FloatingMuteButton
           selectedCount={selectedFindingIds.length}
           selectedFindingIds={selectedFindingIds}
+          muteLabel={`Mute ${selectedFindingIds.length} ${
+            selectedFindingIds.length === 1 ? "Finding" : "Findings"
+          }`}
           onBeforeOpen={async () => {
             return resolveSelectedFindingIds(selectedFindingIds);
           }}
           onComplete={handleMuteComplete}
-          isBulkOperation
+          isBulkOperation={selectedFindingIds.length > 1}
+          showSendToJira
+          canSendToJira={canSendSelectedFindingsToJira}
+          sendToJiraLabel={`Send ${selectedFindingIds.length} ${
+            selectedFindingIds.length === 1 ? "Finding" : "Findings"
+          } to Jira`}
+          onSendToJira={() => setIsJiraModalOpen(true)}
+        />
+      )}
+
+      {jiraSelection && (
+        <SendToJiraModal
+          isOpen={isJiraModalOpen}
+          onOpenChange={setIsJiraModalOpen}
+          selection={jiraSelection}
+          findingTitle={group.checkTitle}
+          defaultDispatchMode={
+            selectedFindingIds.length > 1
+              ? JIRA_DISPATCH_MODE.GROUPED
+              : JIRA_DISPATCH_MODE.INDIVIDUAL
+          }
+          canChooseGroupedDispatch={
+            selectedFindingIds.length > 1 && groupedJiraDispatchEnabled
+          }
         />
       )}
 

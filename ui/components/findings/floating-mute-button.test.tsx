@@ -1,6 +1,9 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useCloudUpgradeStore } from "@/store/cloud-upgrade/store";
+import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 // ---------------------------------------------------------------------------
 // Hoist mocks to avoid deep dependency chains
@@ -42,6 +45,7 @@ function deferredPromise<T>() {
 describe("FloatingMuteButton — onBeforeOpen error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    useCloudUpgradeStore.getState().closeCloudUpgrade();
   });
 
   it("should reset isResolving (re-enable button) when onBeforeOpen rejects", async () => {
@@ -198,5 +202,110 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
         findingIds: ["id-1", "id-2"],
       });
     });
+  });
+
+  it("should route Send to Jira through the action chooser without opening mute", async () => {
+    // Given
+    const onSendToJira = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={1}
+        selectedFindingIds={["finding-1"]}
+        canSendToJira
+        onSendToJira={onSendToJira}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "1 selected" }));
+    await user.click(screen.getByRole("menuitem", { name: "Send to Jira" }));
+
+    // Then
+    expect(onSendToJira).toHaveBeenCalledTimes(1);
+    const modalCalls = MuteFindingsModalMock.mock.calls as unknown as Array<
+      [{ isOpen?: boolean }]
+    >;
+    expect(modalCalls.some(([props]) => props.isOpen === true)).toBe(false);
+  });
+
+  it("should render custom mixed-selection action labels", async () => {
+    // Given
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={2}
+        selectedFindingIds={["group-1", "finding-1"]}
+        label="1 Group and 1 Finding selected"
+        muteLabel="Mute 1 Group and 1 Finding"
+        sendToJiraLabel="Send 1 Group and 1 Finding to Jira"
+        showSendToJira
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "1 Group and 1 Finding selected",
+      }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("menuitem", {
+        name: "Mute 1 Group and 1 Finding",
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("menuitem", {
+        name: "Send 1 Group and 1 Finding to Jira",
+      }),
+    ).toHaveTextContent("Send 1 Group and 1 Finding to Jira");
+  });
+
+  it("should show the Cloud Jira tooltip and open the upgrade modal", async () => {
+    // Given
+    const onSendToJira = vi.fn();
+    const user = userEvent.setup();
+
+    render(
+      <FloatingMuteButton
+        selectedCount={1}
+        selectedFindingIds={["finding-1"]}
+        showSendToJira
+        canSendToJira={false}
+        onSendToJira={onSendToJira}
+      />,
+    );
+
+    // When
+    await user.click(screen.getByRole("button", { name: "1 selected" }));
+    const jiraAction = screen.getByRole("menuitem", { name: "Send to Jira" });
+
+    // Then
+    expect(jiraAction).toBeVisible();
+    expect(jiraAction).not.toHaveAttribute("aria-disabled");
+    expect(
+      within(jiraAction).queryByText("Available only in Prowler Cloud"),
+    ).not.toBeInTheDocument();
+
+    // When
+    await user.hover(jiraAction);
+
+    // Then
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Available only in Prowler Cloud",
+    );
+
+    // When
+    await user.click(jiraAction);
+
+    // Then
+    expect(useCloudUpgradeStore.getState().activeFeature).toBe(
+      CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH,
+    );
+    expect(onSendToJira).not.toHaveBeenCalled();
   });
 });

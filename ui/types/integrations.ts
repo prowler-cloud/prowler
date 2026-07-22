@@ -4,6 +4,63 @@ import type { TaskState } from "@/types/tasks";
 
 export type IntegrationType = "amazon_s3" | "aws_security_hub" | "jira";
 
+export const JIRA_DISPATCH_MODE = {
+  INDIVIDUAL: "individual",
+  GROUPED: "grouped",
+} as const;
+
+export type JiraDispatchMode =
+  (typeof JIRA_DISPATCH_MODE)[keyof typeof JIRA_DISPATCH_MODE];
+
+export const JIRA_DISPATCH_TARGET = {
+  CHECK_ID: "check_id",
+  FINDING_ID: "finding_id",
+} as const;
+
+export type JiraDispatchTarget =
+  (typeof JIRA_DISPATCH_TARGET)[keyof typeof JIRA_DISPATCH_TARGET];
+
+export const JIRA_TARGET_SELECTION_KIND = {
+  SINGLE: "single",
+  TARGET_LIST: "target-list",
+  BATCHES: "batches",
+} as const;
+
+export type JiraTargetSelectionKind =
+  (typeof JIRA_TARGET_SELECTION_KIND)[keyof typeof JIRA_TARGET_SELECTION_KIND];
+
+export type NonEmptyStringArray = [string, ...string[]];
+
+export interface JiraDispatchTargetBatch {
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+  dispatchMode?: JiraDispatchMode;
+}
+
+export interface JiraSingleTargetSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.SINGLE;
+  targetId: string;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraTargetListSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.TARGET_LIST;
+  targetIds: NonEmptyStringArray;
+  targetType: JiraDispatchTarget;
+}
+
+export interface JiraBatchSelection {
+  kind: typeof JIRA_TARGET_SELECTION_KIND.BATCHES;
+  batches: [JiraDispatchTargetBatch, ...JiraDispatchTargetBatch[]];
+}
+
+export type JiraSelection =
+  | JiraSingleTargetSelection
+  | JiraTargetListSelection
+  | JiraBatchSelection;
+
+export const JIRA_DISPATCH_TASK_KIND = "jira-dispatch";
+
 export interface IntegrationProps {
   type: "integrations";
   id: string;
@@ -45,6 +102,7 @@ export interface JiraDispatchRequest {
     attributes: {
       project_key: string;
       issue_type: string;
+      dispatch_mode?: JiraDispatchMode;
     };
   };
 }
@@ -58,19 +116,28 @@ export interface JiraDispatchResponse {
       completed_at: string | null;
       name: string;
       state: TaskState;
-      result: {
-        success?: boolean;
-        error?: string;
-        message?: string;
-        issue_url?: string;
-        issue_key?: string;
-        created_count?: number;
-        failed_count?: number;
-      } | null;
+      result: JiraDispatchTaskResult | null;
       task_args: Record<string, unknown> | null;
       metadata: Record<string, unknown> | null;
     };
   };
+}
+
+export interface JiraDispatchTaskResult {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  successful_count?: number;
+  created_count?: number;
+  updated_count?: number;
+  failed_count?: number;
+  created_issues?: unknown[];
+  updated_issues?: unknown[];
+  failed_groups?: unknown[];
+  failed_batches?: unknown[];
+  failed_finding_ids?: string[];
+  issue_url?: string;
+  issue_key?: string;
 }
 
 // Shared AWS credential fields schema

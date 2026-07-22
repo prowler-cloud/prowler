@@ -3,6 +3,8 @@ import { FILTER_FIELD, FilterParam } from "@/types/filters";
 /** Findings-only filter fields not shared with other views. */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const FINDINGS_EXTRA_FIELD = {
+  CHECK_ID: "check_id",
+  CHECK_ID_IN: "check_id__in",
   DELTA_IN: "delta__in",
   SCAN_EXACT: "scan",
   SCAN_ID: "scan_id",
