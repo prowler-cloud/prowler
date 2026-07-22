@@ -486,7 +486,7 @@ export function OrgSetupForm({
                 </Button>
               )}
               {!isOrgUnitIdValid && (
-                <p className="text-text-neutral-tertiary text-xs leading-5">
+                <p className="text-text-error-primary text-xs leading-5">
                   Enter a valid Organizational Unit or Root ID above to enable
                   deployment.
                 </p>
