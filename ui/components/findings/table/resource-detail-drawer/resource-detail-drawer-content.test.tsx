@@ -665,7 +665,9 @@ describe("ResourceDetailDrawerContent — triage drawer actions", () => {
       within(row as HTMLElement).getByRole("button", { name: "Mute" }),
     ).toBeInTheDocument();
     expect(
-      within(row as HTMLElement).getByRole("button", { name: "Send to Jira" }),
+      within(row as HTMLElement).getByRole("button", {
+        name: "Send 1 Finding to Jira",
+      }),
     ).toBeInTheDocument();
   });
 
@@ -702,7 +704,7 @@ describe("ResourceDetailDrawerContent — triage drawer actions", () => {
     const row = screen.getByText("EC2 Check").closest("tr");
     expect(row).not.toBeNull();
     const actionsCell = within(row as HTMLElement)
-      .getByRole("button", { name: "Send to Jira" })
+      .getByRole("button", { name: "Send 1 Finding to Jira" })
       .closest("td");
 
     // Then
