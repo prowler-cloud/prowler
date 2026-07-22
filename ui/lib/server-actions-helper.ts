@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 import { revalidatePath } from "next/cache";
+import { unstable_rethrow } from "next/navigation";
 
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 import {
@@ -147,6 +148,7 @@ export const handleApiResponse = async (
  * Includes Sentry error tracking
  */
 export const handleApiError = (error: unknown): { error: string } => {
+  unstable_rethrow(error);
   console.error(error);
 
   // Check if this error was already captured by handleApiResponse

@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import { apiBaseUrl, getErrorMessage } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import { ManageGroupPayload, ProviderGroupsResponse } from "@/types/components";
 
@@ -65,9 +66,9 @@ export const getAllProviderGroups = async (): Promise<
   const allGroups: ProviderGroupsResponse["data"] = [];
   let lastResponse: ProviderGroupsResponse | undefined;
   let hasMorePages = true;
+  const headers = await getAuthHeaders({ contentType: false });
 
   try {
-    const headers = await getAuthHeaders({ contentType: false });
     while (hasMorePages && currentPage <= maxPages) {
       const url = new URL(`${apiBaseUrl}/provider-groups`);
       url.searchParams.append("page[number]", currentPage.toString());

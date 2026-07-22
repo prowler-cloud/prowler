@@ -8,6 +8,14 @@ import {
 
 import { handleApiError, handleApiResponse } from "./server-actions-helper";
 
+const { unstableRethrowMock } = vi.hoisted(() => ({
+  unstableRethrowMock: vi.fn((error: unknown) => {
+    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
+      throw error;
+    }
+  }),
+}));
+
 vi.mock("@sentry/nextjs", () => ({
   captureException: vi.fn(),
   captureMessage: vi.fn(),
@@ -15,6 +23,10 @@ vi.mock("@sentry/nextjs", () => ({
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
+}));
+
+vi.mock("next/navigation", () => ({
+  unstable_rethrow: unstableRethrowMock,
 }));
 
 vi.mock("@/lib/helper", () => ({
@@ -178,6 +190,14 @@ describe("server-actions-helper", () => {
   });
 
   describe("handleApiError", () => {
+    it("should rethrow authentication redirect control flow", () => {
+      // Given
+      const redirectError = new Error("NEXT_REDIRECT");
+
+      // When / Then
+      expect(() => handleApiError(redirectError)).toThrow(redirectError);
+    });
+
     it("should not recapture errors that were already reported", () => {
       // Given
       const error = new Error("Already reported failure");
@@ -252,5 +272,43 @@ describe("server-actions-helper", () => {
         error: "Runtime worker 401 crashed unexpectedly",
       });
     });
+  });
+
+  it("returns authentication failures as ordinary API error data", async () => {
+    // Given
+    const response = new Response(
+      JSON.stringify({ errors: [{ detail: "Token is invalid or expired" }] }),
+      {
+        status: 401,
+        headers: { "content-type": "application/vnd.api+json" },
+      },
+    );
+
+    // When
+    const result = await handleApiResponse(response);
+
+    // Then
+    expect(result).toEqual({
+      error: "Token is invalid or expired",
+      errors: [{ detail: "Token is invalid or expired" }],
+      status: 401,
+    });
+  });
+
+  it("returns authorization failures without redirecting the session", async () => {
+    // Given
+    const response = new Response(
+      JSON.stringify({ errors: [{ detail: "Permission denied" }] }),
+      {
+        status: 403,
+        headers: { "content-type": "application/vnd.api+json" },
+      },
+    );
+
+    // When
+    const result = await handleApiResponse(response);
+
+    // Then
+    expect(result).toMatchObject({ error: "Permission denied", status: 403 });
   });
 });

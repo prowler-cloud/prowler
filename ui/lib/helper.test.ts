@@ -15,10 +15,6 @@ vi.mock("@/actions/task", () => ({
   getTask: vi.fn(),
 }));
 
-vi.mock("@/auth.config", () => ({
-  auth: vi.fn(),
-}));
-
 const createToast = () => vi.fn();
 
 const getAnchor = () => {

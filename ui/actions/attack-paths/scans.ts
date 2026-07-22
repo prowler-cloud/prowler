@@ -2,7 +2,8 @@
 
 import { z } from "zod";
 
-import { apiBaseUrl, getAuthHeaders } from "@/lib";
+import { apiBaseUrl } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { AttackPathScan, AttackPathScansResponse } from "@/types/attack-paths";
 

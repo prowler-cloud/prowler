@@ -20,6 +20,9 @@ vi.mock("@/actions/mute-rules", () => ({
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.test/api/v1",
+}));
+
+vi.mock("@/lib/auth-headers", () => ({
   getAuthHeaders: getAuthHeadersMock,
 }));
 

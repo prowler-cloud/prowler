@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getFormValue, wait } from "@/lib";
+import { apiBaseUrl, getFormValue, wait } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { buildSecretConfig } from "@/lib/provider-credentials/build-credentials";
 import { ProviderCredentialFields } from "@/lib/provider-credentials/provider-credential-fields";
 import { appendSanitizedProviderInFilters } from "@/lib/provider-filters";

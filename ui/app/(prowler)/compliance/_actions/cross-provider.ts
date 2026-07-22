@@ -6,10 +6,10 @@ import type { ScanBinaryResult } from "@/actions/scans/scans";
 import {
   apiBaseUrl,
   GENERIC_SERVER_ERROR_MESSAGE,
-  getAuthHeaders,
   getErrorMessage,
 } from "@/lib";
 import { hasActionError } from "@/lib/action-errors";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { SentryErrorSource, SentryErrorType } from "@/sentry";
 

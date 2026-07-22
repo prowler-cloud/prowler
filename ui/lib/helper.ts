@@ -5,7 +5,6 @@ import {
   type ScanBinaryResult,
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
-import { auth } from "@/auth.config";
 import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
@@ -52,26 +51,6 @@ export function filterEmptyValues(
     }),
   );
 }
-
-/**
- * Returns the authentication headers for API requests
- * @param options - Optional configuration options
- * @returns Authentication headers with Accept and Authorization
- */
-export const getAuthHeaders = async (options?: { contentType?: boolean }) => {
-  const session = await auth();
-
-  const headers: Record<string, string> = {
-    Accept: "application/vnd.api+json",
-    Authorization: `Bearer ${session?.accessToken}`,
-  };
-
-  if (options?.contentType) {
-    headers["Content-Type"] = "application/vnd.api+json";
-  }
-
-  return headers;
-};
 
 export const getAuthUrl = (provider: AuthSocialProvider) => {
   const config = {

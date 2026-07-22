@@ -8,9 +8,9 @@ import {
   apiBaseUrl,
   FINDINGS_FILTERED_SORT,
   GENERIC_SERVER_ERROR_MESSAGE,
-  getAuthHeaders,
   sanitizeErrorMessage,
 } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
 import { OrganizationResource } from "@/types/organizations";

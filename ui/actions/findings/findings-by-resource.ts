@@ -4,11 +4,8 @@ import {
   getFindingGroupResources,
   getLatestFindingGroupResources,
 } from "@/actions/finding-groups";
-import {
-  apiBaseUrl,
-  getAuthHeaders,
-  RESOURCE_DRAWER_OTHER_FINDINGS_SORT,
-} from "@/lib";
+import { apiBaseUrl, RESOURCE_DRAWER_OTHER_FINDINGS_SORT } from "@/lib";
+import { getAuthHeaders } from "@/lib/auth-headers";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
