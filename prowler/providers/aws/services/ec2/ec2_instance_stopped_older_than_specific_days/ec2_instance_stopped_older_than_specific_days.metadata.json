@@ -8,7 +8,7 @@
   "ServiceName": "ec2",
   "SubServiceName": "",
   "ResourceIdTemplate": "",
-  "Severity": "medium",
+  "Severity": "low",
   "ResourceType": "AwsEc2Instance",
   "ResourceGroup": "compute",
   "Description": "EC2 instances in `stopped` state are evaluated for age. Instances stopped beyond the configurable limit (`max_ec2_stopped_instance_age_in_days`, default `30`) are flagged.",
