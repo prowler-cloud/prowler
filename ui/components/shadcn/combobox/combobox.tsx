@@ -24,13 +24,18 @@ const comboboxTriggerVariants = cva("", {
   variants: {
     variant: {
       default:
-        "w-full justify-between rounded-xl border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary",
+        "w-full justify-between rounded-lg border border-border-neutral-secondary bg-bg-neutral-secondary hover:bg-bg-neutral-tertiary",
       ghost:
-        "border-none bg-transparent shadow-none hover:bg-accent hover:text-foreground",
+        "border-none bg-transparent shadow-none hover:bg-accent hover:text-text-neutral-primary",
+    },
+    size: {
+      default: "",
+      sm: "",
     },
   },
   defaultVariants: {
     variant: "default",
+    size: "default",
   },
 });
 
@@ -38,7 +43,7 @@ const comboboxContentVariants = cva("p-0", {
   variants: {
     variant: {
       default:
-        "w-[calc(100vw-2rem)] max-w-md rounded-xl border border-border-neutral-secondary bg-bg-neutral-secondary shadow-md sm:w-full",
+        "w-[calc(100vw-2rem)] max-w-md rounded-lg border border-border-neutral-secondary bg-bg-neutral-secondary shadow-md sm:w-full",
       ghost:
         "w-[calc(100vw-2rem)] max-w-md rounded-lg border border-slate-400 bg-white sm:w-full dark:border-[#262626] dark:bg-[#171717]",
     },
@@ -74,6 +79,7 @@ export interface ComboboxProps
   showSelectedFirst?: boolean;
   loading?: boolean;
   loadingMessage?: string;
+  "aria-label"?: string;
 }
 
 export function Combobox({
@@ -88,10 +94,12 @@ export function Combobox({
   triggerClassName,
   contentClassName,
   variant = "default",
+  size = "default",
   disabled = false,
   showSelectedFirst = true,
   loading = false,
   loadingMessage = "Loading...",
+  "aria-label": ariaLabel,
 }: ComboboxProps) {
   const [open, setOpen] = useState(false);
 
@@ -111,11 +119,13 @@ export function Combobox({
       <PopoverTrigger asChild>
         <Button
           variant="outline"
+          size={size}
           role="combobox"
+          aria-label={ariaLabel}
           aria-expanded={open}
           disabled={disabled}
           className={cn(
-            comboboxTriggerVariants({ variant }),
+            comboboxTriggerVariants({ variant, size }),
             triggerClassName,
             className,
           )}

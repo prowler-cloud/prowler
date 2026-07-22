@@ -16,7 +16,7 @@ Government cloud subscriptions (Azure Government) are not currently supported, b
 </Note>
 ### Prerequisites
 
-Before setting up Azure in Prowler App, you need to create a Service Principal with proper permissions.
+Before setting up Azure in Prowler Cloud, you need to create a Service Principal with proper permissions.
 
 For detailed instructions on how to create the Service Principal and configure permissions, see [Authentication > Service Principal](/user-guide/providers/azure/authentication#service-principal-application-authentication-recommended).
 
@@ -34,12 +34,12 @@ For detailed instructions on how to create the Service Principal and configure p
 
 ### Step 2: Access Prowler Cloud
 
-1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler App](/user-guide/tutorials/prowler-app)
+1. Navigate to [Prowler Cloud](https://cloud.prowler.com/) or launch [Prowler Local Server](/user-guide/tutorials/prowler-app)
 2. Navigate to `Configuration` > `Providers`
 
     ![Providers Page](/images/prowler-app/cloud-providers-page.png)
 
-3. Click on `Add Provider`
+3. Click `Add Provider`
 
     ![Add a Provider](/images/prowler-app/add-cloud-provider.png)
 
@@ -53,14 +53,14 @@ For detailed instructions on how to create the Service Principal and configure p
 
 ### Step 3: Add Credentials to Prowler Cloud
 
-For Azure, Prowler App uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](/user-guide/providers/azure/authentication). When you finish creating and adding the [Entra](/user-guide/providers/azure/create-prowler-service-principal#assigning-proper-permissions) and [Subscription](/user-guide/providers/azure/subscriptions) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
+For Azure, Prowler Cloud uses a service principal application to authenticate. For more information about the process of creating and adding permissions to a service principal refer to this [section](/user-guide/providers/azure/authentication). When you finish creating and adding the [Entra](/user-guide/providers/azure/create-prowler-service-principal#assigning-proper-permissions) and [Subscription](/user-guide/providers/azure/subscriptions) scope permissions to the service principal, enter the `Tenant ID`, `Client ID` and `Client Secret` of the service principal application.
 
 
 1. Go to your App Registration overview and copy the `Client ID` and `Tenant ID`
 
     ![App Overview](/images/providers/app-overview.png)
 
-2. Go to Prowler App and paste:
+2. Go to Prowler Cloud and paste:
 
     - `Client ID`
     - `Tenant ID`

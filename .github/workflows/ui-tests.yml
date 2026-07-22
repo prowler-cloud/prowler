@@ -31,14 +31,18 @@ jobs:
 
     steps:
       - name: Harden Runner
-        uses: step-security/harden-runner@ab7a9404c0f3da075243ca237b5fac12c98deaa5 # v2.19.3
+        uses: step-security/harden-runner@bf7454d06d71f1098171f2acdf0cd4708d7b5920 # v2.20.0
         with:
           egress-policy: block
           allowed-endpoints: >
             github.com:443
             registry.npmjs.org:443
+            nodejs.org:443
             fonts.googleapis.com:443
             fonts.gstatic.com:443
+            api.iconify.design:443
+            api.simplesvg.com:443
+            api.unisvg.com:443
             api.github.com:443
             release-assets.githubusercontent.com:443
             cdn.playwright.dev:443
@@ -60,6 +64,7 @@ jobs:
             .github/workflows/ui-tests.yml
           files_ignore: |
             ui/CHANGELOG.md
+            ui/changelog.d/**
             ui/README.md
             ui/AGENTS.md
 
@@ -130,6 +135,10 @@ jobs:
       - name: Run healthcheck
         if: steps.check-changes.outputs.any_changed == 'true'
         run: pnpm run healthcheck
+
+      - name: Check product-tour alignment
+        if: steps.check-changes.outputs.any_changed == 'true'
+        run: pnpm run tour:check
 
       - name: Run pnpm audit
         if: steps.check-changes.outputs.any_changed == 'true'

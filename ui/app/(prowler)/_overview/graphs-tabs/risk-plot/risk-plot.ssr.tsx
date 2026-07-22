@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 
+import { OVERVIEW_FILTER_PARAM } from "@/actions/overview/overview-filters";
 import {
   adaptToRiskPlotData,
   getProvidersRiskData,
@@ -8,6 +9,11 @@ import { getAllProviders } from "@/actions/providers";
 import { SearchParamsProps } from "@/types";
 
 import { pickFilterParams } from "../../_lib/filter-params";
+import {
+  filterProvidersByScope,
+  parseFilterIds,
+} from "../../_lib/provider-scope";
+
 import { RiskPlotClient } from "./risk-plot-client";
 
 export async function RiskPlotSSR({
@@ -17,31 +23,19 @@ export async function RiskPlotSSR({
 }) {
   const filters = pickFilterParams(searchParams);
 
-  const providerTypeFilter = filters["filter[provider_type__in]"];
-  const providerIdFilter = filters["filter[provider_id__in]"];
-
   // Fetch all providers
   const providersListResponse = await getAllProviders();
   const allProviders = providersListResponse?.data || [];
 
-  // Filter providers based on search params
-  let filteredProviders = allProviders;
-
-  if (providerIdFilter) {
-    // Filter by specific provider IDs
-    const selectedIds = String(providerIdFilter)
-      .split(",")
-      .map((id) => id.trim());
-    filteredProviders = allProviders.filter((p) => selectedIds.includes(p.id));
-  } else if (providerTypeFilter) {
-    // Filter by provider types
-    const selectedTypes = String(providerTypeFilter)
-      .split(",")
-      .map((t) => t.trim().toLowerCase());
-    filteredProviders = allProviders.filter((p) =>
-      selectedTypes.includes(p.attributes.provider.toLowerCase()),
-    );
-  }
+  // Compose every active provider-scope filter with AND so combining e.g. a
+  // group and a type narrows to providers matching both.
+  const filteredProviders = filterProvidersByScope(allProviders, {
+    providerIds: parseFilterIds(filters[OVERVIEW_FILTER_PARAM.PROVIDER_ID]),
+    providerTypes: parseFilterIds(filters[OVERVIEW_FILTER_PARAM.PROVIDER_TYPE]),
+    providerGroupIds: parseFilterIds(
+      filters[OVERVIEW_FILTER_PARAM.PROVIDER_GROUPS],
+    ),
+  });
 
   // No providers to show
   if (filteredProviders.length === 0) {

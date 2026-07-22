@@ -15,6 +15,7 @@ const roleDetail = {
   type: "roles",
   attributes: {
     name: "Cloud admin",
+    permission_state: "unlimited",
     manage_users: false,
     manage_account: false,
     manage_providers: false,
@@ -33,7 +34,7 @@ describe("RoleItem", () => {
 
   it("shows Manage Alerts in Prowler Cloud role details", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);
@@ -44,12 +45,39 @@ describe("RoleItem", () => {
 
   it("hides Manage Alerts outside Prowler Cloud role details", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<RoleItem role={role} roleDetail={roleDetail} />);
 
     // Then
     expect(screen.queryByText("Manage Alerts")).not.toBeInTheDocument();
+  });
+
+  it("displays the permission state as a badge", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(screen.getByText("unlimited")).toHaveClass("bg-bg-tag");
+  });
+
+  it("does not render the details toggle", () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+
+    // When
+    render(<RoleItem role={role} roleDetail={roleDetail} />);
+
+    // Then
+    expect(
+      screen.queryByRole("button", { name: /hide details/i }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /show details/i }),
+    ).not.toBeInTheDocument();
   });
 });

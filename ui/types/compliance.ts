@@ -1,3 +1,5 @@
+import type { ProviderType } from "./providers";
+
 export const REQUIREMENT_STATUS = {
   PASS: "PASS",
   FAIL: "FAIL",
@@ -41,10 +43,16 @@ export interface Requirement {
   fail: number;
   manual: number;
   check_ids: string[];
+  // True when the FAIL is caused solely by an invalid scan config.
+  invalid_config?: boolean;
   // This is to allow any key to be added to the requirement object
   // because each compliance has different keys
   [key: string]: string | string[] | number | boolean | object[] | undefined;
 }
+
+/** Check id → provider types it belongs to, for provider-labeled check
+ *  lists in the cross-provider view (a check can exist in several). */
+export type CheckProviderTypesMap = Partial<Record<string, ProviderType[]>>;
 
 export interface Control {
   label: string;
@@ -125,7 +133,7 @@ export interface ISO27001AttributesMetadata {
 export interface CISAttributesMetadata {
   Section: string;
   SubSection: string | null;
-  Profile: string; // "Level 1" or "Level 2"
+  Profile: string; // "Level 1"/"Level 2" (M365 prefixes the tier: "E3 Level 1", "E5 Level 2")
   AssessmentStatus: string; // "Manual" or "Automated"
   Description: string;
   RationaleStatement: string;
@@ -279,6 +287,12 @@ const isOneOf = <T extends string>(
 const isStringArray = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every((item) => typeof item === "string");
 
+const isOptionalString = (value: unknown): value is string | undefined =>
+  value === undefined || typeof value === "string";
+
+const isOptionalStringArray = (value: unknown): value is string[] | undefined =>
+  value === undefined || isStringArray(value);
+
 const ASD_METADATA_STRING_FIELDS = [
   "Section",
   "Description",
@@ -327,10 +341,47 @@ export interface ASDEssentialEightRequirement extends Requirement {
   references: ASDEssentialEightAttributesMetadata["References"];
 }
 
+export interface OktaIDaaSStigAttributesMetadata {
+  Section: string;
+  Severity: string;
+  RuleID: string;
+  StigID: string;
+  CCI?: string[];
+  CheckText?: string;
+  FixText?: string;
+}
+
+const OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS = [
+  "Section",
+  "Severity",
+  "RuleID",
+  "StigID",
+] as const satisfies readonly (keyof OktaIDaaSStigAttributesMetadata)[];
+
+export const isOktaIDaaSStigAttributesMetadata = (
+  value: unknown,
+): value is OktaIDaaSStigAttributesMetadata =>
+  isRecord(value) &&
+  OKTA_IDAAS_STIG_REQUIRED_STRING_FIELDS.every(
+    (field) => typeof value[field] === "string",
+  ) &&
+  isOptionalStringArray(value.CCI) &&
+  isOptionalString(value.CheckText) &&
+  isOptionalString(value.FixText);
+
+export interface OktaIDaaSStigRequirement extends Requirement {
+  severity: OktaIDaaSStigAttributesMetadata["Severity"];
+  rule_id: OktaIDaaSStigAttributesMetadata["RuleID"];
+  stig_id: OktaIDaaSStigAttributesMetadata["StigID"];
+  cci: OktaIDaaSStigAttributesMetadata["CCI"];
+  check_text: OktaIDaaSStigAttributesMetadata["CheckText"];
+  fix_text: OktaIDaaSStigAttributesMetadata["FixText"];
+}
+
 // DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554).
 // Universal framework — flat attributes dict with Pillar/Article/ArticleTitle.
 // `Pillar` is the canonical grouping key for tables and PDF; the enum mirrors
-// the five DORA pillars declared in `prowler/compliance/dora.json`.
+// the five DORA pillars declared in `prowler/compliance/dora_2022_2554.json`.
 export const DORA_PILLAR = {
   ICT_RISK_MANAGEMENT: "ICT Risk Management",
   INCIDENT_REPORTING: "ICT-Related Incident Reporting",
@@ -350,6 +401,19 @@ export interface DORARequirement extends Requirement {
   pillar: DORAAttributesMetadata["Pillar"];
   article: DORAAttributesMetadata["Article"];
   article_title: DORAAttributesMetadata["ArticleTitle"];
+}
+
+export interface CISControlsAttributesMetadata {
+  Section: string;
+  Function: string | null;
+  AssetType: string | null;
+  ImplementationGroups: string[] | null;
+}
+
+export interface CISControlsRequirement extends Requirement {
+  function?: string;
+  asset_type?: string;
+  implementation_groups?: string[];
 }
 
 export interface AttributesItemData {
@@ -374,7 +438,9 @@ export interface AttributesItemData {
         | CCCAttributesMetadata[]
         | CSAAttributesMetadata[]
         | ASDEssentialEightAttributesMetadata[]
+        | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
+        | CISControlsAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure
@@ -396,6 +462,8 @@ export interface RequirementItemData {
     version: string;
     description: string;
     status: RequirementStatus;
+    // True when the FAIL is caused solely by an invalid scan config.
+    invalid_config?: boolean;
     // For Threat compliance:
     passed_findings?: number;
     total_findings?: number;

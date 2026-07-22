@@ -320,6 +320,19 @@ config_aws = {
     "minimum_snapshot_retention_period": 7,
     "elb_min_azs": 2,
     "elbv2_min_azs": 2,
+    "elbv2_listener_pqc_tls_allowed_policies": [
+        "ELBSecurityPolicy-TLS13-1-2-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext1-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext2-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Res-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-3-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext0-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext1-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Ext2-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-2-Res-FIPS-PQ-2025-09",
+        "ELBSecurityPolicy-TLS13-1-3-FIPS-PQ-2025-09",
+    ],
     "secrets_ignore_patterns": [],
     "max_days_secret_unused": 90,
     "max_days_secret_unrotated": 90,
@@ -471,6 +484,58 @@ class Test_Config:
         all_frameworks = get_available_compliance_frameworks()
         assert "csa_ccm_4.0" in all_frameworks
 
+    @mock.patch("prowler.config.config._get_ep_compliance_dirs")
+    def test_get_available_compliance_frameworks_dedupes_ep_collisions_with_builtins(
+        self, mock_dirs
+    ):
+        """Entry-point compliance frameworks that collide with a built-in
+        name must appear only once in the available frameworks list.
+        Built-in wins silently — same policy as the universal frameworks
+        loop and as Compliance.get_bulk."""
+        import json
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            # cis_2.0_aws ships as a built-in under prowler/compliance/aws/
+            json_path = os.path.join(tmpdir, "cis_2.0_aws.json")
+            with open(json_path, "w") as f:
+                json.dump({"Framework": "CIS", "Provider": "aws"}, f)
+
+            mock_dirs.return_value = {"aws": [tmpdir]}
+
+            frameworks = get_available_compliance_frameworks("aws")
+
+            assert frameworks.count("cis_2.0_aws") == 1, (
+                f"Expected cis_2.0_aws to appear exactly once, got "
+                f"{frameworks.count('cis_2.0_aws')} occurrences in: {frameworks}"
+            )
+
+    @mock.patch("prowler.config.config._get_ep_compliance_dirs")
+    def test_get_available_compliance_frameworks_merges_multiple_ep_dirs_same_provider(
+        self, mock_dirs
+    ):
+        """Frameworks from every package contributing the same provider must
+        surface, not just the last directory discovered."""
+        import json
+        import tempfile
+
+        with (
+            tempfile.TemporaryDirectory() as pkg_a,
+            tempfile.TemporaryDirectory() as pkg_b,
+        ):
+            with open(os.path.join(pkg_a, "cis_1.0_template.json"), "w") as f:
+                json.dump({"Framework": "CIS", "Provider": "template"}, f)
+            with open(os.path.join(pkg_b, "nis2_1.0_template.json"), "w") as f:
+                json.dump({"Framework": "NIS2", "Provider": "template"}, f)
+
+            # Two packages register `prowler.compliance` with the same name.
+            mock_dirs.return_value = {"template": [pkg_a, pkg_b]}
+
+            frameworks = get_available_compliance_frameworks("template")
+
+            assert "cis_1.0_template" in frameworks
+            assert "nis2_1.0_template" in frameworks
+
     def test_load_and_validate_config_file_aws(self):
         path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
         config_test_file = f"{path}/fixtures/config.yaml"
@@ -507,6 +572,32 @@ class Test_Config:
         assert load_and_validate_config_file("gcp", config_test_file) == {}
         assert load_and_validate_config_file("azure", config_test_file) == {}
         assert load_and_validate_config_file("kubernetes", config_test_file) == {}
+
+    def test_load_and_validate_config_file_namespaced_non_listed_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # github is a built-in not in the legacy hardcoded list; namespaced format must unwrap it.
+        assert load_and_validate_config_file("github", config_test_file) == {
+            "token": "abc",
+            "org": "prowler-cloud",
+        }
+
+    def test_load_and_validate_config_file_namespaced_external_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # External plug-in provider: namespaced format must unwrap its block.
+        assert load_and_validate_config_file("custom_plugin", config_test_file) == {
+            "setting": "value",
+            "nested": {"key": 42},
+        }
+
+    def test_load_and_validate_config_file_namespaced_missing_provider(self):
+        path = pathlib.Path(os.path.dirname(os.path.realpath(__file__)))
+        config_test_file = f"{path}/fixtures/config_namespaced_external.yaml"
+        # Provider with no section in a namespaced file must return empty config,
+        # not the full file (prevents cross-provider config leakage).
+        assert load_and_validate_config_file("aws", config_test_file) == {}
+        assert load_and_validate_config_file("gcp", config_test_file) == {}
 
     def test_load_and_validate_config_file_invalid_config_file_path(self, caplog):
         provider = "aws"

@@ -1,3 +1,4 @@
+import base64
 from typing import Optional
 
 from botocore.client import ClientError
@@ -15,6 +16,8 @@ class SageMaker(AWSService):
         self.sagemaker_notebook_instances = []
         self.sagemaker_models = []
         self.sagemaker_training_jobs = []
+        self.sagemaker_processing_jobs = []
+        self.processing_jobs_scanned_regions = set()
         self.sagemaker_domains = []
         self.endpoint_configs = {}
         self.sagemaker_model_registries = []
@@ -24,6 +27,7 @@ class SageMaker(AWSService):
         self.__threading_call__(self._list_notebook_instances)
         self.__threading_call__(self._list_models)
         self.__threading_call__(self._list_training_jobs)
+        self.__threading_call__(self._list_processing_jobs)
         self.__threading_call__(self._list_endpoint_configs)
         self.__threading_call__(self._list_domains)
         self.__threading_call__(self._list_model_package_groups)
@@ -34,8 +38,16 @@ class SageMaker(AWSService):
         self.__threading_call__(
             self._describe_notebook_instance, self.sagemaker_notebook_instances
         )
+        # Runs after _describe_notebook_instance so lifecycle_config_name is set.
+        self.__threading_call__(
+            self._describe_notebook_instance_lifecycle_config,
+            self.sagemaker_notebook_instances,
+        )
         self.__threading_call__(
             self._describe_training_job, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._describe_processing_job, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._describe_endpoint_config, list(self.endpoint_configs.values())
@@ -50,6 +62,9 @@ class SageMaker(AWSService):
         )
         self.__threading_call__(
             self._list_tags_for_resource, self.sagemaker_training_jobs
+        )
+        self.__threading_call__(
+            self._list_tags_for_resource, self.sagemaker_processing_jobs
         )
         self.__threading_call__(
             self._list_tags_for_resource, list(self.endpoint_configs.values())
@@ -128,6 +143,66 @@ class SageMaker(AWSService):
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
 
+    def _list_processing_jobs(self, regional_client):
+        """List SageMaker processing jobs in a region.
+
+        Populates ``self.sagemaker_processing_jobs`` with `ProcessingJob`
+        entries and adds ``regional_client.region`` to
+        ``self.processing_jobs_scanned_regions`` once pagination succeeds, so
+        regions where ``ListProcessingJobs`` fails are skipped by checks that
+        consume that set.
+
+        Args:
+            regional_client: Regional SageMaker boto3 client.
+        """
+        logger.info("SageMaker - listing processing jobs...")
+        try:
+            list_processing_jobs_paginator = regional_client.get_paginator(
+                "list_processing_jobs"
+            )
+            for page in list_processing_jobs_paginator.paginate():
+                for processing_job in page["ProcessingJobSummaries"]:
+                    if not self.audit_resources or (
+                        is_resource_filtered(
+                            processing_job["ProcessingJobArn"], self.audit_resources
+                        )
+                    ):
+                        self.sagemaker_processing_jobs.append(
+                            ProcessingJob(
+                                name=processing_job["ProcessingJobName"],
+                                region=regional_client.region,
+                                arn=processing_job["ProcessingJobArn"],
+                            )
+                        )
+            self.processing_jobs_scanned_regions.add(regional_client.region)
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
+    def _describe_processing_job(self, processing_job):
+        """Describe a SageMaker processing job and enrich its image metadata.
+
+        Reads ``AppSpecification.ImageUri`` from ``DescribeProcessingJob`` and
+        stores it on ``processing_job.image_uri``. Errors are logged and
+        swallowed so a failure in one job does not abort the scan.
+
+        Args:
+            processing_job: ProcessingJob model to enrich in-place.
+        """
+        logger.info("SageMaker - describing processing job...")
+        try:
+            regional_client = self.regional_clients[processing_job.region]
+            describe_processing_job = regional_client.describe_processing_job(
+                ProcessingJobName=processing_job.name
+            )
+            app_spec = describe_processing_job.get("AppSpecification", {})
+            processing_job.image_uri = app_spec.get("ImageUri")
+        except Exception as error:
+            logger.error(
+                f"{processing_job.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+
     def _describe_notebook_instance(self, notebook_instance):
         logger.info("SageMaker - describing notebook instances...")
         try:
@@ -155,10 +230,60 @@ class SageMaker(AWSService):
                 notebook_instance.direct_internet_access = True
             if "KmsKeyId" in describe_notebook_instance:
                 notebook_instance.kms_key_id = describe_notebook_instance["KmsKeyId"]
+            if "NotebookInstanceLifecycleConfigName" in describe_notebook_instance:
+                notebook_instance.lifecycle_config_name = describe_notebook_instance[
+                    "NotebookInstanceLifecycleConfigName"
+                ]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+
+    def _describe_notebook_instance_lifecycle_config(self, notebook_instance):
+        """Fetch and decode a notebook instance's lifecycle scripts.
+
+        Reads the ``OnCreate`` and ``OnStart`` scripts from
+        ``DescribeNotebookInstanceLifecycleConfig`` and stores the base64-decoded
+        content on ``notebook_instance.lifecycle_scripts`` keyed by
+        ``"<hook>[<index>]"``. Instances without a lifecycle configuration are
+        skipped. Any describe or decode failure sets
+        ``notebook_instance.lifecycle_scan_failed`` to True so the consuming
+        check can report ``MANUAL`` instead of a false ``PASS``.
+
+        Args:
+            notebook_instance: NotebookInstance model to enrich in-place.
+        """
+        if not notebook_instance.lifecycle_config_name:
+            return
+        logger.info("SageMaker - describing notebook instance lifecycle config...")
+        try:
+            regional_client = self.regional_clients[notebook_instance.region]
+            lifecycle_config = regional_client.describe_notebook_instance_lifecycle_config(
+                NotebookInstanceLifecycleConfigName=notebook_instance.lifecycle_config_name
+            )
+        except Exception as error:
+            notebook_instance.lifecycle_scan_failed = True
+            logger.error(
+                f"{notebook_instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return
+
+        scripts = {}
+        for hook_name in ("OnCreate", "OnStart"):
+            for script_index, script in enumerate(lifecycle_config.get(hook_name, [])):
+                content_b64 = script.get("Content")
+                if not content_b64:
+                    continue
+                try:
+                    scripts[f"{hook_name}[{script_index}]"] = base64.b64decode(
+                        content_b64
+                    ).decode("utf-8", errors="ignore")
+                except Exception as error:
+                    notebook_instance.lifecycle_scan_failed = True
+                    logger.error(
+                        f"{notebook_instance.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+        notebook_instance.lifecycle_scripts = scripts
 
     def _describe_model(self, model):
         logger.info("SageMaker - describing models...")
@@ -428,6 +553,13 @@ class NotebookInstance(BaseModel):
     subnet_id: str = None
     direct_internet_access: bool = None
     kms_key_id: str = None
+    lifecycle_config_name: str = None
+    # Decoded lifecycle scripts keyed by "<hook>[<index>]" (e.g. "OnStart[0]"),
+    # populated by _describe_notebook_instance_lifecycle_config.
+    lifecycle_scripts: dict = {}
+    # True if the lifecycle configuration could not be fully described/decoded,
+    # so the secrets check reports MANUAL instead of a false PASS.
+    lifecycle_scan_failed: bool = False
     tags: Optional[list] = []
 
 
@@ -448,6 +580,25 @@ class TrainingJob(BaseModel):
     volume_kms_key_id: str = None
     network_isolation: bool = None
     vpc_config_subnets: list[str] = []
+    tags: Optional[list] = []
+
+
+class ProcessingJob(BaseModel):
+    """Represents a SageMaker processing job.
+
+    Attributes:
+        name: Processing job name.
+        region: AWS region where the job lives.
+        arn: Processing job ARN.
+        image_uri: Container image URI from `AppSpecification.ImageUri`,
+            populated by `_describe_processing_job`.
+        tags: Resource tags, populated by `_list_tags_for_resource`.
+    """
+
+    name: str
+    region: str
+    arn: str
+    image_uri: Optional[str] = None
     tags: Optional[list] = []
 
 

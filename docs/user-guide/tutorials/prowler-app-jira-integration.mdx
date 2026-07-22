@@ -1,13 +1,17 @@
 ---
 title: "Jira Integration"
+sidebarTitle: 'Jira'
 ---
 import { VersionBadge } from "/snippets/version-badge.mdx"
+import { AppliesTo } from "/snippets/applies-to.mdx"
 
 <VersionBadge version="5.12.0" />
 
-Prowler App enables automatic export of security findings to Jira, providing seamless integration with Atlassian's work item tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
+<AppliesTo />
 
-Integrating Prowler App with Jira provides:
+Prowler Cloud enables automatic export of security findings to Jira, providing seamless integration with Atlassian's work item tracking and project management platform. This comprehensive guide demonstrates how to configure and manage Jira integrations to streamline security incident management and enhance team collaboration across security workflows.
+
+Integrating Prowler Cloud with Jira provides:
 
 * **Streamlined management:** Convert security findings directly into actionable Jira work items
 * **Enhanced team collaboration:** Leverage existing project management workflows for security remediation
@@ -20,11 +24,17 @@ When enabled and configured:
 1. Security findings can be manually sent to Jira from the Findings table.
 2. Each finding creates a Jira work item with all the check's metadata, including guidance on how to remediate it.
 
+## Prerequisites
+
+<VersionBadge version="5.36.0" />
+
+Configuring and using the Jira integration requires the **Manage Integrations** permission. The Jira integration is tenant-wide, so it does not require **Unlimited Visibility** or any specific Provider Group. Findings sent to Jira are still limited to the providers the role can access.
+
 ## Configuration
 
-To configure Jira integration in Prowler App:
+To configure Jira integration in Prowler Cloud:
 
-1. Navigate to **Integrations** in the Prowler App interface
+1. Navigate to **Integrations** in Prowler Cloud
 2. Locate the **Jira** card and click **Manage**, then select **Add integration**
 
     ![Integrations tab](/images/prowler-app/jira/integrations-tab.png)
@@ -50,7 +60,7 @@ Once configured successfully, the integration is ready to send findings to Jira.
 
 To manually send individual findings to Jira:
 
-1. Navigate to the **Findings** section in Prowler App
+1. Navigate to the **Findings** section in Prowler Cloud
 2. Select one finding you want to export
 3. Click the action button on the table row and select **Send to Jira**
 4. Select the Jira integration and project

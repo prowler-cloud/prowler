@@ -4,9 +4,16 @@ import { redirect } from "next/navigation";
 
 import { getLatestFindings } from "@/actions/findings";
 import { listOrganizationsSafe } from "@/actions/organizations/organizations";
-import { apiBaseUrl, FINDINGS_FILTERED_SORT, getAuthHeaders } from "@/lib";
+import {
+  apiBaseUrl,
+  FINDINGS_FILTERED_SORT,
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getAuthHeaders,
+  sanitizeErrorMessage,
+} from "@/lib";
 import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
+import { isCloud } from "@/lib/shared/env";
 import { OrganizationResource } from "@/types/organizations";
 
 export const getResources = async ({
@@ -193,22 +200,27 @@ export const getResourceEvents = async (
 
     if (!response.ok) {
       const rawText = await response.text().catch(() => "");
+      const contentType =
+        response.headers.get("content-type")?.toLowerCase() || "";
       const defaultError = "An error occurred while fetching events.";
+      const fallbackError = contentType.includes("text/html")
+        ? GENERIC_SERVER_ERROR_MESSAGE
+        : response.statusText || defaultError;
       try {
         const errorData = rawText ? JSON.parse(rawText) : null;
+        const errorMessage =
+          errorData?.errors?.[0]?.detail ||
+          errorData?.error ||
+          errorData?.message ||
+          rawText ||
+          fallbackError;
         return {
-          error:
-            errorData?.errors?.[0]?.detail ||
-            errorData?.error ||
-            errorData?.message ||
-            rawText ||
-            response.statusText ||
-            defaultError,
+          error: sanitizeErrorMessage(String(errorMessage), fallbackError),
           status: response.status,
         };
       } catch {
         return {
-          error: rawText || response.statusText || defaultError,
+          error: sanitizeErrorMessage(rawText || fallbackError, fallbackError),
           status: response.status,
         };
       }
@@ -276,7 +288,7 @@ export const getResourceDrawerData = async ({
   pageSize?: number;
   query?: string;
 }) => {
-  const isCloudEnv = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnv = isCloud();
 
   const [resourceData, findingsResponse, organizationsResponse] =
     await Promise.all([

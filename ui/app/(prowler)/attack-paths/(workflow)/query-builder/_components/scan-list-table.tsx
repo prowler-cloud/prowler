@@ -5,18 +5,18 @@ import { Check, Minus } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useRef } from "react";
 
+import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import {
   RadioGroup,
   RadioGroupItem,
 } from "@/components/shadcn/radio-group/radio-group";
+import { DataTable, DataTableColumnHeader } from "@/components/shadcn/table";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
-import { DateWithTime } from "@/components/ui/entities/date-with-time";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { DataTable, DataTableColumnHeader } from "@/components/ui/table";
 import { formatDuration } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 import type { MetaDataProps, ProviderType } from "@/types";
@@ -295,6 +295,9 @@ export const ScanListTable = ({ scans }: ScanListTableProps) => {
             handleSelectScan(row.original.id);
           }
         }}
+        getRowAttributes={(row) =>
+          row.index === 0 ? { "data-tour-id": "attack-paths-scan-list" } : {}
+        }
         enableRowSelection
         rowSelection={getSelectedRowSelection(paginatedScans, selectedScanId)}
       />

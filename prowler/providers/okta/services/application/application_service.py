@@ -1,10 +1,13 @@
-import json
 from typing import Optional
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import urlparse
 
 from pydantic import BaseModel, ValidationError
 
 from prowler.lib.logger import logger
+from prowler.providers.okta.lib.service.pagination import paginate as _paginate_shared
+from prowler.providers.okta.lib.service.raw_fetch import (
+    get_json_paginated as _raw_get_json_paginated,
+)
 from prowler.providers.okta.lib.service.service import OktaService
 
 # These three keys are Okta-platform constants, not tenant-configurable:
@@ -26,29 +29,6 @@ from prowler.providers.okta.lib.service.service import OktaService
 ADMIN_CONSOLE_APP_NAME = "saasure"
 DASHBOARD_APP_NAME = "okta_enduser"
 ADMIN_CONSOLE_FIRST_PARTY_APP_KEY = "admin-console"
-
-
-def _next_after_cursor(resp) -> Optional[str]:
-    """Extract the `after` cursor from a `Link: ...; rel="next"` header.
-
-    Returns None when there is no next page. Header format follows RFC 5988
-    and Okta's pagination guide. Mirrors the helper in `signon_service` —
-    duplicated rather than shared until a third Okta service appears.
-    """
-    if resp is None:
-        return None
-    headers = getattr(resp, "headers", None) or {}
-    link = headers.get("link") or headers.get("Link") or ""
-    if not link:
-        return None
-    for part in link.split(","):
-        if 'rel="next"' not in part:
-            continue
-        url_segment = part.split(";", 1)[0].strip().lstrip("<").rstrip(">")
-        cursor = parse_qs(urlparse(url_segment).query).get("after", [None])[0]
-        if cursor:
-            return cursor
-    return None
 
 
 REQUIRED_SCOPES: dict[str, str] = {
@@ -321,68 +301,23 @@ class Application(OktaService):
         """Raw-JSON fallback for `list_policy_rules`.
 
         Bypasses the Okta SDK's typed deserialization by calling the
-        request executor directly without a response type. The response
-        body is then `json.loads`-ed and projected onto our own pydantic
-        snapshot, which only validates the fields the STIG checks
-        actually read. This keeps the checks evaluable on tenants where
-        the Management API returns values the SDK validators reject.
+        request executor directly via the shared `get_json_paginated`
+        helper, which follows `Link: rel=next` so policies with more
+        rules than `rule_fetch_limit` are not silently truncated.
+        Projects the response onto our own pydantic snapshot which only
+        validates the fields the STIG checks actually read. This keeps
+        the checks evaluable on tenants where the Management API returns
+        values the SDK validators reject.
         """
-        request, error = await self.client._request_executor.create_request(
-            method="GET",
-            url=f"/api/v1/policies/{policy_id}/rules?limit={rule_fetch_limit}",
-            body=None,
-            headers={"Accept": "application/json"},
+        rules_data = await _raw_get_json_paginated(
+            self.client,
+            f"/api/v1/policies/{policy_id}/rules",
+            page_size=rule_fetch_limit,
+            context=f"access policy {policy_id} rules",
         )
-        if error is not None:
-            logger.error(
-                f"Raw rules fetch (create_request) failed for {policy_id}: {error}"
-            )
+        if rules_data is None:
             return AuthenticationPolicy(
                 id=policy_id, name="", status="", is_default=False, rules=[]
-            )
-
-        _response, response_body, error = await self.client._request_executor.execute(
-            request
-        )
-        if error is not None:
-            logger.error(f"Raw rules fetch (execute) failed for {policy_id}: {error}")
-            return AuthenticationPolicy(
-                id=policy_id, name="", status="", is_default=False, rules=[]
-            )
-
-        if isinstance(response_body, (bytes, bytearray)):
-            try:
-                response_body = response_body.decode("utf-8")
-            except UnicodeDecodeError as decode_err:
-                logger.error(
-                    f"Could not decode rules response for {policy_id}: {decode_err}"
-                )
-                return AuthenticationPolicy(
-                    id=policy_id, name="", status="", is_default=False, rules=[]
-                )
-        try:
-            rules_data = json.loads(response_body) if response_body else []
-        except json.JSONDecodeError as decode_err:
-            logger.error(f"Could not parse rules JSON for {policy_id}: {decode_err}")
-            return AuthenticationPolicy(
-                id=policy_id, name="", status="", is_default=False, rules=[]
-            )
-
-        if not isinstance(rules_data, list):
-            logger.error(
-                f"Unexpected raw rules payload shape for {policy_id}: "
-                f"got {type(rules_data).__name__}, expected list"
-            )
-            return AuthenticationPolicy(
-                id=policy_id, name="", status="", is_default=False, rules=[]
-            )
-
-        if len(rules_data) >= rule_fetch_limit:
-            logger.warning(
-                f"Access policy {policy_id} returned {len(rules_data)} rules "
-                f"via raw-JSON fallback — the per-policy fetch limit "
-                f"({rule_fetch_limit}) was hit; any rules beyond this limit "
-                "are not evaluated by Prowler."
             )
         rules_out = [_raw_rule_to_model(rule) for rule in rules_data]
         return AuthenticationPolicy(
@@ -391,33 +326,7 @@ class Application(OktaService):
 
     @staticmethod
     async def _paginate(fetch):
-        """Drain all pages of an SDK list call.
-
-        `fetch` is a callable taking the `after` cursor (or None) and
-        returning the SDK's `(items, resp, err)` tuple. Follows the
-        `Link: rel="next"` header until exhausted. Mirrors the helper in
-        `signon_service`.
-        """
-        all_items = []
-        result = await fetch(None)
-        err = result[-1]
-        if err is not None:
-            return [], err
-        items = result[0]
-        resp = result[1] if len(result) >= 3 else None
-        all_items.extend(items or [])
-        while True:
-            cursor = _next_after_cursor(resp)
-            if not cursor:
-                break
-            result = await fetch(cursor)
-            err = result[-1]
-            if err is not None:
-                return all_items, err
-            items = result[0]
-            resp = result[1] if len(result) >= 3 else None
-            all_items.extend(items or [])
-        return all_items, None
+        return await _paginate_shared(fetch)
 
 
 def _policy_id_from_href(href: Optional[str]) -> Optional[str]:

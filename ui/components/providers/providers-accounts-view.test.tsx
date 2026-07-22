@@ -5,8 +5,15 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProvidersTableRow } from "@/types/providers-table";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
-const { refreshMock, replaceMock, searchParamsValue } = vi.hoisted(() => ({
+const {
+  providersAccountsTableSpy,
+  refreshMock,
+  replaceMock,
+  searchParamsValue,
+} = vi.hoisted(() => ({
+  providersAccountsTableSpy: vi.fn(),
   refreshMock: vi.fn(),
   replaceMock: vi.fn(),
   searchParamsValue: { current: "" },
@@ -49,7 +56,10 @@ vi.mock("@/components/providers/providers-filters", () => ({
 }));
 
 vi.mock("@/components/providers/providers-accounts-table", () => ({
-  ProvidersAccountsTable: () => <div data-testid="providers-table">Table</div>,
+  ProvidersAccountsTable: (props: { scanScheduleCapability?: string }) => {
+    providersAccountsTableSpy(props);
+    return <div data-testid="providers-table">Table</div>;
+  },
 }));
 
 vi.mock("@/components/providers/wizard", () => ({
@@ -86,6 +96,7 @@ const disconnectedProviders: ProviderProps[] = [
     type: "providers",
     attributes: {
       provider: "aws",
+      is_dynamic: false,
       uid: "123456789012",
       alias: "Production",
       status: "completed",
@@ -123,6 +134,7 @@ const disconnectedProviders: ProviderProps[] = [
 describe("ProvidersAccountsView", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+    providersAccountsTableSpy.mockClear();
     searchParamsValue.current = "";
     window.history.replaceState({}, "", "/");
   });
@@ -283,6 +295,27 @@ describe("ProvidersAccountsView", () => {
     expect(
       screen.queryByText("No Providers Configured"),
     ).not.toBeInTheDocument();
+  });
+
+  it("passes scan schedule capability to provider row actions", () => {
+    // Given/When
+    render(
+      <ProvidersAccountsView
+        isCloud
+        filters={filters}
+        metadata={metadata}
+        providers={disconnectedProviders}
+        rows={rows}
+        scanScheduleCapability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // Then
+    expect(providersAccountsTableSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        scanScheduleCapability: SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY,
+      }),
+    );
   });
 
   it("opens the provider wizard from the normal Add Provider button", async () => {

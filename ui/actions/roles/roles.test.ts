@@ -74,7 +74,7 @@ describe("role actions", () => {
 
   it("includes manage_alerts when creating a role in Prowler Cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     await addRole(makeRoleFormData());
@@ -85,7 +85,7 @@ describe("role actions", () => {
 
   it("omits manage_alerts when creating a role outside Prowler Cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     await addRole(makeRoleFormData());
@@ -98,7 +98,7 @@ describe("role actions", () => {
 
   it("includes manage_alerts when updating a role in Prowler Cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     await updateRole(makeRoleFormData(), "role-1");

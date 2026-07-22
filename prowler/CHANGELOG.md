@@ -2,25 +2,272 @@
 
 All notable changes to the **Prowler SDK** are documented in this file.
 
-## [5.30.0] (Prowler UNRELEASED)
+<!-- changelog: release notes start -->
+
+## [5.35.0] (Prowler v5.35.0)
 
 ### 🚀 Added
 
-- OCSF detection finding output now populates `finding_info.analytic` (Prowler check as a Rule analytic) and `finding_info.attacks` (MITRE ATT&CK technique and tactic objects) for AWS, Azure, and GCP findings that have MITRE-ATTACK compliance entries [(#11492)](https://github.com/prowler-cloud/prowler/pull/11492)
-- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
-- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
-- `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
+- `excluded_checks` and `excluded_services` in scan configurations to narrow the execution scope [(#12028)](https://github.com/prowler-cloud/prowler/pull/12028)
+
+### 🔐 Security
+
+- Jira tenant information requests validate site names and do not follow redirects [(#12012)](https://github.com/prowler-cloud/prowler/pull/12012)
 
 ---
 
-## [5.29.3] (Prowler UNRELEASED)
+## [5.34.0] (Prowler v5.34.0)
+
+### 🚀 Added
+
+- `elbv2_listener_pqc_tls_enabled` check for AWS provider, verifying that ELBv2 listeners use post-quantum TLS policies [(#11254)](https://github.com/prowler-cloud/prowler/pull/11254)
+- `iaas_server_public_ip_attached` check for STACKIT provider, flagging IaaS servers that have a public IP address directly attached to a network interface [(#11549)](https://github.com/prowler-cloud/prowler/pull/11549)
+- Changelog fragment workflow for SDK, API, UI, and MCP Server releases, including PR attribution, fragment validation, release compilation, and preserved section ordering [(#11572)](https://github.com/prowler-cloud/prowler/pull/11572)
+- E2E Networks provider with 27 checks across compute nodes, networking, security groups, load balancers, block/file storage, and managed databases [(#11654)](https://github.com/prowler-cloud/prowler/pull/11654)
+- `datapipeline_pipeline_no_secrets_in_definition` check for AWS provider, scanning Data Pipeline object fields, parameter objects, and parameter values for hardcoded secrets with Kingfisher [(#11821)](https://github.com/prowler-cloud/prowler/pull/11821)
+- `amplify_app_no_secrets_in_environment` check for AWS provider, scanning Amplify app and branch environment variables and build settings for hardcoded secrets [(#11825)](https://github.com/prowler-cloud/prowler/pull/11825)
+- `ec2_ami_account_block_public_access` check for AWS provider, verifying AMI block public access is enabled at the account level in each Region so AMIs cannot be shared publicly [(#11828)](https://github.com/prowler-cloud/prowler/pull/11828)
+- `core_readonly_root_filesystem_enabled` check for Kubernetes provider, verifying that every container in each Pod explicitly sets `readOnlyRootFilesystem: true` in its security context [(#11835)](https://github.com/prowler-cloud/prowler/pull/11835)
+- `core_minimize_hostpath_volume_mounts` check for Kubernetes provider, detecting Pods that use `hostPath` volumes [(#11837)](https://github.com/prowler-cloud/prowler/pull/11837)
+- `app_function_ensure_http_is_redirected_to_https` check for Azure provider, verifying that Function Apps enforce HTTPS-only traffic [(#11929)](https://github.com/prowler-cloud/prowler/pull/11929)
+
+### 🔄 Changed
+
+- Add missing trailing newlines to compliance, region, and fixture data files for POSIX compliance [(#11765)](https://github.com/prowler-cloud/prowler/pull/11765)
+- Oracle Cloud API key authentication now uses an internal bootstrap region when no explicit scan region filter is provided [(#11853)](https://github.com/prowler-cloud/prowler/pull/11853)
+- Redesign the local dashboard sidebar and informational pages [(#11972)](https://github.com/prowler-cloud/prowler/pull/11972)
+
+---
+
+## [5.33.2] (Prowler v5.33.2)
+
+### 🐞 Fixed
+
+- EC2 AMI loading now targets Amazon-owned AMIs used by audited instances, reducing AWS API calls during EC2 scans [(#11958)](https://github.com/prowler-cloud/prowler/pull/11958)
+- `ec2_instance_account_imdsv2_enabled` findings now use regional resource ARNs, preventing findings from different AWS Regions from collapsing into one resource [(#11966)](https://github.com/prowler-cloud/prowler/pull/11966)
+
+---
+
+## [5.33.1] (Prowler v5.33.1)
+
+### 🐞 Fixed
+
+- ECS task definition resource limits now select the latest task definitions by registration date instead of relying on ARN ordering [(#11891)](https://github.com/prowler-cloud/prowler/pull/11891)
+- `dlm_ebs_snapshot_lifecycle_policy_exists` no longer initializes the full EC2 inventory just to detect EBS snapshots, avoiding slow scans when checking DLM lifecycle policies [(#11900)](https://github.com/prowler-cloud/prowler/pull/11900)
+- `dms_instance_no_public_access` no longer initializes the full EC2 service when there are no DMS replication instances [(#11902)](https://github.com/prowler-cloud/prowler/pull/11902)
+- `organizations_scp_check_deny_regions` no longer reports false `FAIL` for AWS Organizations that restrict regions with Allow-based SCPs; the Allow path now checks the statement `Effect` instead of an always-false comparison that made it unreachable [(#11915)](https://github.com/prowler-cloud/prowler/pull/11915)
+- Jira issue creation failures now preserve safe structured response details from Jira [(#11925)](https://github.com/prowler-cloud/prowler/pull/11925)
+- Azure Function App optional permission failures now log as warnings, and Function App environment variable fields use the correct spelling internally [(#11926)](https://github.com/prowler-cloud/prowler/pull/11926)
+
+---
+
+## [5.33.0] (Prowler v5.33.0)
+
+### 🐞 Fixed
+
+- Azure resource group scoped scans now keep subscription entries when scoped resource listing fails, clarify helper documentation and test organization, and align the resource group documentation example with the described values [(#11796)](https://github.com/prowler-cloud/prowler/pull/11796)
+- Azure `postgresql_flexible_server_log_retention_days_greater_3` check now queries the `logfiles.retention_days` configuration parameter instead of `log_retention_days` (which only exists on the retired Single Server), fixing false `FAIL` results on every Flexible Server regardless of the actual retention value [(#11761)](https://github.com/prowler-cloud/prowler/pull/11761)
+
+---
+
+## [5.32.1] (Prowler v5.32.1)
+
+### 🐞 Fixed
+
+- `KeyError: 'MANUAL'` crash while rendering the compliance summary table (e.g. CIS Microsoft 365) when a framework has manual, checks-less requirements with a Level 1/Level 2 profile; `MANUAL` findings are now skipped in the PASS/FAIL section tally instead of raising [(#11822)](https://github.com/prowler-cloud/prowler/issues/11822)
+
+---
+
+## [5.32.0] (Prowler v5.32.0)
+
+### 🚀 Added
+
+- `exchange_application_access_policy_restricts_mailbox_apps` check for M365 provider, verifying every service principal with Microsoft Graph application-level Exchange mailbox permissions is restricted by an Exchange Online Application Access Policy, preventing tenant-wide mailbox access by unscoped applications [(#11247)](https://github.com/prowler-cloud/prowler/pull/11247)
+- Per-requirement configuration validation for compliance frameworks via `ConfigRequirements`, so a requirement is reported as FAIL when its configurable checks ran with a configuration too loose to satisfy it (applied across all compliance outputs: CSV, OCSF, and console tables) [(#11669)](https://github.com/prowler-cloud/prowler/pull/11669)
+- `entra_conditional_access_policy_explicitly_targets_azure_devops` check for M365 provider, verifying at least one enabled Conditional Access policy explicitly includes the Azure DevOps cloud application instead of relying on a broad "All cloud apps" policy [(#11182)](https://github.com/prowler-cloud/prowler/pull/11182)
+- `entra_conditional_access_policy_no_exclusion_gaps` check for M365 provider, verifying every user, group, role, or application excluded from an enabled Conditional Access policy stays in scope of another enabled policy [(#11577)](https://github.com/prowler-cloud/prowler/pull/11577)
+- `entra_conditional_access_policy_groups_management_restricted` check for M365 provider, verifying every security group referenced by an enabled or report-only Conditional Access policy is management-restricted or role-assignable [(#11342)](https://github.com/prowler-cloud/prowler/pull/11342)
+- `stepfunctions_statemachine_encrypted_with_cmk` check for AWS provider, verifying that each Step Functions state machine uses a customer-managed KMS key for encryption at rest rather than the default AWS-owned key [(#11538)](https://github.com/prowler-cloud/prowler/pull/11538)
+- CIS Controls v8.1 universal compliance framework mapping existing checks across 18 providers (AWS, Azure, GCP, Kubernetes, M365, GitHub, AlibabaCloud, OracleCloud, GoogleWorkspace, Okta, Cloudflare, Vercel, MongoDB Atlas, OpenStack, Linode, StackIT, NHN, and Scaleway) to the 18 CIS Critical Security Controls and their Safeguards [(#11700)](https://github.com/prowler-cloud/prowler/pull/11700)
+- CIS Microsoft 365 Foundations Benchmark v7.0.0 compliance framework for the M365 provider [(#11699)](https://github.com/prowler-cloud/prowler/pull/11699)
+- `waf_regional_webacl_logging_enabled` check for AWS provider, verifying that each AWS WAF Classic Regional Web ACL has logging enabled to a Kinesis Data Firehose stream [(#11539)](https://github.com/prowler-cloud/prowler/pull/11539)
+- `sdk_only` provider property (default `true`) and `Provider.get_app_providers()`, so a provider (built-in or external) stays CLI/SDK-only and hidden from the app unless it declares `sdk_only = False` [(#11427)](https://github.com/prowler-cloud/prowler/pull/11427)
+- `Provider.get_scan_arguments()`, `Provider.get_connection_arguments()` and `Provider.get_credentials_schema()` contract methods, so a provider persisted as a stored uid plus a secret dict can be constructed and validated programmatically (to be consumed by the API in a later change) [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- Okta API request throttling to proactively stay under rate limits, configurable via `okta_requests_per_second` in the config file and the `--okta-requests-per-second` CLI flag, plus configurable retries via `okta_max_retries` / `--okta-retries-max-attempts` as a safety net [(#11702)](https://github.com/prowler-cloud/prowler/pull/11702)
+- CIS Amazon Web Services Foundations Benchmark v7.0.0 compliance framework for the AWS provider, adding the new Organizations section (2.1.1-2.1.6), resource policy (2.21), web front-end access logging (4.10), and VPC Endpoints (6.8) recommendations [(#11707)](https://github.com/prowler-cloud/prowler/pull/11707)
+- CIS Microsoft Azure Foundations Benchmark v6.0.0 compliance framework for the Azure provider [(#11708)](https://github.com/prowler-cloud/prowler/pull/11708)
+- CIS Google Cloud Platform Foundation Benchmark v5.0.0 compliance framework for the GCP provider [(#11714)](https://github.com/prowler-cloud/prowler/pull/11714)
+- CIS Kubernetes Benchmark v2.0.1 compliance framework for the Kubernetes provider [(#11722)](https://github.com/prowler-cloud/prowler/pull/11722)
+- CIS GitHub Benchmark v1.2.0 compliance framework for the GitHub provider [(#11719)](https://github.com/prowler-cloud/prowler/pull/11719)
+- AWS Bedrock AgentCore privilege escalation paths in the IAM privilege escalation checks, covering Runtime, Harness, Code Interpreter and Custom Browser [(#11726)](https://github.com/prowler-cloud/prowler/pull/11726)
+- `--scan-secrets-validate` flag and `aws.secrets_validate` configuration option to optionally validate the secrets discovered by the secret-scanning checks against the provider APIs; secrets confirmed to be live are reported as critical [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- `apigateway_restapi_no_secrets_in_stage_variables` check for AWS provider, scanning API Gateway REST API stage variables for hardcoded secrets such as passwords, API keys, and tokens [(#11188)](https://github.com/prowler-cloud/prowler/pull/11188)
+- `s3_bucket_object_public` check for AWS provider, spot-checking a configurable sample of object ACLs in each bucket and flagging objects granted to the AllUsers or AuthenticatedUsers groups; disabled by default and opted into via the `s3_bucket_object_public_enabled` configuration option [(#9517)](https://github.com/prowler-cloud/prowler/pull/9517)
+- Azure provider now supports `--azure-resource-group` to scope resource-level checks to specific resource groups across all accessible subscriptions [(#10657)](https://github.com/prowler-cloud/prowler/pull/10657)
+
+### 🔄 Changed
+
+- Replaced the `detect-secrets` library with [Kingfisher](https://github.com/mongodb/kingfisher) as the engine for the secret-scanning checks; scans run fully offline by default and obvious placeholder values are no longer reported as findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Removed the `detect_secrets_plugins` configuration option, which is no longer used by the new secret-scanning engine [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- `awslambda_function_no_secrets_in_code` now supports a `secrets_ignore_files` audit-config option to skip files inside the deployment package by glob pattern (e.g. `*.deps.json`), suppressing .NET dependency-manifest false positives without masking real secrets [(#11222)](https://github.com/prowler-cloud/prowler/pull/11222)
+- AWS scans for EBS snapshots, Backup recovery points, CloudWatch log groups, Lambda functions, ECS task definitions, and CodeArtifact packages now support configurable resource analysis limits via `aws.max_scanned_resources_per_service`; limits are disabled by default and only positive values cap analyzed resources [(#11228)](https://github.com/prowler-cloud/prowler/pull/11228)
+
+### 🐞 Fixed
+
+- GitHub `repository_has_codeowners_file` check no longer flags archived repositories, since they are read-only and cannot be updated without first being unarchived, making the finding not actionable [(#11735)](https://github.com/prowler-cloud/prowler/pull/11735)
+- Report secret-scanning checks as `MANUAL` instead of `PASS` when the scanner fails (non-zero exit, timeout, unparseable output or missing binary), so a scanner failure is no longer indistinguishable from "no secrets found" [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Avoid a false `FAIL` in `cloudwatch_log_group_no_secrets_in_logs` when a multiline event's secrets are all removed by `secrets_ignore_patterns` during the rescan [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Key the `cloudwatch_log_group_no_secrets_in_logs` secret scan by log group ARN instead of name, so same-named log groups and streams in different regions no longer collide and reuse each other's findings [(#11694)](https://github.com/prowler-cloud/prowler/pull/11694)
+- Compliance frameworks contributed by several external packages under the same provider are now merged instead of overwritten, so every entry-point directory a provider contributes is discovered [(#11578)](https://github.com/prowler-cloud/prowler/pull/11578)
+- Azure PostgreSQL flexible server collection no longer drops the remaining servers in a subscription when one server fails to collect; the `connection_throttle.enable` parameter (removed in PostgreSQL 16+) is treated as absent only when the Azure SDK reports it as not found, so unexpected lookup failures are not silently reported as throttling disabled [(#11595)](https://github.com/prowler-cloud/prowler/pull/11595)
+- Azure `keyvault_logging_enabled` now accepts Key Vault diagnostic settings that enable the explicit `AuditEvent` category, avoiding false failures when Azure returns category-based logs without category groups [(#11660)](https://github.com/prowler-cloud/prowler/pull/11660)
+- GitHub default branch protection checks now evaluate repository rulesets in addition to classic branch protection, avoiding false positives for repositories that enforce protection through rulesets [(#11723)](https://github.com/prowler-cloud/prowler/pull/11723)
+- Okta, Alibaba Cloud and OpenStack scan-config sections are now validated against a registered schema instead of being silently accepted, so their configurable thresholds (session/idle timeouts, retention days, image-sharing and secret-scanning settings) log a warning and fall back to the built-in default whenever a value is out of range [(#11725)](https://github.com/prowler-cloud/prowler/pull/11725)
+
+---
+
+## [5.31.1] (Prowler v5.31.1)
+
+### 🐞 Fixed
+
+- Alibaba Cloud `ram_password_policy_number` and `cs_kubernetes_cluster_check_weekly` checks not being loaded due to missing implementation and package files [(#11683)](https://github.com/prowler-cloud/prowler/pull/11683)
+
+---
+
+## [5.31.0] (Prowler v5.31.0)
+
+### 🚀 Added
+
+- Support for Python 3.13 [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
+- `securityhub_delegated_admin_enabled_all_regions` check for AWS provider, verifying that Security Hub has a delegated administrator, is active in all opted-in regions, and has organization auto-enable on [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `config_delegated_admin_and_org_aggregator_all_regions` check for AWS provider, verifying that AWS Config has a delegated administrator and an organization aggregator covering all AWS regions [(#11259)](https://github.com/prowler-cloud/prowler/pull/11259)
+- `sagemaker_clarify_exists` check for AWS provider [(#11211)](https://github.com/prowler-cloud/prowler/pull/11211)
+- `cloudsql_instance_high_availability_enabled` check for GCP provider, verifying Cloud SQL primary instances use `REGIONAL` availability for automatic zone failover [(#11024)](https://github.com/prowler-cloud/prowler/pull/11024)
+- `cloudfunction_function_inside_vpc` check for GCP provider, verifying Cloud Functions have a Serverless VPC Access connector for private egress [(#11021)](https://github.com/prowler-cloud/prowler/pull/11021)
+- `cloudfunction_function_not_publicly_accessible` check for GCP provider, detecting Cloud Functions with `allUsers` or `allAuthenticatedUsers` IAM invocation bindings [(#11022)](https://github.com/prowler-cloud/prowler/pull/11022)
+- `secretmanager_secret_not_publicly_accessible` check for GCP provider, detecting Secret Manager secrets with public IAM bindings [(#11025)](https://github.com/prowler-cloud/prowler/pull/11025)
+- `secretmanager_secret_rotation_enabled` check for GCP provider, verifying Secret Manager secrets have automatic rotation configured within 90 days [(#11026)](https://github.com/prowler-cloud/prowler/pull/11026)
+- `identity_storage_service_level_admins_scoped` check for OCI provider CIS 3.1 control 1.15, ensuring storage service-level administrators exclude delete permissions [(#11523)](https://github.com/prowler-cloud/prowler/pull/11523)
+- `cosmosdb_account_automatic_failover_enabled` check for Azure provider [(#11031)](https://github.com/prowler-cloud/prowler/pull/11031)
+- `cosmosdb_account_backup_policy_continuous` check for Azure provider [(#11032)](https://github.com/prowler-cloud/prowler/pull/11032)
+- `cosmosdb_account_minimum_tls_version` check for Azure provider, verifying Cosmos DB accounts enforce TLS 1.2 or higher for client connections [(#11033)](https://github.com/prowler-cloud/prowler/pull/11033)
+- `cosmosdb_account_public_network_access_disabled` check for Azure provider, verifying Cosmos DB accounts have public network access disabled so connectivity is restricted to private endpoints or VNet service endpoints [(#11034)](https://github.com/prowler-cloud/prowler/pull/11034)
+- `databricks_workspace_public_network_access_disabled` check for Azure provider, verifying Databricks workspaces have public network access disabled so connectivity is restricted to Azure Private Link private endpoints [(#11035)](https://github.com/prowler-cloud/prowler/pull/11035)
+- `databricks_workspace_no_public_ip_enabled` check for Azure provider, verifying Databricks workspaces use secure cluster connectivity (no public IP) so compute nodes are not assigned public IP addresses [(#11036)](https://github.com/prowler-cloud/prowler/pull/11036)
+- `defender_ensure_defender_cspm_is_on` check for Azure provider, verifying Microsoft Defender Cloud Security Posture Management (CSPM) is enabled on the Standard tier [(#11037)](https://github.com/prowler-cloud/prowler/pull/11037)
+- `mysql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying MySQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11041)](https://github.com/prowler-cloud/prowler/pull/11041)
+- `mysql_flexible_server_high_availability_enabled` check for Azure provider, verifying MySQL Flexible Servers have high availability enabled for automatic failover to a standby replica [(#11042)](https://github.com/prowler-cloud/prowler/pull/11042)
+- `postgresql_flexible_server_geo_redundant_backup_enabled` check for Azure provider, verifying PostgreSQL Flexible Servers have geo-redundant backup enabled so backups are replicated to the paired region [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
+- `postgresql_flexible_server_high_availability_enabled` check for Azure provider, verifying PostgreSQL Flexible Servers have high availability enabled for automatic failover to a standby replica [(#11046)](https://github.com/prowler-cloud/prowler/pull/11046)
+- `aks_cluster_azure_monitor_enabled` check for Azure provider, verifying AKS clusters have Azure Monitor (Container Insights) enabled for metrics, logs, and alerting [(#11029)](https://github.com/prowler-cloud/prowler/pull/11029)
+- `aks_cluster_local_accounts_disabled` check for Azure provider, verifying AKS clusters have local accounts disabled so authentication is forced through Microsoft Entra ID [(#11030)](https://github.com/prowler-cloud/prowler/pull/11030)
+- `network_subnet_nsg_associated` check for Azure provider, verifying virtual network subnets have a network security group associated to enforce traffic filtering [(#11043)](https://github.com/prowler-cloud/prowler/pull/11043)
+- `network_vnet_ddos_protection_enabled` check for Azure provider, verifying virtual networks have Azure DDoS Network Protection enabled [(#11044)](https://github.com/prowler-cloud/prowler/pull/11044)
+- `entra_app_registration_credential_not_expired` check for Azure provider, verifying Entra ID app registration secrets and certificates are not expired, expiring within 30 days, or without an expiration date [(#11038)](https://github.com/prowler-cloud/prowler/pull/11038)
+- `entra_authentication_methods_policy_strong_auth_enforced` check for Azure provider, verifying the Entra ID authentication methods policy enforces MFA registration and enables at least one strong method (Microsoft Authenticator, FIDO2, or X.509 certificate) [(#11039)](https://github.com/prowler-cloud/prowler/pull/11039)
+- `entra_user_with_recent_sign_in` check for Azure provider, detecting stale enabled accounts that have not signed in within the last 90 days (requires Entra ID P1/P2 licensing for sign-in activity) [(#11040)](https://github.com/prowler-cloud/prowler/pull/11040)
+- `aks_cluster_auto_upgrade_enabled` check for Azure provider [(#11027)](https://github.com/prowler-cloud/prowler/pull/11027)
+- Public `Provider.get_class()` method that resolves a provider class by name for both built-in and external (entry-point) providers [(#11398)](https://github.com/prowler-cloud/prowler/pull/11398)
+- Jira timeout preventing the calls from hanging indefinitely when the Jira endpoint is unreachable or slow [(#11602)](https://github.com/prowler-cloud/prowler/pull/11602)
+- TLS certificate verification in the `codepipeline_project_repo_private` check, which previously used an unverified SSL context, leaving the repository-visibility probe open to MITM tampering [(#11603)](https://github.com/prowler-cloud/prowler/pull/11603)
+- Support for Linode cloud provider, with compute, networking and administration services [(#11633)](https://github.com/prowler-cloud/prowler/pull/11633)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Azure provider, mapping existing Azure checks across the five DORA pillars [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+- Rename DORA to DORA_2022_2554 to follow the naming <name>_<version> in compliance frameworks [(#11551)](https://github.com/prowler-cloud/prowler/pull/11551)
+- `entra_directory_sync_object_takeover_blocked` check for the M365 provider, verifying that hybrid Entra tenants block cloud object takeover through both soft-match and hard-match directory synchronization [(#11098)](https://github.com/prowler-cloud/prowler/pull/11098)
+- `entra_conditional_access_policy_no_deleted_object_references` check for M365 provider [(#11236)](https://github.com/prowler-cloud/prowler/pull/11236)
+- `aks_cluster_defender_enabled` check for Azure provider, verifying that AKS clusters have Microsoft Defender security monitoring enabled [(#11028)](https://github.com/prowler-cloud/prowler/pull/11028)
+- `recovery_vault_has_protected_items` check for Azure provider, verifying that Recovery Services vaults have at least one protected backup item [(#11048)](https://github.com/prowler-cloud/prowler/pull/11048)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the GCP provider, mapping existing GCP checks across the five DORA pillars [(#11642)](https://github.com/prowler-cloud/prowler/pull/11642)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the Cloudflare provider, mapping existing Cloudflare edge/network checks across the applicable DORA pillars [(#11645)](https://github.com/prowler-cloud/prowler/pull/11645)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) compliance coverage for the AlibabaCloud provider, mapping existing AlibabaCloud checks across the applicable DORA pillars [(#11646)](https://github.com/prowler-cloud/prowler/pull/11646)
+- `cloudfront_distributions_pqc_tls_enabled` check for AWS provider to verify CloudFront distributions enforce a post-quantum TLS 1.3 security policy [(#11317)](https://github.com/prowler-cloud/prowler/pull/11317)
+- `apigateway_domain_name_pqc_tls_enabled` check for AWS provider to verify API Gateway custom domain names use a post-quantum TLS security policy [(#11316)](https://github.com/prowler-cloud/prowler/pull/11316)
+- `transfer_server_pqc_ssh_kex_enabled` check for AWS provider to verify Transfer Family servers use a post-quantum hybrid SSH key exchange security policy [(#11315)](https://github.com/prowler-cloud/prowler/pull/11315)
+- `acmpca_certificate_authority_pqc_key_algorithm` check and new `acmpca` service for AWS provider to verify AWS Private CA certificate authorities use a post-quantum (ML-DSA) key algorithm [(#11318)](https://github.com/prowler-cloud/prowler/pull/11318)
+- `rolesanywhere_trust_anchor_pqc_pki` check and new `rolesanywhere` service for AWS provider to verify IAM Roles Anywhere trust anchors are backed by a post-quantum (ML-DSA) PKI [(#11319)](https://github.com/prowler-cloud/prowler/pull/11319)
+- Kubernetes core checks for container CPU limits, CPU requests, memory limits, memory requests, fixed image tags, liveness probes, and readiness probes [(#11373)](https://github.com/prowler-cloud/prowler/pull/11373)
+- `recovery_vault_backup_policy_retention_adequate` check for Azure provider, verifying Recovery Services backup policies retain daily backups for at least 30 days [(#11047)](https://github.com/prowler-cloud/prowler/pull/11047)
+
+### 🔄 Changed
+
+- Replaced the unmaintained `awsipranges` dependency with a small standard-library helper for the `route53_dangling_ip_subdomain_takeover` check [(#9293)](https://github.com/prowler-cloud/prowler/pull/9293)
+
+### 🐞 Fixed
+
+- Azure PostgreSQL flexible server inventory no longer aborts the whole subscription when the `connection_throttle.enable` parameter is missing (e.g. PostgreSQL v18), and logs the expected "Entra ID authentication not enabled" case as a warning instead of an error, so servers are still scanned [(#11045)](https://github.com/prowler-cloud/prowler/pull/11045)
+- `iam_policy_allows_privilege_escalation` now includes the `privilege-escalation` category [(#11648)](https://github.com/prowler-cloud/prowler/pull/11648)
+
+### 🔐 Security
+
+- `pytest` from 8.3.5 to 9.0.3, patching a known vulnerability in the SDK test dependency [(#11291)](https://github.com/prowler-cloud/prowler/pull/11291)
+- `black` from 25.1.0 to 26.3.1, patching a known vulnerability in the SDK formatter dependency [(#11290)](https://github.com/prowler-cloud/prowler/pull/11290)
+- `microsoft-kiota-*` to 1.9.9 and `aiohttp` to 3.14.0, patching known CVEs [(#11596)](https://github.com/prowler-cloud/prowler/pull/11596)
+- Container base image bumped to `python:3.12.13-slim-bookworm` (patches `libgnutls30` CVE-2026-33845 and CVE-2026-42010) and `trivy` bumped to 0.71.0 (patches embedded `golang.org/x/crypto` and Go stdlib CVEs); `.trivyignore` documents remaining bookworm criticals with no-fix or not-affected rationale [(#11592)](https://github.com/prowler-cloud/prowler/pull/11592)
+
+---
+
+## [5.30.3] (Prowler v5.30.3)
+
+### 🐞 Fixed
+
+- CLI compliance summary tables no longer undercount findings mapped to multiple sections nor double-count a single finding mapped to several requirements within the same group/split, and the Provider column no longer leaks a value from another framework [(#11567)](https://github.com/prowler-cloud/prowler/pull/11567)
+
+---
+
+## [5.30.2] (Prowler v5.30.2)
+
+### 🐞 Fixed
+
+- GCP `logging_log_metric_filter_and_alert_*` checks now credit org-level aggregated sinks filtered to the Admin Activity audit stream [(#11575)](https://github.com/prowler-cloud/prowler/pull/11575)
+- A broken built-in provider no longer aborts the CLI when a different provider was invoked [(#11618)](https://github.com/prowler-cloud/prowler/pull/11618)
+- GCP organization scans with `--organization-id` no longer silently fall back to the credentials' host project when the Cloud Asset API call fails [(#11280)](https://github.com/prowler-cloud/prowler/pull/11280)
+
+---
+
+## [5.30.0] (Prowler v5.30.0)
+
+### 🚀 Added
+
+- DISA Okta IDaaS STIG V1R2 compliance framework for the Okta provider, with a dedicated CSV output formatter and terminal summary table [(#11428)](https://github.com/prowler-cloud/prowler/pull/11428)
+- `sagemaker_models_monitor_enabled` check for AWS provider, verifying that each SageMaker monitoring schedule is in the `Scheduled` state so data and model drift is actively detected [(#11278)](https://github.com/prowler-cloud/prowler/pull/11278)
+- DORA (Digital Operational Resilience Act, Regulation (EU) 2022/2554) universal compliance framework with AWS provider coverage across the five DORA pillars [(#11131)](https://github.com/prowler-cloud/prowler/pull/11131)
+- Okta authenticator and password policy checks for STIG-aligned hardening requirements [(#11465)](https://github.com/prowler-cloud/prowler/pull/11465)
+- Okta network zone check to detect whether anonymized proxy traffic is blocked [(#11463)](https://github.com/prowler-cloud/prowler/pull/11463)
+- Okta API token checks for super admin ownership and network zone restrictions [(#11464)](https://github.com/prowler-cloud/prowler/pull/11464)
+- Support for external/custom providers, checks, and compliance frameworks without modifying core code [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+- `elbv2_alb_drop_invalid_header_fields_enabled` check for AWS provider, verifying Application Load Balancers have `routing.http.drop_invalid_header_fields.enabled` set to `true` to mitigate HTTP desync attacks (AWS FSBP ELB.4) [(#11471)](https://github.com/prowler-cloud/prowler/pull/11471)
+- `user`, `systemlog` and `idp` service for Okta provider with `user_inactivity_automation_35d_enabled`, `systemlog_streaming_enabled` and `idp_smart_card_dod_approved_ca` checks [(#11496)](https://github.com/prowler-cloud/prowler/pull/11496)
+- External multi-provider compliance frameworks can be registered via the `prowler.compliance.universal` entry point group [(#11490)](https://github.com/prowler-cloud/prowler/pull/11490)
+- AWS AI Security Framework support in the CLI dashboard [(#11475)](https://github.com/prowler-cloud/prowler/pull/11475)
+- `entra_service_principal_privileged_role_no_owners` check for M365 provider, failing when a service principal with a permanent Tier 0 directory role has owners on the service principal or its parent app registration [(#11070)](https://github.com/prowler-cloud/prowler/issues/11070)
+- `kms_key_rotation_max_90_days` check for GCP provider, verifying KMS customer-managed keys are rotated every 90 days or less in line with the CIS Benchmark [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
+- `exchange_mailbox_primary_smtp_uses_custom_domain` check for M365 provider [(#11215)](https://github.com/prowler-cloud/prowler/pull/11215)
+- `bedrock_agent_role_least_privilege` check for AWS provider, flagging Bedrock Agent execution roles with full-access managed policies, broad `Resource:*` inline statements, or missing permissions boundaries [(#11335)](https://github.com/prowler-cloud/prowler/pull/11335)
+- STACKIT ObjectStorage service with Object Lock, default retention policy, and access key expiration checks [(#11397)](https://github.com/prowler-cloud/prowler/pull/11397)
+
+### 🐞 Fixed
+
+- `load_and_validate_config_file` now unwraps namespaced config for every built-in and external provider, and no longer leaks the full file as the provider's config when the file is namespaced [(#10700)](https://github.com/prowler-cloud/prowler/pull/10700)
+- `entra_users_mfa_capable` no longer flags pre-provisioned users with future `employeeHireDate`; future-hire date comparisons now tolerate naive datetimes [(#11511)](https://github.com/prowler-cloud/prowler/pull/11511)
+- M365 Admin Center group enumeration now follows Microsoft Graph pagination so group-scoped checks include groups beyond the first page [(#11510)](https://github.com/prowler-cloud/prowler/pull/11510)
+- GCP `kms_key_rotation_enabled` check now only verifies that automatic key rotation is enabled (any interval) instead of enforcing a 90-day period, resolving the mismatch between the check and its documentation; the CIS, Prowler ThreatScore, and CCC requirements that mandate a 90-day maximum were remapped to the new `kms_key_rotation_max_90_days` check [(#11516)](https://github.com/prowler-cloud/prowler/pull/11516)
+- AWS CloudWatch log metric filter checks now validate `filterPattern` clauses regardless of order [(#11345)](https://github.com/prowler-cloud/prowler/pull/11345)
+- AWS `bedrock_api_key_no_long_term_credentials` now applies severity per finding (never-expires keys correctly flag as critical, no leak across findings) and aligns title and wording with AWS guidance to prefer short-term Bedrock API keys [(#11526)](https://github.com/prowler-cloud/prowler/pull/11526)
+
+### 🔐 Security
+
+- `dulwich` from 0.23.0 to 1.2.5 and `pyjwt` from 2.12.1 to 2.13.0, patching `GHSA-897w-fcg9-f6xj` (arbitrary file write) and `PYSEC-2026-179` (HMAC/JWK key confusion) [(#11499)](https://github.com/prowler-cloud/prowler/pull/11499)
+
+---
+
+## [5.29.3] (Prowler v5.29.3)
 
 ### 🐞 Fixed
 
 - GCP `logging_sink_created` now recognizes organization-level aggregated sinks with `includeChildren=True`, avoiding false failures for covered projects [(#11355)](https://github.com/prowler-cloud/prowler/pull/11355)
+- GCP `logging_log_metric_filter_and_alert_*` checks now recognize organization-level aggregated sinks with `includeChildren=True`, no longer false-failing projects covered by a central bucket-scoped metric + alert [(#11488)](https://github.com/prowler-cloud/prowler/pull/11488)
 - Jira integration no longer fails with `400 INVALID_INPUT` when a finding has empty fields [(#11474)](https://github.com/prowler-cloud/prowler/pull/11474)
 - GCP `iam_service_account_unused` now passes disabled service accounts instead of failing them, since a disabled account cannot authenticate or be used [(#11467)](https://github.com/prowler-cloud/prowler/pull/11467)
-- AWS AI Security Framework now renders in the dashboard instead of showing "No data found for this compliance", by adding the missing compliance view module [(#11470)](https://github.com/prowler-cloud/prowler/pull/11470)
 
 ---
 
@@ -108,6 +355,7 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `entra_service_principal_no_secrets_for_permanent_tier0_roles` check for M365 provider [(#10788)](https://github.com/prowler-cloud/prowler/pull/10788)
 - `iam_user_access_not_stale_to_sagemaker` check for AWS provider with configurable `max_unused_sagemaker_access_days` (default 90) [(#11000)](https://github.com/prowler-cloud/prowler/pull/11000)
 - `cloudtrail_bedrock_logging_enabled` check for AWS provider [(#10858)](https://github.com/prowler-cloud/prowler/pull/10858)
+- Per-provider scan configuration schema with bounds validation that drops out-of-range values with a warning on config load [(#11518)](https://github.com/prowler-cloud/prowler/pull/11518)
 - Okta provider with OAuth 2.0 authentication and `signon_global_session_idle_timeout_15min` check [(#11079)](https://github.com/prowler-cloud/prowler/pull/11079)
 - `sagemaker_domain_sso_configured` check for AWS provider [(#11094)](https://github.com/prowler-cloud/prowler/pull/11094)
 - Scaleway provider with `iam_api_keys_no_root_owned` check [(#11166)](https://github.com/prowler-cloud/prowler/pull/11166)
@@ -151,7 +399,6 @@ All notable changes to the **Prowler SDK** are documented in this file.
 - `bedrock_prompt_management_exists` check for AWS provider [(#10878)](https://github.com/prowler-cloud/prowler/pull/10878)
 - 8 Gmail attachment safety and spoofing protection checks for Google Workspace provider using the Cloud Identity Policy API [(#10980)](https://github.com/prowler-cloud/prowler/pull/10980)
 - `bedrock_prompt_encrypted_with_cmk` check for AWS provider [(#10905)](https://github.com/prowler-cloud/prowler/pull/10905)
-
 ### 🔄 Changed
 
 - Azure Network Watcher flow log checks now require workspace-backed Traffic Analytics for `network_flow_log_captured_sent` and align metadata with VNet-compatible flow log guidance [(#10645)](https://github.com/prowler-cloud/prowler/pull/10645)

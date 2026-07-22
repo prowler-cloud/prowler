@@ -6,12 +6,17 @@ from datetime import datetime
 import botocore
 import mock
 from boto3 import client, resource
+from botocore.exceptions import ClientError
 from dateutil.tz import tzutc
 from freezegun import freeze_time
 from moto import mock_aws
 
 from prowler.config.config import encoding_format_utf_8
-from prowler.providers.aws.services.ec2.ec2_service import EC2
+from prowler.providers.aws.services.ec2.ec2_service import (
+    DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE,
+    EC2,
+    Snapshot,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -102,6 +107,216 @@ class Test_EC2_Service:
         )
         ec2 = EC2(aws_provider)
         assert ec2.audited_account == AWS_ACCOUNT_NUMBER
+
+    def test_snapshot_limit_bounds_public_attribute_calls_to_latest_selected(self):
+        class FakeEC2Client:
+            def __init__(self):
+                self.calls = []
+
+            def describe_snapshot_attribute(self, **kwargs):
+                self.calls.append(kwargs["SnapshotId"])
+                return {"CreateVolumePermissions": []}
+
+        regional_client = FakeEC2Client()
+        ec2 = EC2.__new__(EC2)
+        ec2.snapshots = [
+            Snapshot(
+                id="snap-old",
+                arn="arn:aws:ec2:eu-west-1:123456789012:snapshot/snap-old",
+                region=AWS_REGION_EU_WEST_1,
+                encrypted=True,
+                start_time=datetime(2024, 1, 1),
+                volume="vol-old",
+            ),
+            Snapshot(
+                id="snap-new",
+                arn="arn:aws:ec2:eu-west-1:123456789012:snapshot/snap-new",
+                region=AWS_REGION_EU_WEST_1,
+                encrypted=True,
+                start_time=datetime(2024, 1, 2),
+                volume="vol-new",
+            ),
+        ]
+        ec2.snapshot_limit = 1
+        ec2.regional_clients = {AWS_REGION_EU_WEST_1: regional_client}
+
+        ec2._select_snapshots_for_analysis()
+        for snapshot in ec2.snapshots:
+            ec2._determine_public_snapshots(snapshot)
+
+        assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
+        assert regional_client.calls == ["snap-new"]
+
+    def test_snapshot_limit_preserves_volume_index_and_selects_global_latest(self):
+        class FakePaginator:
+            def __init__(self, snapshots):
+                self.snapshots = snapshots
+
+            def paginate(self, **kwargs):
+                assert "PageSize" not in kwargs
+                return [{"Snapshots": self.snapshots}]
+
+        class FakeEC2Client:
+            def __init__(self, region, snapshots):
+                self.region = region
+                self.snapshots = snapshots
+
+            def get_paginator(self, name):
+                assert name == "describe_snapshots"
+                return FakePaginator(self.snapshots)
+
+        ec2 = EC2.__new__(EC2)
+        ec2.snapshots = []
+        ec2.volumes_with_snapshots = {}
+        ec2.regions_with_snapshots = {}
+        ec2.snapshot_limit = 1
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+        old_client = FakeEC2Client(
+            AWS_REGION_EU_WEST_1,
+            [
+                {
+                    "SnapshotId": "snap-old",
+                    "VolumeId": "vol-old",
+                    "StartTime": datetime(2024, 1, 1),
+                }
+            ],
+        )
+        new_client = FakeEC2Client(
+            AWS_REGION_US_EAST_1,
+            [
+                {
+                    "SnapshotId": "snap-new",
+                    "VolumeId": "vol-new",
+                    "StartTime": datetime(2024, 1, 2),
+                }
+            ],
+        )
+
+        ec2._describe_snapshots(old_client)
+        ec2._describe_snapshots(new_client)
+        ec2._select_snapshots_for_analysis()
+
+        assert ec2.volumes_with_snapshots == {"vol-old": True, "vol-new": True}
+        assert [snapshot.id for snapshot in ec2.snapshots] == ["snap-new"]
+
+    def test_describe_images_by_id_preserves_valid_amis_when_batch_has_missing_ids(
+        self,
+    ):
+        missing_image_id = "ami-0000-missing"
+        valid_image_ids = [
+            f"ami-{index:04d}"
+            for index in range(1, DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE + 1)
+        ]
+        instance_image_ids = valid_image_ids + [missing_image_id]
+
+        class FakeInstance:
+            def __init__(self, image_id):
+                self.region = AWS_REGION_US_EAST_1
+                self.image_id = image_id
+
+        class FakeEC2Client:
+            region = AWS_REGION_US_EAST_1
+
+            def __init__(self):
+                self.image_id_calls = []
+
+            def describe_images(self, **kwargs):
+                if kwargs.get("Owners") == ["self"]:
+                    return {"Images": []}
+
+                image_ids = kwargs["ImageIds"]
+                self.image_id_calls.append(image_ids)
+                if missing_image_id in image_ids:
+                    raise ClientError(
+                        {
+                            "Error": {
+                                "Code": "InvalidAMIID.NotFound",
+                                "Message": "The image id does not exist",
+                            }
+                        },
+                        "DescribeImages",
+                    )
+
+                return {
+                    "Images": [
+                        {
+                            "ImageId": image_id,
+                            "Public": True,
+                            "ImageOwnerAlias": "amazon",
+                        }
+                        for image_id in image_ids
+                    ]
+                }
+
+        regional_client = FakeEC2Client()
+        ec2 = EC2.__new__(EC2)
+        ec2.instances = [FakeInstance(image_id) for image_id in instance_image_ids]
+        ec2.images = []
+        ec2.images_by_id = {}
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+
+        ec2._describe_images(regional_client)
+
+        assert (
+            len(regional_client.image_id_calls[0])
+            == DESCRIBE_IMAGES_IMAGE_IDS_BATCH_SIZE
+        )
+        assert regional_client.image_id_calls[-1] == [valid_image_ids[-1]]
+        assert missing_image_id not in ec2.images_by_id
+        assert set(ec2.images_by_id) == set(valid_image_ids)
+        assert {image.owner for image in ec2.images} == {"amazon"}
+
+    def test_describe_images_ignores_non_amazon_public_images_returned_by_image_id(
+        self,
+    ):
+        marketplace_image_id = "ami-marketplace-public"
+        vendor_image_id = "ami-vendor-public"
+
+        class FakeInstance:
+            def __init__(self, image_id):
+                self.region = AWS_REGION_US_EAST_1
+                self.image_id = image_id
+
+        class FakeEC2Client:
+            region = AWS_REGION_US_EAST_1
+
+            def describe_images(self, **kwargs):
+                if kwargs.get("Owners") == ["self"]:
+                    return {"Images": []}
+
+                return {
+                    "Images": [
+                        {
+                            "ImageId": marketplace_image_id,
+                            "Public": True,
+                            "ImageOwnerAlias": "aws-marketplace",
+                        },
+                        {
+                            "ImageId": vendor_image_id,
+                            "Public": True,
+                        },
+                    ]
+                }
+
+        ec2 = EC2.__new__(EC2)
+        ec2.instances = [
+            FakeInstance(marketplace_image_id),
+            FakeInstance(vendor_image_id),
+        ]
+        ec2.images = []
+        ec2.images_by_id = {}
+        ec2.audit_resources = []
+        ec2.audited_partition = "aws"
+        ec2.audited_account = AWS_ACCOUNT_NUMBER
+
+        ec2._describe_images(FakeEC2Client())
+
+        assert ec2.images == []
+        assert ec2.images_by_id == {}
 
     # Test EC2 Describe Instances
     @mock_aws
@@ -345,6 +560,24 @@ class Test_EC2_Service:
                 assert snapshot.region == AWS_REGION_US_EAST_1
                 assert not snapshot.encrypted
                 assert snapshot.public
+
+    @mock_aws
+    def test_snapshot_limit_exposes_only_selected_snapshots(self):
+        ec2_client = client("ec2", region_name=AWS_REGION_US_EAST_1)
+        ec2_resource = resource("ec2", region_name=AWS_REGION_US_EAST_1)
+        volume_id = ec2_resource.create_volume(
+            AvailabilityZone="us-east-1a",
+            Size=80,
+            VolumeType="gp2",
+        ).id
+        for _ in range(3):
+            ec2_client.create_snapshot(VolumeId=volume_id)
+        aws_provider = set_mocked_aws_provider(
+            [AWS_REGION_US_EAST_1], audit_config={"max_ebs_snapshots": 1}
+        )
+        ec2 = EC2(aws_provider)
+
+        assert len(ec2.snapshots) == 1
 
     # Test EC2 Instance User Data
     @mock_aws
@@ -632,9 +865,10 @@ class Test_EC2_Service:
             {"Key": "OS_Version", "Value": "AWS Linux 2"},
         ]
 
-        # Verify that Amazon images are also present
-        amazon_images = [img for img in ec2.images if img.owner == "amazon"]
-        assert len(amazon_images) > 0  # Should have Amazon AMIs
+        # Amazon public AMIs are fetched by targeted instance ImageIds only when
+        # AWS identifies them as Amazon-owned. Moto does not expose that owner
+        # alias for its fixture AMIs, so this service test only verifies the
+        # self-owned AMI behavior used by ec2_ami_public.
 
     # Test EC2 Describe Volumes
     @mock_aws

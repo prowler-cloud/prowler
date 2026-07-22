@@ -1,8 +1,9 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import { ComplianceBadgeVariant } from "@/components/compliance/compliance-custom-details/shared-components";
+import { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   AttributesData,
   CCCAttributesMetadata,
@@ -39,7 +40,7 @@ export interface CCCTextSection {
 export interface CCCMappingSection {
   title: string;
   key: keyof Requirement;
-  colorClasses: string;
+  variant: ComplianceBadgeVariant;
 }
 
 export const CCC_TEXT_SECTIONS: CCCTextSection[] = [
@@ -71,14 +72,12 @@ export const CCC_MAPPING_SECTIONS: CCCMappingSection[] = [
   {
     title: "Threat Mappings",
     key: "section_threat_mappings",
-    colorClasses:
-      "bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20",
+    variant: "error",
   },
   {
     title: "Guideline Mappings",
     key: "section_guideline_mappings",
-    colorClasses:
-      "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
+    variant: "info",
   },
 ];
 
@@ -94,6 +93,7 @@ const createRequirement = (itemData: ProcessedItem): Requirement => {
     description: description,
     status: finalStatus,
     check_ids: checks,
+    invalid_config: requirementData.attributes.invalid_config || false,
     pass: finalStatus === REQUIREMENT_STATUS.PASS ? 1 : 0,
     fail: finalStatus === REQUIREMENT_STATUS.FAIL ? 1 : 0,
     manual: finalStatus === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
@@ -180,6 +180,7 @@ const createRequirementAccordionItem = (
       type=""
       name={requirement.name}
       status={requirement.status as FindingStatus}
+      invalidConfig={requirement.invalid_config}
     />
   ),
   content: (

@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { downloadScanZip } from "./helper";
+import {
+  downloadScanZip,
+  getErrorMessage,
+  permissionFormFields,
+} from "./helper";
 
 vi.mock("@/actions/scans", () => ({
   getComplianceCsv: vi.fn(),
@@ -116,5 +120,38 @@ describe("downloadScanZip", () => {
       description:
         "Unable to prepare the scan report. Please try again in a few minutes.",
     });
+  });
+});
+
+describe("getErrorMessage", () => {
+  it("does not expose HTML gateway pages", () => {
+    // Given
+    const error = new Error(
+      "<html><head><title>502 Bad Gateway</title></head><body><h1>502 Bad Gateway</h1></body></html>",
+    );
+
+    // When
+    const message = getErrorMessage(error);
+
+    // Then
+    expect(message).toBe(
+      "Server is temporarily unavailable. Please try again in a few minutes.",
+    );
+  });
+});
+
+describe("permissionFormFields", () => {
+  it("describes Unlimited Visibility as organization-wide", () => {
+    // Given
+    const field = permissionFormFields.find(
+      ({ field }) => field === "unlimited_visibility",
+    );
+
+    // When
+    const description = field?.description;
+
+    // Then
+    expect(description).toContain("organization-wide visibility");
+    expect(description).not.toContain("tenant-wide");
   });
 });

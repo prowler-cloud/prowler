@@ -2681,6 +2681,17 @@
         "app_function_latest_runtime_version",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -2705,6 +2716,17 @@
         "app_function_latest_runtime_version",
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -3903,6 +3925,17 @@
         "app_ensure_php_version_is_latest",
         "storage_ensure_minimum_tls_version_12",
         "storage_smb_protocol_version_is_latest"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -4352,6 +4385,17 @@
         "sqlserver_recommended_minimal_tls_version",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -5743,6 +5787,17 @@
         "storage_ensure_minimum_tls_version_12",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -5770,6 +5825,17 @@
         "storage_ensure_minimum_tls_version_12",
         "sqlserver_tde_encrypted_with_cmk",
         "sqlserver_tde_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -6513,6 +6579,17 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "sqlserver_recommended_minimal_tls_version",
         "storage_ensure_minimum_tls_version_12"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {

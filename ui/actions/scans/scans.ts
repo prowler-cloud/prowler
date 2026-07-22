@@ -3,18 +3,21 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { apiBaseUrl, getAuthHeaders, getErrorMessage } from "@/lib";
+import {
+  apiBaseUrl,
+  GENERIC_SERVER_ERROR_MESSAGE,
+  getAuthHeaders,
+  getErrorMessage,
+} from "@/lib";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
-import {
-  appendSanitizedProviderTypeFilters,
-  sanitizeProviderTypesCsv,
-} from "@/lib/provider-filters";
+import { appendSanitizedProviderTypeFilters } from "@/lib/provider-filters";
 import { addScanOperation } from "@/lib/sentry-breadcrumbs";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
+import { SCAN_STATES } from "@/types/attack-paths";
 
 const ORGANIZATION_SCAN_CONCURRENCY_LIMIT = 5;
 export const getScans = async ({
@@ -60,10 +63,10 @@ export const getScansByState = async () => {
   const url = new URL(`${apiBaseUrl}/scans`);
   // Request only the necessary fields to optimize the response
   url.searchParams.append("fields[scans]", "state");
-  url.searchParams.append(
-    "filter[provider_type__in]",
-    sanitizeProviderTypesCsv(),
-  );
+  // Only need to know whether at least one completed scan exists; filter server-side
+  // and cap to a single row so the answer is correct regardless of total scan count.
+  url.searchParams.append("filter[state]", SCAN_STATES.COMPLETED);
+  url.searchParams.append("page[size]", "1");
 
   try {
     const response = await fetch(url.toString(), {
@@ -157,18 +160,20 @@ export const scheduleDaily = async (formData: FormData) => {
 
   const url = new URL(`${apiBaseUrl}/schedules/daily`);
 
+  const body = {
+    data: {
+      type: "daily-schedules",
+      attributes: {
+        provider_id: providerId,
+      },
+    },
+  };
+
   try {
     const response = await fetch(url.toString(), {
       method: "POST",
       headers,
-      body: JSON.stringify({
-        data: {
-          type: "daily-schedules",
-          attributes: {
-            provider_id: providerId,
-          },
-        },
-      }),
+      body: JSON.stringify(body),
     });
 
     return handleApiResponse(response, "/scans");
@@ -244,6 +249,27 @@ export const launchOrganizationScans = async (
   return summary;
 };
 
+async function getScanReportErrorMessage(
+  response: Response,
+  fallbackMessage: string,
+): Promise<string> {
+  const contentType = response.headers.get("content-type")?.toLowerCase() || "";
+
+  if (contentType.includes("text/html")) {
+    return GENERIC_SERVER_ERROR_MESSAGE;
+  }
+
+  const errorData = await response.json().catch(() => null);
+
+  return (
+    errorData?.errors?.[0]?.detail ||
+    errorData?.errors?.detail ||
+    errorData?.error ||
+    errorData?.message ||
+    (response.status >= 500 ? GENERIC_SERVER_ERROR_MESSAGE : fallbackMessage)
+  );
+}
+
 export const updateScan = async (formData: FormData) => {
   const headers = await getAuthHeaders({ contentType: true });
 
@@ -295,11 +321,11 @@ export const getExportsZip = async (scanId: string) => {
     }
 
     if (!response.ok) {
-      const errorData = await response.json();
-
       throw new Error(
-        errorData?.errors?.detail ||
+        await getScanReportErrorMessage(
+          response,
           "Unable to fetch scan report. Contact support if the issue continues.",
+        ),
       );
     }
 
@@ -370,10 +396,11 @@ const _fetchScanBinary = async (
     }
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData?.errors?.detail ||
+        await getScanReportErrorMessage(
+          response,
           `Unable to retrieve ${errorLabel}. Contact support if the issue continues.`,
+        ),
       );
     }
 

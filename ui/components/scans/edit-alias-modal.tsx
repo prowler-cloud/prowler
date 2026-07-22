@@ -8,9 +8,9 @@ import { z } from "zod";
 
 import { updateScan } from "@/actions/scans";
 import { Field, FieldError, FieldLabel, Input } from "@/components/shadcn";
+import { FormButtons } from "@/components/shadcn/form";
 import { Modal } from "@/components/shadcn/modal";
-import { FormButtons } from "@/components/ui/form";
-import { toast } from "@/components/ui/toast";
+import { toast } from "@/components/shadcn/toast";
 
 import { scanAliasSchema } from "./scan-alias-validation";
 

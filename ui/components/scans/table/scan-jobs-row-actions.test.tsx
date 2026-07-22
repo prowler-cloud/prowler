@@ -1,19 +1,25 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ScanProps } from "@/types";
+import { SCAN_SCHEDULE_CAPABILITY } from "@/types/schedules";
 
 import { ScanJobsRowActions } from "./scan-jobs-row-actions";
 
-const { downloadScanZipMock, getTaskMock, pushMock, toastMock } = vi.hoisted(
-  () => ({
-    downloadScanZipMock: vi.fn(),
-    getTaskMock: vi.fn(),
-    pushMock: vi.fn(),
-    toastMock: vi.fn(),
-  }),
-);
+const {
+  downloadScanZipMock,
+  getScheduleMock,
+  getTaskMock,
+  pushMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  downloadScanZipMock: vi.fn(),
+  getScheduleMock: vi.fn(),
+  getTaskMock: vi.fn(),
+  pushMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
@@ -21,12 +27,17 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useToast: () => ({ toast: toastMock }),
 }));
 
 vi.mock("@/actions/task", () => ({
   getTask: getTaskMock,
+}));
+
+vi.mock("@/actions/schedules", () => ({
+  getSchedule: getScheduleMock,
 }));
 
 vi.mock("@/lib/helper", () => ({
@@ -49,6 +60,26 @@ vi.mock("@/components/scans/edit-alias-modal", () => ({
     open ? (
       <div role="dialog" aria-label="Edit Alias">
         Editing {currentAlias}
+      </div>
+    ) : null,
+}));
+
+vi.mock("@/components/scans/schedule/edit-scan-schedule-modal", () => ({
+  EDIT_SCAN_SCHEDULE_STATE: {
+    LOADING: "loading",
+    LOADED: "loaded",
+    ERROR: "error",
+  },
+  EditScanScheduleModal: ({
+    open,
+    provider,
+  }: {
+    open: boolean;
+    provider?: { providerId: string };
+  }) =>
+    open ? (
+      <div role="dialog" aria-label="Edit Scan Schedule">
+        Editing schedule for {provider?.providerId}
       </div>
     ) : null,
 }));
@@ -80,6 +111,19 @@ const makeScan = (
 });
 
 describe("ScanJobsRowActions", () => {
+  beforeEach(() => {
+    getScheduleMock.mockResolvedValue({
+      data: {
+        type: "schedules",
+        id: "provider-1",
+        attributes: { scan_hour: null },
+        relationships: {
+          provider: { data: { type: "providers", id: "provider-1" } },
+        },
+      },
+    });
+  });
+
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.clearAllMocks();
@@ -89,13 +133,15 @@ describe("ScanJobsRowActions", () => {
     // Given
     const user = userEvent.setup();
 
-    render(<ScanJobsRowActions scan={makeScan()} />);
+    render(<ScanJobsRowActions scan={makeScan()} tab="scheduled" />);
 
     // When
     await user.click(
       screen.getByRole("button", { name: /open actions menu/i }),
     );
-    await user.click(screen.getByRole("menuitem", { name: /^edit$/i }));
+    await user.click(
+      screen.getByRole("menuitem", { name: /edit scan alias/i }),
+    );
 
     // Then
     expect(
@@ -103,11 +149,34 @@ describe("ScanJobsRowActions", () => {
     ).toHaveTextContent("Editing Production scan");
   });
 
-  it("does not render the legacy Edit Scan Schedule option", async () => {
+  it("opens Edit Scan Schedule for Prowler Cloud subscribed scan rows", async () => {
     // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
-    render(<ScanJobsRowActions scan={makeScan()} />);
+    render(<ScanJobsRowActions scan={makeScan()} tab="scheduled" />);
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    await user.click(
+      screen.getByRole("menuitem", { name: /edit scan schedule/i }),
+    );
+
+    // Then
+    expect(
+      screen.getByRole("dialog", { name: /edit scan schedule/i }),
+    ).toHaveTextContent("Editing schedule for provider-1");
+  });
+
+  it("hides Edit Scan Schedule outside Prowler Cloud (OSS)", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+    const user = userEvent.setup();
+
+    render(<ScanJobsRowActions scan={makeScan()} tab="scheduled" />);
 
     // When
     await user.click(
@@ -120,12 +189,17 @@ describe("ScanJobsRowActions", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("does not render cancel scan while the scan cancellation API is missing", async () => {
-    // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+  it("hides Edit Scan Schedule outside the Scheduled tab even on Cloud", async () => {
+    // Given - advanced capability (Cloud) but rendered in the Completed tab.
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     const user = userEvent.setup();
 
-    render(<ScanJobsRowActions scan={makeScan()} />);
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({ state: "completed" })}
+        tab="completed"
+      />,
+    );
 
     // When
     await user.click(
@@ -134,7 +208,55 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(
-      screen.queryByRole("menuitem", { name: /cancel scan/i }),
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for manual-only Cloud scan rows", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+
+    render(
+      <ScanJobsRowActions
+        scan={makeScan()}
+        tab="scheduled"
+        capability={SCAN_SCHEDULE_CAPABILITY.MANUAL_ONLY}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("hides Edit Scan Schedule for blocked Cloud scan rows", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+
+    render(
+      <ScanJobsRowActions
+        scan={makeScan()}
+        tab="scheduled"
+        capability={SCAN_SCHEDULE_CAPABILITY.BLOCKED}
+      />,
+    );
+
+    // When
+    await user.click(
+      screen.getByRole("button", { name: /open actions menu/i }),
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("menuitem", { name: /edit scan schedule/i }),
     ).not.toBeInTheDocument();
   });
 
@@ -147,6 +269,7 @@ describe("ScanJobsRowActions", () => {
           state: "completed",
           completed_at: "2026-01-01T10:05:00Z",
         })}
+        tab="completed"
       />,
     );
 
@@ -171,6 +294,7 @@ describe("ScanJobsRowActions", () => {
           state: "completed",
           completed_at: "2026-01-01T10:05:00Z",
         })}
+        tab="completed"
       />,
     );
 
@@ -197,6 +321,7 @@ describe("ScanJobsRowActions", () => {
           state: "completed",
           completed_at: "2026-01-01T10:05:00Z",
         })}
+        tab="completed"
       />,
     );
 
@@ -208,7 +333,7 @@ describe("ScanJobsRowActions", () => {
 
     // Then
     expect(pushMock).toHaveBeenCalledWith(
-      "/findings?filter[scan]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
+      "/findings?filter[scan__in]=scan-1&filter[inserted_at]=2026-01-01&filter[status__in]=FAIL",
     );
   });
 
@@ -221,6 +346,7 @@ describe("ScanJobsRowActions", () => {
           state: "completed",
           completed_at: "2026-01-01T10:05:00Z",
         })}
+        tab="completed"
       />,
     );
 
@@ -261,6 +387,7 @@ describe("ScanJobsRowActions", () => {
           state: "failed",
           completed_at: "2026-01-01T10:05:00Z",
         })}
+        tab="completed"
       />,
     );
 
@@ -292,7 +419,12 @@ describe("ScanJobsRowActions", () => {
     // Given
     const user = userEvent.setup();
 
-    render(<ScanJobsRowActions scan={makeScan({ state: "completed" })} />);
+    render(
+      <ScanJobsRowActions
+        scan={makeScan({ state: "completed" })}
+        tab="completed"
+      />,
+    );
 
     // When
     await user.click(

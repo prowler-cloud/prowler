@@ -1,5 +1,9 @@
 import "@testing-library/jest-dom/vitest";
 
+// An ambient UI_CLOUD_ENABLED in a developer's shell would silently flip
+// every test that relies on the OSS default — clear it.
+delete process.env.UI_CLOUD_ENABLED;
+
 class MockStorage implements Storage {
   private readonly store = new Map<string, string>();
 
@@ -70,4 +74,14 @@ if (!Range.prototype.getClientRects) {
 
 if (!Range.prototype.getBoundingClientRect) {
   Range.prototype.getBoundingClientRect = () => emptyRect;
+}
+
+class MockResizeObserver implements ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+if (!globalThis.ResizeObserver) {
+  globalThis.ResizeObserver = MockResizeObserver;
 }

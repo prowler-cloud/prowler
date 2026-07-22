@@ -2,11 +2,9 @@ import json
 from unittest.mock import ANY, Mock, patch
 
 import pytest
-from conftest import TEST_PASSWORD, TODAY
-from django.urls import reverse
-from rest_framework import status
-
 from api.models import (
+    Integration,
+    IntegrationProviderRelationship,
     Membership,
     ProviderGroup,
     ProviderGroupMembership,
@@ -15,7 +13,11 @@ from api.models import (
     User,
     UserRoleRelationship,
 )
+from api.rbac.permissions import HasPermissions, Permissions
 from api.v1.serializers import TokenSerializer
+from conftest import TEST_PASSWORD, TODAY
+from django.urls import reverse
+from rest_framework import status
 
 
 @pytest.mark.django_db
@@ -104,20 +106,84 @@ class TestUserViewSet:
         assert response.json()["data"]["attributes"]["name"] == "Updated Name"
 
     def test_partial_update_user_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, create_test_user
+        self, authenticated_client_no_permissions_rbac, create_test_user_rbac_limited
     ):
         updated_data = {
             "data": {
                 "type": "users",
+                "id": str(create_test_user_rbac_limited.id),
                 "attributes": {"name": "Updated Name"},
             }
         }
         response = authenticated_client_no_permissions_rbac.patch(
-            reverse("user-detail", kwargs={"pk": create_test_user.id}),
+            reverse("user-detail", kwargs={"pk": create_test_user_rbac_limited.id}),
             data=updated_data,
-            format="vnd.api+json",
+            content_type="application/vnd.api+json",
         )
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["name"] == "Updated Name"
+
+    def test_partial_update_other_user_with_no_permissions_denied(
+        self, authenticated_client_no_permissions_rbac, tenants_fixture
+    ):
+        original_email = "target-rbac-update@example.com"
+        original_password = "OriginalPassword123@"
+        target_user = User.objects.create_user(
+            name="target_rbac_update",
+            email=original_email,
+            password=original_password,
+        )
+        Membership.objects.create(user=target_user, tenant=tenants_fixture[0])
+        updated_data = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {
+                    "email": "updated-target-rbac@example.com",
+                    "password": "UpdatedPassword123@",
+                },
+            }
+        }
+
+        response = authenticated_client_no_permissions_rbac.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=updated_data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        target_user.refresh_from_db()
+        assert target_user.email == original_email
+        assert target_user.check_password(original_password)
+
+    def test_partial_update_other_user_with_manage_users_allowed(
+        self, authenticated_client_rbac_manage_users_only
+    ):
+        user = authenticated_client_rbac_manage_users_only.user
+        tenant = Membership.objects.filter(user=user).first().tenant
+        target_user = User.objects.create_user(
+            name="target_manage_users_update",
+            email="target-manage-users-update@example.com",
+            password="Password123@",
+        )
+        Membership.objects.create(user=target_user, tenant=tenant)
+        updated_data = {
+            "data": {
+                "type": "users",
+                "id": str(target_user.id),
+                "attributes": {"name": "Updated Target Name"},
+            }
+        }
+
+        response = authenticated_client_rbac_manage_users_only.patch(
+            reverse("user-detail", kwargs={"pk": target_user.id}),
+            data=updated_data,
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        target_user.refresh_from_db()
+        assert target_user.name == "Updated Target Name"
 
     def test_delete_user_with_all_permissions(
         self, authenticated_client_rbac, create_test_user_rbac
@@ -371,11 +437,11 @@ class TestUserViewSet:
 @pytest.mark.django_db
 class TestProviderViewSet:
     def test_list_providers_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
         response = authenticated_client_rbac.get(reverse("provider-list"))
         assert response.status_code == status.HTTP_200_OK
-        assert len(response.json()["data"]) == len(providers_fixture)
+        assert len(response.json()["data"]) == 1
 
     def test_list_providers_with_no_permissions(
         self, authenticated_client_no_permissions_rbac
@@ -387,9 +453,9 @@ class TestProviderViewSet:
         assert len(response.json()["data"]) == 0
 
     def test_retrieve_provider_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_rbac.get(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -397,9 +463,9 @@ class TestProviderViewSet:
         assert response.json()["data"]["attributes"]["alias"] == provider.alias
 
     def test_retrieve_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.get(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -423,9 +489,9 @@ class TestProviderViewSet:
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_partial_update_provider_with_all_permissions(
-        self, authenticated_client_rbac, providers_fixture
+        self, authenticated_client_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         payload = {
             "data": {
                 "type": "providers",
@@ -442,9 +508,9 @@ class TestProviderViewSet:
         assert response.json()["data"]["attributes"]["alias"] == "updated_alias"
 
     def test_partial_update_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         update_payload = {
             "data": {
                 "type": "providers",
@@ -465,7 +531,7 @@ class TestProviderViewSet:
         mock_delete_task,
         mock_task_get,
         authenticated_client_rbac,
-        providers_fixture,
+        aws_provider,
         tasks_fixture,
     ):
         prowler_task = tasks_fixture[0]
@@ -474,7 +540,7 @@ class TestProviderViewSet:
         mock_delete_task.return_value = task_mock
         mock_task_get.return_value = prowler_task
 
-        provider1, *_ = providers_fixture
+        provider1 = aws_provider
         response = authenticated_client_rbac.delete(
             reverse("provider-detail", kwargs={"pk": provider1.id})
         )
@@ -486,9 +552,9 @@ class TestProviderViewSet:
         assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_delete_provider_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.delete(
             reverse("provider-detail", kwargs={"pk": provider.id})
         )
@@ -501,7 +567,7 @@ class TestProviderViewSet:
         mock_provider_connection,
         mock_task_get,
         authenticated_client_rbac,
-        providers_fixture,
+        aws_provider,
         tasks_fixture,
     ):
         prowler_task = tasks_fixture[0]
@@ -511,7 +577,7 @@ class TestProviderViewSet:
         mock_provider_connection.return_value = task_mock
         mock_task_get.return_value = prowler_task
 
-        provider1, *_ = providers_fixture
+        provider1 = aws_provider
         assert provider1.connected is None
         assert provider1.connection_last_checked_at is None
 
@@ -526,9 +592,9 @@ class TestProviderViewSet:
         assert response.headers["Content-Location"] == f"/api/v1/tasks/{task_mock.id}"
 
     def test_connection_with_no_permissions(
-        self, authenticated_client_no_permissions_rbac, providers_fixture
+        self, authenticated_client_no_permissions_rbac, aws_provider
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         response = authenticated_client_no_permissions_rbac.post(
             reverse("provider-connection", kwargs={"pk": provider.id})
         )
@@ -541,12 +607,10 @@ class TestLimitedVisibility:
     TEST_PASSWORD = "Thisisapassword123@"
 
     @pytest.fixture
-    def limited_admin_user(
-        self, django_db_setup, django_db_blocker, tenants_fixture, providers_fixture
-    ):
+    def limited_admin_user(self, django_db_blocker, tenants_fixture, aws_provider):
         with django_db_blocker.unblock():
             tenant = tenants_fixture[0]
-            provider = providers_fixture[0]
+            provider = aws_provider
             user = User.objects.create_user(
                 name="testing",
                 email=self.TEST_EMAIL,
@@ -593,25 +657,17 @@ class TestLimitedVisibility:
 
     @pytest.fixture
     def authenticated_client_rbac_limited(
-        self, limited_admin_user, tenants_fixture, client
+        self,
+        limited_admin_user,
+        tenants_fixture,
+        authenticated_client_for_tenant_factory,
     ):
-        client.user = limited_admin_user
-        tenant_id = tenants_fixture[0].id
-        serializer = TokenSerializer(
-            data={
-                "type": "tokens",
-                "email": self.TEST_EMAIL,
-                "password": self.TEST_PASSWORD,
-                "tenant_id": tenant_id,
-            }
+        return authenticated_client_for_tenant_factory(
+            limited_admin_user, tenants_fixture[0]
         )
-        serializer.is_valid(raise_exception=True)
-        access_token = serializer.validated_data["access"]
-        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-        return client
 
     def test_integrations(
-        self, authenticated_client_rbac_limited, integrations_fixture, providers_fixture
+        self, authenticated_client_rbac_limited, integrations_fixture
     ):
         # Integration 2 is related to provider1 and provider 2
         # This user cannot see provider 2
@@ -627,11 +683,368 @@ class TestLimitedVisibility:
             response.json()["data"]["relationships"]["providers"]["meta"]["count"] == 1
         )
 
+    @pytest.fixture
+    def jira_integration(self, tenants_fixture):
+        # Jira is a tenant-wide integration: it is not attached to any provider
+        return Integration.objects.create(
+            tenant_id=tenants_fixture[0].id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.JIRA,
+            configuration={"projects": {"TEST": "Test project"}},
+            credentials={
+                "domain": "test",
+                "user_mail": "a@b.com",
+                "api_token": "token",
+            },
+        )
+
+    @pytest.fixture
+    def out_of_scope_integration(self, tenants_fixture, provider_factory):
+        tenant_id = tenants_fixture[0].id
+        integration = Integration.objects.create(
+            tenant_id=tenant_id,
+            enabled=True,
+            connected=True,
+            integration_type=Integration.IntegrationChoices.AMAZON_S3,
+            configuration={
+                "bucket_name": "bucket",
+                "output_directory": "output",
+            },
+            credentials={"aws_access_key_id": "key"},
+        )
+        IntegrationProviderRelationship.objects.create(
+            tenant_id=tenant_id,
+            integration=integration,
+            provider=provider_factory(),
+        )
+        return integration
+
+    def test_integrations_list_includes_tenant_wide_integration(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        jira_integration,
+        aws_provider_pair,
+    ):
+        # Integration 2 is attached to both providers, so make both visible to the role
+        # to assert the provider join does not duplicate it in the listing
+        ProviderGroupMembership.objects.create(
+            tenant_id=aws_provider_pair[1].tenant_id,
+            provider=aws_provider_pair[1],
+            provider_group=ProviderGroup.objects.get(name="limited_visibility_group"),
+        )
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        # The tenant-wide Jira integration is visible without unlimited visibility
+        assert str(jira_integration.id) in integration_ids
+        # Integrations attached to more than one visible provider are not duplicated
+        assert integration_ids.count(str(integrations_fixture[1].id)) == 1
+        assert response.json()["meta"]["pagination"]["count"] == len(integration_ids)
+
+    def test_integrations_list_without_provider_groups_keeps_tenant_wide_integration(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+    ):
+        # A role with no provider group at all sees no provider, but still needs Jira
+        RoleProviderGroupRelationship.objects.all().delete()
+
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert integration_ids == [str(jira_integration.id)]
+
+    def test_integrations_include_providers_hides_out_of_scope_providers(
+        self, authenticated_client_rbac_limited, integrations_fixture, aws_provider_pair
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        hidden_provider = aws_provider_pair[1]
+
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"include": "providers"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        included_ids = {item["id"] for item in response.json().get("included", [])}
+        assert str(aws_provider_pair[0].id) in included_ids
+        # Sideloaded resources must not disclose the provider the role cannot see
+        assert str(hidden_provider.id) not in included_ids
+
+    def test_integrations_list_with_sparse_fields(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-list"), {"fields[integrations]": "enabled"}
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert all(
+            list(item["attributes"].keys()) == ["enabled"]
+            for item in response.json()["data"]
+        )
+
+    def test_integrations_list_excludes_out_of_scope_integration(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(reverse("integration-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        integration_ids = [item["id"] for item in response.json()["data"]]
+        assert str(out_of_scope_integration.id) not in integration_ids
+
+    def test_integration_detail_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse("integration-detail", kwargs={"pk": out_of_scope_integration.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_connection_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-connection", kwargs={"pk": out_of_scope_integration.id}
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_integration_update_allowed_when_fully_visible(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+    ):
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "enabled": False,
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        integration.refresh_from_db()
+        assert integration.enabled is False
+
+        # Tenant-wide integrations have no provider restricting the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(jira_integration.id),
+                "attributes": {"enabled": False},
+            }
+        }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": jira_integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        jira_integration.refresh_from_db()
+        assert jira_integration.enabled is False
+
+    def test_integration_create_rejects_out_of_scope_provider(
+        self, authenticated_client_rbac_limited, aws_provider_pair
+    ):
+        # provider2 is not in any provider group assigned to the role
+        payload = {
+            "data": {
+                "type": "integrations",
+                "attributes": {
+                    "integration_type": "amazon_s3",
+                    "configuration": {
+                        "bucket_name": "attacker_bucket",
+                        "output_directory": "output",
+                    },
+                    "credentials": {"aws_access_key_id": "key"},
+                },
+                "relationships": {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": str(aws_provider_pair[1].id)}
+                        ]
+                    }
+                },
+            }
+        }
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("integration-list"),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Integration.objects.filter(
+            integrationproviderrelationship__provider=aws_provider_pair[1],
+            configuration__bucket_name="attacker_bucket",
+        ).exists()
+
+    @pytest.mark.parametrize("submitted_providers", [True, False])
+    def test_integration_update_denied_when_shared_with_hidden_provider(
+        self,
+        authenticated_client_rbac_limited,
+        integrations_fixture,
+        aws_provider_pair,
+        submitted_providers,
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible).
+        # Editing it would reach beyond the visibility of the role, just like deleting
+        # it, so both are rejected consistently
+        integration = integrations_fixture[1]
+        visible_provider, hidden_provider = aws_provider_pair
+        payload = {
+            "data": {
+                "type": "integrations",
+                "id": str(integration.id),
+                "attributes": {
+                    "enabled": False,
+                    # integration_type is `amazon_s3`
+                    "credentials": {"aws_access_key_id": "new_value"},
+                    "configuration": {
+                        "bucket_name": "new_bucket_name",
+                        "output_directory": "new_output_directory",
+                    },
+                },
+            }
+        }
+        if submitted_providers:
+            payload["data"]["relationships"] = {
+                "providers": {
+                    "data": [{"type": "providers", "id": str(visible_provider.id)}]
+                }
+            }
+
+        response = authenticated_client_rbac_limited.patch(
+            reverse("integration-detail", kwargs={"pk": integration.id}),
+            data=json.dumps(payload),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        integration.refresh_from_db()
+        assert integration.enabled is True
+        assert integration.providers.filter(id=hidden_provider.id).exists()
+        assert integration.providers.filter(id=visible_provider.id).exists()
+
+    def test_integration_delete_denied_when_shared_with_hidden_provider(
+        self, authenticated_client_rbac_limited, integrations_fixture
+    ):
+        # Integration 2 is related to provider1 (visible) and provider2 (not visible)
+        integration = integrations_fixture[1]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert Integration.objects.filter(id=integration.id).exists()
+
+    def test_integration_delete_allowed_when_fully_visible(
+        self, authenticated_client_rbac_limited, integrations_fixture, jira_integration
+    ):
+        # Integration 1 is only related to provider1, which the role can access
+        integration = integrations_fixture[0]
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": integration.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert not Integration.objects.filter(id=integration.id).exists()
+
+        # Tenant-wide integrations have no provider restricting the role
+        response = authenticated_client_rbac_limited.delete(
+            reverse("integration-detail", kwargs={"pk": jira_integration.id})
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    def test_jira_issue_types_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration
+    ):
+        with patch("api.v1.views.initialize_prowler_integration") as mock_jira:
+            mock_jira.return_value.get_available_issue_types.return_value = ["Task"]
+            response = authenticated_client_rbac_limited.get(
+                reverse(
+                    "integration-jira-issue-types",
+                    kwargs={"integration_pk": jira_integration.id},
+                ),
+                {"project_key": "TEST"},
+            )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.json()["data"]["attributes"]["issue_types"] == ["Task"]
+
+    def test_jira_issue_types_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse(
+                "integration-jira-issue-types",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            {"project_key": "TEST"},
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_out_of_scope_returns_404(
+        self, authenticated_client_rbac_limited, out_of_scope_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": out_of_scope_integration.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_jira_dispatches_allowed_without_unlimited_visibility(
+        self, authenticated_client_rbac_limited, jira_integration
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "integration-jira-dispatches",
+                kwargs={"integration_pk": jira_integration.id},
+            ),
+            data=json.dumps({}),
+            content_type="application/vnd.api+json",
+        )
+
+        # The integration is reachable: the request fails on payload validation, not RBAC
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_providers(
         self,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
@@ -641,7 +1054,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(reverse("overview-providers"))
@@ -649,6 +1062,7 @@ class TestLimitedVisibility:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.json()["data"]) == 0
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     @pytest.mark.parametrize(
         "endpoint_name",
         [
@@ -660,8 +1074,7 @@ class TestLimitedVisibility:
         self,
         endpoint_name,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(
@@ -674,7 +1087,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(
@@ -685,11 +1098,11 @@ class TestLimitedVisibility:
         data = response.json()["data"]["attributes"].values()
         assert all(value == 0 for value in data)
 
+    @pytest.mark.usefixtures("scan_summaries_fixture")
     def test_overviews_services(
         self,
         authenticated_client_rbac_limited,
-        scan_summaries_fixture,
-        providers_fixture,
+        provider_factory,
     ):
         # By default, the associated provider is the one which has the overview data
         response = authenticated_client_rbac_limited.get(
@@ -701,7 +1114,7 @@ class TestLimitedVisibility:
 
         # Changing the provider visibility, no data should be returned
         # Only the associated provider to that group is changed
-        new_provider = providers_fixture[1]
+        new_provider = provider_factory()
         ProviderGroupMembership.objects.all().update(provider=new_provider)
 
         response = authenticated_client_rbac_limited.get(
@@ -761,6 +1174,48 @@ class TestRolePermissions:
             content_type="application/vnd.api+json",
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+@pytest.mark.django_db
+class TestHasPermissions:
+    def test_permissions_are_combined_across_roles(
+        self, create_test_user_rbac_no_roles
+    ):
+        user = create_test_user_rbac_no_roles
+        tenant = Membership.objects.get(user=user).tenant
+        manage_users_role = Role.objects.create(
+            name="manage_users_only",
+            tenant=tenant,
+            manage_users=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=manage_users_role,
+            tenant=tenant,
+        )
+        request = Mock(user=user, tenant_id=tenant.id)
+        view = Mock(
+            required_permissions=[
+                Permissions.MANAGE_USERS,
+                Permissions.MANAGE_ACCOUNT,
+            ]
+        )
+        permission = HasPermissions()
+
+        assert not permission.has_permission(request, view)
+
+        manage_account_role = Role.objects.create(
+            name="manage_account_only",
+            tenant=tenant,
+            manage_account=True,
+        )
+        UserRoleRelationship.objects.create(
+            user=user,
+            role=manage_account_role,
+            tenant=tenant,
+        )
+
+        assert permission.has_permission(request, view)
 
 
 @pytest.mark.django_db

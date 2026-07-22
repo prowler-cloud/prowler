@@ -18,6 +18,7 @@ import KISALogo from "./kisa.svg";
 import MITRELogo from "./mitre-attack.svg";
 import NIS2Logo from "./nis2.svg";
 import NISTLogo from "./nist.svg";
+import OktaLogo from "./okta.svg";
 import PCILogo from "./pci-dss.svg";
 import PROWLERTHREATLogo from "./prowlerThreat.svg";
 import RBILogo from "./rbi.svg";
@@ -68,10 +69,12 @@ const COMPLIANCE_LOGOS = [
   ["c5", C5Logo],
   ["ccc", CCCLogo],
   ["csa", CSALogo],
-  // DORA — universal framework (`prowler/compliance/dora.json`). The
-  // compliance_id is just `dora`, no provider suffix.
+  // DORA — universal framework (`prowler/compliance/dora_2022_2554.json`).
+  // The compliance_id is `dora_2022_2554`; the `dora` keyword still matches
+  // it via `includes`, with no provider suffix.
   ["dora", DORALogo],
   ["secnumcloud", ANSSILogo],
+  ["okta", OktaLogo],
   ["aws", AWSLogo],
 ] as const;
 

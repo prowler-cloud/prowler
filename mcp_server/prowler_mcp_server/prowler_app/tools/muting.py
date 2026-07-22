@@ -1,4 +1,4 @@
-"""Muting tools for Prowler App MCP Server.
+"""Muting tools for Prowler MCP Server.
 
 This module provides tools for managing finding muting in Prowler, including:
 - Mutelist management (pattern-based bulk muting)
@@ -43,7 +43,7 @@ class MutingTools(BaseTool):
         Workflow:
         1. Use this tool to check if a mutelist is configured
         2. Examine current muting patterns before making updates
-        3. Use prowler_app_set_mutelist to create or update the configuration
+        3. Use prowler_set_mutelist to create or update the configuration
         """
         self.logger.info("Retrieving mutelist configuration...")
 
@@ -61,7 +61,7 @@ class MutingTools(BaseTool):
         if len(data) == 0:
             return {
                 "error": "No mutelist found",
-                "message": "No mutelist configuration exists for this tenant. Use prowler_app_set_mutelist to create one.",
+                "message": "No mutelist configuration exists for this tenant. Use prowler_set_mutelist to create one.",
             }
 
         # Return the first (and only) mutelist
@@ -116,10 +116,10 @@ Structure:
         - Exceptions: Accounts, Regions, Resources to exclude from muting
 
         Workflow:
-        1. Use prowler_app_get_mutelist to check existing configuration
+        1. Use prowler_get_mutelist to check existing configuration
         2. Build configuration object following Prowler mutelist format
         3. Use this tool to create or update the mutelist
-        4. Verify with prowler_app_get_mutelist
+        4. Verify with prowler_get_mutelist
         """
         self.logger.info("Setting mutelist configuration...")
 
@@ -171,12 +171,12 @@ Structure:
         """Remove the mutelist configuration from the tenant.
 
         WARNING: This is a destructive operation that cannot be undone.
-        - The mutelist will need to be re-created with prowler_app_set_mutelist
+        - The mutelist will need to be re-created with prowler_set_mutelist
         - New findings from future scans will NOT be muted by the deleted mutelist
         - Previously muted findings remain muted (deletion doesn't un-mute them)
 
         Workflow:
-        1. Use prowler_app_get_mutelist to confirm what will be deleted
+        1. Use prowler_get_mutelist to confirm what will be deleted
         2. Use this tool to permanently remove the mutelist
         3. New scans will no longer apply mutelist-based muting
         """
@@ -229,7 +229,7 @@ Structure:
         """Search and filter mute rules with pagination support.
 
         IMPORTANT: This tool returns LIGHTWEIGHT mute rules without the full list of finding UIDs.
-        Use prowler_app_get_mute_rule to get complete details including all finding UIDs and creator information.
+        Use prowler_get_mute_rule to get complete details including all finding UIDs and creator information.
 
         Default behavior:
         - Returns all mute rules (both enabled and disabled)
@@ -237,15 +237,15 @@ Structure:
         - Includes basic rule information without full finding UID lists
 
         Each mute rule includes:
-        - Core identification: id (UUID for prowler_app_get_mute_rule), name
+        - Core identification: id (UUID for prowler_get_mute_rule), name
         - Contextual information: reason, enabled status
         - State tracking: finding_count (number of findings currently muted)
         - Temporal data: inserted_at, updated_at timestamps
 
         Workflow:
         1. Use this tool to search and filter mute rules by name, enabled status, or keywords
-        2. Use prowler_app_get_mute_rule with the mute rule 'id' to get complete details including all finding UIDs
-        3. Use prowler_app_update_mute_rule or prowler_app_delete_mute_rule to modify rules
+        2. Use prowler_get_mute_rule with the mute rule 'id' to get complete details including all finding UIDs
+        3. Use prowler_update_mute_rule or prowler_delete_mute_rule to modify rules
         """
         self.logger.info("Listing mute rules...")
         self.api_client.validate_page_size(page_size)
@@ -289,17 +289,17 @@ Structure:
         """Retrieve comprehensive details about a specific mute rule by its ID.
 
         IMPORTANT: This tool returns COMPLETE mute rule details including the full list of finding UIDs.
-        Use this after finding a rule via prowler_app_list_mute_rules.
+        Use this after finding a rule via prowler_list_mute_rules.
 
-        This tool provides ALL information that prowler_app_list_mute_rules returns PLUS:
+        This tool provides ALL information that prowler_list_mute_rules returns PLUS:
         - finding_uids: Complete list of finding UIDs that are muted by this rule
         - user_creator_id: UUID of the user who created the rule (audit trail)
 
         Workflow:
-        1. Use prowler_app_list_mute_rules to find rules by name or filter criteria
+        1. Use prowler_list_mute_rules to find rules by name or filter criteria
         2. Use this tool with the rule 'id' to get complete details
         3. Examine finding_uids list to understand which findings are muted
-        4. Use prowler_app_update_mute_rule or prowler_app_delete_mute_rule to modify if needed
+        4. Use prowler_update_mute_rule or prowler_delete_mute_rule to modify if needed
         """
         self.logger.info(f"Retrieving mute rule {rule_id}...")
 
@@ -323,7 +323,7 @@ Structure:
             description="Reason for muting these findings. Document why this security issue is acceptable or intentional (e.g., 'Development environment with controlled access', 'Legacy application requires IMDSv1')."
         ),
         finding_ids: list[str] = Field(
-            description="List of finding IDs (UUIDs) to mute. Get these from the prowler_app_search_security_findings tool. Must provide at least 1 finding ID."
+            description="List of finding IDs (UUIDs) to mute. Get these from the prowler_search_security_findings tool. Must provide at least 1 finding ID."
         ),
     ) -> dict[str, Any]:
         """Create a new mute rule to mute specific findings with documentation and audit trail.
@@ -337,15 +337,15 @@ Structure:
         - Records creator for audit trail
 
         The mute rule includes:
-        - Core identification: id (UUID for prowler_app_get_mute_rule), name, reason
+        - Core identification: id (UUID for prowler_get_mute_rule), name, reason
         - Configuration: enabled status, finding_uids list
         - Audit trail: user_creator_id (UUID of the Prowler user from the tenant that created the rule), timestamps when the rule was created and last modified
 
         Workflow:
-        1. Use prowler_app_search_security_findings to identify findings to mute
+        1. Use prowler_search_security_findings to identify findings to mute
         2. Use this tool with finding IDs, descriptive name, and documented reason
-        3. Verify with prowler_app_get_mute_rule to confirm rule creation
-        4. Check findings are muted with prowler_app_search_security_findings (filter by muted=true)
+        3. Verify with prowler_get_mute_rule to confirm rule creation
+        4. Check findings are muted with prowler_search_security_findings (filter by muted=true)
         """
         self.logger.info(f"Creating mute rule '{name}'...")
 
@@ -399,9 +399,9 @@ Structure:
         - enabled: Toggle rule active status (doesn't affect already-muted findings)
 
         Workflow:
-        1. Use prowler_app_get_mute_rule to see current rule state
+        1. Use prowler_get_mute_rule to see current rule state
         2. Use this tool to update name, reason, or enabled status
-        3. Verify changes with prowler_app_get_mute_rule
+        3. Verify changes with prowler_get_mute_rule
         """
         self.logger.info(f"Updating mute rule {rule_id}...")
 
@@ -451,9 +451,9 @@ Structure:
         - Cannot be undone - rule must be recreated to restore
 
         Workflow:
-        1. Use prowler_app_get_mute_rule to review what will be deleted
+        1. Use prowler_get_mute_rule to review what will be deleted
         2. Use this tool to permanently remove the rule
-        3. Verify deletion with prowler_app_list_mute_rules (rule should no longer appear)
+        3. Verify deletion with prowler_list_mute_rules (rule should no longer appear)
         """
         self.logger.info(f"Deleting mute rule {rule_id}...")
 

@@ -4,11 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { createIntegration, updateIntegration } from "@/actions/integrations";
-import { useToast } from "@/components/ui";
-import { CustomInput } from "@/components/ui/custom";
-import { CustomLink } from "@/components/ui/custom/custom-link";
-import { Form } from "@/components/ui/form";
-import { FormButtons } from "@/components/ui/form/form-buttons";
+import { useToast } from "@/components/shadcn";
+import { CustomInput } from "@/components/shadcn/custom";
+import { CustomLink } from "@/components/shadcn/custom/custom-link";
+import { Form } from "@/components/shadcn/form";
+import { FormButtons } from "@/components/shadcn/form/form-buttons";
 import {
   type CreateValues,
   editJiraIntegrationFormSchema,
@@ -222,7 +222,7 @@ export const JiraIntegrationForm = ({
       >
         <div className="flex flex-col gap-4">
           <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center">
-            <p className="text-default-500 flex items-center gap-2 text-sm">
+            <p className="text-text-neutral-tertiary flex items-center gap-2 text-sm">
               Need help configuring your Jira integration?
             </p>
             <CustomLink

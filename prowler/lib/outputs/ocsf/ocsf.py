@@ -1,10 +1,8 @@
-import importlib
 import json
 import os
 from datetime import datetime, timezone
-from functools import lru_cache
 from random import getrandbits
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from py_ocsf_models.events.base_event import SeverityID, StatusID
 from py_ocsf_models.events.findings.detection_finding import (
@@ -340,52 +338,26 @@ def _build_analytic(finding: Finding) -> Analytic:
     )
 
 
-@lru_cache(maxsize=None)
-def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
-    """Load and cache MITRE ATT&CK technique data for a given provider.
-
-    Returns a dict mapping technique ID (e.g. "T1078") to its requirement record.
-    Only AWS, Azure, and GCP have bundled MITRE compliance files.
-    """
-    try:
-        compliance_root = importlib.import_module("prowler.compliance").__path__[0]
-        mitre_file = os.path.join(
-            compliance_root, provider, f"mitre_attack_{provider}.json"
-        )
-        with open(mitre_file) as fh:
-            data = json.load(fh)
-        return {req["Id"]: req for req in data.get("Requirements", [])}
-    except Exception:
-        return {}
-
-
 def _build_mitre_attacks(finding: Finding) -> Optional[List[MITREAttack]]:
     """Build a list of MITREAttack objects from a finding's MITRE-ATTACK compliance entries."""
-    technique_ids = finding.compliance.get("MITRE-ATTACK", [])
-    if not technique_ids:
-        return None
-
-    technique_map = _load_mitre_technique_map(finding.provider)
-    if not technique_map:
-        return None
-
     attacks = []
-    for technique_id in technique_ids:
-        req = technique_map.get(technique_id)
-        if not req:
+    for compliance in finding.metadata.Compliance or []:
+        if compliance.Framework.upper() != "MITRE-ATTACK":
             continue
-        technique = Technique(
-            uid=technique_id,
-            name=req["Name"],
-            src_url=req.get("TechniqueURL"),
-        )
-        for tactic_name in req.get("Tactics", []):
-            attacks.append(
-                MITREAttack(
-                    technique=technique,
-                    tactic=Tactic(name=tactic_name),
-                )
+
+        for requirement in compliance.Requirements:
+            technique = Technique(
+                uid=requirement.Id,
+                name=requirement.Name,
+                src_url=requirement.TechniqueURL,
             )
+            for tactic_name in requirement.Tactics:
+                attacks.append(
+                    MITREAttack(
+                        technique=technique,
+                        tactic=Tactic(name=tactic_name),
+                    )
+                )
 
     return attacks if attacks else None
 

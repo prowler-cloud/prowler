@@ -2,6 +2,8 @@
 title: 'Creating a New Security Compliance Framework in Prowler'
 ---
 
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
 This guide explains how to add a new security compliance framework to Prowler, end to end. It covers directory layout, the two supported JSON schemas (universal and legacy), the Pydantic models that validate each framework, check mapping conventions, output formatting, local validation, testing, and the pull request process.
 
 ## Introduction
@@ -23,7 +25,7 @@ Requirement coverage feeds the compliance percentage calculations and the metada
 | **Universal (recommended for new frameworks)** | Multi-provider frameworks, or single-provider frameworks that benefit from declarative table/PDF rendering | `prowler/compliance/<framework>.json` (top-level) | Available for **every** provider whose key appears in any `requirement.checks` dict |
 | **Legacy provider-specific** | Single-provider frameworks with framework-specific attribute classes already declared in the codebase (CIS, ENS, ISO 27001, etc.) | `prowler/compliance/<provider>/<framework>_<version>_<provider>.json` | Available only under that provider |
 
-Auto-discovery happens in `get_bulk_compliance_frameworks_universal(provider)` (`prowler/lib/check/compliance_models.py:915`), which scans **both** the top-level `prowler/compliance/` directory and every per-provider sub-directory. Legacy frameworks are transparently converted to the universal `ComplianceFramework` model via `adapt_legacy_to_universal()` before being returned, so the rest of Prowler — CLI table rendering, CSV/OCSF outputs, PDF generation — works the same regardless of the source schema.
+Auto-discovery happens in `get_bulk_compliance_frameworks_universal(provider)` (`prowler/lib/check/compliance_models.py`), which scans **both** the top-level `prowler/compliance/` directory and every per-provider sub-directory. Legacy frameworks are transparently converted to the universal `ComplianceFramework` model via `adapt_legacy_to_universal()` before being returned, so the rest of Prowler — CLI table rendering, CSV/OCSF outputs, PDF generation — works the same regardless of the source schema.
 
 > The legacy entry-point `Compliance.get_bulk(provider)` (used by older code paths) only scans per-provider sub-directories. Universal top-level files are picked up exclusively via the universal loader; this matters if you are wiring a new code path against the legacy API.
 
@@ -38,7 +40,7 @@ Before adding a new framework, complete the following checks:
 - **Verify the framework is not already supported.** Inspect `prowler/compliance/` and every `prowler/compliance/<provider>/` for an existing JSON file matching the name and version.
 - **Confirm the required checks exist.** Every requirement that can be automated must point to one or more existing Prowler checks. For each missing check, implement it first by following the [Prowler Checks](/developer-guide/checks) guide.
 - **Review a reference framework.** Use an existing framework with a similar structure as your template:
-  - Universal: `prowler/compliance/dora.json`, `prowler/compliance/csa_ccm_4.0.json`.
+  - Universal: `prowler/compliance/dora_2022_2554.json`, `prowler/compliance/csa_ccm_4.0.json`.
   - Legacy: `prowler/compliance/aws/cis_2.0_aws.json` (canonical CIS shape), `prowler/compliance/aws/ccc_aws.json`, `prowler/compliance/aws/ens_rd2022_aws.json`, `prowler/compliance/aws/nist_800_53_revision_5_aws.json`.
 
 ## Universal Compliance Framework
@@ -51,9 +53,9 @@ Place the file at the top level of the compliance directory:
 prowler/compliance/<framework_name>.json
 ```
 
-Examples in the repository: `prowler/compliance/csa_ccm_4.0.json`, `prowler/compliance/dora.json`.
+Examples in the repository: `prowler/compliance/csa_ccm_4.0.json`, `prowler/compliance/dora_2022_2554.json`.
 
-The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module. The framework key Prowler CLI accepts via `--compliance` is the basename of the JSON file without `.json` (`dora.json` → `dora`).
+The file is auto-discovered — there is **no** need to register it in any `__init__.py`, modify `prowler/lib/outputs/`, or update any other Python module. The framework key Prowler CLI accepts via `--compliance` is the basename of the JSON file without `.json` (`dora_2022_2554.json` → `dora_2022_2554`).
 
 ### Top-level structure
 
@@ -70,13 +72,13 @@ The file is auto-discovered — there is **no** need to register it in any `__in
 }
 ```
 
-A `provider` field at the top level is **optional**. The framework's effective provider list is derived by `ComplianceFramework.get_providers()` (`compliance_models.py:739`) from the union of all keys appearing in `requirement.checks` across all requirements; the explicit `provider` field is used **only as a fallback** when no requirement carries any `checks` key. This is what enables a single file (e.g. `dora.json`) to cover AWS today and add Azure / GCP / etc. tomorrow without restructuring.
+A `provider` field at the top level is **optional**. The framework's effective provider list is derived by `ComplianceFramework.get_providers()` (`compliance_models.py`) from the union of all keys appearing in `requirement.checks` across all requirements; the explicit `provider` field is used **only as a fallback** when no requirement carries any `checks` key. This is what enables a single file (e.g. `dora_2022_2554.json`) to cover AWS today and add Azure / GCP / etc. tomorrow without restructuring.
 
 Provider keys inside `requirement.checks` must match the directory names under `prowler/providers/`. The valid keys at present are: `aws`, `azure`, `gcp`, `m365`, `kubernetes`, `iac`, `github`, `googleworkspace`, `alibabacloud`, `cloudflare`, `mongodbatlas`, `nhn`, `openstack`, `oraclecloud`, `llm`. Comparison in `supports_provider()` is case-insensitive, but lowercase is the convention used everywhere in the repository.
 
 ### `attributes_metadata`
 
-Declares the shape of the per-requirement `attributes` dict. When this field is present, the root validator `validate_attributes_against_metadata` (`compliance_models.py:669`) enforces the schema at load time and rejects:
+Declares the shape of the per-requirement `attributes` dict. When this field is present, the root validator `validate_attributes_against_metadata` (`compliance_models.py`) enforces the schema at load time and rejects:
 
 - Missing keys marked `required: true`.
 - Keys present in `attributes` but not declared in `attributes_metadata` (typo / drift guard).
@@ -192,6 +194,7 @@ Per requirement:
 - `name`: short title shown alongside the id.
 - `attributes`: flat dict; keys must conform to `attributes_metadata`.
 - `checks`: dict keyed by provider name (the same lowercase keys listed in the previous section). Each value is a list of Prowler check names that evidence this requirement for that provider. The list **may be empty** and the dict itself defaults to `{}` if omitted; either way the requirement is still loaded and listed by `--list-compliance-requirements`, it just has zero checks to execute. Note: there is **no automatic check-existence validation** at load time — referencing a non-existent check name will silently produce a requirement with no findings. Validate this yourself (see "Validating Your Framework" below).
+- `config_requirements`: optional list of configuration guardrails. Each entry asserts that a configurable check referenced by this requirement ran with a configuration strict enough to actually satisfy the requirement; otherwise the requirement is forced to FAIL. See [Configuration Guardrails for Requirements](#configuration-guardrails-for-requirements) for the full schema and semantics. In the universal schema the field name is lowercase (`config_requirements`); legacy files use `ConfigRequirements`.
 
 For MITRE-style frameworks, additional optional fields are available on the requirement: `tactics`, `sub_techniques`, `platforms`, `technique_url` (these are populated automatically when adapting a legacy MITRE JSON to the universal model).
 
@@ -258,12 +261,12 @@ prowler/lib/outputs/compliance/<framework>/
 
 ### JSON schema reference
 
-Every legacy compliance file is a JSON document with the following top-level keys. `Framework`, `Name` and `Provider` are validated non-empty by the root validator `framework_and_provider_must_not_be_empty` (`compliance_models.py:329`).
+Every legacy compliance file is a JSON document with the following top-level keys. `Framework`, `Name` and `Provider` are validated non-empty by the root validator `framework_and_provider_must_not_be_empty` (`compliance_models.py`).
 
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `Framework` | string | Yes | Canonical framework identifier, for example `CIS`, `NIST-800-53-Revision-5`, `ENS`, `CCC`. |
-| `Name` | string | Yes | Human-readable framework name displayed by Prowler App. |
+| `Name` | string | Yes | Human-readable framework name displayed by Prowler Cloud and Prowler Local Server. |
 | `Version` | string | Yes (recommended) | Framework version, e.g. `2.0`. See [Version Handling](#version-handling). |
 | `Provider` | string | Yes | Upper-cased provider identifier: `AWS`, `AZURE`, `GCP`, `KUBERNETES`, `M365`, `GITHUB`, `GOOGLEWORKSPACE`, and so on. |
 | `Description` | string | Yes | Short description of the framework's scope and purpose. |
@@ -280,10 +283,11 @@ Each entry in `Requirements` describes one control or requirement.
 | `Description` | string | Yes | Verbatim description from the source framework. |
 | `Attributes` | array | Yes | List of [attribute objects](#attribute-objects). The shape depends on the framework. |
 | `Checks` | array of strings | Yes | Prowler check identifiers that automate the requirement. Leave the list empty when the control cannot be automated. |
+| `ConfigRequirements` | array of objects | No | Optional [configuration guardrails](#configuration-guardrails-for-requirements). Each entry asserts that a configurable check ran with a configuration strict enough to satisfy the requirement; when it did not, the requirement is forced to FAIL. |
 
 #### Attribute Objects
 
-`Attributes` is parsed against the union declared in `Compliance_Requirement.Attributes` (`compliance_models.py:293`). Pydantic v1 tries each member of the union in declaration order and falls back to `Generic_Compliance_Requirement_Attribute` (the last entry) when nothing else matches — so a brand-new shape that doesn't match any existing class will silently be accepted as Generic, losing its specific fields.
+`Attributes` is parsed against the union declared in `Compliance_Requirement.Attributes` (`compliance_models.py`). Pydantic v1 tries each member of the union in declaration order and falls back to `Generic_Compliance_Requirement_Attribute` (the last entry) when nothing else matches — so a brand-new shape that doesn't match any existing class will silently be accepted as Generic, losing its specific fields.
 
 As of today, the registered attribute classes are: `CIS_Requirement_Attribute`, `ENS_Requirement_Attribute`, `ASDEssentialEight_Requirement_Attribute`, `ISO27001_2013_Requirement_Attribute`, `AWS_Well_Architected_Requirement_Attribute`, `KISA_ISMSP_Requirement_Attribute`, `Prowler_ThreatScore_Requirement_Attribute`, `CCC_Requirement_Attribute`, `C5Germany_Requirement_Attribute`, `CSA_CCM_Requirement_Attribute`, and `Generic_Compliance_Requirement_Attribute` (fallback). MITRE-style frameworks use the separate `Mitre_Requirement` model with `Tactics` / `SubTechniques` / `Platforms` / `TechniqueURL` at the requirement top level. The most common shapes are summarized below.
 
@@ -472,12 +476,187 @@ For NIST-style catalogs that use `Generic_Compliance_Requirement_Attribute`, no 
 
 ### Legacy-to-universal adapter
 
-At load time, every legacy file is transparently adapted to a `ComplianceFramework` via `adapt_legacy_to_universal()` (`compliance_models.py:819`), which: (a) flattens the first element of `Attributes` into a flat `attributes` dict, (b) wraps `Checks` as `{provider_lower: [...]}`, (c) infers `attributes_metadata` from the matched Pydantic class via `_infer_attribute_metadata()`. The rest of Prowler (CSV/OCSF/PDF output, CLI table) then treats both formats identically.
+At load time, every legacy file is transparently adapted to a `ComplianceFramework` via `adapt_legacy_to_universal()` (`compliance_models.py`), which: (a) flattens the first element of `Attributes` into a flat `attributes` dict, (b) wraps `Checks` as `{provider_lower: [...]}`, (c) infers `attributes_metadata` from the matched Pydantic class via `_infer_attribute_metadata()`. The rest of Prowler (CSV/OCSF/PDF output, CLI table) then treats both formats identically.
 
 Loader-error behaviour differs between the two entry points:
 
-- `load_compliance_framework()` (legacy) is **fail-fast**: it calls `sys.exit(1)` on any `ValidationError` (`compliance_models.py:464`).
+- `load_compliance_framework()` (legacy) is **fail-fast**: it calls `sys.exit(1)` on any `ValidationError` (`compliance_models.py`).
 - `load_compliance_framework_universal()` is more lenient — it logs the error and returns `None`, so `get_bulk_compliance_frameworks_universal()` simply skips the broken file and keeps loading the rest.
+
+## Configuration Guardrails for Requirements
+
+<VersionBadge version="5.32.0" />
+
+Some requirements are only truly satisfied when the configurable checks behind them ran with a configuration strict enough to meet the control. A [configurable check](/developer-guide/configurable-checks) reads thresholds from the scan's `audit_config`, so loosening a value can make the check PASS while the requirement it backs is, in fact, not satisfied.
+
+A worked example: CIS AWS 6.0 requirement 2.11 ("credentials unused for 45 days or more are disabled") maps to `iam_user_accesskey_unused`, which is driven by the `max_unused_access_keys_days` config key. If a user raises that value to `120`, the check passes for a key unused for 90 days — yet the requirement explicitly demands a 45-day threshold, so the PASS is misleading.
+
+Configuration guardrails close that gap. A requirement declares the configuration it expects, and when the scan ran with a configuration too loose to honor it, the requirement is forced to **FAIL** in every compliance output, with the reason surfaced in the finding's extended status.
+
+<Note>
+Guardrails are an **optional** safety net for configurable checks. A requirement that maps only to non-configurable checks does not need them. When the field is absent, behavior is unchanged.
+</Note>
+
+### Where guardrails are declared
+
+The field is attached to each requirement and exists in both schemas:
+
+- **Legacy** (`prowler/compliance/<provider>/...`): `ConfigRequirements`, a list of objects, validated against the `Compliance_Requirement_ConfigConstraint` Pydantic model (`prowler/lib/check/compliance_models.py`).
+- **Universal** (`prowler/compliance/...`): `config_requirements`, the same list of objects as plain dicts on `UniversalComplianceRequirement`.
+
+When a legacy file is adapted to the universal model, `adapt_legacy_to_universal()` copies `ConfigRequirements` into `config_requirements` (`compliance_models.py`), so downstream code only ever reads one shape.
+
+### Constraint schema
+
+Each entry in the list is a single constraint with the following fields:
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `Check` | string | Yes | The configurable check this constraint guards. Should be one of the requirement's `Checks`. Used only to build a human-readable reason. |
+| `ConfigKey` | string | Yes | The `audit_config` key the check reads (for example `max_unused_access_keys_days`). |
+| `Operator` | enum | Yes | How to compare the applied value against `Value`. One of `lte`, `gte`, `eq`, `in`, `subset`, `superset`. |
+| `Value` | bool, int, float, string, or list | Yes | The strictest configuration the requirement tolerates. The accepted Python type depends on the operator (see below). |
+| `Provider` | string | No | The provider this constraint applies to (e.g. `aws`). **Required for universal (multi-provider) frameworks**, where the same requirement maps checks across providers — the constraint is only evaluated when the scanned provider matches. Single-provider (legacy) frameworks omit it. |
+
+### Operators
+
+| Operator | Applied value satisfies the guardrail when… | Typical use |
+|---|---|---|
+| `lte` | `applied <= Value` | Maximum-age / maximum-count thresholds (e.g. `max_unused_access_keys_days <= 45`). |
+| `gte` | `applied >= Value` | Minimum-retention / minimum-count thresholds. |
+| `eq` | `applied == Value` | Boolean toggles or an exact required value (e.g. `mute_non_default_regions == false`). |
+| `in` | `applied` is one of `Value` (a list) | The applied scalar must belong to an allowed set. |
+| `subset` | `set(applied) <= set(Value)` | **Allowlist** configs — every applied value must already be permitted. Widening the allowlist with a weaker value (e.g. adding TLS `1.0` to `recommended_minimal_tls_versions`) breaks the guardrail. |
+| `superset` | `set(applied) >= set(Value)` | **Denylist** configs — every forbidden value must remain forbidden. Removing an entry from a denylist (e.g. dropping a weak algorithm from `insecure_key_algorithms`) breaks the guardrail. |
+
+<Note>
+`subset` / `superset` require both the applied value and `Value` to be lists; any other type is treated as not satisfied. For `eq` against a boolean, declare `Value` as a JSON boolean (`false`, not `0`) — the model keeps booleans distinct from integers.
+</Note>
+
+### How guardrails are evaluated
+
+All evaluation lives in one shared module, `prowler/lib/check/compliance_config_eval.py`, consumed by every compliance output (CSV, OCSF, and the CLI tables) and reused by the Prowler API backend so the rule is defined exactly once.
+
+1. The applied configuration is the scan-global `audit_config` (the same mapping for every resource and region), resolved via `get_scan_audit_config()`.
+2. For each requirement that declares constraints, `evaluate_config_constraints()` walks the list and returns `(is_compliant, reason)`. The requirement is compliant when **every** explicitly-set key satisfies its constraint.
+3. A constraint tagged with a `Provider` that does **not** match the provider being scanned (resolved via `get_scan_provider_type()`) is **skipped**. This scopes a universal framework's constraints to the right provider, so a guardrail authored for an AWS check never affects a GCP or Azure scan of the same requirement. Untagged constraints (legacy single-provider frameworks) always apply.
+4. A constraint whose `ConfigKey` is **not present** in `audit_config` is **skipped** — the check's built-in default is assumed to already match what the requirement expects. This is why nothing changes for the default configuration.
+5. When a constraint is violated, the finding's status is overridden to `FAIL` and a plain-language explanation is prepended to `status_extended` (via `apply_config_status()`). The message opens with `Configuration not valid for this requirement.` and names the check, the value the scan applied, what the requirement needs and how to fix it. For the table generators, `get_effective_status()` applies the same FAIL roll-up so per-section counts stay consistent.
+
+<Warning>
+Guardrails only ever make a result **stricter** (they can turn PASS into FAIL); they never relax a real FAIL into PASS. A requirement with no constraints, or whose keys all use defaults, is reported exactly as before.
+</Warning>
+
+### Example: legacy framework
+
+From `prowler/compliance/aws/cis_6.0_aws.json`, requirement 2.11 declares two guardrails — one per configurable check it maps to:
+
+```json title="prowler/compliance/aws/cis_6.0_aws.json"
+{
+  "Id": "2.11",
+  "Description": "Ensure credentials unused for 45 days or more are disabled.",
+  "Checks": [
+    "iam_user_accesskey_unused",
+    "iam_user_console_access_unused"
+  ],
+  "ConfigRequirements": [
+    {
+      "Check": "iam_user_accesskey_unused",
+      "ConfigKey": "max_unused_access_keys_days",
+      "Operator": "lte",
+      "Value": 45
+    },
+    {
+      "Check": "iam_user_console_access_unused",
+      "ConfigKey": "max_console_access_days",
+      "Operator": "lte",
+      "Value": 45
+    }
+  ],
+  "Attributes": [ /* ... */ ]
+}
+```
+
+A boolean guardrail from the same file: requirement 2.5 (IAM Access Analyzer) only holds when regions are not muted, so a scan with `mute_non_default_regions: true` cannot be trusted for it:
+
+```json
+"ConfigRequirements": [
+  {
+    "Check": "accessanalyzer_enabled",
+    "ConfigKey": "mute_non_default_regions",
+    "Operator": "eq",
+    "Value": false
+  }
+]
+```
+
+### Example: universal framework
+
+The universal schema uses the lowercase `config_requirements` key with the identical object shape:
+
+```json
+{
+  "id": "MF-2.1",
+  "name": "Restrict TLS to modern versions",
+  "description": "Endpoints must negotiate only TLS 1.2 or higher.",
+  "checks": {
+    "aws": ["elbv2_listener_ssl_listeners"]
+  },
+  "config_requirements": [
+    {
+      "Check": "elbv2_listener_ssl_listeners",
+      "Provider": "aws",
+      "ConfigKey": "recommended_minimal_tls_versions",
+      "Operator": "subset",
+      "Value": ["TLS 1.2", "TLS 1.3"]
+    }
+  ]
+}
+```
+
+Each constraint declares the `Provider` it targets so the guardrail is only evaluated on scans of that provider — essential for universal frameworks like CSA CCM and DORA, where one requirement maps checks across `aws`, `azure`, `gcp` and more. Because the operator is `subset`, adding `"TLS 1.0"` to `recommended_minimal_tls_versions` widens the allowlist beyond `["TLS 1.2", "TLS 1.3"]` and the requirement is forced to FAIL.
+
+### What the user sees
+
+With a loosened config, the affected requirement's findings report:
+
+```text
+Status:         FAIL
+StatusExtended: Configuration not valid for this requirement. The check
+                iam_user_accesskey_unused has max_unused_access_keys_days set
+                to 120, but the requirement needs a value of 45 or lower.
+                Update it to 45 or lower. <original status_extended>
+```
+
+The same `Configuration not valid for this requirement.` message appears identically across the CSV, OCSF, and console-table outputs.
+
+### Authoring guidelines
+
+- Declare a guardrail only for keys whose value actually changes whether the requirement is met. Most configurable checks do not need one.
+- Set `Value` to the **strictest** configuration the control tolerates — the same number the control text cites (CIS 45 days, NIST ≤90, and so on).
+- Keep `ConfigKey` spelled exactly as the check reads it from `audit_config`; an unknown key is never present in the config and the constraint is silently skipped.
+- In a **universal (multi-provider) framework**, always set `Provider` to the provider that owns `Check` — otherwise the guardrail would leak onto scans of the other providers the requirement maps. Legacy single-provider files omit it.
+- Pick the operator from the value's role: a max threshold is `lte`, a min threshold is `gte`, a toggle is `eq`, an allowlist is `subset`, a denylist is `superset`.
+- An unrecognized operator does **not** block the requirement — a malformed constraint is treated as satisfied rather than failing the whole framework. Validate your JSON with the tests below.
+
+### Testing guardrails
+
+The shared evaluator and the per-output integration are covered by:
+
+- `tests/lib/check/compliance_config_eval_test.py` — operator semantics, skipped-key behavior, and the FAIL override.
+- `tests/lib/check/compliance_config_constraint_model_test.py` — model validation (types, operator enum, bool-vs-int).
+- `tests/lib/check/compliance_config_requirements_data_test.py` — sanity-checks the guardrails shipped in the JSON catalog.
+- Per-output tests under `tests/lib/outputs/compliance/` (CIS AWS/Azure, ENS AWS, OCSF, universal table) confirm the override reaches each format.
+
+Run them with:
+
+```bash
+uv run pytest -n auto \
+  tests/lib/check/compliance_config_eval_test.py \
+  tests/lib/check/compliance_config_constraint_model_test.py \
+  tests/lib/check/compliance_config_requirements_data_test.py \
+  tests/lib/outputs/compliance/
+```
 
 ## Version handling
 
@@ -493,7 +672,7 @@ Before opening a PR, validate the JSON loads cleanly against the model and that 
 
 ### 1. Schema validation
 
-For **universal** frameworks, load the file and inspect what was parsed. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for `prowler/compliance/dora.json` that key is `dora`, for `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
+For **universal** frameworks, load the file and inspect what was parsed. The framework key inside `bulk` is the **basename of the JSON file** (without `.json`); for `prowler/compliance/dora_2022_2554.json` that key is `dora_2022_2554`, for `prowler/compliance/aws/cis_5.0_aws.json` it is `cis_5.0_aws`.
 
 ```python
 from prowler.lib.check.compliance_models import (
@@ -557,9 +736,9 @@ Open the generated CSV and confirm:
 - Every requirement has at least one row per scanned resource (when there are findings).
 - Attribute values such as `Requirements_Attributes_Section` reflect the JSON content.
 
-### 5. Verify the framework in Prowler App
+### 5. Verify the Framework in Prowler Local Server
 
-Launch Prowler App locally (`docker compose up` from the repository root) and run a scan with the new compliance framework. Confirm the compliance page renders the requirements, sections, and status widgets correctly.
+Launch Prowler Local Server (`docker compose up` from the repository root) and run a scan with the new compliance framework. Confirm the compliance page renders the requirements, sections, and status widgets correctly.
 
 ## Testing
 
@@ -599,7 +778,7 @@ Before opening the pull request:
     uv run pre-commit run --all-files
     uv run pytest -n auto
     ```
-2. Add a changelog entry under the `### 🚀 Added` section of `prowler/CHANGELOG.md`, describing the new framework and the providers it covers.
+2. Add a changelog fragment `prowler/changelog.d/<slug>.added.md`, describing the new framework and the providers it covers (no PR link in the text; it is attached automatically at release time).
 3. Follow the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md) and set the PR title using Conventional Commits, e.g. `feat(compliance): add My Framework 1.0 for AWS`.
 4. Request review from the compliance codeowners listed in `.github/CODEOWNERS`.
 
@@ -609,7 +788,7 @@ The following issues are the most common when contributing a compliance framewor
 
 - **`ValidationError: field required` during scan (legacy).** The JSON is missing a required attribute field. Re-check the matching Pydantic model in `prowler/lib/check/compliance_models.py`.
 - **All attributes collapse to `Generic_Compliance_Requirement_Attribute` values (legacy).** The Pydantic `Union` is ordered incorrectly, or the JSON matches only the generic shape. Keep the generic model in the last Union position and ensure every required field is present in the JSON.
-- **`attributes_metadata validation failed` (universal).** The root validator in `compliance_models.py:669` rejected the file. The error message lists each offending requirement; common causes are unknown attribute keys (typo or missing entry in `attributes_metadata`), enum violations, or missing required keys.
+- **`attributes_metadata validation failed` (universal).** The root validator in `compliance_models.py` rejected the file. The error message lists each offending requirement; common causes are unknown attribute keys (typo or missing entry in `attributes_metadata`), enum violations, or missing required keys.
 - **`--compliance` filter does not find the framework.** For legacy: the filename does not match `<framework>_<version>_<provider>.json`, the version is empty, or the file lives outside `prowler/compliance/<provider>/`. For universal: the file is not at the top level of `prowler/compliance/` or it loaded as `None` (check logs for the validation error).
 - **CLI summary table is empty but the CSV is populated (legacy).** The dispatcher branch in `prowler/lib/outputs/compliance/compliance.py` is missing or its substring match does not catch the framework key.
 - **CSV file is missing after the scan (legacy).** The transformer class is not registered in `prowler/lib/outputs/compliance/compliance_output.py`, or `transform()` raises silently. Run the scan with `--log-level DEBUG`.
@@ -619,7 +798,7 @@ The following issues are the most common when contributing a compliance framewor
 
 Use the following files as templates when modeling a new contribution.
 
-- `prowler/compliance/dora.json` — universal schema, single-provider populated (AWS), ready to extend with more providers.
+- `prowler/compliance/dora_2022_2554.json` — universal schema, single-provider populated (AWS), ready to extend with more providers.
 - `prowler/compliance/csa_ccm_4.0.json` — universal schema, multi-provider populated (AWS, Azure, GCP, AlibabaCloud, OracleCloud).
 - `prowler/compliance/aws/cis_2.0_aws.json` — legacy CIS attribute shape.
 - `prowler/compliance/aws/nist_800_53_revision_5_aws.json` — legacy generic attribute shape.

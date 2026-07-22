@@ -227,6 +227,72 @@ class Test_bedrock_model_invocation_logs_encryption_enabled:
             assert result[0].region == AWS_REGION_US_EAST_1
             assert result[0].resource_tags == []
 
+    def test_cloudwatch_logging_uses_complete_log_group_index(self):
+        from prowler.providers.aws.services.bedrock.bedrock_service import (
+            LoggingConfiguration,
+        )
+        from prowler.providers.aws.services.cloudwatch.cloudwatch_service import (
+            LogGroup,
+        )
+
+        bedrock_client = mock.MagicMock()
+        bedrock_client.logging_configurations = {
+            AWS_REGION_US_EAST_1: LoggingConfiguration(
+                enabled=True,
+                cloudwatch_log_group="Test",
+            )
+        }
+        bedrock_client._get_model_invocation_logging_arn_template.return_value = (
+            "arn:aws:bedrock:us-east-1:123456789012:model-invocation-logging"
+        )
+
+        logs_client = mock.MagicMock()
+        logs_client.audited_partition = "aws"
+        logs_client.audited_account = "123456789012"
+        logs_client.log_groups = {}
+        logs_client.all_log_groups = {
+            "arn:aws:logs:us-east-1:123456789012:log-group:Test:*": LogGroup(
+                arn="arn:aws:logs:us-east-1:123456789012:log-group:Test:*",
+                name="Test",
+                retention_days=30,
+                never_expire=False,
+                kms_id=None,
+                region=AWS_REGION_US_EAST_1,
+            )
+        }
+
+        s3_client = mock.MagicMock()
+        s3_client.audited_partition = "aws"
+        s3_client.buckets = {}
+
+        with (
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.bedrock_client",
+                new=bedrock_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.logs_client",
+                new=logs_client,
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled.s3_client",
+                new=s3_client,
+            ),
+        ):
+            from prowler.providers.aws.services.bedrock.bedrock_model_invocation_logs_encryption_enabled.bedrock_model_invocation_logs_encryption_enabled import (
+                bedrock_model_invocation_logs_encryption_enabled,
+            )
+
+            check = bedrock_model_invocation_logs_encryption_enabled()
+            result = check.execute()
+
+        assert len(result) == 1
+        assert result[0].status == "FAIL"
+        assert (
+            result[0].status_extended
+            == "Bedrock Model Invocation logs are not encrypted in CloudWatch Log Group: Test."
+        )
+
     @mock_aws
     def test_s3_and_cloudwatch_logging_encrypted(self):
         logs_client = client("logs", region_name=AWS_REGION_US_EAST_1)
