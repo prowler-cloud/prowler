@@ -2999,8 +2999,11 @@ class IntegrationCreateSerializer(
         tenant_id = self.context.get("tenant_id")
 
         providers = validated_data.pop("providers", [])
-        integration = Integration.objects.create(tenant_id=tenant_id, **validated_data)
-        replace_integration_providers(integration, providers, tenant_id)
+        with transaction.atomic():
+            integration = Integration.objects.create(
+                tenant_id=tenant_id, **validated_data
+            )
+            replace_integration_providers(integration, providers, tenant_id)
 
         return integration
 
