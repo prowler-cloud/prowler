@@ -207,11 +207,21 @@ class TestOCSF:
             provider="aws",
             compliance={"MITRE-ATTACK": ["T9999"]},
         )
+        finding.metadata.Compliance = [
+            Compliance(
+                Framework="MITRE-ATTACK",
+                Name="MITRE ATT&CK compliance framework",
+                Provider="AWS",
+                Version="",
+                Description="MITRE ATT&CK test framework",
+                Requirements=[],
+            )
+        ]
 
         ocsf = OCSF([finding])
         assert ocsf.data[0].finding_info.attacks is None
 
-    def test_transform_mitre_attacks_unsupported_provider(self):
+    def test_transform_mitre_attacks_without_mitre_metadata(self):
         finding = generate_finding_output(
             provider="kubernetes",
             compliance={"MITRE-ATTACK": ["T1078"]},
