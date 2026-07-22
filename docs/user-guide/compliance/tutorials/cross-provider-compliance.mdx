@@ -1,7 +1,7 @@
 ---
 title: 'Cross-Provider Compliance'
 sidebarTitle: 'Cross-Provider Compliance'
-description: 'Aggregate a universal compliance framework across every connected provider type, or a single-provider framework across every provider of one type, review consolidated roll-ups and per-provider breakdowns, and download combined PDF reports.'
+description: 'Aggregate a universal compliance framework across compatible providers with completed scans, or a single-provider framework across every provider of one type, review consolidated roll-ups and per-provider breakdowns, and download combined PDF reports.'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -9,7 +9,7 @@ import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
 
 <VersionBadge version="5.34.0" />
 
-Cross-Provider Compliance consolidates a single **universal compliance framework** across all of your connected providers into one unified view. Instead of reviewing the same framework on AWS, Azure, Google Cloud, and every other provider as separate reports, Prowler takes the most recent completed scan of every compatible provider, aggregates them by requirement, and produces a single roll-up posture with a per-provider breakdown and a combined executive PDF.
+Cross-Provider Compliance consolidates a single **universal compliance framework** across your compatible providers with completed scans into one unified view. Instead of reviewing the same framework on AWS, Azure, Google Cloud, and other supported providers as separate reports, Prowler takes the most recent completed scan of every compatible provider, aggregates them by requirement, and produces a single roll-up posture with a per-provider breakdown and a combined executive PDF.
 
 <SubscriptionBanner />
 
@@ -58,7 +58,7 @@ The catalog grows as new universal frameworks ship in Prowler. Browse the full c
 <img src="/images/compliance/prowler-app-cross-provider-tab.png" alt="Compliance page showing the Single Scan and Multiple Scans tabs, with the Multiple Scans tab highlighted" width="900" />
 
 <Note>
-Cross-Provider Compliance requires at least one completed scan for a compatible provider. If no compatible provider has finished a scan yet, the page shows a notice prompting you to launch or wait for a scan to complete.
+The **Across provider types** section requires at least one completed scan for a provider compatible with a universal framework. If none is available, that section shows a notice prompting you to launch or wait for a scan to complete. The **Across providers** section can still list single-provider frameworks when its own account and scan requirements are met.
 </Note>
 
 ## Exploring the Overview
@@ -198,7 +198,7 @@ Because the report aggregates many scans, it is generated **asynchronously**:
 A report already generated for a given set of filters does not need to be generated again. When you open the detail page with a filter combination that was reported before, Prowler detects the existing report and surfaces **Report → Download latest** so you can download it immediately, without launching a new job. You only need to generate a fresh report when:
 
 * You apply a filter combination that has never been reported before, or
-* A contributing provider has run a new scan since the report was generated. The report is tied to the specific scans it was built from, so a newer scan makes the previous report stale; Prowler recognizes it no longer matches the current selection and offers to generate an up-to-date one.
+* A contributing provider has completed a new scan since the report was generated. The report is tied to the specific scans it was built from, so a newer completed scan makes the previous report stale; Prowler recognizes it no longer matches the current selection and offers to generate an up-to-date one.
 
 "Download latest" reuses an existing report only when it matches the framework, the exact resolved scan set for the current filters, and the same report options. This guarantees the PDF you download reflects the posture you are looking at, rather than a report generated for a different filter or an older scan.
 
@@ -225,7 +225,7 @@ Provider types with a single connected provider are not listed — with one prov
 
 ### Cross-Account PDF Report
 
-The detail page's **Report** button produces a single combined PDF across every contributing provider of the type, with the same asynchronous generation, background notification, and **Download latest** reuse flow as the [cross-provider report](#downloading-the-combined-pdf-report). The report is tied to the exact resolved scan set, so a new scan in any contributing provider makes the previous report stale and Prowler offers to generate an up-to-date one.
+The detail page's **Report** button produces a single combined PDF across every contributing provider of the type, with the same asynchronous generation, background notification, and **Download latest** reuse flow as the [cross-provider report](#downloading-the-combined-pdf-report). The report is tied to the exact resolved scan set, so a new completed scan in any contributing provider makes the previous report stale and Prowler offers to generate an up-to-date one.
 
 ## Related Documentation
 
