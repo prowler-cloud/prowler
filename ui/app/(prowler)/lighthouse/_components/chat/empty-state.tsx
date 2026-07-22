@@ -46,6 +46,7 @@ interface ChatEmptyStateProps {
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
   onSubmitText: (text: string) => Promise<void>;
+  suggestions?: readonly string[];
   footer?: ReactNode;
   // Side-panel variant: smaller logo and static (non-animated) copy — the
   // decrypt animation reflows multi-line text in narrow widths.
@@ -54,6 +55,7 @@ interface ChatEmptyStateProps {
 
 export function ChatEmptyState({
   onInputChange,
+  suggestions,
   footer,
   compact = false,
   ...composerPanelProps
@@ -110,21 +112,33 @@ export function ChatEmptyState({
           <span className="text-text-neutral-secondary basis-full text-center text-sm font-medium">
             Try Lighthouse AI for...
           </span>
-          {LIGHTHOUSE_V2_SUGGESTIONS.map((suggestion) => {
-            const Icon = suggestion.icon;
-            return (
-              <Button
-                key={suggestion.label}
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => onInputChange(suggestion.prompt)}
-              >
-                <Icon className="size-4" />
-                {suggestion.label}
-              </Button>
-            );
-          })}
+          {suggestions
+            ? suggestions.map((suggestion) => (
+                <Button
+                  key={suggestion}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onInputChange(suggestion)}
+                >
+                  {suggestion}
+                </Button>
+              ))
+            : LIGHTHOUSE_V2_SUGGESTIONS.map((suggestion) => {
+                const Icon = suggestion.icon;
+                return (
+                  <Button
+                    key={suggestion.label}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onInputChange(suggestion.prompt)}
+                  >
+                    <Icon className="size-4" />
+                    {suggestion.label}
+                  </Button>
+                );
+              })}
         </div>
         {footer ? <div className="w-full max-w-4xl">{footer}</div> : null}
       </div>

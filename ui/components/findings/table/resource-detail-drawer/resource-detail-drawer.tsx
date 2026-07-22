@@ -1,7 +1,10 @@
 "use client";
 
+import { usePathname } from "next/navigation";
+
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import { DetailSidePanel } from "@/components/side-panel/detail-side-panel";
+import { buildFocusedFindingContext } from "@/lib/lighthouse/context/contributions";
 import type { FindingResourceRow } from "@/types";
 import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
@@ -43,12 +46,27 @@ export function ResourceDetailDrawer({
   onMuteComplete,
   onTriageUpdate,
 }: ResourceDetailDrawerProps) {
+  const pathname = usePathname();
+  const context = currentResource
+    ? buildFocusedFindingContext({
+        pathname,
+        findingId: currentFinding?.id ?? currentResource.findingId,
+        checkId: currentFinding?.checkId ?? currentResource.checkId,
+        severity: currentFinding?.severity ?? currentResource.severity,
+        status: currentFinding?.status ?? currentResource.status,
+        providerUid: currentFinding?.providerUid ?? currentResource.providerUid,
+        resourceUid: currentFinding?.resourceUid ?? currentResource.resourceUid,
+        region: currentFinding?.resourceRegion ?? currentResource.region,
+      })
+    : undefined;
+
   return (
     <DetailSidePanel
       open={open}
       onOpenChange={onOpenChange}
       title="Resource Finding Details"
       description="View finding details for the selected resource"
+      context={context}
     >
       <ResourceDetailDrawerContent
         isLoading={isLoading}

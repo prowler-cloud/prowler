@@ -4,13 +4,17 @@ import { Bot, Check, Copy, UserRound } from "lucide-react";
 import { useState } from "react";
 
 import { formatMessageTimestamp } from "@/app/(prowler)/lighthouse/_lib/format";
-import { getTextContent } from "@/app/(prowler)/lighthouse/_lib/messages";
+import {
+  getLighthouseContext,
+  getTextContent,
+} from "@/app/(prowler)/lighthouse/_lib/messages";
 import {
   LIGHTHOUSE_V2_MESSAGE_ROLE,
   LIGHTHOUSE_V2_PART_TYPE,
   type LighthouseV2Message,
   type LighthouseV2Part,
 } from "@/app/(prowler)/lighthouse/_types";
+import { LighthouseContextBadge } from "@/components/lighthouse/context-chip";
 import { Button } from "@/components/shadcn/button/button";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +43,12 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
     .map((part) => getTextContent(part.content))
     .filter(Boolean)
     .join("\n\n");
+  const messageContext = isUser
+    ? message.parts
+        .filter((part) => part.type === LIGHTHOUSE_V2_PART_TYPE.TEXT)
+        .map((part) => getLighthouseContext(part.content))
+        .find((context) => context !== undefined)
+    : undefined;
 
   return (
     <article
@@ -54,6 +64,7 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
           isUser ? "items-end" : "items-start",
         )}
       >
+        {messageContext && <LighthouseContextBadge context={messageContext} />}
         <div
           className={cn(
             "max-w-full min-w-0 rounded-[8px] px-4 py-3 text-sm",

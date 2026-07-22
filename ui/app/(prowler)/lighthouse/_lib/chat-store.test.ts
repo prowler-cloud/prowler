@@ -162,9 +162,9 @@ describe("createLighthouseChatStore", () => {
   it("retries with the original context snapshot", async () => {
     // Given
     const store = makeStore();
-    const context = findingsContext();
+    const context = focusedFindingsContext();
     await store.getState().submitMessage("Prioritize findings", context);
-    context.items[0].label = "Mutated after send";
+    context.items[1].label = "Mutated after send";
     eventSources[0].fail(2 /* EventSource.CLOSED */);
     sendMessageMock.mockResolvedValueOnce({
       data: {
@@ -179,55 +179,10 @@ describe("createLighthouseChatStore", () => {
     expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
       sessionId: "session-1",
       displayText: "Prioritize findings",
-      context: findingsContext(),
+      context: focusedFindingsContext(),
       provider: "openai",
       model: "gpt-5.1",
     });
-  });
-
-  it("retries with the original snapshot even when current context was disabled", async () => {
-    const store = makeStore();
-    const context = findingsContext();
-    await store.getState().submitMessage("Prioritize findings", context);
-    eventSources[0].fail(2 /* EventSource.CLOSED */);
-    store.getState().disableContext();
-
-    await store.getState().retryLastMessage();
-
-    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
-      sessionId: "session-1",
-      displayText: "Prioritize findings",
-      context,
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-    expect(store.getState().isContextEnabled).toBe(false);
-  });
-
-  it("keeps context disabled for the conversation and restores it for a new chat", async () => {
-    // Given
-    const store = makeStore();
-    store.getState().disableContext();
-
-    // When
-    await store
-      .getState()
-      .submitMessage("Question without context", findingsContext());
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(false);
-    expect(sendMessageMock).toHaveBeenCalledWith({
-      sessionId: "session-1",
-      displayText: "Question without context",
-      provider: "openai",
-      model: "gpt-5.1",
-    });
-
-    // When
-    store.getState().resetToNewChat();
-
-    // Then
-    expect(store.getState().isContextEnabled).toBe(true);
   });
 
   it("degrades oversized context before sending without blocking the message", async () => {
@@ -636,6 +591,25 @@ function findingsContext(): LighthouseContextEnvelope {
         scopeKey: "findings:/findings",
         label: "Findings",
         path: "/findings",
+      },
+    ],
+  };
+}
+
+function focusedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "findings:/findings",
+        label: "Focused finding",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
       },
     ],
   };

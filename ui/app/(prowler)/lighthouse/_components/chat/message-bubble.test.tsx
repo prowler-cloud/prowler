@@ -47,6 +47,93 @@ vi.mock("streamdown", () => ({
 }));
 
 describe("MessageBubble", () => {
+  it("should never render the agent-facing context block for user messages", () => {
+    // Given
+    const userMessage: LighthouseV2Message = {
+      id: "message-user-1",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [
+        {
+          id: "part-user-1",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: {
+            text: "[PROWLER_UI_CONTEXT_V1]\nmetadata\n[/PROWLER_UI_CONTEXT_V1]\n\nQuestion",
+            display_text: "Question",
+          },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          updatedAt: "2026-06-25T10:00:00Z",
+        },
+      ],
+    };
+
+    // When
+    render(<MessageBubble message={userMessage} />);
+
+    // Then
+    expect(screen.getByText("Question")).toBeInTheDocument();
+    expect(screen.queryByText(/PROWLER_UI_CONTEXT_V1/)).not.toBeInTheDocument();
+  });
+
+  it("should render persisted user context as a read-only historical badge", () => {
+    // Given
+    const userMessage: LighthouseV2Message = {
+      id: "message-user-context",
+      role: LIGHTHOUSE_V2_MESSAGE_ROLE.USER,
+      model: null,
+      tokenUsage: null,
+      insertedAt: "2026-06-25T10:00:00Z",
+      parts: [
+        {
+          id: "part-user-context",
+          type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
+          content: {
+            text: "technical prompt",
+            display_text: "Question",
+            ui_context: {
+              schema_version: 1,
+              transport: "inline",
+              items: [
+                {
+                  kind: "page",
+                  id: "findings",
+                  source: "automatic",
+                  scope_key: "findings:/findings",
+                  label: "Findings",
+                  path: "/findings",
+                },
+                {
+                  kind: "finding",
+                  id: "finding-1",
+                  source: "focused",
+                  scope_key: "findings:/findings",
+                  label: "Focused finding",
+                  finding_id: "finding-1",
+                  check_id: "aws_s3_bucket_public_access",
+                },
+              ],
+            },
+          },
+          toolCallOutcome: null,
+          insertedAt: "2026-06-25T10:00:00Z",
+          updatedAt: "2026-06-25T10:00:00Z",
+        },
+      ],
+    };
+
+    // When
+    render(<MessageBubble message={userMessage} />);
+
+    // Then
+    expect(screen.getByText("@ Findings +1")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Remove Findings context/ }),
+    ).not.toBeInTheDocument();
+  });
+
   it("should render assistant text and tool calls in persisted part order", () => {
     // Given
     const orderedMessage = buildAssistantMessage([

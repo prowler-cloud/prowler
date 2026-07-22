@@ -45,6 +45,11 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   updateLighthouseV2Configuration: updateConfigurationMock,
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => window.location.pathname,
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
 // jsdom; render its text passthrough so message bodies are still assertable.
 vi.mock("streamdown", () => ({
@@ -109,6 +114,7 @@ describe("LighthouseV2ChatPage", () => {
     updateConfigurationMock.mockReset();
     resetPanelChatStoreForTests();
     eventSources = stubEventSource();
+    window.history.replaceState(null, "", "/lighthouse");
 
     createSessionMock.mockResolvedValue({
       data: {

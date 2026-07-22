@@ -25,6 +25,7 @@ interface ChatComposerPanelProps {
   input: string;
   isStreaming: boolean;
   modelSelector: ReactNode;
+  contextControl?: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
@@ -86,6 +87,7 @@ interface ChatComposerProps {
   input: string;
   isStreaming: boolean;
   modelSelector: ReactNode;
+  contextControl?: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;
@@ -99,6 +101,7 @@ function ChatComposer({
   selectedConfigurationConnected,
   onInputChange,
   modelSelector,
+  contextControl,
   onSubmit,
   onSubmitText,
 }: ChatComposerProps) {
@@ -153,6 +156,7 @@ function ChatComposer({
             </Link>
           </Button>
           {modelSelector}
+          {contextControl}
         </div>
         {isStreaming ? (
           <div

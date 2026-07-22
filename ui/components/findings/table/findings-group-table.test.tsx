@@ -17,6 +17,7 @@ vi.mock("@/components/shadcn/table", () => ({
     data,
     toolbarRightContent,
     getRowAttributes,
+    onRowSelectionChange,
   }: {
     data?: Array<{ checkId?: string }>;
     toolbarRightContent?: ReactNode;
@@ -24,10 +25,14 @@ vi.mock("@/components/shadcn/table", () => ({
       index: number;
       original: { checkId?: string };
     }) => Record<string, string | undefined>;
+    onRowSelectionChange?: (selection: Record<string, boolean>) => void;
   }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>
       <span>10 Total Entries</span>
+      <button type="button" onClick={() => onRowSelectionChange?.({ 0: true })}>
+        Select first finding
+      </button>
       <table>
         <tbody>
           {(data ?? []).map((original, index) => (
@@ -42,6 +47,20 @@ vi.mock("@/components/shadcn/table", () => ({
         </tbody>
       </table>
     </div>
+  ),
+}));
+
+vi.mock("@/components/lighthouse/context-contributor", () => ({
+  LighthouseContextContributor: ({
+    contributorId,
+    item,
+  }: {
+    contributorId: string;
+    item: unknown;
+  }) => (
+    <output data-testid={`context-${contributorId}`}>
+      {JSON.stringify(item)}
+    </output>
   ),
 }));
 
@@ -76,6 +95,40 @@ vi.mock("../floating-mute-button", () => ({
 }));
 
 describe("FindingsGroupTable", () => {
+  it("publishes the loaded total and selected finding groups as context", async () => {
+    const data = [
+      {
+        id: "group-1",
+        checkId: "check-a",
+        checkTitle: "Public bucket",
+        severity: "critical",
+        status: "FAIL",
+      },
+    ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+
+    render(
+      <FindingsGroupTable
+        data={data}
+        metadata={{
+          pagination: { page: 1, pages: 1, count: 12 },
+          version: "v1",
+        }}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
+
+    expect(screen.getByTestId("context-findings-summary")).toHaveTextContent(
+      '"total":12',
+    );
+
+    screen.getByRole("button", { name: "Select first finding" }).click();
+
+    expect(
+      await screen.findByTestId("context-finding-group-group-1"),
+    ).toHaveTextContent('"checkId":"check-a"');
+  });
+
   describe("toolbar", () => {
     it("should render the muted findings checkbox inside the table toolbar", () => {
       // Given

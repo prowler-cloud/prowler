@@ -19,7 +19,7 @@ import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { cn } from "@/lib/utils";
-import { FindingGroupRow } from "@/types";
+import { FindingGroupRow, FindingResourceRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -45,6 +45,8 @@ interface InlineResourceContainerProps {
   columnCount: number;
   /** Called with selected finding IDs (real UUIDs) for parent-level mute */
   onResourceSelectionChange: (findingIds: string[]) => void;
+  /** Publishes already-loaded selected rows to contextual Lighthouse. */
+  onResourceContextSelectionChange?: (resources: FindingResourceRow[]) => void;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -155,6 +157,7 @@ export function InlineResourceContainer({
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
+  onResourceContextSelectionChange,
   ref,
 }: InlineResourceContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +198,7 @@ export function InlineResourceContainer({
     filters,
     hasHistoricalData,
     onResourceSelectionChange,
+    onResourceContextSelectionChange,
     scrollContainerRef,
   });
 

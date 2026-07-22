@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { ResourceDetailsSheet } from "@/components/resources/resource-details-sheet";
 import { DataTable } from "@/components/shadcn/table";
+import { buildResourceSummaryContext } from "@/lib/lighthouse/context/contributions";
 import { MetaDataProps, ResourceProps } from "@/types";
 
 import { getColumnResources } from "./column-resources";
@@ -34,6 +36,13 @@ export function ResourcesTableWithSelection({
 
   return (
     <>
+      {metadata?.pagination.count !== undefined && (
+        <LighthouseContextContributor
+          key={`resources-summary-${metadata.pagination.count}`}
+          contributorId="resources-summary"
+          item={buildResourceSummaryContext(metadata.pagination.count)}
+        />
+      )}
       <DataTable
         columns={columns}
         data={safeData}
