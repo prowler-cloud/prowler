@@ -225,9 +225,20 @@ def _build_aggregated_schema() -> dict:
 
     The output mirrors the layout of `prowler/config/config.yaml` (a mapping
     keyed by provider type) and is what the UI consumes via `ajv`.
+
+    Only app-facing providers (`sdk_only = False`, see
+    `Provider.get_app_providers`) are included. SDK/CLI-only providers may
+    still have a schema registered in `SCHEMAS` so the CLI validates their
+    `config.yaml` (`load_and_validate_config_file` reads `SCHEMAS.get`), but
+    they must not surface in this app-facing schema.
     """
+    from prowler.providers.common.provider import Provider
+
+    app_providers = set(Provider.get_app_providers())
     properties: dict[str, dict] = {}
     for provider, schema_cls in SCHEMAS.items():
+        if provider not in app_providers:
+            continue
         properties[provider] = schema_cls.model_json_schema()
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",

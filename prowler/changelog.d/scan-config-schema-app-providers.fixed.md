@@ -1,0 +1,1 @@
+Scan configuration schema no longer exposes SDK/CLI-only providers such as `e2enetworks`; the aggregated schema served by `/scan-configurations/schema` now includes only app providers (`sdk_only = False`)
