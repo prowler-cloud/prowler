@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud, Private Cloud & Local Server | 32 tools | Yes |
+| Prowler Cloud, Private Cloud & Local Server | 40 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -104,6 +104,24 @@ Tools for viewing compliance status and framework details across all cloud provi
 
 - **`prowler_get_compliance_overview`** - Get high-level compliance status across all frameworks for a specific scan or provider, including pass/fail statistics per framework
 - **`prowler_get_compliance_framework_state_details`** - Get detailed requirement-level breakdown for a specific compliance framework, including failed requirements and associated finding IDs
+
+### User Management
+
+Tools for viewing the users in your tenant and identifying the authenticated user.
+
+- **`prowler_list_users`** - List the users in the tenant with their names and emails
+- **`prowler_get_user`** - Get detailed information about a specific user by ID, including join date and role/membership IDs
+- **`prowler_get_current_user`** - Identify which user the current credentials authenticate as
+
+### Role Management
+
+Tools for browsing RBAC roles and managing the roles assigned to a user.
+
+- **`prowler_list_roles`** - List the roles defined in the tenant with their permission scope
+- **`prowler_get_role`** - Get detailed information about a specific role by ID, including granted capabilities, visibility scope, assigned users, and provider groups
+- **`prowler_get_user_roles`** - List the roles assigned to a specific user, with the capabilities each role grants
+- **`prowler_assign_role_to_user`** - Assign a role to a user, keeping their other roles intact (idempotent)
+- **`prowler_remove_role_from_user`** - Remove a role from a user, keeping their other roles intact (idempotent)
 
 ## Prowler Hub Tools
 
