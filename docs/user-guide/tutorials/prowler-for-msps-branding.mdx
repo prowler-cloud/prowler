@@ -1,0 +1,53 @@
+---
+title: "Customizing Your Branding in Prowler for MSPs and MSSPs"
+sidebarTitle: "Branding"
+---
+
+Upload your company logo to have it displayed alongside Prowler branding in the console. Branding is managed from **Settings → Branding** and requires a role with **Manage settings**.
+
+## Upload a Logo
+
+Open **Settings → Branding**, click **Upload**, and pick your file. The logo replaces the placeholder immediately and a confirmation appears.
+
+{/* IMAGE (pending): /images/prowler-for-msps/settings-branding.png — Settings Branding tab showing the Partner Logo section with an uploaded logo, Upload and Remove controls */}
+
+### Logo Requirements
+
+| Requirement | Value |
+|---|---|
+| **Formats** | PNG or SVG |
+| **Maximum file size** | 512 KB |
+| **Maximum dimensions** | 200 × 60 pixels |
+
+<Warning>
+The upload dialog accepts files up to 1 MB, but the server rejects anything above **512 KB**. Keep your logo under 512 KB to avoid an upload that appears to start and then fails.
+</Warning>
+
+A wide, horizontal logo with a transparent background renders best. SVG stays crisp at every size and is the better choice where you have it.
+
+<Note>
+Uploaded SVG files are sanitized on the server. Scripts, external references and other active content are stripped before the file is stored.
+</Note>
+
+## Replace or Remove a Logo
+
+Uploading a new file replaces the current one. **Remove** deletes it and returns the console to the default Prowler branding. Both take effect immediately for everyone on your team.
+
+## Where Your Logo Appears
+
+Your logo is shown alongside Prowler branding within the console for your team.
+
+<Warning>
+**Branding does not extend to Prowler Cloud.** Customers signing in at [cloud.prowler.com](https://cloud.prowler.com) see the standard Prowler interface. White-labeling Prowler Cloud is not supported.
+</Warning>
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/prowler-for-msps-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+  <Card title="Managing Your Team" icon="users" href="/user-guide/tutorials/prowler-for-msps-team">
+    Invite team members and assign roles.
+  </Card>
+</Columns>

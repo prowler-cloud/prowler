@@ -1,0 +1,90 @@
+---
+title: "Managing Your Partner Organization"
+sidebarTitle: "Your Partner Organization"
+---
+
+Your partner organization is the top-level container in Prowler for MSPs and MSSPs. It holds your team, your workspaces, your branding, your Partner Code and every customer whose Prowler Cloud tenant you operate.
+
+## Lifecycle
+
+A partner organization moves through four states:
+
+| State | Meaning |
+|---|---|
+| **Pending email verification** | The first administrator has signed up but has not yet clicked the verification link. |
+| **Pending approval** | Email verified. Prowler is reviewing the application. |
+| **Active** | Approved. The organization can sign in, invite team members and onboard customers. |
+| **Rejected** | Prowler reviewed and declined the application. The account cannot sign in. |
+
+A rejection email carries the reason, categorized as **Incomplete documentation**, **Not eligible**, **Duplicate** or **Other**.
+
+## Settings
+
+Open **Settings** from the sidebar. The page has four tabs — **Profile**, **Branding**, **Security** and **Notifications** — though what you can do in them depends on your role.
+
+Every signed-in user can view the settings and change their own password. Editing the organization itself requires a role with **Manage settings**; without it, only the **Security** tab is available.
+
+### Profile
+
+The **Profile** tab shows the **Partner Information** card:
+
+* **Company name** — the display name used in the console, in invitations and in outbound email.
+* **Partner Code** — a read-only, Prowler-issued identifier. The helper text reads *"Share this code with customers to link their accounts."* Copy it with the button beside the field.
+
+{/* IMAGE (pending): /images/prowler-for-msps/settings-profile.png — Settings Profile tab showing Partner Information and the copyable Partner Code field */}
+
+### Branding
+
+Upload your logo. See [Customizing Your Branding](/user-guide/tutorials/prowler-for-msps-branding).
+
+### Security
+
+Change your own password, and — for administrators — reach the Danger zone described below.
+
+### Notifications
+
+Reserved for a future release. The tab is present but disabled.
+
+## Customer Capacity
+
+Each partner organization has a cap on how many customers it can hold at once. The default is **50**. To raise it, contact Prowler.
+
+## Closing Your Organization
+
+Deleting a partner organization is a request, not an immediate action.
+
+<Steps>
+  <Step title="Open the Danger zone">
+    Go to **Settings → Security**. The Danger zone and its **Delete Partner** action are only shown to users whose role permits it.
+  </Step>
+
+  <Step title="File the request">
+    Optionally give a reason in **Reason for deletion**, then type `DELETE` in the confirmation field to enable the button and submit.
+  </Step>
+
+  <Step title="Wait for review">
+    The request enters a pending state. The Danger zone then reports that a deletion request is already pending review and that you will be notified. You and your team keep full access while it is pending.
+  </Step>
+</Steps>
+
+<Warning>
+**Customer tenants in Prowler Cloud are not deleted.** Closing your partner organization removes your organization, its team memberships and its branding assets, and invalidates every session. Your customers' Prowler Cloud data survives. Arrange disposal with each customer through Prowler Cloud directly.
+</Warning>
+
+## Ownership
+
+One user is the **owner** of the partner organization — by default, whoever signed up. Ownership can be transferred to another team member, who keeps the Superadmin role. The owner cannot be removed from the team while they hold ownership.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Managing Your Team" icon="users" href="/user-guide/tutorials/prowler-for-msps-team">
+    Invite team members and assign roles.
+  </Card>
+  <Card title="Customizing Your Branding" icon="palette" href="/user-guide/tutorials/prowler-for-msps-branding">
+    Upload your logo.
+  </Card>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/prowler-for-msps-customers">
+    Add customers and open their Prowler Cloud tenants.
+  </Card>
+</Columns>

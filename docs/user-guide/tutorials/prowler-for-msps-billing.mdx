@@ -1,0 +1,101 @@
+---
+title: "Billing and Customer Plans in Prowler for MSPs and MSSPs"
+sidebarTitle: "Billing and Plans"
+---
+
+Billing has two sides. Your own payment method lives on the **Billing** page; your customers' plans are set and changed from the **Customers** page. One payment method funds every customer subscription.
+
+## Permissions
+
+Every billing surface requires a role with **Manage billing**, held today by both **Superadmin** and **Organization Admin**. See [Managing Your Team](/user-guide/tutorials/prowler-for-msps-team).
+
+## The Billing Page
+
+The **Billing** entry appears in the sidebar only when billing has been enabled for your account and your role carries **Manage billing**. If either is missing, the entry is hidden and `/billing` redirects to the Dashboard.
+
+The page holds the **Payment Method** card: the single card that funds every customer subscription for your organization.
+
+{/* IMAGE (pending): /images/prowler-for-msps/billing-payment-method.png — Billing page with the Payment Method card showing a saved card */}
+
+<Steps>
+  <Step title="Add or replace the card">
+    Click **Add Payment Method**, or **Replace Payment Method** if one is already saved. Card details are collected and processed by Stripe; the console stores only the brand and the last four digits.
+  </Step>
+
+  <Step title="Complete verification if prompted">
+    Cards requiring 3-D Secure send you through the bank's verification screen and return you to the Billing page. If verification fails, a banner explains what went wrong and the card is not saved.
+  </Step>
+
+  <Step title="Watch the expiry">
+    A card nearing expiry carries an **Expiring soon** badge. An expired card is flagged **Expired** and must be replaced.
+  </Step>
+</Steps>
+
+Some accounts are configured for invoice billing rather than card billing. There, the payment method is provisioned automatically the first time a customer plan change needs one.
+
+<Note>
+Invoice history and per-customer billing breakdowns are not in this release.
+</Note>
+
+## Customer Plans
+
+Plans are chosen in the **Set Their Billing Plan** step of the Add Customer wizard.
+
+| Plan | Price | Included usage | Overage |
+|---|---|---|---|
+| **Trial** | $0 | Single scan | — |
+| **Annual** | $79 per provider / month, billed annually | 50,000 unique resources / month | $0.24 per resource scanned |
+| **Monthly** | $99 per provider / month | 50,000 unique resources / month | $0.30 per resource scanned |
+| **Flex** | $200 / scan | — | — |
+
+Both paid plans include unlimited scans for all providers, Lighthouse AI, every check and compliance framework in Prowler Hub, MCP Server for agentic workflows, and enterprise support.
+
+<Note>
+**Flex is not active yet.** The card is shown but cannot be selected.
+</Note>
+
+On the **Annual** plan, providers added beyond the plan are billed at the standard $99 per month.
+
+### Provider Accounts on the Annual Plan
+
+The Annual plan is paid upfront for a fixed number of cloud provider accounts, between **1 and 20**. You set that count when you pick the plan. The Monthly plan carries no upfront count.
+
+## Change a Customer's Plan
+
+Open the actions menu on a customer's row and choose **Change plan**. A **Change Plan** dialog opens, offering the paid plans.
+
+<Warning>
+**Plan changes are one way: trial to paid.** The action is only offered while a customer is on trial or its trial has expired. Once a customer holds a paid subscription, **Change plan** no longer appears on the row, and neither Trial nor Flex is ever a valid target.
+</Warning>
+
+{/* IMAGE (pending): /images/prowler-for-msps/change-plan-dialog.png — Change Plan dialog with the Monthly and Annual cards */}
+
+Pick a plan and confirm. Choosing Annual also asks for the upfront provider account count. The change is submitted to Prowler Cloud and applied asynchronously; the customer's row updates once it lands. If it fails, a message explains why:
+
+| Message | Cause |
+|---|---|
+| Cloud accounts count is required | The annual plan was selected without a provider account count. |
+| Cloud accounts count out of range | The count is outside 1–20. |
+| Company name is required | The customer record has no usable company name. |
+| Customer not found | The customer no longer exists or is not linked to a tenant. |
+
+## Revenue Reporting
+
+Billing figures surface in two places.
+
+**On the Customers page**, stat cards above the table summarize **Billing active** — how many customers hold an active subscription — and **Total MTD** per currency, with a percentage change against last month. The cards are hidden until at least one customer has billing activity.
+
+**On the Dashboard**, the **Billing Overview** card and a **Year to Date Expenses** figure give the same picture across your whole book of business.
+
+{/* IMAGE (pending): /images/prowler-for-msps/billing-stats-cards.png — Billing active and Total MTD stat cards above the Customers table */}
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Onboarding Customers" icon="building" href="/user-guide/tutorials/prowler-for-msps-customers">
+    Add customers and open their Prowler Cloud tenants.
+  </Card>
+  <Card title="Your Partner Organization" icon="briefcase" href="/user-guide/tutorials/prowler-for-msps-organization">
+    Lifecycle, settings, Partner Code and closing your organization.
+  </Card>
+</Columns>

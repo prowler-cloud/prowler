@@ -56,6 +56,12 @@
                 ]
               },
               {
+                "group": "Prowler for MSPs and MSSPs",
+                "pages": [
+                  "getting-started/products/prowler-for-msps"
+                ]
+              },
+              {
                 "group": "Prowler Lighthouse AI",
                 "pages": [
                   "getting-started/products/prowler-cloud-lighthouse"
@@ -198,6 +204,18 @@
                   "user-guide/tutorials/prowler-app-sso-google-workspace"
                 ]
               }
+            ]
+          },
+          {
+            "group": "Prowler for MSPs and MSSPs",
+            "pages": [
+              "user-guide/tutorials/prowler-for-msps-sign-up",
+              "user-guide/tutorials/prowler-for-msps-organization",
+              "user-guide/tutorials/prowler-for-msps-team",
+              "user-guide/tutorials/prowler-for-msps-workspaces",
+              "user-guide/tutorials/prowler-for-msps-customers",
+              "user-guide/tutorials/prowler-for-msps-billing",
+              "user-guide/tutorials/prowler-for-msps-branding"
             ]
           },
           {

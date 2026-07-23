@@ -1,0 +1,106 @@
+---
+title: "Onboarding Customers and Accessing Their Tenants"
+sidebarTitle: "Onboarding Customers"
+---
+
+Adding a customer in Prowler for MSPs and MSSPs provisions a Prowler Cloud tenant for that organization and links it to yours. From then on you can open that tenant from the console and work inside it on the customer's behalf.
+
+## Add a Customer
+
+Select **Customers** in the sidebar, then click **Add Customer** to open a three-step wizard.
+
+<Note>
+The **Add Customer** button is only shown to roles carrying **Manage workspaces**, which today means Superadmin.
+</Note>
+
+<Steps>
+  <Step title="Create A Customer Profile">
+    Enter the **Business Name** and pick a **Region**. Names must be unique within your partner organization; a duplicate is rejected inline.
+
+    | Region | Availability |
+    |---|---|
+    | **EU** | Available. Selected by default. |
+    | **US** | Coming soon. |
+
+    {/* IMAGE (pending): /images/prowler-for-msps/add-customer-profile.png — Step 1 of the Add Customer wizard, showing Business Name and the Region selector */}
+  </Step>
+
+  <Step title="Set Their Billing Plan">
+    Choose the plan the customer starts on. See [Billing and Customer Plans](/user-guide/tutorials/prowler-for-msps-billing) for what each plan includes and what the annual plan asks for.
+
+    {/* IMAGE (pending): /images/prowler-for-msps/add-customer-billing.png — Step 2 of the wizard with the plan cards and the Monthly/Annual toggle */}
+  </Step>
+
+  <Step title="Launch Their Customer Workspace">
+    Prowler provisions the tenant in Prowler Cloud. The final step confirms the outcome — created on the free plan, subscribed to a paid plan, or subscribed with a failure to report.
+
+    {/* IMAGE (pending): /images/prowler-for-msps/add-customer-launch.png — Step 3 confirmation banner */}
+  </Step>
+</Steps>
+
+Provisioning is asynchronous. The customer's row shows **Provisioning** until the tenant is ready, then switches to **Active**.
+
+## The Customers View
+
+The Customers table lists every customer you can reach. Each row carries:
+
+| Column | What it shows |
+|---|---|
+| **Customer Business Name** | The customer's name |
+| **Providers** | Icons for each cloud provider connected in their tenant |
+| **Cloud Accounts** | Number of provider accounts under scan |
+| **Resources** | Resources discovered by the latest scan |
+| **Failed Findings** | Failed findings from the latest scan |
+| **Billing Type** | The customer's current plan |
+| **MTD** | Month-to-date spend |
+| **Last Month Expenses** | Previous month's total |
+| **Status** | **Active**, **Provisioning** or **Inactive** |
+| **Last scan completed** | When the most recent scan finished |
+
+{/* IMAGE (pending): /images/prowler-for-msps/customers-table.png — Customers page with the billing stat cards above the table and the full column set */}
+
+A customer shows as **Inactive** once it has been marked for removal.
+
+## Open a Customer's Prowler Cloud Tenant
+
+Open the actions menu at the end of a customer's row and choose **Access Organization**. You are redirected into that customer's tenant in Prowler Cloud, signed in as yourself acting on their behalf.
+
+While you are in the tenant you see what a customer administrator sees, and every action is recorded in the Prowler Cloud audit log against both your identity and the customer you are acting for.
+
+Opening a tenant requires a role with **Access tenants**. The action fails with a clear message if you lack permission, if the customer no longer exists, or if the tenant is not ready.
+
+{/* IMAGE (pending): /images/prowler-for-msps/customer-row-actions.png — Row actions menu showing Access Organization, Change plan and Edit */}
+
+## Edit a Customer
+
+Choose **Edit** from the row actions to open the **Edit customer** panel. From there you can:
+
+* **Rename** the customer. The new name must still be unique within your organization.
+* **Move it to another workspace** using the workspace selector. This is how you re-scope which team members can see the customer. See [Organizing Customers into Workspaces](/user-guide/tutorials/prowler-for-msps-workspaces).
+
+## Link an Existing Customer with Your Partner Code
+
+Each approved partner organization carries a **Partner Code**, shown on **Settings → Profile** with the helper text *"Share this code with customers to link their accounts."* A customer who already runs Prowler Cloud can use that code to request a link to you, rather than having you provision a fresh tenant.
+
+<Note>
+The customer-side flow that consumes the Partner Code is rolling out progressively in Prowler Cloud. Confirm availability with your Prowler contact before sharing the code.
+</Note>
+
+## Customer Self-Access
+
+Your customers keep signing in to [cloud.prowler.com](https://cloud.prowler.com) with their own users. Your access is additive — it neither replaces nor restricts theirs.
+
+## Remove a Customer
+
+Removing a customer detaches it from your partner organization and moves it to **Inactive**. It does **not** delete the customer's data in Prowler Cloud. Arrange disposal with the customer through Prowler Cloud directly.
+
+## Next Steps
+
+<Columns cols={2}>
+  <Card title="Billing and Customer Plans" icon="credit-card" href="/user-guide/tutorials/prowler-for-msps-billing">
+    Payment method, plans and revenue reporting.
+  </Card>
+  <Card title="Organizing Customers into Workspaces" icon="layer-group" href="/user-guide/tutorials/prowler-for-msps-workspaces">
+    Group customers and scope team access.
+  </Card>
+</Columns>
