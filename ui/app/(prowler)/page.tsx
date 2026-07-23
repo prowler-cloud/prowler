@@ -10,11 +10,13 @@ import {
   AppSidebarModeSync,
 } from "@/components/layout/app-sidebar";
 import { ContentLayout } from "@/components/shadcn/content-layout";
+import { DOCS_URLS } from "@/lib/external-urls";
 import { isCloud } from "@/lib/shared/env";
 import { SearchParamsProps } from "@/types";
 
-import { LighthouseOverviewBanner } from "./_overview/_components/lighthouse-overview-banner";
+import { OverviewBanner } from "./_overview/_components/overview-banner";
 import { getLighthouseOverviewBannerHref } from "./_overview/_lib/lighthouse-banner";
+import { OVERVIEW_BANNER_VARIANT } from "./_overview/_lib/overview-banner";
 import {
   AttackSurfaceSkeleton,
   AttackSurfaceSSR,
@@ -58,16 +60,29 @@ export default async function Home({
   return (
     <ContentLayout title="Overview" icon="lucide:square-chart-gantt">
       <AppSidebarModeSync mode={APP_SIDEBAR_MODE.BROWSE} />
+      {/* Agents banner shows everywhere; Lighthouse is Cloud-only, so on a
+          local server the agents banner is the only child and fills the row. */}
+      <div className="mb-6 flex flex-col gap-6 lg:flex-row">
+        {lighthouseBannerHref ? (
+          <div className="min-w-0 lg:flex-1">
+            <OverviewBanner
+              variant={OVERVIEW_BANNER_VARIANT.LIGHTHOUSE}
+              href={lighthouseBannerHref}
+            />
+          </div>
+        ) : null}
+        <div className="min-w-0 lg:flex-1">
+          <OverviewBanner
+            variant={OVERVIEW_BANNER_VARIANT.AGENTS}
+            href={DOCS_URLS.AI_AGENTS}
+          />
+        </div>
+      </div>
+
       <div className="xxl:grid-cols-4 mb-6 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
         <ProviderAccountSelectors providers={providersData?.data ?? []} />
         <ProviderGroupSelector groups={providerGroupsData?.data ?? []} />
       </div>
-
-      {lighthouseBannerHref ? (
-        <div className="mb-6">
-          <LighthouseOverviewBanner href={lighthouseBannerHref} />
-        </div>
-      ) : null}
 
       <div className="flex flex-col gap-6 xl:flex-row xl:flex-wrap xl:items-stretch">
         <Suspense fallback={<ThreatScoreSkeleton />}>

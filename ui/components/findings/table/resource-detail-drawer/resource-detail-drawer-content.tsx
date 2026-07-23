@@ -21,11 +21,10 @@ import {
   type ResourceDrawerFinding,
   updateFindingTriage,
 } from "@/actions/findings";
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MarkdownContainer } from "@/components/findings/markdown-container";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { getComplianceIcon } from "@/components/icons";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   Badge,
   Button,
@@ -73,7 +72,8 @@ import {
 import { ResourceMetadataPanel } from "@/components/shared/resource-metadata-panel";
 import { getFailingForLabel, formatDuration } from "@/lib/date-utils";
 import { shouldRefreshAfterTriageUpdate } from "@/lib/finding-triage";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { buildFindingAnalysisPrompt } from "@/lib/lighthouse/prompts";
 import { getRegionFlag } from "@/lib/region-flags";
 import { getRecommendationLinkLabel } from "@/lib/vulnerability-references";
@@ -363,7 +363,6 @@ export function ResourceDetailDrawerContent({
 }: ResourceDetailDrawerContentProps) {
   const searchParams = useSearchParams();
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvingFramework, setResolvingFramework] = useState<string | null>(
     null,
   );
@@ -413,9 +412,11 @@ export function ResourceDetailDrawerContent({
   // During carousel navigation we only trust row-backed data until the next
   // finding payload is fully ready, otherwise stale details flash briefly.
   const f = isNavigating ? null : currentFinding;
-  const jiraSelection = f
-    ? createJiraTargetSelection([f.id], JIRA_DISPATCH_TARGET.FINDING_ID)
-    : null;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: f ? [f.id] : [],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: checkMeta.checkTitle,
+  });
   const isCheckMetaFresh =
     !currentResource?.checkId || currentResource.checkId === checkMeta.checkId;
   const showCheckMetaContent = !isNavigating || isCheckMetaFresh;
@@ -550,15 +551,6 @@ export function ResourceDetailDrawerContent({
           }}
         />
       )}
-      {f && jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          selection={jiraSelection}
-          findingTitle={checkMeta.checkTitle}
-        />
-      )}
-
       {/* Header: keep row-backed badges visible; only hide stale check metadata */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-3">
@@ -872,10 +864,9 @@ export function ResourceDetailDrawerContent({
                       disabled={f.isMuted}
                       onSelect={() => setIsMuteModalOpen(true)}
                     />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label="Send to Jira"
-                      onSelect={() => setIsJiraModalOpen(true)}
+                    <JiraDispatchActionItem
+                      label={buildJiraActionLabel({ findingCount: 1 })}
+                      payload={jiraPayload}
                     />
                     {externalResourceTarget && (
                       <ActionDropdownItem
@@ -1572,12 +1563,12 @@ function OtherFindingRow({
   onTriageUpdateAction: (input: UpdateFindingTriageInput) => Promise<void>;
 }) {
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const isMuted = finding.isMuted || isOptimisticallyMuted;
-  const jiraSelection = createJiraTargetSelection(
-    [finding.id],
-    JIRA_DISPATCH_TARGET.FINDING_ID,
-  );
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: [finding.id],
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: finding.checkTitle,
+  });
 
   const findingUrl = `/findings?filter%5Bcheck_id__in%5D=${encodeURIComponent(finding.checkId)}&filter%5Bmuted%5D=include`;
 
@@ -1592,14 +1583,6 @@ function OtherFindingRow({
             setIsMuteModalOpen(false);
             onMuted();
           }}
-        />
-      )}
-      {jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          selection={jiraSelection}
-          findingTitle={finding.checkTitle}
         />
       )}
       <TableRow
@@ -1670,10 +1653,9 @@ function OtherFindingRow({
                 disabled={isMuted}
                 onSelect={() => setIsMuteModalOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<JiraIcon size={20} />}
-                label="Send to Jira"
-                onSelect={() => setIsJiraModalOpen(true)}
+              <JiraDispatchActionItem
+                label={buildJiraActionLabel({ findingCount: 1 })}
+                payload={jiraPayload}
               />
             </ActionDropdown>
           </div>

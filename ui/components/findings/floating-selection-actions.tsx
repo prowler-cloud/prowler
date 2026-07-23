@@ -4,42 +4,44 @@ import { Ellipsis, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Button } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown/action-dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { PROWLER_CLOUD_ONLY_TOOLTIP } from "@/lib/deployment";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
+import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
+import { JiraDispatchActionItem } from "./jira-dispatch-action-item";
 import { MuteFindingsModal } from "./mute-findings-modal";
 
-interface FloatingMuteButtonProps {
+interface FloatingSelectionActionsBaseProps {
   selectedCount: number;
   selectedFindingIds: string[];
   onComplete?: () => void;
-  /** Async resolver that returns actual finding UUIDs before opening modal */
+  /** Async resolver that returns actual finding UUIDs before opening modal. */
   onBeforeOpen?: () => Promise<string[]>;
-  /** When true, the toast warns that processing may take a few minutes */
+  /** When true, the toast warns that processing may take a few minutes. */
   isBulkOperation?: boolean;
-  /** Custom button label. Defaults to "Mute ({selectedCount})" */
+  /** Custom button label. Defaults to "{selectedCount} selected". */
   label?: string;
   /** Custom mute action label. Defaults to "Mute". */
   muteLabel?: string;
-  /** Opens the Jira flow for the current selection. */
-  onSendToJira?: () => void;
-  /** Whether the Jira action is available for the current selection. */
-  canSendToJira?: boolean;
-  /** Whether the Jira action should be displayed in the action menu. */
-  showSendToJira?: boolean;
-  /** Custom Jira action label. Defaults to "Send to Jira". */
-  sendToJiraLabel?: string;
 }
 
-export function FloatingMuteButton({
+type FloatingSelectionActionsProps = FloatingSelectionActionsBaseProps &
+  (
+    | {
+        jiraPayload: JiraDispatchModalPayload;
+        jiraLabel: string;
+      }
+    | {
+        jiraPayload?: never;
+        jiraLabel?: never;
+      }
+  );
+
+export function FloatingSelectionActions({
   selectedCount,
   selectedFindingIds,
   onComplete,
@@ -47,11 +49,9 @@ export function FloatingMuteButton({
   isBulkOperation = false,
   label,
   muteLabel = "Mute",
-  onSendToJira,
-  canSendToJira = false,
-  showSendToJira = canSendToJira,
-  sendToJiraLabel = "Send to Jira",
-}: FloatingMuteButtonProps) {
+  jiraPayload,
+  jiraLabel,
+}: FloatingSelectionActionsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -59,9 +59,6 @@ export function FloatingMuteButton({
   const [mutePreparationError, setMutePreparationError] = useState<
     string | null
   >(null);
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
 
   const handleModalOpenChange = (
     nextOpen: boolean | ((previousOpen: boolean) => boolean),
@@ -105,15 +102,6 @@ export function FloatingMuteButton({
     }
   };
 
-  const handleJiraClick = () => {
-    if (!canSendToJira) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
-      return;
-    }
-
-    onSendToJira?.();
-  };
-
   const handleComplete = () => {
     setResolvedIds([]);
     onComplete?.();
@@ -140,7 +128,7 @@ export function FloatingMuteButton({
         ? createPortal(
             <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 flex gap-2 duration-300">
               <div className="shadow-lg">
-                {showSendToJira ? (
+                {jiraPayload ? (
                   <ActionDropdown
                     ariaLabel="Open selection actions"
                     trigger={
@@ -160,14 +148,9 @@ export function FloatingMuteButton({
                       aria-label={muteLabel}
                       onSelect={() => void handleMuteClick()}
                     />
-                    <ActionDropdownItem
-                      icon={<JiraIcon size={20} />}
-                      label={sendToJiraLabel}
-                      tooltip={
-                        !canSendToJira ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
-                      }
-                      aria-label={sendToJiraLabel}
-                      onSelect={handleJiraClick}
+                    <JiraDispatchActionItem
+                      label={jiraLabel}
+                      payload={jiraPayload}
                     />
                   </ActionDropdown>
                 ) : (
