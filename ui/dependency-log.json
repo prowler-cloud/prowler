@@ -770,26 +770,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-22T15:13:22.257Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-22T15:13:22.257Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-22T15:13:22.257Z"
   },
   {
     "section": "devDependencies",
@@ -978,10 +978,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-22T15:13:22.257Z"
   },
   {
     "section": "devDependencies",
