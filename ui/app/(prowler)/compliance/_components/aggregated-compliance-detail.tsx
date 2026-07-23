@@ -49,7 +49,7 @@ export const AggregatedComplianceDetail = ({
                   alt={`${compliancetitle} logo`}
                   fill
                   sizes="48px"
-                  className="border-border-neutral-tertiary bg-bg-logo-surface rounded-lg border object-contain"
+                  className="border-border-neutral-tertiary rounded-lg border bg-gray-50 object-contain"
                 />
               </div>
             )}

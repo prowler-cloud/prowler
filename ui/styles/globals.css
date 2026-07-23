@@ -135,11 +135,6 @@
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: var(--color-rose-50);
 
-  /* Surface for third-party brand logos. Intentionally light in both themes:
-     vendor artwork is drawn for a light background and is unreadable on a
-     dark one. Do not swap this for a theme-dependent neutral token. */
-  --bg-logo-surface: var(--color-white);
-
   /* Data Background Colors */
   --bg-data-azure: var(--color-sky-400);
   --bg-data-kubernetes: var(--color-indigo-600);
@@ -248,9 +243,6 @@
   --bg-warning-secondary: var(--color-orange-900);
   --bg-fail-primary: var(--color-rose-500);
   --bg-fail-secondary: #432232;
-
-  /* Same value as light on purpose — see the light-theme declaration. */
-  --bg-logo-surface: var(--color-white);
 
   /* Data Background Colors */
   --bg-data-azure: var(--color-sky-400);
@@ -362,7 +354,6 @@
   --color-bg-warning-secondary: var(--bg-warning-secondary);
   --color-bg-fail: var(--bg-fail-primary);
   --color-bg-fail-secondary: var(--bg-fail-secondary);
-  --color-bg-logo-surface: var(--bg-logo-surface);
   --color-bg-feature-new: var(--bg-feature-new);
   --color-text-feature-new: var(--text-feature-new);
 
