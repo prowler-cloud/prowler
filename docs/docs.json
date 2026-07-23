@@ -91,7 +91,14 @@
               {
                 "group": "Prowler for MSPs and MSSPs",
                 "pages": [
-                  "getting-started/products/prowler-for-msps"
+                  "getting-started/products/prowler-for-msps",
+                  "user-guide/tutorials/prowler-for-msps-sign-up",
+                  "user-guide/tutorials/prowler-for-msps-organization",
+                  "user-guide/tutorials/prowler-for-msps-team",
+                  "user-guide/tutorials/prowler-for-msps-workspaces",
+                  "user-guide/tutorials/prowler-for-msps-customers",
+                  "user-guide/tutorials/prowler-for-msps-billing",
+                  "user-guide/tutorials/prowler-for-msps-branding"
                 ]
               }
             ]
