@@ -1,0 +1,36 @@
+{
+  "Provider": "alibabacloud",
+  "CheckID": "ecs_securitygroup_restrict_all_ports_internet",
+  "CheckTitle": "Security group restricts all-port access from the internet",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "ALIYUN::ECS::SecurityGroup",
+  "ResourceGroup": "network",
+  "Description": "Checks that no ECS security group Accept rule exposes all protocols and ports to unrestricted IPv4 (`0.0.0.0/0`) or IPv6 (`::/0`) sources.",
+  "Risk": "Unrestricted access to all ports enables broad scanning, remote exploitation, unauthorized access, and data exfiltration, threatening confidentiality, integrity, and availability.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.alibabacloud.com/help/en/ecs/user-guide/add-a-security-group-rule"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aliyun ecs RevokeSecurityGroup --SecurityGroupId <security_group_id> --IpProtocol all --PortRange -1/-1 --SourceCidrIp 0.0.0.0/0",
+      "NativeIaC": "",
+      "Other": "The CLI example is IPv4-specific. Also remove the corresponding IPv6 `::/0` rule, or restrict both `SourceCidrIp` and `Ipv6SourceCidrIp` rules and ports to those required by the workload.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Apply least privilege and do not allow all ports from `0.0.0.0/0` or `::/0`.",
+      "Url": "https://hub.prowler.com/check/ecs_securitygroup_restrict_all_ports_internet"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
