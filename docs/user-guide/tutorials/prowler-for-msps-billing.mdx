@@ -3,35 +3,11 @@ title: "Billing and Customer Plans in Prowler for MSPs and MSSPs"
 sidebarTitle: "Billing and Plans"
 ---
 
-Billing has two sides. Your own payment method lives on the **Billing** page; your customers' plans are set and changed from the **Customers** page. One payment method funds every customer subscription.
+Each customer carries its own billing plan, set when the customer is created and changed later from the **Customers** page. This page covers both, and where the resulting revenue is reported.
 
 ## Permissions
 
-Every billing surface requires a role with **Manage billing**, held today by both **Superadmin** and **Organization Admin**. See [Managing Your Team](/user-guide/tutorials/prowler-for-msps-team).
-
-## The Billing Page
-
-Select **Billing** in the sidebar. The page holds the **Payment Method** card: the single card that funds every customer subscription for your organization.
-
-<Steps>
-  <Step title="Add or replace the card">
-    Click **Add Payment Method**, or **Replace Payment Method** if one is already saved. Card details are collected and processed by Stripe; the console stores only the brand and the last four digits.
-  </Step>
-
-  <Step title="Complete verification if prompted">
-    Cards requiring 3-D Secure send you through the bank's verification screen and return you to the Billing page. If verification fails, a banner explains what went wrong and the card is not saved.
-  </Step>
-
-  <Step title="Watch the expiry">
-    A card nearing expiry carries an **Expiring soon** badge. An expired card is flagged **Expired** and must be replaced.
-  </Step>
-</Steps>
-
-Some accounts are configured for invoice billing rather than card billing. There, the payment method is provisioned automatically the first time a customer plan change needs one.
-
-<Note>
-Invoice history and per-customer billing breakdowns are not in this release.
-</Note>
+Managing customer plans requires a role with **Manage billing**, held today by both **Superadmin** and **Organization Admin**. See [Managing Your Team](/user-guide/tutorials/prowler-for-msps-team).
 
 ## Customer Plans
 
@@ -45,15 +21,17 @@ The annual plan is paid upfront for a fixed number of cloud provider accounts, b
 
 ## Change a Customer's Plan
 
-Open the actions menu on a customer's row and choose **Change plan**. A **Change Plan** dialog opens, offering the paid plans.
+Open the actions menu on a customer's row and choose **Change plan**.
 
 <Warning>
 **Plan changes are one way: trial to paid.** The action is only offered while a customer is on trial or its trial has expired. Once a customer holds a paid subscription, **Change plan** no longer appears on the row, and the trial is never a valid target.
 </Warning>
 
-{/* IMAGE (pending): /images/prowler-for-msps/change-plan-dialog.png — Change Plan dialog with the Monthly and Annual cards */}
+The **Change Plan** dialog opens on **Choose your plan**, with the same **Monthly** and **Annual** toggle used when the customer was created.
 
-Pick a plan and confirm. Choosing Annual also asks for the upfront provider account count. The change is submitted to Prowler Cloud and applied asynchronously; the customer's row updates once it lands. If it fails, a message explains why:
+![Change Plan dialog](/images/prowler-for-msps/change-plan-dialog.png)
+
+Select a plan and confirm with **Change Plan**. Choosing the annual plan also asks for the upfront provider account count. The change is submitted to Prowler Cloud and applied asynchronously; the customer's row updates once it lands. If it fails, a message explains why:
 
 | Message | Cause |
 |---|---|
