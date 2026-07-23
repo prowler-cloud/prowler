@@ -20,7 +20,7 @@ PROVIDER_HEADER_MAP = {
     "aws": ("AccountId", "account_uid", "Region", "region"),
     "azure": ("SubscriptionId", "account_uid", "Location", "region"),
     "gcp": ("ProjectId", "account_uid", "Location", "region"),
-    "kubernetes": ("Context", "account_name", "Namespace", "region"),
+    "kubernetes": ("ClusterUID", "account_uid", "Namespace", "region"),
     "m365": ("TenantId", "account_uid", "Location", "region"),
     "github": ("Account_Name", "account_name", "Account_Id", "account_uid"),
     "oraclecloud": ("TenancyId", "account_uid", "Region", "region"),

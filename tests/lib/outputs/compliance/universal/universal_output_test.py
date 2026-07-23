@@ -492,10 +492,10 @@ class TestProviderHeaders:
             provider="kubernetes",
         )
         row_dict = output.data[0].dict()
-        assert "Context" in row_dict
+        assert "ClusterUID" in row_dict
         assert "Namespace" in row_dict
-        # Kubernetes Context maps to account_name
-        assert row_dict["Context"] == "test-account"
+        # Kubernetes ClusterUID maps to account_uid for consistent cluster identification
+        assert row_dict["ClusterUID"] == "123456789012"
         assert row_dict["Namespace"] == "us-east-1"
 
     def test_github_headers(self, tmp_path):
@@ -572,7 +572,7 @@ class TestProviderHeaders:
             "aws": ("AccountId", "Region"),
             "azure": ("SubscriptionId", "Location"),
             "gcp": ("ProjectId", "Location"),
-            "kubernetes": ("Context", "Namespace"),
+            "kubernetes": ("ClusterUID", "Namespace"),
             "m365": ("TenantId", "Location"),
             "github": ("Account_Name", "Account_Id"),
             "oraclecloud": ("TenancyId", "Region"),
