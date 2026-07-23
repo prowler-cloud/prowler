@@ -56,12 +56,6 @@
                 ]
               },
               {
-                "group": "Prowler for MSPs and MSSPs",
-                "pages": [
-                  "getting-started/products/prowler-for-msps"
-                ]
-              },
-              {
                 "group": "Prowler Lighthouse AI",
                 "pages": [
                   "getting-started/products/prowler-cloud-lighthouse"
@@ -92,6 +86,12 @@
                   "user-guide/ai-agents/codex",
                   "user-guide/ai-agents/cursor",
                   "user-guide/ai-agents/vscode"
+                ]
+              },
+              {
+                "group": "Prowler for MSPs and MSSPs",
+                "pages": [
+                  "getting-started/products/prowler-for-msps"
                 ]
               }
             ]
