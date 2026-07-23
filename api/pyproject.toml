@@ -4,7 +4,7 @@ dev = [
   "coverage==7.5.4",
   "django-silk==5.3.2",
   "docker==7.1.0",
-  "filelock==3.20.3",
+  "filelock==3.30.2",
   "freezegun==1.5.1",
   "mypy==1.10.1",
   "pylint==3.2.5",
