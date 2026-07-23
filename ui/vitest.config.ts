@@ -8,7 +8,19 @@ export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
-    plugins: [react()],
+    // The app runs with the React Compiler (`reactCompiler: true` in
+    // next.config.js) and is written assuming it — components omit
+    // useMemo/useCallback. Without the compiler in the test build, those
+    // unmemoized callbacks/objects are unstable every render, so effects that
+    // depend on them (e.g. the wizard footer-config sync) loop infinitely.
+    // Run the compiler here too so tests match production semantics.
+    plugins: [
+      react({
+        babel: {
+          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
+        },
+      }),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),
@@ -28,10 +40,10 @@ export default defineConfig(() => {
           ".next",
           "tests/**/*",
           "**/*.test.{ts,tsx}",
-          "**/*.browser.test.{ts,tsx}",
+          "**/*.integration.test.{ts,tsx}",
           "vitest.config.ts",
           "vitest.setup.ts",
-          "vitest.browser.setup.ts",
+          "vitest.integration.setup.ts",
           "__tests__/**/*",
         ],
       },
@@ -47,16 +59,16 @@ export default defineConfig(() => {
               "node_modules",
               ".next",
               "tests/**/*",
-              "**/*.browser.test.{ts,tsx}",
+              "**/*.integration.test.{ts,tsx}",
             ],
           },
         },
         {
           extends: true,
           test: {
-            name: "browser",
-            setupFiles: ["./vitest.browser.setup.ts"],
-            include: ["**/*.browser.test.{ts,tsx}"],
+            name: "integration",
+            setupFiles: ["./vitest.integration.setup.ts"],
+            include: ["**/*.integration.test.{ts,tsx}"],
             exclude: ["node_modules", ".next", "tests/**/*"],
             browser: {
               enabled: true,
