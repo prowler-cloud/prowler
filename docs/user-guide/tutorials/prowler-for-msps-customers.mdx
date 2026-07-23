@@ -21,15 +21,15 @@ Adding a customer is restricted to the Superadmin role. Organization Admins mana
   </Step>
 
   <Step title="Set Their Billing Plan">
-    Choose the plan the customer starts on. See [Billing and Customer Plans](/user-guide/tutorials/prowler-for-msps-billing) for what each plan includes and what the annual plan asks for.
+    Under **Choose your plan**, switch between **Monthly** and **Annual** and pick the plan the customer starts on. Click **Create Customer**. See [Billing and Customer Plans](/user-guide/tutorials/prowler-for-msps-billing) for what the annual plan asks for.
 
-    {/* IMAGE (pending): /images/prowler-for-msps/add-customer-billing.png — Step 2 of the Add Customer wizard, showing the plan cards and the Monthly/Annual toggle */}
+    ![Adding A New Customer, choosing a plan](/images/prowler-for-msps/add-customer-billing.png)
   </Step>
 
   <Step title="Launch Their Customer Workspace">
-    Prowler provisions the tenant in Prowler Cloud. The final step confirms the outcome — created on the free plan, subscribed to a paid plan, or subscribed with a failure to report.
+    A banner confirms the outcome — created on trial, or subscribed to a paid plan — and the tenant is created and linked to your organization. Click **Go To Organization** to head straight there and start connecting cloud providers, or **Close** to return to the customer list.
 
-    {/* IMAGE (pending): /images/prowler-for-msps/add-customer-launch.png — Step 3 of the Add Customer wizard, showing the confirmation */}
+    ![Adding A New Customer, confirmation](/images/prowler-for-msps/add-customer-launch.png)
   </Step>
 </Steps>
 
@@ -37,7 +37,11 @@ Provisioning is asynchronous. The customer's row shows **Provisioning** until th
 
 ## The Customers View
 
-The Customers table lists every customer you can reach. Each row carries:
+**My Customers** lists every customer you can reach.
+
+![My Customers page](/images/prowler-for-msps/customers-table.png)
+
+Each row carries:
 
 | Column | What it shows |
 |---|---|
@@ -46,15 +50,15 @@ The Customers table lists every customer you can reach. Each row carries:
 | **Cloud Accounts** | Number of provider accounts under scan |
 | **Resources** | Resources discovered by the latest scan |
 | **Failed Findings** | Failed findings from the latest scan |
-| **Billing Type** | The customer's current plan |
+| **Billing Type** | The customer's current plan, shown as **Trial**, **Pro Monthly** or **Pro Annual** |
 | **MTD** | Month-to-date spend |
 | **Last Month Expenses** | Previous month's total |
 | **Status** | **Active**, **Provisioning** or **Inactive** |
 | **Last scan completed** | When the most recent scan finished |
 
-{/* IMAGE (pending): /images/prowler-for-msps/customers-table.png — Customers page with the billing stat cards above the table and the full column set */}
+A customer shows as **Provisioning** while its tenant is being created, and **Inactive** once it has been marked for removal.
 
-A customer shows as **Inactive** once it has been marked for removal.
+Above the table, search by name and filter by provider or status. The download button at the top right of the table exports the list.
 
 ## Open a Customer's Prowler Cloud Tenant
 
