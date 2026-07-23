@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
+
 import {
   buildLighthouseV2ConfigurationPayload,
   buildLighthouseV2ConfigurationUpdatePayload,
@@ -160,6 +162,54 @@ describe("lighthouse-v2.adapter", () => {
   });
 
   describe("when building Cloud payloads", () => {
+    it("should include agent text, display text, and UI context for contextual messages", () => {
+      // Given
+      const context: LighthouseContextEnvelope = {
+        schemaVersion: 1,
+        transport: "inline",
+        items: [
+          {
+            kind: "page",
+            id: "findings",
+            source: "automatic",
+            scopeKey: "findings:/findings",
+            label: "Findings",
+            path: "/findings",
+          },
+        ],
+      };
+
+      // When
+      const payload = buildLighthouseV2MessagePayload({
+        displayText: "Prioritize these findings",
+        context,
+        provider: "openai",
+      });
+
+      // Then
+      expect(payload.data.attributes.parts?.[0]).toEqual({
+        part_type: "text",
+        content: {
+          text: expect.stringContaining("[PROWLER_UI_CONTEXT_V1]"),
+          display_text: "Prioritize these findings",
+          ui_context: {
+            schema_version: 1,
+            transport: "inline",
+            items: [
+              {
+                kind: "page",
+                id: "findings",
+                source: "automatic",
+                scope_key: "findings:/findings",
+                label: "Findings",
+                path: "/findings",
+              },
+            ],
+          },
+        },
+      });
+    });
+
     it("should use Cloud Bedrock credential keys", () => {
       // Given
       const input = {
@@ -212,7 +262,7 @@ describe("lighthouse-v2.adapter", () => {
     it("should serialize OpenAI-compatible message provider ids for the Cloud API", () => {
       // Given
       const input = {
-        text: "Summarize critical findings",
+        displayText: "Summarize critical findings",
         provider: "openai-compatible" as const,
         model: "openrouter/auto",
       };
@@ -222,6 +272,20 @@ describe("lighthouse-v2.adapter", () => {
 
       // Then
       expect(payload.data.attributes.provider).toBe("openai_compatible");
+    });
+
+    it("should preserve the legacy text-only content without context", () => {
+      // Given / When
+      const payload = buildLighthouseV2MessagePayload({
+        displayText: "Summarize critical findings",
+        provider: "openai",
+      });
+
+      // Then
+      expect(payload.data.attributes.parts?.[0]).toEqual({
+        part_type: "text",
+        content: { text: "Summarize critical findings" },
+      });
     });
 
     it("should build per-provider update payloads with default_model and business_context", () => {

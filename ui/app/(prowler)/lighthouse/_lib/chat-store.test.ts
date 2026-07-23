@@ -14,6 +14,7 @@ import type {
   LighthouseV2SupportedModel,
   LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 const {
   createSessionMock,
@@ -126,6 +127,127 @@ describe("createLighthouseChatStore", () => {
       text: "Summarize findings",
     });
     expect(store.getState().streamState.activeTaskId).toBe("task-1");
+  });
+
+  it("captures and sends the validated context with unmodified display text", async () => {
+    // Given
+    const store = makeStore();
+    const context = findingsContext();
+
+    // When
+    await store
+      .getState()
+      .submitMessage("  Summarize critical findings  ", context);
+
+    // Then
+    expect(createSessionMock).toHaveBeenCalledWith(
+      "Summarize critical findings",
+    );
+    expect(sendMessageMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      displayText: "  Summarize critical findings  ",
+      context,
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+    expect(store.getState().lastSubmission).toEqual({
+      displayText: "  Summarize critical findings  ",
+      context,
+    });
+    expect(store.getState().lastSubmittedText).toBe(
+      "  Summarize critical findings  ",
+    );
+  });
+
+  it("retries with the original context snapshot", async () => {
+    // Given
+    const store = makeStore();
+    const context = findingsContext();
+    await store.getState().submitMessage("Prioritize findings", context);
+    context.items[0].label = "Mutated after send";
+    eventSources[0].fail(2 /* EventSource.CLOSED */);
+    sendMessageMock.mockResolvedValueOnce({
+      data: {
+        task: { id: "task-2", name: "lighthouse-run", state: "executing" },
+      },
+    });
+
+    // When
+    await store.getState().retryLastMessage();
+
+    // Then
+    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
+      sessionId: "session-1",
+      displayText: "Prioritize findings",
+      context: findingsContext(),
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+  });
+
+  it("retries with the original snapshot even when current context was disabled", async () => {
+    const store = makeStore();
+    const context = findingsContext();
+    await store.getState().submitMessage("Prioritize findings", context);
+    eventSources[0].fail(2 /* EventSource.CLOSED */);
+    store.getState().disableContext();
+
+    await store.getState().retryLastMessage();
+
+    expect(sendMessageMock).toHaveBeenNthCalledWith(2, {
+      sessionId: "session-1",
+      displayText: "Prioritize findings",
+      context,
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+    expect(store.getState().isContextEnabled).toBe(false);
+  });
+
+  it("keeps context disabled for the conversation and restores it for a new chat", async () => {
+    // Given
+    const store = makeStore();
+    store.getState().disableContext();
+
+    // When
+    await store
+      .getState()
+      .submitMessage("Question without context", findingsContext());
+
+    // Then
+    expect(store.getState().isContextEnabled).toBe(false);
+    expect(sendMessageMock).toHaveBeenCalledWith({
+      sessionId: "session-1",
+      displayText: "Question without context",
+      provider: "openai",
+      model: "gpt-5.1",
+    });
+
+    // When
+    store.getState().resetToNewChat();
+
+    // Then
+    expect(store.getState().isContextEnabled).toBe(true);
+  });
+
+  it("degrades oversized context before sending without blocking the message", async () => {
+    // Given
+    const store = makeStore();
+    const context = oversizedFindingsContext();
+
+    // When
+    await store.getState().submitMessage("Prioritize findings", context);
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayText: "Prioritize findings",
+        context: {
+          ...context,
+          items: context.items.slice(0, 3),
+        },
+      }),
+    );
   });
 
   it("does not touch the URL when syncUrlToSession is off (panel surface)", async () => {
@@ -498,6 +620,51 @@ function message(
         insertedAt: "2026-06-25T10:00:00Z",
         updatedAt: "2026-06-25T10:00:00Z",
       },
+    ],
+  };
+}
+
+function findingsContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "findings",
+        source: "automatic",
+        scopeKey: "findings:/findings",
+        label: "Findings",
+        path: "/findings",
+      },
+    ],
+  };
+}
+
+function oversizedFindingsContext(): LighthouseContextEnvelope {
+  const context = findingsContext();
+  return {
+    ...context,
+    items: [
+      ...context.items,
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "selection",
+        scopeKey: "findings:/findings",
+        label: "Selected finding",
+        findingId: "finding-1",
+      },
+      ...Array.from({ length: 6 }, (_, index) => ({
+        kind: "finding" as const,
+        id: `summary-${index}`,
+        source: "automatic" as const,
+        scopeKey: "findings:/findings",
+        label: `Summary ${index} ${"x".repeat(240)}`,
+        findingId: `summary-${index}`,
+        checkId: `check-${index}-${"y".repeat(240)}`,
+        providerUid: `provider-${index}-${"z".repeat(237)}`,
+      })),
     ],
   };
 }

@@ -14,7 +14,12 @@ import {
   type LighthouseV2SupportedProvider,
   type LighthouseV2Task,
 } from "@/app/(prowler)/lighthouse/_types";
+import {
+  buildAgentText,
+  toApiLighthouseContext,
+} from "@/lib/lighthouse/context/transport";
 import type { JsonApiDocument, JsonApiResource } from "@/types/jsonapi";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 import type {
   TaskAttributes as ApiTaskAttributes,
   TaskState,
@@ -251,10 +256,22 @@ export function buildLighthouseV2SessionUpdatePayload(
 }
 
 export function buildLighthouseV2MessagePayload(input: {
-  text: string;
+  displayText: string;
+  context?: LighthouseContextEnvelope;
   provider: LighthouseV2ProviderType;
   model?: string | null;
 }) {
+  const apiContext = input.context
+    ? toApiLighthouseContext(input.context)
+    : undefined;
+  const content = apiContext
+    ? {
+        text: buildAgentText(input.displayText, apiContext),
+        display_text: input.displayText,
+        ui_context: apiContext,
+      }
+    : { text: input.displayText };
+
   return {
     data: {
       type: "lighthouse-messages",
@@ -262,7 +279,7 @@ export function buildLighthouseV2MessagePayload(input: {
         parts: [
           {
             part_type: "text",
-            content: { text: input.text },
+            content,
           },
         ],
         provider: toLighthouseV2ApiProviderType(input.provider),

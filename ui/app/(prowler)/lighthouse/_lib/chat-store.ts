@@ -29,6 +29,8 @@ import {
   type LighthouseV2SupportedModel,
   type LighthouseV2SupportedProvider,
 } from "@/app/(prowler)/lighthouse/_types";
+import { prepareLighthouseContext } from "@/lib/lighthouse/context/compiler";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 export interface LighthouseChatConfig {
   configurations: LighthouseV2Configuration[];
@@ -60,18 +62,36 @@ export interface LighthouseChatState {
   blockedByConflict: boolean;
   isSubmitting: boolean;
   isLoadingSession: boolean;
+  /** @deprecated Use lastSubmission so retries can preserve their context snapshot. */
   lastSubmittedText: string | null;
+  lastSubmission: LighthouseChatSubmission | null;
+  isContextEnabled: boolean;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
   setSessionUrlSyncEnabled: (enabled: boolean) => void;
   setInput: (value: string) => void;
   dismissFeedback: () => void;
   selectModel: (selection: LighthouseV2ModelSelection) => Promise<void>;
-  submitMessage: (text: string) => Promise<void>;
+  submitMessage: (
+    displayText: string,
+    context?: LighthouseContextEnvelope,
+  ) => Promise<void>;
+  retryLastMessage: () => Promise<void>;
+  disableContext: () => void;
+  enableContext: () => void;
   openSession: (sessionId: string) => Promise<void>;
   resetToNewChat: () => void;
   handleSessionArchived: (sessionId: string) => void;
   destroy: () => void;
+}
+
+export interface LighthouseChatSubmission {
+  displayText: string;
+  context?: LighthouseContextEnvelope;
+}
+
+interface LighthouseChatSubmitOptions {
+  bypassContextGate?: boolean;
 }
 
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
@@ -247,6 +267,93 @@ export function createLighthouseChatStore(
       return result.data.id;
     };
 
+    const submitMessageInternal = async (
+      displayText: string,
+      context?: LighthouseContextEnvelope,
+      submitOptions: LighthouseChatSubmitOptions = {},
+    ): Promise<void> => {
+      if (!displayText.trim()) return;
+      if (!get().selectedModelSelection) {
+        set({ feedback: "Select a model before sending a message." });
+        return;
+      }
+      if (!selectLighthouseChatCanSend(get())) return;
+
+      const shouldUseContext =
+        submitOptions.bypassContextGate === true || get().isContextEnabled;
+      const contextSnapshot = shouldUseContext
+        ? prepareLighthouseContext(context)
+        : undefined;
+
+      set({ isSubmitting: true });
+      try {
+        const sessionId = await ensureSession(displayText);
+        if (!sessionId || destroyed) return;
+
+        const selection = get().selectedModelSelection;
+        if (!selection) return;
+
+        const provisionalTaskId = `pending-${Date.now()}`;
+        const lastSubmission = contextSnapshot
+          ? { displayText, context: contextSnapshot }
+          : { displayText };
+        set((current) => ({
+          feedback: null,
+          blockedByConflict: false,
+          lastSubmittedText: displayText,
+          lastSubmission,
+          input: "",
+          messages: [
+            ...current.messages,
+            buildOptimisticMessage("user", displayText, contextSnapshot),
+          ],
+          streamState: createInitialLighthouseV2StreamState(provisionalTaskId),
+        }));
+
+        // Subscribe to the same-origin SSE proxy BEFORE sending the message:
+        // the backend has no replay buffer, so the listener must be attached
+        // before the worker starts emitting.
+        startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
+
+        const result = await sendLighthouseV2Message({
+          sessionId,
+          displayText,
+          ...(contextSnapshot ? { context: contextSnapshot } : {}),
+          provider: selection.providerType,
+          model: selection.modelId,
+        });
+        if (destroyed) return;
+
+        if ("error" in result) {
+          // Stale guard: the chat may point at another session by now, so
+          // this failure must not clobber its stream state or feedback.
+          if (get().activeSessionId !== sessionId) return;
+          closeStream();
+          set({
+            streamState: createInitialLighthouseV2StreamState(),
+            feedback: result.error,
+          });
+          if (result.status === 409) {
+            set({ blockedByConflict: true });
+          }
+          // Reconcile the optimistic user message against the server on any
+          // failure — it may or may not have been persisted.
+          await refreshMessages(sessionId);
+          return;
+        }
+
+        set((current) => ({
+          streamState:
+            current.streamState.activeTaskId === provisionalTaskId
+              ? { ...current.streamState, activeTaskId: result.data.task.id }
+              : current.streamState,
+        }));
+        notifyLighthouseV2SessionsChanged();
+      } finally {
+        set({ isSubmitting: false });
+      }
+    };
+
     return {
       config,
       activeSessionId: options.initialSessionId ?? null,
@@ -258,6 +365,8 @@ export function createLighthouseChatStore(
       isSubmitting: false,
       isLoadingSession: false,
       lastSubmittedText: null,
+      lastSubmission: null,
+      isContextEnabled: true,
       selectedModelSelection: resolveInitialModelSelection(
         connectedConfigurations,
         config.modelsByProvider,
@@ -271,6 +380,10 @@ export function createLighthouseChatStore(
       setInput: (value) => set({ input: value }),
 
       dismissFeedback: () => set({ feedback: null }),
+
+      disableContext: () => set({ isContextEnabled: false }),
+
+      enableContext: () => set({ isContextEnabled: true }),
 
       selectModel: async (selection) => {
         // The selection drives the model used for the next message, so it stays
@@ -297,78 +410,19 @@ export function createLighthouseChatStore(
         }
       },
 
-      submitMessage: async (text) => {
-        const trimmedText = text.trim();
-        if (!trimmedText) return;
-        if (!get().selectedModelSelection) {
-          set({ feedback: "Select a model before sending a message." });
-          return;
-        }
-        if (!selectLighthouseChatCanSend(get())) return;
+      submitMessage: (displayText, context) =>
+        submitMessageInternal(displayText, context),
 
-        set({ isSubmitting: true });
-        try {
-          const sessionId = await ensureSession(trimmedText);
-          if (!sessionId || destroyed) return;
-
-          const selection = get().selectedModelSelection;
-          if (!selection) return;
-
-          const provisionalTaskId = `pending-${Date.now()}`;
-          set((current) => ({
-            feedback: null,
-            blockedByConflict: false,
-            lastSubmittedText: trimmedText,
-            input: "",
-            messages: [
-              ...current.messages,
-              buildOptimisticMessage("user", trimmedText),
-            ],
-            streamState:
-              createInitialLighthouseV2StreamState(provisionalTaskId),
-          }));
-
-          // Subscribe to the same-origin SSE proxy BEFORE sending the message:
-          // the backend has no replay buffer, so the listener must be attached
-          // before the worker starts emitting.
-          startStream(buildLighthouseV2StreamUrl(sessionId), sessionId);
-
-          const result = await sendLighthouseV2Message({
-            sessionId,
-            text: trimmedText,
-            provider: selection.providerType,
-            model: selection.modelId,
-          });
-          if (destroyed) return;
-
-          if ("error" in result) {
-            // Stale guard: the chat may point at another session by now, so
-            // this failure must not clobber its stream state or feedback.
-            if (get().activeSessionId !== sessionId) return;
-            closeStream();
-            set({
-              streamState: createInitialLighthouseV2StreamState(),
-              feedback: result.error,
-            });
-            if (result.status === 409) {
-              set({ blockedByConflict: true });
-            }
-            // Reconcile the optimistic user message against the server on any
-            // failure — it may or may not have been persisted.
-            await refreshMessages(sessionId);
-            return;
-          }
-
-          set((current) => ({
-            streamState:
-              current.streamState.activeTaskId === provisionalTaskId
-                ? { ...current.streamState, activeTaskId: result.data.task.id }
-                : current.streamState,
-          }));
-          notifyLighthouseV2SessionsChanged();
-        } finally {
-          set({ isSubmitting: false });
-        }
+      retryLastMessage: async () => {
+        const submission = get().lastSubmission;
+        if (!submission) return;
+        await submitMessageInternal(
+          submission.displayText,
+          submission.context,
+          {
+            bypassContextGate: true,
+          },
+        );
       },
 
       openSession: async (sessionId) => {
@@ -384,6 +438,8 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: true,
           lastSubmittedText: null,
+          lastSubmission: null,
+          isContextEnabled: true,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(sessionId);
@@ -410,6 +466,8 @@ export function createLighthouseChatStore(
           isSubmitting: false,
           isLoadingSession: false,
           lastSubmittedText: null,
+          lastSubmission: null,
+          isContextEnabled: true,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(null);
