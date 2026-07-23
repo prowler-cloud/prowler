@@ -129,12 +129,20 @@ export interface AttackPathQueryDocumentationLink {
   link: string;
 }
 
+export const ATTACK_PATH_QUERY_STATUSES = {
+  OK: "ok",
+  ERROR: "error",
+} as const;
+
+export type AttackPathQueryStatus =
+  (typeof ATTACK_PATH_QUERY_STATUSES)[keyof typeof ATTACK_PATH_QUERY_STATUSES];
+
 // Precomputed per-query result summary from the scan (Prowler Cloud only).
 // `has_data` is null when the query errored; the whole object is null/absent
 // when the query was never precomputed (parameterized, a scan predating the
 // precompute step, or one the bounded pass did not reach).
 export interface AttackPathQueryResultSummary {
-  status: "ok" | "error";
+  status: AttackPathQueryStatus;
   has_data: boolean | null;
 }
 
