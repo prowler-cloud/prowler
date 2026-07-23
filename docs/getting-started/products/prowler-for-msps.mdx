@@ -13,25 +13,19 @@ The console is available at [partners.prowler.com](https://partners.prowler.com)
 
 * **Customer onboarding:** provision a Prowler Cloud tenant for each customer, in the EU or US region, with a billing plan selected up front.
 * **Delegated access:** open any customer's Prowler Cloud tenant from the console. Every action is attributed to you acting on behalf of that customer.
-* **Workspaces:** group customers into workspaces and grant team members access per workspace.
-* **Team and roles:** invite team members into a workspace and assign a role that governs what they can do.
+* **Team and roles:** invite team members by email and assign a role that governs what they can do.
 * **Consolidated billing:** one payment method funds every customer subscription, with month-to-date and year-to-date revenue on the dashboard.
 * **Branding:** upload your logo to appear alongside Prowler branding in the console.
 
 ## Core Concepts
 
-Four objects make up the model. Getting these straight makes the rest of the documentation easy to follow.
+Three objects make up the model. Getting these straight makes the rest of the documentation easy to follow.
 
 | Object | What it is |
 |---|---|
-| **Partner organization** | Your own company. The top-level container for everything below. Created at sign-up. |
-| **Workspace** | A grouping of customers **inside your partner organization**. Every partner organization has one default workspace. Team access is granted per workspace. |
-| **Customer** | One of your customers. Each customer maps to a Prowler Cloud tenant in a region (EU or US) and carries its own billing plan. |
-| **Team member** | A user in your partner organization, holding a role and access to one or more workspaces. |
-
-<Warning>
-**A workspace is yours, not your customer's.** A workspace groups customers on your side of the relationship. It is not the customer's Prowler Cloud environment. The customer's environment is the tenant behind the **Customer** object.
-</Warning>
+| **Partner organization** | The provider's own company. The top-level container for everything below, created at sign-up. |
+| **Customer** | One of the provider's customers. Each customer maps to a Prowler Cloud tenant in a region (EU or US) and carries its own billing plan. |
+| **Team member** | A user in the partner organization, holding a role that governs what they can do. |
 
 ## How It Relates to Prowler Cloud
 
@@ -62,10 +56,6 @@ Signing in lands you on the **Dashboard**. The sidebar carries:
 **Partner Insights** is the top row: **Total Customers**, broken down into active and non-paid; **Cloud Accounts**, broken down by cloud provider; and **Monitored Resources**, with a note on organizations whose critical risk has grown. Each card carries a 30-day trend.
 
 Below it, **Billing Overview** reports monthly expenses against the previous month and splits revenue for the period into annual, monthly and overage. **Active Customers** lists your customers with their provider count, resource count and last completed scan, and carries its own **Add Customer** button.
-
-<Note>
-The **Workspaces** page exists at `/workspaces` but is not currently linked from the sidebar. See [Organizing Customers into Workspaces](/user-guide/tutorials/prowler-for-msps-workspaces).
-</Note>
 
 ## Getting Access
 
