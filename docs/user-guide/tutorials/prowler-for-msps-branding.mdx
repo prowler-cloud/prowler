@@ -7,9 +7,9 @@ Upload your company logo to have it displayed alongside Prowler branding in the 
 
 ## Upload a Logo
 
-Open **Settings → Branding**, click **Upload**, and pick your file. The logo replaces the placeholder immediately and a confirmation appears.
+Open **Settings → Branding**, click **Upload Logo**, and pick your file. The logo replaces the placeholder immediately and a confirmation appears.
 
-{/* IMAGE (pending): /images/prowler-for-msps/settings-branding.png — Settings Branding tab showing the Partner Logo section with an uploaded logo, Upload and Remove controls */}
+![Settings Branding tab](/images/prowler-for-msps/settings-branding.png)
 
 ### Logo Requirements
 
@@ -17,13 +17,18 @@ Open **Settings → Branding**, click **Upload**, and pick your file. The logo r
 |---|---|
 | **Formats** | PNG or SVG |
 | **Maximum file size** | 512 KB |
-| **Maximum dimensions** | 200 × 60 pixels |
+| **Dimensions** | 200 × 60 pixels — a hard limit for PNG, not checked for SVG |
 
 <Warning>
-The upload dialog accepts files up to 1 MB, but the server rejects anything above **512 KB**. Keep your logo under 512 KB to avoid an upload that appears to start and then fails.
+Two limits on this screen are looser than what the server accepts:
+
+* The upload dialog accepts files up to 1 MB, but anything above **512 KB** is rejected.
+* The page describes 200 × 60 pixels as a recommended size. For PNG it is a **maximum**: a larger PNG is rejected with *"PNG dimensions must not exceed 200×60 px."* SVG is exempt from the dimension check.
+
+Keep PNG logos within both limits to avoid an upload that appears to start and then fails.
 </Warning>
 
-A wide, horizontal logo with a transparent background renders best. SVG stays crisp at every size and is the better choice where you have it.
+A wide, horizontal logo with a transparent background renders best. SVG stays crisp at every size, is not subject to the dimension limit, and is the better choice where you have it.
 
 <Note>
 Uploaded SVG files are sanitized on the server. Scripts, external references and other active content are stripped before the file is stored.
@@ -31,7 +36,15 @@ Uploaded SVG files are sanitized on the server. Scripts, external references and
 
 ## Replace or Remove a Logo
 
-Uploading a new file replaces the current one. **Remove** deletes it and returns the console to the default Prowler branding. Both take effect immediately for everyone on your team.
+Uploading a new file replaces the current one. **Remove Logo** deletes it and returns the console to the default Prowler branding. Both take effect immediately for everyone on your team.
+
+## Logo Placement Preview
+
+Below the upload controls, **Logo Placement Preview** renders your logo underneath the Prowler wordmark, showing how the two are intended to sit together in a Prowler Cloud organization. With no logo uploaded, the slot shows a *Your Logo* placeholder.
+
+<Note>
+The preview is rendered locally in the console. Uploading a logo does not currently push it to Prowler Cloud.
+</Note>
 
 ## Where Your Logo Appears
 
