@@ -17,6 +17,7 @@ from stackit.core.configuration import Configuration
 from stackit.iaas import DefaultApi as IaasDefaultApi
 from stackit.objectstorage import DefaultApi as ObjectStorageDefaultApi
 from stackit.resourcemanager import DefaultApi as ResourceManagerDefaultApi
+from stackit.ske import DefaultApi as SkeDefaultApi
 
 from prowler.config.config import (
     default_config_file_path,
@@ -228,6 +229,7 @@ class StackitProvider(Provider):
     _SERVICE_API_CLASS = {
         "iaas": IaasDefaultApi,
         "objectstorage": ObjectStorageDefaultApi,
+        "ske": SkeDefaultApi,
     }
 
     def generate_regional_clients(self, service: str = "iaas") -> dict:

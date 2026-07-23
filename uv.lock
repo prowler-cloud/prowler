@@ -3635,6 +3635,7 @@ dependencies = [
     { name = "stackit-iaas" },
     { name = "stackit-objectstorage" },
     { name = "stackit-resourcemanager" },
+    { name = "stackit-ske" },
     { name = "tabulate" },
     { name = "tzlocal" },
     { name = "uuid6" },
@@ -3744,6 +3745,7 @@ requires-dist = [
     { name = "stackit-iaas", specifier = "==1.4.0" },
     { name = "stackit-objectstorage", specifier = "==1.4.0" },
     { name = "stackit-resourcemanager", specifier = "==0.8.0" },
+    { name = "stackit-ske", specifier = "==1.12.0" },
     { name = "tabulate", specifier = "==0.9.0" },
     { name = "tzlocal", specifier = "==5.3.1" },
     { name = "uuid6", specifier = "==2024.7.10" },
@@ -4771,6 +4773,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/23/2d/f458f18e48ed2b1c83df52cff7dbdfd5dd904fb2980ffd9385876e47bbd9/stackit_resourcemanager-0.8.0.tar.gz", hash = "sha256:f44542beab4130857f5a7f465cf02defeef657bdf63c1beeb3102f0ba3c003fe", size = 33943, upload-time = "2026-05-13T09:43:08.667Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/c7/9c/38a74d0f7a89b4320f6d2366fb660638bda8860daa08748b12c713d84381/stackit_resourcemanager-0.8.0-py3-none-any.whl", hash = "sha256:dd04bb8353d041a137c4dcba190beabded7acfaff1bc98b218fce20a99389ebc", size = 81288, upload-time = "2026-05-13T09:43:07.81Z" },
+]
+
+[[package]]
+name = "stackit-ske"
+version = "1.12.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dateutil" },
+    { name = "requests" },
+    { name = "stackit-core" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/cd/9e/df3ad585cb96d028354f4253568e9879d81bb9395d5ebfa268fa9350e2df/stackit_ske-1.12.0.tar.gz", hash = "sha256:62814279f3b7fb2387648f92d14453a8905ad60115c07579f2741ddb7d1fcc94", size = 37239, upload-time = "2026-06-30T11:18:49.39Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/00/37/dc54fb7185a2d4da37308322ea1a7b992312030b2e37262de4eb4003f5c7/stackit_ske-1.12.0-py3-none-any.whl", hash = "sha256:45bd8084d87f14f818b3d7e824450248c8784ed204ca1b2dc108f491dcbdb1a3", size = 93142, upload-time = "2026-06-30T11:18:48.233Z" },
 ]
 
 [[package]]
