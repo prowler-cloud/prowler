@@ -17,6 +17,10 @@ const { scansFilterBarSpy } = vi.hoisted(() => ({
   scansFilterBarSpy: vi.fn(),
 }));
 
+const { onboardingTriggerSpy } = vi.hoisted(() => ({
+  onboardingTriggerSpy: vi.fn(),
+}));
+
 const localStorageMock = (() => {
   let store: Record<string, string> = {};
 
@@ -103,6 +107,14 @@ vi.mock("@/components/providers/muted-findings-config-button", () => ({
   MutedFindingsConfigButton: () => <a href="/mutelist">Configure Mutelist</a>,
 }));
 
+vi.mock("@/components/onboarding", () => ({
+  OnboardingTrigger: (props: unknown) => {
+    onboardingTriggerSpy(props);
+    return <div data-testid="onboarding-trigger" />;
+  },
+  PageReady: () => <div data-testid="page-ready" />,
+}));
+
 const providers: ProviderProps[] = [
   {
     id: "provider-1",
@@ -139,6 +151,19 @@ const providers: ProviderProps[] = [
           count: 0,
         },
         data: [],
+      },
+    },
+  },
+];
+
+const disconnectedProviders: ProviderProps[] = [
+  {
+    ...providers[0],
+    attributes: {
+      ...providers[0].attributes,
+      connection: {
+        ...providers[0].attributes.connection,
+        connected: false,
       },
     },
   },
@@ -304,6 +329,51 @@ describe("ScansPageShell", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent(/launch scan/i);
   });
 
+  it("does not open the launch scan modal from the URL when no provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from client state when no provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    useScansStore.getState().openLaunchScanModal();
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("does not open the launch scan modal from the URL without manage scans permission", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    searchParamsValue.current = "launchScan=true";
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("strips the launchScan URL param via the History API when closing the URL-opened modal", async () => {
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
     searchParamsValue.current = "tab=completed&launchScan=true";
@@ -415,5 +485,120 @@ describe("ScansPageShell", () => {
     const calledUrl = pushMock.mock.calls.at(-1)?.[0] as string;
     expect(calledUrl).toContain("tab=scheduled");
     expect(calledUrl).not.toContain("filter%5Btrigger%5D");
+  });
+
+  it("shows a non-blocking hint when no provider is connected, while still rendering the table", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Connected Providers")).toBeInTheDocument();
+    // The table (and therefore imported scans) must still render below the hint.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("shows the no-providers hint when there are no providers, while still rendering the table", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByText("No Providers Configured")).toBeInTheDocument();
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("does not show the providers hint when a provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(
+      screen.queryByText("No Connected Providers"),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("No Providers Configured"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("starts the view-first-scan tour when a provider is connected", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when no provider is connected, since Launch Scan is disabled", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell
+        providers={disconnectedProviders}
+        hasManageScansPermission
+      >
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render even with the tour suppressed.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when there are no providers", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+  });
+
+  it("suppresses the view-first-scan tour when a provider is connected but manage scans is missing", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={providers} hasManageScansPermission={false}>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    // Launch Scan is disabled without manage_scans, so the tour must not anchor to it.
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    // The table (and therefore imported scans) must still render.
+    expect(screen.getByText("Scans table")).toBeInTheDocument();
+  });
+
+  it("still signals page-ready without a connected provider so the navbar replay fallback works", () => {
+    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+
+    render(
+      <ScansPageShell providers={[]} hasManageScansPermission>
+        <div>Scans table</div>
+      </ScansPageShell>,
+    );
+
+    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
   });
 });
