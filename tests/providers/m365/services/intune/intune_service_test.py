@@ -218,6 +218,10 @@ class Test_Intune_DeviceEnrollmentConfigurations:
         assert len(result) == 2
         assert {config.id for config in result} == {"page-one", "page-two"}
         assert client.request_adapter.send_primitive_async.await_count == 2
+        # The second request must follow the opaque nextLink, not repeat the first.
+        client.device_management.device_enrollment_configurations.with_url.assert_any_call(
+            first_page["@odata.nextLink"]
+        )
 
 
 class Test_Intune_Service:
