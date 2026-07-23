@@ -803,7 +803,7 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     # S3 where the tmp dir is not removed). Output writers open files in append
     # mode with a deterministic path (derived from scan.started_at), so reusing
     # them would append every finding row again and duplicate the CSV/output
-    # rows. Start from a clean slate before (re)generating. See PROWLER-2266.
+    # rows. Start from a clean slate before (re)generating.
     scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
     try:
         rmtree(scan_tmp_dir, ignore_errors=True)
