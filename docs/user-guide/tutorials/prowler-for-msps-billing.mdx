@@ -35,33 +35,20 @@ Invoice history and per-customer billing breakdowns are not in this release.
 
 ## Customer Plans
 
-Plans are chosen in the **Set Their Billing Plan** step of the Add Customer wizard.
+Plans are chosen in the **Set Their Billing Plan** step of the Add Customer wizard. A customer starts on a trial or on one of the paid plans, billed monthly or annually.
 
-| Plan | Price | Included usage | Overage |
-|---|---|---|---|
-| **Trial** | $0 | Single scan | — |
-| **Annual** | $79 per provider / month, billed annually | 50,000 unique resources / month | $0.24 per resource scanned |
-| **Monthly** | $99 per provider / month | 50,000 unique resources / month | $0.30 per resource scanned |
-| **Flex** | $200 / scan | — | — |
-
-Both paid plans include unlimited scans for all providers, Lighthouse AI, every check and compliance framework in Prowler Hub, MCP Server for agentic workflows, and enterprise support.
-
-<Note>
-**Flex is not active yet.** The card is shown but cannot be selected.
-</Note>
-
-On the **Annual** plan, providers added beyond the plan are billed at the standard $99 per month.
+Each plan card in the wizard shows its own price, included usage and overage rate. For current pricing, see [prowler.com/pricing](https://prowler.com/pricing).
 
 ### Provider Accounts on the Annual Plan
 
-The Annual plan is paid upfront for a fixed number of cloud provider accounts, between **1 and 20**. You set that count when you pick the plan. The Monthly plan carries no upfront count.
+The annual plan is paid upfront for a fixed number of cloud provider accounts, between **1 and 20**. You set that count when you pick the plan. The monthly plan carries no upfront count.
 
 ## Change a Customer's Plan
 
 Open the actions menu on a customer's row and choose **Change plan**. A **Change Plan** dialog opens, offering the paid plans.
 
 <Warning>
-**Plan changes are one way: trial to paid.** The action is only offered while a customer is on trial or its trial has expired. Once a customer holds a paid subscription, **Change plan** no longer appears on the row, and neither Trial nor Flex is ever a valid target.
+**Plan changes are one way: trial to paid.** The action is only offered while a customer is on trial or its trial has expired. Once a customer holds a paid subscription, **Change plan** no longer appears on the row, and the trial is never a valid target.
 </Warning>
 
 {/* IMAGE (pending): /images/prowler-for-msps/change-plan-dialog.png — Change Plan dialog with the Monthly and Annual cards */}
