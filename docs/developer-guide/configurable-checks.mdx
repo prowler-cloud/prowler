@@ -133,6 +133,7 @@ Only fields with a numeric range, a fixed value set, or a length cap are listed.
 | `max_unused_sagemaker_access_days` | `7..180` days | |
 | `max_security_group_rules` | `1..1000` | AWS hard limit is 1000 rules per security group |
 | `max_ec2_instance_age_in_days` | `1..1095` days | 3 years |
+| `max_ec2_instance_stopped_days` | `1..1095` days | 3 years |
 | `ec2_high_risk_ports` | each port `1..65535` | port 0 is reserved |
 | `max_idle_disconnect_timeout_in_seconds` | `60..1800` s | NIST AC-12: cap at 30 min |
 | `max_disconnect_timeout_in_seconds` | `60..3600` s | |

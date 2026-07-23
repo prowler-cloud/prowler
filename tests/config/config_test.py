@@ -35,6 +35,7 @@ old_config_aws = {
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
+    "max_ec2_instance_stopped_days": 30,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "trusted_account_ids": [],
@@ -86,6 +87,7 @@ config_aws = {
     "shodan_api_key": None,
     "max_security_group_rules": 50,
     "max_ec2_instance_age_in_days": 180,
+    "max_ec2_instance_stopped_days": 30,
     "ec2_allowed_interface_types": ["api_gateway_managed", "vpc_endpoint"],
     "ec2_allowed_instance_owners": ["amazon-elb"],
     "ec2_high_risk_ports": [

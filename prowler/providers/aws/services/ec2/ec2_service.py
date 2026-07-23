@@ -100,6 +100,9 @@ class EC2(AWSService):
                                     type=instance["InstanceType"],
                                     image_id=instance["ImageId"],
                                     launch_time=instance["LaunchTime"],
+                                    state_transition_reason=instance.get(
+                                        "StateTransitionReason"
+                                    ),
                                     private_dns=instance["PrivateDnsName"],
                                     private_ip=instance.get("PrivateIpAddress"),
                                     public_dns=instance.get("PublicDnsName"),
@@ -761,6 +764,7 @@ class Instance(BaseModel):
     type: str
     image_id: str
     launch_time: datetime
+    state_transition_reason: Optional[str] = None
     private_dns: str
     private_ip: Optional[str]
     public_dns: Optional[str]
