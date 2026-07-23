@@ -10,7 +10,7 @@ describe("enterprise feature flags", () => {
     vi.unstubAllEnvs();
   });
 
-  it("should keep grouped Jira dispatch disabled by default", async () => {
+  it("should keep grouped Jira dispatch disabled outside cloud", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
@@ -30,16 +30,5 @@ describe("enterprise feature flags", () => {
 
     // Then
     expect(isGroupedJiraDispatchEnabled()).toBe(true);
-  });
-
-  it("should keep grouped Jira dispatch disabled outside cloud", async () => {
-    // Given
-    vi.stubEnv("UI_CLOUD_ENABLED", "false");
-
-    // When
-    const { isGroupedJiraDispatchEnabled } = await importFresh();
-
-    // Then
-    expect(isGroupedJiraDispatchEnabled()).toBe(false);
   });
 });
