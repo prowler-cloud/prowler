@@ -16,9 +16,11 @@ from py_ocsf_models.events.findings.detection_finding import (
 )
 from py_ocsf_models.events.findings.finding import ActivityID, FindingInformation
 from py_ocsf_models.objects.account import Account, TypeID
+from py_ocsf_models.objects.analytic import Analytic
 from py_ocsf_models.objects.cloud import Cloud
 from py_ocsf_models.objects.group import Group
 from py_ocsf_models.objects.metadata import Metadata
+from py_ocsf_models.objects.mitre_attack import MITREAttack
 from py_ocsf_models.objects.organization import Organization
 from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.remediation import Remediation
@@ -26,6 +28,11 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.compliance_models import (
+    Compliance,
+    Mitre_Requirement,
+    Mitre_Requirement_Attribute_AWS,
+)
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
@@ -106,6 +113,18 @@ class TestOCSF:
             output_data.type_name
             == f"Detection Finding: {DetectionFindingTypeID.Create.name}"
         )
+        # analytic field describes the Prowler check (rule) that generated the finding
+        assert isinstance(output_data.finding_info.analytic, Analytic)
+        assert output_data.finding_info.analytic.name == findings[0].metadata.CheckTitle
+        assert output_data.finding_info.analytic.uid == findings[0].metadata.CheckID
+        assert output_data.finding_info.analytic.type_id == 1
+        assert output_data.finding_info.analytic.type == "Rule"
+        assert (
+            output_data.finding_info.analytic.category
+            == findings[0].metadata.ServiceName
+        )
+        # no MITRE data in default fixture compliance
+        assert output_data.finding_info.attacks is None
         unmapped = output_data.unmapped
         scan_id = unmapped.pop("scan_id")
         assert UUID(scan_id)  # Valid UUID
@@ -128,6 +147,89 @@ class TestOCSF:
         assert output_data.time_dt == datetime.fromtimestamp(
             1619600000, tz=timezone.utc
         )
+
+    def test_transform_mitre_attacks_populated(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T4242"]},
+            check_id="iam_user_mfa_enabled_console_access",
+            check_title="IAM users with console access have MFA enabled",
+            service_name="iam",
+        )
+        finding.metadata.Compliance = [
+            Compliance(
+                Framework="MITRE-ATTACK",
+                Name="MITRE ATT&CK compliance framework",
+                Provider="AWS",
+                Version="",
+                Description="MITRE ATT&CK test framework",
+                Requirements=[
+                    Mitre_Requirement(
+                        Name="Synthetic Valid Accounts",
+                        Id="T4242",
+                        Tactics=["Persistence", "Privilege Escalation"],
+                        SubTechniques=[],
+                        Description="Synthetic MITRE technique for OCSF tests.",
+                        Platforms=["IaaS"],
+                        TechniqueURL="https://attack.mitre.org/techniques/T4242/",
+                        Attributes=[
+                            Mitre_Requirement_Attribute_AWS(
+                                AWSService="AWS IAM",
+                                Category="Protect",
+                                Value="Significant",
+                                Comment="Test mapping",
+                            )
+                        ],
+                        Checks=["iam_user_mfa_enabled_console_access"],
+                    )
+                ],
+            )
+        ]
+
+        ocsf = OCSF([finding])
+        output_data = ocsf.data[0]
+
+        assert output_data.finding_info.attacks is not None
+        assert len(output_data.finding_info.attacks) == 2
+        attack = output_data.finding_info.attacks[0]
+        assert isinstance(attack, MITREAttack)
+        assert attack.technique.uid == "T4242"
+        assert attack.technique.name == "Synthetic Valid Accounts"
+        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T4242/"
+        assert attack.tactic is not None
+        assert [attack.tactic.name for attack in output_data.finding_info.attacks] == [
+            "Persistence",
+            "Privilege Escalation",
+        ]
+
+    def test_transform_mitre_attacks_unknown_technique(self):
+        finding = generate_finding_output(
+            provider="aws",
+            compliance={"MITRE-ATTACK": ["T9999"]},
+        )
+        finding.metadata.Compliance = [
+            Compliance(
+                Framework="MITRE-ATTACK",
+                Name="MITRE ATT&CK compliance framework",
+                Provider="AWS",
+                Version="",
+                Description="MITRE ATT&CK test framework",
+                Requirements=[],
+            )
+        ]
+
+        ocsf = OCSF([finding])
+        assert ocsf.data[0].finding_info.attacks is None
+
+    def test_transform_mitre_attacks_without_mitre_metadata(self):
+        finding = generate_finding_output(
+            provider="kubernetes",
+            compliance={"MITRE-ATTACK": ["T1078"]},
+            check_type=[],
+        )
+
+        ocsf = OCSF([finding])
+        assert ocsf.data[0].finding_info.attacks is None
 
     def test_scan_id_is_unique_per_provider_and_account(self):
         findings = [
@@ -231,6 +333,13 @@ class TestOCSF:
                 "activity_name": "Create",
                 "activity_id": 1,
                 "finding_info": {
+                    "analytic": {
+                        "name": "service_test_check_id",
+                        "uid": "service_test_check_id",
+                        "type_id": 1,
+                        "type": "Rule",
+                        "category": "service",
+                    },
                     "created_time": int(datetime.now().timestamp()),
                     "created_time_dt": datetime.now().isoformat(),
                     "desc": "check description",
