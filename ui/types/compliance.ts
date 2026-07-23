@@ -416,6 +416,36 @@ export interface CISControlsRequirement extends Requirement {
   implementation_groups?: string[];
 }
 
+// Universal framework — flat attributes dict with Theme/AssessmentStatus/
+// CloudApplicability/RemediationProcedure/References. `Theme` is the canonical
+// grouping key for tables and PDF; the enum mirrors the five Cyber Essentials
+// control themes declared in `prowler/compliance/cyber_essentials_3.3.json`.
+export const CYBER_ESSENTIALS_THEME = {
+  FIREWALLS: "Firewalls",
+  SECURE_CONFIGURATION: "Secure Configuration",
+  SECURITY_UPDATE_MANAGEMENT: "Security Update Management",
+  USER_ACCESS_CONTROL: "User Access Control",
+  MALWARE_PROTECTION: "Malware Protection",
+} as const;
+export type CyberEssentialsTheme =
+  (typeof CYBER_ESSENTIALS_THEME)[keyof typeof CYBER_ESSENTIALS_THEME];
+
+export interface CyberEssentialsAttributesMetadata {
+  Theme: CyberEssentialsTheme;
+  AssessmentStatus: string; // "Automated" or "Manual"
+  CloudApplicability: string; // "full", "partial" or "non-applicable"
+  RemediationProcedure: string;
+  References: string;
+}
+
+export interface CyberEssentialsRequirement extends Requirement {
+  theme: CyberEssentialsAttributesMetadata["Theme"];
+  assessment_status: CyberEssentialsAttributesMetadata["AssessmentStatus"];
+  cloud_applicability: CyberEssentialsAttributesMetadata["CloudApplicability"];
+  remediation_procedure: CyberEssentialsAttributesMetadata["RemediationProcedure"];
+  references: CyberEssentialsAttributesMetadata["References"];
+}
+
 export interface AttributesItemData {
   type: "compliance-requirements-attributes";
   id: string;
@@ -441,6 +471,7 @@ export interface AttributesItemData {
         | OktaIDaaSStigAttributesMetadata[]
         | DORAAttributesMetadata[]
         | CISControlsAttributesMetadata[]
+        | CyberEssentialsAttributesMetadata[]
         | GenericAttributesMetadata[];
       check_ids: string[];
       // MITRE structure

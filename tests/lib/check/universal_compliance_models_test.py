@@ -891,6 +891,60 @@ class TestSmokeLoadAllJSONs:
         assert len(fw.requirements) >= 0
 
 
+class TestCyberEssentialsFramework:
+    """Schema and content checks for the Cyber Essentials universal framework."""
+
+    @staticmethod
+    def _path():
+        base = os.path.join(
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "prowler",
+            "compliance",
+            "cyber_essentials_3.3.json",
+        )
+        return os.path.normpath(base)
+
+    def test_loads_and_supports_azure(self):
+        fw = load_compliance_framework_universal(self._path())
+        assert fw is not None
+        assert fw.framework == "Cyber-Essentials"
+        assert fw.version == "3.3"
+        assert fw.get_providers() == ["azure"]
+        assert fw.supports_provider("azure")
+
+    def test_covers_all_five_themes(self):
+        fw = load_compliance_framework_universal(self._path())
+        themes = {req.attributes["Theme"] for req in fw.requirements}
+        assert themes == {
+            "Firewalls",
+            "Secure Configuration",
+            "Security Update Management",
+            "User Access Control",
+            "Malware Protection",
+        }
+
+    def test_requirement_ids_are_unique(self):
+        fw = load_compliance_framework_universal(self._path())
+        ids = [req.id for req in fw.requirements]
+        assert len(ids) == len(set(ids))
+
+    def test_attribute_values_conform_to_enums(self):
+        fw = load_compliance_framework_universal(self._path())
+        for req in fw.requirements:
+            assert req.attributes["AssessmentStatus"] in {"Automated", "Manual"}
+            assert req.attributes["CloudApplicability"] in {
+                "full",
+                "partial",
+                "non-applicable",
+            }
+            # Requirements with no checks must not claim to be Automated.
+            if not req.checks.get("azure"):
+                assert req.attributes["AssessmentStatus"] == "Manual"
+
+
 class TestBackwardCompat:
     """Ensure Compliance.get_bulk still returns Compliance objects."""
 
