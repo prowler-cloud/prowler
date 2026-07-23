@@ -490,6 +490,54 @@ class TestGenerateOutputs:
             assert not stale_artifact.exists()
             assert not scan_tmp_dir.exists()
 
+    def test_generate_outputs_aborts_when_stale_cleanup_fails(self):
+        """Regression for PROWLER-2266.
+
+        If the stale output directory cannot be removed (e.g. permission error),
+        the leftover files would be reopened in append mode and every finding
+        row would be duplicated. The task must abort instead of continuing and
+        publishing duplicated rows, so the retry can start from a clean slate.
+        """
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp_root:
+            scan_tmp_dir = Path(tmp_root) / self.tenant_id / self.scan_id
+            scan_tmp_dir.mkdir(parents=True)
+            stale_artifact = scan_tmp_dir / "prowler-output-aws-20260723120000.csv"
+            stale_artifact.write_text("HEADER\nold-finding-row\n")
+
+            with (
+                patch("tasks.tasks.DJANGO_TMP_OUTPUT_DIRECTORY", tmp_root),
+                patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+                patch("tasks.tasks.Provider.objects.get"),
+                patch("tasks.tasks.initialize_prowler_provider"),
+                patch("tasks.tasks.Compliance.get_bulk"),
+                patch("tasks.tasks.get_compliance_frameworks"),
+                patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+                # `rmtree(ignore_errors=True)` swallows the failure and leaves the
+                # directory behind; simulate that with a no-op so the guard fires.
+                patch("tasks.tasks.rmtree"),
+                patch("tasks.tasks._generate_output_directory") as mock_gen_dir,
+                patch("tasks.tasks._compress_output_files") as mock_compress,
+                patch("tasks.tasks._upload_to_s3") as mock_upload,
+                patch("tasks.tasks.Scan.all_objects.filter") as mock_scan_update,
+            ):
+                mock_filter.return_value.exists.return_value = True
+
+                with pytest.raises(RuntimeError, match="stale output directory"):
+                    generate_outputs_task(
+                        scan_id=self.scan_id,
+                        provider_id=self.provider_id,
+                        tenant_id=self.tenant_id,
+                    )
+
+            # The task must abort before generating/publishing any output.
+            mock_gen_dir.assert_not_called()
+            mock_compress.assert_not_called()
+            mock_upload.assert_not_called()
+            mock_scan_update.assert_not_called()
+
     def test_generate_outputs_triggers_html_extra_update(self):
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}

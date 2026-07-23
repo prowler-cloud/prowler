@@ -806,20 +806,18 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     # rows. Start from a clean slate before (re)generating.
     scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
     if os.path.exists(scan_tmp_dir):
-        # Do not suppress deletion failures: `ignore_errors=True` would hide a
-        # partial removal, and leftover files reopened in append mode would
-        # silently duplicate every finding row on retry. Let failures surface to
-        # the warning below instead.
-        try:
-            rmtree(scan_tmp_dir)
-        except Exception as error:
-            # A failure to clean the previous run's artifacts must not prevent
-            # (re)generating the outputs; worst case the leftover files are
-            # overwritten by the writers below.
-            logger.warning(
-                "Failed to clean stale output directory for scan %s before generation: %s",
-                scan_id,
-                error,
+        rmtree(scan_tmp_dir, ignore_errors=True)
+        # The writers below open output files in append mode with deterministic
+        # paths (derived from scan.started_at). Any stale file that survives the
+        # cleanup would get every finding row appended again, which is the exact
+        # duplication this guards against. Continuing is therefore unsafe: abort
+        # so `ScanReportRLSTask.on_failure` removes the tmp dir and the retry
+        # starts from a clean slate instead of publishing duplicated rows.
+        if os.path.exists(scan_tmp_dir):
+            raise RuntimeError(
+                "Could not remove stale output directory for scan "
+                f"{scan_id} before generating outputs; aborting to avoid "
+                "duplicated rows in appended outputs."
             )
 
     out_dir, comp_dir = _generate_output_directory(
