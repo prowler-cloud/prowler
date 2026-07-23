@@ -32,7 +32,7 @@ class accessanalyzer_enabled(Check):
                     and not analyzer.region == accessanalyzer_client.region
                 ):
                     report.muted = True
-
+            print(report)
             findings.append(report)
 
         return findings
