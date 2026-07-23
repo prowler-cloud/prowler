@@ -11,21 +11,32 @@ from typing import Any
 
 def extract_relationship_ids(
     relationships: dict[str, Any], relationship_name: str
-) -> list[str]:
+) -> list[str] | None:
     """Extract related resource IDs from a JSON:API relationship.
 
     Handles both to-one (``data`` is an object) and to-many (``data`` is a list)
-    relationships, returning a flat list of IDs in either case. Missing or empty
-    relationships yield an empty list.
+    relationships, returning a flat list of IDs in either case.
+
+    The absent and present-but-empty cases are deliberately distinguished so
+    callers can tell "the relationship was not part of this document" from "the
+    relationship is genuinely empty":
+
+    - Relationship key absent → ``None`` (unknown; the serializer did not expose
+      it, e.g. a role included via ``?include=roles`` carries no ``users``).
+    - Relationship key present but with no members → ``[]`` (explicitly none).
 
     Args:
         relationships: The ``relationships`` object from a JSON:API resource
         relationship_name: The relationship key to read (e.g. ``"roles"``)
 
     Returns:
-        List of related resource IDs (empty if the relationship is absent/empty)
+        List of related resource IDs, ``[]`` if the relationship is present but
+        empty, or ``None`` if the relationship is absent from the document.
     """
-    data = relationships.get(relationship_name, {}).get("data")
+    relationship = relationships.get(relationship_name)
+    if relationship is None:
+        return None
+    data = relationship.get("data")
     if not data:
         return []
     if isinstance(data, list):

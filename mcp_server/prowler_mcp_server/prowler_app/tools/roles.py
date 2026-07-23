@@ -33,10 +33,6 @@ class RolesTools(BaseTool):
 
     async def list_roles(
         self,
-        search: str | None = Field(
-            default=None,
-            description="Free-text search term to find roles (matches on name and related fields).",
-        ),
         page_size: int = Field(
             default=50, description="Number of results to return per page"
         ),
@@ -64,8 +60,6 @@ class RolesTools(BaseTool):
             "page[number]": page_number,
             "page[size]": page_size,
         }
-        if search:
-            params["filter[search]"] = search
 
         clean_params = self.api_client.build_filter_params(params)
 
@@ -112,6 +106,11 @@ class RolesTools(BaseTool):
         Returns the user's roles with the concrete capabilities each one grants,
         so you can see what the user is allowed to do in the tenant.
 
+        Note: this reads the user's record, so it requires MANAGE_USERS (the same
+        permission `prowler_get_user` needs). Each role's `user_ids` and
+        `provider_group_ids` are not resolved here; use `prowler_get_role` for a
+        role's full assignment and provider-group scope.
+
         Workflow:
         1. Use `prowler_list_users` (or `prowler_get_current_user`) to find the user 'id'
         2. Use this tool to see which roles they hold and what those roles grant
@@ -136,8 +135,9 @@ class RolesTools(BaseTool):
         change and reports `changed: false`. It always returns the user's full,
         up-to-date role set after the operation.
 
-        Note: role management requires MANAGE_ACCOUNT permission. The API also
-        enforces guard rails (for example, it keeps at least one user with
+        Note: this operation requires both MANAGE_ACCOUNT (to change role
+        assignments) and MANAGE_USERS (to read the user's current roles). The API
+        also enforces guard rails (for example, it keeps at least one user with
         MANAGE_ACCOUNT in the tenant); such rejections are surfaced as errors.
 
         Workflow:
@@ -161,6 +161,20 @@ class RolesTools(BaseTool):
         )
 
         updated_roles = await self._fetch_user_roles(user_id)
+        if not any(role.id == role_id for role in updated_roles):
+            # The relationship endpoint silently ignores role IDs that don't
+            # exist in this tenant (an unknown ID, or a role from another
+            # tenant): it returns success without assigning anything. Detect that
+            # here so we never report a change that did not actually happen.
+            #
+            # TODO: This should be a raise ValueError(...) instead of returning an error dict, but we don't have
+            # a good standard for error handling in the tools yet. We should unify that across all tools.
+            return {
+                "error": f"Role {role_id} could not be assigned to user {user_id}: the role "
+                f"was not found in this tenant. Use `prowler_list_roles` to find a "
+                f"valid role ID."
+            }
+
         return UserRolesResult.build(
             user_id=user_id,
             roles=updated_roles,
@@ -183,10 +197,10 @@ class RolesTools(BaseTool):
         change and reports `changed: false`. It always returns the user's full,
         up-to-date role set after the operation.
 
-        Note: role management requires MANAGE_ACCOUNT permission. The API also
-        enforces guard rails — users cannot remove their own role assignments,
-        and the last user holding MANAGE_ACCOUNT in the tenant cannot lose it;
-        such rejections are surfaced as errors.
+        Note: this operation requires both MANAGE_ACCOUNT (to change role
+        assignments) and MANAGE_USERS (to read the user's current roles). The API
+        also enforces a guard rail — the last user holding MANAGE_ACCOUNT in the
+        tenant cannot lose it; such rejections are surfaced as errors.
 
         Workflow:
         1. Use `prowler_get_user_roles` to see the user's current roles
@@ -201,10 +215,18 @@ class RolesTools(BaseTool):
                 message=f"Role {role_id} is not assigned to user {user_id}; no change made.",
             ).model_dump()
 
-        # DELETE with a body removes only the listed role, leaving the rest.
-        await self.api_client.delete(
+        # The DELETE relationship endpoint cannot remove a single role reliably:
+        # a JSON:API to-many payload is parsed as a list, which the API treats as
+        # "clear all of the user's roles". Instead, PATCH the relationship with
+        # the roles the user should keep, replacing the full set in one request.
+        remaining_roles = [
+            {"type": "roles", "id": role.id}
+            for role in current_roles
+            if role.id != role_id
+        ]
+        await self.api_client.patch(
             f"/users/{user_id}/relationships/roles",
-            json_data={"data": [{"type": "roles", "id": role_id}]},
+            json_data={"data": remaining_roles},
         )
 
         updated_roles = await self._fetch_user_roles(user_id)
@@ -220,8 +242,15 @@ class RolesTools(BaseTool):
     async def _fetch_user_roles(self, user_id: str) -> list[DetailedRole]:
         """Fetch the roles currently assigned to a user.
 
-        Uses a single ``GET /users/{id}?include=roles`` request and reads the
-        role resources from the JSON:API ``included`` section.
+        Uses a single `GET /users/{id}?include=roles` request and reads the
+        role resources from the JSON:API `included` section. This request
+        requires MANAGE_USERS (it reads the user record).
+
+        The included role resources do not carry their `users` /
+        `provider_groups` relationships, so the returned `DetailedRole`
+        instances omit `user_ids` / `provider_group_ids` (unknown here)
+        rather than reporting them as empty. Use `get_role` for a role's full
+        assignment and provider-group scope.
 
         Args:
             user_id: The Prowler UUID of the user

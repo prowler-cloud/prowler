@@ -58,41 +58,31 @@ class SimplifiedUser(MinimalSerializerMixin, BaseModel):
 class DetailedUser(SimplifiedUser):
     """Detailed user representation with account metadata and relationships.
 
-    Extends SimplifiedUser with verification status, join date, and the IDs of
-    the roles and memberships associated with the user.
+    Extends SimplifiedUser with the join date and the IDs of the roles and
+    memberships associated with the user.
     Used by get_user() and get_current_user() tools.
+
+    Note: ``role_ids`` and ``membership_ids`` are omitted when empty because an
+    empty list is ambiguous here. The API hides another user's roles/memberships
+    from callers without MANAGE_ACCOUNT (returning them empty rather than
+    forbidden), so an empty list cannot be told apart from "genuinely none". They
+    are only reported when at least one ID is visible.
     """
 
     model_config = ConfigDict(frozen=True)
 
-    is_verified: bool | None = Field(
-        default=None,
-        description="Whether the user has verified their email address",
-    )
     date_joined: str | None = Field(
         default=None,
         description="ISO 8601 timestamp when the user joined",
     )
     role_ids: list[str] | None = Field(
         default=None,
-        description="UUIDv4 identifiers of the roles assigned to the user",
+        description="UUIDv4 identifiers of the roles assigned to the user (omitted when none are visible)",
     )
     membership_ids: list[str] | None = Field(
         default=None,
-        description="UUIDv4 identifiers of the tenant memberships of the user",
+        description="UUIDv4 identifiers of the tenant memberships of the user (omitted when none are visible)",
     )
-
-    def _should_exclude(self, key: str, value: Any) -> bool:
-        """Keep fields whose "empty" form carries meaning.
-
-        ``is_verified`` is kept even when ``False``, and ``role_ids`` /
-        ``membership_ids`` are kept even when empty so that an empty list
-        explicitly signals "not assigned to any role / not a member of any
-        tenant" instead of looking like an omitted, unknown field to an agent.
-        """
-        if key in ("is_verified", "role_ids", "membership_ids"):
-            return value is None
-        return super()._should_exclude(key, value)
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "DetailedUser":
@@ -112,7 +102,6 @@ class DetailedUser(SimplifiedUser):
             name=attributes["name"],
             email=attributes["email"],
             company_name=attributes.get("company_name"),
-            is_verified=attributes.get("is_verified"),
             date_joined=attributes.get("date_joined"),
             role_ids=extract_relationship_ids(relationships, "roles"),
             membership_ids=extract_relationship_ids(relationships, "memberships"),

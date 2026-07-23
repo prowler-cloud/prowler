@@ -54,8 +54,8 @@ class UsersTools(BaseTool):
         - company_name: Company the user belongs to, when set
 
         To find out which user the current credentials authenticate as, use
-        `prowler_get_current_user`. For a single user's roles, membership links,
-        verification status and join date, use `prowler_get_user`.
+        `prowler_get_current_user`. For a single user's roles, membership links
+        and join date, use `prowler_get_user`.
         """
         self.api_client.validate_page_size(page_size)
 
@@ -86,10 +86,13 @@ class UsersTools(BaseTool):
         """Retrieve detailed information about a specific user by their ID.
 
         Returns everything `prowler_list_users` returns PLUS:
-        - is_verified: Whether the user has verified their email address
         - date_joined: When the user joined
         - role_ids: UUIDs of the roles assigned to the user
         - membership_ids: UUIDs of the user's tenant memberships
+
+        Reading another user's roles/memberships requires MANAGE_ACCOUNT; without
+        it the API hides them and `role_ids`/`membership_ids` are omitted rather
+        than reported as empty.
 
         Workflow:
         1. Use `prowler_list_users` to browse users and find the target user 'id'
@@ -109,7 +112,7 @@ class UsersTools(BaseTool):
 
         Returns the same detailed information as `prowler_get_user`:
         - id, name, email, company_name
-        - is_verified, date_joined
+        - date_joined
         - role_ids, membership_ids
         """
         api_response = await self.api_client.get("/users/me")
