@@ -26,7 +26,7 @@ class Test_entra_password_protection_lockout_threshold_limited:
             return entra_password_protection_lockout_threshold_limited().execute()
 
     def test_template_absent(self):
-        assert self._run({})[0].status == "FAIL"
+        assert len(self._run({})) == 0
 
     def test_within_limit(self):
         result = self._run(

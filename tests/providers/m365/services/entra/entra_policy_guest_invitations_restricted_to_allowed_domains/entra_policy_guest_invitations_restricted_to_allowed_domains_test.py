@@ -1,8 +1,6 @@
 from unittest import mock
 
-from prowler.providers.m365.services.entra.entra_service import (
-    B2BCollaborationPolicy,
-)
+from prowler.providers.m365.services.entra.entra_service import B2BCollaborationPolicy
 from tests.providers.m365.m365_fixtures import set_mocked_m365_provider
 
 CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_policy_guest_invitations_restricted_to_allowed_domains.entra_policy_guest_invitations_restricted_to_allowed_domains"
@@ -43,6 +41,15 @@ class Test_entra_policy_guest_invitations_restricted_to_allowed_domains:
         result = self._run(
             B2BCollaborationPolicy(
                 invitations_restricted_to_allowed_domains=False,
+                allowed_domains=[],
+            )
+        )
+        assert result[0].status == "FAIL"
+
+    def test_restricted_with_empty_allowed_domains(self):
+        result = self._run(
+            B2BCollaborationPolicy(
+                invitations_restricted_to_allowed_domains=True,
                 allowed_domains=[],
             )
         )

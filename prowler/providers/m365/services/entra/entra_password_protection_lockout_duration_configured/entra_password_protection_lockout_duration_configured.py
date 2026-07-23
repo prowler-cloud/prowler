@@ -26,6 +26,8 @@ class entra_password_protection_lockout_duration_configured(Check):
         settings = entra_client.directory_settings.get(
             PASSWORD_RULE_SETTINGS_TEMPLATE_ID
         )
+        if not settings:
+            return findings
 
         report = CheckReportM365(
             metadata=self.metadata(),

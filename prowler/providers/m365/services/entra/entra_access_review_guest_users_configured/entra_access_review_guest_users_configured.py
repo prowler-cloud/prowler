@@ -19,6 +19,15 @@ class entra_access_review_guest_users_configured(Check):
     """
 
     def _is_fail_closed(self, definition) -> bool:
+        """Determine whether an access review definition is fail-closed.
+
+        Args:
+            definition: The access review definition to evaluate.
+
+        Returns:
+            bool: True if the review denies access by default, auto-applies
+            decisions, and has mail notifications and reminders enabled.
+        """
         return (
             definition.default_decision == "Deny"
             and definition.auto_apply_enabled
@@ -27,6 +36,15 @@ class entra_access_review_guest_users_configured(Check):
         )
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether a fail-closed access review for guest users exists.
+
+        Searches the tenant's access review definitions for an active, fail-closed
+        review scoped to guest users.
+
+        Returns:
+            List[CheckReportM365]: A single report indicating whether an active,
+            fail-closed access review scoped to guest users is configured.
+        """
         findings = []
         definitions = entra_client.access_review_definitions
 

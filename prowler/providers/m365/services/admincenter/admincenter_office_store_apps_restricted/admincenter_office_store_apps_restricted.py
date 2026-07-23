@@ -18,6 +18,15 @@ class admincenter_office_store_apps_restricted(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether Office Store access and trials are restricted.
+
+        Reads the org-wide apps and services settings and reports PASS when both
+        Office Store access and trials on behalf of the organization are disabled,
+        and FAIL otherwise.
+
+        Returns:
+            List[CheckReportM365]: The findings for the check.
+        """
         findings = []
         settings = admincenter_client.apps_and_services_settings
         if not settings:

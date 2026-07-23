@@ -15,6 +15,16 @@ class entra_policy_guest_invitations_restricted_to_allowed_domains(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether guest invitations are restricted to allowed domains.
+
+        Inspects the B2B collaboration policy to determine whether guest invitations
+        are limited to an allow-list of domains that contains at least one domain.
+
+        Returns:
+            List[CheckReportM365]: A single report indicating whether guest
+            invitations are restricted to a non-empty allow-list of domains, or an
+            empty list when the policy is absent.
+        """
         findings = []
         policy = entra_client.b2b_collaboration_policy
         if not policy:
@@ -31,18 +41,12 @@ class entra_policy_guest_invitations_restricted_to_allowed_domains(Check):
             "Guest invitations are not restricted to an allow-list of domains."
         )
 
-        if policy.invitations_restricted_to_allowed_domains:
+        if policy.invitations_restricted_to_allowed_domains and policy.allowed_domains:
             report.status = "PASS"
-            if policy.allowed_domains:
-                report.status_extended = (
-                    "Guest invitations are restricted to an allow-list of "
-                    f"{len(policy.allowed_domains)} domain(s)."
-                )
-            else:
-                report.status_extended = (
-                    "Guest invitations are restricted to an allow-list with no "
-                    "domains (all external invitations are blocked)."
-                )
+            report.status_extended = (
+                "Guest invitations are restricted to an allow-list of "
+                f"{len(policy.allowed_domains)} domain(s)."
+            )
 
         findings.append(report)
         return findings

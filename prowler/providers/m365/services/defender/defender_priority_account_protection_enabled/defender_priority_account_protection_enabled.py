@@ -20,6 +20,16 @@ class defender_priority_account_protection_enabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the priority account protection check.
+
+        Evaluates the tenant-level ``EnablePriorityAccountProtection`` flag from
+        the Defender email tenant settings, producing PASS when enabled and FAIL
+        when disabled. Returns no findings when settings are unavailable.
+
+        Returns:
+            List[CheckReportM365]: A list with the check report, or empty when no
+            email tenant settings are available.
+        """
         findings = []
         settings = defender_client.email_tenant_settings
         if not settings:

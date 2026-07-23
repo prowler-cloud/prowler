@@ -1,5 +1,6 @@
 import asyncio
 import importlib
+import json
 from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -1196,3 +1197,62 @@ class Test_Entra_Service:
         queried_users = {call.args[0] for call in by_user_id.call_args_list}
         assert queried_users == {deleted_user, live_user}
         assert user_builders[deleted_user].get.await_count == 1
+
+    def test__get_named_locations_paginates_through_next_links(self):
+        entra_service = Entra.__new__(Entra)
+
+        page_one = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.ipNamedLocation",
+                        "id": "loc-1",
+                        "displayName": "Trusted IPs",
+                        "isTrusted": True,
+                        "ipRanges": [{"cidrAddress": "10.0.0.0/8"}],
+                    }
+                ],
+                "@odata.nextLink": "next-link",
+            }
+        )
+        page_two = json.dumps(
+            {
+                "value": [
+                    {
+                        "@odata.type": "#microsoft.graph.countryNamedLocation",
+                        "id": "loc-2",
+                        "displayName": "Countries",
+                        "isTrusted": False,
+                    }
+                ]
+            }
+        )
+
+        send_mock = AsyncMock(side_effect=[page_one, page_two])
+        next_link_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-two")
+        )
+        with_url_mock = MagicMock(return_value=next_link_builder)
+        named_locations_builder = SimpleNamespace(
+            to_get_request_information=MagicMock(return_value="req-info-page-one"),
+            with_url=with_url_mock,
+        )
+        entra_service.client = SimpleNamespace(
+            identity=SimpleNamespace(
+                conditional_access=SimpleNamespace(
+                    named_locations=named_locations_builder
+                )
+            ),
+            request_adapter=SimpleNamespace(send_primitive_async=send_mock),
+        )
+
+        named_locations = asyncio.run(entra_service._get_named_locations())
+
+        # Both pages are requested and every entry is accumulated before parsing.
+        assert send_mock.await_count == 2
+        with_url_mock.assert_called_once_with("next-link")
+        assert [loc.id for loc in named_locations] == ["loc-1", "loc-2"]
+        assert named_locations[0].is_ip_location is True
+        assert named_locations[0].ip_ranges_count == 1
+        assert named_locations[1].is_ip_location is False
+        assert named_locations[1].is_trusted is False

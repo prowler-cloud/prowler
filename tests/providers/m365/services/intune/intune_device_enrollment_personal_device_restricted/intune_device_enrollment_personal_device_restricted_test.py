@@ -10,7 +10,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.intune.intune_device_enroll
 
 class Test_intune_device_enrollment_personal_device_restricted:
     def _run(self, configurations):
-        intune_client = mock.MagicMock
+        intune_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

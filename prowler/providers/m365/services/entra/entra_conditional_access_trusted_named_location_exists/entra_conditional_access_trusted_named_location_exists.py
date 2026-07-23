@@ -18,6 +18,8 @@ class entra_conditional_access_trusted_named_location_exists(Check):
     def execute(self) -> List[CheckReportM365]:
         findings = []
         named_locations = entra_client.named_locations
+        if not named_locations:
+            return findings
 
         report = CheckReportM365(
             metadata=self.metadata(),

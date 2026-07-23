@@ -1313,35 +1313,49 @@ OAuthAppInfo
                 "roleManagementPolicyAssignments?$filter=scopeId%20eq%20'/'%20and%20"
                 "scopeType%20eq%20'DirectoryRole'&$expand=policy($expand=rules)"
             )
-            builder = self.client.policies.with_url(url)
-            request_info = builder.to_get_request_information()
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
+            request_info = self.client.policies.with_url(
+                url
+            ).to_get_request_information()
+            assignments = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
                 data = json.loads(response)
-                for assignment in data.get("value", []) or []:
-                    role_id = assignment.get("roleDefinitionId")
-                    if not role_id:
-                        continue
-                    rules = (assignment.get("policy", {}) or {}).get("rules", []) or []
-                    is_approval_required = False
-                    has_approvers = False
-                    for rule in rules:
-                        if rule.get("id") == "Approval_EndUser_Assignment":
-                            setting = rule.get("setting", {}) or {}
-                            is_approval_required = bool(
-                                setting.get("isApprovalRequired", False)
-                            )
-                            for stage in setting.get("approvalStages", []) or []:
-                                if stage.get("primaryApprovers"):
-                                    has_approvers = True
-                                    break
-                    settings[role_id] = PimRoleApprovalSetting(
-                        role_definition_id=role_id,
-                        is_approval_required=is_approval_required,
-                        has_approvers=has_approvers,
-                    )
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                assignments.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.policies.with_url(
+                    next_link
+                ).to_get_request_information()
+            for assignment in assignments:
+                role_id = assignment.get("roleDefinitionId")
+                if not role_id:
+                    continue
+                rules = (assignment.get("policy", {}) or {}).get("rules", []) or []
+                is_approval_required = False
+                has_approvers = False
+                for rule in rules:
+                    if rule.get("id") == "Approval_EndUser_Assignment":
+                        setting = rule.get("setting", {}) or {}
+                        is_approval_required = bool(
+                            setting.get("isApprovalRequired", False)
+                        )
+                        for stage in setting.get("approvalStages", []) or []:
+                            if stage.get("primaryApprovers"):
+                                has_approvers = True
+                                break
+                settings[role_id] = PimRoleApprovalSetting(
+                    role_definition_id=role_id,
+                    is_approval_required=is_approval_required,
+                    has_approvers=has_approvers,
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1364,47 +1378,61 @@ OAuthAppInfo
                 "https://graph.microsoft.com/v1.0/identityGovernance/"
                 "accessReviews/definitions"
             )
-            builder = self.client.identity_governance.with_url(url)
-            request_info = builder.to_get_request_information()
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
+            request_info = self.client.identity_governance.with_url(
+                url
+            ).to_get_request_information()
+            raw_definitions = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
                 data = json.loads(response)
-                for definition in data.get("value", []) or []:
-                    scope = definition.get("scope", {}) or {}
-                    settings = definition.get("settings", {}) or {}
-                    definitions.append(
-                        AccessReviewDefinition(
-                            id=definition.get("id", ""),
-                            display_name=definition.get("displayName"),
-                            status=definition.get("status"),
-                            scope_query=str(scope.get("query", "")),
-                            resource_scope_queries=[
-                                str(resource_scope.get("query", ""))
-                                for resource_scope in (
-                                    scope.get("resourceScopes", []) or []
-                                )
-                            ],
-                            principal_scope_queries=[
-                                str(principal_scope.get("query", ""))
-                                for principal_scope in (
-                                    scope.get("principalScopes", []) or []
-                                )
-                            ],
-                            default_decision=settings.get("defaultDecision"),
-                            auto_apply_enabled=bool(
-                                settings.get("autoApplyDecisionsEnabled", False)
-                            ),
-                            mail_notifications_enabled=bool(
-                                settings.get("mailNotificationsEnabled", False)
-                            ),
-                            reminders_enabled=bool(
-                                settings.get("reminderNotificationsEnabled", False)
-                            ),
-                            duration_in_days=settings.get("instanceDurationInDays"),
-                        )
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_definitions.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.identity_governance.with_url(
+                    next_link
+                ).to_get_request_information()
+            for definition in raw_definitions:
+                scope = definition.get("scope", {}) or {}
+                settings = definition.get("settings", {}) or {}
+                definitions.append(
+                    AccessReviewDefinition(
+                        id=definition.get("id", ""),
+                        display_name=definition.get("displayName"),
+                        status=definition.get("status"),
+                        scope_query=str(scope.get("query", "")),
+                        resource_scope_queries=[
+                            str(resource_scope.get("query", ""))
+                            for resource_scope in (
+                                scope.get("resourceScopes", []) or []
+                            )
+                        ],
+                        principal_scope_queries=[
+                            str(principal_scope.get("query", ""))
+                            for principal_scope in (
+                                scope.get("principalScopes", []) or []
+                            )
+                        ],
+                        default_decision=settings.get("defaultDecision"),
+                        auto_apply_enabled=bool(
+                            settings.get("autoApplyDecisionsEnabled", False)
+                        ),
+                        mail_notifications_enabled=bool(
+                            settings.get("mailNotificationsEnabled", False)
+                        ),
+                        reminders_enabled=bool(
+                            settings.get("reminderNotificationsEnabled", False)
+                        ),
+                        duration_in_days=settings.get("instanceDurationInDays"),
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -1488,23 +1516,38 @@ OAuthAppInfo
             request_info = (
                 self.client.identity.conditional_access.named_locations.to_get_request_information()
             )
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
+            raw_locations = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
                 data = json.loads(response)
-                for location in data.get("value", []) or []:
-                    odata_type = location.get("@odata.type", "")
-                    ip_ranges = location.get("ipRanges", []) or []
-                    named_locations.append(
-                        NamedLocation(
-                            id=location.get("id", ""),
-                            display_name=location.get("displayName"),
-                            is_trusted=bool(location.get("isTrusted", False)),
-                            is_ip_location="ipNamedLocation" in odata_type,
-                            ip_ranges_count=len(ip_ranges),
-                        )
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_locations.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = (
+                    self.client.identity.conditional_access.named_locations.with_url(
+                        next_link
+                    ).to_get_request_information()
+                )
+            for location in raw_locations:
+                odata_type = location.get("@odata.type", "")
+                ip_ranges = location.get("ipRanges", []) or []
+                named_locations.append(
+                    NamedLocation(
+                        id=location.get("id", ""),
+                        display_name=location.get("displayName"),
+                        is_trusted=bool(location.get("isTrusted", False)),
+                        is_ip_location="ipNamedLocation" in odata_type,
+                        ip_ranges_count=len(ip_ranges),
                     )
+                )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"

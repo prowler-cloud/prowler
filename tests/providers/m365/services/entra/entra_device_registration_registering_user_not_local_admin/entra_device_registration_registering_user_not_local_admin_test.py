@@ -43,6 +43,15 @@ class Test_entra_device_registration_registering_user_not_local_admin:
     def test_selected_registering_users(self):
         result = self._run(
             DeviceRegistrationPolicy(
+                azure_ad_join_registering_users_type=DeviceRegistrationMembershipType.ENUMERATED.value
+            )
+        )
+        assert len(result) == 1
+        assert result[0].status == "PASS"
+
+    def test_none_registering_users(self):
+        result = self._run(
+            DeviceRegistrationPolicy(
                 azure_ad_join_registering_users_type=DeviceRegistrationMembershipType.NONE.value
             )
         )

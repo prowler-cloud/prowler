@@ -25,8 +25,9 @@ class Test_entra_password_protection_on_premises_enforced:
             entra_client.directory_settings = directory_settings
             return entra_password_protection_on_premises_enforced().execute()
 
-    def test_template_absent(self):
-        assert self._run({})[0].status == "FAIL"
+    def test_no_resources(self):
+        result = self._run({})
+        assert len(result) == 0
 
     def test_enabled_and_enforced(self):
         result = self._run(

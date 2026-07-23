@@ -21,7 +21,19 @@ class entra_access_review_privileged_roles_configured(Check):
     """
 
     def _targets_privileged_roles(self, definition) -> bool:
-        # For PIM role reviews the role reference lives in the resource scopes.
+        """Determine whether an access review targets privileged directory roles.
+
+        For PIM role reviews the role reference lives in the resource scopes, so both
+        the scope query and the resource scope queries are inspected for markers that
+        indicate directory role assignments.
+
+        Args:
+            definition: The access review definition to evaluate.
+
+        Returns:
+            bool: True if any of the review's scope queries reference privileged
+            (PIM) directory roles.
+        """
         queries = [definition.scope_query] + definition.resource_scope_queries
         return any(
             marker in query.lower()
@@ -30,6 +42,15 @@ class entra_access_review_privileged_roles_configured(Check):
         )
 
     def _is_fail_closed(self, definition) -> bool:
+        """Determine whether an access review definition is fail-closed.
+
+        Args:
+            definition: The access review definition to evaluate.
+
+        Returns:
+            bool: True if the review denies access by default, auto-applies
+            decisions, and has mail notifications and reminders enabled.
+        """
         return (
             definition.default_decision == "Deny"
             and definition.auto_apply_enabled
@@ -38,6 +59,15 @@ class entra_access_review_privileged_roles_configured(Check):
         )
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether a fail-closed access review for privileged roles exists.
+
+        Searches the tenant's access review definitions for an active, fail-closed
+        review scoped to privileged (PIM) directory roles.
+
+        Returns:
+            List[CheckReportM365]: A single report indicating whether an active,
+            fail-closed access review scoped to privileged roles is configured.
+        """
         findings = []
         definitions = entra_client.access_review_definitions
 

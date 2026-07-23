@@ -10,7 +10,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_password_protec
 
 class Test_entra_password_protection_lockout_duration_configured:
     def _run(self, directory_settings):
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -26,7 +26,7 @@ class Test_entra_password_protection_lockout_duration_configured:
             return entra_password_protection_lockout_duration_configured().execute()
 
     def test_template_absent(self):
-        assert self._run({})[0].status == "FAIL"
+        assert len(self._run({})) == 0
 
     def test_at_minimum(self):
         result = self._run(

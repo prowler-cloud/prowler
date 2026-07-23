@@ -87,6 +87,14 @@ class AdminCenter(M365Service):
         return organization_config
 
     def _get_mailbox_policy(self):
+        """Retrieve the OWA mailbox policies via Exchange Online PowerShell.
+
+        Reads the OWA mailbox policy configuration and captures each policy's
+        default flag and Bookings mailbox creation setting.
+
+        Returns:
+            List[OwaMailboxPolicy]: The parsed OWA mailbox policies, empty on error.
+        """
         logger.info("Microsoft365 - Getting OWA mailbox policy configuration...")
         mailbox_policies = []
         try:
@@ -359,6 +367,15 @@ class Organization(BaseModel):
 
 
 class OwaMailboxPolicy(BaseModel):
+    """Represents an Outlook on the web (OWA) mailbox policy.
+
+    Attributes:
+        id: The mailbox policy identifier.
+        is_default: Whether the policy is the default OWA mailbox policy.
+        bookings_mailbox_creation_enabled: Whether users can create Bookings
+            mailboxes under this policy.
+    """
+
     id: str
     is_default: bool = False
     bookings_mailbox_creation_enabled: bool = True
@@ -371,9 +388,24 @@ class SharingPolicy(BaseModel):
 
 
 class AppsAndServicesSettings(BaseModel):
+    """Represents the org-wide apps and services settings.
+
+    Attributes:
+        office_store_enabled: Whether users can access the Office Store.
+        app_and_services_trial_enabled: Whether users can start trials on behalf
+            of the organization.
+    """
+
     office_store_enabled: bool = True
     app_and_services_trial_enabled: bool = True
 
 
 class FormsSettings(BaseModel):
+    """Represents the Microsoft Forms org settings.
+
+    Attributes:
+        in_org_forms_phishing_scan_enabled: Whether internal phishing protection
+            scans forms for phishing keywords.
+    """
+
     in_org_forms_phishing_scan_enabled: bool = False

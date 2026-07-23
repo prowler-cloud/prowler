@@ -19,6 +19,15 @@ class entra_pim_global_administrator_approval_required(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate PIM approval settings for the Global Administrator role.
+
+        Reports whether Privileged Identity Management requires approval to activate
+        the Global Administrator role and whether at least one approver is configured.
+
+        Returns:
+            List[CheckReportM365]: A single report for the Global Administrator PIM
+            role settings, or an empty list when the settings are absent.
+        """
         findings = []
         setting = entra_client.pim_role_approval_settings.get(
             GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID
@@ -37,7 +46,12 @@ class entra_pim_global_administrator_approval_required(Check):
             "PIM does not require approval to activate the Global Administrator role."
         )
 
-        if setting.is_approval_required and setting.has_approvers:
+        if setting.is_approval_required and not setting.has_approvers:
+            report.status_extended = (
+                "PIM requires approval to activate the Global Administrator role but "
+                "no approvers are configured."
+            )
+        elif setting.is_approval_required and setting.has_approvers:
             report.status = "PASS"
             report.status_extended = (
                 "PIM requires approval to activate the Global Administrator role and "

@@ -18,6 +18,14 @@ class admincenter_forms_phishing_protection_enabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether Microsoft Forms internal phishing protection is enabled.
+
+        Reads the Microsoft Forms org settings and reports PASS when internal
+        phishing protection is enabled, and FAIL otherwise.
+
+        Returns:
+            List[CheckReportM365]: The findings for the check.
+        """
         findings = []
         settings = admincenter_client.forms_settings
         if not settings:

@@ -31,6 +31,7 @@ class Test_entra_authentication_method_authenticator_show_context:
     def test_both_enabled(self):
         result = self._run(
             AuthenticationMethodsPolicySettings(
+                authenticator_state="enabled",
                 authenticator_display_app_information_state="enabled",
                 authenticator_display_location_information_state="enabled",
             )
@@ -40,8 +41,19 @@ class Test_entra_authentication_method_authenticator_show_context:
     def test_location_disabled(self):
         result = self._run(
             AuthenticationMethodsPolicySettings(
+                authenticator_state="enabled",
                 authenticator_display_app_information_state="enabled",
                 authenticator_display_location_information_state="disabled",
+            )
+        )
+        assert result[0].status == "FAIL"
+
+    def test_context_enabled_but_authenticator_disabled(self):
+        result = self._run(
+            AuthenticationMethodsPolicySettings(
+                authenticator_state="disabled",
+                authenticator_display_app_information_state="enabled",
+                authenticator_display_location_information_state="enabled",
             )
         )
         assert result[0].status == "FAIL"

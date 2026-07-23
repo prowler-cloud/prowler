@@ -17,6 +17,17 @@ class entra_authentication_method_authenticator_companion_app_disabled(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the Microsoft Authenticator companion app disabled check.
+
+        Verifies that Microsoft Authenticator on companion applications (Authenticator
+        Lite) is disabled so that MFA remains bound to the full Microsoft Authenticator
+        app.
+
+        Returns:
+            List[CheckReportM365]: A list with a single report describing whether
+            Microsoft Authenticator on companion applications is disabled, or an empty
+            list when the authentication methods policy settings are not available.
+        """
         findings = []
         settings = entra_client.authentication_methods_policy_settings
         if not settings:

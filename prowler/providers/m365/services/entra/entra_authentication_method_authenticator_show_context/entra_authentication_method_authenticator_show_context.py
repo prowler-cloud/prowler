@@ -17,6 +17,18 @@ class entra_authentication_method_authenticator_show_context(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the Microsoft Authenticator show context check.
+
+        Verifies that the Microsoft Authenticator method is enabled and configured to
+        display both the application name and the geographic location of the sign-in in
+        push and passwordless notifications.
+
+        Returns:
+            List[CheckReportM365]: A list with a single report describing whether
+            Microsoft Authenticator shows application name and geographic location
+            context, or an empty list when the authentication methods policy settings
+            are not available.
+        """
         findings = []
         settings = entra_client.authentication_methods_policy_settings
         if not settings:
@@ -35,7 +47,8 @@ class entra_authentication_method_authenticator_show_context(Check):
         )
 
         if (
-            settings.authenticator_display_app_information_state == "enabled"
+            settings.authenticator_state == "enabled"
+            and settings.authenticator_display_app_information_state == "enabled"
             and settings.authenticator_display_location_information_state == "enabled"
         ):
             report.status = "PASS"

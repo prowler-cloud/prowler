@@ -11,7 +11,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_pim_global_admi
 
 class Test_entra_pim_global_administrator_approval_required:
     def _run(self, settings):
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

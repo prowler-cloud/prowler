@@ -10,7 +10,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_password_protec
 
 class Test_entra_password_protection_custom_banned_list_enforced:
     def _run(self, directory_settings):
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -27,8 +27,7 @@ class Test_entra_password_protection_custom_banned_list_enforced:
 
     def test_template_absent(self):
         result = self._run({})
-        assert len(result) == 1
-        assert result[0].status == "FAIL"
+        assert len(result) == 0
 
     def test_enforced_with_list(self):
         result = self._run(

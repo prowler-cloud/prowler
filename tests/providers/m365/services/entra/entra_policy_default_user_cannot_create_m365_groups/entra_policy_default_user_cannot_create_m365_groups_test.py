@@ -10,7 +10,7 @@ CHECK_MODULE_PATH = "prowler.providers.m365.services.entra.entra_policy_default_
 
 class Test_entra_policy_default_user_cannot_create_m365_groups:
     def _run(self, directory_settings):
-        entra_client = mock.MagicMock
+        entra_client = mock.MagicMock()
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",

@@ -106,17 +106,20 @@ class Intune(M365Service):
         try:
             # The beta endpoint exposes the full set of per-platform restrictions
             # (including macOS/Android for Work) that v1.0 may omit.
-            builder = (
-                self.client.device_management.device_enrollment_configurations.with_url(
-                    "https://graph.microsoft.com/beta/deviceManagement/"
-                    "deviceEnrollmentConfigurations"
+            next_link = (
+                "https://graph.microsoft.com/beta/deviceManagement/"
+                "deviceEnrollmentConfigurations"
+            )
+            while next_link:
+                builder = self.client.device_management.device_enrollment_configurations.with_url(
+                    next_link
                 )
-            )
-            request_info = builder.to_get_request_information()
-            response = await self.client.request_adapter.send_primitive_async(
-                request_info, "bytes", {}
-            )
-            if response:
+                request_info = builder.to_get_request_information()
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
                 data = json.loads(response)
                 for config in data.get("value", []) or []:
                     odata_type = config.get("@odata.type", "")
@@ -143,6 +146,9 @@ class Intune(M365Service):
                             platform_restrictions=platform_restrictions,
                         )
                     )
+
+                # Follow pagination using the opaque nextLink until exhausted.
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -390,6 +396,17 @@ class IntuneManagedDevice(BaseModel):
 
 
 class DeviceEnrollmentConfiguration(BaseModel):
+    """Represents an Intune device enrollment (platform restrictions) configuration.
+
+    Attributes:
+        id: The device enrollment configuration identifier.
+        priority: The configuration priority (0 is the default configuration).
+        odata_type: The Graph ``@odata.type`` of the configuration.
+        platform_restrictions: Mapping of platform restriction name to a boolean
+            indicating whether personal-device enrollment is blocked (or the
+            platform is fully blocked) for that platform.
+    """
+
     id: str
     priority: int = 0
     odata_type: Optional[str] = None

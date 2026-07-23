@@ -15,11 +15,21 @@ class entra_pim_privileged_role_administrator_approval_required(Check):
 
     - PASS: Approval is required to activate Privileged Role Administrator and
       approvers exist.
-    - FAIL: Approval is not required, no approvers are configured, or PIM settings are
-      unavailable.
+    - FAIL: Approval is not required or no approvers are configured.
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate PIM approval settings for the Privileged Role Administrator role.
+
+        Reports whether Privileged Identity Management requires approval to activate
+        the Privileged Role Administrator role and whether at least one approver is
+        configured.
+
+        Returns:
+            List[CheckReportM365]: A single report for the Privileged Role
+            Administrator PIM role settings, or an empty list when the settings are
+            absent.
+        """
         findings = []
         setting = entra_client.pim_role_approval_settings.get(
             PRIVILEGED_ROLE_ADMINISTRATOR_ROLE_TEMPLATE_ID

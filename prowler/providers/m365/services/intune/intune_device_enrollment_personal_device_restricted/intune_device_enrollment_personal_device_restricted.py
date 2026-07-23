@@ -18,6 +18,15 @@ class intune_device_enrollment_personal_device_restricted(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether the default enrollment restriction blocks personal devices.
+
+        Reads the default (priority 0) device platform restriction configuration and
+        reports PASS when personally owned devices are blocked for all platforms, and
+        FAIL when they are allowed for one or more platforms.
+
+        Returns:
+            List[CheckReportM365]: The findings for the check.
+        """
         findings = []
         configurations = intune_client.device_enrollment_configurations
 

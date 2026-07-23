@@ -20,10 +20,22 @@ class entra_password_protection_custom_banned_list_enforced(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the custom banned password list enforcement check.
+
+        Evaluate whether the Password Rule Settings directory setting enforces a
+        non-empty custom banned password list. When the settings object is absent,
+        no finding is produced.
+
+        Returns:
+            List[CheckReportM365]: A list with a single report when the Password Rule
+            Settings exist, or an empty list when they are absent.
+        """
         findings = []
         settings = entra_client.directory_settings.get(
             PASSWORD_RULE_SETTINGS_TEMPLATE_ID
         )
+        if not settings:
+            return findings
 
         report = CheckReportM365(
             metadata=self.metadata(),

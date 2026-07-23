@@ -19,6 +19,18 @@ class defender_strict_preset_security_policy_enabled(Check):
     """
 
     def _has_enabled_strict_preset(self, rules) -> bool:
+        """Check whether any rule enables the Strict Preset Security Policy.
+
+        A rule qualifies only when it is named the Strict Preset Security Policy,
+        is in the ``Enabled`` state, and targets at least one recipient scope.
+
+        Args:
+            rules: Iterable of preset security policy rules (EOP or ATP).
+
+        Returns:
+            bool: True if at least one rule enables the Strict Preset Security
+            Policy with recipients, False otherwise.
+        """
         return any(
             rule.name == STRICT_PRESET_NAME
             and rule.state == "Enabled"
@@ -27,6 +39,15 @@ class defender_strict_preset_security_policy_enabled(Check):
         )
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the Strict Preset Security Policy check.
+
+        Evaluates whether the Strict Preset Security Policy is enabled for both
+        Exchange Online Protection (EOP) and Defender for Office 365 (ATP),
+        producing PASS only when both are enabled with recipients.
+
+        Returns:
+            List[CheckReportM365]: A single-element list with the check report.
+        """
         findings = []
         report = CheckReportM365(
             metadata=self.metadata(),

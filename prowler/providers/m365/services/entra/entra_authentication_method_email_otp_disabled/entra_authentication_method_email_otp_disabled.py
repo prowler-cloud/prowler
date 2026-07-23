@@ -35,15 +35,21 @@ class entra_authentication_method_email_otp_disabled(Check):
                 resource_id=entra_client.tenant_domain,
             )
 
-            if email_config.state == "enabled":
+            if email_config.state == "disabled":
+                report.status = "PASS"
+                report.status_extended = (
+                    "Email OTP authentication method is disabled in the tenant."
+                )
+            elif email_config.state == "enabled":
                 report.status = "FAIL"
                 report.status_extended = (
                     "Email OTP authentication method is enabled in the tenant."
                 )
             else:
-                report.status = "PASS"
+                report.status = "FAIL"
                 report.status_extended = (
-                    "Email OTP authentication method is disabled in the tenant."
+                    "Email OTP authentication method state could not be determined; "
+                    "treating as enabled/non-compliant."
                 )
 
             findings.append(report)

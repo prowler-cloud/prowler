@@ -21,10 +21,22 @@ class entra_password_protection_lockout_threshold_limited(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Execute the smart lockout threshold check.
+
+        Evaluate whether the Password Rule Settings directory setting limits the smart
+        lockout threshold to the recommended maximum. When the settings object is
+        absent, no finding is produced.
+
+        Returns:
+            List[CheckReportM365]: A list with a single report when the Password Rule
+            Settings exist, or an empty list when they are absent.
+        """
         findings = []
         settings = entra_client.directory_settings.get(
             PASSWORD_RULE_SETTINGS_TEMPLATE_ID
         )
+        if not settings:
+            return findings
 
         report = CheckReportM365(
             metadata=self.metadata(),

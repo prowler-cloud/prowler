@@ -19,6 +19,16 @@ class entra_policy_default_user_cannot_create_m365_groups(Check):
     """
 
     def execute(self) -> List[CheckReportM365]:
+        """Evaluate whether default users can create Microsoft 365 groups.
+
+        Inspects the Group.Unified directory setting to determine whether non-admin
+        users are allowed to create Microsoft 365 groups. When the setting is absent
+        the tenant default (group creation allowed) applies.
+
+        Returns:
+            List[CheckReportM365]: A single report indicating whether non-admin users
+            are restricted from creating Microsoft 365 groups.
+        """
         findings = []
         settings = entra_client.directory_settings.get(
             GROUP_UNIFIED_SETTINGS_TEMPLATE_ID

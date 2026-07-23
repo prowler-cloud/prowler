@@ -161,6 +161,64 @@ class Test_Intune_DeviceEnrollmentConfigurations:
     def test_empty_response(self):
         assert self._run_getter({"value": []}) == []
 
+    def test_follows_pagination_across_pages(self):
+        import json
+
+        first_page = {
+            "value": [
+                {
+                    "@odata.type": "#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration",
+                    "id": "page-one",
+                    "priority": 0,
+                    "iosRestriction": {
+                        "personalDeviceEnrollmentBlocked": True,
+                        "platformBlocked": False,
+                    },
+                },
+            ],
+            "@odata.nextLink": "https://graph.microsoft.com/beta/deviceManagement/deviceEnrollmentConfigurations?$skiptoken=abc",
+        }
+        second_page = {
+            "value": [
+                {
+                    "@odata.type": "#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration",
+                    "id": "page-two",
+                    "priority": 1,
+                    "androidRestriction": {
+                        "personalDeviceEnrollmentBlocked": False,
+                        "platformBlocked": True,
+                    },
+                },
+            ],
+        }
+
+        service = Intune.__new__(Intune)
+        client = mock.MagicMock()
+        builder = (
+            client.device_management.device_enrollment_configurations.with_url.return_value
+        )
+        builder.to_get_request_information.return_value = mock.MagicMock()
+        client.request_adapter.send_primitive_async = AsyncMock(
+            side_effect=[
+                json.dumps(first_page).encode(),
+                json.dumps(second_page).encode(),
+            ]
+        )
+        service.client = client
+
+        loop = asyncio.new_event_loop()
+        try:
+            result = loop.run_until_complete(
+                service._get_device_enrollment_configurations()
+            )
+        finally:
+            loop.close()
+
+        # Configurations from BOTH pages must be collected.
+        assert len(result) == 2
+        assert {config.id for config in result} == {"page-one", "page-two"}
+        assert client.request_adapter.send_primitive_async.await_count == 2
+
 
 class Test_Intune_Service:
     def test_get_settings_secure_by_default_true(self):
