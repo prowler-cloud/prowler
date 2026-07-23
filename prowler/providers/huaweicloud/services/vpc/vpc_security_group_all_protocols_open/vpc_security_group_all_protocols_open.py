@@ -1,5 +1,9 @@
 from prowler.lib.check.models import Check, CheckReportHuaweiCloud
 from prowler.providers.huaweicloud.services.vpc.vpc_client import vpc_client
+from prowler.providers.huaweicloud.services.vpc.vpc_service import (
+    rule_covers_all_ports,
+    rule_source_is_open,
+)
 
 
 class vpc_security_group_all_protocols_open(Check):
@@ -14,14 +18,13 @@ class vpc_security_group_all_protocols_open(Check):
             report.resource_id = sg.id
             report.resource_arn = f"huaweicloud:vpc:{sg.region}:{vpc_client.audited_account}:security-group/{sg.id}"
 
-            all_protocol_rules = []
-            for rule in sg.rules:
-                if rule.direction != "ingress":
-                    continue
-                if rule.remote_ip_prefix not in ("0.0.0.0/0", "::/0"):
-                    continue
-                if rule.port_range_min is None and rule.port_range_max is None:
-                    all_protocol_rules.append(rule)
+            all_protocol_rules = [
+                rule
+                for rule in sg.rules
+                if rule.direction == "ingress"
+                and rule_source_is_open(rule)
+                and rule_covers_all_ports(rule)
+            ]
 
             if all_protocol_rules:
                 report.status = "FAIL"

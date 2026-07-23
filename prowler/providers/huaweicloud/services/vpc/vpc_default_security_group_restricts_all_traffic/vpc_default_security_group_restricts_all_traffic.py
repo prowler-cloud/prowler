@@ -1,5 +1,9 @@
 from prowler.lib.check.models import Check, CheckReportHuaweiCloud
 from prowler.providers.huaweicloud.services.vpc.vpc_client import vpc_client
+from prowler.providers.huaweicloud.services.vpc.vpc_service import (
+    DEFAULT_SECURITY_GROUP_NAMES,
+    rule_source_is_open,
+)
 
 
 class vpc_default_security_group_restricts_all_traffic(Check):
@@ -9,41 +13,35 @@ class vpc_default_security_group_restricts_all_traffic(Check):
         findings = []
 
         for sg in vpc_client.security_groups.values():
+            if sg.name not in DEFAULT_SECURITY_GROUP_NAMES:
+                continue
+
             report = CheckReportHuaweiCloud(metadata=self.metadata(), resource=sg)
             report.region = sg.region
             report.resource_id = sg.id
             report.resource_arn = f"huaweicloud:vpc:{sg.region}:{vpc_client.audited_account}:security-group/{sg.id}"
 
-            if not sg.name:
-                findings.append(report)
-                continue
-
-            has_ingress_rule_with_open_cidr = False
-            has_egress_rule_with_open_cidr = False
-
+            open_directions = []
             for rule in sg.rules:
-                if rule.direction == "ingress" and rule.remote_ip_prefix in (
-                    "0.0.0.0/0",
-                    "::/0",
-                ):
-                    has_ingress_rule_with_open_cidr = True
-                if rule.direction == "egress" and rule.remote_ip_prefix in (
-                    "0.0.0.0/0",
-                    "::/0",
-                ):
-                    has_egress_rule_with_open_cidr = True
+                if rule.direction not in ("ingress", "egress"):
+                    continue
+                if not rule_source_is_open(rule):
+                    continue
+                if rule.direction not in open_directions:
+                    open_directions.append(rule.direction)
 
-            if has_ingress_rule_with_open_cidr or has_egress_rule_with_open_cidr:
+            if open_directions:
                 report.status = "FAIL"
-                open_directions = []
-                if has_ingress_rule_with_open_cidr:
-                    open_directions.append("ingress")
-                if has_egress_rule_with_open_cidr:
-                    open_directions.append("egress")
-                report.status_extended = f"Security group {sg.name} ({sg.id}) has {' and '.join(open_directions)} rule(s) with open CIDR (0.0.0.0/0 or ::/0)."
+                report.status_extended = (
+                    f"Default security group {sg.name} ({sg.id}) has "
+                    f"{' and '.join(open_directions)} rule(s) open to any source."
+                )
             else:
                 report.status = "PASS"
-                report.status_extended = f"Security group {sg.name} ({sg.id}) does not have any rule with open CIDR."
+                report.status_extended = (
+                    f"Default security group {sg.name} ({sg.id}) does not "
+                    "have any rule open to any source."
+                )
 
             findings.append(report)
 

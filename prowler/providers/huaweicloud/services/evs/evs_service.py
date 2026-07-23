@@ -28,10 +28,16 @@ class EVS(HuaweiCloudService):
         try:
             from huaweicloudsdkevs.v2 import ListVolumesRequest
 
-            request = ListVolumesRequest()
-            response = self._call_with_retries(regional_client.list_volumes, request)
+            page_size = 1000
+            offset = 0
+            while True:
+                request = ListVolumesRequest(limit=page_size, offset=offset)
+                response = self._call_with_retries(
+                    regional_client.list_volumes, request
+                )
+                if not response or not response.volumes:
+                    break
 
-            if response and response.volumes:
                 for vol_data in response.volumes:
                     metadata = getattr(vol_data, "metadata", None) or {}
                     is_encrypted = bool(getattr(vol_data, "encrypted", False)) or (
@@ -46,6 +52,10 @@ class EVS(HuaweiCloudService):
                             region=region,
                         )
                     )
+
+                if len(response.volumes) < page_size:
+                    break
+                offset += page_size
 
         except Exception as error:
             logger.error(

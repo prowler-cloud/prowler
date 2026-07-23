@@ -28,10 +28,15 @@ class KMS(HuaweiCloudService):
         try:
             from huaweicloudsdkkms.v2 import ListKeysRequest, ListKeysRequestBody
 
-            request = ListKeysRequest(body=ListKeysRequestBody(limit="100"))
-            response = self._call_with_retries(regional_client.list_keys, request)
+            marker = None
+            while True:
+                request = ListKeysRequest(
+                    body=ListKeysRequestBody(limit="200", marker=marker)
+                )
+                response = self._call_with_retries(regional_client.list_keys, request)
+                if not response or not response.key_details:
+                    break
 
-            if response and response.key_details:
                 for key_data in response.key_details:
                     key_id = getattr(key_data, "key_id", None) or ""
                     is_rotation_enabled = False
@@ -72,6 +77,12 @@ class KMS(HuaweiCloudService):
                             region=region,
                         )
                     )
+
+                if getattr(response, "truncated", "false") != "true":
+                    break
+                marker = getattr(response, "next_marker", None)
+                if not marker:
+                    break
 
         except Exception as error:
             logger.error(

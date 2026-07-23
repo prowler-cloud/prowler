@@ -131,6 +131,13 @@ class HuaweicloudProvider(Provider):
         # Cloud instance so non-China accounts do not need to list regions.
         regions = self._resolve_regions(regions, cloud)
 
+        # Resolve the validation region up front so it can be used both for
+        # credential validation and for agency assumption. The default
+        # (cn-north-4) is a China region that non-China accounts cannot reach,
+        # and the region must expose an IAM endpoint (some dedicated regions
+        # do not) for either operation to work.
+        validation_region = self._validation_region(regions)
+
         logger.info("Setting up Huawei Cloud session ...")
         self._session = self.setup_session(
             access_key_id=access_key_id,
@@ -140,14 +147,11 @@ class HuaweicloudProvider(Provider):
             agency_name=agency_name,
             assume_domain_id=assume_domain_id,
             assume_domain_name=assume_domain_name,
+            region=validation_region,
         )
         logger.info("Huawei Cloud session configured successfully")
 
         # Validate credentials against a region the account can actually reach.
-        # The default (cn-north-4) is a China region that international accounts
-        # cannot access, so honor the requested regions; the region must also
-        # expose an IAM endpoint (some dedicated regions do not).
-        validation_region = self._validation_region(regions)
         logger.info(f"Validating credentials in region {validation_region} ...")
         caller_identity = self.validate_credentials(
             session=self._session,
@@ -326,6 +330,7 @@ class HuaweicloudProvider(Provider):
         agency_name: str = None,
         assume_domain_id: str = None,
         assume_domain_name: str = None,
+        region: str = None,
     ) -> HuaweiCloudSession:
         """
         Set up the Huawei Cloud session.
@@ -402,6 +407,7 @@ class HuaweicloudProvider(Provider):
                     agency_name=agency_name,
                     assume_domain_id=assume_domain_id,
                     assume_domain_name=assume_domain_name,
+                    region=region or HUAWEICLOUD_DEFAULT_REGION,
                 )
 
             return HuaweiCloudSession(credentials)
@@ -410,7 +416,7 @@ class HuaweicloudProvider(Provider):
             raise
         except Exception as error:
             logger.critical(
-                f"HuaweiCloudSetUpSessionError[{error.__traceback__.tb_lineno}]: {error}"
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             raise HuaweiCloudSetUpSessionError(
                 file=pathlib.Path(__file__).name,
@@ -481,9 +487,11 @@ class HuaweicloudProvider(Provider):
                 .build()
             )
 
+            # Huawei caps duration at 24h (86400s). Use the max so long-running
+            # scans don't hit token expiry mid-run.
             assume_role = IdentityAssumerole(
                 agency_name=agency_name,
-                duration_seconds=3600,
+                duration_seconds=86400,
             )
             if assume_domain_id:
                 assume_role.domain_id = assume_domain_id
@@ -509,11 +517,26 @@ class HuaweicloudProvider(Provider):
                 f"{assume_domain_id or assume_domain_name}"
             )
 
+            expiration = None
+            expires_at = getattr(temp, "expires_at", None)
+            if expires_at:
+                try:
+                    from datetime import datetime
+
+                    expiration = datetime.fromisoformat(
+                        str(expires_at).replace("Z", "+00:00")
+                    )
+                except (TypeError, ValueError) as parse_error:
+                    logger.debug(
+                        f"Could not parse agency credential expiration '{expires_at}': {parse_error}"
+                    )
+
             return HuaweiCloudCredentials(
                 ak=temp.access,
                 sk=temp.secret,
                 security_token=temp.securitytoken,
                 domain_id=assume_domain_id or credentials.domain_id,
+                expiration=expiration,
             )
 
         except HuaweiCloudAssumeRoleError:

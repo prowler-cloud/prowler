@@ -166,3 +166,46 @@ class SecurityGroups(HuaweiCloudBaseModel):
     vpc_id: str = ""
     description: str = ""
     rules: List[SecurityGroupRule] = []
+
+
+# Names Huawei Cloud uses for the auto-created default security group. It is
+# "default" on China/International and "Sys-default" on Europe.
+DEFAULT_SECURITY_GROUP_NAMES = ("default", "Sys-default")
+
+# Ports flagged as sensitive when open from the internet.
+SENSITIVE_PORTS = frozenset({22, 3389, 3306, 6379, 27017})
+
+
+def rule_source_is_open(rule: SecurityGroupRule) -> bool:
+    """True when a rule allows traffic from any source.
+
+    Huawei Cloud represents "any source" in two ways: an explicit ``0.0.0.0/0``
+    (or ``::/0``) in ``remote_ip_prefix``, or leaving both ``remote_ip_prefix``
+    and ``remote_group_id`` empty. Rules that reference another security group
+    via ``remote_group_id`` are NOT open even when ``remote_ip_prefix`` is
+    empty.
+    """
+    if rule.remote_ip_prefix in ("0.0.0.0/0", "::/0"):
+        return True
+    return not rule.remote_ip_prefix and not rule.remote_group_id
+
+
+def rule_covers_all_ports(rule: SecurityGroupRule) -> bool:
+    """True when a rule effectively opens every TCP/UDP port.
+
+    Huawei encodes "all ports" as both port_range_min and port_range_max being
+    None. A range that spans the full 1-65535 window is equivalent.
+    """
+    if rule.port_range_min is None and rule.port_range_max is None:
+        return True
+    return rule.port_range_min == 1 and rule.port_range_max == 65535
+
+
+def rule_covers_port(rule: SecurityGroupRule, port: int) -> bool:
+    """True when the port is inside the rule's port range (all-ports included)."""
+    if rule_covers_all_ports(rule):
+        return True
+    if rule.port_range_min is None:
+        return False
+    upper = rule.port_range_max if rule.port_range_max is not None else rule.port_range_min
+    return rule.port_range_min <= port <= upper

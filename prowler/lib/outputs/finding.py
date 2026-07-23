@@ -525,7 +525,10 @@ class Finding(BaseModel):
                     provider, "identity.account_name"
                 )
                 output_data["resource_name"] = check_output.resource_name
-                output_data["resource_uid"] = check_output.resource_id
+                output_data["resource_uid"] = (
+                    getattr(check_output, "resource_arn", "")
+                    or check_output.resource_id
+                )
                 output_data["region"] = check_output.region
 
             elif provider.type == "openstack":

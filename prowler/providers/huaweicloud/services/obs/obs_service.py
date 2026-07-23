@@ -53,7 +53,9 @@ class OBS(HuaweiCloudService):
         logger.info(f"OBS - Listing Buckets in {region}...")
 
         try:
-            response = self.client.list_buckets(ListBucketsRequest())
+            response = self._call_with_retries(
+                self.client.list_buckets, ListBucketsRequest()
+            )
 
             if response and response.buckets and response.buckets.bucket:
                 for bucket_data in response.buckets.bucket:
@@ -65,8 +67,9 @@ class OBS(HuaweiCloudService):
                     acl = ""
 
                     try:
-                        public_status = bucket_client.get_bucket_public_status(
-                            GetBucketPublicStatusRequest(bucket_name=bucket_name)
+                        public_status = self._call_with_retries(
+                            bucket_client.get_bucket_public_status,
+                            GetBucketPublicStatusRequest(bucket_name=bucket_name),
                         )
                         if public_status and public_status.is_public:
                             is_public = True
@@ -76,8 +79,9 @@ class OBS(HuaweiCloudService):
                         )
 
                     try:
-                        policy_status = bucket_client.get_bucket_policy_public_status(
-                            GetBucketPolicyPublicStatusRequest(bucket_name=bucket_name)
+                        policy_status = self._call_with_retries(
+                            bucket_client.get_bucket_policy_public_status,
+                            GetBucketPolicyPublicStatusRequest(bucket_name=bucket_name),
                         )
                         if policy_status and policy_status.is_public:
                             is_public = True
