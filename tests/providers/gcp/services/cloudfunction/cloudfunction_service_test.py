@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock, patch
 
+from prowler.providers.gcp.lib.service.service import GCPService
 from prowler.providers.gcp.services.cloudfunction.cloudfunction_service import (
     CloudFunction,
 )
@@ -147,6 +148,63 @@ class TestCloudFunctionService:
             assert fn.name == "no-vpc-func"
             assert fn.vpc_connector is None
             assert fn.publicly_accessible is False
+
+    def test_get_functions_iam_policy_gen2_uses_per_request_http(self):
+        """Regression: the gen2 IAM lookup must pass a per-request HTTP client.
+
+        _get_function_iam_policy runs once per function across a thread pool
+        (GCPService.__threading_call__), and httplib2 is not thread-safe. The
+        gen1 branch isolates each thread with its own AuthorizedHttp via
+        __get_AuthorizedHttp_client__; the gen2 branch must do the same. Sharing
+        the single self._run_client transport across threads corrupts the
+        process heap and aborts the scan (SIGABRT/SIGSEGV).
+        """
+        sentinel_http = object()
+
+        request = MagicMock()
+        request.execute.return_value = {"bindings": []}
+        run_client = MagicMock()
+        run_client.projects().locations().services().getIamPolicy.return_value = (
+            request
+        )
+
+        def mock_api_client(*args, **kwargs):
+            return _make_cloudfunction_client(
+                functions_list=[
+                    {
+                        "name": _FUNCTION_ID,
+                        "state": "ACTIVE",
+                        "environment": "GEN_2",
+                        "serviceConfig": {"service": _RUN_SERVICE},
+                    }
+                ]
+            )
+
+        with (
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__is_api_active__",
+                new=mock_is_api_active,
+            ),
+            patch(
+                "prowler.providers.gcp.lib.service.service.GCPService.__generate_client__",
+                new=mock_api_client,
+            ),
+            patch(
+                "prowler.providers.gcp.services.cloudfunction.cloudfunction_service.discovery.build",
+                return_value=run_client,
+            ),
+            patch.object(
+                GCPService,
+                "__get_AuthorizedHttp_client__",
+                return_value=sentinel_http,
+            ),
+        ):
+            CloudFunction(set_mocked_gcp_provider(project_ids=[GCP_PROJECT_ID]))
+
+        # gen2 IAM policy must be fetched with a per-request http (not the shared
+        # self._run_client transport), mirroring the gen1 branch.
+        request.execute.assert_called_once()
+        assert request.execute.call_args.kwargs.get("http") is sentinel_http
 
     def test_get_functions_iam_policy_gen2_all_users(self):
         """Gen2 functions: allUsers binding lives on the Cloud Run service."""

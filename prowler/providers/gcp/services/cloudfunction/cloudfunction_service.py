@@ -108,7 +108,10 @@ class CloudFunction(GCPService):
                     .locations()
                     .services()
                     .getIamPolicy(resource=function.service)
-                    .execute(num_retries=DEFAULT_RETRY_ATTEMPTS)
+                    .execute(
+                        http=self.__get_AuthorizedHttp_client__(),
+                        num_retries=DEFAULT_RETRY_ATTEMPTS,
+                    )
                 )
             else:
                 response = (
