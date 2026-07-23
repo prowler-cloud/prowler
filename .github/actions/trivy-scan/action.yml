@@ -63,7 +63,7 @@ runs:
         exit-code: '0'
         scanners: 'vuln'
         timeout: '5m'
-        version: 'v0.71.2'
+        version: 'v0.72.0'
 
     - name: Run Trivy vulnerability scan (SARIF)
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
@@ -76,11 +76,11 @@ runs:
         exit-code: '0'
         scanners: 'vuln'
         timeout: '5m'
-        version: 'v0.71.2'
+        version: 'v0.72.0'
 
     - name: Upload Trivy results to GitHub Security tab
       if: inputs.upload-sarif == 'true' && github.event_name == 'push'
-      uses: github/codeql-action/upload-sarif@3599b3baa15b485a2e49ef411a7a4bb2452e7f93 # v3.30.5
+      uses: github/codeql-action/upload-sarif@b7351df727350dca84cb9d725d57dcf5bc82ba26 # v3.37.1
       with:
         sarif_file: 'trivy-results.sarif'
         category: 'trivy-container'
