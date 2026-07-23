@@ -1,0 +1,39 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_domain_dmarc_records_published",
+  "CheckTitle": "Exchange Online domain has an enforcing DMARC record",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "**Microsoft 365 Exchange Online domains** publish DMARC TXT records at `_dmarc.<domain>` with an enforcing policy. This evaluates each domain from the Defender DKIM configuration list and expects `p=quarantine` or `p=reject`.",
+  "Risk": "Without an enforcing **DMARC** policy, attackers can spoof the organization's mail domains more easily, increasing phishing, BEC, and impersonation risk. A `p=none` policy is useful for monitoring but does not instruct receivers to quarantine or reject unauthenticated mail.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://www.rfc-editor.org/rfc/rfc7489",
+    "https://learn.microsoft.com/en-us/defender-office-365/email-authentication-dmarc-configure",
+    "https://learn.microsoft.com/en-us/defender-office-365/email-authentication-about"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Publish a TXT record at _dmarc.<domain> with v=DMARC1 and p=quarantine or p=reject.",
+      "NativeIaC": "",
+      "Other": "1. Confirm SPF and DKIM are aligned for the domain\n2. Publish a DMARC TXT record at _dmarc.<domain> using p=quarantine or p=reject\n3. Include rua/ruf reporting addresses where appropriate\n4. Validate the TXT record from an external DNS resolver",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "- Enforce DMARC with `p=quarantine` or `p=reject` for every sending domain\n- Start with monitoring only when needed, but move to enforcement after validating legitimate mail flows\n- Combine DMARC with SPF and DKIM alignment for defense in depth\n- Monitor aggregate reports for authentication failures and spoofing attempts",
+      "Url": "https://hub.prowler.com/check/defender_domain_dmarc_records_published"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
