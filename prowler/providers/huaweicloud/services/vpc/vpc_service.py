@@ -207,5 +207,7 @@ def rule_covers_port(rule: SecurityGroupRule, port: int) -> bool:
         return True
     if rule.port_range_min is None:
         return False
-    upper = rule.port_range_max if rule.port_range_max is not None else rule.port_range_min
+    upper = (
+        rule.port_range_max if rule.port_range_max is not None else rule.port_range_min
+    )
     return rule.port_range_min <= port <= upper
