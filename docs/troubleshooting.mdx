@@ -200,7 +200,9 @@ A fix addressing this permission issue is being evaluated in [PR #9953](https://
 
 ### Scan Stuck in Executing State After Worker Crash
 
-When running Prowler Local Server via Docker Compose, a scan may remain indefinitely in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Since it is not currently possible to cancel a scan in `executing` state through the UI, the workaround is to manually update the scan record in the database.
+When running Prowler Local Server via Docker Compose, a scan may remain in the `executing` state if the worker process crashes (for example, due to an Out of Memory condition) before it can update the scan status. Because scans run one at a time per provider, a scan stuck in `executing` also keeps any newer scans for that provider in the `Queued` state.
+
+A periodic task (`scan-cleanup-stale-scans`) automatically detects these scans — it confirms the worker is gone, marks the scan `failed`, and releases the provider's queue so the next scan starts. It runs every 15 minutes, so recovery normally completes within roughly 30–45 minutes of the last scan activity (the `SCAN_INACTIVITY_THRESHOLD_MINUTES` window, default 30 minutes, plus up to one scheduling interval). If you need to recover immediately instead of waiting, use the manual workaround below.
 
 **Root Cause:**
 

@@ -188,6 +188,7 @@ class TestReconcileTaskResults:
             "scan-perform",
             "attack-paths-scan-perform",
             "attack-paths-cleanup-stale-scans",
+            "scan-cleanup-stale-scans",
         ],
     )
     def test_scan_task_is_skipped_entirely(self, tenants_fixture, task_name):

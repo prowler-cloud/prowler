@@ -90,6 +90,7 @@ from tasks.jobs.scan import (
     reset_ephemeral_resource_findings_count,
     update_provider_compliance_scores,
 )
+from tasks.jobs.scan_cleanup import cleanup_stale_scans
 from tasks.utils import (
     _get_or_create_scheduled_scan,
     batched,
@@ -704,6 +705,13 @@ def perform_attack_paths_scan_task(self, tenant_id: str, scan_id: str):
 @shared_task(name="attack-paths-cleanup-stale-scans", queue="attack-paths-scans")
 def cleanup_stale_attack_paths_scans_task():
     return cleanup_stale_attack_paths_scans()
+
+
+@shared_task(name="scan-cleanup-stale-scans", queue="celery")
+def cleanup_stale_scans_task():
+    """Periodic watchdog: fail scans stranded in `executing` by a dead worker
+    and dispatch the next queued scan the dead scan was blocking."""
+    return cleanup_stale_scans()
 
 
 @shared_task(name="reconcile-orphan-tasks", queue="celery")
