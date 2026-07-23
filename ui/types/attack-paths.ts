@@ -137,10 +137,7 @@ export const ATTACK_PATH_QUERY_STATUSES = {
 export type AttackPathQueryStatus =
   (typeof ATTACK_PATH_QUERY_STATUSES)[keyof typeof ATTACK_PATH_QUERY_STATUSES];
 
-// Precomputed per-query result summary from the scan (Prowler Cloud only).
-// `has_data` is null when the query errored; the whole object is null/absent
-// when the query was never precomputed (parameterized, a scan predating the
-// precompute step, or one the bounded pass did not reach).
+// Cloud-only precomputed query summary. Missing/null means no definitive empty verdict.
 export interface AttackPathQueryResultSummary {
   status: AttackPathQueryStatus;
   has_data: boolean | null;
