@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_authentication_transfer_blocked",
+  "CheckTitle": "Conditional Access policy blocks authentication transfer",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "At least one enabled Conditional Access policy should target the **authentication transfer** flow for **all users** and **all resources** and set the grant control to **Block**. Authentication transfer lets a user move an authenticated session from one device to another (for example, by scanning a QR code), which can be abused to move a session onto an attacker-controlled device.",
+  "Risk": "If authentication transfer is not blocked, an attacker who can present a transfer prompt (e.g., a malicious QR code) may capture an authenticated session and gain access to the victim's resources without needing their credentials or **MFA**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-conditional-access-conditions"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, include **All users** (exclude only documented break-glass accounts)\n4. Under **Target resources**, select **All resources**\n5. Under **Conditions** > **Authentication flows**, enable and select **Authentication transfer**\n6. Under **Grant**, select **Block access**\n7. Set the policy to **On** and click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that blocks the authentication transfer flow for all users and all resources, excluding only documented break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_authentication_transfer_blocked"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

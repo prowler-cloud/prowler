@@ -59,6 +59,9 @@ class Defender(M365Service):
         self.safe_links_policies = {}
         self.safe_links_rules = {}
         self.teams_protection_policy = None
+        self.eop_protection_policy_rules = []
+        self.atp_protection_policy_rules = []
+        self.email_tenant_settings = None
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.malware_policies = self._get_malware_filter_policy()
@@ -80,7 +83,87 @@ class Defender(M365Service):
                 self.safe_links_policies = self._get_safe_links_policy()
                 self.safe_links_rules = self._get_safe_links_rule()
                 self.teams_protection_policy = self._get_teams_protection_policy()
+                self.eop_protection_policy_rules = (
+                    self._get_eop_protection_policy_rules()
+                )
+                self.atp_protection_policy_rules = (
+                    self._get_atp_protection_policy_rules()
+                )
+                self.email_tenant_settings = self._get_email_tenant_settings()
             self.powershell.close()
+
+    def _parse_protection_policy_rules(self, rules_data):
+        """Parse preset security policy rules into PresetSecurityPolicyRule models."""
+        rules = []
+        if not rules_data:
+            return rules
+        if isinstance(rules_data, dict):
+            rules_data = [rules_data]
+        for rule in rules_data:
+            if rule:
+                rules.append(
+                    PresetSecurityPolicyRule(
+                        name=rule.get("Name", rule.get("Identity", "")),
+                        state=rule.get("State", ""),
+                        sent_to=self._normalize_list(rule.get("SentTo")),
+                        sent_to_member_of=self._normalize_list(
+                            rule.get("SentToMemberOf")
+                        ),
+                        recipient_domain_is=self._normalize_list(
+                            rule.get("RecipientDomainIs")
+                        ),
+                    )
+                )
+        return rules
+
+    @staticmethod
+    def _normalize_list(value):
+        """Normalize a PowerShell scalar/list/None value into a list."""
+        if value is None:
+            return []
+        if isinstance(value, list):
+            return value
+        return [value]
+
+    def _get_eop_protection_policy_rules(self):
+        logger.info("M365 - Getting Defender EOP protection policy rules...")
+        try:
+            return self._parse_protection_policy_rules(
+                self.powershell.get_eop_protection_policy_rule()
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
+
+    def _get_atp_protection_policy_rules(self):
+        logger.info("M365 - Getting Defender ATP protection policy rules...")
+        try:
+            return self._parse_protection_policy_rules(
+                self.powershell.get_atp_protection_policy_rule()
+            )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return []
+
+    def _get_email_tenant_settings(self):
+        logger.info("M365 - Getting Defender email tenant settings...")
+        try:
+            data = self.powershell.get_email_tenant_settings()
+            if data:
+                return EmailTenantSettings(
+                    priority_account_protection_enabled=data.get(
+                        "EnablePriorityAccountProtection", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return None
 
     def _get_malware_filter_policy(self):
         logger.info("M365 - Getting Defender malware filter policy...")
@@ -826,3 +909,24 @@ class TeamsProtectionPolicy(BaseModel):
 
     identity: str
     zap_enabled: bool
+
+
+class PresetSecurityPolicyRule(BaseModel):
+    """Model for a preset security policy rule (EOP or ATP)."""
+
+    name: str = ""
+    state: str = ""
+    sent_to: list = []
+    sent_to_member_of: list = []
+    recipient_domain_is: list = []
+
+    @property
+    def has_recipients(self) -> bool:
+        """True if the rule targets at least one recipient scope."""
+        return bool(self.sent_to or self.sent_to_member_of or self.recipient_domain_is)
+
+
+class EmailTenantSettings(BaseModel):
+    """Model for Defender email tenant settings."""
+
+    priority_account_protection_enabled: bool = False

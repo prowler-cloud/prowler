@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_sign_in_frequency_all_users",
+  "CheckTitle": "Conditional Access policy enforces sign-in frequency for all users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "At least one enabled Conditional Access policy should target **all users** and **all resources** and enforce a **sign-in frequency of 7 days or less**. Sign-in frequency defines how long an authenticated session remains valid before the user must reauthenticate. The Microsoft Entra default is a rolling 90-day window, which is too permissive.",
+  "Risk": "Long-lived sessions increase the window in which a stolen token or hijacked session can be used. Without an enforced reauthentication interval, a compromised session can remain valid for up to 90 days, extending an attacker's access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/conditional-access/concept-session-lifetime"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Conditional Access** > **Policies** > **New policy**\n3. Under **Users**, include **All users** (exclude only documented break-glass accounts)\n4. Under **Target resources**, select **All resources**\n5. Under **Session**, enable **Sign-in frequency** and set it to **7 days** or less\n6. Set the policy to **On** and click **Create**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a Conditional Access policy that enforces a sign-in frequency of 7 days or less for all users and all resources, excluding only documented break-glass accounts.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_sign_in_frequency_all_users"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -96,6 +96,72 @@ def _build_intune_service(
         return Intune(set_mocked_m365_provider())
 
 
+class Test_Intune_DeviceEnrollmentConfigurations:
+    def _run_getter(self, payload):
+        import json
+
+        service = Intune.__new__(Intune)
+        client = mock.MagicMock()
+        builder = (
+            client.device_management.device_enrollment_configurations.with_url.return_value
+        )
+        builder.to_get_request_information.return_value = mock.MagicMock()
+        client.request_adapter.send_primitive_async = AsyncMock(
+            return_value=json.dumps(payload).encode()
+        )
+        service.client = client
+        loop = asyncio.new_event_loop()
+        try:
+            return loop.run_until_complete(
+                service._get_device_enrollment_configurations()
+            )
+        finally:
+            loop.close()
+
+    def test_parses_platform_restrictions_and_platform_blocked(self):
+        payload = {
+            "value": [
+                {
+                    "@odata.type": "#microsoft.graph.deviceEnrollmentPlatformRestrictionsConfiguration",
+                    "id": "default",
+                    "priority": 0,
+                    "iosRestriction": {
+                        "personalDeviceEnrollmentBlocked": True,
+                        "platformBlocked": False,
+                    },
+                    "androidRestriction": {
+                        "personalDeviceEnrollmentBlocked": False,
+                        "platformBlocked": True,
+                    },
+                    "windowsRestriction": {
+                        "personalDeviceEnrollmentBlocked": False,
+                        "platformBlocked": False,
+                    },
+                },
+                {
+                    "@odata.type": "#microsoft.graph.deviceEnrollmentWindowsHelloForBusinessConfiguration",
+                    "id": "whfb",
+                    "priority": 0,
+                },
+            ]
+        }
+        result = self._run_getter(payload)
+        # Only the platform-restrictions config is captured (WHfB ignored).
+        assert len(result) == 1
+        config = result[0]
+        assert config.priority == 0
+        # ios: personal blocked -> compliant; android: platformBlocked -> compliant;
+        # windows: neither -> not compliant.
+        assert config.platform_restrictions == {
+            "iosRestriction": True,
+            "androidRestriction": True,
+            "windowsRestriction": False,
+        }
+
+    def test_empty_response(self):
+        assert self._run_getter({"value": []}) == []
+
+
 class Test_Intune_Service:
     def test_get_settings_secure_by_default_true(self):
         intune = _build_intune_service()

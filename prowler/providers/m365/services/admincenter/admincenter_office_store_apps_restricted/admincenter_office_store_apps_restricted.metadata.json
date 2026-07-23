@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "admincenter_office_store_apps_restricted",
+  "CheckTitle": "Users cannot access the Office Store or start trials",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The org-wide apps and services settings should disable **Let users access the Office Store** (**isOfficeStoreEnabled**) and **Let users start trials on behalf of your organization** (**isAppAndServicesTrialEnabled**). This prevents users from installing arbitrary store add-ins or provisioning trial services without administrative oversight.",
+  "Risk": "Allowing users to install **Office Store** add-ins or start service trials introduces unvetted third-party code and services into the tenant, which can access user data (mail, files) and expand the attack surface without administrator review.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/admin/misc/user-owned-apps-and-services"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center at https://admin.microsoft.com/\n2. Go to **Settings** > **Org settings** > **Services** > **User owned apps and services**\n3. Uncheck **Let users access the Office Store**\n4. Uncheck **Let users start trials on behalf of your organization**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable Office Store access and organization trials so that only administrators can introduce add-ins and services into the tenant.",
+      "Url": "https://hub.prowler.com/check/admincenter_office_store_apps_restricted"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

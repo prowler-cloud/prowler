@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_access_review_privileged_roles_configured",
+  "CheckTitle": "Access review for privileged roles is configured",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "An **access review** scoped to **privileged (PIM) directory roles** should exist and be active so privileged role assignments are periodically recertified by reviewers. Requires a Microsoft Entra ID P2 license.",
+  "Risk": "Without recurring access reviews of privileged roles, standing privileged assignments accumulate and persist beyond their need, increasing the risk of privilege misuse and expanding the impact of a compromised administrator account.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/id-governance/privileged-identity-management/pim-create-roles-and-resource-roles-review"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **ID Governance** > **Privileged Identity Management** > **Microsoft Entra Roles** > **Access reviews** > **New**\n3. Scope the review to the privileged roles, set the assignment type to Eligible and Active\n4. Assign reviewers, enable notifications, and set a recurring schedule\n5. Create the review",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create a recurring access review scoped to privileged roles with assigned reviewers so privileged role assignments are periodically recertified.",
+      "Url": "https://hub.prowler.com/check/entra_access_review_privileged_roles_configured"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Requires Microsoft Entra ID P2."
+}

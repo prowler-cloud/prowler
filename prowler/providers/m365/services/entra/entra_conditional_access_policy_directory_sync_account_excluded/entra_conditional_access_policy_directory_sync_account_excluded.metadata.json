@@ -10,7 +10,7 @@
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "Conditional Access policies scoped to **all users** and **all cloud applications** are evaluated to confirm the **Directory Synchronization Accounts** role is explicitly excluded. The Microsoft Entra Connect Sync Account does not support multifactor authentication, so it must be excluded from restrictive policies to maintain directory synchronization.",
-  "Risk": "If the Directory Synchronization Accounts role is not excluded from Conditional Access policies requiring MFA or blocking access, the Entra Connect Sync Account will be unable to authenticate. This breaks hybrid identity synchronization between on-premises Active Directory and Entra ID, potentially causing authentication failures and identity inconsistencies.",
+  "Risk": "If the Directory Synchronization Accounts role is not excluded from **Conditional Access** policies requiring **MFA** or blocking access, the Entra Connect Sync Account will be unable to authenticate. This breaks hybrid identity synchronization between **on-premises** Active Directory and Entra ID, potentially causing authentication failures and identity inconsistencies.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/entra/identity/conditional-access/howto-conditional-access-policy-all-users-mfa",

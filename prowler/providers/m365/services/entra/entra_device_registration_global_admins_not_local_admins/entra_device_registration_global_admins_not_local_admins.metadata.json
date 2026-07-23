@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_device_registration_global_admins_not_local_admins",
+  "CheckTitle": "Global Administrators are not added as local administrators during Entra join",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant device registration policy should not automatically add the **Global Administrator** role to the local administrators group of a device during the Microsoft Entra join process (**azureADJoin.localAdmins.enableGlobalAdmins** should be false).",
+  "Risk": "Automatically granting Global Administrators local admin rights on every Entra-joined device broadens the blast radius of a device compromise and violates least privilege, since local admin rights on endpoints are rarely required for directory administration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/devices/assign-local-admin"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Identity** > **Devices** > **Device settings**\n3. Set **Global administrator role is added as local administrator on the device during Microsoft Entra join** to **No**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable the automatic addition of Global Administrators to the local administrators group during Microsoft Entra join and grant local admin rights only where required.",
+      "Url": "https://hub.prowler.com/check/entra_device_registration_global_admins_not_local_admins"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

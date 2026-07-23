@@ -1,4 +1,5 @@
 import asyncio
+import json
 from typing import List, Optional
 
 from pydantic.v1 import BaseModel
@@ -14,10 +15,12 @@ class AdminCenter(M365Service):
 
         self.organization_config = None
         self.sharing_policy = None
+        self.mailbox_policies = []
         if self.powershell:
             if self.powershell.connect_exchange_online():
                 self.organization_config = self._get_organization_config()
                 self.sharing_policy = self._get_sharing_policy()
+                self.mailbox_policies = self._get_mailbox_policy()
             self.powershell.close()
 
         created_loop = False
@@ -46,12 +49,16 @@ class AdminCenter(M365Service):
                 self._get_directory_roles(),
                 self._get_groups(),
                 self._get_password_policy(),
+                self._get_apps_and_services_settings(),
+                self._get_forms_settings(),
             )
         )
 
         self.directory_roles = attributes[0]
         self.groups = attributes[1]
         self.password_policy = attributes[2]
+        self.apps_and_services_settings = attributes[3]
+        self.forms_settings = attributes[4]
 
         if created_loop:
             asyncio.set_event_loop(None)
@@ -69,12 +76,40 @@ class AdminCenter(M365Service):
                     customer_lockbox_enabled=organization_configuration.get(
                         "CustomerLockboxEnabled", False
                     ),
+                    bookings_enabled=organization_configuration.get(
+                        "BookingsEnabled", True
+                    ),
                 )
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return organization_config
+
+    def _get_mailbox_policy(self):
+        logger.info("Microsoft365 - Getting OWA mailbox policy configuration...")
+        mailbox_policies = []
+        try:
+            policies_data = self.powershell.get_mailbox_policy()
+            if policies_data:
+                if isinstance(policies_data, dict):
+                    policies_data = [policies_data]
+                for policy in policies_data:
+                    if policy:
+                        mailbox_policies.append(
+                            OwaMailboxPolicy(
+                                id=policy.get("Id", ""),
+                                is_default=policy.get("IsDefault", False),
+                                bookings_mailbox_creation_enabled=policy.get(
+                                    "BookingsMailboxCreationEnabled", True
+                                ),
+                            )
+                        )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return mailbox_policies
 
     def _get_sharing_policy(self):
         logger.info("M365 - Getting sharing policy...")
@@ -225,6 +260,71 @@ class AdminCenter(M365Service):
             )
         return password_policy
 
+    async def _get_apps_and_services_settings(self):
+        """Retrieve the org-wide apps and services settings (beta Graph).
+
+        Fetches ``admin/appsAndServices/settings`` from the beta Graph endpoint to
+        read whether users can access the Office Store and start trials.
+
+        Returns:
+            Optional[AppsAndServicesSettings]: The parsed settings, or None on error.
+        """
+        logger.info("M365 - Getting apps and services settings...")
+        settings = None
+        try:
+            builder = self.client.admin.with_url(
+                "https://graph.microsoft.com/beta/admin/appsAndServices/settings"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                settings = AppsAndServicesSettings(
+                    office_store_enabled=data.get("isOfficeStoreEnabled", True),
+                    app_and_services_trial_enabled=data.get(
+                        "isAppAndServicesTrialEnabled", True
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
+
+    async def _get_forms_settings(self):
+        """Retrieve the Microsoft Forms org settings (beta Graph).
+
+        Fetches ``admin/forms/settings`` from the beta Graph endpoint to read whether
+        internal phishing protection is enabled.
+
+        Returns:
+            Optional[FormsSettings]: The parsed settings, or None on error.
+        """
+        logger.info("M365 - Getting Microsoft Forms settings...")
+        settings = None
+        try:
+            builder = self.client.admin.with_url(
+                "https://graph.microsoft.com/beta/admin/forms/settings"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                settings = FormsSettings(
+                    in_org_forms_phishing_scan_enabled=data.get(
+                        "isInOrgFormsPhishingScanEnabled", False
+                    ),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
+
 
 class User(BaseModel):
     id: str
@@ -255,9 +355,25 @@ class Organization(BaseModel):
     name: str
     guid: str
     customer_lockbox_enabled: bool
+    bookings_enabled: bool = True
+
+
+class OwaMailboxPolicy(BaseModel):
+    id: str
+    is_default: bool = False
+    bookings_mailbox_creation_enabled: bool = True
 
 
 class SharingPolicy(BaseModel):
     name: str
     guid: str
     enabled: bool
+
+
+class AppsAndServicesSettings(BaseModel):
+    office_store_enabled: bool = True
+    app_and_services_trial_enabled: bool = True
+
+
+class FormsSettings(BaseModel):
+    in_org_forms_phishing_scan_enabled: bool = False

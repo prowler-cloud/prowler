@@ -1,5 +1,6 @@
 import asyncio
-from typing import Optional
+import json
+from typing import Dict, Optional
 
 from kiota_abstractions.base_request_configuration import RequestConfiguration
 from pydantic.v1 import BaseModel
@@ -29,6 +30,9 @@ class Intune(M365Service):
         self.settings: Optional[IntuneSettings] = None
         self.compliance_policies: Optional[list[IntuneCompliancePolicy]] = []
         self.managed_devices: Optional[list[IntuneManagedDevice]] = []
+        self.device_enrollment_configurations: list["DeviceEnrollmentConfiguration"] = (
+            []
+        )
         self.verification_error: Optional[str] = None
 
         loop = self._get_event_loop()
@@ -44,6 +48,9 @@ class Intune(M365Service):
             self.settings = settings
             self.compliance_policies = policies
             self.managed_devices = managed_devices
+            self.device_enrollment_configurations = loop.run_until_complete(
+                self._get_device_enrollment_configurations()
+            )
             self.verification_error = (
                 " ".join(
                     error
@@ -81,6 +88,66 @@ class Intune(M365Service):
                 loop.close()
         except Exception as error:
             logger.debug(f"Intune - Failed to clean up event loop: {error}")
+
+    async def _get_device_enrollment_configurations(
+        self,
+    ) -> "list[DeviceEnrollmentConfiguration]":
+        """Retrieve device enrollment configurations (platform restrictions).
+
+        Fetches ``deviceManagement/deviceEnrollmentConfigurations`` as raw JSON and
+        parses the platform-restriction configurations, capturing each platform's
+        ``personalDeviceEnrollmentBlocked`` flag.
+
+        Returns:
+            list[DeviceEnrollmentConfiguration]: The parsed enrollment configurations.
+        """
+        logger.info("M365 - Getting Intune device enrollment configurations...")
+        configurations: list[DeviceEnrollmentConfiguration] = []
+        try:
+            # The beta endpoint exposes the full set of per-platform restrictions
+            # (including macOS/Android for Work) that v1.0 may omit.
+            builder = (
+                self.client.device_management.device_enrollment_configurations.with_url(
+                    "https://graph.microsoft.com/beta/deviceManagement/"
+                    "deviceEnrollmentConfigurations"
+                )
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                for config in data.get("value", []) or []:
+                    odata_type = config.get("@odata.type", "")
+                    if "PlatformRestrictionsConfiguration" not in odata_type:
+                        continue
+                    platform_restrictions = {}
+                    for key, value in config.items():
+                        if (
+                            key.endswith("Restriction")
+                            and isinstance(value, dict)
+                            and "personalDeviceEnrollmentBlocked" in value
+                        ):
+                            # A platform is compliant when personal enrollment is
+                            # blocked OR the platform itself is fully blocked (CIS:
+                            # a blocked platform is also a passing state).
+                            platform_restrictions[key] = bool(
+                                value.get("personalDeviceEnrollmentBlocked", False)
+                            ) or bool(value.get("platformBlocked", False))
+                    configurations.append(
+                        DeviceEnrollmentConfiguration(
+                            id=config.get("id", ""),
+                            priority=config.get("priority", 0),
+                            odata_type=odata_type,
+                            platform_restrictions=platform_restrictions,
+                        )
+                    )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return configurations
 
     async def _load_intune_configuration(
         self,
@@ -320,3 +387,11 @@ class IntuneManagedDevice(BaseModel):
     device_name: str = ""
     compliance_state: str = ""
     management_agent: str = ""
+
+
+class DeviceEnrollmentConfiguration(BaseModel):
+    id: str
+    priority: int = 0
+    odata_type: Optional[str] = None
+    # Mapping of platform restriction name -> personalDeviceEnrollmentBlocked flag.
+    platform_restrictions: Dict[str, bool] = {}
