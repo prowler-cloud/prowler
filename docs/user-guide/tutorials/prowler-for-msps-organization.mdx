@@ -20,9 +20,9 @@ A rejection email carries the reason, categorized as **Incomplete documentation*
 
 ## Settings
 
-Open **Settings** from the sidebar. The page has three tabs — **Profile**, **Branding** and **Security** — though what you can do in them depends on your role.
+Open **Settings** from the sidebar. The tabs depend on your role. Users with **Manage settings** see **Profile**, **Branding**, **Security** and a disabled **Notifications** tab. Users without **Manage settings** see only **Security**.
 
-Every signed-in user can view the settings and change their own password. Editing the organization itself requires a role with **Manage settings**; without it, only the **Security** tab is available.
+Every signed-in user can change their own password. Editing the organization itself requires a role with **Manage settings**.
 
 ### Profile
 
@@ -39,7 +39,7 @@ Upload your logo. See [Customizing Your Branding](/user-guide/tutorials/prowler-
 
 ### Security
 
-Change your own password. Roles with **Manage settings** — Superadmin today — also reach the Danger zone described below. An Organization Admin sees the password form only.
+Change your own password. Users with **Manage settings** can also see the Danger zone described below, but only the partner owner can submit a deletion request. An Organization Admin sees the password form only.
 
 ## Customer Capacity
 
@@ -51,11 +51,11 @@ Deleting a partner organization is a request, not an immediate action.
 
 <Steps>
   <Step title="Open the Danger zone">
-    Go to **Settings → Security**. The Danger zone and its **Delete Partner** action require a role with **Manage settings**.
+    Go to **Settings → Security**. The Danger zone requires **Manage settings**, and submitting its **Delete Partner** request is restricted to the partner owner.
   </Step>
 
   <Step title="File the request">
-    Optionally give a reason in **Reason for deletion**, then type `DELETE` in the confirmation field to enable the button and submit.
+    Enter a required **Reason for deletion**. The UI accepts 10–1000 characters, and the API rejects reasons shorter than 10 characters. Then type `DELETE` in the confirmation field to enable the button and submit.
   </Step>
 
   <Step title="Wait for review">
@@ -73,7 +73,7 @@ Closing a partner organization does not delete customer data in Prowler Cloud on
 
 ## Ownership
 
-One user is the **owner** of the partner organization — by default, whoever signed up. Ownership can be transferred to another team member, who keeps the Superadmin role. The owner cannot be removed from the team while they hold ownership.
+One user is the **owner** of the partner organization — by default, whoever signed up. Ownership transfer is Prowler-assisted rather than self-service: contact Prowler to request it. Prowler staff can transfer ownership only when the partner has no customer organizations and the target is an active Superadmin. The previous owner keeps the Superadmin role, and the current owner cannot be removed from the team while they hold ownership.
 
 ## Next Steps
 
