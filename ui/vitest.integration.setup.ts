@@ -25,6 +25,18 @@ vi.mock("@/auth.config", () => ({
   handlers: {},
 }));
 
+// Server Actions call `revalidatePath`/`revalidateTag` from `next/cache` after
+// mutations. Those read Next's static-generation store, which only exists
+// inside a Next request scope — in the browser test they throw "Invariant:
+// static generation store missing", aborting the action before the UI can
+// react. Stub them as no-ops; the tests assert on UI state, not cache
+// invalidation.
+vi.mock("next/cache", () => ({
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+  unstable_cache: <T>(fn: T) => fn,
+}));
+
 // Next.js's App Router context (`useRouter`, `useSearchParams`, `usePathname`)
 // is not available in vitest browser — there's no Next runtime mounting the
 // providers. We back the hooks with the real `window.location` so navigating
