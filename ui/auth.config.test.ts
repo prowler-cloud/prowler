@@ -72,6 +72,8 @@ describe("authConfig JWT callback", () => {
         tenant_id: "tenant-1",
         user: {
           name: "Tenant User",
+          email: "tenant@example.com",
+          dateJoined: "2026-01-01",
           permissions: RESTRICTED_PERMISSIONS,
         },
       },
@@ -80,7 +82,6 @@ describe("authConfig JWT callback", () => {
       session: {
         accessToken,
         refreshToken: "elevated-refresh-token",
-        user: { permissions: RESTRICTED_PERMISSIONS },
       },
     });
 
@@ -117,6 +118,8 @@ describe("authConfig JWT callback", () => {
         tenant_id: "tenant-2",
         user: {
           name: "Tenant User",
+          email: "tenant@example.com",
+          dateJoined: "2026-01-01",
           permissions: ELEVATED_PERMISSIONS,
         },
       },
@@ -125,7 +128,6 @@ describe("authConfig JWT callback", () => {
       session: {
         accessToken,
         refreshToken: "restricted-refresh-token",
-        user: { permissions: ELEVATED_PERMISSIONS },
       },
     });
 
@@ -139,18 +141,22 @@ describe("authConfig JWT callback", () => {
     });
   });
 
-  it("should preserve the current session when the switched tenant user cannot be loaded", async () => {
+  it("should report a tenant switch failure while preserving the current session", async () => {
     // Given
     vi.spyOn(console, "warn").mockImplementation(() => undefined);
     getUserByMeMock.mockRejectedValue(new Error("Temporary API failure"));
     const jwtCallback = authConfig.callbacks?.jwt;
     if (!jwtCallback) throw new Error("JWT callback is not configured");
+    const sessionCallback = authConfig.callbacks?.session;
+    if (!sessionCallback) throw new Error("Session callback is not configured");
     const currentToken = {
       accessToken: "current-access-token",
       refreshToken: "current-refresh-token",
       tenant_id: "tenant-1",
       user: {
         name: "Tenant User",
+        email: "tenant@example.com",
+        dateJoined: "2026-01-01",
         permissions: RESTRICTED_PERMISSIONS,
       },
     };
@@ -164,20 +170,28 @@ describe("authConfig JWT callback", () => {
         accessToken:
           "header.eyJzdWIiOiJ1c2VyLTEiLCJ0ZW5hbnRfaWQiOiJ0ZW5hbnQtMiJ9.signature",
         refreshToken: "switched-refresh-token",
-        user: { permissions: ELEVATED_PERMISSIONS },
       },
     });
+    if (!result) throw new Error("JWT callback cleared the current token");
+
+    const session = await sessionCallback({
+      session: {
+        expires: "2026-12-31T23:59:59.999Z",
+        user: { name: "Tenant User" },
+      },
+      token: result,
+    } as Parameters<typeof sessionCallback>[0]);
 
     // Then
-    expect(result).toBe(currentToken);
-    expect(result).toMatchObject({
+    expect(session).toMatchObject({
+      error: "TenantSwitchError",
       accessToken: "current-access-token",
       refreshToken: "current-refresh-token",
-      tenant_id: "tenant-1",
+      tenantId: "tenant-1",
       user: {
         permissions: RESTRICTED_PERMISSIONS,
       },
     });
-    expect(result.error).not.toBe("RefreshAccessTokenError");
+    expect(result.error).toBeUndefined();
   });
 });
