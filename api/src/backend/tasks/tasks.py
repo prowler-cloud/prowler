@@ -797,12 +797,31 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
         if name not in frameworks_bulk and universal_bulk[name].outputs
     }
     frameworks_avail = get_compliance_frameworks(provider_type)
+    # Idempotency: a previous run of this task for the same scan may have left
+    # output files behind (e.g. broker redelivery after a worker was killed
+    # mid-run with task_acks_late, or a successful run on a deployment without
+    # S3 where the tmp dir is not removed). Output writers open files in append
+    # mode with a deterministic path (derived from scan.started_at), so reusing
+    # them would append every finding row again and duplicate the CSV/output
+    # rows. Start from a clean slate before (re)generating. See PROWLER-2266.
+    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
+    try:
+        rmtree(scan_tmp_dir, ignore_errors=True)
+    except Exception as error:
+        # A failure to clean the previous run's artifacts must not prevent
+        # (re)generating the outputs; worst case the leftover files are
+        # overwritten by the writers below.
+        logger.warning(
+            "Failed to clean stale output directory for scan %s before generation: %s",
+            scan_id,
+            error,
+        )
+
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
     )
     # Removed on success here and on failure by ScanReportRLSTask.on_failure,
     # so partial artifacts do not accumulate and fill the disk (ENOSPC).
-    scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
 
     def get_writer(writer_map, name, factory, is_last):
         """

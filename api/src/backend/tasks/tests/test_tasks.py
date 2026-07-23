@@ -420,6 +420,76 @@ class TestGenerateOutputs:
             assert result == {"upload": False}
             mock_scan_update.return_value.update.assert_called_once()
 
+    def test_generate_outputs_removes_previous_run_artifacts(self):
+        """Regression for PROWLER-2266.
+
+        Output writers open files in append mode with a deterministic path
+        (derived from scan.started_at). If this task runs again for the same
+        scan (e.g. broker redelivery after a worker is killed mid-run with
+        task_acks_late), reusing the leftover files appends every finding row
+        again, duplicating rows in the CSV/output while the API console keeps
+        showing a single finding. The task must start from a clean slate by
+        removing the scan's tmp output directory before (re)generating.
+        """
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp_root:
+            # Simulate artifacts left behind by a previous run of the same scan.
+            scan_tmp_dir = Path(tmp_root) / self.tenant_id / self.scan_id
+            scan_tmp_dir.mkdir(parents=True)
+            stale_artifact = scan_tmp_dir / "prowler-output-aws-20260723120000.csv"
+            stale_artifact.write_text("HEADER\nold-finding-row\n")
+
+            with (
+                patch("tasks.tasks.DJANGO_TMP_OUTPUT_DIRECTORY", tmp_root),
+                patch("tasks.tasks.ScanSummary.objects.filter") as mock_filter,
+                patch("tasks.tasks.Provider.objects.get"),
+                patch("tasks.tasks.initialize_prowler_provider"),
+                patch("tasks.tasks.Compliance.get_bulk"),
+                patch("tasks.tasks.get_compliance_frameworks"),
+                patch("tasks.tasks.get_prowler_provider_compliance", return_value={}),
+                patch("tasks.tasks.Finding.all_objects.filter") as mock_findings,
+                patch(
+                    "tasks.tasks._generate_output_directory",
+                    return_value=("/tmp/test/out", "/tmp/test/comp"),
+                ),
+                patch("tasks.tasks.FindingOutput._transform_findings_stats"),
+                patch("tasks.tasks.FindingOutput.transform_api_finding"),
+                patch(
+                    "tasks.tasks.OUTPUT_FORMATS_MAPPING",
+                    {
+                        "json": {
+                            "class": MagicMock(name="Writer"),
+                            "suffix": ".json",
+                            "kwargs": {},
+                        }
+                    },
+                ),
+                patch("tasks.tasks.COMPLIANCE_CLASS_MAP", {"aws": []}),
+                patch(
+                    "tasks.tasks._compress_output_files", return_value="/tmp/compressed"
+                ),
+                patch("tasks.tasks._upload_to_s3", return_value=None),
+                patch("tasks.tasks.Scan.all_objects.filter"),
+            ):
+                mock_filter.return_value.exists.return_value = True
+                mock_findings.return_value.order_by.return_value.iterator.return_value = [
+                    [MagicMock()],
+                    True,
+                ]
+
+                generate_outputs_task(
+                    scan_id=self.scan_id,
+                    provider_id=self.provider_id,
+                    tenant_id=self.tenant_id,
+                )
+
+            # The stale artifacts from the previous run must be gone, so the
+            # append-mode writers cannot duplicate rows onto them.
+            assert not stale_artifact.exists()
+            assert not scan_tmp_dir.exists()
+
     def test_generate_outputs_triggers_html_extra_update(self):
         mock_finding_output = MagicMock()
         mock_finding_output.compliance = {"cis": ["requirement-1", "requirement-2"]}
