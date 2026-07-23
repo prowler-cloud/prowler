@@ -499,6 +499,8 @@ class SageMaker(AWSService):
                     )
                 )
             endpoint_config.production_variants = production_variants
+            if "KmsKeyId" in describe_endpoint_config:
+                endpoint_config.kms_key_id = describe_endpoint_config["KmsKeyId"]
         except Exception as error:
             logger.error(
                 f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
@@ -623,6 +625,7 @@ class EndpointConfig(BaseModel):
     region: str
     arn: str
     production_variants: list[ProductionVariant] = []
+    kms_key_id: Optional[str] = None
     tags: Optional[list] = []
 
 
