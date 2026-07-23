@@ -1,0 +1,34 @@
+{
+  "Provider": "aws",
+  "CheckID": "ec2_instance_stopped_older_than_specific_days",
+  "CheckTitle": "EC2 stopped instance was launched more than the configured number of days ago",
+  "CheckType": [
+    "Software and Configuration Checks/AWS Security Best Practices"
+  ],
+  "ServiceName": "ec2",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "AwsEc2Instance",
+  "ResourceGroup": "compute",
+  "Description": "EC2 instances that are currently in `stopped` state and were launched more than the configurable number of days ago (`max_ec2_stopped_instance_age_in_days`, default `30`) are flagged.",
+  "Risk": "Instances that were launched long ago and are currently stopped may indicate forgotten or abandoned resources that retain stale security configurations.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws ec2 terminate-instances --instance-ids <example_resource_id>",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Review instances that were launched long ago and are currently stopped. Terminate them if no longer needed.",
+      "Url": "https://hub.prowler.com/check/ec2_instance_stopped_older_than_specific_days"
+    }
+  },
+  "Categories": [],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
