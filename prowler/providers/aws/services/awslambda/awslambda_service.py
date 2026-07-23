@@ -25,6 +25,7 @@ class Lambda(AWSService):
         # Functions are listed first, then trimmed to the subset selected for
         # analysis before expensive per-function detail is hydrated.
         self.functions = {}
+        self.layers = {}
         self.security_groups_in_use = set()
         self.regions_with_functions = set()
         self.function_limit = get_resource_scan_limit(
@@ -32,6 +33,7 @@ class Lambda(AWSService):
         )
         self.__threading_call__(self._list_functions)
         self._select_functions_for_analysis()
+        self._select_layers_for_analysis()
         self._list_tags_for_resource()
         self.__threading_call__(self._get_policy)
         self.__threading_call__(self._get_function_url_config)
@@ -104,6 +106,13 @@ class Lambda(AWSService):
                 ),
                 self.function_limit,
             )
+        }
+
+    def _select_layers_for_analysis(self):
+        self.layers = {
+            layer.arn: layer
+            for function in self.functions.values()
+            for layer in function.layers
         }
 
     def _list_event_source_mappings(self, regional_client):
@@ -186,12 +195,12 @@ class Lambda(AWSService):
             function = lambda_functions_to_fetch[fetched_lambda_code]
             try:
                 function_code = fetched_lambda_code.result()
-                if function_code:
-                    yield function, function_code
+                yield function, function_code
             except Exception as error:
                 logger.error(
                     f"{function.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
                 )
+                yield function, None
 
     def _fetch_function_code(self, function_name, function_region):
         try:
@@ -202,6 +211,41 @@ class Lambda(AWSService):
             if "Location" in function_information["Code"]:
                 code_location_uri = function_information["Code"]["Location"]
                 raw_code_zip = requests.get(code_location_uri).content
+                return LambdaCode(
+                    location=code_location_uri,
+                    code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
+                )
+        except Exception as error:
+            logger.error(
+                f"{regional_client.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            raise
+
+    def _get_layer_code(self):
+        logger.info("Lambda - Getting Layer Code...")
+        lambda_layers_to_fetch = {
+            self.thread_pool.submit(self._fetch_layer_code, layer): layer
+            for layer in self.layers.values()
+        }
+
+        for fetched_layer_code in as_completed(lambda_layers_to_fetch):
+            layer = lambda_layers_to_fetch[fetched_layer_code]
+            try:
+                layer_code = fetched_layer_code.result()
+                yield layer, layer_code
+            except Exception as error:
+                logger.error(
+                    f"{layer.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
+                yield layer, None
+
+    def _fetch_layer_code(self, layer):
+        try:
+            regional_client = self.regional_clients[layer.region]
+            layer_information = regional_client.get_layer_version_by_arn(Arn=layer.arn)
+            if "Location" in layer_information["Content"]:
+                code_location_uri = layer_information["Content"]["Location"]
+                raw_code_zip = requests.get(code_location_uri, timeout=30).content
                 return LambdaCode(
                     location=code_location_uri,
                     code_zip=zipfile.ZipFile(io.BytesIO(raw_code_zip)),
@@ -303,10 +347,28 @@ class Layer(BaseModel):
     arn: str
 
     @property
+    def name(self) -> str:
+        """Extract the layer name from the layer ARN."""
+        parts = self.arn.split(":")
+        return parts[6] if len(parts) >= 7 else self.arn
+
+    @property
+    def region(self) -> str:
+        """Extract the AWS region from the layer ARN."""
+        parts = self.arn.split(":")
+        return parts[3] if len(parts) >= 4 else ""
+
+    @property
     def account_id(self) -> str:
         """Extract the account ID from the layer ARN."""
         parts = self.arn.split(":")
         return parts[4] if len(parts) >= 5 else ""
+
+    @property
+    def version(self) -> str:
+        """Extract the layer version from the layer ARN."""
+        parts = self.arn.split(":")
+        return parts[7] if len(parts) >= 8 else ""
 
 
 class DeadLetterConfig(BaseModel):

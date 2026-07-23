@@ -2,6 +2,7 @@ import io
 import os
 import tempfile
 import zipfile
+from concurrent.futures import ThreadPoolExecutor
 from re import search
 from unittest.mock import patch
 
@@ -15,6 +16,7 @@ from prowler.providers.aws.services.awslambda.awslambda_service import (
     AuthType,
     Function,
     Lambda,
+    Layer,
 )
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
@@ -44,7 +46,7 @@ def create_zip_file(code: str = "") -> io.BytesIO:
     return zip_output
 
 
-def mock_request_get(_):
+def mock_request_get(_, timeout=None):
     """Mock requests.get() to get the Lambda Code in Zip Format"""
     mock_resp = mock.MagicMock
     mock_resp.status_code = 200
@@ -165,6 +167,57 @@ class Test_Lambda_Service:
         awslambda._select_functions_for_analysis()
 
         assert [function.name for function in awslambda.functions.values()] == ["new"]
+
+    def test_select_layers_for_analysis_deduplicates_selected_function_layers(self):
+        layer = Layer(
+            arn=(
+                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                f"{AWS_ACCOUNT_NUMBER}:layer:shared:1"
+            )
+        )
+        other_layer = Layer(
+            arn=(
+                f"arn:aws:lambda:{AWS_REGION_EU_WEST_1}:"
+                f"{AWS_ACCOUNT_NUMBER}:layer:other:3"
+            )
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.functions = {
+            "function-1": Function(
+                name="function-1",
+                arn="function-1",
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+                layers=[layer, other_layer],
+            ),
+            "function-2": Function(
+                name="function-2",
+                arn="function-2",
+                security_groups=[],
+                region=AWS_REGION_US_EAST_1,
+                layers=[layer],
+            ),
+        }
+
+        awslambda._select_layers_for_analysis()
+
+        assert awslambda.layers == {
+            layer.arn: layer,
+            other_layer.arn: other_layer,
+        }
+
+    def test_layer_parses_identity_from_arn(self):
+        layer = Layer(
+            arn=(
+                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                f"{AWS_ACCOUNT_NUMBER}:layer:shared:42"
+            )
+        )
+
+        assert layer.name == "shared"
+        assert layer.region == AWS_REGION_US_EAST_1
+        assert layer.account_id == AWS_ACCOUNT_NUMBER
+        assert layer.version == "42"
 
     def test_function_limit_keeps_complete_auxiliary_indexes(self):
         class FakePaginator:
@@ -680,3 +733,27 @@ class Test_Lambda_Service:
 
         assert len(list(awslambda._get_function_code())) == 1
         assert len(fetched) == 1
+
+    def test_get_layer_code_fetches_unique_selected_layers(self):
+        layer = Layer(
+            arn=(
+                f"arn:aws:lambda:{AWS_REGION_US_EAST_1}:"
+                f"{AWS_ACCOUNT_NUMBER}:layer:shared:1"
+            )
+        )
+        awslambda = Lambda.__new__(Lambda)
+        awslambda.layers = {layer.arn: layer}
+        fetched = []
+
+        def fetch_layer_code(fetched_layer):
+            fetched.append(fetched_layer.arn)
+            return mock.MagicMock()
+
+        awslambda._fetch_layer_code = fetch_layer_code
+        awslambda.thread_pool = ThreadPoolExecutor(max_workers=1)
+
+        try:
+            assert len(list(awslambda._get_layer_code())) == 1
+            assert fetched == [layer.arn]
+        finally:
+            awslambda.thread_pool.shutdown()

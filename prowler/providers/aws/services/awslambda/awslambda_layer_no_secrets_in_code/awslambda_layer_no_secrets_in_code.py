@@ -10,41 +10,35 @@ from prowler.lib.utils.utils import (
 from prowler.providers.aws.services.awslambda.awslambda_client import awslambda_client
 
 
-class awslambda_function_no_secrets_in_code(Check):
+class awslambda_layer_no_secrets_in_code(Check):
+    """Check Lambda layer package contents for hardcoded secrets."""
+
     def execute(self) -> list[Check_Report_AWS]:
+        """Execute the Lambda layer secret scan check."""
         findings = []
-        if not awslambda_client.functions:
+        if not awslambda_client.layers:
             return findings
 
         secrets_ignore_patterns = awslambda_client.audit_config.get(
             "secrets_ignore_patterns", []
         )
-        # Glob patterns of file names inside the deployment package to skip
-        # when scanning for secrets (e.g. "*.deps.json" for .NET Lambdas).
         secrets_ignore_files = (
             awslambda_client.audit_config.get("secrets_ignore_files", []) or []
         )
         validate = awslambda_client.audit_config.get("secrets_validate", False)
 
-        # Scan files of every function's package in batched
-        # Kingfisher invocations instead of one subprocess per file per function.
-        # Each package is extracted one at a time and its files are
-        # read (byte-faithfully via latin-1) before the extraction is released,
-        # so only a single package is on disk at a time. Findings are keyed by
-        # (function index, package-relative file name) so they can be grouped
-        # back per function.
-        functions_with_code = []
-        functions_without_code = []
+        layers_with_code = []
+        layers_without_code = []
 
         def code_payloads():
-            for function, function_code in awslambda_client._get_function_code():
-                if not function_code:
-                    functions_without_code.append(function)
+            for layer, layer_code in awslambda_client._get_layer_code():
+                if not layer_code:
+                    layers_without_code.append(layer)
                     continue
-                index = len(functions_with_code)
-                functions_with_code.append(function)
+                index = len(layers_with_code)
+                layers_with_code.append(layer)
                 for relative_file_path, content in iter_zip_text_payloads(
-                    function_code.code_zip, secrets_ignore_files
+                    layer_code.code_zip, secrets_ignore_files
                 ):
                     yield (index, relative_file_path), content
 
@@ -60,30 +54,28 @@ class awslambda_function_no_secrets_in_code(Check):
             scan_error = error
 
         if scan_error:
-            # The scan failed before any function's code could be cleared. Report
-            # MANUAL for every function rather than risk a false PASS.
-            for function in awslambda_client.functions.values():
-                report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+            for layer in awslambda_client.layers.values():
+                report = Check_Report_AWS(metadata=self.metadata(), resource=layer)
                 report.status = "MANUAL"
                 report.status_extended = (
-                    f"Could not scan Lambda function {function.name} code for "
+                    f"Could not scan Lambda layer {layer.name} code for "
                     f"secrets: {scan_error}; manual review is required."
                 )
                 findings.append(report)
             return findings
 
-        findings_by_function = defaultdict(dict)
+        findings_by_layer = defaultdict(dict)
         for (index, file_name), file_findings in batch_results.items():
-            findings_by_function[index][file_name] = file_findings
+            findings_by_layer[index][file_name] = file_findings
 
-        for index, function in enumerate(functions_with_code):
-            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+        for index, layer in enumerate(layers_with_code):
+            report = Check_Report_AWS(metadata=self.metadata(), resource=layer)
             report.status = "PASS"
             report.status_extended = (
-                f"No secrets found in Lambda function {function.name} code."
+                f"No secrets found in Lambda layer {layer.name} code."
             )
 
-            files_with_secrets = findings_by_function.get(index)
+            files_with_secrets = findings_by_layer.get(index)
             if files_with_secrets:
                 all_secrets = []
                 secrets_findings = []
@@ -95,18 +87,22 @@ class awslambda_function_no_secrets_in_code(Check):
                     )
                     secrets_findings.append(f"{file_name}: {secrets_string}")
 
-                final_output_string = "; ".join(secrets_findings)
                 report.status = "FAIL"
-                report.status_extended = f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} found in Lambda function {function.name} code -> {final_output_string}."
+                final_output_string = "; ".join(secrets_findings)
+                report.status_extended = (
+                    f"Potential {'secrets' if len(secrets_findings) > 1 else 'secret'} "
+                    f"found in Lambda layer {layer.name} code -> "
+                    f"{final_output_string}."
+                )
                 annotate_verified_secrets(report, all_secrets)
 
             findings.append(report)
 
-        for function in functions_without_code:
-            report = Check_Report_AWS(metadata=self.metadata(), resource=function)
+        for layer in layers_without_code:
+            report = Check_Report_AWS(metadata=self.metadata(), resource=layer)
             report.status = "MANUAL"
             report.status_extended = (
-                f"Could not retrieve Lambda function {function.name} code for secrets "
+                f"Could not retrieve Lambda layer {layer.name} code for secrets "
                 "scan; manual review is required."
             )
             findings.append(report)
