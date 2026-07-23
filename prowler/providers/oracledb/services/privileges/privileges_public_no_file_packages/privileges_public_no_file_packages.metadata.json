@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "privileges_public_no_file_packages",
+  "CheckTitle": "File system PL/SQL packages are not executable by PUBLIC",
+  "CheckType": [],
+  "ServiceName": "privileges",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "storage",
+  "Description": "Checks that file system PL/SQL packages (**UTL_FILE, DBMS_LOB, DBMS_ADVISOR**) are not granted EXECUTE to PUBLIC, limiting who can read and write files on the database server (DBSAT finding PRIV.FILESYSTEMPACKAGEPUBLIC).",
+  "Risk": "Any user able to run these packages can read or overwrite files accessible through directory objects — including data files, scripts and wallets — leading to data theft, tampering or code execution on the server.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/managing-security-for-application-developers.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "REVOKE EXECUTE ON UTL_FILE FROM PUBLIC;",
+      "NativeIaC": "",
+      "Other": "1. List PUBLIC execute grants on the file packages in DBA_TAB_PRIVS\n2. Revoke each: REVOKE EXECUTE ON <package> FROM PUBLIC\n3. Grant EXECUTE only to the schemas that need it and restrict directory objects to the minimum paths required",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Revoke PUBLIC execute on the file system packages and control file access through per-user grants and tightly scoped directory objects.",
+      "Url": "https://hub.prowler.com/check/privileges_public_no_file_packages"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

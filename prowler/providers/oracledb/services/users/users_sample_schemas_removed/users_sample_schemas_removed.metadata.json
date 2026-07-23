@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "users_sample_schemas_removed",
+  "CheckTitle": "Oracle sample schemas are not installed in the database",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that Oracle **sample schemas** (SCOTT, HR, OE, SH, PM, IX, BI...) are not present in the database. Sample schemas are demo content with well-known passwords and objects and must not exist in production databases (DBSAT finding USER.SAMPLE).",
+  "Risk": "Sample schemas use published default passwords and predictable objects, giving attackers an easy initial foothold. Once inside, they can enumerate the data dictionary and escalate through granted privileges.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/comsc/introduction-to-sample-schemas.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "DROP USER SCOTT CASCADE;",
+      "NativeIaC": "",
+      "Other": "1. Connect as a DBA user\n2. Review the sample schemas reported by the check\n3. Run DROP USER <schema> CASCADE for each sample schema after confirming it holds no business data",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove Oracle sample schemas from production databases. If a schema must stay temporarily, lock and expire the account and remove it as soon as possible.",
+      "Url": "https://hub.prowler.com/check/users_sample_schemas_removed"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

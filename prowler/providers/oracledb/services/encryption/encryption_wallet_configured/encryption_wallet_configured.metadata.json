@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "encryption_wallet_configured",
+  "CheckTitle": "A TDE keystore is configured and open",
+  "CheckType": [],
+  "ServiceName": "encryption",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "security",
+  "Description": "Checks that a Transparent Data Encryption (TDE) keystore (wallet) is configured and **OPEN**, so the database can encrypt tablespaces and columns (DBSAT finding ENCRYPT.WALLET).",
+  "Risk": "Without a configured TDE keystore no data-at-rest encryption is possible: stolen data files, backups or disks can be read directly with standard tools, bypassing every access control in the database.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/asoag/configuring-transparent-data-encryption.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ADMINISTER KEY MANAGEMENT CREATE KEYSTORE IDENTIFIED BY <password>;",
+      "NativeIaC": "",
+      "Other": "1. Set WALLET_ROOT and TDE_CONFIGURATION initialization parameters\n2. Create the keystore: ADMINISTER KEY MANAGEMENT CREATE KEYSTORE IDENTIFIED BY <password>\n3. Open it and set a master key: ADMINISTER KEY MANAGEMENT SET KEY IDENTIFIED BY <password> WITH BACKUP\n4. Consider an auto-login keystore for unattended restarts",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure a TDE keystore, set a master encryption key and keep the keystore open (auto-login where appropriate) so tablespaces and backups can be encrypted.",
+      "Url": "https://hub.prowler.com/check/encryption_wallet_configured"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

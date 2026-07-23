@@ -1553,6 +1553,59 @@ class HTML(Output):
             return ""
 
     @staticmethod
+    def get_oracledb_assessment_summary(provider: Provider) -> str:
+        """
+        get_oracledb_assessment_summary gets the HTML assessment summary for the Oracle Database provider
+
+        Args:
+            provider (Provider): the Oracle Database provider object
+
+        Returns:
+            str: HTML assessment summary for the Oracle Database provider
+        """
+        try:
+            assessment_items = f"""
+                            <li class="list-group-item">
+                                <b>Oracle Database:</b> {provider.identity.database_name}
+                            </li>
+                            <li class="list-group-item">
+                                <b>DSN:</b> {provider.identity.dsn}
+                            </li>"""
+
+            credentials_items = f"""
+                            <li class="list-group-item">
+                                <b>Authentication:</b> {provider.auth_method}
+                            </li>
+                            <li class="list-group-item">
+                                <b>User:</b> {provider.identity.user}
+                            </li>"""
+
+            return f"""
+                <div class="col-md-2">
+                    <div class="card">
+                        <div class="card-header">
+                            Oracle Database Assessment Summary
+                        </div>
+                        <ul class="list-group list-group-flush">{assessment_items}
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            Oracle Database Credentials
+                        </div>
+                        <ul class="list-group list-group-flush">{credentials_items}
+                        </ul>
+                    </div>
+                </div>"""
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            return ""
+
+    @staticmethod
     def get_scaleway_assessment_summary(provider: Provider) -> str:
         """
         get_scaleway_assessment_summary gets the HTML assessment summary for the Scaleway provider

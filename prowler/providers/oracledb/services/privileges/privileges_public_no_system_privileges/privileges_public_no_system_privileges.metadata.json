@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "privileges_public_no_system_privileges",
+  "CheckTitle": "No system privileges are granted to PUBLIC",
+  "CheckType": [],
+  "ServiceName": "privileges",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that no system privileges are granted to the **PUBLIC** role. Anything granted to PUBLIC is available to every database user, so system privileges must never be granted to it (DBSAT finding PRIV.SYSPUBLIC).",
+  "Risk": "A system privilege granted to PUBLIC is effectively granted to every current and future user, including compromised low-privilege accounts, enabling privilege escalation and broad unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/configuring-privilege-and-role-authorization.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "REVOKE <privilege> FROM PUBLIC;",
+      "NativeIaC": "",
+      "Other": "1. List the grants: SELECT privilege FROM dba_sys_privs WHERE grantee = 'PUBLIC'\n2. Revoke each one: REVOKE <privilege> FROM PUBLIC\n3. Grant the privilege to the specific users or roles that need it",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Revoke all system privileges from PUBLIC and grant them only to the specific users or roles that require them.",
+      "Url": "https://hub.prowler.com/check/privileges_public_no_system_privileges"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

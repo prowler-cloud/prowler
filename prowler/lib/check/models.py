@@ -994,6 +994,41 @@ class CheckReportOkta(Check_Report):
 
 
 @dataclass
+class CheckReportOracledb(Check_Report):
+    """Contains the Oracle Database Check's finding information."""
+
+    resource_name: str
+    resource_id: str
+    database_name: str
+    region: str
+
+    def __init__(
+        self,
+        metadata: Dict,
+        resource: Any,
+        resource_name: str = None,
+        resource_id: str = None,
+        database_name: str = None,
+        region: str = "global",
+    ) -> None:
+        """Initialize the Oracle Database Check's finding information.
+
+        Args:
+            metadata: The metadata of the check.
+            resource: Basic information about the resource.
+            resource_name: The name of the resource related with the finding.
+            resource_id: The id of the resource related with the finding.
+            database_name: The database global name related with the finding.
+            region: Always "global" — a database has no regional concept.
+        """
+        super().__init__(metadata, resource)
+        self.resource_name = resource_name or getattr(resource, "name", "")
+        self.resource_id = resource_id or getattr(resource, "id", "")
+        self.database_name = database_name or getattr(resource, "database_name", "")
+        self.region = region
+
+
+@dataclass
 class CheckReportGoogleWorkspace(Check_Report):
     """Contains the Google Workspace Check's finding information."""
 

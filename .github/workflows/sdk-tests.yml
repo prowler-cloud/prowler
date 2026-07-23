@@ -351,6 +351,30 @@ jobs:
           flags: prowler-py${{ matrix.python-version }}-okta
           files: ./okta_coverage.xml
 
+      # Oracle Database Provider
+      - name: Check if Oracle Database files changed
+        if: steps.check-changes.outputs.any_changed == 'true'
+        id: changed-oracledb
+        uses: tj-actions/changed-files@9426d40962ed5378910ee2e21d5f8c6fcbf2dd96 # v47.0.6
+        with:
+          files: |
+            ./prowler/**/oracledb/**
+            ./tests/**/oracledb/**
+            ./uv.lock
+
+      - name: Run Oracle Database tests
+        if: steps.changed-oracledb.outputs.any_changed == 'true'
+        run: uv run pytest -n auto --cov=./prowler/providers/oracledb --cov-report=xml:oracledb_coverage.xml tests/providers/oracledb
+
+      - name: Upload Oracle Database coverage to Codecov
+        if: steps.changed-oracledb.outputs.any_changed == 'true'
+        uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          flags: prowler-py${{ matrix.python-version }}-oracledb
+          files: ./oracledb_coverage.xml
+
       # NHN Provider
       - name: Check if NHN files changed
         if: steps.check-changes.outputs.any_changed == 'true'

@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "users_failed_login_attempts_limited",
+  "CheckTitle": "Database users lock after a limited number of failed login attempts",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OracleDatabaseUser",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that each non-Oracle-maintained database user has a profile with a limited **FAILED_LOGIN_ATTEMPTS**, so accounts lock after repeated authentication failures (DBSAT finding USER.NOLOCK).",
+  "Risk": "Without an account lockout threshold, attackers can brute-force passwords online without limit. A single weak password then exposes the account and every privilege granted to it.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/configuring-authentication.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER PROFILE <profile> LIMIT FAILED_LOGIN_ATTEMPTS 10;",
+      "NativeIaC": "",
+      "Other": "1. Identify the profile of each failing user in DBA_USERS\n2. Set a lockout threshold: ALTER PROFILE <profile> LIMIT FAILED_LOGIN_ATTEMPTS 10\n3. Optionally set PASSWORD_LOCK_TIME to control how long the account stays locked",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Assign every user a profile with a finite FAILED_LOGIN_ATTEMPTS (Oracle's default profile uses 10) so brute-force attempts lock the account.",
+      "Url": "https://hub.prowler.com/check/users_failed_login_attempts_limited"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

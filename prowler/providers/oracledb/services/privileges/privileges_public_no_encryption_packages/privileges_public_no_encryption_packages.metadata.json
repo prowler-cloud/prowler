@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "privileges_public_no_encryption_packages",
+  "CheckTitle": "Encryption PL/SQL packages are not executable by PUBLIC",
+  "CheckType": [],
+  "ServiceName": "privileges",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "security",
+  "Description": "Checks that encryption PL/SQL packages (**DBMS_CRYPTO, DBMS_OBFUSCATION_TOOLKIT, DBMS_RANDOM**) are not granted EXECUTE to PUBLIC (DBSAT finding PRIV.ENCRYPTPACKAGEPUBLIC).",
+  "Risk": "Broad access to encryption primitives lets attackers encrypt stolen data to defeat inspection, build ransomware-style attacks inside the database, or misuse weak random generation in security-relevant code.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/managing-security-for-application-developers.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "REVOKE EXECUTE ON DBMS_CRYPTO FROM PUBLIC;",
+      "NativeIaC": "",
+      "Other": "1. List PUBLIC execute grants on the encryption packages in DBA_TAB_PRIVS\n2. Revoke each: REVOKE EXECUTE ON <package> FROM PUBLIC\n3. Grant EXECUTE only to the schemas whose code performs cryptographic operations",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Revoke PUBLIC execute on the encryption packages and grant them only to the application schemas that legitimately perform cryptography.",
+      "Url": "https://hub.prowler.com/check/privileges_public_no_encryption_packages"
+    }
+  },
+  "Categories": [
+    "encryption",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
