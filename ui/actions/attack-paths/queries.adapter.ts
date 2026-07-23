@@ -33,7 +33,7 @@ import {
  * (`has_data` null), and scans that predate the precompute step (no summary at
  * all). A missing/null summary is therefore never treated as "empty".
  */
-export function shouldShowQuery(query: AttackPathQuery): boolean {
+function shouldShowQuery(query: AttackPathQuery): boolean {
   if (!isCloud()) {
     return true;
   }
