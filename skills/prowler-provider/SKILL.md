@@ -21,6 +21,16 @@ Use this skill when:
 - Adding a new service to an existing provider
 - Understanding the provider architecture pattern
 
+## Step 0: Classify Your Provider Scope
+
+Before following the architecture pattern below, decide how far the provider needs to reach:
+
+- **Built-in CLI/SDK provider** — ships in this repository, usable from the Prowler CLI.
+- **External entry-point provider** — a separate installable package, discovered via a `prowler.providers` entry point.
+- **Full-stack provider** — a built-in provider that also integrates with the Prowler API and UI (Prowler Cloud / Local Server).
+
+Each scope has its own required registrations, tests, and completion criteria — see [Provider Golden Paths](../../docs/developer-guide/provider-golden-paths.mdx) for the checklist per scope. This skill covers the shared architecture pattern and templates; it does not duplicate that checklist.
+
 ## Provider Architecture Pattern
 
 Every provider MUST follow this structure:
@@ -136,20 +146,31 @@ from prowler.providers.{provider}.services.{service}.{service}_service import {S
 
 ## Supported Providers
 
-Current providers:
+Current providers (`prowler/providers/`, excluding the shared `common/` package):
 - AWS (Amazon Web Services)
 - Azure (Microsoft Azure)
 - GCP (Google Cloud Platform)
 - Kubernetes
 - GitHub
+- Google Workspace
 - M365 (Microsoft 365)
+- Okta
 - OracleCloud (Oracle Cloud Infrastructure)
 - AlibabaCloud
 - Cloudflare
 - MongoDB Atlas
-- NHN (NHN Cloud)
-- LLM (Language Model providers)
+- NHN (NHN Cloud, community-maintained)
+- LLM (Beta)
 - IaC (Infrastructure as Code)
+- Image (container images)
+- OpenStack
+- Scaleway
+- Stackit
+- Vercel
+- Linode
+- E2ENetworks (E2E Networks)
+
+This list drifts — cross-check `prowler/providers/` directly, or `Provider.get_available_providers()` in `prowler/providers/common/provider.py`, before relying on it.
 
 ## Commands
 
