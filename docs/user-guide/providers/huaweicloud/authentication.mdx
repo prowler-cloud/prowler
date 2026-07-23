@@ -18,11 +18,11 @@ Prowler requires read access to the Huawei Cloud account. The following values a
 | Secret Access Key | `HUAWEICLOUD_SECRET_ACCESS_KEY` (or `HW_SECRET_KEY`) | Secret access key paired with the access key ID |
 | Domain ID | `HUAWEICLOUD_DOMAIN_ID` (or `HW_DOMAIN_ID`) | Optional account (domain) ID |
 | Security Token | `HUAWEICLOUD_SECURITY_TOKEN` | Optional security token for temporary credentials |
-| Region | `HUAWEICLOUD_REGION` (or `HW_REGION`) | Default region when `--region` is not passed (e.g. `eu-west-101`) |
-| Cloud | `HUAWEICLOUD_CLOUD` | Scan every region of a cloud (`international`, `europe`, or `china`) when no region is set |
+| Region | `HUAWEICLOUD_REGION` (or `HW_REGION`) | Default region(s) when `--region` is not passed (e.g. `eu-west-101`) |
+| Cloud | `HUAWEICLOUD_CLOUD` (or `HW_CLOUD`) | Scan every region of a cloud (`international`, `europe`, or `china`) when no region is set |
 
 <Note>
-The per-region project ID is resolved automatically by the SDK, so no project configuration is needed. Multi-region scans work out of the box.
+The endpoint domain (`.eu` or `.com`) and the per-region project ID are resolved automatically from the region, so neither endpoint nor project configuration is needed. Multi-region scans work out of the box. For the region precedence rules and the full list of supported regions, see [Regions and Clouds](/user-guide/providers/huaweicloud/getting-started-huaweicloud#regions-and-clouds).
 </Note>
 
 <Warning>
@@ -83,10 +83,23 @@ prowler huaweicloud
 
 ## Verifying Authentication
 
-To confirm that Prowler can reach the account, run a scan against a single region:
+To confirm that Prowler can reach the account, run a scan against a single region the account can reach:
 
 ```bash
+# China account
 prowler huaweicloud --region cn-north-4
+
+# International account
+prowler huaweicloud --region ap-southeast-1
+
+# Huawei Cloud Europe account
+prowler huaweicloud --region eu-west-101
+```
+
+To scan the account's entire cloud instead, use the `--cloud` selector:
+
+```bash
+prowler huaweicloud --cloud europe
 ```
 
 A successful run reports findings for the discovered resources. A failed run displays an error message indicating the credential or connectivity issue.
