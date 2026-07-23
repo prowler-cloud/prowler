@@ -422,10 +422,37 @@ worker:
     pollingInterval: 30
     # -- The cooldown period in seconds for scaling
     cooldownPeriod: 120
-    # -- The trigger type for scaling (cpu or memory)
+    # -- The KEDA scaler type. Only `postgresql` is supported by the default query below.
     triggerType: "postgresql"
-    # -- The target utilization percentage for the worker pods
-    value: "50"
+    # PostgreSQL connection used by the scaler query. The KEDA operator opens this
+    # connection from its own namespace, so `host` must resolve from there. The
+    # defaults target the bundled postgresql subchart; set them explicitly when
+    # using an external database (postgresql.enabled: false).
+    postgresql:
+      # -- Scaler database host. Defaults to the bundled "<release>-postgresql.<namespace>.svc.cluster.local" service.
+      host: ""
+      # -- Scaler database port.
+      port: "5432"
+      # -- Scaler database name. Defaults to `postgresql.auth.database`.
+      database: ""
+      # -- User the scaler authenticates as.
+      userName: "postgres"
+      # -- Name of an env var on the worker container holding the password.
+      passwordFromEnv: "POSTGRES_ADMIN_PASSWORD"
+      # -- sslmode for the scaler connection.
+      sslmode: "disable"
+    # -- The scaler divides the query result by this value to get the desired replica count.
+    targetQueryValue: "1"
+    # -- Query the scaler runs to measure pending work. The default counts scans that
+    # represent real work: those executing or available (bounded to rows updated in the
+    # last 24h so orphaned rows do not pin the worker up), plus scheduled scans that are
+    # due (no lower bound, so an overdue backlog still scales up). This replaces the
+    # previous 2-hour scheduled-only window, which missed manual scans, older backlogs,
+    # and in-progress scans. Override to tune scaling for your workload.
+    query: >-
+      SELECT COUNT(*) FROM scans
+      WHERE (state IN ('executing', 'available') AND updated_at > NOW() - INTERVAL '24 hours')
+      OR (state = 'scheduled' AND scheduled_at < NOW())
 
 worker_beat:
   # This will set the replicaset count more information can be found here: https://kubernetes.io/docs/concepts/workloads/controllers/replicaset/
