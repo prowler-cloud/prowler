@@ -805,17 +805,22 @@ def generate_outputs_task(scan_id: str, provider_id: str, tenant_id: str):
     # them would append every finding row again and duplicate the CSV/output
     # rows. Start from a clean slate before (re)generating.
     scan_tmp_dir = _scan_tmp_output_directory(tenant_id, scan_id)
-    try:
-        rmtree(scan_tmp_dir, ignore_errors=True)
-    except Exception as error:
-        # A failure to clean the previous run's artifacts must not prevent
-        # (re)generating the outputs; worst case the leftover files are
-        # overwritten by the writers below.
-        logger.warning(
-            "Failed to clean stale output directory for scan %s before generation: %s",
-            scan_id,
-            error,
-        )
+    if os.path.exists(scan_tmp_dir):
+        # Do not suppress deletion failures: `ignore_errors=True` would hide a
+        # partial removal, and leftover files reopened in append mode would
+        # silently duplicate every finding row on retry. Let failures surface to
+        # the warning below instead.
+        try:
+            rmtree(scan_tmp_dir)
+        except Exception as error:
+            # A failure to clean the previous run's artifacts must not prevent
+            # (re)generating the outputs; worst case the leftover files are
+            # overwritten by the writers below.
+            logger.warning(
+                "Failed to clean stale output directory for scan %s before generation: %s",
+                scan_id,
+                error,
+            )
 
     out_dir, comp_dir = _generate_output_directory(
         DJANGO_TMP_OUTPUT_DIRECTORY, provider_uid, tenant_id, scan_id
