@@ -11,20 +11,19 @@ describe("enterprise feature flags", () => {
   });
 
   it("should keep grouped Jira dispatch disabled by default", async () => {
-    // Given / When
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
+
+    // When
     const { isGroupedJiraDispatchEnabled } = await importFresh();
 
     // Then
     expect(isGroupedJiraDispatchEnabled()).toBe(false);
   });
 
-  it("should enable grouped Jira dispatch from the enterprise env flag in cloud", async () => {
+  it("should enable grouped Jira dispatch in cloud without an enterprise flag", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE", "cloud");
-    vi.stubEnv(
-      "NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED",
-      "true",
-    );
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const { isGroupedJiraDispatchEnabled } = await importFresh();
@@ -35,11 +34,7 @@ describe("enterprise feature flags", () => {
 
   it("should keep grouped Jira dispatch disabled outside cloud", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE", "onpremise");
-    vi.stubEnv(
-      "NEXT_PUBLIC_PROWLER_ENTERPRISE_GROUPED_JIRA_DISPATCH_ENABLED",
-      "true",
-    );
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const { isGroupedJiraDispatchEnabled } = await importFresh();
