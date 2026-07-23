@@ -1,0 +1,1 @@
+Output generation now removes the scan's temporary output directory before writing, so a re-run of the task for the same scan (e.g. broker redelivery after a worker is killed mid-run) no longer appends to the previous run's files and duplicates finding rows in the exported CSV and other outputs
