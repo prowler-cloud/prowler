@@ -26,13 +26,9 @@ class batch_job_definition_no_secrets(Check):
             for jd_index, job_definition in enumerate(job_definitions):
                 container = job_definition.container_properties
 
-                if container.environment:
-                    dump_env_vars = {
-                        env_var.name: env_var.value
-                        for env_var in container.environment
-                    }
-                    yield (jd_index, "environment"), dumps(
-                        dump_env_vars, indent=2
+                for env_index, env_var in enumerate(container.environment):
+                    yield (jd_index, env_index), dumps(
+                        {env_var.name: env_var.value}, indent=2
                     )
 
                 if container.command:
@@ -79,18 +75,12 @@ class batch_job_definition_no_secrets(Check):
                 findings.append(report)
                 continue
 
-            if container.environment:
-                original_env_vars = [
-                    env_var.name for env_var in container.environment
-                ]
-
-                env_secrets = batch_results.get(
-                    (jd_index, "environment")
-                )
+            for env_index, env_var in enumerate(container.environment):
+                env_secrets = batch_results.get((jd_index, env_index))
                 if env_secrets:
                     all_secrets.extend(env_secrets)
                     secrets_string = ", ".join(
-                        f"{secret['type']} on the environment variable {original_env_vars[secret['line_number'] - 2]}"
+                        f"{secret['type']} on the environment variable {env_var.name}"
                         for secret in env_secrets
                     )
                     extended_status_parts.append(
