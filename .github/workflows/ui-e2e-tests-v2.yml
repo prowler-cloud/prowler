@@ -118,6 +118,111 @@ jobs:
         env:
           NEEDS_IMPACT_ANALYSIS_OUTPUTS_MODULES: ${{ needs.impact-analysis.outputs.modules }}
 
+      - name: Validate E2E prerequisites
+        shell: bash
+        env:
+          IS_FORK_PR: ${{ github.event.pull_request.head.repo.fork }}
+        run: |
+          if [[ "${IS_FORK_PR}" == "true" ]]; then
+            echo "Skipping secret preflight for fork pull request."
+            exit 0
+          fi
+
+          declare -A required=()
+
+          suite_selected() {
+            [[ "${RUN_ALL_TESTS}" == "true" ]] ||
+              [[ " ${E2E_TEST_PATHS} " == *"ui/tests/$1/"* ]]
+          }
+
+          require_vars() {
+            local variable
+            for variable in "$@"; do
+              required["${variable}"]=1
+            done
+          }
+
+          if suite_selected auth || suite_selected providers ||
+            suite_selected invitations || suite_selected scans ||
+            suite_selected navigation; then
+            require_vars E2E_ADMIN_USER E2E_ADMIN_PASSWORD
+          fi
+
+          if suite_selected sign-up; then
+            require_vars E2E_NEW_USER_PASSWORD
+          fi
+
+          if suite_selected invitations; then
+            require_vars E2E_NEW_USER_PASSWORD E2E_ORGANIZATION_ID
+          fi
+
+          if suite_selected scans; then
+            require_vars \
+              E2E_AWS_PROVIDER_ACCOUNT_ID \
+              E2E_AWS_PROVIDER_ACCESS_KEY \
+              E2E_AWS_PROVIDER_SECRET_KEY
+          fi
+
+          if suite_selected providers; then
+            require_vars \
+              E2E_AWS_PROVIDER_ACCOUNT_ID \
+              E2E_AWS_PROVIDER_ACCESS_KEY \
+              E2E_AWS_PROVIDER_SECRET_KEY \
+              E2E_AWS_PROVIDER_ROLE_ARN \
+              E2E_AZURE_SUBSCRIPTION_ID \
+              E2E_AZURE_CLIENT_ID \
+              E2E_AZURE_SECRET_ID \
+              E2E_AZURE_TENANT_ID \
+              E2E_M365_DOMAIN_ID \
+              E2E_M365_CLIENT_ID \
+              E2E_M365_SECRET_ID \
+              E2E_M365_TENANT_ID \
+              E2E_M365_CERTIFICATE_CONTENT \
+              E2E_GCP_BASE64_SERVICE_ACCOUNT_KEY \
+              E2E_GCP_PROJECT_ID \
+              E2E_GITHUB_APP_ID \
+              E2E_GITHUB_BASE64_APP_PRIVATE_KEY \
+              E2E_GITHUB_USERNAME \
+              E2E_GITHUB_PERSONAL_ACCESS_TOKEN \
+              E2E_GITHUB_ORGANIZATION \
+              E2E_GITHUB_ORGANIZATION_ACCESS_TOKEN \
+              E2E_OCI_TENANCY_ID \
+              E2E_OCI_USER_ID \
+              E2E_OCI_FINGERPRINT \
+              E2E_OCI_KEY_CONTENT \
+              E2E_ALIBABACLOUD_ACCOUNT_ID \
+              E2E_ALIBABACLOUD_ACCESS_KEY_ID \
+              E2E_ALIBABACLOUD_ACCESS_KEY_SECRET \
+              E2E_ALIBABACLOUD_ROLE_ARN \
+              E2E_OKTA_DOMAIN \
+              E2E_OKTA_CLIENT_ID \
+              E2E_OKTA_BASE64_PRIVATE_KEY \
+              E2E_GOOGLEWORKSPACE_CUSTOMER_ID \
+              E2E_GOOGLEWORKSPACE_SERVICE_ACCOUNT_JSON \
+              E2E_GOOGLEWORKSPACE_DELEGATED_USER \
+              E2E_VERCEL_TEAM_ID \
+              E2E_VERCEL_API_TOKEN
+          fi
+
+          missing=()
+          if (( ${#required[@]} > 0 )); then
+            while IFS= read -r variable; do
+              [[ -z "${!variable:-}" ]] && missing+=("${variable}")
+            done < <(printf '%s\n' "${!required[@]}" | sort)
+          fi
+
+          if (( ${#missing[@]} > 0 )); then
+            echo "Missing required E2E variables:"
+            printf ' - %s\n' "${missing[@]}"
+            {
+              echo "## Missing E2E prerequisites"
+              printf -- "- \`%s\`\n" "${missing[@]}"
+            } >> "${GITHUB_STEP_SUMMARY}"
+            exit 1
+          fi
+
+          echo "E2E prerequisite preflight passed."
+
       - name: Create k8s Kind Cluster
         uses: helm/kind-action@ef37e7f390d99f746eb8b610417061a60e82a6cc # v1
         with:
