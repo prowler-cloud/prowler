@@ -10,10 +10,9 @@
  */
 
 import { SessionProvider } from "next-auth/react";
-import { vi } from "vitest";
-import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
+import { BrowserHarness } from "@/__tests__/browser-harness";
 import { handlersForOrganizations } from "@/__tests__/msw/handlers/organizations";
 import { NODE_KIND } from "@/__tests__/msw/handlers/organizations.fixtures";
 import type {
@@ -51,19 +50,7 @@ interface MountOptions {
   openWizard?: boolean;
 }
 
-export class ProvidersPageHarness {
-  readonly user = userEvent;
-  /** Every request MSW sees during the test, for behavioral assertions. */
-  readonly requestLog: Array<{ method: string; url: string }> = [];
-
-  constructor(readonly fixture: OrgFixture) {}
-
-  countRequests(method: string, pathIncludes: string): number {
-    return this.requestLog.filter(
-      (r) => r.method === method && r.url.includes(pathIncludes),
-    ).length;
-  }
-
+export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   get applyCallCount(): number {
     return this.countRequests("POST", "/apply");
   }
@@ -90,10 +77,7 @@ export class ProvidersPageHarness {
   mount({ openWizard = true }: MountOptions = {}): void {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture));
-    worker.events.removeAllListeners();
-    worker.events.on("request:start", ({ request }) => {
-      this.requestLog.push({ method: request.method, url: request.url });
-    });
+    this.trackRequests(worker);
 
     const session = {
       tenantId: TENANT_ID,
@@ -233,84 +217,6 @@ export class ProvidersPageHarness {
         this.toProviderRow(provider),
       ),
     });
-  }
-
-  // --- Low-level DOM
-
-  private get container(): HTMLElement {
-    return document.body;
-  }
-
-  private containsText(pattern: RegExp): boolean {
-    return pattern.test(this.container.textContent ?? "");
-  }
-
-  private q(selector: string): HTMLElement | null {
-    return this.container.querySelector<HTMLElement>(selector);
-  }
-
-  private byRoleName(
-    role: string,
-    name: RegExp,
-    scope: ParentNode = document,
-  ): HTMLElement | null {
-    const nodes = Array.from(
-      scope.querySelectorAll<HTMLElement>(`[role="${role}"]`),
-    );
-    return (
-      nodes.find((el) => name.test(el.textContent ?? "")) ??
-      // Buttons expose their role implicitly.
-      Array.from(scope.querySelectorAll<HTMLElement>("button")).find(
-        (el) =>
-          el.getAttribute("role") === role && name.test(el.textContent ?? ""),
-      ) ??
-      null
-    );
-  }
-
-  private buttonByText(
-    name: RegExp,
-    scope: ParentNode = document,
-  ): HTMLButtonElement | null {
-    return (
-      Array.from(scope.querySelectorAll<HTMLButtonElement>("button")).find(
-        (b) => name.test(b.textContent ?? ""),
-      ) ?? null
-    );
-  }
-
-  private inputByName(name: string): HTMLInputElement | null {
-    return this.q(`input[name="${name}"]`) as HTMLInputElement | null;
-  }
-
-  // --- Sync helpers (private) ---------------------------------------------
-
-  private async waitFor<T>(
-    fn: () => T | null | undefined | false,
-    timeoutMs = 5000,
-  ): Promise<T> {
-    return vi.waitFor(
-      () => {
-        const v = fn();
-        if (!v) throw new Error("waitFor predicate not yet truthy");
-        return v;
-      },
-      { timeout: timeoutMs, interval: 30 },
-    ) as Promise<T>;
-  }
-
-  private async waitForText(pattern: RegExp, timeoutMs = 5000): Promise<void> {
-    await this.waitFor(() => this.containsText(pattern), timeoutMs);
-  }
-
-  private async waitForButton(
-    name: RegExp,
-    timeoutMs = 5000,
-  ): Promise<HTMLButtonElement> {
-    return this.waitFor(() => {
-      const btn = this.buttonByText(name);
-      return btn && !btn.disabled ? btn : null;
-    }, timeoutMs);
   }
 
   // --- Wizard: connect step ----------------------------------------------
@@ -555,17 +461,6 @@ export class ProvidersPageHarness {
       );
     });
     await this.user.click(trigger);
-  }
-
-  /** Click a dropdown/menu item (rendered in a Radix portal) by its label. */
-  private async clickMenuItem(name: RegExp): Promise<void> {
-    const item = await this.waitFor(() => this.byRoleName("menuitem", name));
-    await this.user.click(item);
-  }
-
-  private async clickButton(name: RegExp): Promise<void> {
-    const btn = await this.waitForButton(name);
-    await this.user.click(btn);
   }
 
   /** Open the "Edit Organization Name" flow for the organization `name`. */
