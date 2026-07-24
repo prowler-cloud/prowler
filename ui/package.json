@@ -88,7 +88,7 @@
     "d3": "7.9.0",
     "date-fns": "4.1.0",
     "driver.js": "1.4.0",
-    "framer-motion": "11.18.2",
+    "motion": "11.18.2",
     "import-in-the-middle": "3.3.1",
     "js-yaml": "4.3.0",
     "jwt-decode": "4.0.0",
