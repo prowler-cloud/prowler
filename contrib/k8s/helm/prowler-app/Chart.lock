@@ -4,9 +4,9 @@ dependencies:
   version: 18.2.0
 - name: valkey
   repository: https://valkey.io/valkey-helm/
-  version: 0.9.3
+  version: 0.10.0
 - name: neo4j
   repository: https://helm.neo4j.com/neo4j
   version: 2025.12.1
-digest: sha256:da19233c6832727345fcdb314d683d30aa347d349f270023f3a67149bffb009b
-generated: "2026-01-26T12:00:06.798702+02:00"
+digest: sha256:ecb5a0da5e949780df66d9ed8ac382921616f394344c4360334b306ff6703bf2
+generated: "2026-07-20T14:22:35.399004937Z"
