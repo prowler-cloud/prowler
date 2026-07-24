@@ -1,0 +1,135 @@
+---
+title: "Huawei Cloud Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.36.0" />
+
+Prowler for Huawei Cloud authenticates against the Huawei Cloud APIs using an IAM user's **Access Key ID** and **Secret Access Key** (AK/SK). Credentials are read exclusively from environment variables to avoid exposing secrets in shell history or process listings; there are no credential CLI flags.
+
+## Required Credentials
+
+Prowler requires read access to the Huawei Cloud account. The following values are supported:
+
+| Credential | Environment Variable | Description |
+|------------|----------------------|-------------|
+| Access Key ID | `HUAWEICLOUD_ACCESS_KEY_ID` (or `HW_ACCESS_KEY`) | Permanent access key ID of the IAM user |
+| Secret Access Key | `HUAWEICLOUD_SECRET_ACCESS_KEY` (or `HW_SECRET_KEY`) | Secret access key paired with the access key ID |
+| Domain ID | `HUAWEICLOUD_DOMAIN_ID` (or `HW_DOMAIN_ID`) | Optional account (domain) ID |
+| Security Token | `HUAWEICLOUD_SECURITY_TOKEN` | Optional security token for temporary credentials |
+| Region | `HUAWEICLOUD_REGION` (or `HW_REGION`) | Default region(s) when `--region` is not passed (e.g. `eu-west-101`) |
+| Cloud | `HUAWEICLOUD_CLOUD` (or `HW_CLOUD`) | Scan every region of a cloud (`international`, `europe`, or `china`) when no region is set |
+
+<Note>
+The endpoint domain (`.eu` or `.com`) and the per-region project ID are resolved automatically from the region, so neither endpoint nor project configuration is needed. Multi-region scans work out of the box. For the region precedence rules and the full list of supported regions, see [Regions and Clouds](/user-guide/providers/huaweicloud/getting-started-huaweicloud#regions-and-clouds).
+</Note>
+
+<Warning>
+Huawei Cloud runs separate clouds: **International** and **China** (`.com` endpoints) and **Huawei Cloud Europe** (`.eu` endpoints). The region (or `--cloud` selector) determines the endpoint, so accounts outside China must select a region they can reach — for example `eu-west-101` for a Huawei Cloud Europe account. A single set of credentials belongs to one cloud, so it cannot authenticate against both `.com` and `.eu`; scan each account with its own credentials.
+</Warning>
+
+---
+
+## API Credentials
+
+### Step 1: Create an Access Key (AK/SK)
+
+1. Log into the [Huawei Cloud console](https://console-intl.huaweicloud.com).
+2. Open **My Credentials** from the account menu, then select **Access Keys**.
+3. Click **Create Access Key** and complete the identity verification.
+4. Download the `credentials.csv` file — it contains the Access Key ID and Secret Access Key. The secret is not shown again.
+
+<Warning>
+Use an IAM user with read-only permissions (for example, the built-in `ReadOnly` policy) rather than the account root credentials.
+</Warning>
+
+### Step 2: Configure Authentication
+
+Export the credentials as environment variables:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+```
+
+Then run Prowler:
+
+```bash
+prowler huaweicloud
+```
+
+---
+
+## Assuming an Agency (Cross-Account)
+
+To scan a different account, assume an [agency](https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_06_0002.html) delegated to your account. Set the agency name and the target account, and Prowler exchanges the base credentials for temporary credentials scoped to the agency:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+export HUAWEICLOUD_AGENCY_NAME="your-agency-name"
+export HUAWEICLOUD_ASSUME_DOMAIN_ID="target-account-domain-id"   # or HUAWEICLOUD_ASSUME_DOMAIN_NAME
+prowler huaweicloud
+```
+
+| Environment Variable | Description |
+|----------------------|-------------|
+| `HUAWEICLOUD_AGENCY_NAME` | Name of the agency to assume in the target account |
+| `HUAWEICLOUD_ASSUME_DOMAIN_ID` | Domain ID of the target (delegating) account |
+| `HUAWEICLOUD_ASSUME_DOMAIN_NAME` | Domain name of the target account (alternative to the domain ID) |
+
+---
+
+## Verifying Authentication
+
+To confirm that Prowler can reach the account, run a scan against a single region the account can reach:
+
+```bash
+# China account
+prowler huaweicloud --region cn-north-4
+
+# International account
+prowler huaweicloud --region ap-southeast-1
+
+# Huawei Cloud Europe account
+prowler huaweicloud --region eu-west-101
+```
+
+To scan the account's entire cloud instead, use the `--cloud` selector:
+
+```bash
+prowler huaweicloud --cloud europe
+```
+
+A successful run reports findings for the discovered resources. A failed run displays an error message indicating the credential or connectivity issue.
+
+---
+
+## CI/CD Integration
+
+For automated pipelines, set the credentials as secret environment variables:
+
+**GitHub Actions:**
+
+```yaml
+env:
+  HUAWEICLOUD_ACCESS_KEY_ID: ${{ secrets.HUAWEICLOUD_ACCESS_KEY_ID }}
+  HUAWEICLOUD_SECRET_ACCESS_KEY: ${{ secrets.HUAWEICLOUD_SECRET_ACCESS_KEY }}
+
+steps:
+  - name: Run Prowler
+    run: prowler huaweicloud
+```
+
+**GitLab CI:**
+
+```yaml
+variables:
+  HUAWEICLOUD_ACCESS_KEY_ID: $HUAWEICLOUD_ACCESS_KEY_ID
+  HUAWEICLOUD_SECRET_ACCESS_KEY: $HUAWEICLOUD_SECRET_ACCESS_KEY
+
+prowler_scan:
+  script:
+    - prowler huaweicloud
+```

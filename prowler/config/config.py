@@ -81,6 +81,7 @@ class Provider(str, Enum):
     OKTA = "okta"
     STACKIT = "stackit"
     LINODE = "linode"
+    HUAWEICLOUD = "huaweicloud"
     E2ENETWORKS = "e2enetworks"
 
 

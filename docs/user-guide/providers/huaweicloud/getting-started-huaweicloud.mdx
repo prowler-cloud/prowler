@@ -1,0 +1,177 @@
+---
+title: 'Getting Started With Huawei Cloud on Prowler'
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.36.0" />
+
+Prowler for Huawei Cloud scans your Huawei Cloud account for security misconfigurations across compute, storage, networking, identity, encryption, database, and logging services.
+
+<Note>
+Huawei Cloud support in Prowler is community-maintained. For commercial support or to request additional service coverage, [contact us](https://prowler.com/contact).
+</Note>
+
+## Prerequisites
+
+Set up authentication for Huawei Cloud with the [Huawei Cloud Authentication](/user-guide/providers/huaweicloud/authentication) guide before starting:
+
+- Create an Access Key ID and Secret Access Key (AK/SK) for an IAM user with read-only permissions
+- Prowler reads the credentials exclusively from environment variables, so secrets are never passed on the command line
+
+## Prowler CLI
+
+### Run Prowler for Huawei Cloud
+
+Once authenticated, export the credentials as environment variables and run Prowler for Huawei Cloud. Environment variables keep secrets out of shell history and process listings:
+
+```bash
+export HUAWEICLOUD_ACCESS_KEY_ID="your-access-key-id"
+export HUAWEICLOUD_SECRET_ACCESS_KEY="your-secret-access-key"
+prowler huaweicloud
+```
+
+### Run Specific Checks
+
+```bash
+prowler huaweicloud --checks obs_bucket_public_access iam_user_mfa_enabled
+```
+
+### Run a Specific Service
+
+```bash
+prowler huaweicloud --services iam
+```
+
+## Regions and Clouds
+
+Huawei Cloud operates as three separate clouds, and every account belongs to exactly one of them:
+
+- **International** — served from the `.com` endpoints (for example `myhuaweicloud.com`).
+- **China** — also served from the `.com` endpoints, on the China regions (`cn-*`).
+- **Huawei Cloud Europe** — served from the `.eu` endpoints (for example `myhuaweicloud.eu`).
+
+The cloud is a property of the region: each region ID maps to exactly one endpoint domain. Prowler selects the correct endpoint automatically from the region, so no endpoint configuration is required.
+
+### Region Selection Precedence
+
+Prowler resolves the regions to scan from the first source that is set, in this order:
+
+1. **`--region` flag** (aliases `--filter-region`, `-f`) — one or more explicit region IDs.
+2. **`HUAWEICLOUD_REGION`** (or `HW_REGION`) environment variable — one or more region IDs, separated by spaces or commas.
+3. **`--cloud` selector** (or `HUAWEICLOUD_CLOUD` / `HW_CLOUD`) — expands to every region of the selected cloud.
+4. **Default** — when none is set, Prowler falls back to its built-in region list.
+
+A more specific source always wins: `--region` overrides `HUAWEICLOUD_REGION`, which overrides `--cloud`.
+
+### Select Specific Regions
+
+To scan a defined set of regions, pass the region IDs to `--region` or set `HUAWEICLOUD_REGION`. Accounts outside China must select a region they can reach — for example `eu-west-101` for Huawei Cloud Europe or `ap-southeast-1` for International.
+
+```bash
+# Flag (one or more regions)
+prowler huaweicloud --region eu-west-101 ap-southeast-1
+
+# Environment variable (space- or comma-separated)
+export HUAWEICLOUD_REGION="ap-southeast-1, ap-southeast-2"
+prowler huaweicloud
+```
+
+### Scan an Entire Cloud
+
+To scan every region of an account's cloud without listing regions, use the `--cloud` selector or the `HUAWEICLOUD_CLOUD` environment variable. Prowler expands it to that cloud's regions and selects the matching endpoint automatically:
+
+```bash
+# Scan all Huawei Cloud Europe regions (.eu endpoints)
+prowler huaweicloud --cloud europe
+
+# Scan all International regions (.com endpoints)
+prowler huaweicloud --cloud international
+
+# Scan all China regions (.com endpoints)
+prowler huaweicloud --cloud china
+```
+
+The `--cloud` flag accepts three values: `international`, `europe`, and `china`. The `HUAWEICLOUD_CLOUD` (or `HW_CLOUD`) environment variable additionally accepts the short aliases `intl`/`com` (International), `eu` (Europe), and `cn` (China).
+
+<Note>
+A single set of credentials belongs to one cloud, so `--cloud` selects which cloud to scan — it cannot authenticate against both `.com` and `.eu` at once. To scan accounts on different clouds, run Prowler once per account with that account's credentials.
+</Note>
+
+### How Prowler Handles Regions and Endpoints
+
+Prowler manages several Huawei Cloud specifics automatically during a scan:
+
+- **Endpoint selection:** The endpoint domain (`.eu` or `.com`) is derived from each region, so every service targets the right cloud. This corrects services whose bundled metadata still points Europe regions at `.com`.
+- **Project resolution:** The per-region project ID is resolved automatically, so multi-region scans work without any project configuration.
+- **Credential validation:** Credentials are validated against a region in the account's cloud that exposes IAM, so validation succeeds even when the requested regions do not all offer IAM.
+- **Unsupported regions:** Any region a given service does not offer is skipped and logged, so scanning an entire cloud never fails on regions where a service is unavailable.
+
+### Supported Regions
+
+Prowler recognizes the following region IDs, grouped by cloud.
+
+**International (`.com`)**
+
+| Region ID | Location |
+|-----------|----------|
+| `ae-ad-1` | UAE (Abu Dhabi) |
+| `af-north-1` | Egypt (Cairo) |
+| `af-south-1` | South Africa |
+| `ap-southeast-1` | Hong Kong |
+| `ap-southeast-2` | Singapore |
+| `ap-southeast-3` | Thailand |
+| `ap-southeast-4` | Malaysia |
+| `ap-southeast-5` | Indonesia (Jakarta) |
+| `eu-west-0` | Ireland |
+| `la-north-2` | Mexico |
+| `la-south-2` | Chile (Santiago) |
+| `me-east-1` | UAE (Dubai) |
+| `my-kualalumpur-1` | Malaysia (Kuala Lumpur) |
+| `na-mexico-1` | Mexico (Mexico City) |
+| `ru-moscow-1` | Russia (Moscow-1) |
+| `sa-brazil-1` | Brazil |
+| `tr-west-1` | Türkiye (Istanbul) |
+
+**Huawei Cloud Europe (`.eu`)**
+
+| Region ID | Location |
+|-----------|----------|
+| `eu-west-101` | Ireland (Dublin) |
+
+**China (`.com`)**
+
+| Region ID | Location |
+|-----------|----------|
+| `cn-north-1` | China (Beijing-1) |
+| `cn-north-2` | China (Beijing-2) |
+| `cn-north-4` | China (Beijing-4) |
+| `cn-north-9` | China (Ulanqab) |
+| `cn-north-11` | China (Ulanqab-11) |
+| `cn-north-12` | China (Ulanqab-12) |
+| `cn-east-2` | China (Shanghai-2) |
+| `cn-east-3` | China (Shanghai-1) |
+| `cn-east-4` | China (Shanghai-4) |
+| `cn-east-5` | China (Shanghai-5) |
+| `cn-south-1` | China (Guangzhou) |
+| `cn-south-2` | China (Guangzhou-2) |
+| `cn-south-4` | China (Guangzhou-4) |
+| `cn-southwest-2` | China (Guiyang) |
+| `cn-southwest-3` | China (Guiyang-3) |
+
+## Available Services
+
+Prowler for Huawei Cloud currently supports the following services:
+
+| Service | Description |
+|---------|-------------|
+| `cts` | Cloud Trace Service trackers that record account and API activity for audit logging |
+| `ecs` | Elastic Cloud Server compute instances and their key pair, public IP, and security group configuration |
+| `elb` | Elastic Load Balance load balancers and their public exposure |
+| `evs` | Elastic Volume Service block volumes and their encryption settings |
+| `iam` | Identity and Access Management users, MFA devices, password policy, and account operation protection |
+| `kms` | Key Management Service keys, their state, and rotation configuration |
+| `obs` | Object Storage Service buckets and their public-access configuration |
+| `rds` | Relational Database Service instances and their public access, backup, and disk-encryption settings |
+| `vpc` | Virtual Private Cloud security groups and their ingress rules |
+| `waf` | Web Application Firewall instances and their status |

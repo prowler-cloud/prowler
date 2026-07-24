@@ -36,6 +36,8 @@ def stdout_report(finding, color, verbose, status, fix, provider=None):
         details = finding.region
     elif finding.check_metadata.Provider == "alibabacloud":
         details = finding.region
+    elif finding.check_metadata.Provider == "huaweicloud":
+        details = finding.region
     elif finding.check_metadata.Provider == "openstack":
         details = finding.region
     elif finding.check_metadata.Provider == "cloudflare":

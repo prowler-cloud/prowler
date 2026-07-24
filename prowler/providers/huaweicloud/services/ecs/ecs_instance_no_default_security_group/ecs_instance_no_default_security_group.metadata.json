@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_no_default_security_group",
+  "CheckTitle": "ECS instances should not use the default security group",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances do not use the default security group, which may have overly permissive rules.",
+  "Risk": "The default security group in Huawei Cloud may allow unrestricted traffic. Using it for ECS instances increases the risk of unauthorized network access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_Sg_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud ECS NovaDisassociateSecurityGroup --server_id=<instance_id> --removeSecurityGroup.name=\"default\"",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance\n4. Click More > Manage Security Group\n5. Remove the default security group\n6. Attach a custom security group with restrictive rules",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create custom security groups with least-privilege rules and replace the default security group on all ECS instances.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_no_default_security_group"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

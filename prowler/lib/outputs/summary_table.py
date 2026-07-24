@@ -129,6 +129,11 @@ def display_summary_table(
             audited_entities = (
                 provider.identity.username or provider.identity.email or "linode"
             )
+        elif provider.type == "huaweicloud":
+            entity_type = "Account"
+            audited_entities = (
+                provider.identity.account_id or provider.identity.account_name
+            )
         else:
             # Dynamic fallback: any external/custom provider
             entity_type, audited_entities = provider.get_summary_entity()

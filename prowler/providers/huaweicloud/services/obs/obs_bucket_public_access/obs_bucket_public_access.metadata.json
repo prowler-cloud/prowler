@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "obs_bucket_public_access",
+  "CheckTitle": "OBS buckets are not publicly accessible",
+  "CheckType": [],
+  "ServiceName": "obs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "HUAWEICLOUD::OBS::Bucket",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that OBS buckets are not publicly accessible to prevent unauthorized access to stored objects.",
+  "Risk": "Publicly accessible OBS buckets allow anyone on the internet to list, read, or modify stored objects, potentially exposing sensitive data to unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0739.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "obsutil chattri obs://<bucket_name> -acl=private",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Object Storage Service.\n3. Select the bucket.\n4. Click the Permissions tab.\n5. Remove any public read or public read/write permissions.\n6. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Remove public access permissions from OBS buckets and use IAM policies for controlled access.",
+      "Url": "https://hub.prowler.com/check/obs_bucket_public_access"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
