@@ -109,7 +109,7 @@ class Test_ec2_instance_stopped_older_than_specific_days:
         aws_provider._audit_config = {"max_ec2_instance_stopped_days": 30}
 
         # Boundary: stopped exactly 30 days ago must remain PASS
-        # (threshold is exclusive: time_stopped > timedelta(days=30)).
+        # (threshold is exclusive: days_stopped > max_ec2_instance_stopped_days).
         fixed_now = datetime(2024, 6, 15, 12, 0, 0, tzinfo=timezone.utc)
         recent_stop = fixed_now - timedelta(days=30)
         stop_reason = recent_stop.strftime("User initiated (%Y-%m-%d %H:%M:%S GMT)")
