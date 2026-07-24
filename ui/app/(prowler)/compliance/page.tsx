@@ -29,6 +29,7 @@ import { ComplianceOverviewData } from "@/types/compliance";
 
 import { CompliancePageTabs } from "./_components/compliance-page-tabs";
 import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
+import { CrossAccountOverviewSection } from "./_components/cross-account-overview-section";
 import { CrossProviderOverview } from "./_components/cross-provider-overview";
 import { COMPLIANCE_TAB } from "./_types";
 
@@ -62,16 +63,32 @@ export default async function Compliance({
           crossProviderEnabled={crossProviderEnabled}
           perScanContent={null}
           crossProviderContent={
-            <Suspense
-              key={`cross-provider-${searchParamsKey}`}
-              fallback={
-                <ComplianceOverviewPanel>
-                  <ComplianceSkeletonGrid />
-                </ComplianceOverviewPanel>
-              }
-            >
-              <CrossProviderOverview searchParams={resolvedSearchParams} />
-            </Suspense>
+            // gap-6 = the app-wide 24px below a filter row (Findings and the
+            // Single Scan tab both use mb-6), so filters→"Across provider
+            // types" and cards→"Across providers" read as one rhythm.
+            <div className="flex flex-col gap-6">
+              <Suspense
+                key={`cross-provider-${searchParamsKey}`}
+                fallback={
+                  <ComplianceOverviewPanel>
+                    <ComplianceSkeletonGrid />
+                  </ComplianceOverviewPanel>
+                }
+              >
+                <CrossProviderOverview searchParams={resolvedSearchParams} />
+              </Suspense>
+              {/* Regular per-provider frameworks viewable across accounts.
+                  Renders nothing for single-account tenants; no fallback so
+                  the universal grid above never waits on it. */}
+              <Suspense
+                key={`cross-account-${searchParamsKey}`}
+                fallback={null}
+              >
+                <CrossAccountOverviewSection
+                  searchParams={resolvedSearchParams}
+                />
+              </Suspense>
+            </div>
           }
         />
       </ContentLayout>

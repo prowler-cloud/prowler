@@ -31,6 +31,10 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
       xl: "p-8",
       none: "p-0",
     },
+    interactive: {
+      true: "cursor-pointer transition-shadow hover:shadow-md",
+      false: "",
+    },
   },
   compoundVariants: [
     {
@@ -57,6 +61,7 @@ const cardVariants = cva("flex flex-col gap-6 rounded-xl border", {
   defaultVariants: {
     variant: "default",
     padding: "default",
+    interactive: false,
   },
 });
 
@@ -64,11 +69,17 @@ interface CardProps
   extends React.ComponentProps<"div">,
     VariantProps<typeof cardVariants> {}
 
-function Card({ className, variant, padding, ...props }: CardProps) {
+function Card({
+  className,
+  variant,
+  padding,
+  interactive,
+  ...props
+}: CardProps) {
   return (
     <div
       data-slot="card"
-      className={cn(cardVariants({ variant, padding }), className)}
+      className={cn(cardVariants({ variant, padding, interactive }), className)}
       {...props}
     />
   );

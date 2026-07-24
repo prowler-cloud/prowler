@@ -3,27 +3,29 @@ import { Info } from "lucide-react";
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { ProviderTypeIcon } from "@/components/icons/providers-badge/provider-type-icon";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import {
+  type KnownProviderType,
+  PROVIDER_DISPLAY_NAMES,
+} from "@/types/providers";
 
 import {
-  getCrossProviderComplianceOverview,
-  getLatestCrossProviderPdf,
-} from "../_actions/cross-provider";
+  getCrossAccountComplianceOverview,
+  getLatestCrossAccountPdf,
+} from "../_actions/cross-account";
 import {
   getAggregatedInitialExpandedKeys,
   getAggregatedRequirementsTotals,
 } from "../_lib/aggregated-compliance-detail";
-import { toCrossProviderAccordionItems } from "../_lib/cross-provider-accordion";
+import { toCrossAccountAccordionItems } from "../_lib/cross-account-accordion";
 import {
-  buildRequirementExtrasMap,
-  computeProviderBreakdown,
-  crossProviderToMapperInput,
-} from "../_lib/cross-provider-adapter";
-import {
-  CROSS_PROVIDER_FRAMEWORKS,
-  parseCrossProviderFilters,
-} from "../_lib/cross-provider-frameworks";
+  buildAccountExtrasMap,
+  computeAccountBreakdown,
+  crossAccountToMapperInput,
+} from "../_lib/cross-account-adapter";
+import { parseCrossAccountFilters } from "../_lib/cross-account-frameworks";
 import { CROSS_PROVIDER_OVERVIEW_RESULT_STATUS } from "../_types";
 
 import { AggregatedComplianceDetail } from "./aggregated-compliance-detail";
@@ -33,34 +35,41 @@ import type {
   CrossProviderGroupOption,
 } from "./cross-provider-filters";
 import { CrossProviderFilters } from "./cross-provider-filters";
-import { CrossProviderHubLink } from "./cross-provider-hub-link";
 import { CrossProviderPdfButton } from "./cross-provider-pdf-button";
+import type { CoverageRow } from "./provider-coverage-card";
 import { ProviderCoverageCard } from "./provider-coverage-card";
 
-interface CrossProviderDetailProps {
+interface CrossAccountDetailProps {
   compliancetitle: string;
   complianceId: string;
+  providerType: KnownProviderType;
   searchParams: Record<string, string | string[] | undefined>;
   targetSection?: string;
 }
 
 /**
- * Server island for the cross-provider detail (`?mode=cross-provider`):
- * fetches the roll-up, funnels it through the real framework mapper via the
- * adapter, and renders the same summary-charts + accordion layout as the
- * per-scan detail with per-provider augmentations.
+ * Server island for the cross-account detail (`?mode=cross-account`): the
+ * account-axis sibling of `CrossProviderDetail`. Fetches the roll-up of one
+ * regular framework across every account of one provider type, funnels it
+ * through the real framework mapper via the adapter, and renders the same
+ * summary-charts + accordion layout with per-account augmentations.
  */
-export const CrossProviderDetail = async ({
+export const CrossAccountDetail = async ({
   compliancetitle,
   complianceId,
+  providerType,
   searchParams,
   targetSection,
-}: CrossProviderDetailProps) => {
-  const filters = parseCrossProviderFilters(searchParams);
+}: CrossAccountDetailProps) => {
+  const filters = parseCrossAccountFilters(searchParams);
 
   const [overviewResponse, providersData, providerGroupsData] =
     await Promise.all([
-      getCrossProviderComplianceOverview({ complianceId, filters }),
+      getCrossAccountComplianceOverview({
+        complianceId,
+        providerType,
+        filters,
+      }),
       getAllProviders(),
       getAllProviderGroups(),
     ]);
@@ -85,9 +94,9 @@ export const CrossProviderDetail = async ({
       <Alert variant="info">
         <Info className="size-4" />
         <AlertDescription>
-          No cross-provider compliance data was returned for this framework.
-          Universal frameworks aggregate the latest completed scan of every
-          compatible provider — run a scan to populate this view.
+          No cross-account compliance data was returned for this framework. The
+          view aggregates the latest completed scan of every account of this
+          provider type — run a scan to populate it.
         </AlertDescription>
       </Alert>
     );
@@ -95,27 +104,37 @@ export const CrossProviderDetail = async ({
 
   const attrs = overviewData.attributes;
 
-  // Scoped to the EXACT scans the overview resolved (not the raw filters), so
-  // an offered "Download latest" always matches the data on screen even if a
-  // provider finished a new scan between the two calls. The overview
-  // aggregation dominates wall-clock; serializing this quick check is cheap.
-  const latestPdf = await getLatestCrossProviderPdf({
+  // Scoped to the EXACT scans the overview resolved (not the raw filters),
+  // so an offered "Download latest" always matches the data on screen even
+  // if an account finished a new scan between the two calls.
+  const latestPdf = await getLatestCrossAccountPdf({
     complianceId,
+    providerType,
     filters: { ...filters, scanIds: attrs.scan_ids },
   });
 
   const mapper = getComplianceMapper(attrs.framework);
-  const { attributesData, requirementsData } =
-    crossProviderToMapperInput(attrs);
+  const { attributesData, requirementsData } = crossAccountToMapperInput(attrs);
   const data = mapper.mapComplianceData(attributesData, requirementsData);
-  const extras = buildRequirementExtrasMap(attrs);
-  const providerBreakdown = computeProviderBreakdown(attrs);
+  const extras = buildAccountExtrasMap(attrs);
+  const coverageRows: CoverageRow[] = computeAccountBreakdown(attrs).map(
+    (entry) => ({
+      key: entry.id,
+      label: entry.label,
+      iconType: providerType,
+      pass: entry.pass,
+      fail: entry.fail,
+      manual: entry.manual,
+      score: entry.score,
+    }),
+  );
 
   const totals = getAggregatedRequirementsTotals(data);
-  const accordionItems = toCrossProviderAccordionItems(
+  const accordionItems = toCrossAccountAccordionItems(
     data,
     extras,
     attrs.framework,
+    attrs.accounts,
   );
   const topFailedResult = mapper.getTopFailedSections(data);
 
@@ -125,20 +144,12 @@ export const CrossProviderDetail = async ({
     targetSection,
   );
 
-  const catalogEntry = CROSS_PROVIDER_FRAMEWORKS.find(
-    (entry) => entry.complianceId === complianceId,
-  );
-  const compatibleTypes =
-    catalogEntry?.compatibleProviders ??
-    providerBreakdown.map((b) => b.provider);
   const logoPath = getComplianceIcon(compliancetitle);
 
   const providerAccounts: CrossProviderAccountOption[] = (
     providersData?.data || []
   )
-    .filter((provider) =>
-      compatibleTypes.some((type) => type === provider.attributes.provider),
-    )
+    .filter((provider) => provider.attributes.provider === providerType)
     .map((provider) => ({
       id: provider.id,
       label: provider.attributes.alias
@@ -156,36 +167,41 @@ export const CrossProviderDetail = async ({
       compliancetitle={compliancetitle}
       logoPath={logoPath}
       title={
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium">
-            {attrs.name || compliancetitle.split("-").join(" ")}
-          </span>
-          <CrossProviderHubLink complianceId={complianceId} />
-        </div>
+        <span className="truncate text-sm font-medium">
+          {attrs.name || compliancetitle.split("-").join(" ")}
+        </span>
       }
       description={
-        <p className="text-text-neutral-tertiary text-xs">
-          {attrs.providers.length} of {compatibleTypes.length} compatible
-          providers scanned · {attrs.scan_ids.length}{" "}
-          {attrs.scan_ids.length === 1 ? "scan" : "scans"} aggregated
+        <p className="text-text-neutral-tertiary flex items-center gap-1.5 text-xs">
+          <ProviderTypeIcon type={providerType} size={14} />
+          {PROVIDER_DISPLAY_NAMES[providerType]} · {attrs.accounts.length}{" "}
+          {attrs.accounts.length === 1 ? "account" : "accounts"} aggregated ·{" "}
+          {attrs.scan_ids.length}{" "}
+          {attrs.scan_ids.length === 1 ? "scan" : "scans"}
         </p>
       }
       reportAction={
         <CrossProviderPdfButton
           complianceId={complianceId}
+          providerType={providerType}
           filters={{ ...filters, scanIds: attrs.scan_ids }}
           latestPdf={latestPdf}
         />
       }
       filters={
         <CrossProviderFilters
-          providerTypes={compatibleTypes}
           providerAccounts={providerAccounts}
           providerGroups={providerGroups}
         />
       }
       totals={totals}
-      coverage={<ProviderCoverageCard breakdown={providerBreakdown} />}
+      coverage={
+        <ProviderCoverageCard
+          rows={coverageRows}
+          title="Account Coverage"
+          emptyMessage="No scanned accounts for this framework yet."
+        />
+      }
       topFailed={{
         sections: topFailedResult.items,
         dataType: topFailedResult.type,

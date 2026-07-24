@@ -119,7 +119,7 @@ export const ComplianceCard: React.FC<ComplianceCardProps> = ({
         <div className="flex w-full flex-col gap-3">
           <div className="flex items-center gap-3 pr-9">
             {getComplianceIcon(title) && (
-              <div className="flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border border-gray-300 bg-white">
+              <div className="border-border-neutral-tertiary flex h-10 w-10 min-w-10 shrink-0 items-center justify-center rounded-md border bg-gray-50">
                 <Image
                   src={getComplianceIcon(title)}
                   alt={`${title} logo`}

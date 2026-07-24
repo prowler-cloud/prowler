@@ -57,32 +57,33 @@ export const CompliancePageTabs = ({
   };
 
   return (
-    // Same layout spacing as the scans view tabs (scans-page-shell.tsx).
-    <Tabs
-      value={activeTab}
-      onValueChange={handleTabChange}
-      className="flex flex-col gap-[18px]"
-    >
-      <TabsList className="overflow-x-auto">
-        <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>Per Scan</TabsTrigger>
-        <TabsTrigger
-          value={COMPLIANCE_TAB.CROSS_PROVIDER}
-          adornment={
-            !crossProviderEnabled ? (
-              <Badge variant="cloud">Cloud</Badge>
-            ) : undefined
-          }
-        >
-          Cross-Provider
-        </TabsTrigger>
-      </TabsList>
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
+      <div className="flex flex-col gap-[18px]">
+        <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
+          <TabsList>
+            <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
+              Single Scan
+            </TabsTrigger>
+            <TabsTrigger
+              value={COMPLIANCE_TAB.CROSS_PROVIDER}
+              adornment={
+                !crossProviderEnabled ? (
+                  <Badge variant="cloud">Cloud</Badge>
+                ) : undefined
+              }
+            >
+              Multiple Scans
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-      <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
-        {perScanContent}
-      </TabsContent>
-      <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>
-        {crossProviderContent}
-      </TabsContent>
+        <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
+          {perScanContent}
+        </TabsContent>
+        <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>
+          {crossProviderContent}
+        </TabsContent>
+      </div>
     </Tabs>
   );
 };

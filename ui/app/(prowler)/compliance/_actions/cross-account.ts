@@ -10,27 +10,28 @@ import {
   getLatestAggregatedCompliancePdf,
 } from "../_lib/aggregated-compliance-actions";
 import type {
-  CrossProviderApiFilters,
-  CrossProviderOverviewResponse,
-  CrossProviderOverviewResult,
+  CrossAccountApiFilters,
+  CrossAccountOverviewResponse,
+  CrossAccountOverviewResult,
   LatestCrossProviderPdf,
 } from "../_types";
 
-const CROSS_PROVIDER_API_PATH = "/cross-provider-compliance-overviews";
+const CROSS_ACCOUNT_API_PATH = "/cross-account-compliance-overviews";
 
-const applyCrossProviderParams = (
+const applyCrossAccountParams = (
   url: URL,
   complianceId: string,
-  filters?: CrossProviderApiFilters,
+  providerType: string,
+  filters?: CrossAccountApiFilters,
 ) => {
   url.searchParams.set("filter[compliance_id]", complianceId);
+  url.searchParams.set("filter[provider_type]", providerType);
 
   if (filters?.scanIds?.length) {
     url.searchParams.set("filter[scan__in]", filters.scanIds.join(","));
   }
 
   const params = {
-    "filter[provider_type__in]": filters?.providerTypes,
     "filter[provider_id__in]": filters?.providerIds,
     "filter[provider_groups__in]": filters?.providerGroups,
   };
@@ -39,48 +40,53 @@ const applyCrossProviderParams = (
   }
 };
 
-const buildCrossProviderUrl = (
+const buildCrossAccountUrl = (
   suffix: string,
   complianceId: string,
-  filters?: CrossProviderApiFilters,
+  providerType: string,
+  filters?: CrossAccountApiFilters,
 ) => {
-  const url = new URL(`${apiBaseUrl}${CROSS_PROVIDER_API_PATH}${suffix}`);
-  applyCrossProviderParams(url, complianceId, filters);
+  const url = new URL(`${apiBaseUrl}${CROSS_ACCOUNT_API_PATH}${suffix}`);
+  applyCrossAccountParams(url, complianceId, providerType, filters);
   return url;
 };
 
-export const getCrossProviderComplianceOverview = async ({
+export const getCrossAccountComplianceOverview = async ({
   complianceId,
+  providerType,
   filters,
 }: {
   complianceId: string;
-  filters?: CrossProviderApiFilters;
-}): Promise<CrossProviderOverviewResult> => {
-  const url = buildCrossProviderUrl("", complianceId, filters);
-  return getAggregatedComplianceOverview<CrossProviderOverviewResponse>(
+  providerType: string;
+  filters?: CrossAccountApiFilters;
+}): Promise<CrossAccountOverviewResult> => {
+  const url = buildCrossAccountUrl("", complianceId, providerType, filters);
+  return getAggregatedComplianceOverview<CrossAccountOverviewResponse>(
     url,
-    `GET ${CROSS_PROVIDER_API_PATH}`,
+    `GET ${CROSS_ACCOUNT_API_PATH}`,
   );
 };
 
-export const generateCrossProviderPdf = async ({
+export const generateCrossAccountPdf = async ({
   complianceId,
+  providerType,
   filters,
   reportName,
 }: {
   complianceId: string;
-  filters?: CrossProviderApiFilters;
+  providerType: string;
+  filters?: CrossAccountApiFilters;
   reportName?: string;
 }): Promise<{ taskId: string } | { error: string }> => {
-  const url = buildCrossProviderUrl("/pdf", complianceId, filters);
+  const url = buildCrossAccountUrl("/pdf", complianceId, providerType, filters);
   if (reportName) url.searchParams.set("report_name", reportName);
   return generateAggregatedCompliancePdf(
     url,
-    `POST ${CROSS_PROVIDER_API_PATH}/pdf`,
+    `POST ${CROSS_ACCOUNT_API_PATH}/pdf`,
   );
 };
 
-export const getCrossProviderPdfBinary = async (
+export const getCrossAccountPdfBinary = async (
   taskId: string,
 ): Promise<ScanBinaryResult> => {
   const safeTaskId = taskId.trim();
@@ -89,25 +95,32 @@ export const getCrossProviderPdfBinary = async (
   }
 
   const url = new URL(
-    `${apiBaseUrl}${CROSS_PROVIDER_API_PATH}/pdf/${encodeURIComponent(safeTaskId)}`,
+    `${apiBaseUrl}${CROSS_ACCOUNT_API_PATH}/pdf/${encodeURIComponent(safeTaskId)}`,
   );
   return getAggregatedCompliancePdfBinary({
     url,
-    operation: `GET ${CROSS_PROVIDER_API_PATH}/pdf/{taskId}`,
-    defaultFilename: "cross-provider-compliance.pdf",
+    operation: `GET ${CROSS_ACCOUNT_API_PATH}/pdf/{taskId}`,
+    defaultFilename: "cross-account-compliance.pdf",
   });
 };
 
-export const getLatestCrossProviderPdf = async ({
+export const getLatestCrossAccountPdf = async ({
   complianceId,
+  providerType,
   filters,
 }: {
   complianceId: string;
-  filters?: CrossProviderApiFilters;
+  providerType: string;
+  filters?: CrossAccountApiFilters;
 }): Promise<LatestCrossProviderPdf | null> => {
-  const url = buildCrossProviderUrl("/pdf/latest", complianceId, filters);
+  const url = buildCrossAccountUrl(
+    "/pdf/latest",
+    complianceId,
+    providerType,
+    filters,
+  );
   return getLatestAggregatedCompliancePdf(
     url,
-    `GET ${CROSS_PROVIDER_API_PATH}/pdf/latest`,
+    `GET ${CROSS_ACCOUNT_API_PATH}/pdf/latest`,
   );
 };

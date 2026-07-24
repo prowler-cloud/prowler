@@ -161,3 +161,114 @@ export interface LatestCrossProviderPdf {
   filename?: string;
   completedAt?: string;
 }
+
+// Types for the Cloud-only cross-account compliance roll-up, backed by
+// GET /cross-account-compliance-overviews (one regular per-provider framework
+// aggregated across the latest scan of every account of a single provider
+// type; same server-side roll-up rules as the cross-provider endpoint, with
+// the column axis being the account instead of the provider type).
+
+export const CROSS_ACCOUNT_OVERVIEW_TYPE =
+  "cross-account-compliance-overviews" as const;
+
+/** Contributing account (Provider) metadata, sorted by alias server-side. */
+export interface CrossAccountAccountRef {
+  id: string;
+  uid: string;
+  alias: string | null;
+}
+
+/** Requirement status per account, keyed by Provider UUID. */
+export type AccountStatusMap = Record<string, CrossProviderStatus>;
+
+export interface CrossAccountRequirementData {
+  id: string;
+  name: string;
+  description: string;
+  /** Framework-specific metadata list from the per-provider template
+   *  (already unwrapped — same shape the per-scan mappers consume). */
+  attributes: unknown[];
+  status: CrossProviderStatus;
+  accounts: AccountStatusMap;
+  /** Single flat list — every account shares the provider type. */
+  check_ids?: string[];
+}
+
+export interface CrossAccountOverviewAttributes {
+  compliance_id: string;
+  provider_type: string;
+  framework: string;
+  name: string;
+  version: string;
+  description: string;
+  accounts: CrossAccountAccountRef[];
+  scan_ids: string[];
+  /** Provider UUID → scan UUIDs aggregated for that account. */
+  scan_ids_by_account: Record<string, string[]>;
+  requirements_passed: number;
+  requirements_failed: number;
+  requirements_manual: number;
+  total_requirements: number;
+  requirements: CrossAccountRequirementData[];
+}
+
+export interface CrossAccountOverviewData {
+  type: typeof CROSS_ACCOUNT_OVERVIEW_TYPE;
+  id: string;
+  attributes: CrossAccountOverviewAttributes;
+}
+
+export interface CrossAccountOverviewResponse {
+  data: CrossAccountOverviewData;
+}
+
+/** Result variants reuse the cross-provider status constants so the shared
+ *  error components (CrossProviderErrorAlert) work unchanged. */
+export type CrossAccountOverviewResult =
+  | {
+      status: typeof CROSS_PROVIDER_OVERVIEW_RESULT_STATUS.SUCCESS;
+      response: CrossAccountOverviewResponse;
+    }
+  | CrossProviderOverviewActionErrorResult
+  | CrossProviderOverviewLoadErrorResult;
+
+/** Filters accepted by the cross-account endpoint (comma-joined). */
+export interface CrossAccountApiFilters {
+  scanIds?: string[];
+  providerIds?: string;
+  providerGroups?: string;
+}
+
+/** Cross-account context joined onto a mapped requirement, keyed by the
+ *  composed requirement name the per-scan mappers produce. */
+export interface CrossAccountRequirementExtras {
+  requirementId: string;
+  accounts: AccountStatusMap;
+  checkIds: string[];
+  scanIdsByAccount: Record<string, string[]>;
+}
+
+/** Card data for the per-provider frameworks section of the Cross-Provider
+ *  tab: one regular framework of one provider type, aggregatable across
+ *  that type's accounts. */
+export interface CrossAccountFrameworkEntry {
+  /** Regular framework id used as filter[compliance_id] (e.g. cis_2.0_aws). */
+  complianceId: string;
+  /** Framework display name; also the [compliancetitle] path segment and the
+   *  key getComplianceIcon resolves the framework icon from. */
+  title: string;
+  version: string;
+  providerType: KnownProviderType;
+  accountCount: number;
+}
+
+export interface AccountBreakdownEntry {
+  id: string;
+  label: string;
+  pass: number;
+  fail: number;
+  manual: number;
+  total: number;
+  /** 0-100 pass percentage over non-manual requirements. */
+  score: number;
+}
