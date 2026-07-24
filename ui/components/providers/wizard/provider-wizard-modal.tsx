@@ -33,8 +33,11 @@ import { PROVIDER_WIZARD_STEPS, WizardStepper } from "./wizard-stepper";
 
 const UPDATE_MODE_WIZARD_STEPS = PROVIDER_WIZARD_STEPS.slice(
   0,
-  PROVIDER_WIZARD_STEP.LAUNCH,
+  PROVIDER_WIZARD_STEP.LAUNCH + 1,
 );
+
+const PROVIDER_WIZARD_MODAL_DESCRIPTION =
+  "Connect or update a provider by adding account details, credentials, testing the connection, and launching a scan.";
 
 interface ProviderWizardModalProps {
   open: boolean;
@@ -100,6 +103,7 @@ export function ProviderWizardModal({
     <Modal
       open={open}
       onOpenChange={handleDialogOpenChange}
+      description={PROVIDER_WIZARD_MODAL_DESCRIPTION}
       size="4xl"
       className="flex !h-[90vh] !max-h-[90vh] !min-h-[90vh] !w-[calc(100vw-24px)] !max-w-[1192px] flex-col overflow-hidden p-4 sm:!w-[calc(100vw-40px)] sm:p-6 lg:!w-[calc(100vw-64px)] lg:p-8"
     >

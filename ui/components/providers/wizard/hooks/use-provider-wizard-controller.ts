@@ -82,7 +82,7 @@ export function useProviderWizardController({
   const [orgCurrentStep, setOrgCurrentStep] = useState<OrgWizardStep>(
     ORG_WIZARD_STEP.SETUP,
   );
-  const [footerConfig, setFooterConfig] =
+  const [resolvedFooterConfig, setFooterConfig] =
     useState<WizardFooterConfig>(EMPTY_FOOTER_CONFIG);
   const [providerTypeHint, setProviderTypeHint] = useState<ProviderType | null>(
     null,
@@ -220,12 +220,6 @@ export function useProviderWizardController({
   };
 
   const handleTestSuccess = () => {
-    if (
-      useProviderWizardStore.getState().mode === PROVIDER_WIZARD_MODE.UPDATE
-    ) {
-      handleClose();
-      return;
-    }
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
@@ -254,13 +248,11 @@ export function useProviderWizardController({
   const docsLink = isProviderFlow
     ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
     : DOCS_URLS.AWS_ORGANIZATIONS;
-  const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);
 
   return {
     currentStep,
     docsLink,
-    footerConfig,
     handleClose,
     handleDialogOpenChange,
     handleTestSuccess,

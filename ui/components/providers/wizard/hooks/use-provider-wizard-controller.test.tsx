@@ -9,6 +9,7 @@ import {
   PROVIDER_WIZARD_STEP,
 } from "@/types/provider-wizard";
 
+import { WIZARD_FOOTER_ACTION_TYPE } from "../steps/footer-controls";
 import type { ProviderWizardInitialData } from "../types";
 
 import { useProviderWizardController } from "./use-provider-wizard-controller";
@@ -238,7 +239,7 @@ describe("useProviderWizardController", () => {
     expect(onOpenChange).not.toHaveBeenCalled();
   });
 
-  it("closes the wizard after a successful connection test in update mode", async () => {
+  it("moves to launch step after a successful connection test in update mode", async () => {
     // Given
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
@@ -266,10 +267,83 @@ describe("useProviderWizardController", () => {
       result.current.handleTestSuccess();
     });
 
-    // Credential rotation skips the launch/schedule step.
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-    expect(refreshMock).toHaveBeenCalledTimes(1);
-    expect(result.current.currentStep).not.toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.LAUNCH);
+    expect(onOpenChange).not.toHaveBeenCalled();
+    expect(refreshMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps the footer setter stable and uses replacement action callbacks", () => {
+    // Given
+    const onOpenChange = vi.fn();
+    const firstOnBack = vi.fn();
+    const firstOnSecondaryAction = vi.fn();
+    const firstOnAction = vi.fn();
+    const latestOnBack = vi.fn();
+    const latestOnSecondaryAction = vi.fn();
+    const latestOnAction = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+      }),
+    );
+    const initialSetFooterConfig = result.current.setFooterConfig;
+
+    const firstFooterConfig = {
+      showBack: true,
+      backLabel: "Back",
+      onBack: firstOnBack,
+      showSecondaryAction: true,
+      secondaryActionLabel: "Cancel",
+      secondaryActionVariant: "outline" as const,
+      secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onSecondaryAction: firstOnSecondaryAction,
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: false,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      onAction: firstOnAction,
+    };
+
+    act(() => {
+      result.current.setFooterConfig(firstFooterConfig);
+    });
+
+    // When
+    act(() => {
+      result.current.setFooterConfig({
+        ...firstFooterConfig,
+        onBack: latestOnBack,
+        onSecondaryAction: latestOnSecondaryAction,
+        onAction: latestOnAction,
+      });
+    });
+    act(() => {
+      result.current.resolvedFooterConfig.onBack?.();
+      result.current.resolvedFooterConfig.onSecondaryAction?.();
+      result.current.resolvedFooterConfig.onAction?.();
+    });
+
+    // Then
+    expect(result.current.setFooterConfig).toBe(initialSetFooterConfig);
+    expect(result.current.resolvedFooterConfig).toMatchObject({
+      showBack: true,
+      backLabel: "Back",
+      showSecondaryAction: true,
+      secondaryActionLabel: "Cancel",
+      secondaryActionVariant: "outline",
+      secondaryActionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+      showAction: true,
+      actionLabel: "Next",
+      actionDisabled: false,
+      actionType: WIZARD_FOOTER_ACTION_TYPE.BUTTON,
+    });
+    expect(firstOnBack).not.toHaveBeenCalled();
+    expect(firstOnSecondaryAction).not.toHaveBeenCalled();
+    expect(firstOnAction).not.toHaveBeenCalled();
+    expect(latestOnBack).toHaveBeenCalledTimes(1);
+    expect(latestOnSecondaryAction).toHaveBeenCalledTimes(1);
+    expect(latestOnAction).toHaveBeenCalledTimes(1);
   });
 
   it("does not override launch footer config in the controller", () => {
