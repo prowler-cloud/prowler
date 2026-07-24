@@ -10,7 +10,7 @@
   "ResourceType": "NotDefined",
   "ResourceGroup": "security",
   "Description": "Intune has a built-in Device Compliance Policy that governs how devices without an explicit compliance policy are treated. When the default behavior marks those devices as Compliant, unmanaged devices can be treated as compliant and gain access to corporate resources. This check verifies the default is set to Not compliant (secureByDefault = true).",
-  "Risk": "If the built-in policy marks devices without a compliance policy as Compliant, those devices can bypass Conditional Access policies requiring device compliance, granting unauthorized access to corporate resources from unmanaged or non-compliant endpoints.",
+  "Risk": "If the built-in policy marks devices without a compliance policy as Compliant, those devices can bypass **Conditional Access** policies requiring device compliance, granting unauthorized access to corporate resources from unmanaged or non-compliant endpoints.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/intune-deviceconfig-devicemanagementsettings?view=graph-rest-1.0"

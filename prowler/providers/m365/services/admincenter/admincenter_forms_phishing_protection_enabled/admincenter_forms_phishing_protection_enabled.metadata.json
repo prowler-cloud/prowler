@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "admincenter_forms_phishing_protection_enabled",
+  "CheckTitle": "Microsoft Forms internal phishing protection is enabled",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The Microsoft Forms organization settings should have **internal phishing protection** (**isInOrgFormsPhishingScanEnabled**) enabled. This scans forms for common phishing keywords and blocks the collection of responses while suspicious content is present.",
+  "Risk": "Without internal **phishing** protection, malicious users (internal or compromised accounts) can use **Microsoft Forms** to create convincing phishing forms that harvest credentials or sensitive information from other employees.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-forms/administrator-settings-microsoft-forms"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft 365 admin center at https://admin.microsoft.com/\n2. Go to **Settings** > **Org settings** > **Services** > **Microsoft Forms**\n3. Under **Phishing protection**, check **Add internal phishing protection**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable internal phishing protection for Microsoft Forms so forms are automatically scanned for phishing keywords.",
+      "Url": "https://hub.prowler.com/check/admincenter_forms_phishing_protection_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

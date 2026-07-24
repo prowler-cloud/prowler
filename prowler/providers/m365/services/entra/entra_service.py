@@ -102,6 +102,14 @@ class Entra(M365Service):
                 self._get_service_principals(),
                 self._get_app_registrations(),
                 self._get_exchange_mailbox_permission_service_principals(),
+                self._get_device_registration_policy(),
+                self._get_directory_settings(),
+                self._get_authentication_methods_policy_settings(),
+                self._get_activity_based_timeout_policies(),
+                self._get_named_locations(),
+                self._get_pim_role_approval_settings(),
+                self._get_access_review_definitions(),
+                self._get_b2b_collaboration_policy(),
             )
         )
 
@@ -122,6 +130,22 @@ class Entra(M365Service):
         self.exchange_mailbox_permission_service_principals: Dict[
             str, "ServicePrincipal"
         ] = attributes[12]
+        self.device_registration_policy: Optional[DeviceRegistrationPolicy] = (
+            attributes[13]
+        )
+        self.directory_settings: Dict[str, Dict[str, str]] = attributes[14]
+        self.authentication_methods_policy_settings: Optional[
+            AuthenticationMethodsPolicySettings
+        ] = attributes[15]
+        self.activity_based_timeout_policies: List[ActivityBasedTimeoutPolicy] = (
+            attributes[16]
+        )
+        self.named_locations: List[NamedLocation] = attributes[17]
+        self.pim_role_approval_settings: Dict[str, PimRoleApprovalSetting] = attributes[
+            18
+        ]
+        self.access_review_definitions: List[AccessReviewDefinition] = attributes[19]
+        self.b2b_collaboration_policy: Optional[B2BCollaborationPolicy] = attributes[20]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -386,6 +410,24 @@ class Entra(M365Service):
                         authentication_flows=self._parse_authentication_flows(
                             raw_auth_flows_map.get(policy.id)
                         ),
+                        locations=LocationsCondition(
+                            include_locations=list(
+                                getattr(
+                                    getattr(policy.conditions, "locations", None),
+                                    "include_locations",
+                                    [],
+                                )
+                                or []
+                            ),
+                            exclude_locations=list(
+                                getattr(
+                                    getattr(policy.conditions, "locations", None),
+                                    "exclude_locations",
+                                    [],
+                                )
+                                or []
+                            ),
+                        ),
                         device_conditions=DeviceConditions(
                             device_filter_mode=(
                                 DeviceFilterMode(
@@ -515,6 +557,19 @@ class Entra(M365Service):
                                 and policy.session_controls.application_enforced_restrictions
                                 else False
                             ),
+                        ),
+                        secure_sign_in_session_enabled=bool(
+                            getattr(
+                                getattr(
+                                    policy.session_controls,
+                                    "secure_sign_in_session",
+                                    None,
+                                ),
+                                "is_enabled",
+                                False,
+                            )
+                            if policy.session_controls
+                            else False
                         ),
                     ),
                     state=ConditionalAccessPolicyState(
@@ -1192,6 +1247,480 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_device_registration_policy(self):
+        """Retrieve the tenant device registration policy from Microsoft Entra.
+
+        Fetches the ``policies/deviceRegistrationPolicy`` singleton from the beta
+        Graph endpoint because several fields required for auditing (the
+        ``azureADJoin.*`` local-admin and membership settings) are only exposed on
+        beta. The response is parsed from raw JSON since those fields are not
+        present on the v1.0 typed SDK model.
+
+        Returns:
+            Optional[DeviceRegistrationPolicy]: The parsed policy, or None on error.
+        """
+        logger.info("Entra - Getting device registration policy...")
+        device_registration_policy = None
+        try:
+            builder = self.client.policies.device_registration_policy.with_url(
+                "https://graph.microsoft.com/beta/policies/deviceRegistrationPolicy"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                azure_ad_join = data.get("azureADJoin", {}) or {}
+                local_admins = azure_ad_join.get("localAdmins", {}) or {}
+                allowed_to_join = azure_ad_join.get("allowedToJoin", {}) or {}
+                registering_users = local_admins.get("registeringUsers", {}) or {}
+                local_admin_password = data.get("localAdminPassword", {}) or {}
+                device_registration_policy = DeviceRegistrationPolicy(
+                    user_device_quota=data.get("userDeviceQuota"),
+                    azure_ad_join_allowed_to_join_type=allowed_to_join.get(
+                        "@odata.type"
+                    ),
+                    azure_ad_join_global_admins_enabled=local_admins.get(
+                        "enableGlobalAdmins"
+                    ),
+                    azure_ad_join_registering_users_type=registering_users.get(
+                        "@odata.type"
+                    ),
+                    local_admin_password_enabled=local_admin_password.get("isEnabled"),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return device_registration_policy
+
+    async def _get_pim_role_approval_settings(self):
+        """Retrieve PIM approval-to-activate settings per directory role.
+
+        Fetches ``policies/roleManagementPolicyAssignments`` for directory roles with
+        their expanded policy rules, and extracts, per role definition, whether
+        approval is required to activate and whether approvers are configured.
+
+        Returns:
+            Dict[str, PimRoleApprovalSetting]: Keyed by role definition (template) id.
+        """
+        logger.info("Entra - Getting PIM role approval settings...")
+        settings: Dict[str, PimRoleApprovalSetting] = {}
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/policies/"
+                "roleManagementPolicyAssignments?$filter=scopeId%20eq%20'/'%20and%20"
+                "scopeType%20eq%20'DirectoryRole'&$expand=policy($expand=rules)"
+            )
+            request_info = self.client.policies.with_url(
+                url
+            ).to_get_request_information()
+            assignments = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                assignments.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.policies.with_url(
+                    next_link
+                ).to_get_request_information()
+            for assignment in assignments:
+                role_id = assignment.get("roleDefinitionId")
+                if not role_id:
+                    continue
+                rules = (assignment.get("policy", {}) or {}).get("rules", []) or []
+                is_approval_required = False
+                has_approvers = False
+                for rule in rules:
+                    if rule.get("id") == "Approval_EndUser_Assignment":
+                        setting = rule.get("setting", {}) or {}
+                        is_approval_required = bool(
+                            setting.get("isApprovalRequired", False)
+                        )
+                        for stage in setting.get("approvalStages", []) or []:
+                            if stage.get("primaryApprovers"):
+                                has_approvers = True
+                                break
+                settings[role_id] = PimRoleApprovalSetting(
+                    role_definition_id=role_id,
+                    is_approval_required=is_approval_required,
+                    has_approvers=has_approvers,
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
+
+    async def _get_access_review_definitions(self):
+        """Retrieve access review definitions from Microsoft Entra ID Governance.
+
+        Fetches ``identityGovernance/accessReviews/definitions`` and captures the
+        status and scope query of each definition for the access-review checks.
+
+        Returns:
+            List[AccessReviewDefinition]: The parsed access review definitions.
+        """
+        logger.info("Entra - Getting access review definitions...")
+        definitions = []
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/identityGovernance/"
+                "accessReviews/definitions"
+            )
+            request_info = self.client.identity_governance.with_url(
+                url
+            ).to_get_request_information()
+            raw_definitions = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_definitions.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.identity_governance.with_url(
+                    next_link
+                ).to_get_request_information()
+            for definition in raw_definitions:
+                scope = definition.get("scope", {}) or {}
+                settings = definition.get("settings", {}) or {}
+                definitions.append(
+                    AccessReviewDefinition(
+                        id=definition.get("id", ""),
+                        display_name=definition.get("displayName"),
+                        status=definition.get("status"),
+                        scope_query=str(scope.get("query", "")),
+                        resource_scope_queries=[
+                            str(resource_scope.get("query", ""))
+                            for resource_scope in (
+                                scope.get("resourceScopes", []) or []
+                            )
+                        ],
+                        principal_scope_queries=[
+                            str(principal_scope.get("query", ""))
+                            for principal_scope in (
+                                scope.get("principalScopes", []) or []
+                            )
+                        ],
+                        default_decision=settings.get("defaultDecision"),
+                        auto_apply_enabled=bool(
+                            settings.get("autoApplyDecisionsEnabled", False)
+                        ),
+                        mail_notifications_enabled=bool(
+                            settings.get("mailNotificationsEnabled", False)
+                        ),
+                        reminders_enabled=bool(
+                            settings.get("reminderNotificationsEnabled", False)
+                        ),
+                        duration_in_days=settings.get("instanceDurationInDays"),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return definitions
+
+    async def _get_b2b_collaboration_policy(self):
+        """Retrieve the legacy B2B collaboration (invitation domains) policy.
+
+        Fetches the legacy ``B2BManagementPolicy`` to determine whether invitations
+        are restricted to an allow-list of domains.
+
+        Returns:
+            Optional[B2BCollaborationPolicy]: The parsed policy, or None on error.
+        """
+        logger.info("Entra - Getting B2B collaboration policy...")
+        b2b_policy = None
+        try:
+            url = "https://graph.microsoft.com/beta/legacy/policies"
+            builder = self.client.policies.with_url(url)
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                # The legacy policy object has no string ``type`` discriminator, so
+                # match on the ``B2BManagementPolicy`` block inside the definition JSON.
+                for policy in data.get("value", []) or []:
+                    matched = False
+                    allowed_domains = []
+                    invitations_restricted = False
+                    for definition in policy.get("definition", []) or []:
+                        try:
+                            parsed = json.loads(definition)
+                        except (TypeError, ValueError):
+                            continue
+                        b2b_block = parsed.get("B2BManagementPolicy")
+                        if not b2b_block:
+                            continue
+                        matched = True
+                        invitation_policy = (
+                            b2b_block.get(
+                                "InvitationsAllowedAndBlockedDomainsPolicy", {}
+                            )
+                            or {}
+                        )
+                        # Allow-list mode is active whenever the AllowedDomains key is
+                        # present, even when empty (empty = block all external invites,
+                        # the most restrictive and CIS-compliant state).
+                        if "AllowedDomains" in invitation_policy:
+                            invitations_restricted = True
+                            allowed_domains = (
+                                invitation_policy.get("AllowedDomains") or []
+                            )
+                    if matched:
+                        b2b_policy = B2BCollaborationPolicy(
+                            invitations_restricted_to_allowed_domains=invitations_restricted,
+                            allowed_domains=allowed_domains,
+                        )
+                        break
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return b2b_policy
+
+    async def _get_named_locations(self):
+        """Retrieve Conditional Access named locations from Microsoft Entra.
+
+        Fetches ``identity/conditionalAccess/namedLocations`` as raw JSON to handle
+        the polymorphic ipNamedLocation / countryNamedLocation types and extract
+        their trust and IP-range attributes.
+
+        Returns:
+            List[NamedLocation]: The parsed named locations.
+        """
+        logger.info("Entra - Getting named locations...")
+        named_locations = []
+        try:
+            request_info = (
+                self.client.identity.conditional_access.named_locations.to_get_request_information()
+            )
+            raw_locations = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_locations.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = (
+                    self.client.identity.conditional_access.named_locations.with_url(
+                        next_link
+                    ).to_get_request_information()
+                )
+            for location in raw_locations:
+                odata_type = location.get("@odata.type", "")
+                ip_ranges = location.get("ipRanges", []) or []
+                named_locations.append(
+                    NamedLocation(
+                        id=location.get("id", ""),
+                        display_name=location.get("displayName"),
+                        is_trusted=bool(location.get("isTrusted", False)),
+                        is_ip_location="ipNamedLocation" in odata_type,
+                        ip_ranges_count=len(ip_ranges),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return named_locations
+
+    @staticmethod
+    def _parse_timespan_to_seconds(value) -> "Optional[int]":
+        """Parse a .NET TimeSpan string (``[d.]hh:mm:ss[.fffffff]``) to seconds.
+
+        Args:
+            value: The TimeSpan string (e.g. "03:00:00" or "1.00:00:00").
+
+        Returns:
+            The total number of seconds, or None if the value cannot be parsed.
+        """
+        if not value or not isinstance(value, str):
+            return None
+        try:
+            days = 0
+            remainder = value.strip()
+            head = remainder.split(":", 1)[0]
+            # A dot in the hours component denotes the days separator (d.hh).
+            if "." in head:
+                day_part, remainder = remainder.split(".", 1)
+                days = int(day_part)
+            hours, minutes, seconds = remainder.split(":")
+            # Seconds may carry fractional digits (ss.fffffff); truncate them.
+            seconds = seconds.split(".")[0]
+            return days * 86400 + int(hours) * 3600 + int(minutes) * 60 + int(seconds)
+        except (ValueError, AttributeError):
+            return None
+
+    async def _get_activity_based_timeout_policies(self):
+        """Retrieve activity-based (idle session) timeout policies from Entra.
+
+        Fetches ``policies/activityBasedTimeoutPolicies`` and parses each policy's
+        ``definition`` JSON to extract the ``WebSessionIdleTimeout`` for the idle
+        session timeout check.
+
+        Returns:
+            List[ActivityBasedTimeoutPolicy]: The parsed timeout policies.
+        """
+        logger.info("Entra - Getting activity based timeout policies...")
+        policies = []
+        try:
+            response = await self.client.policies.activity_based_timeout_policies.get()
+            for policy in getattr(response, "value", []) or []:
+                idle_timeout_seconds = None
+                for definition in getattr(policy, "definition", []) or []:
+                    try:
+                        parsed = json.loads(definition)
+                    except (TypeError, ValueError):
+                        continue
+                    app_policies = (
+                        parsed.get("ActivityBasedTimeoutPolicy", {}).get(
+                            "ApplicationPolicies", []
+                        )
+                        or []
+                    )
+                    for app_policy in app_policies:
+                        seconds = self._parse_timespan_to_seconds(
+                            app_policy.get("WebSessionIdleTimeout")
+                        )
+                        if seconds is not None and (
+                            idle_timeout_seconds is None
+                            or seconds < idle_timeout_seconds
+                        ):
+                            idle_timeout_seconds = seconds
+                policies.append(
+                    ActivityBasedTimeoutPolicy(
+                        id=getattr(policy, "id", ""),
+                        display_name=getattr(policy, "display_name", None),
+                        web_session_idle_timeout_seconds=idle_timeout_seconds,
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return policies
+
+    async def _get_authentication_methods_policy_settings(self):
+        """Retrieve advanced settings from the beta authentication methods policy.
+
+        Fetches ``policies/authenticationMethodsPolicy`` from the beta Graph endpoint
+        to extract settings not exposed on the v1.0 typed model: the
+        ``systemCredentialPreferences`` block and the Microsoft Authenticator
+        ``featureSettings`` (app-information / location-information / companion-app
+        states). Parsed from raw JSON because these fields are beta-only.
+
+        Returns:
+            Optional[AuthenticationMethodsPolicySettings]: Parsed settings, or None.
+        """
+        logger.info("Entra - Getting authentication methods policy settings...")
+        settings = None
+        try:
+            builder = self.client.policies.authentication_methods_policy.with_url(
+                "https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                system_prefs = data.get("systemCredentialPreferences", {}) or {}
+                include_targets = [
+                    target.get("id")
+                    for target in (system_prefs.get("includeTargets", []) or [])
+                    if target.get("id")
+                ]
+                authenticator = {}
+                for config in data.get("authenticationMethodConfigurations", []) or []:
+                    if config.get("id") == "MicrosoftAuthenticator":
+                        authenticator = config
+                        break
+                feature_settings = authenticator.get("featureSettings", {}) or {}
+                settings = AuthenticationMethodsPolicySettings(
+                    system_preferred_mfa_state=system_prefs.get("state"),
+                    system_preferred_mfa_include_targets=include_targets,
+                    authenticator_state=authenticator.get("state"),
+                    authenticator_display_app_information_state=(
+                        feature_settings.get("displayAppInformationRequiredState", {})
+                        or {}
+                    ).get("state"),
+                    authenticator_display_location_information_state=(
+                        feature_settings.get(
+                            "displayLocationInformationRequiredState", {}
+                        )
+                        or {}
+                    ).get("state"),
+                    authenticator_companion_app_state=(
+                        feature_settings.get("companionAppAllowedState", {}) or {}
+                    ).get("state"),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
+
+    async def _get_directory_settings(self):
+        """Retrieve tenant directory (group) settings from Microsoft Entra.
+
+        Fetches the ``/groupSettings`` collection and returns a mapping of each
+        setting's ``templateId`` to a dict of its ``name``/``value`` pairs. This
+        exposes the Group.Unified and Password Rule Settings templates used by the
+        group-creation and password-protection checks.
+
+        Returns:
+            Dict[str, Dict[str, str]]: Mapping of template ID to its name/value pairs.
+        """
+        logger.info("Entra - Getting directory (group) settings...")
+        directory_settings: Dict[str, Dict[str, str]] = {}
+        try:
+            response = await self.client.group_settings.get()
+            for setting in getattr(response, "value", []) or []:
+                template_id = getattr(setting, "template_id", None)
+                if not template_id:
+                    continue
+                values = {}
+                for value in getattr(setting, "values", []) or []:
+                    name = getattr(value, "name", None)
+                    if name is not None:
+                        values[name] = getattr(value, "value", None)
+                directory_settings[template_id] = values
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return directory_settings
+
     async def _get_service_principals(self):
         """Retrieve service principals owned by the audited tenant.
 
@@ -1820,6 +2349,13 @@ class AuthenticationFlows(BaseModel):
     transfer_methods: List[TransferMethod] = []
 
 
+class LocationsCondition(BaseModel):
+    """Model representing location conditions for Conditional Access policies."""
+
+    include_locations: List[str] = []
+    exclude_locations: List[str] = []
+
+
 class Conditions(BaseModel):
     """Model representing conditions for Conditional Access policies."""
 
@@ -1832,6 +2368,7 @@ class Conditions(BaseModel):
     platform_conditions: Optional[PlatformConditions] = None
     authentication_flows: Optional[AuthenticationFlows] = None
     device_conditions: Optional[DeviceConditions] = None
+    locations: Optional[LocationsCondition] = None
 
 
 class PersistentBrowser(BaseModel):
@@ -1868,6 +2405,7 @@ class SessionControls(BaseModel):
     persistent_browser: PersistentBrowser
     sign_in_frequency: SignInFrequency
     application_enforced_restrictions: Optional[ApplicationEnforcedRestrictions] = None
+    secure_sign_in_session_enabled: bool = False
 
 
 class ConditionalAccessGrantControl(Enum):
@@ -1923,6 +2461,93 @@ class AuthorizationPolicy(BaseModel):
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+
+
+# Well-known directory setting template IDs (from /groupSettings).
+GROUP_UNIFIED_SETTINGS_TEMPLATE_ID = "62375ab9-6b52-47ed-826b-58e47e0e304b"
+PASSWORD_RULE_SETTINGS_TEMPLATE_ID = "5cf42378-d67d-4f36-ba46-e8b86229381d"
+
+# Well-known directory role template IDs.
+GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID = "62e90394-69f5-4237-9190-012177145e10"
+PRIVILEGED_ROLE_ADMINISTRATOR_ROLE_TEMPLATE_ID = "e8611ab8-c189-46e8-94e1-60213ab1f814"
+
+
+class DeviceRegistrationMembershipType(str, Enum):
+    """OData types for Entra device registration membership settings."""
+
+    ALL = "#microsoft.graph.allDeviceRegistrationMembership"
+    ENUMERATED = "#microsoft.graph.enumeratedDeviceRegistrationMembership"
+    NONE = "#microsoft.graph.noDeviceRegistrationMembership"
+
+
+class DeviceRegistrationPolicy(BaseModel):
+    """Tenant device registration policy (policies/deviceRegistrationPolicy)."""
+
+    user_device_quota: Optional[int] = None
+    azure_ad_join_allowed_to_join_type: Optional[str] = None
+    azure_ad_join_global_admins_enabled: Optional[bool] = None
+    azure_ad_join_registering_users_type: Optional[str] = None
+    local_admin_password_enabled: Optional[bool] = None
+
+
+class ActivityBasedTimeoutPolicy(BaseModel):
+    """Activity-based (idle session) timeout policy."""
+
+    id: str
+    display_name: Optional[str] = None
+    web_session_idle_timeout_seconds: Optional[int] = None
+
+
+class NamedLocation(BaseModel):
+    """Conditional Access named location."""
+
+    id: str
+    display_name: Optional[str] = None
+    is_trusted: bool = False
+    is_ip_location: bool = False
+    ip_ranges_count: int = 0
+
+
+class PimRoleApprovalSetting(BaseModel):
+    """PIM approval-to-activate setting for a directory role."""
+
+    role_definition_id: str
+    is_approval_required: bool = False
+    has_approvers: bool = False
+
+
+class AccessReviewDefinition(BaseModel):
+    """Access review definition (identityGovernance/accessReviews/definitions)."""
+
+    id: str
+    display_name: Optional[str] = None
+    status: Optional[str] = None
+    scope_query: str = ""
+    resource_scope_queries: List[str] = []
+    principal_scope_queries: List[str] = []
+    default_decision: Optional[str] = None
+    auto_apply_enabled: bool = False
+    mail_notifications_enabled: bool = False
+    reminders_enabled: bool = False
+    duration_in_days: Optional[int] = None
+
+
+class B2BCollaborationPolicy(BaseModel):
+    """Legacy B2B collaboration (invitation domains) policy."""
+
+    invitations_restricted_to_allowed_domains: bool = False
+    allowed_domains: List[str] = []
+
+
+class AuthenticationMethodsPolicySettings(BaseModel):
+    """Advanced settings from the beta authentication methods policy."""
+
+    system_preferred_mfa_state: Optional[str] = None
+    system_preferred_mfa_include_targets: List[str] = []
+    authenticator_state: Optional[str] = None
+    authenticator_display_app_information_state: Optional[str] = None
+    authenticator_display_location_information_state: Optional[str] = None
+    authenticator_companion_app_state: Optional[str] = None
 
 
 class Organization(BaseModel):

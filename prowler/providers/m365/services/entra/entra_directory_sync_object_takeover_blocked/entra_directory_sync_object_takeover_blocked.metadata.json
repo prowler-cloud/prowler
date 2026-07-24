@@ -10,7 +10,7 @@
   "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
   "Description": "When on-premises directory synchronization is enabled, both blockSoftMatchEnabled and blockCloudObjectTakeoverThroughHardMatchEnabled must be true. Without these blocks, an attacker who can write to on-premises AD can craft an object that matches a privileged cloud account and take it over.",
-  "Risk": "An attacker with write access to on-premises Active Directory can create an object whose UPN, SMTP address, or ImmutableID matches an existing cloud-only account (e.g. Global Administrator). When the sync engine processes this object, it merges the on-premises identity into the cloud account, effectively granting the attacker full control of that privileged account.",
+  "Risk": "An attacker with write access to **on-premises** Active Directory can create an object whose UPN, SMTP address, or ImmutableID matches an existing cloud-only account (e.g. **Global Administrator**). When the sync engine processes this object, it merges the on-premises identity into the cloud account, effectively granting the attacker full control of that privileged account.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://learn.microsoft.com/en-us/graph/api/resources/onpremisesdirectorysynchronization?view=graph-rest-1.0",

@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "admincenter_shared_bookings_disabled",
+  "CheckTitle": "Microsoft Shared Bookings is disabled",
+  "CheckType": [],
+  "ServiceName": "admincenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "Microsoft Bookings (Shared Bookings) should be turned off unless the organization has a business need for it. Bookings lets users create public booking pages so customers can schedule time with staff. It is considered compliant when it is disabled at the tenant level (**BookingsEnabled**) or when the default OWA mailbox policy blocks Bookings mailbox creation (**BookingsMailboxCreationEnabled**).",
+  "Risk": "**Bookings** pages are internet-facing and can expose staff names, email addresses, and availability, and may allow uncontrolled creation of Bookings mailboxes. Leaving Bookings enabled without a business need increases the organization's external attack surface and information disclosure risk.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoft-365/bookings/turn-bookings-on-or-off"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-OrganizationConfig -BookingsEnabled $false",
+      "NativeIaC": "",
+      "Other": "1. Connect to Exchange Online PowerShell using Connect-ExchangeOnline\n2. To disable at the tenant level, run: Set-OrganizationConfig -BookingsEnabled $false\n3. Alternatively, disable in the default OWA mailbox policy: Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -BookingsMailboxCreationEnabled $false",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Turn off Shared Bookings at the tenant level or in the default OWA mailbox policy unless there is a documented business need, in which case restrict who can create Bookings mailboxes.",
+      "Url": "https://hub.prowler.com/check/admincenter_shared_bookings_disabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

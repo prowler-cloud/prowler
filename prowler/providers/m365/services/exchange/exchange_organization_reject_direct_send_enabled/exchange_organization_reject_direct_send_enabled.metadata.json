@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_organization_reject_direct_send_enabled",
+  "CheckTitle": "Direct Send is rejected for the Exchange Online organization",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The Exchange Online organization configuration should have **RejectDirectSend** enabled. Direct Send allows on-premises devices, applications, or third-party cloud services to send email to the tenant's hosted mailboxes using one of the tenant's accepted domains without authentication, which can be abused to spoof internal senders.",
+  "Risk": "When **Direct Send** is allowed, anyone who knows a valid recipient and accepted domain can send unauthenticated email that appears to originate from inside the organization, enabling **phishing** and **business email compromise** against employees.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/exchange/mail-flow-best-practices/how-to-set-up-a-multifunction-device-or-application-to-send-email-using-microsoft-365-or-office-365#option-3-configure-a-connector-to-send-mail-using-microsoft-365-or-office-365-smtp-relay"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-OrganizationConfig -RejectDirectSend $true",
+      "NativeIaC": "",
+      "Other": "1. Connect to Exchange Online PowerShell using Connect-ExchangeOnline\n2. Run: Set-OrganizationConfig -RejectDirectSend $true\n3. Ensure legitimate senders use an authenticated connector or SMTP AUTH before enabling",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable RejectDirectSend so that unauthenticated Direct Send email to the tenant's accepted domains is rejected. Migrate any legitimate on-premises or application senders to authenticated connectors first.",
+      "Url": "https://hub.prowler.com/check/exchange_organization_reject_direct_send_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
