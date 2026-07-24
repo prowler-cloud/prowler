@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "audit_trail_enabled",
+  "CheckTitle": "Database auditing is enabled",
+  "CheckType": [],
+  "ServiceName": "audit",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "monitoring",
+  "Description": "Checks that database auditing is active, either through pure **Unified Auditing** or a traditional **AUDIT_TRAIL** setting other than NONE (DBSAT finding AUDIT.ENABLED).",
+  "Risk": "With auditing disabled there is no record of logins, privilege use or data access. Attacks and misuse become undetectable, forensics is impossible and most regulatory frameworks are violated.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/introduction-to-auditing.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET audit_trail=DB,EXTENDED SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Prefer Unified Auditing: relink the database with the uniaud_on option or rely on mixed mode policies\n2. For traditional auditing, run ALTER SYSTEM SET audit_trail=DB,EXTENDED SCOPE=SPFILE and restart\n3. Enable at least the ORA_SECURECONFIG and ORA_LOGON_FAILURES unified audit policies",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Unified Auditing (or at minimum set AUDIT_TRAIL to a value other than NONE) and enable baseline audit policies so security-relevant activity is recorded.",
+      "Url": "https://hub.prowler.com/check/audit_trail_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

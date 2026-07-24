@@ -468,6 +468,18 @@ class Finding(BaseModel):
                 output_data["resource_uid"] = check_output.resource_id
                 output_data["region"] = "global"
 
+            elif provider.type == "oracledb":
+                output_data["auth_method"] = provider.auth_method
+                output_data["account_uid"] = get_nested_attribute(
+                    provider, "identity.database_name"
+                )
+                output_data["account_name"] = get_nested_attribute(
+                    provider, "identity.database_name"
+                )
+                output_data["resource_name"] = check_output.resource_name
+                output_data["resource_uid"] = check_output.resource_id
+                output_data["region"] = "global"
+
             elif provider.type == "scaleway":
                 output_data["auth_method"] = "api_key"
                 output_data["account_uid"] = get_nested_attribute(

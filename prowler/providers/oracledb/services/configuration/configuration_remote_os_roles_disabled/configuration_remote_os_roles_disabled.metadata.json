@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "configuration_remote_os_roles_disabled",
+  "CheckTitle": "Remote operating system role management is disabled",
+  "CheckType": [],
+  "ServiceName": "configuration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabaseParameter",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that **REMOTE_OS_ROLES** is FALSE so database roles are never enabled based on the operating system groups of a remote client (DBSAT finding CONF.EXTERNALOSAUTH).",
+  "Risk": "With remote OS roles enabled, an attacker controlling a client machine can grant themselves OS groups that map to powerful database roles, escalating privileges without any database-side change.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/REMOTE_OS_ROLES.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET remote_os_roles=FALSE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET remote_os_roles=FALSE SCOPE=SPFILE\n2. Restart the database\n3. Manage roles inside the database (GRANT/SET ROLE) or through a central directory instead",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep REMOTE_OS_ROLES at its default FALSE and manage role grants inside the database or via enterprise user security.",
+      "Url": "https://hub.prowler.com/check/configuration_remote_os_roles_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "configuration_sql92_security_enabled",
+  "CheckTitle": "SQL92 security is enabled for UPDATE and DELETE statements",
+  "CheckType": [],
+  "ServiceName": "configuration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OracleDatabaseParameter",
+  "ResourceGroup": "database",
+  "Description": "Checks that **SQL92_SECURITY** is TRUE so UPDATE and DELETE statements whose WHERE clause reads a column also require SELECT privilege on that column (DBSAT finding CONF.SQL92SECURITY).",
+  "Risk": "With SQL92_SECURITY disabled, a user with only UPDATE or DELETE privilege can infer column values they cannot SELECT by observing which rows a conditional statement affects — a data inference attack.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/SQL92_SECURITY.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET sql92_security=TRUE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET sql92_security=TRUE SCOPE=SPFILE\n2. Restart the database\n3. Verify applications that rely on UPDATE/DELETE without SELECT still hold the required privileges",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set SQL92_SECURITY to TRUE (the default since Oracle 12.2) so conditional UPDATE and DELETE statements cannot be used to infer protected data.",
+      "Url": "https://hub.prowler.com/check/configuration_sql92_security_enabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "audit_sys_operations_enabled",
+  "CheckTitle": "Auditing of SYS administrative operations is enabled",
+  "CheckType": [],
+  "ServiceName": "audit",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "monitoring",
+  "Description": "Checks that **AUDIT_SYS_OPERATIONS** is TRUE so statements run by SYS and users connecting AS SYSDBA/SYSOPER are audited (DBSAT finding AUDIT.ADMINACTIONS).",
+  "Risk": "SYS bypasses standard auditing. Without AUDIT_SYS_OPERATIONS, the most privileged actions in the database — including tampering with the audit trail itself — leave no trace.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/introduction-to-auditing.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET audit_sys_operations=TRUE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET audit_sys_operations=TRUE SCOPE=SPFILE\n2. Restart the database\n3. Ship the generated OS audit files to a centralized, tamper-resistant log store",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set AUDIT_SYS_OPERATIONS to TRUE so administrative activity by SYS is written to the operating system audit trail, and forward those files to a SIEM.",
+      "Url": "https://hub.prowler.com/check/audit_sys_operations_enabled"
+    }
+  },
+  "Categories": [
+    "logging",
+    "forensics-ready"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

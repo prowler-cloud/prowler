@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "configuration_remote_os_authentication_disabled",
+  "CheckTitle": "Remote operating system authentication is disabled",
+  "CheckType": [],
+  "ServiceName": "configuration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "critical",
+  "ResourceType": "OracleDatabaseParameter",
+  "ResourceGroup": "IAM",
+  "Description": "Checks that **REMOTE_OS_AUTHENT** is FALSE (or absent — the parameter was desupported in 12c) so the database never trusts the client machine's OS username for authentication (DBSAT finding CONF.EXTERNALOSAUTH).",
+  "Risk": "With remote OS authentication enabled, any attacker who controls a client machine can create a local OS user matching an externally identified database account and log in without a password.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/REMOTE_OS_AUTHENT.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET remote_os_authent=FALSE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET remote_os_authent=FALSE SCOPE=SPFILE\n2. Restart the database\n3. Convert IDENTIFIED EXTERNALLY accounts that relied on it to password, Kerberos or certificate authentication",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep REMOTE_OS_AUTHENT disabled and use strong, centrally managed authentication (passwords with profiles, Kerberos or TLS certificates) for remote users.",
+      "Url": "https://hub.prowler.com/check/configuration_remote_os_authentication_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

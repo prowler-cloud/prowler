@@ -1,0 +1,38 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "privileges_public_no_network_packages",
+  "CheckTitle": "Network PL/SQL packages are not executable by PUBLIC",
+  "CheckType": [],
+  "ServiceName": "privileges",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabase",
+  "ResourceGroup": "network",
+  "Description": "Checks that network PL/SQL packages (**UTL_HTTP, UTL_TCP, UTL_SMTP, UTL_MAIL, UTL_INADDR, DBMS_LDAP**) are not granted EXECUTE to PUBLIC, limiting who can open network connections from inside the database (DBSAT finding PRIV.NETPACKAGEPUBLIC).",
+  "Risk": "Any user able to run these packages can exfiltrate data over HTTP/TCP/SMTP, scan internal networks from the database host and reach services behind the database's network position.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/dbseg/managing-fine-grained-access-in-pl-sql-packages-and-types.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "REVOKE EXECUTE ON UTL_HTTP FROM PUBLIC;",
+      "NativeIaC": "",
+      "Other": "1. List PUBLIC execute grants on the network packages in DBA_TAB_PRIVS\n2. Revoke each: REVOKE EXECUTE ON <package> FROM PUBLIC\n3. Grant EXECUTE to the specific application schemas that need it and define network ACLs (DBMS_NETWORK_ACL_ADMIN) for those users",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Revoke PUBLIC execute on the network packages and combine per-user grants with fine-grained network ACLs so only authorized code can open outbound connections.",
+      "Url": "https://hub.prowler.com/check/privileges_public_no_network_packages"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

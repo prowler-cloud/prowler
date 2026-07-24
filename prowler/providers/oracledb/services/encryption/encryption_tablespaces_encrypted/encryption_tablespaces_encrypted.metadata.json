@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "encryption_tablespaces_encrypted",
+  "CheckTitle": "Permanent tablespaces are encrypted with TDE",
+  "CheckType": [],
+  "ServiceName": "encryption",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "OracleDatabaseTablespace",
+  "ResourceGroup": "storage",
+  "Description": "Checks that each permanent application tablespace is encrypted with **Transparent Data Encryption (TDE)**. SYSTEM and SYSAUX are excluded and reported separately by DBSAT (finding ENCRYPT.TDE).",
+  "Risk": "Unencrypted tablespaces expose their data to anyone who can read the underlying files: OS administrators, stolen backups or disks, and direct data file parsing all bypass database authentication entirely.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/asoag/encrypting-tablespaces.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "CREATE TABLESPACE <name> DATAFILE ... ENCRYPTION USING 'AES256' DEFAULT STORAGE (ENCRYPT);",
+      "NativeIaC": "",
+      "Other": "1. Configure and open the TDE keystore\n2. Encrypt existing tablespaces online: ALTER TABLESPACE <name> ENCRYPTION ONLINE USING 'AES256' ENCRYPT\n3. Create new tablespaces encrypted by default (ENCRYPT_NEW_TABLESPACES=ALWAYS)",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Encrypt all permanent tablespaces with TDE, use online conversion for existing ones and set ENCRYPT_NEW_TABLESPACES so future tablespaces are encrypted automatically.",
+      "Url": "https://hub.prowler.com/check/encryption_tablespaces_encrypted"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

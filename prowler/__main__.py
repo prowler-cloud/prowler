@@ -156,6 +156,7 @@ from prowler.providers.nhn.models import NHNOutputOptions
 from prowler.providers.okta.models import OktaOutputOptions
 from prowler.providers.openstack.models import OpenStackOutputOptions
 from prowler.providers.oraclecloud.models import OCIOutputOptions
+from prowler.providers.oracledb.models import OracledbOutputOptions
 from prowler.providers.scaleway.models import ScalewayOutputOptions
 from prowler.providers.stackit.models import StackITOutputOptions
 from prowler.providers.vercel.models import VercelOutputOptions
@@ -439,6 +440,10 @@ def prowler():
         )
     elif provider == "okta":
         output_options = OktaOutputOptions(
+            args, bulk_checks_metadata, global_provider.identity
+        )
+    elif provider == "oracledb":
+        output_options = OracledbOutputOptions(
             args, bulk_checks_metadata, global_provider.identity
         )
     elif provider == "scaleway":

@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "users_default_tablespace_not_system",
+  "CheckTitle": "Application users do not use SYSTEM or SYSAUX as their default tablespace",
+  "CheckType": [],
+  "ServiceName": "users",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "OracleDatabaseUser",
+  "ResourceGroup": "database",
+  "Description": "Checks that non-Oracle-maintained database users do not have **SYSTEM** or **SYSAUX** as their default tablespace, keeping user data out of the tablespaces reserved for the data dictionary (DBSAT finding USER.TABLESPACE).",
+  "Risk": "User objects in SYSTEM or SYSAUX can exhaust space needed by the data dictionary, causing database-wide outages, and blur the boundary between application data and dictionary objects that stricter protections rely on.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/admin/managing-tablespaces.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER USER <username> DEFAULT TABLESPACE users;",
+      "NativeIaC": "",
+      "Other": "1. Create or choose an application tablespace\n2. Run ALTER USER <username> DEFAULT TABLESPACE <tablespace>\n3. Move any existing objects out of SYSTEM/SYSAUX with ALTER TABLE ... MOVE / ALTER INDEX ... REBUILD",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Give every application user a dedicated default tablespace and move existing user objects out of SYSTEM and SYSAUX.",
+      "Url": "https://hub.prowler.com/check/users_default_tablespace_not_system"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

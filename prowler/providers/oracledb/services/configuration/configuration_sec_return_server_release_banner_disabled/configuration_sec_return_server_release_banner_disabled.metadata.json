@@ -1,0 +1,37 @@
+{
+  "Provider": "oracledb",
+  "CheckID": "configuration_sec_return_server_release_banner_disabled",
+  "CheckTitle": "The server release banner is not returned to clients before authentication",
+  "CheckType": [],
+  "ServiceName": "configuration",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "OracleDatabaseParameter",
+  "ResourceGroup": "database",
+  "Description": "Checks that **SEC_RETURN_SERVER_RELEASE_BANNER** is FALSE so the database does not disclose its full release information to unauthenticated clients (DBSAT finding CONF.NETWORK).",
+  "Risk": "The full release banner tells attackers the exact patch level of the database, letting them pick known CVEs and exploits that match the unpatched version.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.oracle.com/en/database/oracle/oracle-database/19/refrn/SEC_RETURN_SERVER_RELEASE_BANNER.html",
+    "https://docs.oracle.com/en/database/oracle/security-assessment-tool/3.0.0/satug/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "ALTER SYSTEM SET sec_return_server_release_banner=FALSE SCOPE=SPFILE;",
+      "NativeIaC": "",
+      "Other": "1. Run ALTER SYSTEM SET sec_return_server_release_banner=FALSE SCOPE=SPFILE\n2. Restart the database",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Keep SEC_RETURN_SERVER_RELEASE_BANNER at its default FALSE so only a generic version is disclosed before authentication.",
+      "Url": "https://hub.prowler.com/check/configuration_sec_return_server_release_banner_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
