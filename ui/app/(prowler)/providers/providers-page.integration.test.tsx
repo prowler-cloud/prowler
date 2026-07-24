@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect } from "vitest";
 
+import { it } from "@/__tests__/fixtures";
 import {
   awsHierarchyFixture,
   awsOnboardingFixture,
@@ -190,5 +191,20 @@ describe("AWS Organizations providers page (baseline)", () => {
     );
     // Current behaviour: single DELETE, no deletion-task polling (Phase 2 adds it).
     expect(harness.countRequests("GET", "/tasks/")).toBe(0);
+  }, 30000);
+
+  it("renders a flat provider list (no org/OU grouping) on-prem", async ({
+    seedRuntimeConfig,
+  }) => {
+    seedRuntimeConfig({ cloudEnabled: false });
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    harness.mount({ openWizard: false });
+
+    // Providers still render, but ungrouped: no organization row, no OU labels.
+    await harness.waitForRow(/prod-web/);
+    expect(harness.rowByText(/prod-api/)).not.toBeNull();
+    expect(harness.rowByText(/sandbox-1/)).not.toBeNull();
+    expect(harness.containsText(/My AWS Organization/)).toBe(false);
+    expect(harness.containsText(/Organizational Unit/)).toBe(false);
   }, 30000);
 });

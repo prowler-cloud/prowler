@@ -28,7 +28,7 @@ import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
-import { RUNTIME_CONFIG_SCRIPT_ID } from "@/lib/runtime-config.shared";
+import { isCloud } from "@/lib/shared/env";
 import type { ProviderProps } from "@/types";
 import type {
   OrganizationResource,
@@ -49,13 +49,11 @@ const TS = "2026-07-01T10:00:00Z";
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
-  /** Runtime-config island `cloudEnabled` — drives `isCloud()`. Default true. */
-  cloud?: boolean;
 }
 
 export class ProvidersPageHarness {
   readonly user = userEvent;
-  /** Every request MSW sees during the test, for behavioural assertions. */
+  /** Every request MSW sees during the test, for behavioral assertions. */
   readonly requestLog: Array<{ method: string; url: string }> = [];
 
   constructor(readonly fixture: OrgFixture) {}
@@ -76,15 +74,6 @@ export class ProvidersPageHarness {
 
   // --- Mount + environment ------------------------------------------------
 
-  private seedRuntimeConfigIsland(cloud: boolean): void {
-    document.getElementById(RUNTIME_CONFIG_SCRIPT_ID)?.remove();
-    const island = document.createElement("script");
-    island.id = RUNTIME_CONFIG_SCRIPT_ID;
-    island.type = "application/json";
-    island.textContent = JSON.stringify({ cloudEnabled: cloud });
-    document.head.append(island);
-  }
-
   private seedWizardUrl(openWizard: boolean): void {
     const params = new URLSearchParams();
     if (openWizard) {
@@ -98,8 +87,7 @@ export class ProvidersPageHarness {
     );
   }
 
-  mount({ openWizard = true, cloud = true }: MountOptions = {}): void {
-    this.seedRuntimeConfigIsland(cloud);
+  mount({ openWizard = true }: MountOptions = {}): void {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture));
     worker.events.removeAllListeners();
@@ -113,6 +101,10 @@ export class ProvidersPageHarness {
       expires: "2999-01-01T00:00:00Z",
     };
 
+    // Single source of truth: the runtime-config island (seeded by the
+    // `seedRuntimeConfig` fixture) drives both `isCloud()` deep in the tree and
+    // the top-level prop, exactly as `providers/page.tsx` derives it in prod.
+    const cloud = isCloud();
     const providers = this.buildProviderProps();
     const rows = this.buildTableRows(cloud);
 
