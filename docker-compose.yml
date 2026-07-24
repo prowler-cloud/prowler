@@ -6,7 +6,7 @@
 #
 services:
   api-init:
-    image: busybox:1.37.0@sha256:9532d8c39891ca2ecde4d30d7710e01fb739c87a8b9299685c63704296b16028
+    image: busybox:1.38.0@sha256:fd8d9aa63ba2f0982b5304e1ee8d3b90a210bc1ffb5314d980eb6962f1a9715d
     volumes:
       - ./_data/api:/data
     command: ["sh", "-c", "chown -R 1000:1000 /data"]
@@ -60,7 +60,7 @@ services:
       start_period: 60s
 
   postgres:
-    image: postgres:16.3-alpine3.20@sha256:36ed71227ae36305d26382657c0b96cbaf298427b3f1eaeb10d77a6dea3eec41
+    image: postgres:16.9-alpine3.20@sha256:e5507c984377515b8c9922b0eb19f55aba2063fdc7bccf268cefd53133f97054
     hostname: "postgres-db"
     volumes:
       - ./_data/postgres:/var/lib/postgresql/data
@@ -96,7 +96,7 @@ services:
       retries: 3
 
   neo4j:
-    image: graphstack/dozerdb:5.26.3.0@sha256:a77526ea3918fdc46d1fff70c4aea7d71d3874a26ecec059179d6775845b1247
+    image: graphstack/dozerdb:5.26.27.0@sha256:9b54d6b3a98a76c00bd23e8e78d8c82081ff168162aebd47b25c234e092cb0a0
     hostname: "neo4j"
     volumes:
       - ./_data/neo4j:/data
