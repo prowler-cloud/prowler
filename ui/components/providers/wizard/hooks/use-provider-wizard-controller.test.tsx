@@ -47,7 +47,7 @@ describe("useProviderWizardController", () => {
     sessionStorage.clear();
     localStorage.clear();
     // Checkpoint is Cloud-only.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useProviderWizardStore.getState().reset();
     useOrgSetupStore.getState().reset();
   });
@@ -118,7 +118,7 @@ describe("useProviderWizardController", () => {
   });
 
   it("does not request the onboarding checkpoint in self-hosted (OSS) deployments", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     const onOpenChange = vi.fn();
     const { result } = renderHook(() =>
       useProviderWizardController({

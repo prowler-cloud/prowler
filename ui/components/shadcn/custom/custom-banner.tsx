@@ -11,6 +11,7 @@ interface CustomBannerProps {
   message: string;
   buttonLabel?: string;
   buttonLink?: string;
+  onButtonClick?: () => void;
 }
 
 export const CustomBanner = ({
@@ -18,6 +19,7 @@ export const CustomBanner = ({
   message,
   buttonLabel = "Go Home",
   buttonLink = "/",
+  onButtonClick,
 }: CustomBannerProps) => {
   return (
     <Card variant="inner">
@@ -40,7 +42,9 @@ export const CustomBanner = ({
               className="w-full justify-center md:w-fit"
               size="default"
             >
-              <Link href={buttonLink}>{buttonLabel}</Link>
+              <Link href={buttonLink} onClick={onButtonClick}>
+                {buttonLabel}
+              </Link>
             </Button>
           </div>
         </div>

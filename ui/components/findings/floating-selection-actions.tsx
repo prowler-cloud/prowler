@@ -1,34 +1,57 @@
 "use client";
 
-import { VolumeX } from "lucide-react";
+import { Ellipsis, VolumeX } from "lucide-react";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/shadcn";
+import {
+  ActionDropdown,
+  ActionDropdownItem,
+} from "@/components/shadcn/dropdown/action-dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
+import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
+import { JiraDispatchActionItem } from "./jira-dispatch-action-item";
 import { MuteFindingsModal } from "./mute-findings-modal";
 
-interface FloatingMuteButtonProps {
+interface FloatingSelectionActionsBaseProps {
   selectedCount: number;
   selectedFindingIds: string[];
   onComplete?: () => void;
-  /** Async resolver that returns actual finding UUIDs before opening modal */
+  /** Async resolver that returns actual finding UUIDs before opening modal. */
   onBeforeOpen?: () => Promise<string[]>;
-  /** When true, the toast warns that processing may take a few minutes */
+  /** When true, the toast warns that processing may take a few minutes. */
   isBulkOperation?: boolean;
-  /** Custom button label. Defaults to "Mute ({selectedCount})" */
+  /** Custom button label. Defaults to "{selectedCount} selected". */
   label?: string;
+  /** Custom mute action label. Defaults to "Mute". */
+  muteLabel?: string;
 }
 
-export function FloatingMuteButton({
+type FloatingSelectionActionsProps = FloatingSelectionActionsBaseProps &
+  (
+    | {
+        jiraPayload: JiraDispatchModalPayload;
+        jiraLabel: string;
+      }
+    | {
+        jiraPayload?: never;
+        jiraLabel?: never;
+      }
+  );
+
+export function FloatingSelectionActions({
   selectedCount,
   selectedFindingIds,
   onComplete,
   onBeforeOpen,
   isBulkOperation = false,
   label,
-}: FloatingMuteButtonProps) {
+  muteLabel = "Mute",
+  jiraPayload,
+  jiraLabel,
+}: FloatingSelectionActionsProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
@@ -51,7 +74,7 @@ export function FloatingMuteButton({
     }
   };
 
-  const handleClick = async () => {
+  const handleMuteClick = async () => {
     if (onBeforeOpen) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -103,20 +126,48 @@ export function FloatingMuteButton({
           with the content. */}
       {typeof document !== "undefined"
         ? createPortal(
-            <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 duration-300">
-              <Button
-                onClick={handleClick}
-                disabled={isResolving}
-                size="lg"
-                className="shadow-lg"
-              >
-                {isResolving ? (
-                  <Spinner className="size-5" />
+            <div className="animate-in fade-in slide-in-from-bottom-4 fixed right-6 bottom-6 z-50 flex gap-2 duration-300">
+              <div className="shadow-lg">
+                {jiraPayload ? (
+                  <ActionDropdown
+                    ariaLabel="Open selection actions"
+                    trigger={
+                      <Button disabled={isResolving} size="lg">
+                        {isResolving ? (
+                          <Spinner className="size-5" />
+                        ) : (
+                          <Ellipsis className="size-5" />
+                        )}
+                        {label ?? `${selectedCount} selected`}
+                      </Button>
+                    }
+                  >
+                    <ActionDropdownItem
+                      icon={<VolumeX />}
+                      label={muteLabel}
+                      aria-label={muteLabel}
+                      onSelect={() => void handleMuteClick()}
+                    />
+                    <JiraDispatchActionItem
+                      label={jiraLabel}
+                      payload={jiraPayload}
+                    />
+                  </ActionDropdown>
                 ) : (
-                  <VolumeX className="size-5" />
+                  <Button
+                    onClick={() => void handleMuteClick()}
+                    disabled={isResolving}
+                    size="lg"
+                  >
+                    {isResolving ? (
+                      <Spinner className="size-5" />
+                    ) : (
+                      <VolumeX className="size-5" />
+                    )}
+                    Mute ({selectedCount})
+                  </Button>
                 )}
-                {label ?? `Mute (${selectedCount})`}
-              </Button>
+              </div>
             </div>,
             document.body,
           )

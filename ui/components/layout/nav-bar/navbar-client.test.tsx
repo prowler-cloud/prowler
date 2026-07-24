@@ -67,7 +67,7 @@ describe("NavbarClient", () => {
     navigationMocks.searchParams = new URLSearchParams();
     window.localStorage.clear();
     // Replay icon is Cloud-only.
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     // Default: the current route's content has loaded, so the icon is enabled.
     usePageReadyStore.setState({ readyPath: "/findings" });
     useSidePanelStore.setState({
@@ -223,7 +223,7 @@ describe("NavbarClient", () => {
   });
 
   it("hides the replay icon entirely in self-hosted (OSS) deployments", () => {
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     render(
       <NavbarClient
@@ -280,7 +280,7 @@ describe("NavbarClient", () => {
 
   it("hides the Lighthouse AI side-panel trigger in self-hosted (OSS) deployments", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<NavbarClient title="Findings" />);

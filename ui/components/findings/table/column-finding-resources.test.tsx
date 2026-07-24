@@ -5,7 +5,11 @@ import type {
   InputHTMLAttributes,
   ReactNode,
 } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const { isGroupedJiraDispatchEnabledMock } = vi.hoisted(() => ({
+  isGroupedJiraDispatchEnabledMock: vi.fn(() => true),
+}));
 
 // CustomLink pulls the "@/lib" barrel (and next-auth with it) into the unit env.
 vi.mock("@/components/shadcn/custom/custom-link", () => ({
@@ -14,8 +18,7 @@ vi.mock("@/components/shadcn/custom/custom-link", () => ({
   ),
 }));
 
-vi.mock("@/components/shadcn", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
+vi.mock("@/components/shadcn", () => ({
   Button: ({ children, ...props }: ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button {...props}>{children}</button>
   ),
@@ -41,22 +44,6 @@ vi.mock("@/components/findings/mute-findings-modal", () => ({
   MuteFindingsModal: () => null,
 }));
 
-vi.mock("@/components/findings/send-to-jira-modal", () => ({
-  SendToJiraModal: ({
-    findingId,
-    isOpen,
-  }: {
-    findingId: string;
-    isOpen: boolean;
-  }) => (
-    <div
-      data-testid="jira-modal"
-      data-finding-id={findingId}
-      data-open={isOpen ? "true" : "false"}
-    />
-  ),
-}));
-
 vi.mock("@/components/icons/services/IconServices", () => ({
   JiraIcon: () => null,
 }));
@@ -69,12 +56,14 @@ vi.mock("@/components/shadcn/dropdown", () => ({
     label,
     onSelect,
     disabled,
+    disabledTooltip,
   }: {
     label: string;
     onSelect?: () => void;
     disabled?: boolean;
+    disabledTooltip?: string;
   }) => (
-    <button disabled={disabled} onClick={onSelect}>
+    <button disabled={disabled} onClick={onSelect} title={disabledTooltip}>
       {label}
     </button>
   ),
@@ -175,6 +164,11 @@ vi.mock("@/lib/date-utils", () => ({
   getFailingForLabel: () => "2d",
 }));
 
+vi.mock("@/lib/deployment", () => ({
+  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
+  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
+}));
+
 const notificationIndicatorMock = vi.fn((_props: unknown) => null);
 
 vi.mock("./notification-indicator", () => ({
@@ -184,6 +178,7 @@ vi.mock("./notification-indicator", () => ({
   },
 }));
 
+import { useJiraDispatchStore } from "@/store/jira-dispatch/store";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_DISABLED_REASON,
@@ -284,6 +279,12 @@ function renderResourceActionsCell({
 }
 
 describe("column-finding-resources", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
+    useJiraDispatchStore.getState().closeJiraDispatch();
+  });
+
   it("should render actions as the last visible column after Triage without Notes", () => {
     // Given
     const columns = getColumnFindingResources({
@@ -296,6 +297,7 @@ describe("column-finding-resources", () => {
 
     // Then
     expect(columnIds.slice(-2)).toEqual(["triage", "actions"]);
+    expect(columnIds).not.toContain("status");
     expect(columnIds).not.toContain("notes");
     expect(
       (columns.at(-1) as { id?: string; size?: number } | undefined)?.size,
@@ -473,7 +475,7 @@ describe("column-finding-resources", () => {
     expect(screen.getByText(CLOUD_ONLY_TOOLTIP_COPY)).toBeInTheDocument();
   });
 
-  it("should open Send to Jira modal with finding UUID directly", async () => {
+  it("should open Jira dispatch with the finding UUID directly", async () => {
     // Given
     const user = userEvent.setup();
 
@@ -506,16 +508,15 @@ describe("column-finding-resources", () => {
     );
 
     // When
-    await user.click(screen.getByRole("button", { name: "Send to Jira" }));
+    await user.click(
+      screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
+    );
 
     // Then
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-finding-id",
-      "real-finding-uuid",
-    );
-    expect(screen.getByTestId("jira-modal")).toHaveAttribute(
-      "data-open",
-      "true",
-    );
+    expect(useJiraDispatchStore.getState().activePayload?.selection).toEqual({
+      kind: "single",
+      targetId: "real-finding-uuid",
+      targetType: "finding_id",
+    });
   });
 });

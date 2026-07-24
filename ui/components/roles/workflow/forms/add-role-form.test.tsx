@@ -96,7 +96,7 @@ describe("AddRoleForm", () => {
 
   it("shows Manage Alerts in Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     render(<AddRoleForm groups={[]} />);
@@ -108,7 +108,7 @@ describe("AddRoleForm", () => {
 
   it("hides Manage Alerts outside Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     render(<AddRoleForm groups={[]} />);

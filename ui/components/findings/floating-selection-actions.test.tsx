@@ -22,7 +22,7 @@ vi.mock("next/navigation", () => ({
 // Import after mocks
 // ---------------------------------------------------------------------------
 
-import { FloatingMuteButton } from "./floating-mute-button";
+import { FloatingSelectionActions } from "./floating-selection-actions";
 
 function deferredPromise<T>() {
   let resolve!: (value: T) => void;
@@ -39,7 +39,7 @@ function deferredPromise<T>() {
 // Fix 3: onBeforeOpen rejection resets isResolving
 // ---------------------------------------------------------------------------
 
-describe("FloatingMuteButton — onBeforeOpen error handling", () => {
+describe("FloatingSelectionActions — onBeforeOpen error handling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -50,7 +50,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     const user = userEvent.setup();
 
     render(
-      <FloatingMuteButton
+      <FloatingSelectionActions
         selectedCount={3}
         selectedFindingIds={[]}
         onBeforeOpen={onBeforeOpen}
@@ -74,7 +74,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     const user = userEvent.setup();
 
     render(
-      <FloatingMuteButton
+      <FloatingSelectionActions
         selectedCount={2}
         selectedFindingIds={[]}
         onBeforeOpen={onBeforeOpen}
@@ -113,7 +113,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     const user = userEvent.setup();
 
     render(
-      <FloatingMuteButton
+      <FloatingSelectionActions
         selectedCount={2}
         selectedFindingIds={[]}
         onBeforeOpen={onBeforeOpen}
@@ -147,7 +147,7 @@ describe("FloatingMuteButton — onBeforeOpen error handling", () => {
     const user = userEvent.setup();
 
     render(
-      <FloatingMuteButton
+      <FloatingSelectionActions
         selectedCount={3}
         selectedFindingIds={["group-1", "group-2", "group-3"]}
         onBeforeOpen={onBeforeOpen}

@@ -309,6 +309,36 @@ current-context: test-context
         assert not serializer.is_valid()
         assert "kubeconfig_content" in serializer.errors
 
+    def test_kubeconfig_with_auth_provider_cmd_path_is_rejected(self):
+        kubeconfig_content = """
+apiVersion: v1
+kind: Config
+clusters:
+  - name: test-cluster
+    cluster:
+      server: https://kubernetes.example.test
+users:
+  - name: test-user
+    user:
+      auth-provider:
+        name: gcp
+        config:
+          cmd-path: /bin/sh
+contexts:
+  - name: test-context
+    context:
+      cluster: test-cluster
+      user: test-user
+current-context: test-context
+"""
+
+        serializer = KubernetesProviderSecret(
+            data={"kubeconfig_content": kubeconfig_content}
+        )
+
+        assert not serializer.is_valid()
+        assert "kubeconfig_content" in serializer.errors
+
     def test_malformed_kubeconfig_is_rejected(self):
         serializer = KubernetesProviderSecret(
             data={"kubeconfig_content": "apiVersion: ["}
