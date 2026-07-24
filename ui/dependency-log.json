@@ -449,6 +449,14 @@
   },
   {
     "section": "dependencies",
+    "name": "jsonwebtoken",
+    "from": "9.0.2",
+    "to": "9.0.2",
+    "strategy": "installed",
+    "generatedAt": "2026-07-24T12:40:57.298Z"
+  },
+  {
+    "section": "dependencies",
     "name": "jwt-decode",
     "from": "4.0.0",
     "to": "4.0.0",
@@ -518,6 +526,14 @@
     "to": "0.2.1",
     "strategy": "installed",
     "generatedAt": "2025-10-22T12:36:37.962Z"
+  },
+  {
+    "section": "dependencies",
+    "name": "posthog-js",
+    "from": "1.260.1",
+    "to": "1.407.2",
+    "strategy": "installed",
+    "generatedAt": "2026-07-27T08:35:41.397Z"
   },
   {
     "section": "dependencies",
@@ -718,6 +734,14 @@
     "to": "7946.0.16",
     "strategy": "installed",
     "generatedAt": "2025-10-30T10:22:21.335Z"
+  },
+  {
+    "section": "devDependencies",
+    "name": "@types/jsonwebtoken",
+    "from": "9.0.10",
+    "to": "9.0.10",
+    "strategy": "installed",
+    "generatedAt": "2026-07-24T12:40:57.298Z"
   },
   {
     "section": "devDependencies",

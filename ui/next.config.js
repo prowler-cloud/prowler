@@ -8,19 +8,33 @@ const { withSentryConfig } = require("@sentry/nextjs");
 // HTTP Security Headers
 // 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode.
 //
-// CSP is static; the JSON config island is inert (no nonce needed). A runtime
-// Sentry DSN must be in `connect-src` below — `*.sentry.io` covers Sentry Cloud,
-// but a self-hosted/region host is blocked until per-request CSP (middleware) lands.
-const cspHeader = `
+// The JSON config island is inert (no nonce needed). A runtime Sentry DSN must
+// be in `connect-src` below — `*.sentry.io` covers Sentry Cloud, but a
+// self-hosted/region host is blocked until per-request CSP (middleware) lands.
+const getCspHeader = () => {
+  // PostHog backs the in-app, Cloud-only feedback survey. Its wildcard host is
+  // allowed only on cloud deployments (UI_CLOUD_ENABLED) — the same gate as the
+  // widget itself — so self-hosted OSS omits it entirely and keeps zero
+  // third-party egress by default. When enabled, the SDK loads its
+  // config/surveys bundle, captures events, and fetches survey definitions
+  // across *.posthog.com, so that wildcard goes in script-src, connect-src,
+  // img-src, and frame-src (same placement as Prowler Cloud). NEXT_PUBLIC_* vars
+  // are not visible to next.config at load time, so the plain UI_CLOUD_ENABLED
+  // runtime flag is used here rather than NEXT_PUBLIC_POSTHOG_KEY.
+  const posthog =
+    process.env.UI_CLOUD_ENABLED === "true" ? " https://*.posthog.com" : "";
+
+  return `
   default-src 'self';
-  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com;
-  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io;
-  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://www.googletagmanager.com https://browser.sentry-cdn.com${posthog};
+  connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://js.stripe.com https://www.googletagmanager.com https://*.sentry.io https://*.ingest.sentry.io${posthog};
+  img-src 'self' https://www.google-analytics.com https://www.googletagmanager.com${posthog};
   font-src 'self';
   style-src 'self' 'unsafe-inline';
-  frame-src 'self' https://js.stripe.com https://www.googletagmanager.com;
+  frame-src 'self' https://js.stripe.com https://www.googletagmanager.com${posthog};
   frame-ancestors 'none';
 `;
+};
 
 const nextConfig = {
   poweredByHeader: false,
@@ -39,7 +53,7 @@ const nextConfig = {
     const headers = [
       {
         key: "Content-Security-Policy",
-        value: cspHeader.replace(/\n/g, ""),
+        value: getCspHeader().replace(/\n/g, ""),
       },
       {
         key: "X-Content-Type-Options",

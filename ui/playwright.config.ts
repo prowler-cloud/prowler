@@ -172,6 +172,16 @@ export default defineConfig({
       E2E_ADMIN_USER: process.env.E2E_ADMIN_USER || "e2e@prowler.com",
       E2E_ADMIN_PASSWORD:
         process.env.E2E_ADMIN_PASSWORD || "Thisisapassword123@",
+      UI_CLOUD_ENABLED: "true",
+      // The PostHog-backed feedback widget is enabled by NEXT_PUBLIC_POSTHOG_KEY,
+      // which Next.js inlines at BUILD time. This webServer only runs
+      // `pnpm run start`/`dev` over an already-built bundle, so injecting
+      // NEXT_PUBLIC_POSTHOG_* here would NOT reach the client bundle — the widget
+      // would never render and any "widget present" assertion would be
+      // impossible while "widget absent" would pass for the wrong reason. The
+      // widget's render/capture behavior is therefore covered by unit tests
+      // (components/survey/feedback-survey.test.tsx), not E2E. Only
+      // UI_CLOUD_ENABLED is kept — a runtime flag that genuinely affects routing.
     },
   },
 });
