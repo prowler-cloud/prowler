@@ -86,7 +86,7 @@ export const ComplianceHeader = ({
                     src={logoPath}
                     alt={`${complianceTitle} logo`}
                     fill
-                    className="border-border-neutral-tertiary rounded-lg border bg-gray-50 object-contain"
+                    className="border-border-neutral-tertiary rounded-lg border bg-slate-50 object-contain"
                   />
                 </div>
               )}
