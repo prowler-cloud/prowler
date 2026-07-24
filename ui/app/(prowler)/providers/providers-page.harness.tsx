@@ -235,13 +235,13 @@ export class ProvidersPageHarness {
     });
   }
 
-  // --- Low-level DOM ------------------------------------------------------
+  // --- Low-level DOM
 
-  get container(): HTMLElement {
+  private get container(): HTMLElement {
     return document.body;
   }
 
-  containsText(pattern: RegExp): boolean {
+  private containsText(pattern: RegExp): boolean {
     return pattern.test(this.container.textContent ?? "");
   }
 
@@ -268,7 +268,7 @@ export class ProvidersPageHarness {
     );
   }
 
-  buttonByText(
+  private buttonByText(
     name: RegExp,
     scope: ParentNode = document,
   ): HTMLButtonElement | null {
@@ -279,13 +279,13 @@ export class ProvidersPageHarness {
     );
   }
 
-  inputByName(name: string): HTMLInputElement | null {
+  private inputByName(name: string): HTMLInputElement | null {
     return this.q(`input[name="${name}"]`) as HTMLInputElement | null;
   }
 
-  // --- Sync helpers -------------------------------------------------------
+  // --- Sync helpers (private) ---------------------------------------------
 
-  async waitFor<T>(
+  private async waitFor<T>(
     fn: () => T | null | undefined | false,
     timeoutMs = 5000,
   ): Promise<T> {
@@ -299,11 +299,11 @@ export class ProvidersPageHarness {
     ) as Promise<T>;
   }
 
-  async waitForText(pattern: RegExp, timeoutMs = 5000): Promise<void> {
+  private async waitForText(pattern: RegExp, timeoutMs = 5000): Promise<void> {
     await this.waitFor(() => this.containsText(pattern), timeoutMs);
   }
 
-  async waitForButton(
+  private async waitForButton(
     name: RegExp,
     timeoutMs = 5000,
   ): Promise<HTMLButtonElement> {
@@ -347,8 +347,13 @@ export class ProvidersPageHarness {
     }
   }
 
+  /** Advance from the organization-details step to the authentication step. */
+  async submitOrganizationDetails(): Promise<void> {
+    await this.clickPrimary(/Next/);
+  }
+
   /** Click the setup step's primary footer button ("Next" / "Authenticate"). */
-  async clickPrimary(name: RegExp): Promise<void> {
+  private async clickPrimary(name: RegExp): Promise<void> {
     const btn = await this.waitForButton(name);
     await this.user.click(btn);
   }
@@ -373,39 +378,74 @@ export class ProvidersPageHarness {
     await this.user.click(checkbox);
   }
 
+  /** Submit the authentication step, kicking off account discovery. */
+  async authenticate(): Promise<void> {
+    await this.clickPrimary(/Authenticate/);
+  }
+
   // --- Wizard: selection step --------------------------------------------
 
-  get tree(): HTMLElement | null {
+  private get tree(): HTMLElement | null {
     return this.q('[role="tree"]');
   }
 
-  get treeItems(): HTMLElement[] {
+  private get treeItems(): HTMLElement[] {
     return Array.from(
       this.container.querySelectorAll<HTMLElement>('[role="treeitem"]'),
     );
   }
 
-  treeItemByText(text: RegExp): HTMLElement | null {
+  private treeItemByText(text: RegExp): HTMLElement | null {
     return this.treeItems.find((el) => text.test(el.textContent ?? "")) ?? null;
   }
 
-  async waitForSelectionTree(): Promise<HTMLElement> {
-    return this.waitFor(() => this.tree);
-  }
-
-  selectedCountText(): string {
+  private selectedCountText(): string {
     return (
       this.container.textContent?.match(/\d+ of \d+ accounts selected/)?.[0] ??
       ""
     );
   }
 
-  /** Toggle a candidate's selection by clicking its tree-row checkbox. */
-  async toggleCandidate(idText: RegExp): Promise<void> {
-    const item = await this.waitFor(() => this.treeItemByText(idText));
+  async waitForSelectionTree(): Promise<HTMLElement> {
+    return this.waitFor(() => this.tree);
+  }
+
+  /** Wait until account discovery finishes and the selection summary renders. */
+  async waitForAccountSelection(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/of \d+ accounts selected/, timeoutMs);
+  }
+
+  /** Wait until the summary reads "<selected> of <total> accounts selected". */
+  async waitForSelectedCount(
+    selected: number,
+    total: number,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    await this.waitForText(
+      new RegExp(`${selected} of ${total} accounts selected`),
+      timeoutMs,
+    );
+  }
+
+  /** Whether the selection summary currently reads "<selected> of <total>". */
+  hasSelectedCount(selected: number, total: number): boolean {
+    return new RegExp(`${selected} of ${total} accounts selected`).test(
+      this.selectedCountText(),
+    );
+  }
+
+  /** Toggle a discovered account's selection by its UID. */
+  async toggleAccount(uid: string): Promise<void> {
+    const item = await this.waitFor(() => this.treeItemByText(new RegExp(uid)));
     const checkbox =
       item.querySelector<HTMLElement>('[role="checkbox"]') ?? item;
     await this.user.click(checkbox);
+  }
+
+  /** Whether a discovered account is blocked (disabled, not selectable). */
+  async isAccountBlocked(uid: string): Promise<boolean> {
+    const item = await this.waitFor(() => this.treeItemByText(new RegExp(uid)));
+    return item.getAttribute("aria-disabled") === "true";
   }
 
   async testConnections(): Promise<void> {
@@ -417,38 +457,96 @@ export class ProvidersPageHarness {
     await this.user.click(btn);
   }
 
-  async clickBack(): Promise<void> {
+  async goBack(): Promise<void> {
     const btn = await this.waitForButton(/^\s*Back\s*$/);
     await this.user.click(btn);
   }
 
+  /** Wait until every selected account has connected successfully. */
+  async waitForAccountsConnected(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Accounts Connected!/, timeoutMs);
+  }
+
+  /** Wait until the flow reaches the connected / ready-to-scan state. */
+  async waitForReadyToScan(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Accounts Connected!|ready to Scan/, timeoutMs);
+  }
+
   /** Wait until the connection-test error alert surfaces (partial failure). */
-  async waitForConnectionErrorAlert(timeoutMs = 20000): Promise<void> {
+  async waitForConnectionError(timeoutMs = 20000): Promise<void> {
     await this.waitForText(
       /problem connecting to some accounts|No accounts connected/,
       timeoutMs,
     );
   }
 
+  /** Wait until the app has issued at least `n` connection-test requests. */
+  async waitForConnectionAttempts(n: number, timeoutMs = 20000): Promise<void> {
+    await this.waitFor(() => this.connectionCallCount >= n, timeoutMs);
+  }
+
+  /** Wait until the app has issued at least `n` apply requests. */
+  async waitForApplyCount(n: number, timeoutMs = 20000): Promise<void> {
+    await this.waitFor(() => this.applyCallCount >= n, timeoutMs);
+  }
+
   // --- Table: grouping + row actions --------------------------------------
 
-  get tableRows(): HTMLElement[] {
+  private get tableRows(): HTMLElement[] {
     return Array.from(this.container.querySelectorAll<HTMLElement>("tr"));
   }
 
   /** The table row (`<tr>`) whose text matches — a provider or group row. */
-  rowByText(text: RegExp): HTMLElement | null {
+  private rowByText(text: RegExp): HTMLElement | null {
     return this.tableRows.find((r) => text.test(r.textContent ?? "")) ?? null;
   }
 
-  async waitForRow(text: RegExp, timeoutMs = 5000): Promise<HTMLElement> {
+  private async waitForRow(
+    text: RegExp,
+    timeoutMs = 5000,
+  ): Promise<HTMLElement> {
     return this.waitFor(() => this.rowByText(text), timeoutMs);
   }
 
-  /** Open the actions dropdown for the row matching `rowText`. */
-  async openRowActionsFor(rowText: RegExp): Promise<void> {
+  /** Whether a provider row addressed by its alias is present. */
+  hasProviderRow(alias: string): boolean {
+    return this.rowByText(new RegExp(alias)) !== null;
+  }
+
+  /** Wait until a provider row addressed by its alias is present. */
+  async waitForProviderRow(alias: string): Promise<HTMLElement> {
+    return this.waitForRow(new RegExp(alias));
+  }
+
+  /** Whether the organization group row is present. */
+  hasOrganizationRow(name: string): boolean {
+    return this.rowByText(new RegExp(name)) !== null;
+  }
+
+  /** Wait until the organization group row is present. */
+  async waitForOrganizationRow(name: string): Promise<HTMLElement> {
+    return this.waitForRow(new RegExp(name));
+  }
+
+  /** Wait until a node (OU / folder) group row is present. */
+  async waitForNodeGroup(name: string): Promise<HTMLElement> {
+    return this.waitForRow(new RegExp(name));
+  }
+
+  /** Whether a node group is labelled by its kind (e.g. "Organizational Unit"). */
+  hasNodeKindLabel(label: string): boolean {
+    return this.containsText(new RegExp(label));
+  }
+
+  /** Whether the organization row surfaces its total provider count. */
+  hasProviderCount(count: number): boolean {
+    return this.containsText(new RegExp(`${count} Providers`));
+  }
+
+  /** Open the row-actions dropdown for the organization named `name`. */
+  private async openActionsFor(name: string): Promise<void> {
     const trigger = await this.waitFor(() => {
-      const row = this.rowByText(rowText);
+      const row = this.rowByText(new RegExp(name));
       if (!row) return null;
       return (
         Array.from(row.querySelectorAll<HTMLButtonElement>("button")).find(
@@ -460,24 +558,99 @@ export class ProvidersPageHarness {
   }
 
   /** Click a dropdown/menu item (rendered in a Radix portal) by its label. */
-  async clickMenuItem(name: RegExp): Promise<void> {
+  private async clickMenuItem(name: RegExp): Promise<void> {
     const item = await this.waitFor(() => this.byRoleName("menuitem", name));
     await this.user.click(item);
   }
 
-  async clickButton(name: RegExp): Promise<void> {
+  private async clickButton(name: RegExp): Promise<void> {
     const btn = await this.waitForButton(name);
     await this.user.click(btn);
   }
 
+  /** Open the "Edit Organization Name" flow for the organization `name`. */
+  async openEditNameFor(name: string): Promise<void> {
+    await this.openActionsFor(name);
+    await this.clickMenuItem(/Edit Organization Name/);
+  }
+
+  /** Open the "Update Credentials" flow for the organization `name`. */
+  async openUpdateCredentialsFor(name: string): Promise<void> {
+    await this.openActionsFor(name);
+    await this.clickMenuItem(/Update Credentials/);
+  }
+
+  /** Open the "Delete Organization" flow for the organization `name`. */
+  async openDeleteFor(name: string): Promise<void> {
+    await this.openActionsFor(name);
+    await this.clickMenuItem(/Delete Organization/);
+  }
+
+  /** Wait until the wizard re-opens on the AWS authentication step. */
+  async waitForAuthenticationStep(): Promise<void> {
+    await this.waitForText(
+      /Amazon Web Services \(AWS\) \/ Authentication Details/,
+    );
+  }
+
+  /** Whether the authentication step's primary button is present. */
+  hasAuthenticateButton(): boolean {
+    return this.buttonByText(/Authenticate/) !== null;
+  }
+
+  /** Whether a "Back" button is present. */
+  hasBackButton(): boolean {
+    return this.buttonByText(/^\s*Back\s*$/) !== null;
+  }
+
+  /** Wait until the delete-confirmation dialog surfaces. */
+  async waitForDeleteConfirmation(): Promise<void> {
+    await this.waitForText(/Are you absolutely sure/);
+  }
+
+  /** Whether the delete dialog shows its permanent-deletion warning. */
+  hasDeleteWarning(): boolean {
+    return this.containsText(/permanently delete this organization/);
+  }
+
+  /** Confirm the delete-organization dialog. */
+  async confirmDelete(): Promise<void> {
+    await this.clickButton(/^\s*Delete\s*$/);
+  }
+
+  /** Wait until the app has issued the given request (defaults to at least one). */
+  async waitForRequest(
+    method: string,
+    pathIncludes: string,
+    count = 1,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    await this.waitFor(
+      () => this.countRequests(method, pathIncludes) >= count,
+      timeoutMs,
+    );
+  }
+
   // --- Table: edit-name modal ---------------------------------------------
 
-  get editNameInput(): HTMLInputElement | null {
+  private get editNameInput(): HTMLInputElement | null {
     return this.q("#edit-name-input") as HTMLInputElement | null;
+  }
+
+  /** Wait until the inline edit-name modal is open. */
+  async waitForEditNameModal(): Promise<void> {
+    await this.waitForText(
+      /If left blank, Prowler will use the name stored in AWS/,
+    );
   }
 
   async fillEditName(value: string): Promise<void> {
     const input = await this.waitFor(() => this.editNameInput);
     await this.user.fill(input, value);
+  }
+
+  /** Save the inline edit-name modal. */
+  async saveName(): Promise<void> {
+    await this.clickButton(/^\s*Save\s*$/);
   }
 }

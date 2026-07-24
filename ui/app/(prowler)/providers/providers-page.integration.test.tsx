@@ -13,6 +13,7 @@ const AWS_ORG_ID = "o-aws0abcdef";
 const AWS_ROLE_ARN = "arn:aws:iam::111111111111:role/ProwlerScan";
 /** The organization id seeded by `awsHierarchyFixture`. */
 const AWS_HIERARCHY_ORG_ID = "org-aws-1";
+const AWS_ORG_NAME = "My AWS Organization";
 
 /** A world where one of the two ready accounts fails its connection test. */
 const partialConnectionFixture = (): OrgFixture =>
@@ -30,11 +31,11 @@ async function onboardToSelection(
   harness.mount();
   await harness.chooseAwsOrganizations();
   await harness.fillAwsOrgDetails(AWS_ORG_ID, "My AWS Org");
-  await harness.clickPrimary(/Next/);
+  await harness.submitOrganizationDetails();
   await harness.fillAwsAccess({ ouId: "r-aws0", roleArn: AWS_ROLE_ARN });
-  await harness.clickPrimary(/Authenticate/);
+  await harness.authenticate();
   await harness.waitForSelectionTree();
-  await harness.waitForText(/of \d+ accounts selected/, 15000);
+  await harness.waitForAccountSelection();
 }
 
 describe("AWS Organizations onboarding (baseline)", () => {
@@ -43,9 +44,8 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await onboardToSelection(harness);
 
     await harness.testConnections();
-    await harness.waitForText(/Accounts Connected!/, 20000);
+    await harness.waitForAccountsConnected();
 
-    expect(harness.containsText(/Accounts Connected!/)).toBe(true);
     expect(harness.applyCallCount).toBe(1);
   }, 40000);
 
@@ -53,13 +53,10 @@ describe("AWS Organizations onboarding (baseline)", () => {
     const harness = new ProvidersPageHarness(awsOnboardingFixture());
     await onboardToSelection(harness);
 
-    const blocked = await harness.waitFor(() =>
-      harness.treeItemByText(/333333333333/),
-    );
-    expect(blocked.getAttribute("aria-disabled")).toBe("true");
+    expect(await harness.isAccountBlocked("333333333333")).toBe(true);
 
-    await harness.waitForText(/2 of 2 accounts selected/, 15000);
-    expect(harness.containsText(/3 of 3 accounts selected/)).toBe(false);
+    await harness.waitForSelectedCount(2, 2);
+    expect(harness.hasSelectedCount(3, 3)).toBe(false);
   }, 40000);
 
   it("retries only the failed connections without re-applying", async () => {
@@ -67,12 +64,12 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await onboardToSelection(harness);
 
     await harness.testConnections();
-    await harness.waitForConnectionErrorAlert();
-    await harness.waitFor(() => harness.connectionCallCount === 2, 20000);
+    await harness.waitForConnectionError();
+    await harness.waitForConnectionAttempts(2);
     expect(harness.applyCallCount).toBe(1);
 
     await harness.testConnections();
-    await harness.waitFor(() => harness.connectionCallCount === 3, 20000);
+    await harness.waitForConnectionAttempts(3);
     expect(harness.applyCallCount).toBe(1);
   }, 60000);
 
@@ -81,13 +78,13 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await onboardToSelection(harness);
 
     await harness.testConnections();
-    await harness.waitForConnectionErrorAlert();
+    await harness.waitForConnectionError();
     expect(harness.applyCallCount).toBe(1);
 
-    await harness.clickBack();
-    await harness.toggleCandidate(/222222222222/);
+    await harness.goBack();
+    await harness.toggleAccount("222222222222");
     await harness.testConnections();
-    await harness.waitFor(() => harness.applyCallCount === 2, 20000);
+    await harness.waitForApplyCount(2);
   }, 60000);
 
   it("allows skipping validation once at least one account connected", async () => {
@@ -95,10 +92,10 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await onboardToSelection(harness);
 
     await harness.testConnections();
-    await harness.waitForConnectionErrorAlert();
+    await harness.waitForConnectionError();
 
     await harness.skipValidation();
-    await harness.waitForText(/Accounts Connected!|ready to Scan/, 20000);
+    await harness.waitForReadyToScan();
   }, 60000);
 });
 
@@ -108,86 +105,69 @@ describe("AWS Organizations providers page (baseline)", () => {
     harness.mount({ openWizard: false });
 
     // Organization group row + its OU sub-groups (expanded by default in cloud).
-    await harness.waitForText(/My AWS Organization/);
-    await harness.waitForRow(/Production/);
-    await harness.waitForRow(/Sandbox/);
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
+    await harness.waitForNodeGroup("Production");
+    await harness.waitForNodeGroup("Sandbox");
 
     // Node group rows are labelled by kind, not by ID prefix.
-    expect(harness.containsText(/Organizational Unit/)).toBe(true);
+    expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(true);
     // Organization row surfaces its total provider count.
-    expect(harness.containsText(/3 Providers/)).toBe(true);
+    expect(harness.hasProviderCount(3)).toBe(true);
 
     // Providers render nested under their OU, addressed by alias.
-    expect(harness.rowByText(/prod-web/)).not.toBeNull();
-    expect(harness.rowByText(/prod-api/)).not.toBeNull();
-    expect(harness.rowByText(/sandbox-1/)).not.toBeNull();
+    expect(harness.hasProviderRow("prod-web")).toBe(true);
+    expect(harness.hasProviderRow("prod-api")).toBe(true);
+    expect(harness.hasProviderRow("sandbox-1")).toBe(true);
   }, 30000);
 
   it("edits the organization name via the inline modal (PATCH)", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     harness.mount({ openWizard: false });
-    await harness.waitForText(/My AWS Organization/);
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
-    await harness.openRowActionsFor(/My AWS Organization/);
-    await harness.clickMenuItem(/Edit Organization Name/);
+    await harness.openEditNameFor(AWS_ORG_NAME);
 
     // The edit-name affordance is an inline modal (not the wizard) today.
-    await harness.waitForText(
-      /If left blank, Prowler will use the name stored in AWS/,
-    );
+    await harness.waitForEditNameModal();
     await harness.fillEditName("Renamed AWS Org");
-    await harness.clickButton(/^\s*Save\s*$/);
+    await harness.saveName();
 
-    await harness.waitFor(
-      () =>
-        harness.countRequests(
-          "PATCH",
-          `/organizations/${AWS_HIERARCHY_ORG_ID}`,
-        ) === 1,
-      15000,
+    await harness.waitForRequest(
+      "PATCH",
+      `/organizations/${AWS_HIERARCHY_ORG_ID}`,
     );
   }, 30000);
 
   it("re-enters the wizard at the authentication step to update credentials", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     harness.mount({ openWizard: false });
-    await harness.waitForText(/My AWS Organization/);
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
-    await harness.openRowActionsFor(/My AWS Organization/);
-    await harness.clickMenuItem(/Update Credentials/);
+    await harness.openUpdateCredentialsFor(AWS_ORG_NAME);
 
     // Opens the org wizard directly on the AWS authentication (access) phase.
-    await harness.waitForText(
-      /Amazon Web Services \(AWS\) \/ Authentication Details/,
-    );
-    expect(harness.buttonByText(/Authenticate/)).not.toBeNull();
+    await harness.waitForAuthenticationStep();
+    expect(harness.hasAuthenticateButton()).toBe(true);
     // Edit-credentials re-entry skips the details step, so Back is hidden.
-    expect(harness.buttonByText(/^\s*Back\s*$/)).toBeNull();
+    expect(harness.hasBackButton()).toBe(false);
   }, 30000);
 
   it("deletes an organization as a fire-and-forget request (no task polling)", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     harness.mount({ openWizard: false });
-    await harness.waitForText(/My AWS Organization/);
+    await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
-    await harness.openRowActionsFor(/My AWS Organization/);
-    await harness.clickMenuItem(/Delete Organization/);
+    await harness.openDeleteFor(AWS_ORG_NAME);
 
     // Cascade confirmation dialog.
-    await harness.waitForText(/Are you absolutely sure/);
-    expect(harness.containsText(/permanently delete this organization/)).toBe(
-      true,
-    );
+    await harness.waitForDeleteConfirmation();
+    expect(harness.hasDeleteWarning()).toBe(true);
 
-    await harness.clickButton(/^\s*Delete\s*$/);
+    await harness.confirmDelete();
 
-    await harness.waitFor(
-      () =>
-        harness.countRequests(
-          "DELETE",
-          `/organizations/${AWS_HIERARCHY_ORG_ID}`,
-        ) === 1,
-      15000,
+    await harness.waitForRequest(
+      "DELETE",
+      `/organizations/${AWS_HIERARCHY_ORG_ID}`,
     );
     // Current behaviour: single DELETE, no deletion-task polling (Phase 2 adds it).
     expect(harness.countRequests("GET", "/tasks/")).toBe(0);
@@ -201,10 +181,10 @@ describe("AWS Organizations providers page (baseline)", () => {
     harness.mount({ openWizard: false });
 
     // Providers still render, but ungrouped: no organization row, no OU labels.
-    await harness.waitForRow(/prod-web/);
-    expect(harness.rowByText(/prod-api/)).not.toBeNull();
-    expect(harness.rowByText(/sandbox-1/)).not.toBeNull();
-    expect(harness.containsText(/My AWS Organization/)).toBe(false);
-    expect(harness.containsText(/Organizational Unit/)).toBe(false);
+    await harness.waitForProviderRow("prod-web");
+    expect(harness.hasProviderRow("prod-api")).toBe(true);
+    expect(harness.hasProviderRow("sandbox-1")).toBe(true);
+    expect(harness.hasOrganizationRow(AWS_ORG_NAME)).toBe(false);
+    expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
   }, 30000);
 });
