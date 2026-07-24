@@ -193,6 +193,28 @@ describe("resolveNodeVisual", () => {
       });
     });
 
+    it("should resolve cloud-provider finding resources as non-finding nodes", () => {
+      // Given
+      const guardDutyNode = buildNode(["GuardDutyFinding"], {
+        title: "Port probe",
+        severity: "high",
+      });
+      const inspectorNode = buildNode(["AWSInspectorFinding"], {
+        title: "Package vulnerability",
+        severity: "high",
+      });
+
+      // When
+      const guardDutyVisual = resolveNodeVisual(guardDutyNode);
+      const inspectorVisual = resolveNodeVisual(inspectorNode);
+
+      // Then
+      expect(guardDutyVisual.category).not.toBe(NODE_CATEGORY.FINDING);
+      expect(guardDutyVisual.description).toBe("Guard Duty Finding");
+      expect(inspectorVisual.category).not.toBe(NODE_CATEGORY.FINDING);
+      expect(inspectorVisual.description).toBe("Aws Inspector Finding");
+    });
+
     it("should resolve finding icons from severity", () => {
       // Given
       const findingNodes = [

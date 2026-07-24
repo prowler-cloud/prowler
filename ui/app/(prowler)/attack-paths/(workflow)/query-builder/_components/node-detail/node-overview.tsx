@@ -5,7 +5,7 @@ import { DateWithTime } from "@/components/shadcn/entities/date-with-time";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import type { GraphNode, GraphNodePropertyValue } from "@/types/attack-paths";
 
-import { formatNodeLabels } from "../../_lib";
+import { formatNodeLabels, isProwlerFindingNode } from "../../_lib";
 
 interface NodeOverviewProps {
   node: GraphNode;
@@ -25,9 +25,7 @@ export const NodeOverview = ({ node }: NodeOverviewProps) => {
     return String(value);
   };
 
-  const isFinding = node.labels.some((label) =>
-    label.toLowerCase().includes("finding"),
-  );
+  const isFinding = isProwlerFindingNode(node.labels);
 
   return (
     <div className="flex flex-col gap-4">

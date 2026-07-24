@@ -7,6 +7,7 @@
 import { vi } from "vitest";
 import { userEvent } from "vitest/browser";
 
+import { isProwlerFindingNode } from "./_lib";
 import type { PageFixture } from "./attack-paths-page.fixtures";
 
 export class AttackPathPageHarness {
@@ -458,9 +459,7 @@ export class AttackPathPageHarness {
   async clickFirstResourceNodeWithoutFindings(): Promise<HTMLElement> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();
@@ -528,9 +527,7 @@ export class AttackPathPageHarness {
   async expandAllFindings(): Promise<void> {
     const findingIds = new Set(
       (this.fixture.queryResult?.nodes ?? [])
-        .filter((n) =>
-          n.labels.some((l) => l.toLowerCase().includes("finding")),
-        )
+        .filter((n) => isProwlerFindingNode(n.labels))
         .map((n) => n.id),
     );
     const resourceWithFindingIds = new Set<string>();
