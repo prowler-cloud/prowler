@@ -121,8 +121,13 @@ export abstract class BrowserHarness<TFixture> {
     }, timeoutMs);
   }
 
-  /** Sleep for a fixed duration to let a CSS/layout transition settle. */
-  protected async waitForTransition(ms = 350): Promise<void> {
+  /**
+   * Sleep for a fixed duration to let a CSS/layout transition settle. Public
+   * because a few flows assert on animation-tail state that has no queryable
+   * settled signal; prefer waiting on an observable post-condition when one
+   * exists.
+   */
+  async waitForTransition(ms = 350): Promise<void> {
     await new Promise((r) => setTimeout(r, ms));
   }
 

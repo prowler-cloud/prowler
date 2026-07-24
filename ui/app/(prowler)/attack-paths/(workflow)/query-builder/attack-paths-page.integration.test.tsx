@@ -106,7 +106,7 @@ describe("running a query", () => {
   }) => {
     const graph = await mountWith();
 
-    const card = await graph.waitFor(() => graph.queryBuilderCard, 10000);
+    const card = await graph.waitForQueryBuilderCard();
 
     expect(card).toHaveAttribute("data-slot", "card");
     expect(card).toHaveClass("rounded-xl");
@@ -119,11 +119,11 @@ describe("running a query", () => {
 
     await graph.selectQuery();
 
-    expect(graph.containsText(/Query Parameters/i)).toBe(true);
-    expect(graph.containsText(/Tag key/i)).toBe(true);
-    expect(graph.getInputByName("tag_key")).toBeTruthy();
-    expect(graph.containsText(/Tag value/i)).toBe(true);
-    expect(graph.getInputByName("tag_value")).toBeTruthy();
+    expect(graph.showsQueryParameters()).toBe(true);
+    expect(graph.showsParameterLabel("Tag key")).toBe(true);
+    expect(graph.hasParameterInput("tag_key")).toBe(true);
+    expect(graph.showsParameterLabel("Tag value")).toBe(true);
+    expect(graph.hasParameterInput("tag_value")).toBe(true);
   });
 
   test("the graph renders with a background, a minimap, and a viewport", async ({
@@ -307,7 +307,7 @@ describe("running a query", () => {
     await graph.waitForGraphStable(5);
 
     expect(graph.nodes.length).toBe(7);
-    expect(graph.containsText(/🔒-secure-bucket-日本語/)).toBe(true);
+    expect(graph.showsNodeLabel("🔒-secure-bucket-日本語")).toBe(true);
   });
 });
 
@@ -375,19 +375,13 @@ describe("exploring the graph", () => {
     await graph.clickFirstResourceNode();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
-    await graph.waitFor(
-      () => graph.viewportTransform !== initialViewport,
-      2000,
-    );
+    await graph.waitForViewportChange(initialViewport);
 
     const contextualViewport = graph.viewportTransform;
 
     await graph.fit();
 
-    await graph.waitFor(
-      () => graph.viewportTransform !== contextualViewport,
-      2000,
-    );
+    await graph.waitForViewportChange(contextualViewport);
   });
   test("clicking an expanded resource re-fits the remaining visible graph", async ({
     mountWith,
@@ -398,6 +392,9 @@ describe("exploring the graph", () => {
 
     await graph.clickFirstResourceNode();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
+    // This flow asserts the re-fit animation moves the viewport off the
+    // mid-transition value captured next; there is no queryable settled state
+    // to wait on, so a fixed settle is the honest tool here.
     await graph.waitForTransition();
 
     const expandedViewport = graph.viewportTransform;
@@ -405,10 +402,7 @@ describe("exploring the graph", () => {
     await graph.clickFirstResourceNode();
 
     expect(graph.findingNodes.length).toBe(0);
-    await graph.waitFor(
-      () => graph.viewportTransform !== expandedViewport,
-      2000,
-    );
+    await graph.waitForViewportChange(expandedViewport);
   });
 
   test("returning from a finding keeps the expanded findings context fitted", async ({
@@ -420,7 +414,6 @@ describe("exploring the graph", () => {
 
     await graph.clickFirstResourceNode();
     expect(graph.findingNodes.length).toBeGreaterThan(0);
-    await graph.waitForTransition();
 
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
@@ -428,7 +421,6 @@ describe("exploring the graph", () => {
     await graph.exitFilteredView();
 
     expect(graph.isInFilteredView).toBe(false);
-    await graph.waitForTransition();
 
     expect(graph.findingNodes.length).toBeGreaterThan(0);
     expect(graph.viewportTransform).toBeTruthy();
@@ -492,14 +484,14 @@ describe("exploring the graph", () => {
       .sort();
 
     await graph.hoverFirstResourceNode();
-    await graph.waitForTransition(120);
+    await graph.waitForHighlightedEdges(expectedHighlightedIds.length);
 
     expect(
       graph.highlightedEdges.map((edge) => edge.dataset.id ?? "").sort(),
     ).toEqual(expectedHighlightedIds);
 
     await graph.unhoverNodes();
-    await graph.waitForTransition(120);
+    await graph.waitForHighlightedEdges(0);
     expect(graph.highlightedEdges.length).toBe(0);
   });
 
@@ -572,8 +564,9 @@ describe("auto-fitting the viewport", () => {
     // sit entirely outside the current frame. The expand auto-fit should then
     // recover the user instead of leaving them hunting off-screen.
     for (let i = 0; i < 5; i++) {
+      const zoomedFrom = graph.viewportTransform;
       await graph.zoomIn();
-      await graph.waitForTransition(80);
+      await graph.waitForViewportChange(zoomedFrom);
     }
     // Hidden findings are not measured by the initial declarative fit, so
     // their positions can sit outside the framed viewport. Expanding the
@@ -583,7 +576,7 @@ describe("auto-fitting the viewport", () => {
     expect(before).toBeTruthy();
 
     await graph.expandAllFindings();
-    await graph.waitForTransition();
+    await graph.waitForViewportChange(before);
 
     expect(graph.viewportTransform).not.toBe(before);
   });
@@ -601,7 +594,7 @@ describe("auto-fitting the viewport", () => {
 
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
-    await graph.waitForTransition();
+    await graph.waitForViewportChange(beforeFilter);
 
     expect(graph.viewportTransform).not.toBe(beforeFilter);
   });
@@ -613,14 +606,16 @@ describe("auto-fitting the viewport", () => {
     await graph.executeQuery();
     await graph.waitForGraphStable(3);
     await graph.expandAllFindings();
+
+    const beforeFilter = graph.viewportTransform;
     await graph.clickFirstFindingNode();
     expect(graph.isInFilteredView).toBe(true);
-    await graph.waitForTransition();
+    await graph.waitForViewportChange(beforeFilter);
     const filterT = graph.viewportTransform;
 
     await graph.exitFilteredView();
     await graph.waitForGraphStable(3);
-    await graph.waitForTransition();
+    await graph.waitForViewportChange(filterT);
 
     expect(graph.viewportTransform).not.toBe(filterT);
   });
