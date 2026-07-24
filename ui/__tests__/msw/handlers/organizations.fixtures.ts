@@ -1,11 +1,10 @@
 /**
- * Shared fixtures for the organizations onboarding flow browser tests and the
- * no-backend dev harness.
+ * Shared fixtures for the organization onboarding flow, used by the onboarding
+ * integration tests and the no-backend dev harness (MSW).
  *
- * The wire shapes here mirror the agreed transition-window API contract and are
- * intentionally kept independent of `@/types/organizations` so the handlers and
- * fixtures stay stable while that module is reshaped to canonical during Phase 1
- * (see design decision D13 — "zero handler changes during the refactor").
+ * The wire shapes are declared here rather than imported from
+ * `@/types/organizations` so refactors to that module don't force the mock
+ * handlers and fixtures to churn.
  *
  * A fixture is a self-contained snapshot of the API "world" a single test
  * exercises: seeded organizations/nodes/providers for the providers-page
@@ -33,9 +32,9 @@ export const NODE_KIND = {
 export type NodeKind = (typeof NODE_KIND)[keyof typeof NODE_KIND];
 
 /**
- * Registration enums use the CANONICAL values from day 0 (see D13). Current
- * code does not read `provider_secret_state`/relation fields, so emitting the
- * new values is safe; Phase 1 code will read them.
+ * `provider_secret_state` and the relation fields carry the canonical values.
+ * The app doesn't read them yet, so serving them from the mock is harmless;
+ * they're here for the code that will consume them.
  */
 export const PROVIDER_SECRET_STATE = {
   WILL_CREATE: "will_create",

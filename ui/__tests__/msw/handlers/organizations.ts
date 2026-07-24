@@ -1,12 +1,12 @@
 /**
- * MSW handlers for the organizations onboarding flow.
+ * MSW handlers for the organization onboarding flow.
  *
  * These serve BOTH the deprecated `/organizational-units` routes and the
- * canonical `/organization-nodes` contract over the same fixture data —
- * exactly like the real transition-window API (see design decision D13). AWS
- * bodies carry canonical fields plus deprecated aliases; the fixture flag
- * `serveDeprecatedRoutes` is flipped off by the Phase 1 tripwire (task 2.10) to
- * prove no UI code still calls alias endpoints.
+ * canonical `/organization-nodes` routes over the same fixture data. AWS
+ * bodies carry canonical fields plus the deprecated aliases, mirroring an API
+ * that still accepts both. Set the fixture flag `serveDeprecatedRoutes` to
+ * `false` to drop the alias routes — used to assert no UI code still calls
+ * them.
  *
  * Wire the handlers per test via `worker.use(...handlersForOrganizations(fx))`.
  * The module also doubles as the no-backend dev harness.
@@ -428,8 +428,8 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
     http.post(`${API}/schedules/bulk`, () => HttpResponse.json({ data: [] })),
   ];
 
-  // Transition-window facade: the deprecated AWS-only routes are served
-  // alongside the canonical ones until the Phase 1 tripwire flips them off.
+  // Deprecated AWS-only routes, served alongside the canonical ones unless
+  // `serveDeprecatedRoutes` is off.
   const deprecatedHandlers = [
     http.get(`${API}/organizational-units`, () =>
       HttpResponse.json({
