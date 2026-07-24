@@ -8,16 +8,11 @@ export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
-    // The app runs with the React Compiler (`reactCompiler: true` in
-    // next.config.js) and is written assuming it — components omit
-    // useMemo/useCallback. Without the compiler in the test build, those
-    // unmemoized callbacks/objects are unstable every render, so effects that
-    // depend on them (e.g. the wizard footer-config sync) loop infinitely.
-    // Run the compiler here too so tests match production semantics.
+    // Enable react compiler for test environment
     plugins: [
       react({
         babel: {
-          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
+          plugins: [["babel-plugin-react-compiler"]],
         },
       }),
     ],
