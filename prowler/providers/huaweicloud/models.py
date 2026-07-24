@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from typing import Any, Optional
+from urllib.parse import urlparse
 
 from pydantic.v1 import BaseModel, validator
 
@@ -33,6 +34,19 @@ def _iam_endpoint_for_region(region: str):
         return None
 
 
+def _endpoint_host(endpoint: str) -> str:
+    """Return the lowercased host of an endpoint URL, or "" if unparseable.
+
+    Used so cloud detection matches on the URL host's TLD suffix instead of an
+    arbitrary substring, which avoids being fooled by a lookalike host such as
+    ``iam.myhuaweicloud.com.example.eu``.
+    """
+    if not endpoint:
+        return ""
+    parsed = urlparse(endpoint if "://" in endpoint else f"//{endpoint}")
+    return (parsed.hostname or "").lower()
+
+
 def _align_endpoint_tld(region: str, endpoint: str) -> str:
     """Align a service endpoint's TLD to the region's cloud.
 
@@ -46,9 +60,10 @@ def _align_endpoint_tld(region: str, endpoint: str) -> str:
     iam_endpoint = _iam_endpoint_for_region(region)
     if not iam_endpoint or not endpoint:
         return endpoint
-    if ".myhuaweicloud.eu" in iam_endpoint:
+    iam_host = _endpoint_host(iam_endpoint)
+    if iam_host.endswith(".myhuaweicloud.eu"):
         return endpoint.replace(".myhuaweicloud.com", ".myhuaweicloud.eu")
-    if ".myhuaweicloud.com" in iam_endpoint:
+    if iam_host.endswith(".myhuaweicloud.com"):
         return endpoint.replace(".myhuaweicloud.eu", ".myhuaweicloud.com")
     return endpoint
 
@@ -81,7 +96,7 @@ class HuaweiCloudBaseModel(BaseModel):
     """
 
     @validator("*", pre=True)
-    def _coerce_none_for_non_optional_str(cls, value, field):
+    def _coerce_none_for_non_optional_str(cls, value, field):  # noqa: vulture
         if value is None and not field.allow_none and field.type_ is str:
             return field.default if field.default is not None else ""
         return value

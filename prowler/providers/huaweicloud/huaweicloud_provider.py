@@ -31,6 +31,7 @@ from prowler.providers.huaweicloud.models import (
     HuaweiCloudCredentials,
     HuaweiCloudIdentityInfo,
     HuaweiCloudSession,
+    _endpoint_host,
     _iam_endpoint_for_region,
 )
 
@@ -261,7 +262,7 @@ class HuaweicloudProvider(Provider):
         result = []
         for region in HUAWEICLOUD_REGIONS:
             endpoint = _iam_endpoint_for_region(region) or ""
-            is_europe = ".myhuaweicloud.eu" in endpoint
+            is_europe = _endpoint_host(endpoint).endswith(".myhuaweicloud.eu")
             is_china = region.startswith("cn-")
             if cloud == "europe" and is_europe:
                 result.append(region)
