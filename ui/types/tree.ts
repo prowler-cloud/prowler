@@ -39,6 +39,12 @@ export interface TreeDataItem {
   errorMessage?: string;
   /** Additional CSS classes for the item */
   className?: string;
+  /**
+   * Optional domain discriminator for container nodes (e.g. the organizations
+   * flow sets the node `kind` — "organizational-unit" / "folder"). Leaf items
+   * leave it unset. Used to drive rendering by data rather than ID prefixes.
+   */
+  kind?: string;
 }
 
 /**

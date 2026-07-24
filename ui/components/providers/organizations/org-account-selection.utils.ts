@@ -6,13 +6,15 @@ import {
 const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 
-interface AccountProviderMapping {
+interface CandidateProviderMapping {
+  // Wire field name is `account_id` for both providers (it carries the
+  // candidate uid: AWS account id / GCP project id).
   account_id: string;
   provider_id: string;
 }
 
-interface BuildAccountToProviderMapParams {
-  selectedAccountIds: string[];
+interface BuildCandidateToProviderMapParams {
+  selectedCandidateIds: string[];
   providerIds: string[];
   applyResult: unknown;
   resolveProviderUidById: (providerId: string) => Promise<string | null>;
@@ -78,9 +80,9 @@ function sleepWithAbort(
   });
 }
 
-function normalizeAccountProviderMapping(
+function normalizeCandidateProviderMapping(
   value: unknown,
-): AccountProviderMapping | null {
+): CandidateProviderMapping | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -107,7 +109,7 @@ function normalizeAccountProviderMapping(
   };
 }
 
-function extractAccountProviderMappings(applyResult: unknown) {
+function extractCandidateProviderMappings(applyResult: unknown) {
   if (!isRecord(applyResult)) {
     return [];
   }
@@ -133,8 +135,8 @@ function extractAccountProviderMappings(applyResult: unknown) {
     : [];
 
   return [...attributeMappings, ...relationshipMappings]
-    .map(normalizeAccountProviderMapping)
-    .filter((mapping): mapping is AccountProviderMapping => mapping !== null);
+    .map(normalizeCandidateProviderMapping)
+    .filter((mapping): mapping is CandidateProviderMapping => mapping !== null);
 }
 
 export async function runWithConcurrencyLimit<T, R>(
@@ -170,20 +172,20 @@ export async function runWithConcurrencyLimit<T, R>(
   return results;
 }
 
-export async function buildAccountToProviderMap({
-  selectedAccountIds,
+export async function buildCandidateToProviderMap({
+  selectedCandidateIds,
   providerIds,
   applyResult,
   resolveProviderUidById,
-}: BuildAccountToProviderMapParams): Promise<Map<string, string>> {
-  const selectedAccountIdSet = new Set(selectedAccountIds);
+}: BuildCandidateToProviderMapParams): Promise<Map<string, string>> {
+  const selectedCandidateIdSet = new Set(selectedCandidateIds);
 
-  const explicitMappings = extractAccountProviderMappings(applyResult);
+  const explicitMappings = extractCandidateProviderMappings(applyResult);
   if (explicitMappings.length > 0) {
     const mappedProviders = new Map<string, string>();
 
     for (const mapping of explicitMappings) {
-      if (!selectedAccountIdSet.has(mapping.account_id)) {
+      if (!selectedCandidateIdSet.has(mapping.account_id)) {
         continue;
       }
       mappedProviders.set(mapping.account_id, mapping.provider_id);
@@ -199,10 +201,10 @@ export async function buildAccountToProviderMap({
     DEFAULT_CONCURRENCY_LIMIT,
     async (providerId) => {
       const providerUid = await resolveProviderUidById(providerId);
-      if (!providerUid || !selectedAccountIdSet.has(providerUid)) {
+      if (!providerUid || !selectedCandidateIdSet.has(providerUid)) {
         return null;
       }
-      return { accountId: providerUid, providerId };
+      return { candidateId: providerUid, providerId };
     },
   );
 
@@ -211,7 +213,7 @@ export async function buildAccountToProviderMap({
     if (!entry) {
       continue;
     }
-    fallbackMapping.set(entry.accountId, entry.providerId);
+    fallbackMapping.set(entry.candidateId, entry.providerId);
   }
 
   return fallbackMapping;

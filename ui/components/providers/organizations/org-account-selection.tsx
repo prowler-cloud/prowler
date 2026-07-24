@@ -24,11 +24,11 @@ export function OrgAccountSelection({
   onFooterChange,
 }: OrgAccountSelectionProps) {
   const {
-    accountAliases,
-    accountLookup,
+    candidateAliases,
+    candidateLookup,
     applyError,
     canAdvanceToLaunch,
-    discoveryResult,
+    hierarchy,
     handleTreeSelectionChange,
     hasConnectionErrors,
     isTesting,
@@ -37,9 +37,9 @@ export function OrgAccountSelection({
     organizationExternalId,
     selectedCount,
     selectedIdsForTree,
-    setAccountAlias,
+    setCandidateAlias,
     showHeaderHelperText,
-    totalAccounts,
+    totalCandidates,
     treeDataWithConnectionState,
   } = useOrgAccountSelectionFlow({
     onBack,
@@ -48,7 +48,7 @@ export function OrgAccountSelection({
     onFooterChange,
   });
 
-  if (!discoveryResult) {
+  if (!hierarchy) {
     return (
       <div className="text-muted-foreground py-8 text-center text-sm">
         No discovery data available.
@@ -79,7 +79,7 @@ export function OrgAccountSelection({
               ? "Testing account connections..."
               : "Confirm all accounts under this Organization you want to add to Prowler."}{" "}
             {!isTestingView &&
-              `${selectedCount} of ${totalAccounts} accounts selected.`}
+              `${selectedCount} of ${totalCandidates} accounts selected.`}
           </p>
         )}
       </div>
@@ -118,9 +118,9 @@ export function OrgAccountSelection({
             <OrgAccountTreeItem
               params={params}
               mode={TREE_ITEM_MODE.SELECTION}
-              accountLookup={accountLookup}
-              aliases={accountAliases}
-              onAliasChange={setAccountAlias}
+              candidateLookup={candidateLookup}
+              aliases={candidateAliases}
+              onAliasChange={setCandidateAlias}
             />
           )}
         />

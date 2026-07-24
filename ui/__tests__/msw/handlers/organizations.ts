@@ -211,7 +211,20 @@ const uidForProviderId = (
 const CONNECTION_TASK_PREFIX = "conn-task-";
 const DELETION_TASK_PREFIX = "del-task-";
 
-export const handlersForOrganizations = (fx: OrgFixture) => {
+interface HandlerOptions {
+  /**
+   * Fail both hierarchy reads (`/organizations`, `/organization-nodes`) with a
+   * 500. The `…Safe` list actions turn that into their degraded-fetch flag,
+   * which is how the providers page resolves `hierarchyStatus: unavailable` —
+   * so the notice is exercised through the real path, not an injected prop.
+   */
+  hierarchyUnavailable?: boolean;
+}
+
+export const handlersForOrganizations = (
+  fx: OrgFixture,
+  { hierarchyUnavailable = false }: HandlerOptions = {},
+) => {
   // Mutable working copy for resources created during the test lifecycle.
   const organizations = [...fx.organizations];
   const createdSecretIds = new Set(
@@ -233,6 +246,11 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
   const handlers = [
     // --- organizations CRUD + filters ------------------------------------
     http.get(`${API}/organizations`, ({ request }) => {
+      if (hierarchyUnavailable) {
+        return HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
+          status: 500,
+        });
+      }
       const url = new URL(request.url);
       const externalId = url.searchParams.get("filter[external_id]");
       const orgType = url.searchParams.get("filter[org_type]");
@@ -349,10 +367,14 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
 
     // --- canonical organization-nodes ------------------------------------
     http.get(`${API}/organization-nodes`, () =>
-      HttpResponse.json({
-        data: fx.nodes.map(organizationNodeResource),
-        meta: { version: "v1" },
-      }),
+      hierarchyUnavailable
+        ? HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
+            status: 500,
+          })
+        : HttpResponse.json({
+            data: fx.nodes.map(organizationNodeResource),
+            meta: { version: "v1" },
+          }),
     ),
 
     http.delete<{ id: string }>(`${API}/organization-nodes/:id`, ({ params }) =>

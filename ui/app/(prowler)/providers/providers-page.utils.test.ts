@@ -7,7 +7,7 @@ const providersActionsMock = vi.hoisted(() => ({
 
 const organizationsActionsMock = vi.hoisted(() => ({
   listOrganizationsSafe: vi.fn(),
-  listOrganizationUnitsSafe: vi.fn(),
+  listOrganizationNodesSafe: vi.fn(),
 }));
 
 const scansActionsMock = vi.hoisted(() => ({
@@ -32,8 +32,10 @@ vi.mock("@/actions/schedules", () => schedulesActionsMock);
 vi.mock("@/actions/manage-groups/manage-groups", () => manageGroupsActionsMock);
 
 import { SearchParamsProps } from "@/types";
+import { NODE_KIND } from "@/types/organizations";
 import { ProvidersApiResponse } from "@/types/providers";
 import {
+  HIERARCHY_STATUS,
   isProvidersOrganizationRow,
   ProvidersProviderRow,
 } from "@/types/providers-table";
@@ -214,7 +216,7 @@ describe("buildProvidersTableRows", () => {
     const rows = buildProvidersTableRows({
       providers,
       organizations: [],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: false,
     });
 
@@ -236,10 +238,10 @@ describe("buildProvidersTableRows", () => {
                 ? { type: "organizations", id: "org-1" }
                 : null,
           },
-          organization_unit: {
+          organization_node: {
             data:
               provider.id === "provider-1"
-                ? { type: "organizational-units", id: "ou-1" }
+                ? { type: "organization-nodes", id: "ou-1" }
                 : null,
           },
         },
@@ -263,11 +265,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -306,8 +309,8 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: { type: "organizations", id: "org-1" },
           },
-          organization_unit: {
-            data: { type: "organizational-units", id: "ou-grandchild" },
+          organization_node: {
+            data: { type: "organization-nodes", id: "ou-grandchild" },
           },
         },
       }),
@@ -330,11 +333,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-root",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Production",
             external_id: "ou-prod",
             parent_external_id: "r-root",
@@ -348,8 +352,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-child",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "EMEA",
             external_id: "ou-emea",
             parent_external_id: "ou-prod",
@@ -363,8 +368,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-grandchild",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security",
             external_id: "ou-security",
             parent_external_id: "ou-emea",
@@ -421,11 +427,12 @@ describe("buildProvidersTableRows", () => {
           relationships: {},
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-parent",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Workloads",
             external_id: "ou-workloads",
             parent_external_id: null,
@@ -442,8 +449,9 @@ describe("buildProvidersTableRows", () => {
         },
         {
           id: "ou-child",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Team A",
             external_id: "ou-team-a",
             parent_external_id: null,
@@ -454,7 +462,7 @@ describe("buildProvidersTableRows", () => {
               data: { type: "organizations", id: "org-1" },
             },
             parent: {
-              data: { type: "organizational-units", id: "ou-parent" },
+              data: { type: "organization-nodes", id: "ou-parent" },
             },
             providers: {
               data: [{ type: "providers", id: "provider-1" }],
@@ -483,7 +491,9 @@ describe("buildProvidersTableRows", () => {
   });
 
   it("does not duplicate providers that appear in both org relationships and OU assignments", () => {
-    // Given — provider-1 is linked to org-1 AND assigned to ou-1
+    // Given — provider-1 is linked to org-1 AND assigned to ou-1.
+    // Uses the deprecated `organization_unit` alias (rather than the canonical
+    // `organization_node`) to keep coverage of the source's alias fallback.
     const providers = [
       toProviderRow(providersResponse.data[0], {
         relationships: {
@@ -519,11 +529,12 @@ describe("buildProvidersTableRows", () => {
           },
         },
       ],
-      organizationUnits: [
+      organizationNodes: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -563,7 +574,7 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: { type: "organizations", id: "org-1" },
           },
-          organization_unit: {
+          organization_node: {
             data: null,
           },
         },
@@ -591,7 +602,7 @@ describe("buildProvidersTableRows", () => {
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -613,7 +624,7 @@ describe("buildProvidersTableRows", () => {
           organization: {
             data: null,
           },
-          organization_unit: {
+          organization_node: {
             data: null,
           },
         },
@@ -641,13 +652,13 @@ describe("buildProvidersTableRows", () => {
                 { type: "providers", id: "provider-2" },
               ],
             },
-            organizational_units: {
+            organization_nodes: {
               data: [],
             },
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -665,6 +676,8 @@ describe("buildProvidersTableRows", () => {
       ),
     ).toBe(true);
     expect(orgRow.providerIds).toEqual(["provider-1", "provider-2"]);
+    // Org row carries the per-organization orgType from `attributes.org_type`.
+    expect(orgRow.orgType).toBe("aws");
   });
 
   it("keeps organization relationship provider ids even when providers are not in the visible page", () => {
@@ -701,13 +714,13 @@ describe("buildProvidersTableRows", () => {
                 { type: "providers", id: "provider-not-in-page" },
               ],
             },
-            organizational_units: {
+            organization_nodes: {
               data: [],
             },
           },
         },
       ],
-      organizationUnits: [],
+      organizationNodes: [],
       isCloud: true,
     });
 
@@ -741,7 +754,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationsSafe,
     ).not.toHaveBeenCalled();
     expect(
-      organizationsActionsMock.listOrganizationUnitsSafe,
+      organizationsActionsMock.listOrganizationNodesSafe,
     ).not.toHaveBeenCalled();
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
@@ -762,10 +775,10 @@ describe("loadProvidersAccountsViewData", () => {
                 ? { type: "organizations", id: "org-1" }
                 : null,
           },
-          organization_unit: {
+          organization_node: {
             data:
               provider.id === "provider-1"
-                ? { type: "organizational-units", id: "ou-1" }
+                ? { type: "organization-nodes", id: "ou-1" }
                 : null,
           },
         },
@@ -788,12 +801,13 @@ describe("loadProvidersAccountsViewData", () => {
         },
       ],
     });
-    organizationsActionsMock.listOrganizationUnitsSafe.mockResolvedValue({
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
       data: [
         {
           id: "ou-1",
-          type: "organizational-units",
+          type: "organization-nodes",
           attributes: {
+            kind: NODE_KIND.ORGANIZATIONAL_UNIT,
             name: "Security OU",
             external_id: "ou-security",
             parent_external_id: "r-root",
@@ -823,7 +837,7 @@ describe("loadProvidersAccountsViewData", () => {
       organizationsActionsMock.listOrganizationsSafe,
     ).toHaveBeenCalledTimes(1);
     expect(
-      organizationsActionsMock.listOrganizationUnitsSafe,
+      organizationsActionsMock.listOrganizationNodesSafe,
     ).toHaveBeenCalledTimes(1);
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
@@ -832,14 +846,17 @@ describe("loadProvidersAccountsViewData", () => {
   });
 
   it("falls back to empty cloud grouping data when organizations endpoints fail", async () => {
-    // Given
+    // Given — both hierarchy fetches fail (flagged with `error: true`), which is
+    // distinct from a genuinely-empty hierarchy.
     providersActionsMock.getProviders.mockResolvedValue(providersResponse);
     providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
     organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
       data: [],
+      error: true,
     });
-    organizationsActionsMock.listOrganizationUnitsSafe.mockResolvedValue({
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
       data: [],
+      error: true,
     });
     scansActionsMock.getScans.mockResolvedValue({ data: [] });
 
@@ -849,7 +866,7 @@ describe("loadProvidersAccountsViewData", () => {
       isCloud: true,
     });
 
-    // Then
+    // Then — providers render flat and the degraded-view notice is signaled.
     expect(viewData.filters.map((filter) => filter.labelCheckboxGroup)).toEqual(
       ["Status"],
     );
@@ -857,6 +874,7 @@ describe("loadProvidersAccountsViewData", () => {
     expect(
       viewData.rows.every((row) => row.rowType === PROVIDERS_ROW_TYPE.PROVIDER),
     ).toBe(true);
+    expect(viewData.hierarchyStatus).toBe(HIERARCHY_STATUS.UNAVAILABLE);
   });
 
   it("surfaces the real cadence (not a hardcoded label) from a configured schedule with no materialized scan yet", async () => {

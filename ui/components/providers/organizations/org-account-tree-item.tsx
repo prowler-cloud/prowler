@@ -9,7 +9,7 @@ import {
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
 import { cn } from "@/lib/utils";
-import { APPLY_STATUS, DiscoveredAccount } from "@/types/organizations";
+import { APPLY_STATUS, NODE_KIND, OrgCandidate } from "@/types/organizations";
 import { TreeRenderItemParams } from "@/types/tree";
 
 const TREE_ITEM_MODE = {
@@ -21,29 +21,33 @@ type TreeItemMode = (typeof TREE_ITEM_MODE)[keyof typeof TREE_ITEM_MODE];
 interface OrgAccountTreeItemProps {
   params: TreeRenderItemParams;
   mode: TreeItemMode;
-  accountLookup: Map<string, DiscoveredAccount>;
+  candidateLookup: Map<string, OrgCandidate>;
   aliases: Record<string, string>;
-  onAliasChange?: (accountId: string, alias: string) => void;
+  onAliasChange?: (candidateId: string, alias: string) => void;
 }
 
 export function OrgAccountTreeItem({
   params,
   mode,
-  accountLookup,
+  candidateLookup,
   aliases,
   onAliasChange,
 }: OrgAccountTreeItemProps) {
   const { item, isLeaf } = params;
-  const account = accountLookup.get(item.id);
-  const isOuNode = item.id.startsWith("ou-");
+  const candidate = candidateLookup.get(item.id);
   const ItemIcon = item.icon;
   const idColumnClass = "w-44 shrink-0";
   const aliasInputClass = "h-9 w-full max-w-64 text-sm";
 
-  // OU nodes: show OU id + alias/name (input in selection mode).
-  if (!account && isOuNode) {
-    const ouDisplayName = aliases[item.id] ?? item.name;
-    const isSelectionMode = mode === TREE_ITEM_MODE.SELECTION && onAliasChange;
+  // Container node (OU / folder) — presence in candidateLookup, not an ID
+  // prefix, decides this. AWS organizational units keep the editable-name
+  // input; other container kinds (e.g. GCP folders) render read-only.
+  if (!candidate) {
+    const nodeDisplayName = aliases[item.id] ?? item.name;
+    const isEditableNode =
+      mode === TREE_ITEM_MODE.SELECTION &&
+      onAliasChange &&
+      item.kind === NODE_KIND.ORGANIZATIONAL_UNIT;
 
     return (
       <div className="flex flex-1 items-center gap-3">
@@ -54,17 +58,17 @@ export function OrgAccountTreeItem({
           <span className="text-sm">{item.id}</span>
         </div>
         <div className="min-w-0 flex-1">
-          {isSelectionMode ? (
+          {isEditableNode ? (
             <Input
               className={aliasInputClass}
               placeholder="Name (optional)"
-              value={ouDisplayName}
+              value={nodeDisplayName}
               onChange={(e) => onAliasChange(item.id, e.target.value)}
               onClick={(e) => e.stopPropagation()}
             />
           ) : (
             <span className="text-muted-foreground line-clamp-1 text-xs">
-              {ouDisplayName}
+              {nodeDisplayName}
             </span>
           )}
         </div>
@@ -72,23 +76,24 @@ export function OrgAccountTreeItem({
     );
   }
 
-  // Any remaining non-account node (unexpected fallback).
-  if (!account || !isLeaf) {
+  // Any remaining non-leaf node (unexpected fallback).
+  if (!isLeaf) {
     return <span className="text-sm font-medium">{item.name}</span>;
   }
 
-  const isBlocked = account.registration?.apply_status === APPLY_STATUS.BLOCKED;
-  const blockedReasons = account.registration?.blocked_reasons ?? [];
+  const isBlocked =
+    candidate.registration?.apply_status === APPLY_STATUS.BLOCKED;
+  const blockedReasons = candidate.registration?.blocked_reasons ?? [];
 
   return (
     <div className="flex flex-1 items-center gap-3">
-      {/* Account ID */}
+      {/* Candidate uid */}
       <div className={cn(idColumnClass, "flex items-center gap-2")}>
         {ItemIcon && (
           <ItemIcon className="text-muted-foreground size-4 shrink-0" />
         )}
         <span className={cn("text-sm", isBlocked && "text-muted-foreground")}>
-          {account.id}
+          {candidate.uid}
         </span>
       </div>
 
@@ -98,13 +103,13 @@ export function OrgAccountTreeItem({
           <Input
             className={aliasInputClass}
             placeholder="Name (optional)"
-            value={aliases[account.id] ?? account.name}
-            onChange={(e) => onAliasChange(account.id, e.target.value)}
+            value={aliases[candidate.uid] ?? candidate.label}
+            onChange={(e) => onAliasChange(candidate.uid, e.target.value)}
             onClick={(e) => e.stopPropagation()}
           />
         ) : (
           <span className="text-muted-foreground line-clamp-1 text-xs">
-            {aliases[account.id] || account.name}
+            {aliases[candidate.uid] || candidate.label}
           </span>
         )}
       </div>

@@ -3,18 +3,18 @@ import { describe, expect, it, vi } from "vitest";
 import { CONNECTION_TEST_STATUS } from "@/types/organizations";
 
 import {
-  buildAccountToProviderMap,
+  buildCandidateToProviderMap,
   canAdvanceToLaunchStep,
   getLaunchableProviderIds,
   pollConnectionTask,
   runWithConcurrencyLimit,
 } from "./org-account-selection.utils";
 
-describe("buildAccountToProviderMap", () => {
-  it("uses explicit account-provider mappings when apply response is unordered", async () => {
+describe("buildCandidateToProviderMap", () => {
+  it("uses explicit candidate-provider mappings when apply response is unordered", async () => {
     // Given
     const resolveProviderUidById = vi.fn();
-    const selectedAccountIds = ["111111111111", "222222222222"];
+    const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-b", "provider-a"];
     const applyResult = {
       data: {
@@ -34,8 +34,8 @@ describe("buildAccountToProviderMap", () => {
     };
 
     // When
-    const map = await buildAccountToProviderMap({
-      selectedAccountIds,
+    const map = await buildCandidateToProviderMap({
+      selectedCandidateIds,
       providerIds,
       applyResult,
       resolveProviderUidById,
@@ -49,7 +49,7 @@ describe("buildAccountToProviderMap", () => {
 
   it("falls back to provider uid matching when explicit mappings are missing", async () => {
     // Given
-    const selectedAccountIds = ["111111111111", "222222222222"];
+    const selectedCandidateIds = ["111111111111", "222222222222"];
     const providerIds = ["provider-a", "provider-b", "provider-c"];
     const resolveProviderUidById = vi.fn(async (providerId: string) => {
       if (providerId === "provider-a") return "222222222222";
@@ -58,8 +58,8 @@ describe("buildAccountToProviderMap", () => {
     });
 
     // When
-    const map = await buildAccountToProviderMap({
-      selectedAccountIds,
+    const map = await buildCandidateToProviderMap({
+      selectedCandidateIds,
       providerIds,
       applyResult: {},
       resolveProviderUidById,

@@ -4,7 +4,7 @@ import { Dispatch, SetStateAction, useState } from "react";
 
 import {
   deleteOrganization,
-  deleteOrganizationalUnit,
+  deleteOrganizationNode,
 } from "@/actions/organizations/organizations";
 import { DeleteIcon } from "@/components/icons";
 import { Button, useToast } from "@/components/shadcn";
@@ -37,7 +37,7 @@ export function DeleteOrganizationForm({
 
     const result = isOrg
       ? await deleteOrganization(id)
-      : await deleteOrganizationalUnit(id);
+      : await deleteOrganizationNode(id);
 
     setIsLoading(false);
 

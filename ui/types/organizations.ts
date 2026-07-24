@@ -25,23 +25,44 @@ export const ORG_RELATION = {
 
 export type OrgRelation = (typeof ORG_RELATION)[keyof typeof ORG_RELATION];
 
-export const OU_RELATION = {
+// Canonical node-relation vocabulary (replaces the deprecated OU_RELATION /
+// `linked_to_other_ou`). `unchanged` was dropped from the contract.
+export const NODE_RELATION = {
   NOT_APPLICABLE: "not_applicable",
   ALREADY_LINKED: "already_linked",
   LINK_REQUIRED: "link_required",
-  LINKED_TO_OTHER_OU: "linked_to_other_ou",
-  UNCHANGED: "unchanged",
+  LINKED_TO_OTHER_NODE: "linked_to_other_node",
 } as const;
 
-export type OuRelation = (typeof OU_RELATION)[keyof typeof OU_RELATION];
+export type NodeRelation = (typeof NODE_RELATION)[keyof typeof NODE_RELATION];
 
-export const SECRET_STATE = {
-  ALREADY_EXISTS: "already_exists",
+// Canonical provider-secret state (replaces the deprecated `already_exists` /
+// `manual_required`).
+export const PROVIDER_SECRET_STATE = {
   WILL_CREATE: "will_create",
-  MANUAL_REQUIRED: "manual_required",
+  WILL_REPLACE: "will_replace",
 } as const;
 
-export type SecretState = (typeof SECRET_STATE)[keyof typeof SECRET_STATE];
+export type ProviderSecretState =
+  (typeof PROVIDER_SECRET_STATE)[keyof typeof PROVIDER_SECRET_STATE];
+
+// Canonical node kinds: AWS organizational units vs GCP folders.
+export const NODE_KIND = {
+  ORGANIZATIONAL_UNIT: "organizational-unit",
+  FOLDER: "folder",
+} as const;
+
+export type NodeKind = (typeof NODE_KIND)[keyof typeof NODE_KIND];
+
+// Organization-secret types per provider (API vocabulary — underscore form).
+export const ORG_SECRET_TYPE = {
+  ROLE: "role",
+  SERVICE_ACCOUNT: "service_account",
+  STATIC: "static",
+} as const;
+
+export type OrgSecretType =
+  (typeof ORG_SECRET_TYPE)[keyof typeof ORG_SECRET_TYPE];
 
 export const ORG_WIZARD_STEP = {
   SETUP: 0,
@@ -92,17 +113,29 @@ export const ORGANIZATION_TYPE = {
 export type OrganizationType =
   (typeof ORGANIZATION_TYPE)[keyof typeof ORGANIZATION_TYPE];
 
-// ─── Discovery Result Interfaces ──────────────────────────────────────────────
+/** Organization types with an org-level onboarding flow. */
+export type OrgFlowType =
+  | typeof ORGANIZATION_TYPE.AWS
+  | typeof ORGANIZATION_TYPE.GCP;
 
-export interface AccountRegistration {
+// ─── Candidate Registration (shared wire shape) ───────────────────────────────
+
+/**
+ * Registration state of a discovered account/project — its candidacy to become
+ * a provider. Shared by AWS accounts and GCP projects; all fields use canonical
+ * names (`organization_node_relation`, `provider_secret_state`).
+ */
+export interface CandidateRegistration {
   provider_exists: boolean;
   provider_id: string | null;
   organization_relation: OrgRelation;
-  organizational_unit_relation: OuRelation;
-  provider_secret_state: SecretState;
+  organization_node_relation: NodeRelation;
+  provider_secret_state: ProviderSecretState;
   apply_status: ApplyStatus;
   blocked_reasons: string[];
 }
+
+// ─── AWS Discovery Result (wire) ───────────────────────────────────────────────
 
 export interface DiscoveredAccount {
   id: string;
@@ -113,7 +146,7 @@ export interface DiscoveredAccount {
   joined_method: DiscoveredAccountJoinedMethod;
   joined_timestamp: string;
   parent_id: string;
-  registration?: AccountRegistration;
+  registration?: CandidateRegistration;
 }
 
 export interface DiscoveredOu {
@@ -130,11 +163,124 @@ export interface DiscoveredRoot {
   policy_types: OrganizationPolicyType[];
 }
 
-export interface DiscoveryResult {
+export interface AwsDiscoveryResult {
   roots: DiscoveredRoot[];
   organizational_units: DiscoveredOu[];
   accounts: DiscoveredAccount[];
 }
+
+// ─── GCP Discovery Result (wire) ───────────────────────────────────────────────
+
+export interface GcpDiscoveredOrganization {
+  id: string;
+  uid: string;
+  display_name: string;
+}
+
+export interface GcpDiscoveredFolder {
+  id: string;
+  display_name: string;
+  /** Canonical name-ref of the parent: `organizations/{id}` or `folders/{id}`. */
+  parent: string;
+}
+
+export interface GcpDiscoveredProject {
+  project_id: string;
+  name: string;
+  /** Canonical name-ref of the parent: `organizations/{id}` or `folders/{id}`. */
+  parent: string;
+  registration?: CandidateRegistration;
+}
+
+export interface GcpDiscoveryResult {
+  organization: GcpDiscoveredOrganization;
+  folders: GcpDiscoveredFolder[];
+  projects: GcpDiscoveredProject[];
+}
+
+/** Raw discovery `result` blob — per-provider, carries no discriminant on the wire. */
+export type DiscoveryResult = AwsDiscoveryResult | GcpDiscoveryResult;
+
+// ─── Normalized Hierarchy Model (store currency) ───────────────────────────────
+
+export interface OrgHierarchyOrganization {
+  /** External id / uid (AWS org external id, GCP numeric org id). */
+  uid: string;
+  /** Human label (AWS root name / GCP org display name). */
+  name: string;
+}
+
+export interface OrgNode {
+  id: string;
+  kind: NodeKind;
+  name: string;
+  /**
+   * Identifier of the containing node. Points at the organization root
+   * (AWS root id / GCP `organizations/{id}`) for top-level nodes; such refs are
+   * absent from the node set, so tree rebuild treats them as top-level.
+   */
+  parentId: string;
+}
+
+export interface OrgCandidate {
+  /** Provider uid by contract: AWS account id, GCP `project_id`. */
+  uid: string;
+  label: string;
+  parentId: string;
+  registration?: CandidateRegistration;
+}
+
+interface BaseOrgHierarchy {
+  organization: OrgHierarchyOrganization;
+  nodes: OrgNode[];
+  candidates: OrgCandidate[];
+}
+
+export interface AwsOrgHierarchy extends BaseOrgHierarchy {
+  orgType: typeof ORGANIZATION_TYPE.AWS;
+}
+
+export interface GcpOrgHierarchy extends BaseOrgHierarchy {
+  orgType: typeof ORGANIZATION_TYPE.GCP;
+}
+
+export type OrgHierarchy = AwsOrgHierarchy | GcpOrgHierarchy;
+
+// ─── Secret + Apply Payloads (per-type) ────────────────────────────────────────
+
+export interface AwsRoleSecret {
+  role_arn: string;
+  external_id: string;
+}
+
+export interface GcpServiceAccountSecret {
+  service_account_key: Record<string, unknown>;
+}
+
+export interface GcpStaticSecret {
+  client_id: string;
+  client_secret: string;
+  refresh_token: string;
+}
+
+export type OrgSecretPayload =
+  | { secretType: typeof ORG_SECRET_TYPE.ROLE; secret: AwsRoleSecret }
+  | {
+      secretType: typeof ORG_SECRET_TYPE.SERVICE_ACCOUNT;
+      secret: GcpServiceAccountSecret;
+    }
+  | { secretType: typeof ORG_SECRET_TYPE.STATIC; secret: GcpStaticSecret };
+
+export type ApplyDiscoveryPayload =
+  | {
+      orgType: typeof ORGANIZATION_TYPE.AWS;
+      accounts: Array<{ id: string; alias?: string }>;
+      organizationalUnits: Array<{ id: string }>;
+    }
+  | {
+      orgType: typeof ORGANIZATION_TYPE.GCP;
+      projects: Array<{ project_id: string; alias?: string }>;
+    };
 
 // ─── JSON:API Resource Interfaces ─────────────────────────────────────────────
 
@@ -154,7 +300,7 @@ interface OrganizationRelationshipRef<T extends string = string> {
 
 interface OrganizationRelationships {
   providers?: OrganizationRelationshipRef<"providers">;
-  organizational_units?: OrganizationRelationshipRef<"organizational-units">;
+  organization_nodes?: OrganizationRelationshipRef<"organization-nodes">;
 }
 
 export interface OrganizationResource {
@@ -171,8 +317,9 @@ export interface OrganizationListResponse {
   };
 }
 
-export interface OrganizationUnitAttributes {
+export interface OrganizationNodeAttributes {
   name: string;
+  kind: NodeKind;
   external_id: string;
   parent_external_id: string | null;
   metadata: Record<string, unknown>;
@@ -180,25 +327,25 @@ export interface OrganizationUnitAttributes {
   updated_at?: string;
 }
 
-export interface OrganizationUnitRelationships {
+export interface OrganizationNodeRelationships {
   organization: {
     data: { id: string; type: "organizations" };
   };
   parent?: {
-    data: { id: string; type: "organizational-units" } | null;
+    data: { id: string; type: "organization-nodes" } | null;
   };
   providers?: OrganizationRelationshipRef<"providers">;
 }
 
-export interface OrganizationUnitResource {
+export interface OrganizationNodeResource {
   id: string;
-  type: "organizational-units";
-  attributes: OrganizationUnitAttributes;
-  relationships: OrganizationUnitRelationships;
+  type: "organization-nodes";
+  attributes: OrganizationNodeAttributes;
+  relationships: OrganizationNodeRelationships;
 }
 
-export interface OrganizationUnitListResponse {
-  data: OrganizationUnitResource[];
+export interface OrganizationNodeListResponse {
+  data: OrganizationNodeResource[];
   meta?: {
     version?: string;
   };
@@ -222,7 +369,7 @@ export interface ApplyResultAttributes {
   providers_created_count: number;
   providers_linked_count: number;
   providers_applied_count: number;
-  organizational_units_created_count: number;
+  organization_nodes_created_count: number;
 }
 
 export interface ApplyResultRelationships {
@@ -230,8 +377,8 @@ export interface ApplyResultRelationships {
     data: Array<{ type: "providers"; id: string }>;
     meta: { count: number };
   };
-  organizational_units: {
-    data: Array<{ type: "organizational-units"; id: string }>;
+  organization_nodes: {
+    data: Array<{ type: "organization-nodes"; id: string }>;
     meta: { count: number };
   };
 }

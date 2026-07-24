@@ -342,8 +342,12 @@ const baseFixture = (): OrgFixture => ({
   connectionByUid: {},
   duplicateSecret: false,
   deletionTaskState: "completed",
+  // Deprecated AWS FIELDS stay in bodies (mirrors production's facade period)…
   includeAwsAliases: true,
-  serveDeprecatedRoutes: true,
+  // …but the deprecated `/organizational-units` ROUTES are gone (Phase 1
+  // tripwire, task 2.10): with `onUnhandledRequest: "error"`, any lingering
+  // alias-route call becomes a hard failure, proving the UI is fully canonical.
+  serveDeprecatedRoutes: false,
 });
 
 /**

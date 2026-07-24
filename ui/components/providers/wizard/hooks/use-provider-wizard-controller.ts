@@ -12,6 +12,8 @@ import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+  OrgFlowType,
   OrgSetupPhase,
   OrgWizardStep,
 } from "@/types/organizations";
@@ -100,7 +102,11 @@ export function useProviderWizardController({
     mode,
     providerType,
   } = useProviderWizardStore();
-  const { reset: resetOrgWizard, setOrganization } = useOrgSetupStore();
+  const {
+    reset: resetOrgWizard,
+    setOrganization,
+    setOrganizationType,
+  } = useOrgSetupStore();
 
   useEffect(() => {
     if (!open) {
@@ -116,6 +122,7 @@ export function useProviderWizardController({
     if (orgInitialData) {
       setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
       resetOrgWizard();
+      setOrganizationType(orgInitialData.organizationType);
       setOrganization(
         orgInitialData.organizationId,
         orgInitialData.organizationName,
@@ -174,6 +181,7 @@ export function useProviderWizardController({
     resetProviderWizard,
     setMode,
     setOrganization,
+    setOrganizationType,
     setProvider,
     setSecretId,
     setVia,
@@ -229,11 +237,14 @@ export function useProviderWizardController({
     setCurrentStep(PROVIDER_WIZARD_STEP.LAUNCH);
   };
 
-  const openOrganizationsFlow = () => {
-    // AWS Organizations diverges from the credentials path the tour guides toward; end
+  const openOrganizationsFlow = (
+    orgType: OrgFlowType = ORGANIZATION_TYPE.AWS,
+  ) => {
+    // Organizations diverges from the credentials path the tour guides toward; end
     // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
     endActiveTour();
     resetOrgWizard();
+    setOrganizationType(orgType);
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);
     setFooterConfig(EMPTY_FOOTER_CONFIG);

@@ -37,7 +37,11 @@ import { runWithConcurrencyLimit } from "@/lib/concurrency";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { isConfigurableProvider } from "@/types/providers";
 import {
@@ -165,9 +169,12 @@ function OrgGroupDropdownActions({
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
 
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
+  const isGcp = rowData.orgType === ORGANIZATION_TYPE.GCP;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
   const testCount = testIds.length;
-  const entityLabel = isOrgKind ? "organization" : "organizational unit";
+  const nodeLabel = isGcp ? "folder" : "organizational unit";
+  const entityLabel = isOrgKind ? "organization" : nodeLabel;
+  const nameSourceLabel = isGcp ? "Google Cloud" : "AWS";
 
   const openOrgWizardAt = (
     targetStep: OrgWizardInitialData["targetStep"],
@@ -175,6 +182,7 @@ function OrgGroupDropdownActions({
     intent?: OrgWizardInitialData["intent"],
   ) => {
     onOpenOrganizationWizard({
+      organizationType: rowData.orgType,
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -196,7 +204,7 @@ function OrgGroupDropdownActions({
             currentValue={rowData.name}
             label="Name"
             successMessage="The organization name was updated successfully."
-            helperText="If left blank, Prowler will use the name stored in AWS."
+            helperText={`If left blank, Prowler will use the name stored in ${nameSourceLabel}.`}
             setIsOpen={setIsEditNameOpen}
             onSave={(name) => updateOrganizationName(rowData.id, name)}
           />

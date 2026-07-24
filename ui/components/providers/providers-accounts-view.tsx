@@ -1,5 +1,6 @@
 "use client";
 
+import { Info } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
@@ -14,6 +15,7 @@ import type {
   OrgWizardInitialData,
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
+import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getFlowById } from "@/lib/onboarding";
 import {
   ADD_PROVIDER_SEARCH_PARAM,
@@ -29,7 +31,11 @@ import {
 } from "@/lib/tours/use-driver-tour";
 import type { FilterOption, MetaDataProps, ProviderProps } from "@/types";
 import type { ProviderGroup } from "@/types/components";
-import type { ProvidersTableRow } from "@/types/providers-table";
+import {
+  HIERARCHY_STATUS,
+  type HierarchyStatus,
+  type ProvidersTableRow,
+} from "@/types/providers-table";
 import type {
   ScanConfigurationData,
   ScanConfigurationListStatus,
@@ -65,6 +71,8 @@ interface ProvidersAccountsViewProps {
   scanConfigs?: ScanConfigurationData[];
   scanConfigStatus?: ScanConfigurationListStatus;
   isScanLimitReached?: boolean;
+  /** `unavailable` surfaces the non-blocking hierarchy-grouping notice. */
+  hierarchyStatus?: HierarchyStatus;
 }
 
 export function ProvidersAccountsView({
@@ -78,6 +86,7 @@ export function ProvidersAccountsView({
   scanConfigs,
   scanConfigStatus,
   isScanLimitReached,
+  hierarchyStatus = HIERARCHY_STATUS.AVAILABLE,
 }: ProvidersAccountsViewProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -151,6 +160,15 @@ export function ProvidersAccountsView({
         />
       ) : (
         <div className="flex flex-col gap-6">
+          {hierarchyStatus === HIERARCHY_STATUS.UNAVAILABLE && (
+            <Alert>
+              <Info />
+              <AlertDescription>
+                Organization grouping is temporarily unavailable. Providers are
+                shown as a flat list.
+              </AlertDescription>
+            </Alert>
+          )}
           <ProvidersFilters
             filters={filters}
             providers={providers}

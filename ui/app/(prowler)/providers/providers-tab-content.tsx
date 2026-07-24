@@ -56,6 +56,7 @@ export const ProvidersTabContent = async ({
       providerGroups={providersView.providerGroups}
       metadata={providersView.metadata}
       rows={providersView.rows}
+      hierarchyStatus={providersView.hierarchyStatus}
       scanConfigs={scanConfigsState.data}
       scanConfigStatus={scanConfigsState.status}
     />

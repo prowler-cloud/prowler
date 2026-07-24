@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { ORG_SECRET_TYPE, ORGANIZATION_TYPE } from "@/types/organizations";
+
 const {
   fetchMock,
   getAuthHeadersMock,
@@ -31,10 +33,8 @@ vi.mock("@/lib/server-actions-helper", () => ({
 import {
   applyDiscovery,
   getDiscovery,
-  listOrganizations,
+  listOrganizationNodesSafe,
   listOrganizationsSafe,
-  listOrganizationUnits,
-  listOrganizationUnitsSafe,
   triggerDiscovery,
   updateOrganizationSecret,
 } from "./organizations";
@@ -48,14 +48,14 @@ describe("organizations actions", () => {
   });
 
   it("rejects invalid organization secret identifiers", async () => {
-    // Given
-    const formData = new FormData();
-    formData.set("organizationSecretId", "../secret-id");
-    formData.set("roleArn", "arn:aws:iam::123456789012:role/ProwlerOrgRole");
-    formData.set("externalId", "o-abc123def4");
-
     // When
-    const result = await updateOrganizationSecret(formData);
+    const result = await updateOrganizationSecret("../secret-id", {
+      secretType: ORG_SECRET_TYPE.ROLE,
+      secret: {
+        role_arn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
+        external_id: "o-abc123def4",
+      },
+    });
 
     // Then
     expect(result).toEqual({ error: "Invalid organization secret ID" });
@@ -98,14 +98,12 @@ describe("organizations actions", () => {
     const failedResult = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
     const successfulResult = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
 
     // Then
@@ -132,8 +130,7 @@ describe("organizations actions", () => {
     const result = await applyDiscovery(
       "123e4567-e89b-12d3-a456-426614174000",
       "223e4567-e89b-12d3-a456-426614174111",
-      [],
-      [],
+      { orgType: ORGANIZATION_TYPE.AWS, accounts: [], organizationalUnits: [] },
     );
 
     // Then
@@ -142,35 +139,47 @@ describe("organizations actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/providers");
   });
 
-  it("lists organizations with the expected filters", async () => {
+  it("lists organizations across all types without a hardcoded org_type filter", async () => {
     // Given
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
     handleApiResponseMock.mockResolvedValue({ data: [] });
 
     // When
-    await listOrganizations();
+    await listOrganizationsSafe();
 
     // Then
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organizations?filter%5Borg_type%5D=aws",
+      "https://api.example.com/api/v1/organizations?page%5Bsize%5D=100",
     );
   });
 
-  it("lists organization units from the dedicated endpoint", async () => {
+  it("lists organization nodes from the canonical endpoint", async () => {
     // Given
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
     handleApiResponseMock.mockResolvedValue({ data: [] });
 
     // When
-    await listOrganizationUnits();
+    await listOrganizationNodesSafe();
 
     // Then
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
-      "https://api.example.com/api/v1/organizational-units",
+      "https://api.example.com/api/v1/organization-nodes?page%5Bsize%5D=100",
     );
   });
 
-  it("returns an empty organizations payload when the safe organizations request fails", async () => {
+  it("flags an empty organizations payload as degraded when the safe request fails", async () => {
     // Given
     fetchMock.mockResolvedValue(
       new Response("Internal Server Error", {
@@ -182,12 +191,12 @@ describe("organizations actions", () => {
     const result = await listOrganizationsSafe();
 
     // Then
-    expect(result).toEqual({ data: [] });
+    expect(result).toEqual({ data: [], error: true });
     expect(handleApiResponseMock).not.toHaveBeenCalled();
     expect(handleApiErrorMock).not.toHaveBeenCalled();
   });
 
-  it("returns an empty organization units payload when the safe request fails", async () => {
+  it("flags an empty organization nodes payload as degraded when the safe request fails", async () => {
     // Given
     fetchMock.mockResolvedValue(
       new Response("Internal Server Error", {
@@ -196,10 +205,10 @@ describe("organizations actions", () => {
     );
 
     // When
-    const result = await listOrganizationUnitsSafe();
+    const result = await listOrganizationNodesSafe();
 
     // Then
-    expect(result).toEqual({ data: [] });
+    expect(result).toEqual({ data: [], error: true });
     expect(handleApiResponseMock).not.toHaveBeenCalled();
     expect(handleApiErrorMock).not.toHaveBeenCalled();
   });

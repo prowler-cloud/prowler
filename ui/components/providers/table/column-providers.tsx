@@ -14,6 +14,7 @@ import { DateWithTime, EntityInfo } from "@/components/shadcn/entities";
 import { DataTableColumnHeader } from "@/components/shadcn/table";
 import { DataTableExpandAllToggle } from "@/components/shadcn/table/data-table-expand-all-toggle";
 import { DataTableExpandableCell } from "@/components/shadcn/table/data-table-expandable-cell";
+import { NODE_KIND } from "@/types/organizations";
 import {
   isProvidersOrganizationRow,
   PROVIDERS_GROUP_KIND,
@@ -217,12 +218,17 @@ export function getColumnProviders(
       ),
       cell: ({ row }) => {
         if (isProvidersOrganizationRow(row.original)) {
+          // Node label is kind-driven ("Organizational Unit" / "Folder"),
+          // never derived from an ID prefix.
+          const label =
+            row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
+              ? "Organization"
+              : row.original.kind === NODE_KIND.FOLDER
+                ? "Folder"
+                : "Organizational Unit";
+
           return (
-            <span className="text-text-neutral-tertiary text-sm">
-              {row.original.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION
-                ? "Organization"
-                : "Organizational Unit"}
-            </span>
+            <span className="text-text-neutral-tertiary text-sm">{label}</span>
           );
         }
 

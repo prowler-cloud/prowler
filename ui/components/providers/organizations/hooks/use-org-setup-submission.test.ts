@@ -36,7 +36,7 @@ describe("useOrgSetupSubmission", () => {
     }
   });
 
-  it("completes the setup chain and stores selectable accounts", async () => {
+  it("completes the setup chain and stores selectable candidates", async () => {
     // Given
     const onNext = vi.fn();
     const setFieldError = vi.fn();
@@ -59,7 +59,7 @@ describe("useOrgSetupSubmission", () => {
             provider_exists: false,
             provider_id: null,
             organization_relation: "link_required",
-            organizational_unit_relation: "not_applicable",
+            organization_node_relation: "not_applicable",
             provider_secret_state: "will_create",
             apply_status: APPLY_STATUS.READY,
             blocked_reasons: [],
@@ -78,7 +78,7 @@ describe("useOrgSetupSubmission", () => {
             provider_exists: false,
             provider_id: null,
             organization_relation: "link_required",
-            organizational_unit_relation: "not_applicable",
+            organization_node_relation: "not_applicable",
             provider_secret_state: "will_create",
             apply_status: APPLY_STATUS.BLOCKED,
             blocked_reasons: ["Already linked"],
@@ -140,8 +140,8 @@ describe("useOrgSetupSubmission", () => {
     expect(state.organizationId).toBe("org-1");
     expect(state.organizationExternalId).toBe("o-abc123def4");
     expect(state.discoveryId).toBe("discovery-1");
-    expect(state.selectedAccountIds).toEqual(["111111111111"]);
-    expect(state.selectableAccountIds).toEqual(["111111111111"]);
+    expect(state.selectedCandidateIds).toEqual(["111111111111"]);
+    expect(state.selectableCandidateIds).toEqual(["111111111111"]);
   });
 
   it("maps external_id server errors to awsOrgId field errors", async () => {

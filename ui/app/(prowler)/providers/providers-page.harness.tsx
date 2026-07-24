@@ -22,6 +22,10 @@ import {
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
 import type { SearchParamsProps } from "@/types";
+import {
+  HIERARCHY_STATUS,
+  type HierarchyStatus,
+} from "@/types/providers-table";
 
 import { ProvidersTabContent } from "./providers-tab-content";
 
@@ -30,6 +34,14 @@ const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
+  /**
+   * Whether the hierarchy reads succeed. `unavailable` fails both of them
+   * (`/organizations`, `/organization-nodes`), which is what the loader turns
+   * into the degraded-view notice — the status is never injected as a prop, so
+   * the notice is only ever reached the way production reaches it. Default
+   * available.
+   */
+  hierarchyStatus?: HierarchyStatus;
 }
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
@@ -101,9 +113,16 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
    * (`page.tsx`'s default export can't be used at all — it returns Suspense
    * wrapping async children, which only a server renderer resolves.)
    */
-  async mount({ openWizard = true }: MountOptions = {}): Promise<void> {
+  async mount({
+    openWizard = true,
+    hierarchyStatus = HIERARCHY_STATUS.AVAILABLE,
+  }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
-    worker.use(...handlersForOrganizations(this.fixture));
+    worker.use(
+      ...handlersForOrganizations(this.fixture, {
+        hierarchyUnavailable: hierarchyStatus === HIERARCHY_STATUS.UNAVAILABLE,
+      }),
+    );
     this.trackRequests(worker);
 
     render(await ProvidersTabContent({ searchParams: this.searchParams() }));
@@ -360,6 +379,23 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Whether the organization row surfaces its total provider count. */
   hasProviderCount(count: number): boolean {
     return this.containsText(new RegExp(`${count} Providers`));
+  }
+
+  /** Wait until the degraded-hierarchy notice surfaces above the table. */
+  async waitForDegradedHierarchyNotice(): Promise<void> {
+    await this.waitForText(/Organization grouping is temporarily unavailable/);
+  }
+
+  /** Whether the degraded-hierarchy notice is showing. */
+  hasDegradedHierarchyNotice(): boolean {
+    return this.containsText(
+      /Organization grouping is temporarily unavailable/,
+    );
+  }
+
+  /** Whether the degraded notice says providers stay listed flat. */
+  saysProvidersAreFlat(): boolean {
+    return this.containsText(/Providers are shown as a flat list/);
   }
 
   /** Open the row-actions dropdown for the organization named `name`. */

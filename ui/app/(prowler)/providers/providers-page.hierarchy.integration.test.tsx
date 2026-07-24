@@ -1,0 +1,78 @@
+import { describe, expect } from "vitest";
+
+// The extended `it` carries the auto `seedRuntimeConfig` fixture: grouping is
+// cloud-only, so the runtime-config island has to exist before mounting.
+import { it } from "@/__tests__/fixtures";
+import {
+  awsHierarchyFixture,
+  mixedHierarchyFixture,
+} from "@/__tests__/msw/handlers/organizations.fixtures";
+import { HIERARCHY_STATUS } from "@/types/providers-table";
+
+import { ProvidersPageHarness } from "./providers-page.harness";
+
+// Phase 1 new-behavior coverage (the Phase 0 AWS baseline suite stays untouched):
+// the providers page now consumes the canonical organization-nodes contract for
+// BOTH organization types, deriving container labels from node `kind`, and
+// surfaces an explicit notice when the hierarchy fetch degrades.
+
+describe("Providers page — mixed AWS + GCP hierarchy display", () => {
+  it("groups both organizations, labelling nodes by kind (Organizational Unit vs Folder)", async () => {
+    const harness = new ProvidersPageHarness(mixedHierarchyFixture());
+    await harness.mount({ openWizard: false });
+
+    // Both organizations render as top-level groups.
+    await harness.waitForOrganizationRow("My AWS Organization");
+    await harness.waitForOrganizationRow("My GCP Organization");
+
+    // AWS organizational units and GCP folders both render as node groups.
+    await harness.waitForNodeGroup("Production");
+    await harness.waitForNodeGroup("Sandbox");
+    await harness.waitForNodeGroup("Engineering");
+    await harness.waitForNodeGroup("Platform");
+
+    // Container labels are kind-driven, never ID-prefix-driven: AWS nodes read
+    // "Organizational Unit", GCP nodes read "Folder".
+    expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(true);
+    expect(harness.hasNodeKindLabel("Folder")).toBe(true);
+
+    // Per-organization provider counts.
+    expect(harness.hasProviderCount(3)).toBe(true);
+    expect(harness.hasProviderCount(2)).toBe(true);
+
+    // Providers of both types render nested under their nodes, by alias.
+    expect(harness.hasProviderRow("prod-web")).toBe(true);
+    expect(harness.hasProviderRow("sandbox-1")).toBe(true);
+    expect(harness.hasProviderRow("Prod Analytics")).toBe(true);
+    expect(harness.hasProviderRow("Prod Platform")).toBe(true);
+
+    // Tripwire: the rows came from real requests over the canonical route.
+    expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
+  }, 30000);
+});
+
+describe("Providers page — degraded hierarchy view", () => {
+  it("shows a non-blocking notice and keeps providers listed flat when hierarchy is unavailable", async () => {
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({
+      openWizard: false,
+      hierarchyStatus: HIERARCHY_STATUS.UNAVAILABLE,
+    });
+
+    await harness.waitForDegradedHierarchyNotice();
+    expect(harness.saysProvidersAreFlat()).toBe(true);
+
+    // Providers are still listed despite grouping being unavailable, and no
+    // organization group row survives the failed hierarchy fetch.
+    expect(harness.hasProviderRow("prod-web")).toBe(true);
+    expect(harness.hasOrganizationRow("My AWS Organization")).toBe(false);
+  }, 30000);
+
+  it("shows no notice when the hierarchy is available", async () => {
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({ openWizard: false });
+
+    await harness.waitForOrganizationRow("My AWS Organization");
+    expect(harness.hasDegradedHierarchyNotice()).toBe(false);
+  }, 30000);
+});
