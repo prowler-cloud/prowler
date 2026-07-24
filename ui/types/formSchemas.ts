@@ -6,14 +6,14 @@ import { validateMutelistYaml, validateYaml } from "@/lib/yaml";
 
 import { PROVIDER_TYPES, ProviderType } from "./providers";
 
-export const KUBECONFIG_EXEC_AUTHENTICATION_ERROR =
-  "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud for security reasons.";
+export const KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR =
+  "Kubernetes kubeconfig command-based authentication is not supported in Prowler Cloud for security reasons.";
 
 const isRecord = (value: unknown): value is Record<string, unknown> => {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 };
 
-export const kubeconfigContainsExecAuthentication = (
+export const kubeconfigContainsUnsupportedCommandAuthentication = (
   value: string,
 ): boolean => {
   try {
@@ -28,7 +28,16 @@ export const kubeconfigContainsExecAuthentication = (
         return false;
       }
 
-      return "exec" in userEntry.user;
+      if ("exec" in userEntry.user) {
+        return true;
+      }
+
+      const authProvider = userEntry.user["auth-provider"];
+      if (!isRecord(authProvider) || !isRecord(authProvider.config)) {
+        return false;
+      }
+
+      return "cmd-path" in authProvider.config;
     });
   } catch {
     return false;
@@ -229,9 +238,13 @@ export const addCredentialsFormSchema = (
                     .string()
                     .min(1, "Kubeconfig Content is required")
                     .refine(
-                      (value) => !kubeconfigContainsExecAuthentication(value),
+                      (value) =>
+                        !kubeconfigContainsUnsupportedCommandAuthentication(
+                          value,
+                        ),
                       {
-                        error: KUBECONFIG_EXEC_AUTHENTICATION_ERROR,
+                        error:
+                          KUBECONFIG_UNSUPPORTED_COMMAND_AUTHENTICATION_ERROR,
                       },
                     ),
                 }

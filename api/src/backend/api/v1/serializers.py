@@ -1569,14 +1569,14 @@ class FindingMetadataSerializer(BaseSerializerV1):
 
 
 # Provider secrets
-KUBERNETES_KUBECONFIG_EXEC_ERROR = (
-    "Kubernetes kubeconfig exec authentication is not supported in Prowler Cloud "
-    "for security reasons."
+KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR = (
+    "Kubernetes kubeconfig command-based authentication is not supported in "
+    "Prowler Cloud for security reasons."
 )
 KUBERNETES_KUBECONFIG_INVALID_ERROR = "Invalid Kubernetes kubeconfig content."
 
 
-def kubeconfig_contains_exec_auth(kubeconfig: dict) -> bool:
+def kubeconfig_contains_unsupported_command_auth(kubeconfig: dict) -> bool:
     users = kubeconfig.get("users", [])
     if not isinstance(users, list):
         raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
@@ -1590,6 +1590,17 @@ def kubeconfig_contains_exec_auth(kubeconfig: dict) -> bool:
             raise ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
         if "exec" in user:
+            return True
+
+        auth_provider = user.get("auth-provider", {})
+        if not isinstance(auth_provider, dict):
+            continue
+
+        auth_provider_config = auth_provider.get("config", {})
+        if not isinstance(auth_provider_config, dict):
+            continue
+
+        if "cmd-path" in auth_provider_config:
             return True
 
     return False
@@ -1788,8 +1799,10 @@ class KubernetesProviderSecret(serializers.Serializer):
         if not isinstance(kubeconfig, dict):
             raise serializers.ValidationError(KUBERNETES_KUBECONFIG_INVALID_ERROR)
 
-        if kubeconfig_contains_exec_auth(kubeconfig):
-            raise serializers.ValidationError(KUBERNETES_KUBECONFIG_EXEC_ERROR)
+        if kubeconfig_contains_unsupported_command_auth(kubeconfig):
+            raise serializers.ValidationError(
+                KUBERNETES_KUBECONFIG_UNSUPPORTED_COMMAND_AUTH_ERROR
+            )
 
         return kubeconfig_content
 
