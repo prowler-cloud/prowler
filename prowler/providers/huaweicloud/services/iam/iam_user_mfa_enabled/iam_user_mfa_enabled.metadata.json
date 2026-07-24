@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "HUAWEICLOUD::IAM::User",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "IAM",
-  "Description": "Huawei Cloud IAM users should have MFA enabled. MFA adds an extra layer of protection on top of a username and password. With MFA enabled, when a user signs in to the Huawei Cloud console, they are prompted for their username and password as well as for an authentication code from their MFA device.",
-  "Risk": "Without MFA, a compromised user password enables unauthorized access to cloud resources. An attacker could modify, delete, or create resources depending on the user's permissions, harming confidentiality, integrity, and availability.",
+  "Description": "**Huawei Cloud IAM** users should have **MFA** enabled. **MFA** adds an extra layer of protection on top of a username and password. With **MFA** enabled, when a user signs in to the **Huawei Cloud console**, they are prompted for their username and password as well as for an authentication code from their **MFA device**.",
+  "Risk": "Without **MFA**, a compromised user password enables unauthorized access to cloud resources. An attacker could modify, delete, or create resources depending on the user's permissions, harming **confidentiality**, **integrity**, and **availability**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-iam/iam_01_0012.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud IAM UpdateLoginProtect --user_id=<user_id> --login_protect.enabled=true --login_protect.verification_method=\"vmfa\"",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console as an administrator.\n2. Choose IAM & Security.\n3. Click Users.\n4. Select the target user.\n5. Click the Security Settings tab.\n6. In the Virtual MFA Device section, click Enable.\n7. Scan the QR code with a virtual MFA application (e.g., Google Authenticator).\n8. Enter two consecutive verification codes to bind the MFA device.",
+      "Other": "1. Log on to the **Huawei Cloud console** as an administrator.\n2. Choose **IAM & Security**.\n3. Click **Users**.\n4. Select the target user.\n5. Click the **Security Settings** tab.\n6. In the **Virtual MFA Device** section, click **Enable**.\n7. Scan the QR code with a virtual MFA application (e.g., `Google Authenticator`).\n8. Enter two consecutive verification codes to bind the **MFA device**.",
       "Terraform": ""
     },
     "Recommendation": {

@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "critical",
-  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "database",
-  "Description": "Ensure that RDS instances do not have public IP addresses to prevent direct internet access to databases.",
-  "Risk": "RDS instances with public IP addresses are accessible from the internet, exposing databases to potential brute-force attacks, SQL injection, and unauthorized data access.",
+  "Description": "Ensure that **Huawei Cloud Relational Database Service (RDS)** instances do not have public IP addresses to prevent direct **internet access** to databases.",
+  "Risk": "**RDS** instances with public IP addresses are accessible from the internet, exposing databases to potential **brute-force attacks**, **SQL injection**, and **unauthorized data access**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-rds-mysql/rds_public_accessibility.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud EIP DisassociatePublicips --publicip_id=<eip_id>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Relational Database Service.\n3. Select the instance.\n4. Click More > Unbind EIP.\n5. Confirm the unbinding.",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Relational Database Service**.\n3. Select the instance.\n4. Click **More** > **Unbind EIP**.\n5. Confirm the unbinding.",
       "Terraform": ""
     },
     "Recommendation": {

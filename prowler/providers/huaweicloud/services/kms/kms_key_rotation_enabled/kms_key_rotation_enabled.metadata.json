@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "HUAWEICLOUD::KMS::Key",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "security",
-  "Description": "Ensure that KMS keys have automatic key rotation enabled to regularly rotate the cryptographic material.",
-  "Risk": "Without key rotation, the same cryptographic material is used indefinitely, increasing the risk of key compromise over time. If a key is compromised, all data encrypted with that key version is at risk.",
+  "Description": "Ensure that **Huawei Cloud Key Management Service (KMS)** keys have automatic **key rotation** enabled to regularly rotate the cryptographic material.",
+  "Risk": "Without **key rotation**, the same cryptographic material is used indefinitely, increasing the risk of **key compromise** over time. If a key is compromised, all data encrypted with that key version is at risk.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-dew/dew_01_0139.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud KMS EnableKeyRotation --key_id=<key_id>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Key Management Service.\n3. Select the key.\n4. Click the Rotation tab.\n5. Enable rotation and set the rotation period.\n6. Click OK.",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Key Management Service**.\n3. Select the key.\n4. Click the **Rotation** tab.\n5. Enable **rotation** and set the rotation period.\n6. Click **OK**.",
       "Terraform": ""
     },
     "Recommendation": {

@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "compute",
-  "Description": "Ensure that ECS instances do not have public IP addresses assigned, reducing exposure to the internet.",
-  "Risk": "ECS instances with public IP addresses are directly accessible from the internet, which increases the attack surface and risk of unauthorized access, data exfiltration, or exploitation.",
+  "Description": "Ensure that **Elastic Cloud Server (ECS)** instances do not have **public IP** addresses assigned, reducing exposure to the internet.",
+  "Risk": "**ECS** instances with **public IP** addresses are directly accessible from the internet, which increases the **attack surface** and risk of **unauthorized access**, **data exfiltration**, or exploitation.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-ecs/ecs_03_0701.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud EIP DisassociatePublicips --publicip_id=<eip_id>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Elastic Cloud Server\n3. Select the instance with a public IP\n4. Unbind the EIP from the instance\n5. Use a NAT gateway or VPN for outbound connectivity if needed",
+      "Other": "1. Log on to the **Huawei Cloud** console\n2. Navigate to **Elastic Cloud Server**\n3. Select the instance with a **public IP**\n4. Unbind the `EIP` from the instance\n5. Use a **NAT gateway** or `VPN` for outbound connectivity if needed",
       "Terraform": ""
     },
     "Recommendation": {

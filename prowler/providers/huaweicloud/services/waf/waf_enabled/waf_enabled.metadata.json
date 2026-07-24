@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "medium",
-  "ResourceType": "HUAWEICLOUD::WAF::Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Ensure that Web Application Firewall (WAF) is enabled to protect web applications from common exploits.",
-  "Risk": "Without WAF, web applications are exposed to common attacks such as SQL injection, cross-site scripting (XSS), and other OWASP Top 10 threats.",
+  "Description": "Ensure that **Web Application Firewall (WAF)** is enabled to protect web applications from common exploits.",
+  "Risk": "Without **WAF**, web applications are exposed to common attacks such as SQL injection, cross-site scripting (XSS), and other OWASP Top 10 threats.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-waf/waf_01_0001.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud WAF CreatePolicy --name=<policy_name> --enterprise_project_id=<eps_id>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Web Application Firewall.\n3. Create a WAF instance (dedicated or cloud).\n4. Add protected websites/domains.\n5. Configure protection policies and rules.",
+      "Other": "1. Log on to the **Huawei Cloud console**.\n2. Navigate to **Web Application Firewall**.\n3. Create a **WAF** instance (dedicated or cloud).\n4. Add protected websites/domains.\n5. Configure protection policies and rules.",
       "Terraform": ""
     },
     "Recommendation": {

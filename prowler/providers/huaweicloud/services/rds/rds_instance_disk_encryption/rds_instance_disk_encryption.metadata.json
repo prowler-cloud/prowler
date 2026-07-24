@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "HUAWEICLOUD::RDS::Instance",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "database",
-  "Description": "Ensure that RDS instances have storage disk encryption enabled using a KMS key.",
-  "Risk": "RDS instances without disk encryption store data at rest in plaintext, which may expose sensitive information if the underlying storage is compromised.",
+  "Description": "Ensure that **Huawei Cloud Relational Database Service (RDS)** instances have storage disk **encryption** enabled using a **Key Management Service (KMS)** key.",
+  "Risk": "**RDS** instances without disk **encryption** store data at rest in plaintext, which may expose sensitive information if the underlying storage is compromised.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/usermanual-rds/rds_05_0045.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud RDS CreateInstance --instance.disk_encryption_id=<kms_key_id> --instance.name=<name> --instance.datastore.type=<engine>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Relational Database Service\n3. Select the instance\n4. Click More > Manage Disk Encryption\n5. Enable disk encryption and select a KMS key",
+      "Other": "1. Log on to the **Huawei Cloud console**\n2. Navigate to **Relational Database Service**\n3. Select the instance\n4. Click **More** > **Manage Disk Encryption**\n5. Enable disk **encryption** and select a **KMS** key",
       "Terraform": ""
     },
     "Recommendation": {

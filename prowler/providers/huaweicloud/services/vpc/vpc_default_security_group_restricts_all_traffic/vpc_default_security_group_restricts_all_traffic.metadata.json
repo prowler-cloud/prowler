@@ -7,10 +7,10 @@
   "SubServiceName": "",
   "ResourceIdTemplate": "",
   "Severity": "high",
-  "ResourceType": "HUAWEICLOUD::VPC::SecurityGroup",
+  "ResourceType": "NotDefined",
   "ResourceGroup": "network",
-  "Description": "Ensure that default security groups restrict all traffic to prevent unauthorized access to cloud resources.",
-  "Risk": "Security groups with rules that allow open CIDR ranges (0.0.0.0/0 or ::/0) expose resources to traffic from any source on the internet. This significantly increases the attack surface and can lead to unauthorized access, data exfiltration, or service disruption.",
+  "Description": "Ensure that **default security groups** restrict all traffic to prevent **unauthorized access** to cloud resources.",
+  "Risk": "**Security groups** with rules that allow open **CIDR** ranges (`0.0.0.0/0` or `::/0`) expose resources to traffic from any source on the internet. This significantly increases the **attack surface** and can lead to **unauthorized access**, **data exfiltration**, or **service disruption**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://support.huaweicloud.com/intl/en-us/vpc_faq/vpc_faq_0036.html"
@@ -19,7 +19,7 @@
     "Code": {
       "CLI": "hcloud VPC DeleteSecurityGroupRule --security_group_rule_id=<rule_id>",
       "NativeIaC": "",
-      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to VPC > Security Groups\n3. Select the default security group\n4. Review and delete any rules with 0.0.0.0/0 or ::/0 as the source/destination\n5. Add restrictive rules as needed",
+      "Other": "1. Log on to the **Huawei Cloud** console\n2. Navigate to **VPC** > **Security Groups**\n3. Select the **default security group**\n4. Review and delete any rules with `0.0.0.0/0` or `::/0` as the source/destination\n5. Add restrictive rules as needed",
       "Terraform": ""
     },
     "Recommendation": {
