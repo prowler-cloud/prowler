@@ -116,7 +116,7 @@ def mock_batch_scan_with_findings(findings_map):
 
 class Test_appsync_graphql_api_no_secrets_in_resolvers:
     def test_no_apis(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         appsync_client.graphql_apis = {}
         appsync_client.audit_config = {}
 
@@ -137,7 +137,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert len(result) == 0
 
     def test_api_no_resolvers_no_data_sources(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         api = create_graphql_api()
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
@@ -170,7 +170,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert result[0].region == AWS_REGION_US_EAST_1
 
     def test_api_with_resolver_no_secrets(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         resolver = create_resolver(
             request_template=RESOLVER_REQUEST_TEMPLATE_WITHOUT_SECRET,
             response_template=RESOLVER_RESPONSE_TEMPLATE_WITHOUT_SECRET,
@@ -204,7 +204,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             )
 
     def test_api_with_secret_in_resolver_request_template(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         resolver = create_resolver(
             request_template=RESOLVER_REQUEST_TEMPLATE_WITH_SECRET,
             response_template=RESOLVER_RESPONSE_TEMPLATE_WITHOUT_SECRET,
@@ -248,7 +248,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert "Resolver Query.getUser (request template)" in result[0].status_extended
 
     def test_api_with_secret_in_resolver_response_template(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         resolver = create_resolver(
             request_template=RESOLVER_REQUEST_TEMPLATE_WITHOUT_SECRET,
             response_template=RESOLVER_RESPONSE_TEMPLATE_WITH_SECRET,
@@ -291,7 +291,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert "Resolver Query.getUser (response template)" in result[0].status_extended
 
     def test_api_with_secret_in_data_source_http_config(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         data_source = create_data_source(
             name="HTTPDataSource",
             ds_type="HTTP",
@@ -341,7 +341,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert "DataSource HTTPDataSource (http_config)" in result[0].status_extended
 
     def test_api_with_multiple_secrets(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         resolver = create_resolver(
             request_template=RESOLVER_REQUEST_TEMPLATE_WITH_SECRET,
         )
@@ -400,7 +400,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert "DataSource HTTPDataSource" in result[0].status_extended
 
     def test_api_with_scan_error(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         api = create_graphql_api()
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
@@ -428,7 +428,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert "manual review is required" in result[0].status_extended
 
     def test_api_with_verified_secret(self):
-        appsync_client = mock.MagicMock
+        appsync_client = mock.MagicMock()
         resolver = create_resolver(
             request_template=RESOLVER_REQUEST_TEMPLATE_WITH_SECRET,
         )
