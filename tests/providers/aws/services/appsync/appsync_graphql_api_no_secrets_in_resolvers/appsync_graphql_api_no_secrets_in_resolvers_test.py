@@ -96,6 +96,24 @@ def create_data_source(name="TestDataSource", ds_type="NONE", **configs):
     )
 
 
+def mock_batch_scan_with_findings(findings_map):
+    """
+    Create a mock function for detect_secrets_scan_batch that consumes
+    the generator and returns specified findings.
+
+    Args:
+        findings_map: dict mapping keys to findings lists
+    """
+    def mock_scan(payloads, **kwargs):
+        # Consume the generator to populate apis_list in the check
+        results = {}
+        for key, payload in payloads:
+            if key in findings_map:
+                results[key] = findings_map[key]
+        return results
+    return mock_scan
+
+
 class Test_appsync_graphql_api_no_secrets_in_resolvers:
     def test_no_apis(self):
         appsync_client = mock.MagicMock
@@ -132,7 +150,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value={},
+            side_effect=mock_batch_scan_with_findings({}),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -169,7 +187,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value={},
+            side_effect=mock_batch_scan_with_findings({}),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -195,8 +213,8 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
 
-        # Mock batch scan to return findings for request template
-        mock_findings = {
+        # Mock findings for request template
+        findings_map = {
             (0, "resolver", "Query.getUser (request template)"): [
                 {
                     "type": "Secret Keyword",
@@ -215,7 +233,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value=mock_findings,
+            side_effect=mock_batch_scan_with_findings(findings_map),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -239,7 +257,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
 
-        mock_findings = {
+        findings_map = {
             (0, "resolver", "Query.getUser (response template)"): [
                 {
                     "type": "AWS Access Key",
@@ -258,7 +276,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value=mock_findings,
+            side_effect=mock_batch_scan_with_findings(findings_map),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -289,7 +307,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
 
-        mock_findings = {
+        findings_map = {
             (0, "datasource", "HTTPDataSource (http_config)"): [
                 {
                     "type": "Secret Keyword",
@@ -308,7 +326,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value=mock_findings,
+            side_effect=mock_batch_scan_with_findings(findings_map),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -339,7 +357,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         appsync_client.graphql_apis = {API_ARN: api}
         appsync_client.audit_config = {}
 
-        mock_findings = {
+        findings_map = {
             (0, "resolver", "Query.getUser (request template)"): [
                 {
                     "type": "Secret Keyword",
@@ -366,7 +384,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value=mock_findings,
+            side_effect=mock_batch_scan_with_findings(findings_map),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -419,7 +437,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         appsync_client.audit_config = {"secrets_validate": True}
 
         # Mock with a verified secret
-        mock_findings = {
+        findings_map = {
             (0, "resolver", "Query.getUser (request template)"): [
                 {
                     "type": "AWS Access Key",
@@ -438,7 +456,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             new=appsync_client,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
-            return_value=mock_findings,
+            side_effect=mock_batch_scan_with_findings(findings_map),
         ):
             from prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers import (
                 appsync_graphql_api_no_secrets_in_resolvers,
@@ -450,4 +468,5 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             # Severity should be escalated to CRITICAL for verified secrets
-            assert result[0].severity == "critical"
+            assert result[0].check_metadata.Severity == "critical"
+            assert "confirmed to be live" in result[0].status_extended
