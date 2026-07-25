@@ -25,12 +25,10 @@ class appsync_graphql_api_no_secrets_in_resolvers(Check):
         # Use a lazy generator to yield (key, payload) tuples for batch scanning.
         # Keys are (api_index, component_type, component_id) tuples to map findings
         # back to specific APIs, resolvers, and data sources.
-        apis_list = []
+        apis_list = list(appsync_client.graphql_apis.values())
 
         def resolver_and_datasource_payloads():
-            for api in appsync_client.graphql_apis.values():
-                api_index = len(apis_list)
-                apis_list.append(api)
+            for api_index, api in enumerate(apis_list):
 
                 # Yield resolver mapping templates
                 for resolver in api.resolvers:
