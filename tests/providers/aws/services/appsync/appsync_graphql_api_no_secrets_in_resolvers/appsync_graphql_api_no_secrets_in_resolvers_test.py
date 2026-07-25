@@ -105,7 +105,7 @@ def mock_batch_scan_with_findings(findings_map):
         findings_map: dict mapping keys to findings lists
     """
     def mock_scan(payloads, **kwargs):
-        # Consume the generator to populate apis_list in the check
+        # Iterate through payloads and return findings for matching keys
         results = {}
         for key, payload in payloads:
             if key in findings_map:
