@@ -188,6 +188,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings({}),
@@ -235,6 +236,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings(findings_map),
@@ -278,6 +280,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings(findings_map),
@@ -328,6 +331,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings(findings_map),
@@ -386,6 +390,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings(findings_map),
@@ -415,6 +420,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=SecretsScanError("Scanner failed"),
@@ -458,6 +464,7 @@ class Test_appsync_graphql_api_no_secrets_in_resolvers:
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.appsync_client",
             new=appsync_client,
+            create=True,
         ), mock.patch(
             "prowler.providers.aws.services.appsync.appsync_graphql_api_no_secrets_in_resolvers.appsync_graphql_api_no_secrets_in_resolvers.detect_secrets_scan_batch",
             side_effect=mock_batch_scan_with_findings(findings_map),
