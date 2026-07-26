@@ -184,6 +184,8 @@ class Test_ecr_repository_image_no_secrets:
 
     def test_secret_in_environment_variable(self):
         """A secret in an environment variable fails, naming the variable."""
+        from prowler.lib.check.models import Severity
+
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(
@@ -223,6 +225,8 @@ class Test_ecr_repository_image_no_secrets:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "environment variable DB_PASSWORD" in result[0].status_extended
+            assert SECRET_VALUE not in result[0].status_extended
+            assert result[0].check_metadata.Severity == Severity.high
 
     def test_secrets_ignore_patterns_suppresses_finding(self):
         """A secret matching an ignore pattern is suppressed."""
@@ -306,6 +310,7 @@ class Test_ecr_repository_image_no_secrets:
             assert len(result) == 1
             assert result[0].status == "FAIL"
             assert "image history step 2" in result[0].status_extended
+            assert SECRET_VALUE not in result[0].status_extended
 
     def test_secret_in_layer_file(self):
         """A secret in a layer file fails, naming the file and layer."""
@@ -356,6 +361,7 @@ class Test_ecr_repository_image_no_secrets:
             assert result[0].status == "FAIL"
             assert "file app/config.py" in result[0].status_extended
             assert layer_digest in result[0].status_extended
+            assert SECRET_VALUE not in result[0].status_extended
 
     def test_manifest_unresolvable(self):
         """An unresolvable manifest is reported as MANUAL."""
@@ -573,3 +579,5 @@ class Test_ecr_repository_image_no_secrets:
             statuses_by_repo = {r.resource_id.split(":")[0]: r.status for r in result}
             assert statuses_by_repo["repo-1"] == "PASS"
             assert statuses_by_repo["repo-2"] == "FAIL"
+            report_by_repo = {r.resource_id.split(":")[0]: r for r in result}
+            assert SECRET_VALUE not in report_by_repo["repo-2"].status_extended
