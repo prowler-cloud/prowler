@@ -1,3 +1,6 @@
+import io
+import json
+import tarfile
 from datetime import datetime
 from unittest.mock import patch
 
@@ -5,7 +8,13 @@ import botocore
 from boto3 import client
 from moto import mock_aws
 
-from prowler.providers.aws.services.ecr.ecr_service import ECR, ScanningRule
+from prowler.providers.aws.services.ecr.ecr_service import (
+    ECR,
+    MAX_LAYER_DOWNLOAD_BYTES,
+    ImageDetails,
+    Repository,
+    ScanningRule,
+)
 from tests.providers.aws.utils import (
     AWS_ACCOUNT_NUMBER,
     AWS_REGION_EU_WEST_1,
@@ -17,6 +26,105 @@ repo_name = "test-repo"
 
 # Mocking Access Analyzer Calls
 make_api_call = botocore.client.BaseClient._make_api_call
+
+# --- Fixtures for BatchGetImage / GetDownloadUrlForLayer, used by the
+# ecr_repository_image_no_secrets service methods below. Populated per test
+# since moto does not implement either of these two ECR operations.
+IMAGE_DIGEST = f"sha256:{'1' * 64}"
+CONFIG_DIGEST = f"sha256:{'c' * 64}"
+LAYER_DIGEST = f"sha256:{'d' * 64}"
+MULTI_ARCH_INDEX_DIGEST = f"sha256:{'2' * 64}"
+CHILD_AMD64_DIGEST = f"sha256:{'3' * 64}"
+CHILD_ARM64_DIGEST = f"sha256:{'4' * 64}"
+ATTESTATION_DIGEST = f"sha256:{'5' * 64}"
+
+SIMPLE_MANIFEST = {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+    "config": {
+        "mediaType": "application/vnd.docker.container.image.v1+json",
+        "digest": CONFIG_DIGEST,
+        "size": 100,
+    },
+    "layers": [
+        {
+            "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+            "digest": LAYER_DIGEST,
+            "size": 200,
+        }
+    ],
+}
+
+MULTI_ARCH_MANIFEST_LIST = {
+    "schemaVersion": 2,
+    "mediaType": "application/vnd.docker.distribution.manifest.list.v2+json",
+    "manifests": [
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": CHILD_AMD64_DIGEST,
+            "size": 10,
+            "platform": {"architecture": "amd64", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "digest": CHILD_ARM64_DIGEST,
+            "size": 10,
+            "platform": {"architecture": "arm64", "os": "linux"},
+        },
+        {
+            "mediaType": "application/vnd.oci.image.manifest.v1+json",
+            "digest": ATTESTATION_DIGEST,
+            "size": 10,
+            "platform": {"architecture": "unknown", "os": "unknown"},
+            "annotations": {"vnd.docker.reference.type": "attestation-manifest"},
+        },
+    ],
+}
+
+CONFIG_JSON = {
+    "config": {"Env": ["PATH=/usr/bin", "TOKEN=super-secret-value"]},
+    "history": [
+        {"created_by": "/bin/sh -c #(nop) ADD file"},
+        {"created_by": "RUN echo hi"},
+    ],
+}
+
+_MANIFESTS_BY_DIGEST = {}
+_BLOBS_BY_DIGEST = {}
+
+
+def build_gzip_tar(files: dict) -> bytes:
+    tar_buffer = io.BytesIO()
+    with tarfile.open(fileobj=tar_buffer, mode="w:gz") as tar:
+        for name, content in files.items():
+            data = content.encode("latin-1")
+            info = tarfile.TarInfo(name=name)
+            info.size = len(data)
+            tar.addfile(info, io.BytesIO(data))
+    return tar_buffer.getvalue()
+
+
+class FakeLayerResponse:
+    def __init__(self, data: bytes):
+        self._data = data
+
+    def raise_for_status(self):
+        pass
+
+    def iter_content(self, chunk_size=1024 * 1024):
+        for start in range(0, len(self._data), chunk_size):
+            yield self._data[start : start + chunk_size]
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        return False
+
+
+def mock_requests_get(url, **_):
+    digest = url.rsplit("/", 1)[-1]
+    return FakeLayerResponse(_BLOBS_BY_DIGEST[digest])
 
 
 def mock_make_api_call(self, operation_name, kwarg):
@@ -149,6 +257,32 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "findingSeverityCounts": {"CRITICAL": 3, "HIGH": 4, "MEDIUM": 5}
             },
         }
+
+    if operation_name == "BatchGetImage":
+        digest = kwarg["imageIds"][0]["imageDigest"]
+        manifest = _MANIFESTS_BY_DIGEST.get(digest)
+        if manifest is None:
+            return {
+                "images": [],
+                "failures": [
+                    {
+                        "imageId": {"imageDigest": digest},
+                        "failureCode": "ImageNotFound",
+                    }
+                ],
+            }
+        return {
+            "images": [
+                {
+                    "imageManifest": json.dumps(manifest),
+                    "imageManifestMediaType": manifest.get("mediaType", ""),
+                }
+            ]
+        }
+
+    if operation_name == "GetDownloadUrlForLayer":
+        digest = kwarg["layerDigest"]
+        return {"downloadUrl": f"https://layers.example.com/{digest}"}
 
     return make_api_call(self, operation_name, kwarg)
 
@@ -414,4 +548,159 @@ class Test_ECR_Service:
     def test_is_artifact_scannable_scannable_tags(self):
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.container.image.v1+json", ["abcdefg123456"]
+        )
+
+    @staticmethod
+    def _build_repository_and_image(digest=IMAGE_DIGEST):
+        repository = Repository(
+            name=repo_name,
+            arn=repo_arn,
+            region=AWS_REGION_EU_WEST_1,
+            scan_on_push=True,
+            images_details=[],
+        )
+        image = ImageDetails(
+            latest_tag="latest",
+            latest_digest=digest,
+            image_pushed_at=datetime(2023, 1, 1),
+            scan_findings_status=None,
+            scan_findings_severity_count=None,
+            artifact_media_type="application/vnd.docker.container.image.v1+json",
+            type="Docker",
+        )
+        return repository, image
+
+    @mock_aws
+    def test_fetch_image_scan_data_simple_image(self):
+        _MANIFESTS_BY_DIGEST.clear()
+        _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
+        _BLOBS_BY_DIGEST.clear()
+        _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
+            {"app/config.py": "TOKEN = 'x'"}
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image()
+
+        with patch(
+            "prowler.providers.aws.services.ecr.ecr_service.requests.get",
+            new=mock_requests_get,
+        ):
+            scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        assert scan_data is not None
+        assert scan_data.env == ["PATH=/usr/bin", "TOKEN=super-secret-value"]
+        assert scan_data.history == ["/bin/sh -c #(nop) ADD file", "RUN echo hi"]
+        assert len(scan_data.files) == 1
+        assert scan_data.files[0].path == "app/config.py"
+        assert scan_data.files[0].layer_digest == LAYER_DIGEST
+        assert scan_data.files[0].content == "TOKEN = 'x'"
+        assert scan_data.truncated is False
+
+    @mock_aws
+    def test_fetch_image_scan_data_resolves_multi_arch_manifest(self):
+        _MANIFESTS_BY_DIGEST.clear()
+        _MANIFESTS_BY_DIGEST[MULTI_ARCH_INDEX_DIGEST] = MULTI_ARCH_MANIFEST_LIST
+        _MANIFESTS_BY_DIGEST[CHILD_AMD64_DIGEST] = SIMPLE_MANIFEST
+        _BLOBS_BY_DIGEST.clear()
+        _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
+            {"app/config.py": "TOKEN = 'x'"}
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image(
+            digest=MULTI_ARCH_INDEX_DIGEST
+        )
+
+        with patch(
+            "prowler.providers.aws.services.ecr.ecr_service.requests.get",
+            new=mock_requests_get,
+        ):
+            scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        # Only the amd64/linux child manifest is resolved and scanned; the
+        # arm64 and attestation entries in the manifest list are ignored.
+        assert scan_data is not None
+        assert scan_data.env == ["PATH=/usr/bin", "TOKEN=super-secret-value"]
+        assert len(scan_data.files) == 1
+        assert scan_data.files[0].path == "app/config.py"
+
+    @mock_aws
+    def test_fetch_image_scan_data_skips_oversized_layer(self):
+        oversized_manifest = {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "config": {"digest": CONFIG_DIGEST, "size": 10},
+            "layers": [
+                {
+                    "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                    "digest": LAYER_DIGEST,
+                    "size": MAX_LAYER_DOWNLOAD_BYTES + 1,
+                }
+            ],
+        }
+        _MANIFESTS_BY_DIGEST.clear()
+        _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = oversized_manifest
+        _BLOBS_BY_DIGEST.clear()
+        _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image()
+
+        with patch(
+            "prowler.providers.aws.services.ecr.ecr_service.requests.get",
+            new=mock_requests_get,
+        ):
+            scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        # The oversized layer is never downloaded (only the config blob is in
+        # _BLOBS_BY_DIGEST), yet the fetch completes without raising.
+        assert scan_data is not None
+        assert scan_data.files == []
+        assert scan_data.truncated is True
+
+    @mock_aws
+    def test_fetch_image_scan_data_manifest_not_found_returns_none(self):
+        _MANIFESTS_BY_DIGEST.clear()
+        _BLOBS_BY_DIGEST.clear()
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image(
+            digest=f"sha256:{'f' * 64}"
+        )
+
+        scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        assert scan_data is None
+
+    @mock_aws
+    def test_get_image_scan_data_selects_only_latest_image_per_repository(self):
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": True},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        # Sanity check: this repository has several scannable tagged images.
+        assert len(repository.images_details) == 4
+
+        results = list(ecr._get_image_scan_data())
+
+        # Only the most recently pushed image is selected, not all four.
+        assert len(results) == 1
+        fetched_repository, fetched_image, _ = results[0]
+        assert fetched_repository.name == repo_name
+        assert fetched_image.latest_tag == "test-tag4"
+        assert (
+            fetched_image.latest_digest
+            == "sha256:43251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed"
         )
