@@ -235,6 +235,9 @@ class Organization(GithubService):
 
         Returns:
             Optional[str]: "read" or "write", or None when the setting cannot be read.
+
+        Raises:
+            github.RateLimitExceededException: When API rate limits are exceeded
         """
         try:
             _, response = org._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
@@ -249,6 +252,9 @@ class Organization(GithubService):
                 permissions = response.get("default_workflow_permissions")
                 if isinstance(permissions, str):
                     return permissions
+        except github.RateLimitExceededException as error:
+            logger.error(f"GitHub API rate limit exceeded: {error}")
+            raise  # Re-raise rate limit errors as they need special handling
         except github.GithubException as error:
             status_code = getattr(error, "status", None)
             if status_code == 404:

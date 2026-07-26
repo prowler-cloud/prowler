@@ -6,6 +6,7 @@ from tests.providers.github.github_fixtures import set_mocked_github_provider
 
 class Test_organization_default_workflow_permissions_read_only:
     def test_no_organizations(self):
+        """Test that no findings are reported when there are no organizations"""
         organization_client = mock.MagicMock
         organization_client.organizations = {}
 
@@ -28,6 +29,7 @@ class Test_organization_default_workflow_permissions_read_only:
             assert len(result) == 0
 
     def test_organization_default_workflow_permissions_unknown(self):
+        """Test that no finding is reported when the setting could not be read"""
         organization_client = mock.MagicMock
         organization_client.organizations = {
             1: Org(
@@ -56,6 +58,7 @@ class Test_organization_default_workflow_permissions_read_only:
             assert len(result) == 0
 
     def test_organization_default_workflow_permissions_write(self):
+        """Test that a write-capable default GITHUB_TOKEN fails the check"""
         organization_client = mock.MagicMock
         org_name = "test-organization"
         organization_client.organizations = {
@@ -92,6 +95,7 @@ class Test_organization_default_workflow_permissions_read_only:
             )
 
     def test_organization_default_workflow_permissions_read(self):
+        """Test that a read-only default GITHUB_TOKEN passes the check"""
         organization_client = mock.MagicMock
         org_name = "test-organization"
         organization_client.organizations = {
