@@ -14,6 +14,7 @@ from prowler.providers.aws.services.ecr.ecr_service import (
     ECR,
     MAX_FILE_BYTES,
     MAX_LAYER_DOWNLOAD_BYTES,
+    MAX_TOTAL_BYTES_PER_IMAGE,
     ImageDetails,
     Repository,
     ScanningRule,
@@ -774,6 +775,53 @@ class Test_ECR_Service:
         assert scan_data is not None
         assert len(scan_data.files) == 1
         assert scan_data.files[0].content == "TOKEN = 'x'"
+
+    def test_zstd_frame_content_size_matches_real_frame(self):
+        data = b"x" * 11000
+
+        assert ECR._zstd_frame_content_size(zstd.compress(data)) == len(data)
+
+    def test_zstd_frame_content_size_returns_none_for_non_zstd_data(self):
+        assert ECR._zstd_frame_content_size(b"not a zstd frame") is None
+
+    @mock_aws
+    def test_fetch_image_scan_data_rejects_oversized_zstd_frame(self):
+        zstd_manifest = {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "config": {"digest": CONFIG_DIGEST, "size": 100},
+            "layers": [
+                {
+                    "mediaType": "application/vnd.oci.image.layer.v1.tar+zstd",
+                    "digest": LAYER_DIGEST,
+                    "size": 200,
+                }
+            ],
+        }
+        _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = zstd_manifest
+        _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        # A hand-crafted zstd frame header (single-segment, 4-byte content
+        # size field, no dictionary) declaring a decompressed size over the
+        # per-image budget. The safeguard must reject it from the header
+        # alone, without ever calling zstd.decompress().
+        oversized_declared_size = MAX_TOTAL_BYTES_PER_IMAGE + 1
+        _BLOBS_BY_DIGEST[LAYER_DIGEST] = bytes(
+            [0x28, 0xB5, 0x2F, 0xFD, 0xA0]
+        ) + oversized_declared_size.to_bytes(4, "little")
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image()
+
+        with patch(
+            "prowler.providers.aws.services.ecr.ecr_service.requests.get",
+            new=mock_requests_get,
+        ):
+            scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        assert scan_data is not None
+        assert scan_data.files == []
+        assert scan_data.truncated is True
 
     @mock_aws
     def test_fetch_image_scan_data_uncompressed_tar_layer(self):
