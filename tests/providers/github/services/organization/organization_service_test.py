@@ -492,3 +492,62 @@ class Test_Organization_ErrorHandling:
                 # Should log rate limit error
                 mock_logger.error.assert_called()
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
+
+
+class Test_Organization_Default_Workflow_Permissions:
+    def _get_service(self):
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.GithubService.__init__"
+        ):
+            return Organization(set_mocked_github_provider())
+
+    def test_default_workflow_permissions_read(self):
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "read"},
+        )
+
+        assert (
+            organization_service._get_default_workflow_permissions(mock_org) == "read"
+        ), "The organization default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+
+    def test_default_workflow_permissions_missing_field(self):
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = ({}, {})
+
+        assert (
+            organization_service._get_default_workflow_permissions(mock_org) is None
+        ), "An unexpected response payload should not be reported as a permissions value"
+
+    def test_default_workflow_permissions_not_available(self):
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-user"
+        mock_org._requester.requestJsonAndCheck.side_effect = GithubException(
+            404, "Not Found", None
+        )
+
+        assert (
+            organization_service._get_default_workflow_permissions(mock_org) is None
+        ), "Accounts without Actions permissions settings should not produce a value"
+
+    def test_default_workflow_permissions_access_denied(self):
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.side_effect = GithubException(
+            403, "Forbidden", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.organization.organization_service.logger"
+        ) as mock_logger:
+            assert (
+                organization_service._get_default_workflow_permissions(mock_org) is None
+            ), "Insufficient permissions should not produce a value"
+            mock_logger.warning.assert_called()
