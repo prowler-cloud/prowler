@@ -784,6 +784,29 @@ class Test_ECR_Service:
     def test_zstd_frame_content_size_returns_none_for_non_zstd_data(self):
         assert ECR._zstd_frame_content_size(b"not a zstd frame") is None
 
+    def test_open_layer_tar_zstd_respects_remaining_budget_not_full_cap(self):
+        media_type = "application/vnd.oci.image.layer.v1.tar+zstd"
+        tar_bytes = build_tar({"app/config.py": "TOKEN = 'x'"})
+        compressed = zstd.compress(tar_bytes)
+        declared_size = ECR._zstd_frame_content_size(compressed)
+
+        # The frame declares `declared_size` bytes: comfortably under the
+        # full per-image cap, but over a remaining budget smaller than it.
+        # The check must compare against that remaining budget, not the
+        # full MAX_TOTAL_BYTES_PER_IMAGE cap.
+        assert (
+            ECR._open_layer_tar(
+                compressed, media_type, remaining_budget=declared_size - 1
+            )
+            is None
+        )
+        assert (
+            ECR._open_layer_tar(
+                compressed, media_type, remaining_budget=declared_size + 1
+            )
+            is not None
+        )
+
     @mock_aws
     def test_fetch_image_scan_data_rejects_oversized_zstd_frame(self):
         zstd_manifest = {

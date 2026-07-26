@@ -460,10 +460,19 @@ class ECR(AWSService):
                 truncated = True
                 continue
 
-            tar_stream = self._open_layer_tar(layer_bytes, layer.get("mediaType", ""))
+            tar_stream = self._open_layer_tar(
+                layer_bytes,
+                layer.get("mediaType", ""),
+                remaining_budget=MAX_TOTAL_BYTES_PER_IMAGE - total_bytes,
+            )
             if tar_stream is None:
                 truncated = True
                 continue
+            # The compressed blob is no longer needed once decompressed into
+            # tar_stream; drop it so it can be freed during the (often
+            # longer) member-iteration below instead of lingering alongside
+            # the decompressed copy.
+            layer_bytes = None
 
             with tar_stream:
                 for member in tar_stream:
@@ -677,8 +686,13 @@ class ECR(AWSService):
         return content_size
 
     @staticmethod
-    def _open_layer_tar(layer_bytes: bytes, media_type: str):
+    def _open_layer_tar(layer_bytes: bytes, media_type: str, remaining_budget: int):
         """Open a downloaded layer's bytes as a tar archive by media type.
+
+        Args:
+            remaining_budget: Decompressed bytes still allowed for this
+                image (MAX_TOTAL_BYTES_PER_IMAGE minus what prior layers
+                already contributed), used to bound zstd decompression.
 
         Returns:
             An open TarFile for gzip, zstd, or uncompressed tar layers, or
@@ -689,11 +703,11 @@ class ECR(AWSService):
                 # Unlike gzip (streamed incrementally by tarfile, with each
                 # member's size checked before its content is read), zstd
                 # decompression here happens all at once. Refuse to expand a
-                # frame whose declared decompressed size is unknown or
-                # exceeds the per-image budget, instead of buffering an
-                # unbounded amount of untrusted data in memory.
+                # frame whose declared decompressed size is unknown or would
+                # exceed what's left of the image's total budget, instead of
+                # buffering an unbounded amount of untrusted data in memory.
                 content_size = ECR._zstd_frame_content_size(layer_bytes)
-                if content_size is None or content_size > MAX_TOTAL_BYTES_PER_IMAGE:
+                if content_size is None or content_size > remaining_budget:
                     return None
                 return tarfile.open(
                     fileobj=BytesIO(zstd.decompress(layer_bytes)), mode="r:"
