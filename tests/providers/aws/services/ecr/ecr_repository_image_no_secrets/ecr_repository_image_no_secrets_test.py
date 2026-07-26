@@ -24,6 +24,7 @@ SECRET_VALUE = (
 
 
 def create_repository(name="test-repo", region=AWS_REGION_US_EAST_1) -> Repository:
+    """Build a minimal ECR Repository fixture."""
     return Repository(
         name=name,
         arn=f"arn:aws:ecr:{region}:{AWS_ACCOUNT_NUMBER}:repository/{name}",
@@ -34,6 +35,7 @@ def create_repository(name="test-repo", region=AWS_REGION_US_EAST_1) -> Reposito
 
 
 def create_image(tag="latest", digest=None) -> ImageDetails:
+    """Build a minimal ImageDetails fixture."""
     return ImageDetails(
         latest_tag=tag,
         latest_digest=digest or f"sha256:{'0' * 64}",
@@ -46,7 +48,10 @@ def create_image(tag="latest", digest=None) -> ImageDetails:
 
 
 def mock_image_scan_data(pairs):
+    """Build a fake _get_image_scan_data generator yielding the given pairs."""
+
     def _generator():
+        """Yield each (repository, image, scan_data) pair once."""
         for entry in pairs:
             yield entry
 
@@ -54,7 +59,10 @@ def mock_image_scan_data(pairs):
 
 
 class Test_ecr_repository_image_no_secrets:
+    """Tests for the ecr_repository_image_no_secrets check."""
+
     def test_no_repositories(self):
+        """No repositories yields no findings."""
         ecr_client = mock.MagicMock()
         ecr_client.registries = {}
         ecr_client.audit_config = {
@@ -83,6 +91,7 @@ class Test_ecr_repository_image_no_secrets:
             assert len(result) == 0
 
     def test_clean_image(self):
+        """An image with no secrets passes."""
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(
@@ -134,6 +143,7 @@ class Test_ecr_repository_image_no_secrets:
             assert result[0].resource_arn == f"{repository.arn}/image/{digest_short}"
 
     def test_truncated_image_still_passes_with_disclosure(self):
+        """A clean but truncated image still passes, disclosing the truncation."""
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(env=[], history=[], files=[], truncated=True)
@@ -173,6 +183,7 @@ class Test_ecr_repository_image_no_secrets:
             )
 
     def test_secret_in_environment_variable(self):
+        """A secret in an environment variable fails, naming the variable."""
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(
@@ -214,6 +225,7 @@ class Test_ecr_repository_image_no_secrets:
             assert "environment variable DB_PASSWORD" in result[0].status_extended
 
     def test_secrets_ignore_patterns_suppresses_finding(self):
+        """A secret matching an ignore pattern is suppressed."""
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(
@@ -254,6 +266,7 @@ class Test_ecr_repository_image_no_secrets:
             assert result[0].status == "PASS"
 
     def test_secret_in_build_history(self):
+        """A secret in a build history step fails, naming the step."""
         repository = create_repository()
         image = create_image()
         scan_data = ImageScanData(
@@ -295,6 +308,7 @@ class Test_ecr_repository_image_no_secrets:
             assert "image history step 2" in result[0].status_extended
 
     def test_secret_in_layer_file(self):
+        """A secret in a layer file fails, naming the file and layer."""
         repository = create_repository()
         image = create_image()
         layer_digest = f"sha256:{'a' * 64}"
@@ -344,6 +358,7 @@ class Test_ecr_repository_image_no_secrets:
             assert layer_digest in result[0].status_extended
 
     def test_manifest_unresolvable(self):
+        """An unresolvable manifest is reported as MANUAL."""
         repository = create_repository()
         image = create_image()
 
@@ -382,6 +397,7 @@ class Test_ecr_repository_image_no_secrets:
             )
 
     def test_scan_error_reports_manual_for_latest_image_per_repository(self):
+        """A scanner failure reports MANUAL once per repository's latest image."""
         from prowler.lib.utils.utils import SecretsScanError
 
         # Each repository has multiple images; the scan-error fallback must
@@ -448,6 +464,7 @@ class Test_ecr_repository_image_no_secrets:
             assert "Scanner failure" in result[0].status_extended
 
     def test_verified_secret_escalates_to_critical(self):
+        """A verified secret escalates severity to critical."""
         from prowler.lib.check.models import Severity
 
         repository = create_repository()
@@ -471,6 +488,7 @@ class Test_ecr_repository_image_no_secrets:
             # payloads generator as a side effect (that's what populates the
             # check's `scanned` list); replicate that here while returning
             # a controlled, pre-verified finding.
+            """Drain the payload generator like the real scanner, then return canned findings."""
             list(payloads)
             return {
                 (0, "environment"): [
@@ -510,6 +528,7 @@ class Test_ecr_repository_image_no_secrets:
             assert "confirmed to be live" in result[0].status_extended
 
     def test_multiple_repositories_and_images(self):
+        """Mixed pass/fail results are reported across multiple repositories."""
         repo1 = create_repository(name="repo-1")
         repo2 = create_repository(name="repo-2")
         image1 = create_image(tag="v1", digest=f"sha256:{'1' * 64}")

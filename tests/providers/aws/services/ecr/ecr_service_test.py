@@ -108,6 +108,7 @@ def _reset_image_fixtures():
 
 
 def build_tar(files: dict) -> bytes:
+    """Build an uncompressed tar archive from the given files."""
     tar_buffer = io.BytesIO()
     with tarfile.open(fileobj=tar_buffer, mode="w") as tar:
         for name, content in files.items():
@@ -119,6 +120,7 @@ def build_tar(files: dict) -> bytes:
 
 
 def build_gzip_tar(files: dict) -> bytes:
+    """Build a gzip-compressed tar archive from the given files."""
     tar_buffer = io.BytesIO()
     with tarfile.open(fileobj=tar_buffer, mode="w:gz") as tar:
         for name, content in files.items():
@@ -130,29 +132,37 @@ def build_gzip_tar(files: dict) -> bytes:
 
 
 class FakeLayerResponse:
+    """A minimal stand-in for a requests.Response over a layer download."""
+
     def __init__(self, data: bytes):
+        """Store the fixture bytes to serve."""
         self._data = data
 
     def raise_for_status(self):
-        pass
+        """No-op: fixture responses are always successful."""
 
     def iter_content(self, chunk_size=1024 * 1024):
+        """Yield the fixture bytes in chunks."""
         for start in range(0, len(self._data), chunk_size):
             yield self._data[start : start + chunk_size]
 
     def __enter__(self):
+        """Support use as a context manager."""
         return self
 
     def __exit__(self, *_):
+        """Support use as a context manager."""
         return False
 
 
 def mock_requests_get(url, **_):
+    """Return the fixture bytes registered for the requested layer's URL."""
     digest = url.rsplit("/", 1)[-1]
     return FakeLayerResponse(_BLOBS_BY_DIGEST[digest])
 
 
 def mock_make_api_call(self, operation_name, kwarg):
+    """Fake botocore responses for the ECR operations this suite exercises."""
     if operation_name == "DescribeImages":
         return {
             "imageDetails": [
@@ -313,6 +323,7 @@ def mock_make_api_call(self, operation_name, kwarg):
 
 
 def mock_generate_regional_clients(provider, service):
+    """Return a single regional client for every requested region."""
     regional_client = provider._session.current_session.client(
         service, region_name=AWS_REGION_EU_WEST_1
     )
@@ -328,13 +339,17 @@ def mock_generate_regional_clients(provider, service):
 )
 class Test_ECR_Service:
     # Test ECR Service
+    """Tests for the ECR service."""
+
     def test_service(self):
+        """The service name is set correctly."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert ecr.service == "ecr"
 
     # Test ECR client
     def test_client(self):
+        """Each regional client is an ECR client."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         for regional_client in ecr.regional_clients.values():
@@ -342,6 +357,7 @@ class Test_ECR_Service:
 
     # Test ECR session
     def test_get_session(self):
+        """The session is set correctly."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert ecr.session.__class__.__name__ == "Session"
@@ -349,6 +365,7 @@ class Test_ECR_Service:
     # Test describe ECR repositories
     @mock_aws
     def test_describe_registries_and_repositories(self):
+        """Registries and repositories are discovered."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -379,6 +396,7 @@ class Test_ECR_Service:
     # Test describe ECR repository policies
     @mock_aws
     def test_describe_repository_policies(self):
+        """Repository policies are fetched and parsed."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -408,6 +426,7 @@ class Test_ECR_Service:
     # Test describe ECR repository lifecycle policies
     @mock_aws
     def test_get_lifecycle_policies(self):
+        """Repository lifecycle policies are fetched."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -427,6 +446,7 @@ class Test_ECR_Service:
     # Test get image details
     @mock_aws
     def test_get_image_details(self):
+        """Scannable, tagged images are collected and sorted by push date."""
         ecr_client = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client.create_repository(
             repositoryName=repo_name,
@@ -525,6 +545,7 @@ class Test_ECR_Service:
     # Test get ECR Registries Scanning Configuration
     @mock_aws
     def test_get_registry_scanning_configuration(self):
+        """The registry's scanning configuration is fetched."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         assert len(ecr.registries) == 1
@@ -538,45 +559,56 @@ class Test_ECR_Service:
         ]
 
     def test_is_artifact_scannable_docker(self):
+        """A Docker image config is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.container.image.v1+json"
         )
 
     def test_is_artifact_scannable_layer_tar(self):
+        """An uncompressed Docker layer is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.image.rootfs.diff.tar"
         )
 
     def test_is_artifact_scannable_layer_gzip(self):
+        """A gzip-compressed Docker layer is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.image.rootfs.diff.tar.gzip"
         )
 
     def test_is_artifact_scannable_oci(self):
+        """An OCI image config is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.config.v1+json")
 
     def test_is_artifact_scannable_oci_tar(self):
+        """An uncompressed OCI layer is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar")
 
     def test_is_artifact_scannable_oci_compressed(self):
+        """A gzip-compressed OCI layer is scannable."""
         assert ECR._is_artifact_scannable("application/vnd.oci.image.layer.v1.tar+gzip")
 
     def test_is_artifact_scannable_none(self):
+        """A missing media type is not scannable."""
         assert not ECR._is_artifact_scannable(None)
 
     def test_is_artifact_scannable_empty(self):
+        """An empty media type is not scannable."""
         assert not ECR._is_artifact_scannable("")
 
     def test_is_artifact_scannable_non_scannable_tags(self):
+        """A signature-tagged artifact is not scannable."""
         assert not ECR._is_artifact_scannable("", ["sha256-abcdefg123456.sig"])
 
     def test_is_artifact_scannable_scannable_tags(self):
+        """A normally-tagged artifact is scannable."""
         assert ECR._is_artifact_scannable(
             "application/vnd.docker.container.image.v1+json", ["abcdefg123456"]
         )
 
     @staticmethod
     def _build_repository_and_image(digest=IMAGE_DIGEST):
+        """Build a Repository and a single ImageDetails for it."""
         repository = Repository(
             name=repo_name,
             arn=repo_arn,
@@ -597,6 +629,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_simple_image(self):
+        """A single-manifest image's config and layer file are scanned."""
         _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
         _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
         _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
@@ -624,6 +657,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_resolves_multi_arch_manifest(self):
+        """A multi-arch manifest list resolves to its amd64/linux child."""
         _MANIFESTS_BY_DIGEST[MULTI_ARCH_INDEX_DIGEST] = MULTI_ARCH_MANIFEST_LIST
         _MANIFESTS_BY_DIGEST[CHILD_AMD64_DIGEST] = SIMPLE_MANIFEST
         _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
@@ -652,6 +686,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_skips_oversized_layer(self):
+        """A layer over the size cap is skipped, not downloaded."""
         oversized_manifest = {
             "schemaVersion": 2,
             "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -685,6 +720,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_manifest_not_found_returns_none(self):
+        """An unknown digest resolves to no scan data."""
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
         repository, image = self._build_repository_and_image(
@@ -697,6 +733,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_get_image_scan_data_selects_only_latest_image_per_repository(self):
+        """Only the latest image per repository is selected for scanning."""
         ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
         ecr_client_boto.create_repository(
             repositoryName=repo_name,
@@ -722,6 +759,7 @@ class Test_ECR_Service:
         )
 
     def test_select_child_manifest_digest_falls_back_to_non_amd64(self):
+        """With no amd64/linux entry, the first non-attestation candidate is picked."""
         manifest_list = {
             "manifests": [
                 {
@@ -744,6 +782,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_zstd_layer(self):
+        """A zstd-compressed layer is decompressed and scanned."""
         zstd_manifest = {
             "schemaVersion": 2,
             "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -777,14 +816,17 @@ class Test_ECR_Service:
         assert scan_data.files[0].content == "TOKEN = 'x'"
 
     def test_zstd_frame_content_size_matches_real_frame(self):
+        """The parsed frame size matches a real frame's actual content length."""
         data = b"x" * 11000
 
         assert ECR._zstd_frame_content_size(zstd.compress(data)) == len(data)
 
     def test_zstd_frame_content_size_returns_none_for_non_zstd_data(self):
+        """Non-zstd data yields no declared size."""
         assert ECR._zstd_frame_content_size(b"not a zstd frame") is None
 
     def test_open_layer_tar_zstd_respects_remaining_budget_not_full_cap(self):
+        """The zstd size check compares against the remaining budget, not the full cap."""
         media_type = "application/vnd.oci.image.layer.v1.tar+zstd"
         tar_bytes = build_tar({"app/config.py": "TOKEN = 'x'"})
         compressed = zstd.compress(tar_bytes)
@@ -809,6 +851,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_rejects_oversized_zstd_frame(self):
+        """A zstd frame declaring a size over budget is rejected without decompressing."""
         zstd_manifest = {
             "schemaVersion": 2,
             "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -848,6 +891,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_uncompressed_tar_layer(self):
+        """An uncompressed tar layer is read and scanned directly."""
         tar_manifest = {
             "schemaVersion": 2,
             "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
@@ -880,6 +924,7 @@ class Test_ECR_Service:
 
     @mock_aws
     def test_fetch_image_scan_data_skips_whiteout_and_oversized_file(self):
+        """Whiteout markers and oversized files are skipped, not scanned."""
         _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = SIMPLE_MANIFEST
         _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
         _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
