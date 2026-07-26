@@ -44,6 +44,7 @@ class ecr_repository_image_no_secrets(Check):
         scanned = []
 
         def image_payloads():
+            """Yield keyed scan payloads, recording each image into `scanned`."""
             for repository, image, scan_data in ecr_client._get_image_scan_data():
                 index = len(scanned)
                 scanned.append((repository, image, scan_data))
@@ -56,7 +57,11 @@ class ecr_repository_image_no_secrets(Check):
                 for file_index, scanned_file in enumerate(scan_data.files):
                     yield (index, f"file:{file_index}"), scanned_file.content
 
-        # Phase 2: batch — one call, chunked Kingfisher subprocesses.
+        # Phase 2: batch — one call, chunked Kingfisher subprocesses. This
+        # must fully consume image_payloads() so every image is appended to
+        # `scanned` before Phase 3 runs; detect_secrets_scan_batch does so
+        # today, but a future short-circuit there would silently drop images
+        # from the report loop.
         scan_error = None
         try:
             batch_results = detect_secrets_scan_batch(
@@ -74,7 +79,11 @@ class ecr_repository_image_no_secrets(Check):
             # themselves rather than risk a false PASS or a missing finding.
             for registry in ecr_client.registries.values():
                 for repository in registry.repositories:
-                    for image in repository.images_details or []:
+                    for image in (
+                        [repository.images_details[-1]]
+                        if repository.images_details
+                        else []
+                    ):
                         report = self._build_report(repository, image)
                         report.status = "MANUAL"
                         report.status_extended = (
@@ -153,6 +162,11 @@ class ecr_repository_image_no_secrets(Check):
                     f"Potential {'secrets' if len(secrets_found) > 1 else 'secret'} "
                     f"found in the {image_reference} -> {', '.join(secrets_found)}."
                 )
+                if scan_data.truncated:
+                    report.status_extended += (
+                        " Some layers or files exceeded configured size limits "
+                        "and were not scanned."
+                    )
                 annotate_verified_secrets(report, all_secrets)
 
             findings.append(report)

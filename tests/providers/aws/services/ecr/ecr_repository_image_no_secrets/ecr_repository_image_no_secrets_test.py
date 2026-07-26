@@ -213,6 +213,46 @@ class Test_ecr_repository_image_no_secrets:
             assert result[0].status == "FAIL"
             assert "environment variable DB_PASSWORD" in result[0].status_extended
 
+    def test_secrets_ignore_patterns_suppresses_finding(self):
+        repository = create_repository()
+        image = create_image()
+        scan_data = ImageScanData(
+            env=["PATH=/usr/bin", f"DB_PASSWORD={SECRET_VALUE}"],
+            history=[],
+            files=[],
+            truncated=False,
+        )
+
+        ecr_client = mock.MagicMock()
+        ecr_client.registries = {}
+        ecr_client.audit_config = {
+            "secrets_ignore_patterns": [SECRET_VALUE],
+            "secrets_validate": False,
+        }
+        ecr_client._get_image_scan_data = mock_image_scan_data(
+            [(repository, image, scan_data)]
+        )
+
+        with (
+            mock.patch(
+                "prowler.providers.common.provider.Provider.get_global_provider",
+                return_value=set_mocked_aws_provider(),
+            ),
+            mock.patch(
+                "prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets.ecr_client",
+                new=ecr_client,
+            ),
+        ):
+            from prowler.providers.aws.services.ecr.ecr_repository_image_no_secrets.ecr_repository_image_no_secrets import (
+                ecr_repository_image_no_secrets,
+            )
+
+            check = ecr_repository_image_no_secrets()
+            result = check.execute()
+
+            assert len(result) == 1
+            assert result[0].status == "PASS"
+
     def test_secret_in_build_history(self):
         repository = create_repository()
         image = create_image()
@@ -341,17 +381,27 @@ class Test_ecr_repository_image_no_secrets:
                 in result[0].status_extended
             )
 
-    def test_scan_error_reports_manual_for_every_image(self):
+    def test_scan_error_reports_manual_for_latest_image_per_repository(self):
         from prowler.lib.utils.utils import SecretsScanError
 
-        repository = create_repository()
-        image = create_image()
-        repository.images_details = [image]
+        # Each repository has multiple images; the scan-error fallback must
+        # scope to the latest image per repository only, mirroring the
+        # success-path scope, not emit one MANUAL per image.
+        repo1 = create_repository(name="repo-1")
+        repo1.images_details = [
+            create_image(tag="v1", digest=f"sha256:{'1' * 64}"),
+            create_image(tag="v2", digest=f"sha256:{'2' * 64}"),
+        ]
+        repo2 = create_repository(name="repo-2")
+        repo2.images_details = [
+            create_image(tag="v1", digest=f"sha256:{'3' * 64}"),
+            create_image(tag="v2", digest=f"sha256:{'4' * 64}"),
+        ]
         registry = Registry(
             id=AWS_ACCOUNT_NUMBER,
             arn=f"arn:aws:ecr:{AWS_REGION_US_EAST_1}:{AWS_ACCOUNT_NUMBER}:registry/{AWS_ACCOUNT_NUMBER}",
             region=AWS_REGION_US_EAST_1,
-            repositories=[repository],
+            repositories=[repo1, repo2],
         )
 
         ecr_client = mock.MagicMock()
@@ -384,9 +434,17 @@ class Test_ecr_repository_image_no_secrets:
             check = ecr_repository_image_no_secrets()
             result = check.execute()
 
-            assert len(result) == 1
-            assert result[0].status == "MANUAL"
-            assert "Could not scan image" in result[0].status_extended
+            # One MANUAL per repository (its latest image), not one per image.
+            assert len(result) == 2
+            for report in result:
+                assert report.status == "MANUAL"
+                assert "Could not scan image" in report.status_extended
+                assert "Scanner failure" in report.status_extended
+
+            digests_reported = {report.resource_id.split("@")[-1] for report in result}
+            latest_digest_repo1 = repo1.images_details[-1].latest_digest[-12:]
+            latest_digest_repo2 = repo2.images_details[-1].latest_digest[-12:]
+            assert digests_reported == {latest_digest_repo1, latest_digest_repo2}
             assert "Scanner failure" in result[0].status_extended
 
     def test_verified_secret_escalates_to_critical(self):

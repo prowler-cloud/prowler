@@ -34,7 +34,10 @@ LAYER_DOWNLOAD_TIMEOUT_SECONDS = 30
 
 
 class ECR(AWSService):
+    """AWS Elastic Container Registry service."""
+
     def __init__(self, provider):
+        """Discover registries, repositories, policies, and image metadata."""
         # Call AWSService's __init__
         super().__init__(__class__.__name__, provider)
         self.registry_id = self.audited_account
@@ -47,6 +50,7 @@ class ECR(AWSService):
         self.__threading_call__(self._list_tags_for_resource)
 
     def _describe_registries_and_repositories(self, regional_client):
+        """Populate the registry and its repositories for one region."""
         logger.info("ECR - Describing registries and repositories...")
         regional_registry_repositories = []
         try:
@@ -91,6 +95,7 @@ class ECR(AWSService):
             )
 
     def _describe_repository_policies(self, regional_client):
+        """Fetch and attach each repository's resource policy, if any."""
         logger.info("ECR - Describing repository policies...")
         try:
             if regional_client.region in self.registries:
@@ -119,6 +124,7 @@ class ECR(AWSService):
                 )
 
     def _get_repository_lifecycle_policy(self, regional_client):
+        """Fetch and attach each repository's lifecycle policy, if any."""
         logger.info("ECR - Getting repository lifecycle policy...")
         try:
             if regional_client.region in self.registries:
@@ -147,6 +153,7 @@ class ECR(AWSService):
             )
 
     def _get_image_details(self, regional_client):
+        """Populate each scan-on-push repository's scannable, tagged images."""
         logger.info("ECR - Getting images details...")
         try:
             if regional_client.region in self.registries:
@@ -275,6 +282,7 @@ class ECR(AWSService):
             )
 
     def _list_tags_for_resource(self, regional_client):
+        """Fetch and attach each repository's resource tags."""
         logger.info("ECR - List Tags...")
         try:
             if regional_client.region in self.registries:
@@ -303,6 +311,7 @@ class ECR(AWSService):
             )
 
     def _get_registry_scanning_configuration(self, regional_client):
+        """Fetch and attach the registry's image-scanning configuration."""
         logger.info("ECR - Getting Registry Scanning Configuration...")
         try:
             if regional_client.region in self.registries:
@@ -380,6 +389,15 @@ class ECR(AWSService):
             yield repository, image, scan_data
 
     def _fetch_image_scan_data(self, repository, image) -> Optional["ImageScanData"]:
+        """Resolve one image's manifest and return its scannable content.
+
+        Downloads the config blob (environment variables, build history)
+        and every filesystem layer's file contents, bounded by the module's
+        size/count limits.
+
+        Returns:
+            An ImageScanData, or None if the manifest could not be resolved.
+        """
         client = self.regional_clients[repository.region]
         registry_id = self.registries[repository.region].id
 
@@ -394,7 +412,11 @@ class ECR(AWSService):
         config_digest = manifest.get("config", {}).get("digest")
         if config_digest:
             config_bytes = self._download_layer(
-                client, registry_id, repository.name, config_digest
+                client,
+                registry_id,
+                repository.name,
+                config_digest,
+                max_bytes=MAX_FILE_BYTES,
             )
             if config_bytes is not None:
                 try:
@@ -502,6 +524,14 @@ class ECR(AWSService):
                 manifest, _ = self._batch_get_manifest(
                     client, registry_id, repository_name, child_digest
                 )
+            if manifest is not None and not (
+                manifest.get("config") or manifest.get("layers")
+            ):
+                # A resolved manifest with neither a config nor layers has
+                # nothing to scan (e.g. a nested manifest list, or an
+                # unsupported manifest shape) — treat it as unresolvable so
+                # the caller reports MANUAL instead of a false PASS.
+                return None
             return manifest
         except Exception as error:
             logger.error(
@@ -511,6 +541,11 @@ class ECR(AWSService):
 
     @staticmethod
     def _batch_get_manifest(client, registry_id, repository_name, image_digest):
+        """Fetch and parse the raw manifest JSON for a single image digest.
+
+        Returns:
+            A (manifest, media_type) tuple, or (None, None) if not found.
+        """
         response = client.batch_get_image(
             registryId=registry_id,
             repositoryName=repository_name,
@@ -527,6 +562,15 @@ class ECR(AWSService):
 
     @staticmethod
     def _select_child_manifest_digest(manifest_list: dict) -> Optional[str]:
+        """Pick one real platform manifest's digest from a manifest list.
+
+        Prefers linux/amd64, falling back to the first remaining candidate
+        once attestation manifests (platform "unknown/unknown", or
+        annotated as an attestation manifest) are excluded.
+
+        Returns:
+            The chosen manifest's digest, or None if no candidate remains.
+        """
         candidates = []
         for entry in manifest_list.get("manifests", []):
             platform = entry.get("platform", {}) or {}
@@ -556,6 +600,15 @@ class ECR(AWSService):
     def _download_layer(
         client, registry_id, repository_name, layer_digest, max_bytes=None
     ) -> Optional[bytes]:
+        """Download one layer or config blob via its presigned URL.
+
+        Streams the response, aborting once `max_bytes` is exceeded, so a
+        lying or oversized blob is never buffered in full.
+
+        Returns:
+            The blob's bytes, or None if it could not be downloaded or
+            exceeded `max_bytes`.
+        """
         try:
             response = client.get_download_url_for_layer(
                 registryId=registry_id,
@@ -571,6 +624,7 @@ class ECR(AWSService):
                 download_url,
                 stream=True,
                 timeout=LAYER_DOWNLOAD_TIMEOUT_SECONDS,
+                allow_redirects=False,
             ) as http_response:
                 http_response.raise_for_status()
                 for chunk in http_response.iter_content(chunk_size=1024 * 1024):
@@ -586,6 +640,12 @@ class ECR(AWSService):
 
     @staticmethod
     def _open_layer_tar(layer_bytes: bytes, media_type: str):
+        """Open a downloaded layer's bytes as a tar archive by media type.
+
+        Returns:
+            An open TarFile for gzip, zstd, or uncompressed tar layers, or
+            None for an unrecognized media type or a decompression failure.
+        """
         try:
             if media_type.endswith("zstd"):
                 return tarfile.open(
@@ -642,12 +702,16 @@ class ECR(AWSService):
 
 
 class FindingSeverityCounts(BaseModel):
+    """Count of an image's vulnerability scan findings by severity."""
+
     critical: int
     high: int
     medium: int
 
 
 class ImageDetails(BaseModel):
+    """A single scannable, tagged image within an ECR repository."""
+
     latest_tag: str
     latest_digest: str
     image_pushed_at: datetime
@@ -658,6 +722,8 @@ class ImageDetails(BaseModel):
 
 
 class Repository(BaseModel):
+    """An ECR repository and its policies, images, and tags."""
+
     name: str
     arn: str
     region: str
@@ -671,12 +737,16 @@ class Repository(BaseModel):
 
 
 class ImageScanFile(BaseModel):
+    """A single file extracted from an image layer for secret scanning."""
+
     path: str
     layer_digest: str
     content: str
 
 
 class ImageScanData(BaseModel):
+    """An image's scannable content: config env/history and layer files."""
+
     env: list[str] = []
     history: list[str] = []
     files: list[ImageScanFile] = []
@@ -686,11 +756,15 @@ class ImageScanData(BaseModel):
 
 
 class ScanningRule(BaseModel):
+    """A registry-level image-scanning rule and its repository filters."""
+
     scan_frequency: str
     scan_filters: list[dict]
 
 
 class Registry(BaseModel):
+    """An ECR registry: its repositories and scanning configuration."""
+
     id: str
     arn: str
     region: str
