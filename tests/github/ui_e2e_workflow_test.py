@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import yaml
-
 REPOSITORY_ROOT = Path(__file__).parents[2]
 WORKFLOW_PATH = REPOSITORY_ROOT / ".github/workflows/ui-e2e-tests-v2.yml"
 NODE_IMAGE_DIGEST = (
@@ -9,9 +7,26 @@ NODE_IMAGE_DIGEST = (
 )
 
 
-def _jobs():
-    with WORKFLOW_PATH.open() as workflow_file:
-        return yaml.safe_load(workflow_file)["jobs"]
+def _indented_block(text, heading):
+    lines = text.splitlines()
+    start = lines.index(heading)
+    indentation = len(heading) - len(heading.lstrip())
+    end = len(lines)
+
+    for index in range(start + 1, len(lines)):
+        line = lines[index]
+        if line.strip() and len(line) - len(line.lstrip()) <= indentation:
+            end = index
+            break
+
+    return "\n".join(lines[start:end])
+
+
+def _multiline_value(block, key):
+    lines = block.splitlines()
+    heading = next(line for line in lines if line.strip() == f"{key}: |")
+    value_block = _indented_block(block, heading)
+    return "\n".join(value_block.splitlines()[1:])
 
 
 def _normalize(expression):
@@ -19,44 +34,42 @@ def _normalize(expression):
 
 
 def test_fork_pull_requests_use_explicit_skip_route():
-    jobs = _jobs()
-    fork_job = jobs["fork-e2e-unavailable"]
+    workflow = WORKFLOW_PATH.read_text()
+    e2e_job = _indented_block(workflow, "  e2e-tests:")
+    fork_job = _indented_block(workflow, "  fork-e2e-unavailable:")
 
-    assert _normalize(jobs["e2e-tests"]["if"]) == (
+    assert _normalize(_multiline_value(e2e_job, "if")) == (
         "github.repository == 'prowler-cloud/prowler' && "
         "(github.event_name != 'pull_request' || "
         "github.event.pull_request.head.repo.fork == false) && "
         "(needs.impact-analysis.outputs.has-ui-e2e == 'true' || "
         "needs.impact-analysis.outputs.run-all == 'true')"
     )
-    assert _normalize(fork_job["if"]) == (
+    assert _normalize(_multiline_value(fork_job, "if")) == (
         "github.repository == 'prowler-cloud/prowler' && "
         "github.event_name == 'pull_request' && "
         "github.event.pull_request.head.repo.fork == true && "
         "(needs.impact-analysis.outputs.has-ui-e2e == 'true' || "
         "needs.impact-analysis.outputs.run-all == 'true')"
     )
-    assert fork_job["permissions"] == {"contents": "read"}
-
-    reporting_step = next(
-        step
-        for step in fork_job["steps"]
-        if step["name"] == "Report unavailable E2E tests"
+    assert _indented_block(fork_job, "    permissions:") == (
+        "    permissions:\n      contents: read"
     )
-    assert "GITHUB_STEP_SUMMARY" in reporting_step["run"]
+
+    reporting_step = _indented_block(
+        fork_job, "      - name: Report unavailable E2E tests"
+    )
+    assert "GITHUB_STEP_SUMMARY" in reporting_step
     assert (
         "UI E2E tests require repository secrets and cannot run for fork pull requests."
-        in reporting_step["run"]
+        in reporting_step
     )
 
-    prerequisite_step = next(
-        step
-        for step in jobs["e2e-tests"]["steps"]
-        if step["name"] == "Validate E2E prerequisites"
+    prerequisite_step = _indented_block(
+        e2e_job, "      - name: Validate E2E prerequisites"
     )
-    assert "IS_FORK_PR" not in prerequisite_step.get("env", {})
-    assert "IS_FORK_PR" not in prerequisite_step["run"]
-    assert "exit 0" not in prerequisite_step["run"]
+    assert "IS_FORK_PR" not in prerequisite_step
+    assert "exit 0" not in prerequisite_step
 
 
 def test_docker_node_image_matches_nvmrc():
