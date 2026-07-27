@@ -36,6 +36,7 @@ jobs:
     needs: impact-analysis
     if: |
       github.repository == 'prowler-cloud/prowler' &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false) &&
       (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
     runs-on: ubuntu-latest
     env:
@@ -120,14 +121,7 @@ jobs:
 
       - name: Validate E2E prerequisites
         shell: bash
-        env:
-          IS_FORK_PR: ${{ github.event.pull_request.head.repo.fork }}
         run: |
-          if [[ "${IS_FORK_PR}" == "true" ]]; then
-            echo "Skipping secret preflight for fork pull request."
-            exit 0
-          fi
-
           declare -A required=()
 
           suite_selected() {
@@ -408,6 +402,24 @@ jobs:
         if: always()
         run: |
           docker compose down -v || true
+
+  # Fork pull requests cannot access the secrets required by the E2E suites.
+  fork-e2e-unavailable:
+    needs: impact-analysis
+    if: |
+      github.repository == 'prowler-cloud/prowler' &&
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.fork == true &&
+      (needs.impact-analysis.outputs.has-ui-e2e == 'true' || needs.impact-analysis.outputs.run-all == 'true')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Report unavailable E2E tests
+        run: |
+          echo "## E2E Tests Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "UI E2E tests require repository secrets and cannot run for fork pull requests." >> "$GITHUB_STEP_SUMMARY"
 
   # Skip job - provides clear feedback when no E2E tests needed
   skip-e2e:
