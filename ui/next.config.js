@@ -5,6 +5,8 @@ const { withSentryConfig } = require("@sentry/nextjs");
 
 /** @type {import('next').NextConfig} */
 
+const POSTHOG_CSP_SOURCE = " https://*.posthog.com";
+
 // HTTP Security Headers
 // 'unsafe-eval' is configured under `script-src` because it is required by NextJS for development mode.
 //
@@ -22,7 +24,7 @@ const getCspHeader = () => {
   // are not visible to next.config at load time, so the plain UI_CLOUD_ENABLED
   // runtime flag is used here rather than NEXT_PUBLIC_POSTHOG_KEY.
   const posthog =
-    process.env.UI_CLOUD_ENABLED === "true" ? " https://*.posthog.com" : "";
+    process.env.UI_CLOUD_ENABLED === "true" ? POSTHOG_CSP_SOURCE : "";
 
   return `
   default-src 'self';
