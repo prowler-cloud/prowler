@@ -6,9 +6,10 @@ import { apiBaseUrl, getAuthHeaders } from "@/lib";
 import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   ApplyDiscoveryPayload,
+  CollectionFetch,
   ORGANIZATION_TYPE,
-  OrganizationListResponse,
-  OrganizationNodeListResponse,
+  OrganizationNodeResource,
+  OrganizationResource,
   OrganizationType,
   OrgSecretPayload,
 } from "@/types";
@@ -45,24 +46,24 @@ function hasActionError(result: unknown): result is { error: unknown } {
   );
 }
 
-// Never throws: on failure it yields an empty collection flagged with
-// `error: true` so callers can distinguish a degraded fetch from a genuinely
-// empty hierarchy (see providers-page degraded-view signaling).
-async function fetchOptionalCollection<T extends { data: unknown[] }>(
+// On failure it yields an empty collection flagged with `error: true` so
+// callers can distinguish a degraded fetch from a genuinely empty collection.
+async function fetchOptionalCollection<T>(
   url: URL,
-): Promise<T & { error?: boolean }> {
+): Promise<CollectionFetch<T>> {
   const headers = await getAuthHeaders({ contentType: false });
 
   try {
     const response = await fetch(url.toString(), { headers });
 
     if (!response.ok) {
-      return { data: [], error: true } as unknown as T & { error?: boolean };
+      return { data: [], error: true };
     }
 
-    return (await handleApiResponse(response)) as T;
+    const { data } = (await handleApiResponse(response)) as { data?: T[] };
+    return { data: data ?? [] };
   } catch {
-    return { data: [], error: true } as unknown as T & { error?: boolean };
+    return { data: [], error: true };
   }
 }
 
@@ -181,12 +182,12 @@ export const listOrganizationsByExternalId = async (
  * GET /api/v1/organizations
  */
 export const listOrganizationsSafe = async (): Promise<
-  OrganizationListResponse & { error?: boolean }
+  CollectionFetch<OrganizationResource>
 > => {
   const url = new URL(`${apiBaseUrl}/organizations`);
   url.searchParams.set("page[size]", "100");
 
-  return fetchOptionalCollection<OrganizationListResponse>(url);
+  return fetchOptionalCollection<OrganizationResource>(url);
 };
 
 /**
@@ -195,12 +196,12 @@ export const listOrganizationsSafe = async (): Promise<
  * GET /api/v1/organization-nodes
  */
 export const listOrganizationNodesSafe = async (): Promise<
-  OrganizationNodeListResponse & { error?: boolean }
+  CollectionFetch<OrganizationNodeResource>
 > => {
   const url = new URL(`${apiBaseUrl}/organization-nodes`);
   url.searchParams.set("page[size]", "100");
 
-  return fetchOptionalCollection<OrganizationNodeListResponse>(url);
+  return fetchOptionalCollection<OrganizationNodeResource>(url);
 };
 
 /**

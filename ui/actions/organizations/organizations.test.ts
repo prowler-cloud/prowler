@@ -150,9 +150,10 @@ describe("organizations actions", () => {
     handleApiResponseMock.mockResolvedValue({ data: [] });
 
     // When
-    await listOrganizationsSafe();
+    const result = await listOrganizationsSafe();
 
     // Then
+    expect(result).toEqual({ data: [] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       "https://api.example.com/api/v1/organizations?page%5Bsize%5D=100",
@@ -170,9 +171,10 @@ describe("organizations actions", () => {
     handleApiResponseMock.mockResolvedValue({ data: [] });
 
     // When
-    await listOrganizationNodesSafe();
+    const result = await listOrganizationNodesSafe();
 
     // Then
+    expect(result).toEqual({ data: [] });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0]?.[0]).toBe(
       "https://api.example.com/api/v1/organization-nodes?page%5Bsize%5D=100",

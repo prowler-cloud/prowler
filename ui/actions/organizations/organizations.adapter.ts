@@ -21,11 +21,13 @@ import { TreeDataItem } from "@/types/tree";
  */
 export function mapAwsDiscovery(result: AwsDiscoveryResult): AwsOrgHierarchy {
   const root = result.roots[0];
+  if (!root) throw new Error("Invalid root organization");
+
   return {
     orgType: ORGANIZATION_TYPE.AWS,
     organization: {
-      uid: root?.id ?? "",
-      name: root?.name ?? "Organization",
+      uid: root.id,
+      name: root.name,
     },
     nodes: result.organizational_units.map((ou) => ({
       id: ou.id,

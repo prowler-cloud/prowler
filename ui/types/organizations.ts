@@ -351,6 +351,16 @@ export interface OrganizationNodeListResponse {
   };
 }
 
+/**
+ * Result of a non-throwing ("safe") collection fetch. `data` is always present
+ * (empty on failure); `error` is set only when the request failed, letting
+ * callers tell a degraded fetch from a genuinely empty collection.
+ */
+export interface CollectionFetch<T> {
+  data: T[];
+  error?: boolean;
+}
+
 export interface DiscoveryAttributes {
   status: DiscoveryStatus;
   result: DiscoveryResult | Record<string, never>;
