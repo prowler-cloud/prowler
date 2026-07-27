@@ -367,6 +367,13 @@
                 ]
               },
               {
+                "group": "Huawei Cloud",
+                "pages": [
+                  "user-guide/providers/huaweicloud/getting-started-huaweicloud",
+                  "user-guide/providers/huaweicloud/authentication"
+                ]
+              },
+              {
                 "group": "IaC",
                 "pages": [
                   "user-guide/providers/iac/getting-started-iac",
@@ -559,14 +566,15 @@
         ]
       },
       {
+        "tab": "Changelog",
+        "pages": [
+          "changelog"
+        ]
+      },
+      {
         "tab": "About Us",
         "icon": "/favicon.ico",
         "href": "https://prowler.com/about#team"
-      },
-      {
-        "tab": "Changelog",
-        "icon": "github",
-        "href": "https://github.com/prowler-cloud/prowler/releases"
       }
     ],
     "global": {
@@ -603,7 +611,7 @@
     ]
   },
   "banner": {
-    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products).",
+    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products). Check the [latest changes](/changelog).",
     "dismissible": false
   },
   "markdown": {

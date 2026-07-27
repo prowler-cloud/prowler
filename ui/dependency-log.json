@@ -498,18 +498,18 @@
   {
     "section": "dependencies",
     "name": "next",
-    "from": "16.2.6",
-    "to": "16.2.9",
+    "from": "16.2.9",
+    "to": "16.2.11",
     "strategy": "installed",
-    "generatedAt": "2026-06-15T07:49:41.143Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "dependencies",
     "name": "next-auth",
-    "from": "5.0.0-beta.29",
-    "to": "5.0.0-beta.30",
+    "from": "5.0.0-beta.30",
+    "to": "5.0.0-beta.32",
     "strategy": "installed",
-    "generatedAt": "2025-12-15T11:18:25.093Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "dependencies",
@@ -770,26 +770,26 @@
   {
     "section": "devDependencies",
     "name": "@vitest/browser",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/browser-playwright",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
     "name": "@vitest/coverage-v8",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",
@@ -978,10 +978,10 @@
   {
     "section": "devDependencies",
     "name": "vitest",
-    "from": "4.0.18",
-    "to": "4.1.8",
+    "from": "4.1.8",
+    "to": "4.1.10",
     "strategy": "installed",
-    "generatedAt": "2026-06-02T11:34:46.264Z"
+    "generatedAt": "2026-07-24T08:32:45.227Z"
   },
   {
     "section": "devDependencies",

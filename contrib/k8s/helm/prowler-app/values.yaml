@@ -189,6 +189,11 @@ api:
     DJANGO_STALE_WHILE_REVALIDATE: "60"
     DJANGO_MANAGE_DB_PARTITIONS: "True"
     DJANGO_BROKER_VISIBILITY_TIMEOUT: "86400"
+    # Caps the Celery prefork pool size on the worker pods. Without it, Celery
+    # sizes the pool from the number of visible CPUs, so on large nodes the
+    # worker spawns one child per CPU, each loading the full Prowler SDK, and
+    # OOMKills under memory pressure. Raise it on bigger workers.
+    DJANGO_CELERY_WORKER_CONCURRENCY: "2"
 
   # Secret names to be used as env vars for api, worker, and worker_beat.
   secrets: []

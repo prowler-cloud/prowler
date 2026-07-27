@@ -109,7 +109,7 @@ trustPolicy: no-downgrade
 trustPolicyExclude:
   # next-auth: only one one-off manual test release (`0.0.0-manual.2824fa11`) has
   # provenance; real beta/stable releases don't. Scoped to current beta line.
-  - "next-auth@5.0.0-beta.30"
+  - "next-auth@5.0.0-beta.32"
   # semver: legacy major 6.x never had provenance (added in 7.5.1+). Pinned
   # to the exact 6.x version pulled transitively (via @babel/helper-compilation-targets).
   - "semver@6.3.1"
