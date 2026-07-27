@@ -40,6 +40,18 @@ describe("resolveLighthousePage", () => {
       getLighthouseScopeKey("/compliance/CSA CCM"),
     );
   });
+
+  it("should keep dynamic route scope keys inside the context schema limit", () => {
+    // Given
+    const pathname = `/compliance/${"a".repeat(300)}`;
+
+    // When
+    const context = buildLighthousePageContext(pathname, new URLSearchParams());
+
+    // Then
+    expect(context.scopeKey).toBe(getLighthouseScopeKey(pathname));
+    expect(context.scopeKey.length).toBeLessThanOrEqual(256);
+  });
 });
 
 describe("buildLighthousePageContext", () => {

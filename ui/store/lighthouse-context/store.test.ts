@@ -1,45 +1,11 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import {
-  selectLighthouseContextItems,
-  useLighthouseContextStore,
-} from "./store";
+import { useLighthouseContextStore } from "./store";
+import { resetLighthouseContextStore } from "./store.test-utils";
 
 describe("useLighthouseContextStore", () => {
   beforeEach(() => {
-    useLighthouseContextStore.getState().resetContributions();
-  });
-
-  it("should expose only contributions for the current page scope", () => {
-    // Given
-    const { registerContribution } = useLighthouseContextStore.getState();
-    registerContribution("findings-total", {
-      kind: "finding",
-      id: "findings-summary",
-      source: "automatic",
-      scopeKey: "findings:/findings",
-      label: "Visible findings",
-      findingId: "summary",
-      total: 42,
-    });
-    registerContribution("resources-total", {
-      kind: "resource",
-      id: "resources-summary",
-      source: "automatic",
-      scopeKey: "resources:/resources",
-      label: "Visible resources",
-      resourceId: "summary",
-      total: 12,
-    });
-
-    // When
-    const items = selectLighthouseContextItems(
-      useLighthouseContextStore.getState(),
-      "resources:/resources",
-    );
-
-    // Then
-    expect(items.map((item) => item.id)).toEqual(["resources-summary"]);
+    resetLighthouseContextStore();
   });
 
   it("should replace a contribution when an interaction updates it", () => {
@@ -66,10 +32,9 @@ describe("useLighthouseContextStore", () => {
 
     // Then
     expect(
-      selectLighthouseContextItems(
-        useLighthouseContextStore.getState(),
-        "resources:/resources",
-      ).map((item) => item.id),
+      Object.values(useLighthouseContextStore.getState().contributions).map(
+        (item) => item.id,
+      ),
     ).toEqual(["resource-2"]);
   });
 

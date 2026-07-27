@@ -49,6 +49,31 @@ const group: FindingGroupRow = {
   updatedAt: "2026-04-22T10:00:00Z",
 };
 
+function findingResource(status: string): FindingResourceRow {
+  return {
+    id: "resource-1",
+    rowType: FINDINGS_ROW_TYPE.RESOURCE,
+    findingId: "finding-1",
+    checkId: "check-1",
+    providerType: "aws",
+    providerAlias: "production",
+    providerUid: "provider-1",
+    resourceName: "resource-1",
+    resourceType: "Bucket",
+    resourceGroup: "default",
+    resourceUid: "resource-uid-1",
+    service: "s3",
+    region: "us-east-1",
+    severity: "high",
+    status,
+    statusExtended: `${status} finding`,
+    delta: null,
+    isMuted: false,
+    firstSeenAt: null,
+    lastSeenAt: "2026-04-22T10:00:00Z",
+  };
+}
+
 describe("useFindingGroupResourceState", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -127,6 +152,39 @@ describe("useFindingGroupResourceState", () => {
         includeMutedInOtherFindings: true,
       }),
     );
+  });
+
+  it("derives selected resources from the latest loaded data", async () => {
+    // Given
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+    await act(async () => {
+      onSetResources([findingResource("FAIL")], false);
+      result.current.handleRowSelectionChange({ "0": true });
+    });
+
+    // When: a refresh updates the selected finding without another selection event
+    await act(async () => {
+      onSetResources([findingResource("MUTED")], false);
+    });
+
+    // Then
+    expect(result.current.selectedResources).toEqual([
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: "MUTED",
+      }),
+    ]);
   });
 
   it("preserves an existing mute reason for already-muted optimistic shortcut updates", async () => {

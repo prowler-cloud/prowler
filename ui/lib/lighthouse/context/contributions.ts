@@ -1,5 +1,6 @@
 import {
   LIGHTHOUSE_CONTEXT_KIND,
+  LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
   type LighthouseAttackPathContextItem,
   type LighthouseAttackPathParameter,
@@ -42,15 +43,17 @@ interface FocusedFindingContextInput extends FindingResourceContextInput {
   pathname: string;
 }
 
+interface ResourceContextAttributes {
+  uid: string;
+  service: string;
+  region: string;
+  type: string;
+  failed_findings_count: number;
+}
+
 interface ResourceContextInput {
   id: string;
-  attributes: {
-    uid: string;
-    service: string;
-    region: string;
-    type: string;
-    failed_findings_count: number;
-  };
+  attributes: ResourceContextAttributes;
   providerUid?: string;
 }
 
@@ -74,6 +77,11 @@ interface ComplianceContextInput {
   total?: number;
 }
 
+interface AttackPathSelectedNodeInput {
+  id: string;
+  type?: string;
+}
+
 interface AttackPathContextInput {
   pathname: string;
   scanId: string;
@@ -82,7 +90,7 @@ interface AttackPathContextInput {
   parameters?: Record<string, string | number | boolean>;
   nodeCount?: number;
   edgeCount?: number;
-  selectedNode?: { id: string; type?: string } | null;
+  selectedNode?: AttackPathSelectedNodeInput | null;
 }
 
 interface ScanContextInput {
@@ -336,7 +344,7 @@ export function buildProviderContext(
 }
 
 function toBoundedString(value: string): string {
-  return value.slice(0, 256);
+  return value.slice(0, LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 }
 
 function optionalBoundedString(value: string | undefined): string | undefined {
@@ -372,7 +380,7 @@ function sanitizeAttackPathParameters(
             containsSensitiveLighthouseContextValue(value)
           ),
       )
-      .slice(0, 8)
+      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_PARAMETERS)
       .map(([key, value]) => [
         toBoundedString(key),
         typeof value === "string" ? toBoundedString(value) : value,

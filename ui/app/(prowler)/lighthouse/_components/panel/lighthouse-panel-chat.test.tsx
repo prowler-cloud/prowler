@@ -19,6 +19,7 @@ import {
   buildFocusedFindingContext,
 } from "@/lib/lighthouse/context/contributions";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
@@ -110,7 +111,7 @@ describe("LighthousePanelChat", () => {
     stubEventSource();
     resetPanelChatStoreForTests();
     resetPanelChatConfigCacheForTests();
-    useLighthouseContextStore.getState().resetContributions();
+    resetLighthouseContextStore();
 
     getConfigurationsMock.mockResolvedValue({ data: configurations });
     getSupportedProvidersMock.mockResolvedValue({

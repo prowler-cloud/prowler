@@ -20,7 +20,6 @@ interface UseFindingGroupResourceStateOptions {
   filters: Record<string, string>;
   hasHistoricalData: boolean;
   onResourceSelectionChange?: (findingIds: string[]) => void;
-  onResourceContextSelectionChange?: (resources: FindingResourceRow[]) => void;
   scrollContainerRef?: React.RefObject<HTMLElement | null>;
 }
 
@@ -34,6 +33,7 @@ interface UseFindingGroupResourceStateReturn {
   totalCount: number | null;
   drawer: ReturnType<typeof useResourceDetailDrawer>;
   handleDrawerMuteComplete: () => void;
+  selectedResources: FindingResourceRow[];
   selectedFindingIds: string[];
   selectableRowCount: number;
   getRowCanSelect: (row: Row<FindingResourceRow>) => boolean;
@@ -48,12 +48,21 @@ interface UseFindingGroupResourceStateReturn {
   ) => Promise<void>;
 }
 
+function getSelectedResources(
+  resources: FindingResourceRow[],
+  selection: RowSelectionState,
+): FindingResourceRow[] {
+  return Object.keys(selection)
+    .filter((key) => selection[key])
+    .map((idx) => resources[parseInt(idx)])
+    .filter((resource): resource is FindingResourceRow => Boolean(resource));
+}
+
 export function useFindingGroupResourceState({
   group,
   filters,
   hasHistoricalData,
   onResourceSelectionChange,
-  onResourceContextSelectionChange,
   scrollContainerRef,
 }: UseFindingGroupResourceStateOptions): UseFindingGroupResourceStateReturn {
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
@@ -175,10 +184,10 @@ export function useFindingGroupResourceState({
     refresh();
   };
 
-  const selectedFindingIds = Object.keys(rowSelection)
-    .filter((key) => rowSelection[key])
-    .map((idx) => resources[parseInt(idx)]?.findingId)
-    .filter((id): id is string => Boolean(id));
+  const selectedResources = getSelectedResources(resources, rowSelection);
+  const selectedFindingIds = selectedResources.map(
+    (resource) => resource.findingId,
+  );
 
   const selectableRowCount = resources.filter(canMuteFindingResource).length;
 
@@ -189,7 +198,6 @@ export function useFindingGroupResourceState({
   const clearSelection = () => {
     setRowSelection({});
     onResourceSelectionChange?.([]);
-    onResourceContextSelectionChange?.([]);
   };
 
   const isSelected = (id: string) => {
@@ -211,20 +219,10 @@ export function useFindingGroupResourceState({
     setRowSelection(newSelection);
 
     if (onResourceSelectionChange) {
-      const newFindingIds = Object.keys(newSelection)
-        .filter((key) => newSelection[key])
-        .map((idx) => resources[parseInt(idx)]?.findingId)
-        .filter((id): id is string => Boolean(id));
+      const newFindingIds = getSelectedResources(resources, newSelection).map(
+        (resource) => resource.findingId,
+      );
       onResourceSelectionChange(newFindingIds);
-    }
-    if (onResourceContextSelectionChange) {
-      const selectedResources = Object.keys(newSelection)
-        .filter((key) => newSelection[key])
-        .map((idx) => resources[parseInt(idx)])
-        .filter((resource): resource is FindingResourceRow =>
-          Boolean(resource),
-        );
-      onResourceContextSelectionChange(selectedResources);
     }
   };
 
@@ -290,6 +288,7 @@ export function useFindingGroupResourceState({
     totalCount,
     drawer,
     handleDrawerMuteComplete,
+    selectedResources,
     selectedFindingIds,
     selectableRowCount,
     getRowCanSelect,

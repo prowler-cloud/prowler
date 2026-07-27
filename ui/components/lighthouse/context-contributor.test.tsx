@@ -2,12 +2,13 @@ import { render } from "@testing-library/react";
 import { beforeEach, describe, expect, it } from "vitest";
 
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
 import { LighthouseContextContributor } from "./context-contributor";
 
 describe("LighthouseContextContributor", () => {
   beforeEach(() => {
-    useLighthouseContextStore.getState().resetContributions();
+    resetLighthouseContextStore();
   });
 
   it("should register loaded page data and remove it on unmount", () => {

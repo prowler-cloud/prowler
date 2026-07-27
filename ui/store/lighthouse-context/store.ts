@@ -16,7 +16,6 @@ export interface LighthouseContextStoreState {
     item: LighthouseContextItem | null,
   ) => void;
   clearFocusedContext: (ownerToken: number) => void;
-  resetContributions: () => void;
 }
 
 export const useLighthouseContextStore = create<LighthouseContextStoreState>(
@@ -47,16 +46,5 @@ export const useLighthouseContextStore = create<LighthouseContextStoreState>(
           ? { focused: null, focusedOwnerToken: 0 }
           : state,
       ),
-    resetContributions: () =>
-      set({ contributions: {}, focused: null, focusedOwnerToken: 0 }),
   }),
 );
-
-export function selectLighthouseContextItems(
-  state: LighthouseContextStoreState,
-  scopeKey: string,
-): LighthouseContextItem[] {
-  return Object.values(state.contributions).filter(
-    (item) => item.scopeKey === scopeKey,
-  );
-}

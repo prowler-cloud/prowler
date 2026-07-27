@@ -62,8 +62,6 @@ export interface LighthouseChatState {
   blockedByConflict: boolean;
   isSubmitting: boolean;
   isLoadingSession: boolean;
-  /** @deprecated Use lastSubmission so retries can preserve their context snapshot. */
-  lastSubmittedText: string | null;
   lastSubmission: LighthouseChatSubmission | null;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
@@ -296,7 +294,6 @@ export function createLighthouseChatStore(
         set((current) => ({
           feedback: null,
           blockedByConflict: false,
-          lastSubmittedText: displayText,
           lastSubmission,
           input: "",
           messages: [
@@ -364,7 +361,6 @@ export function createLighthouseChatStore(
       blockedByConflict: false,
       isSubmitting: false,
       isLoadingSession: false,
-      lastSubmittedText: null,
       lastSubmission: null,
       selectedModelSelection: resolveInitialModelSelection(
         connectedConfigurations,
@@ -427,7 +423,6 @@ export function createLighthouseChatStore(
           blockedByConflict: false,
           isSubmitting: false,
           isLoadingSession: true,
-          lastSubmittedText: null,
           lastSubmission: null,
           streamState: createInitialLighthouseV2StreamState(),
         });
@@ -455,7 +450,6 @@ export function createLighthouseChatStore(
           blockedByConflict: false,
           isSubmitting: false,
           isLoadingSession: false,
-          lastSubmittedText: null,
           lastSubmission: null,
           streamState: createInitialLighthouseV2StreamState(),
         });

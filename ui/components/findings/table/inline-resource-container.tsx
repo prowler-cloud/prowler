@@ -13,13 +13,15 @@ import {
   loadLatestFindingTriageNote,
   updateFindingTriage,
 } from "@/actions/findings";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { LoadingState } from "@/components/shadcn/spinner/loading-state";
 import { TableCell, TableRow } from "@/components/shadcn/table";
 import { useFindingGroupResourceState } from "@/hooks/use-finding-group-resource-state";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
+import { buildFindingResourceContext } from "@/lib/lighthouse/context/contributions";
 import { cn } from "@/lib/utils";
-import { FindingGroupRow, FindingResourceRow } from "@/types";
+import { FindingGroupRow } from "@/types";
 
 import { getColumnFindingResources } from "./column-finding-resources";
 import { FindingsSelectionContext } from "./findings-selection-context";
@@ -45,8 +47,7 @@ interface InlineResourceContainerProps {
   columnCount: number;
   /** Called with selected finding IDs (real UUIDs) for parent-level mute */
   onResourceSelectionChange: (findingIds: string[]) => void;
-  /** Publishes already-loaded selected rows to contextual Lighthouse. */
-  onResourceContextSelectionChange?: (resources: FindingResourceRow[]) => void;
+  contextSelectionLimit: number;
   ref?: React.Ref<InlineResourceContainerHandle>;
 }
 
@@ -153,7 +154,7 @@ export function InlineResourceContainer({
   resourceSearch,
   columnCount,
   onResourceSelectionChange,
-  onResourceContextSelectionChange,
+  contextSelectionLimit,
   ref,
 }: InlineResourceContainerProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -180,6 +181,7 @@ export function InlineResourceContainer({
     refresh,
     drawer,
     handleDrawerMuteComplete,
+    selectedResources,
     selectedFindingIds,
     selectableRowCount,
     getRowCanSelect,
@@ -194,7 +196,6 @@ export function InlineResourceContainer({
     filters,
     hasHistoricalData,
     onResourceSelectionChange,
-    onResourceContextSelectionChange,
     scrollContainerRef,
   });
 
@@ -247,6 +248,13 @@ export function InlineResourceContainer({
         onMuteComplete: handleMuteComplete,
       }}
     >
+      {selectedResources.slice(0, contextSelectionLimit).map((finding) => (
+        <LighthouseContextContributor
+          key={`finding-resource-${finding.findingId}`}
+          contributorId={`finding-resource-${finding.findingId}`}
+          item={buildFindingResourceContext(finding)}
+        />
+      ))}
       <tr>
         <td colSpan={columnCount} className="max-w-0 p-0">
           <AnimatePresence initial>

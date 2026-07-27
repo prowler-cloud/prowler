@@ -70,4 +70,24 @@ describe("panel chat message request", () => {
       submitMessage.mock.invocationCallOrder[0],
     );
   });
+
+  it("should cancel an initial submission before sending a contextual request", () => {
+    // Given: the store is still creating its first session
+    const store = getOrCreatePanelChatStore(EMPTY_CHAT_CONFIG);
+    store.setState({ isSubmitting: true });
+    const resetToNewChat = vi.spyOn(store.getState(), "resetToNewChat");
+    const submitMessage = vi
+      .spyOn(store.getState(), "submitMessage")
+      .mockResolvedValue();
+
+    // When
+    requestPanelChatMessage("Analyze this finding");
+
+    // Then
+    expect(resetToNewChat).toHaveBeenCalledOnce();
+    expect(submitMessage).toHaveBeenCalledWith(
+      "Analyze this finding",
+      undefined,
+    );
+  });
 });

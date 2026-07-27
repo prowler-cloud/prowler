@@ -17,31 +17,28 @@ interface LighthouseCurrentContextBadgeProps {
   context: LighthouseContextEnvelope | undefined;
 }
 
+interface LighthouseContextBadgeProps {
+  context: LighthouseContextEnvelope;
+}
+
+interface ContextBadgeProps extends LighthouseContextBadgeProps {
+  ariaLabelPrefix: string;
+}
+
 export function LighthouseCurrentContextBadge({
   context,
 }: LighthouseCurrentContextBadgeProps) {
   if (!context) return null;
-  const badgeContent = getContextBadgeContent(context);
-
-  return (
-    <Tooltip delayDuration={100}>
-      <TooltipTrigger asChild>
-        <Badge asChild variant="tag">
-          <span tabIndex={0} aria-label={`${badgeContent.pageLabel} context`}>
-            {buildContextLabel(badgeContent)}
-          </span>
-        </Badge>
-      </TooltipTrigger>
-      <LighthouseContextTooltip context={context} />
-    </Tooltip>
-  );
+  return <ContextBadge context={context} ariaLabelPrefix="" />;
 }
 
 export function LighthouseContextBadge({
   context,
-}: {
-  context: LighthouseContextEnvelope;
-}) {
+}: LighthouseContextBadgeProps) {
+  return <ContextBadge context={context} ariaLabelPrefix="Historical " />;
+}
+
+function ContextBadge({ context, ariaLabelPrefix }: ContextBadgeProps) {
   const badgeContent = getContextBadgeContent(context);
 
   return (
@@ -50,7 +47,7 @@ export function LighthouseContextBadge({
         <Badge asChild variant="tag">
           <span
             tabIndex={0}
-            aria-label={`Historical ${badgeContent.pageLabel} context`}
+            aria-label={`${ariaLabelPrefix}${badgeContent.pageLabel} context`}
           >
             {buildContextLabel(badgeContent)}
           </span>
@@ -84,11 +81,7 @@ function getContextBadgeContent(
   return { pageLabel, hasFocusedDetail, selectionCount };
 }
 
-function LighthouseContextTooltip({
-  context,
-}: {
-  context: LighthouseContextEnvelope;
-}) {
+function LighthouseContextTooltip({ context }: LighthouseContextBadgeProps) {
   const page = context.items.find(
     (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
   );

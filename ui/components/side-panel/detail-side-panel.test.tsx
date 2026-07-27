@@ -4,6 +4,7 @@ import { useState } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 
 import { DetailSidePanel } from "./detail-side-panel";
@@ -146,7 +147,7 @@ describe("DetailSidePanel", () => {
       contextOwnerToken: 0,
       contextOutlet: null,
     });
-    useLighthouseContextStore.getState().resetContributions();
+    resetLighthouseContextStore();
   });
 
   it("portals the detail content into the global panel when open", async () => {

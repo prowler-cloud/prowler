@@ -1,5 +1,6 @@
 import {
   LIGHTHOUSE_CONTEXT_KIND,
+  LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
   LIGHTHOUSE_PAGE_ID,
   type LighthouseContextFilters,
@@ -227,14 +228,16 @@ const KNOWN_ROUTE_LABELS = {
   workloads: "Workloads",
 } as const;
 
-export function normalizeLighthousePath(pathname: string): string {
+function normalizeLighthousePath(pathname: string): string {
   const normalized = `/${pathname
     .split("?")[0]
     .split("/")
     .filter(Boolean)
     .map(decodePathSegment)
     .join("/")}`;
-  return normalized === "/" ? normalized : normalized.slice(0, 256);
+  return normalized === "/"
+    ? normalized
+    : normalized.slice(0, LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 }
 
 export function resolveLighthousePage(
@@ -261,7 +264,7 @@ export function buildLighthousePageContext(
 export function getLighthouseScopeKey(pathname: string): string {
   const normalizedPath = normalizeLighthousePath(pathname);
   const page = resolveLighthousePage(normalizedPath);
-  return `${page.id}:${normalizedPath}`;
+  return buildLighthouseScopeKey(page.id, normalizedPath);
 }
 
 function createPageDefinition(
@@ -275,13 +278,24 @@ function createPageDefinition(
         kind: LIGHTHOUSE_CONTEXT_KIND.PAGE,
         id: input.id,
         source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
-        scopeKey: `${input.id}:${pathname}`,
+        scopeKey: buildLighthouseScopeKey(input.id, pathname),
         label: input.label,
         path: pathname,
         ...(Object.keys(filters).length > 0 ? { filters } : {}),
       };
     },
   };
+}
+
+function buildLighthouseScopeKey(
+  pageId: LighthousePageId,
+  pathname: string,
+): string {
+  const prefix = `${pageId}:`;
+  return `${prefix}${pathname.slice(
+    0,
+    LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH - prefix.length,
+  )}`;
 }
 
 function createFallbackDefinition(pathname: string): LighthousePageDefinition {
@@ -303,7 +317,7 @@ function buildFilters(
   allowedSearchParams: readonly string[],
 ): LighthouseContextFilters {
   const filters: LighthouseContextFilters = {};
-  let remainingValues = 20;
+  let remainingValues: number = LIGHTHOUSE_CONTEXT_LIMIT.FILTER_VALUES;
 
   for (const param of [...allowedSearchParams].sort()) {
     if (remainingValues === 0) break;
@@ -315,7 +329,7 @@ function buildFilters(
         (value) =>
           value.length > 0 && !containsSensitiveLighthouseContextValue(value),
       )
-      .map((value) => value.slice(0, 256))
+      .map((value) => value.slice(0, LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH))
       .slice(0, remainingValues);
     if (values.length === 0) continue;
 
@@ -376,7 +390,7 @@ function toTitleCase(value: string): string {
     .filter(Boolean)
     .map((part) => `${part[0]?.toUpperCase() ?? ""}${part.slice(1)}`)
     .join(" ")
-    .slice(0, 256);
+    .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 }
 
 function decodePathSegment(segment: string): string {

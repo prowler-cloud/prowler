@@ -17,13 +17,13 @@ import {
 } from "@/lib/jira-dispatch-selection";
 import {
   buildFindingGroupContext,
-  buildFindingResourceContext,
   buildFindingSummaryContext,
 } from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findings.tour";
-import { FindingGroupRow, FindingResourceRow, MetaDataProps } from "@/types";
+import { FindingGroupRow, MetaDataProps } from "@/types";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import { LIGHTHOUSE_CONTEXT_LIMIT } from "@/types/lighthouse-context";
 
 import { FloatingSelectionActions } from "../floating-selection-actions";
 
@@ -37,6 +37,7 @@ import {
 
 const exploreFindingsFlow = getFlowById("explore-findings")!;
 const EMPTY_FINDING_GROUPS: FindingGroupRow[] = [];
+const MAX_FINDING_CONTEXT_SELECTIONS = LIGHTHOUSE_CONTEXT_LIMIT.ITEMS - 2;
 
 function buildSelectionSummary(
   groupCount: number,
@@ -135,9 +136,6 @@ const FindingsGroupTableContent = ({
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
-  const [resourceContextSelection, setResourceContextSelection] = useState<
-    FindingResourceRow[]
-  >([]);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
   const safeData = data ?? EMPTY_FINDING_GROUPS;
@@ -150,9 +148,6 @@ const FindingsGroupTableContent = ({
       : null;
   const expandedCheckId = expandedGroup?.checkId ?? null;
   const activeResourceSelection = expandedCheckId ? resourceSelection : [];
-  const activeResourceContextSelection = expandedCheckId
-    ? resourceContextSelection
-    : [];
   const hasResourceSelection = activeResourceSelection.length > 0;
   const filters = resolvedFilters;
 
@@ -169,6 +164,13 @@ const FindingsGroupTableContent = ({
     .filter((key) => rowSelection[key])
     .map((idx) => safeData[parseInt(idx)])
     .filter(Boolean);
+  const selectedContextGroups = selectedFindings.filter((finding) =>
+    selectedCheckIds.includes(finding.checkId),
+  );
+  const resourceContextLimit = Math.min(
+    activeResourceSelection.length,
+    MAX_FINDING_CONTEXT_SELECTIONS,
+  );
 
   const selectedGroupTitle =
     selectedFindings.length === 1 ? selectedFindings[0]?.checkTitle : undefined;
@@ -285,7 +287,6 @@ const FindingsGroupTableContent = ({
   const handleMuteComplete = () => {
     clearSelection();
     setResourceSelection([]);
-    setResourceContextSelection([]);
     inlineRef.current?.clearSelection();
     inlineRef.current?.refresh();
     router.refresh();
@@ -303,7 +304,6 @@ const FindingsGroupTableContent = ({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
-    setResourceContextSelection([]);
   };
 
   const handleCollapse = () => {
@@ -311,7 +311,6 @@ const FindingsGroupTableContent = ({
     setResourceSearchInput("");
     setResourceSearch("");
     setResourceSelection([]);
-    setResourceContextSelection([]);
   };
 
   // Drives the onboarding "Open a finding group" step: opens the first row when
@@ -350,7 +349,7 @@ const FindingsGroupTableContent = ({
         resourceSearch={resourceSearch}
         columnCount={columns.length}
         onResourceSelectionChange={setResourceSelection}
-        onResourceContextSelectionChange={setResourceContextSelection}
+        contextSelectionLimit={resourceContextLimit}
       />
     );
   };
@@ -374,20 +373,16 @@ const FindingsGroupTableContent = ({
             item={buildFindingSummaryContext(metadata.pagination.count)}
           />
         )}
-        {selectedFindings.slice(0, 6).map((finding) => (
-          <LighthouseContextContributor
-            key={`finding-group-${finding.id}`}
-            contributorId={`finding-group-${finding.id}`}
-            item={buildFindingGroupContext(finding)}
-          />
-        ))}
-        {activeResourceContextSelection
-          .slice(0, Math.max(0, 6 - selectedFindings.length))
+        {selectedContextGroups
+          .slice(
+            0,
+            Math.max(0, MAX_FINDING_CONTEXT_SELECTIONS - resourceContextLimit),
+          )
           .map((finding) => (
             <LighthouseContextContributor
-              key={`finding-resource-${finding.findingId}`}
-              contributorId={`finding-resource-${finding.findingId}`}
-              item={buildFindingResourceContext(finding)}
+              key={`finding-group-${finding.id}`}
+              contributorId={`finding-group-${finding.id}`}
+              item={buildFindingGroupContext(finding)}
             />
           ))}
         <Suspense fallback={null}>

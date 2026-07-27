@@ -146,9 +146,6 @@ describe("createLighthouseChatStore", () => {
       displayText: "  Summarize critical findings  ",
       context,
     });
-    expect(store.getState().lastSubmittedText).toBe(
-      "  Summarize critical findings  ",
-    );
   });
 
   it("uses the model selected when submission starts", async () => {

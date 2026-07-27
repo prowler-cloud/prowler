@@ -39,7 +39,8 @@ export function requestPanelChatMessage(
     const hasActiveConversation =
       chatState.activeSessionId !== null ||
       chatState.messages.length > 0 ||
-      chatState.streamState.activeTaskId !== null;
+      chatState.streamState.activeTaskId !== null ||
+      chatState.isSubmitting;
     if (hasActiveConversation) {
       chatState.resetToNewChat();
     }
