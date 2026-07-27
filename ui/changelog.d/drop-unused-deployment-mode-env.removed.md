@@ -1,0 +1,1 @@
+Removed the unused `NEXT_PUBLIC_PROWLER_DEPLOYMENT_MODE` variable and its `getDeploymentMode` helper; no build ever set it and nothing read the result, so Cloud versus self-hosted behavior is decided solely by the runtime `UI_CLOUD_ENABLED` flag
