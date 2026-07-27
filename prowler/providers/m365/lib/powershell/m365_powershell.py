@@ -238,6 +238,68 @@ class M365PowerShell(PowerShellSession):
             return False
         return True
 
+    def test_sharepoint_connection(self) -> bool:
+        """Test SharePoint Online API connection and raise exception if it fails."""
+        try:
+            self.execute(
+                '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
+            )
+            # Try to connect. Note: SharePoint Online App-Only auth typically requires certificates or PnP.
+            # Using Connect-SPOService here as standard.
+            result = self.execute_connect(
+                "Connect-SPOService -Url $spoAdminUrl; if ($?) { Write-Output 'Connected' }"
+            )
+            if (
+                "timeout reached" in result
+                or "error" in result.lower()
+                or "Connected" not in result
+            ):
+                logger.error(
+                    f"SharePoint Online connection failed: {result}. Please check your permissions and try again."
+                )
+                return False
+            return True
+        except Exception as e:
+            logger.error(
+                f"SharePoint Online connection failed: {e}. Please check your permissions and try again."
+            )
+            return False
+
+    def test_sharepoint_certificate_connection(self) -> bool:
+        """Test SharePoint Online API connection using certificate and raise exception if it fails."""
+        try:
+            self.execute(
+                '$spoAdminUrl = "https://" + $tenantDomain.Split(".")[0] + "-admin.sharepoint.com"'
+            )
+            # Modern SPOService supports -Certificate and -ClientId (if not, Connect-PnPOnline could be a fallback)
+            result = self.execute_connect(
+                "Connect-SPOService -Url $spoAdminUrl -Certificate $certificate -ClientId $clientID -TenantId $tenantID; if ($?) { Write-Output 'Connected' }"
+            )
+            if (
+                "timeout reached" in result
+                or "not recognized" in result
+                or "error" in result.lower()
+                or "Connected" not in result
+            ):
+                logger.error(
+                    f"SharePoint Online Certificate connection failed: {result}"
+                )
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"SharePoint Online Certificate connection failed: {e}")
+            return False
+
+    def connect_sharepoint_online(self) -> dict:
+        """
+        Connect to SharePoint Online PowerShell Module.
+
+        Establishes a connection to SharePoint Online using the initialized credentials.
+        """
+        if self.execute("Write-Output $certificate") != "":
+            return self.test_sharepoint_certificate_connection()
+        return self.test_sharepoint_connection()
+
     def connect_microsoft_teams(self) -> dict:
         """
         Connect to Microsoft Teams Module PowerShell Module.
@@ -379,6 +441,20 @@ class M365PowerShell(PowerShellSession):
         """
         return self.execute(
             "Get-AdminAuditLogConfig | Select-Object UnifiedAuditLogIngestionEnabled | ConvertTo-Json -Depth 10",
+            json_parse=True,
+        )
+
+    def get_sharepoint_tenant_config(self) -> dict:
+        """
+        Get SharePoint Tenant Settings.
+
+        Retrieves the current SharePoint tenant configuration settings using Get-SPOTenant.
+
+        Returns:
+            dict: SharePoint tenant configuration settings in JSON format.
+        """
+        return self.execute(
+            "Get-SPOTenant | ConvertTo-Json -Depth 10",
             json_parse=True,
         )
 
@@ -1109,6 +1185,7 @@ def initialize_m365_powershell_modules():
         "ExchangeOnlineManagement",
         "MicrosoftTeams",
         "MSAL.PS",
+        "Microsoft.Online.SharePoint.PowerShell",
     ]
 
     pwsh = PowerShellSession()
