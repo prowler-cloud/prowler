@@ -3,7 +3,7 @@
 import { MessageSquareText } from "lucide-react";
 import posthog from "posthog-js";
 import type { Survey } from "posthog-js";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Button } from "@/components/shadcn/button/button";
 import {
@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { useMountEffect } from "@/hooks/use-mount-effect";
 import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
 
@@ -30,17 +31,36 @@ const SURVEY_EVENT = {
 } as const;
 
 export function FeedbackSurvey() {
+  const { posthogKey, posthogHost } = useRuntimeConfig();
+
   // Cloud-only is the PRIMARY guard: OSS / self-hosted deployments never fetch
   // surveys, never render UI, and never call posthog.capture.
-  const enabled = isCloud();
-  const { posthogKey, posthogHost } = useRuntimeConfig();
+  if (!isCloud() || !posthogKey || !posthogHost) return null;
+
+  return (
+    <RuntimeFeedbackSurvey
+      key={`${posthogKey}:${posthogHost}`}
+      posthogKey={posthogKey}
+      posthogHost={posthogHost}
+    />
+  );
+}
+
+interface RuntimeFeedbackSurveyProps {
+  posthogKey: string;
+  posthogHost: string;
+}
+
+function RuntimeFeedbackSurvey({
+  posthogKey,
+  posthogHost,
+}: RuntimeFeedbackSurveyProps) {
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [open, setOpen] = useState(false);
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  useEffect(() => {
-    if (!isCloud() || !posthogKey || !posthogHost) return;
+  useMountEffect(() => {
     // Consume the shared `posthog` singleton. On Prowler Cloud it is already
     // initialized (app/providers.tsx runs first, so `__loaded` is true) and we
     // reuse that instance. Otherwise initialize it after hydration so the
@@ -63,7 +83,7 @@ export function FeedbackSurvey() {
         ) ?? null,
       );
     });
-  }, [posthogHost, posthogKey]);
+  });
 
   const question = survey?.questions?.[0];
 
@@ -72,7 +92,7 @@ export function FeedbackSurvey() {
   // question type was changed in the PostHog dashboard to a non-open kind
   // (rating/choice/etc.), safely turns the feature off — the free-text form
   // only matches an `open` question.
-  if (!enabled || !survey || question?.type !== "open") return null;
+  if (!survey || question?.type !== "open") return null;
 
   const questionId = question.id ?? "";
   const appearance = survey.appearance;
