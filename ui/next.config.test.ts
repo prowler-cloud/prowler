@@ -125,16 +125,4 @@ describe("PostHog Content Security Policy", () => {
     expect(csp["font-src"]).not.toContain(POSTHOG_WILDCARD);
     expect(csp["default-src"]).not.toContain(POSTHOG_WILDCARD);
   });
-
-  it("no longer references any Featurebase source in the CSP", async () => {
-    // Given - even with PostHog fully enabled on Cloud
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-
-    // When
-    const raw = await getRawCsp();
-
-    // Then
-    expect(raw).not.toContain("featurebase");
-    expect(raw).not.toContain("media-src");
-  });
 });

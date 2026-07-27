@@ -60,7 +60,11 @@ export function FeedbackSurvey() {
     // Surveys are not available synchronously on load; onSurveysLoaded fires
     // once the definitions arrive (and returns an unsubscribe).
     return posthog.onSurveysLoaded((surveys) => {
-      setSurvey(surveys.find((item) => item.name === SURVEY_NAME) ?? null);
+      setSurvey(
+        surveys.find(
+          (item) => item.name === SURVEY_NAME && item.type === "api",
+        ) ?? null,
+      );
     });
   }, []);
 
@@ -117,7 +121,7 @@ export function FeedbackSurvey() {
           type="button"
           aria-label="Give feedback"
           size="lg"
-          className="group ring-button-primary/20 hover:ring-button-primary/30 fixed right-4 bottom-4 z-50 h-12 rounded-full px-5 font-semibold shadow-xl ring-4 shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none sm:right-6 sm:bottom-6"
+          className="group ring-button-primary/20 hover:ring-button-primary/30 fixed right-6 bottom-20 z-50 h-12 rounded-full px-5 font-semibold shadow-xl ring-4 shadow-black/20 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-2xl active:translate-y-0 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none"
         >
           <MessageSquareText
             aria-hidden="true"

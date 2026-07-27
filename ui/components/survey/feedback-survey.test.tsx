@@ -92,6 +92,38 @@ describe("FeedbackSurvey", () => {
     expect(trigger).toHaveTextContent("Feedback");
   });
 
+  it("ignores a same-name non-API survey and selects the API survey", async () => {
+    // Given - PostHog can return multiple survey types with the same name.
+    const popoverSurvey = {
+      ...SURVEY_FIXTURE,
+      id: "survey-popover",
+      type: "popover",
+      questions: [
+        {
+          id: "q-popover",
+          type: "open",
+          question: "This popover must not render",
+        },
+      ],
+    } as unknown as Survey;
+    provideSurveys([popoverSurvey, SURVEY_FIXTURE]);
+    const user = userEvent.setup();
+
+    // When
+    await renderSurvey();
+    await user.click(
+      await screen.findByRole("button", { name: "Give feedback" }),
+    );
+
+    // Then
+    expect(
+      await screen.findByRole("heading", { name: "What could we do better?" }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "This popover must not render" }),
+    ).not.toBeInTheDocument();
+  });
+
   it("opens a visible feedback form with the fetched question, description, placeholder, and submit copy", async () => {
     // Given
     const user = userEvent.setup();
