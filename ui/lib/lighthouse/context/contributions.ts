@@ -1,4 +1,10 @@
 import {
+  ATTACK_PATH_QUERY_KIND,
+  type AttackPathGraphData,
+  type AttackPathQueryKind,
+  type GraphEdge,
+} from "@/types/attack-paths";
+import {
   LIGHTHOUSE_CONTEXT_KIND,
   LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
@@ -87,7 +93,9 @@ interface AttackPathContextInput {
   scanId: string;
   queryId?: string | null;
   queryLabel?: string;
+  queryKind?: AttackPathQueryKind;
   parameters?: Record<string, string | number | boolean>;
+  graphData?: AttackPathGraphData | null;
   nodeCount?: number;
   edgeCount?: number;
   selectedNode?: AttackPathSelectedNodeInput | null;
@@ -265,7 +273,10 @@ export function buildComplianceContext(
 export function buildAttackPathContext(
   input: AttackPathContextInput,
 ): LighthouseAttackPathContextItem {
-  const parameters = sanitizeAttackPathParameters(input.parameters);
+  const { parameters, redactedParameters } = sanitizeAttackPathParameters(
+    input.parameters,
+  );
+  const graphSummary = summarizeAttackPathGraph(input.graphData);
   return {
     kind: LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH,
     id: input.queryId ? "current-query" : "current-scan",
@@ -274,9 +285,26 @@ export function buildAttackPathContext(
     label: toBoundedString(input.queryLabel || "Selected attack-path scan"),
     scanId: toBoundedString(input.scanId),
     queryId: optionalBoundedString(input.queryId ?? undefined),
+    ...(input.queryKind
+      ? {
+          queryKind: input.queryKind,
+          canReplayQuery: getCanReplayAttackPathQuery(
+            input.queryKind,
+            redactedParameters,
+          ),
+        }
+      : {}),
     parameters: Object.keys(parameters).length > 0 ? parameters : undefined,
-    nodeCount: optionalSafeCount(input.nodeCount),
-    edgeCount: optionalSafeCount(input.edgeCount),
+    ...(redactedParameters.length > 0 ? { redactedParameters } : {}),
+    nodeCount: graphSummary?.nodeCount ?? optionalSafeCount(input.nodeCount),
+    edgeCount: graphSummary?.edgeCount ?? optionalSafeCount(input.edgeCount),
+    ...(graphSummary
+      ? {
+          connectedComponentCount: graphSummary.connectedComponentCount,
+          nodeTypeCounts: graphSummary.nodeTypeCounts,
+          relationshipTypeCounts: graphSummary.relationshipTypeCounts,
+        }
+      : {}),
     selectedNodeId: optionalBoundedString(input.selectedNode?.id),
     selectedNodeType: optionalBoundedString(input.selectedNode?.type),
   };
@@ -366,24 +394,147 @@ function toSafeScore(value: number): number {
 
 function sanitizeAttackPathParameters(
   parameters: AttackPathContextInput["parameters"],
-): Record<string, LighthouseAttackPathParameter> {
-  if (!parameters) return {};
+): SanitizedAttackPathParameters {
+  if (!parameters) return { parameters: {}, redactedParameters: [] };
 
-  return Object.fromEntries(
-    Object.entries(parameters)
-      .filter(
-        ([key, value]) =>
-          !/password|secret|token|credential|query/i.test(key) &&
-          value !== "" &&
-          !(
-            typeof value === "string" &&
-            containsSensitiveLighthouseContextValue(value)
-          ),
-      )
-      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_PARAMETERS)
-      .map(([key, value]) => [
-        toBoundedString(key),
-        typeof value === "string" ? toBoundedString(value) : value,
-      ]),
+  const safeParameters: Record<string, LighthouseAttackPathParameter> = {};
+  const redactedParameters: string[] = [];
+
+  for (const [key, value] of Object.entries(parameters)) {
+    if (value === "") continue;
+
+    const isRedacted =
+      /password|secret|token|credential|query/i.test(key) ||
+      (typeof value === "string" &&
+        containsSensitiveLighthouseContextValue(value));
+    if (isRedacted) {
+      if (
+        redactedParameters.length <
+        LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_REDACTED_PARAMETERS
+      ) {
+        redactedParameters.push(toBoundedString(key));
+      }
+      continue;
+    }
+
+    if (
+      Object.keys(safeParameters).length >=
+      LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_PARAMETERS
+    ) {
+      continue;
+    }
+    safeParameters[toBoundedString(key)] =
+      typeof value === "string" ? toBoundedString(value) : value;
+  }
+
+  return {
+    parameters: safeParameters,
+    redactedParameters: redactedParameters.sort(),
+  };
+}
+
+interface SanitizedAttackPathParameters {
+  parameters: Record<string, LighthouseAttackPathParameter>;
+  redactedParameters: string[];
+}
+
+interface AttackPathGraphSummary {
+  nodeCount: number;
+  edgeCount: number;
+  connectedComponentCount: number;
+  nodeTypeCounts?: Record<string, number>;
+  relationshipTypeCounts?: Record<string, number>;
+}
+
+function getCanReplayAttackPathQuery(
+  queryKind: AttackPathQueryKind | undefined,
+  redactedParameters: string[],
+): boolean | undefined {
+  if (!queryKind) return undefined;
+  return (
+    queryKind === ATTACK_PATH_QUERY_KIND.PREDEFINED &&
+    redactedParameters.length === 0
   );
+}
+
+function summarizeAttackPathGraph(
+  graphData: AttackPathGraphData | null | undefined,
+): AttackPathGraphSummary | undefined {
+  if (!graphData) return undefined;
+
+  const edges =
+    graphData.edges ??
+    graphData.relationships?.map((relationship) => ({
+      source: relationship.source,
+      target: relationship.target,
+      type: relationship.label,
+    })) ??
+    [];
+
+  return {
+    nodeCount: toSafeCount(graphData.nodes.length),
+    edgeCount: toSafeCount(edges.length),
+    connectedComponentCount: countConnectedComponents(graphData, edges),
+    nodeTypeCounts: buildBoundedTypeCounts(
+      graphData.nodes.map((node) => node.labels[0]).filter(Boolean),
+    ),
+    relationshipTypeCounts: buildBoundedTypeCounts(
+      edges.map((edge) => edge.type).filter(Boolean),
+    ),
+  };
+}
+
+function countConnectedComponents(
+  graphData: AttackPathGraphData,
+  edges: ReadonlyArray<Pick<GraphEdge, "source" | "target">>,
+): number {
+  const nodeIdList = graphData.nodes.map((node) => node.id);
+  const nodeIds = new Set(nodeIdList);
+  const adjacency = new Map<string, Set<string>>(
+    nodeIdList.map((nodeId) => [nodeId, new Set<string>()]),
+  );
+
+  for (const edge of edges) {
+    if (!nodeIds.has(edge.source) || !nodeIds.has(edge.target)) continue;
+    adjacency.get(edge.source)?.add(edge.target);
+    adjacency.get(edge.target)?.add(edge.source);
+  }
+
+  const visited = new Set<string>();
+  let componentCount = 0;
+  for (const nodeId of nodeIdList) {
+    if (visited.has(nodeId)) continue;
+    componentCount += 1;
+    const pending = [nodeId];
+    while (pending.length > 0) {
+      const current = pending.pop();
+      if (!current || visited.has(current)) continue;
+      visited.add(current);
+      adjacency.get(current)?.forEach((neighbor) => {
+        if (!visited.has(neighbor)) pending.push(neighbor);
+      });
+    }
+  }
+
+  return componentCount;
+}
+
+function buildBoundedTypeCounts(
+  values: string[],
+): Record<string, number> | undefined {
+  const counts = values.reduce<Record<string, number>>((result, value) => {
+    const boundedValue = toBoundedString(value);
+    result[boundedValue] = (result[boundedValue] ?? 0) + 1;
+    return result;
+  }, {});
+  const boundedCounts = Object.fromEntries(
+    Object.entries(counts)
+      .sort(
+        ([leftLabel, leftCount], [rightLabel, rightCount]) =>
+          rightCount - leftCount || leftLabel.localeCompare(rightLabel),
+      )
+      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_TYPE_COUNTS),
+  );
+
+  return Object.keys(boundedCounts).length > 0 ? boundedCounts : undefined;
 }

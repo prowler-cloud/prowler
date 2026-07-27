@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
+
 import {
   buildAttackPathContext,
   buildComplianceContext,
@@ -240,11 +242,100 @@ describe("Lighthouse page contributions", () => {
         hops: 3,
         includeMuted: false,
       },
+      redactedParameters: [
+        "authHeader",
+        "ownerEmail",
+        "password",
+        "query",
+        "sourceIp",
+        "sourceIpv6",
+      ],
       nodeCount: 12,
       edgeCount: 15,
       selectedNodeId: "node-1",
       selectedNodeType: "AwsS3Bucket",
     });
+  });
+
+  it("describes custom-query results without exposing the Cypher or raw graph ids", () => {
+    // Given
+    const context = buildAttackPathContext({
+      pathname: "/attack-paths",
+      scanId: "scan-1",
+      queryId: "__custom-open-cypher__",
+      queryLabel: "Custom openCypher query",
+      queryKind: ATTACK_PATH_QUERY_KIND.CUSTOM,
+      parameters: {
+        query: "MATCH path = (a)-[r]->(b) RETURN path LIMIT 25",
+      },
+      graphData: {
+        nodes: [
+          { id: "account-1", labels: ["AWSAccount"], properties: {} },
+          { id: "role-1", labels: ["AWSRole"], properties: {} },
+          { id: "bucket-1", labels: ["S3Bucket"], properties: {} },
+          { id: "instance-1", labels: ["EC2Instance"], properties: {} },
+        ],
+        relationships: [
+          {
+            id: "relationship-1",
+            source: "account-1",
+            target: "role-1",
+            label: "RESOURCE",
+          },
+          {
+            id: "relationship-2",
+            source: "bucket-1",
+            target: "instance-1",
+            label: "CAN_ACCESS",
+          },
+        ],
+      },
+    });
+
+    // Then
+    expect(context).toMatchObject({
+      queryKind: "custom",
+      canReplayQuery: false,
+      redactedParameters: ["query"],
+      nodeCount: 4,
+      edgeCount: 2,
+      connectedComponentCount: 2,
+      nodeTypeCounts: {
+        AWSAccount: 1,
+        AWSRole: 1,
+        EC2Instance: 1,
+        S3Bucket: 1,
+      },
+      relationshipTypeCounts: {
+        CAN_ACCESS: 1,
+        RESOURCE: 1,
+      },
+    });
+    expect(JSON.stringify(context)).not.toContain("MATCH path");
+    expect(JSON.stringify(context)).not.toContain("account-1");
+  });
+
+  it("marks a predefined query as non-replayable when a required IP is redacted", () => {
+    // Given
+    const parameters = { ip: "192.0.2.10" };
+
+    // When
+    const context = buildAttackPathContext({
+      pathname: "/attack-paths",
+      scanId: "scan-1",
+      queryId: "aws-public-ip-resource-lookup",
+      queryLabel: "Resource Lookup by Public IP",
+      queryKind: ATTACK_PATH_QUERY_KIND.PREDEFINED,
+      parameters,
+    });
+
+    // Then
+    expect(context).toMatchObject({
+      queryKind: "predefined",
+      canReplayQuery: false,
+      redactedParameters: ["ip"],
+    });
+    expect(context.parameters).toBeUndefined();
   });
 
   it("builds an attack-path scope from the current route", () => {

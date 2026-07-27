@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, test as base, vi } from "vitest";
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
 const { getFindingByIdMock } = vi.hoisted(() => ({
   getFindingByIdMock: vi.fn(),
@@ -50,6 +52,7 @@ interface Fixtures {
 // one (selection, filtered view, expanded resources, etc.).
 beforeEach(() => {
   useGraphStore.getState().reset();
+  resetLighthouseContextStore();
   getFindingByIdMock.mockClear();
 });
 
@@ -124,6 +127,77 @@ describe("running a query", () => {
     expect(graph.getInputByName("tag_key")).toBeTruthy();
     expect(graph.containsText(/Tag value/i)).toBe(true);
     expect(graph.getInputByName("tag_value")).toBeTruthy();
+  });
+
+  test("changing the form keeps Lighthouse bound to the query that produced the graph", async ({
+    mountWith,
+  }) => {
+    // Given
+    const fixture = fixtures.typical();
+    const graph = await mountWith(fixture);
+    await graph.executeQuery();
+
+    // When
+    await graph.selectQuery("aws-open-security-groups");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      queryId: fixture.queryId,
+      queryKind: "predefined",
+      canReplayQuery: true,
+      label: "Public S3 buckets",
+      nodeCount: fixture.queryResult?.nodes.length,
+      edgeCount: fixture.queryResult?.relationships?.length,
+    });
+  });
+
+  test("editing parameters keeps Lighthouse bound to the executed values", async ({
+    mountWith,
+  }) => {
+    // Given
+    const graph = await mountWith(fixtures.parameterizedQuery());
+    await graph.selectQuery();
+    await graph.fillInput("tag_key", "DataClassification");
+    await graph.fillInput("tag_value", "Sensitive");
+    await graph.executeQuery({ selectFirst: false });
+
+    // When
+    await graph.fillInput("tag_value", "Confidential");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      parameters: {
+        tag_key: "DataClassification",
+        tag_value: "Sensitive",
+      },
+    });
+  });
+
+  test("loading another execution removes stale graph context", async ({
+    mountWith,
+  }) => {
+    // Given
+    const graph = await mountWith();
+    await graph.executeQuery();
+
+    // When
+    useGraphStore.getState().setLoading(true);
+
+    // Then
+    await vi.waitFor(() =>
+      expect(
+        useLighthouseContextStore.getState().contributions[
+          "attack-path-current"
+        ],
+      ).toMatchObject({
+        id: "current-scan",
+        queryId: undefined,
+      }),
+    );
   });
 
   test("the graph renders with a background, a minimap, and a viewport", async ({

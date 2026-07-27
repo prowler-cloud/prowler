@@ -43,7 +43,11 @@ import type {
   AttackPathQueryError,
   GraphNode,
 } from "@/types/attack-paths";
-import { ATTACK_PATH_QUERY_IDS, SCAN_STATES } from "@/types/attack-paths";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  ATTACK_PATH_QUERY_KIND,
+  SCAN_STATES,
+} from "@/types/attack-paths";
 
 import {
   AttackPathGraph,
@@ -260,12 +264,14 @@ export default function AttackPathsPage() {
     graphState.setError(null);
 
     try {
-      const parameters = queryBuilder.getQueryParameters();
-      const isCustomQuery =
-        queryBuilder.selectedQuery === ATTACK_PATH_QUERY_IDS.CUSTOM;
+      const queryId = queryBuilder.selectedQuery;
+      const queryLabel =
+        queryBuilder.selectedQueryData?.attributes.name ?? queryId;
+      const parameters = { ...queryBuilder.getQueryParameters() };
+      const isCustomQuery = queryId === ATTACK_PATH_QUERY_IDS.CUSTOM;
       const result = isCustomQuery
         ? await executeCustomQuery(scanId, String(parameters?.query ?? ""))
-        : await executeQuery(scanId, queryBuilder.selectedQuery, parameters);
+        : await executeQuery(scanId, queryId, parameters);
 
       if (result && "error" in result) {
         const apiError = result as AttackPathQueryError;
@@ -291,7 +297,14 @@ export default function AttackPathsPage() {
         }
       } else if (result?.data?.attributes) {
         const graphData = adaptQueryResultToGraphData(result.data.attributes);
-        graphState.updateGraphData(graphData);
+        graphState.updateGraphData(graphData, {
+          queryId,
+          queryLabel,
+          queryKind: isCustomQuery
+            ? ATTACK_PATH_QUERY_KIND.CUSTOM
+            : ATTACK_PATH_QUERY_KIND.PREDEFINED,
+          parameters,
+        });
         toast({
           title: "Success",
           description: "Query executed successfully",
@@ -400,29 +413,24 @@ export default function AttackPathsPage() {
 
   const lighthouseSelectedNode =
     graphState.selectedNode ?? graphState.filteredNode;
-  // Root-level watch keeps the hidden contributor aligned with typed form
-  // parameters at send time. The factory excludes custom Cypher and secrets.
-  const lighthouseQueryParameters = queryBuilder.form.watch() as Record<
-    string,
-    string | number | boolean
-  >;
+  const lighthouseGraphData = graphState.fullData ?? graphState.data;
+  const lighthouseExecution = graphState.loading ? null : graphState.execution;
   const lighthouseContext = scanId
     ? buildAttackPathContext({
         pathname,
         scanId,
-        queryId: queryBuilder.selectedQuery,
-        queryLabel: queryBuilder.selectedQueryData?.attributes.name,
-        parameters: lighthouseQueryParameters,
-        nodeCount: graphState.data?.nodes.length,
-        edgeCount:
-          graphState.data?.edges?.length ??
-          graphState.data?.relationships?.length,
-        selectedNode: lighthouseSelectedNode
-          ? {
-              id: lighthouseSelectedNode.id,
-              type: lighthouseSelectedNode.labels[0],
-            }
-          : null,
+        queryId: lighthouseExecution?.queryId,
+        queryLabel: lighthouseExecution?.queryLabel,
+        queryKind: lighthouseExecution?.queryKind,
+        parameters: lighthouseExecution?.parameters,
+        graphData: lighthouseExecution ? lighthouseGraphData : null,
+        selectedNode:
+          lighthouseExecution && lighthouseSelectedNode
+            ? {
+                id: lighthouseSelectedNode.id,
+                type: lighthouseSelectedNode.labels[0],
+              }
+            : null,
       })
     : null;
 
