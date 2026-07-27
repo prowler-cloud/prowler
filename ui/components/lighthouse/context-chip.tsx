@@ -94,7 +94,9 @@ function LighthouseContextTooltip({
     <TooltipContent maxWidth="md">
       <div className="space-y-1">
         {page?.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE && (
-          <p>Page: {page.path}</p>
+          <p>
+            <strong>{page.label}</strong>
+          </p>
         )}
         {filters && <p>Filters: {filters}</p>}
         {itemDescriptions.map(({ id, text }) => (

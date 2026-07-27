@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +10,26 @@ import {
 } from "./context-chip";
 
 describe("LighthouseCurrentContextBadge", () => {
+  it.each([
+    ["Overview", overviewContext(), "Page: /"],
+    ["Findings", findingsContext(), "Page: /findings"],
+  ])(
+    "should show the %s page label in bold instead of its route",
+    async (pageLabel, context, routeLabel) => {
+      // Given
+      const user = userEvent.setup();
+      render(<LighthouseCurrentContextBadge context={context} />);
+
+      // When
+      await user.hover(screen.getByLabelText(`${pageLabel} context`));
+
+      // Then
+      const tooltip = await screen.findByRole("tooltip");
+      expect(within(tooltip).getByText(pageLabel).tagName).toBe("STRONG");
+      expect(tooltip).not.toHaveTextContent(routeLabel);
+    },
+  );
+
   it("should show current context as read-only and explain automatic inclusion", async () => {
     // Given
     const user = userEvent.setup();
@@ -61,6 +81,23 @@ describe("LighthouseContextBadge", () => {
     ).not.toBeInTheDocument();
   });
 });
+
+function overviewContext(): LighthouseContextEnvelope {
+  return {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "page",
+        id: "overview",
+        source: "automatic",
+        scopeKey: "overview:/",
+        label: "Overview",
+        path: "/",
+      },
+    ],
+  };
+}
 
 function findingsContext(): LighthouseContextEnvelope {
   return {
