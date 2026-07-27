@@ -62,9 +62,7 @@ export function buildCurrentLighthouseContext(
     scopeKey,
     selectionCount:
       context?.items.filter(
-        (item) =>
-          item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED ||
-          item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
+        (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
       ).length ?? 0,
   };
 }

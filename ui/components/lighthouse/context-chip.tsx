@@ -21,14 +21,14 @@ export function LighthouseCurrentContextBadge({
   context,
 }: LighthouseCurrentContextBadgeProps) {
   if (!context) return null;
-  const { pageLabel, additionalCount } = getContextBadgeContent(context);
+  const badgeContent = getContextBadgeContent(context);
 
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
         <Badge asChild variant="tag">
-          <span tabIndex={0} aria-label={`${pageLabel} context`}>
-            {buildContextLabel(pageLabel, additionalCount)}
+          <span tabIndex={0} aria-label={`${badgeContent.pageLabel} context`}>
+            {buildContextLabel(badgeContent)}
           </span>
         </Badge>
       </TooltipTrigger>
@@ -42,14 +42,17 @@ export function LighthouseContextBadge({
 }: {
   context: LighthouseContextEnvelope;
 }) {
-  const { pageLabel, additionalCount } = getContextBadgeContent(context);
+  const badgeContent = getContextBadgeContent(context);
 
   return (
     <Tooltip delayDuration={100}>
       <TooltipTrigger asChild>
         <Badge asChild variant="tag">
-          <span tabIndex={0} aria-label={`Historical ${pageLabel} context`}>
-            {buildContextLabel(pageLabel, additionalCount)}
+          <span
+            tabIndex={0}
+            aria-label={`Historical ${badgeContent.pageLabel} context`}
+          >
+            {buildContextLabel(badgeContent)}
           </span>
         </Badge>
       </TooltipTrigger>
@@ -58,18 +61,27 @@ export function LighthouseContextBadge({
   );
 }
 
-function getContextBadgeContent(context: LighthouseContextEnvelope) {
+interface ContextBadgeContent {
+  pageLabel: string;
+  hasFocusedDetail: boolean;
+  selectionCount: number;
+}
+
+function getContextBadgeContent(
+  context: LighthouseContextEnvelope,
+): ContextBadgeContent {
   const page = context.items.find(
     (item) => item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE,
   );
   const pageLabel = page?.label ?? "Context";
-  const additionalCount = context.items.filter(
-    (item) =>
-      item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED ||
-      item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
+  const hasFocusedDetail = context.items.some(
+    (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+  );
+  const selectionCount = context.items.filter(
+    (item) => item.source === LIGHTHOUSE_CONTEXT_SOURCE.SELECTION,
   ).length;
 
-  return { pageLabel, additionalCount };
+  return { pageLabel, hasFocusedDetail, selectionCount };
 }
 
 function LighthouseContextTooltip({
@@ -161,6 +173,12 @@ function getContextItemDescription(
   }
 }
 
-function buildContextLabel(pageLabel: string, additionalCount: number): string {
-  return `@ ${pageLabel}${additionalCount > 0 ? ` +${additionalCount}` : ""}`;
+function buildContextLabel({
+  pageLabel,
+  hasFocusedDetail,
+  selectionCount,
+}: ContextBadgeContent): string {
+  const detailLabel = hasFocusedDetail ? " · Detail" : "";
+  const selectionLabel = selectionCount > 0 ? ` +${selectionCount}` : "";
+  return `@ ${pageLabel}${detailLabel}${selectionLabel}`;
 }

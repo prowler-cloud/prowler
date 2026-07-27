@@ -11,6 +11,25 @@ import {
 
 describe("LighthouseCurrentContextBadge", () => {
   it.each([
+    ["focused detail", resourceContext(), "@ Resources · Detail"],
+    ["explicit selection", scanContext(), "@ Scans +1"],
+    [
+      "focused detail with a selection",
+      findingsContext(),
+      "@ Findings · Detail +1",
+    ],
+    ["automatic context", attackPathContext(), "@ Attack Paths"],
+  ])("should label %s clearly", (_, context, expectedLabel) => {
+    // Given / When
+    render(<LighthouseCurrentContextBadge context={context} />);
+
+    // Then
+    expect(
+      screen.getByLabelText(`${context.items[0].label} context`),
+    ).toHaveTextContent(expectedLabel);
+  });
+
+  it.each([
     ["Overview", overviewContext(), "Page: /"],
     ["Findings", findingsContext(), "Page: /findings"],
   ])(
@@ -44,7 +63,7 @@ describe("LighthouseCurrentContextBadge", () => {
       screen.queryByRole("button", { name: /Findings context/ }),
     ).not.toBeInTheDocument();
     const tooltip = await screen.findByRole("tooltip");
-    expect(contextBadge).toHaveTextContent("@ Findings +2");
+    expect(contextBadge).toHaveTextContent("@ Findings · Detail +1");
     expect(tooltip).toHaveTextContent("Filters: severity: critical");
     expect(tooltip).toHaveTextContent("Finding: finding-focused");
     expect(tooltip).toHaveTextContent("Finding: finding-1");
@@ -75,7 +94,7 @@ describe("LighthouseContextBadge", () => {
     render(<LighthouseContextBadge context={findingsContext()} />);
 
     // Then
-    expect(screen.getByText("@ Findings +2")).toBeInTheDocument();
+    expect(screen.getByText("@ Findings · Detail +1")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Findings context/ }),
     ).not.toBeInTheDocument();

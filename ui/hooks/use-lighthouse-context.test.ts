@@ -80,6 +80,6 @@ describe("buildCurrentLighthouseContext", () => {
       kind: "page",
       filters: { scanId: ["scan-1"] },
     });
-    expect(current.selectionCount).toBe(1);
+    expect(current.selectionCount).toBe(0);
   });
 });

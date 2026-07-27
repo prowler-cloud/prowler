@@ -291,7 +291,7 @@ describe("LighthousePanelChat", () => {
     });
     render(<LighthousePanelChat />);
     const input = await screen.findByRole("textbox", { name: "Message" });
-    expect(screen.getByText("@ Attack Paths +1")).toBeInTheDocument();
+    expect(screen.getByText("@ Attack Paths · Detail")).toBeInTheDocument();
 
     // When
     await user.type(input, "Explain this finding{Enter}");

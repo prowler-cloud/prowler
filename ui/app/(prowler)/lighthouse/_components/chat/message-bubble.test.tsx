@@ -128,7 +128,7 @@ describe("MessageBubble", () => {
     render(<MessageBubble message={userMessage} />);
 
     // Then
-    expect(screen.getByText("@ Findings +1")).toBeInTheDocument();
+    expect(screen.getByText("@ Findings · Detail")).toBeInTheDocument();
     expect(
       screen.queryByRole("button", { name: /Remove Findings context/ }),
     ).not.toBeInTheDocument();
