@@ -24,6 +24,9 @@ const {
   mockNotificationIndicator,
   mockUpdateFindingTriage,
   mockLoadLatestFindingTriageNote,
+  mockRequestPanelChatMessage,
+  mockIsCloud,
+  mockCurrentLighthouseContext,
 } = vi.hoisted(() => ({
   mockGetComplianceIcon: vi.fn((_: string) => null as string | null),
   mockGetCompliancesOverview: vi.fn(),
@@ -33,6 +36,23 @@ const {
   mockNotificationIndicator: vi.fn(),
   mockUpdateFindingTriage: vi.fn(),
   mockLoadLatestFindingTriageNote: vi.fn(),
+  mockRequestPanelChatMessage: vi.fn(),
+  mockIsCloud: vi.fn(() => true),
+  mockCurrentLighthouseContext: {
+    schemaVersion: 1,
+    transport: "inline",
+    items: [
+      {
+        kind: "finding",
+        id: "finding-1",
+        source: "focused",
+        scopeKey: "/findings",
+        label: "S3 Check",
+        findingId: "finding-1",
+        checkId: "s3_check",
+      },
+    ],
+  },
 }));
 
 vi.mock("next/navigation", () => ({
@@ -358,6 +378,20 @@ vi.mock("@/lib/date-utils", () => ({
   formatDuration: vi.fn(() => "5m"),
 }));
 
+vi.mock("@/lib/shared/env", () => ({
+  isCloud: mockIsCloud,
+}));
+
+vi.mock("@/app/(prowler)/lighthouse/_lib/panel-chat-store", () => ({
+  requestPanelChatMessage: mockRequestPanelChatMessage,
+}));
+
+vi.mock("@/hooks/use-lighthouse-context", () => ({
+  useLighthouseCurrentContext: () => ({
+    context: mockCurrentLighthouseContext,
+  }),
+}));
+
 vi.mock("@/lib/utils", () => ({
   cn: (...args: (string | undefined | false | null)[]) =>
     args.filter(Boolean).join(" "),
@@ -484,6 +518,7 @@ vi.mock("../../muted", () => ({
 // ---------------------------------------------------------------------------
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
+import { SIDE_PANEL_TAB, useSidePanelStore } from "@/store/side-panel";
 import type { FindingResourceRow } from "@/types";
 import {
   FINDING_TRIAGE_STATUS,
@@ -499,6 +534,11 @@ afterEach(() => {
   mockGetComplianceIcon.mockImplementation(
     (_: string) => null as string | null,
   );
+  mockIsCloud.mockReturnValue(true);
+  useSidePanelStore.setState({
+    isOpen: false,
+    selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -778,14 +818,15 @@ const mockResourceRow: FindingResourceRow = {
   lastSeenAt: null,
 };
 
-// ---------------------------------------------------------------------------
-// Fix 1: Lighthouse AI button text change
-// ---------------------------------------------------------------------------
-
-describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () => {
-  it("should say 'Analyze this finding with Lighthouse AI' instead of 'View This Finding'", () => {
+describe("ResourceDetailDrawerContent — Lighthouse AI", () => {
+  it("should open the Lighthouse tab and submit a contextual analysis", async () => {
     // Given
-    const { container } = render(
+    const user = userEvent.setup();
+    useSidePanelStore.setState({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.CONTEXT,
+    });
+    render(
       <ResourceDetailDrawerContent
         isLoading={false}
         isNavigating={false}
@@ -800,12 +841,50 @@ describe("ResourceDetailDrawerContent — Fix 1: Lighthouse AI button text", () 
       />,
     );
 
-    // When — look for the lighthouse link
-    const allText = container.textContent ?? "";
+    // When
+    await user.click(
+      screen.getByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    );
 
-    // Then — correct text must be present, old text must be absent
-    expect(allText.toLowerCase()).toContain("analyze this finding");
-    expect(allText.toLowerCase()).not.toContain("view this finding");
+    // Then
+    expect(mockRequestPanelChatMessage).toHaveBeenCalledWith(
+      "Analyze this finding",
+      mockCurrentLighthouseContext,
+    );
+    expect(useSidePanelStore.getState()).toMatchObject({
+      isOpen: true,
+      selectedTab: SIDE_PANEL_TAB.AI_CHAT,
+    });
+  });
+
+  it("should hide the action when the Lighthouse panel tab is unavailable", () => {
+    // Given
+    mockIsCloud.mockReturnValue(false);
+
+    // When
+    render(
+      <ResourceDetailDrawerContent
+        isLoading={false}
+        isNavigating={false}
+        checkMeta={mockCheckMeta}
+        currentIndex={0}
+        totalResources={1}
+        currentFinding={mockFinding}
+        otherFindings={[]}
+        onNavigatePrev={vi.fn()}
+        onNavigateNext={vi.fn()}
+        onMuteComplete={vi.fn()}
+      />,
+    );
+
+    // Then
+    expect(
+      screen.queryByRole("button", {
+        name: "Analyze This Finding With Lighthouse AI",
+      }),
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -1829,7 +1908,7 @@ describe("ResourceDetailDrawerContent — header skeleton while navigating", () 
     expect(screen.queryByText("Status Extended:")).not.toBeInTheDocument();
     expect(screen.queryByText("uid-1")).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", {
+      screen.queryByRole("button", {
         name: "Analyze This Finding With Lighthouse AI",
       }),
     ).not.toBeInTheDocument();

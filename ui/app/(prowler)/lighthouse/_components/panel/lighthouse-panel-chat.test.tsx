@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetPanelChatStoreForTests } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  requestPanelChatMessage,
+  resetPanelChatStoreForTests,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import { notifyLighthouseV2ConfigurationsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import { stubEventSource } from "@/app/(prowler)/lighthouse/_lib/testing/event-source-mock";
 import type {
@@ -16,6 +19,7 @@ import {
   buildFocusedFindingContext,
 } from "@/lib/lighthouse/context/contributions";
 import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
   LighthousePanelChat,
@@ -244,6 +248,60 @@ describe("LighthousePanelChat", () => {
                 filters: { severity: ["critical"] },
               }),
             ]),
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("submits a queued contextual analysis when the panel chat becomes ready", async () => {
+    // Given
+    const context = {
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        buildFocusedFindingContext({
+          pathname: "/findings",
+          findingId: "finding-1",
+          checkId: "aws_s3_bucket_public_access",
+          severity: "critical",
+          status: "FAIL",
+          providerUid: "123456789012",
+          resourceUid: "arn:aws:s3:::example",
+          region: "eu-west-1",
+        }),
+      ],
+    } satisfies LighthouseContextEnvelope;
+    createSessionMock.mockResolvedValue({
+      data: session("session-context", "Analyze this finding"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    requestPanelChatMessage("Analyze this finding", context);
+
+    // When
+    render(<LighthousePanelChat />);
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayText: "Analyze this finding",
+          context: expect.objectContaining({
+            items: [
+              expect.objectContaining({
+                kind: "finding",
+                id: "finding-1",
+                source: "focused",
+              }),
+            ],
           }),
         }),
       ),
