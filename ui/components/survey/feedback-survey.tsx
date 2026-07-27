@@ -12,6 +12,7 @@ import {
   PopoverTrigger,
 } from "@/components/shadcn/popover";
 import { Textarea } from "@/components/shadcn/textarea/textarea";
+import { useRuntimeConfig } from "@/hooks/use-runtime-config";
 import { isCloud } from "@/lib/shared/env";
 
 // The survey is fetched by NAME so its id, question, and copy stay editable from
@@ -32,26 +33,22 @@ export function FeedbackSurvey() {
   // Cloud-only is the PRIMARY guard: OSS / self-hosted deployments never fetch
   // surveys, never render UI, and never call posthog.capture.
   const enabled = isCloud();
+  const { posthogKey, posthogHost } = useRuntimeConfig();
   const [survey, setSurvey] = useState<Survey | null>(null);
   const [open, setOpen] = useState(false);
   const [response, setResponse] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    if (!isCloud()) return;
+    if (!isCloud() || !posthogKey || !posthogHost) return;
     // Consume the shared `posthog` singleton. On Prowler Cloud it is already
     // initialized (app/providers.tsx runs first, so `__loaded` is true) and we
-    // reuse that instance. Elsewhere (self-hosted with the build-time public
-    // key set) we initialize it here — AFTER hydration — to avoid injecting the
-    // surveys/config script before React hydrates. Config mirrors Cloud.
+    // reuse that instance. Otherwise initialize it after hydration so the
+    // surveys/config script is not injected before React hydrates.
     if (!posthog.__loaded) {
-      const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-      if (!key) return;
-      posthog.init(key, {
-        api_host:
-          process.env.NEXT_PUBLIC_POSTHOG_API_HOST || "https://eu.posthog.com",
-        ui_host:
-          process.env.NEXT_PUBLIC_POSTHOG_UI_HOST || "https://eu.posthog.com",
+      posthog.init(posthogKey, {
+        api_host: posthogHost,
+        ui_host: posthogHost,
         autocapture: false,
         capture_pageview: false,
         capture_pageleave: false,
@@ -66,7 +63,7 @@ export function FeedbackSurvey() {
         ) ?? null,
       );
     });
-  }, []);
+  }, [posthogHost, posthogKey]);
 
   const question = survey?.questions?.[0];
 

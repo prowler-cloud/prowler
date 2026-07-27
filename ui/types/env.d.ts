@@ -64,11 +64,6 @@ declare global {
       /** @deprecated use UI_POSTHOG_HOST */
       POSTHOG_HOST?: string;
       UI_POSTHOG_HOST?: string;
-      // Build-time public PostHog config (NEXT_PUBLIC_*, inlined per Dockerfile
-      // ARG), matching Prowler Cloud. Powers the in-app feedback survey.
-      NEXT_PUBLIC_POSTHOG_KEY?: string;
-      NEXT_PUBLIC_POSTHOG_API_HOST?: string;
-      NEXT_PUBLIC_POSTHOG_UI_HOST?: string;
       // TODO Reserved runtime public config (registered now; no UI consumer yet)
       REO_DEV_CLIENT_ID?: string;
 

@@ -38,17 +38,9 @@ RUN corepack install
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
-ARG UI_CLOUD_ENABLED
-ENV UI_CLOUD_ENABLED=${UI_CLOUD_ENABLED}
-ARG NEXT_PUBLIC_POSTHOG_KEY
-ENV NEXT_PUBLIC_POSTHOG_KEY=${NEXT_PUBLIC_POSTHOG_KEY}
-ARG NEXT_PUBLIC_POSTHOG_API_HOST
-ENV NEXT_PUBLIC_POSTHOG_API_HOST=${NEXT_PUBLIC_POSTHOG_API_HOST}
-ARG NEXT_PUBLIC_POSTHOG_UI_HOST
-ENV NEXT_PUBLIC_POSTHOG_UI_HOST=${NEXT_PUBLIC_POSTHOG_UI_HOST}
 
-# Cloud/PostHog values above are build-time: Next.js inlines NEXT_PUBLIC_*
-# for the feedback survey, and UI_CLOUD_ENABLED controls CSP generation.
+# Cloud/PostHog values are runtime configuration. UI_POSTHOG_ENABLED gates the
+# integration, and UI_POSTHOG_KEY/UI_POSTHOG_HOST supply its public settings.
 # GTM and API base/docs URLs remain runtime configuration.
 
 RUN pnpm run build
@@ -91,15 +83,13 @@ ENV HOSTNAME="0.0.0.0"
 # Helm, or Kubernetes:
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
-#   - Cloud mode: pass UI_CLOUD_ENABLED="true" as a build arg; the value above
-#     generates the Cloud CSP
+#   - Cloud mode: pass UI_CLOUD_ENABLED="true" at runtime
 #   - gated integrations (load only when *_ENABLED="true"; the value is then
 #     required or boot fails). Their legacy names (NEXT_PUBLIC_SENTRY_*,
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
 #       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
 #       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
-#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (runtime config;
-#       the feedback survey uses the build-time NEXT_PUBLIC_POSTHOG_* above)
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (runtime config)
 #   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output

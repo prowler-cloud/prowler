@@ -1,6 +1,6 @@
 import { createRequire } from "node:module";
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 const require = createRequire(import.meta.url);
 const config = require("./next.config.js") as {
@@ -8,6 +8,8 @@ const config = require("./next.config.js") as {
     Array<{ headers: Array<{ key: string; value: string }> }>
   >;
 };
+
+const POSTHOG_WILDCARD = "https://*.posthog.com";
 
 const BASELINE_CSP = {
   "default-src": ["'self'"],
@@ -18,6 +20,7 @@ const BASELINE_CSP = {
     "https://js.stripe.com",
     "https://www.googletagmanager.com",
     "https://browser.sentry-cdn.com",
+    POSTHOG_WILDCARD,
   ],
   "connect-src": [
     "'self'",
@@ -28,11 +31,13 @@ const BASELINE_CSP = {
     "https://www.googletagmanager.com",
     "https://*.sentry.io",
     "https://*.ingest.sentry.io",
+    POSTHOG_WILDCARD,
   ],
   "img-src": [
     "'self'",
     "https://www.google-analytics.com",
     "https://www.googletagmanager.com",
+    POSTHOG_WILDCARD,
   ],
   "font-src": ["'self'"],
   "style-src": ["'self'", "'unsafe-inline'"],
@@ -40,20 +45,10 @@ const BASELINE_CSP = {
     "'self'",
     "https://js.stripe.com",
     "https://www.googletagmanager.com",
+    POSTHOG_WILDCARD,
   ],
   "frame-ancestors": ["'none'"],
 } as const;
-
-// The SDK reaches config, capture, surveys, and assets across the PostHog
-// wildcard host, matching Prowler Cloud's CSP.
-const POSTHOG_WILDCARD = "https://*.posthog.com";
-// Directives that must gain the wildcard when PostHog is enabled.
-const POSTHOG_DIRECTIVES = [
-  "script-src",
-  "connect-src",
-  "img-src",
-  "frame-src",
-] as const;
 
 const getRawCsp = async () => {
   const rules = await config.headers();
@@ -76,52 +71,14 @@ const getCsp = async () => {
 };
 
 describe("PostHog Content Security Policy", () => {
-  beforeEach(() => {
-    vi.stubEnv("UI_CLOUD_ENABLED", undefined);
-  });
-
-  afterEach(() => vi.unstubAllEnvs());
-
-  it.each([
-    ["unset", undefined],
-    ["not 'true' (\"false\")", "false"],
-  ])(
-    "keeps the exact baseline CSP and no PostHog source when UI_CLOUD_ENABLED is %s",
-    async (_case, cloud) => {
-      // Given - PostHog is Cloud-gated; a non-Cloud deployment adds nothing.
-      vi.stubEnv("UI_CLOUD_ENABLED", cloud);
-
-      // When
-      const csp = await getCsp();
-      const raw = await getRawCsp();
-
-      // Then - baseline unchanged; the wildcard appears in no directive.
-      expect(csp).toEqual(BASELINE_CSP);
-      expect(raw).not.toContain(POSTHOG_WILDCARD);
-    },
-  );
-
-  it("adds the PostHog wildcard to script-src, connect-src, img-src, and frame-src when UI_CLOUD_ENABLED is 'true'", async () => {
-    // Given - a Prowler Cloud deployment. NEXT_PUBLIC_* is inlined and not
-    // readable by next.config at load time, so the CSP is gated on the plain
-    // UI_CLOUD_ENABLED runtime flag instead.
-    vi.stubEnv("UI_CLOUD_ENABLED", "true");
-
+  it("keeps the PostHog wildcard in the exact baseline CSP", async () => {
+    // Given - CSP grants permission, while runtime guards decide whether the
+    // browser ever initializes PostHog or makes a request.
     // When
     const csp = await getCsp();
 
-    // Then - exactly the four Cloud directives gain the wildcard; nothing else.
-    expect(csp).toEqual({
-      ...BASELINE_CSP,
-      "script-src": [...BASELINE_CSP["script-src"], POSTHOG_WILDCARD],
-      "connect-src": [...BASELINE_CSP["connect-src"], POSTHOG_WILDCARD],
-      "img-src": [...BASELINE_CSP["img-src"], POSTHOG_WILDCARD],
-      "frame-src": [...BASELINE_CSP["frame-src"], POSTHOG_WILDCARD],
-    });
-    for (const directive of POSTHOG_DIRECTIVES) {
-      expect(csp[directive]).toContain(POSTHOG_WILDCARD);
-    }
-    // Directives Cloud does not extend stay wildcard-free.
+    // Then - exactly the four required directives contain the wildcard.
+    expect(csp).toEqual(BASELINE_CSP);
     expect(csp["font-src"]).not.toContain(POSTHOG_WILDCARD);
     expect(csp["default-src"]).not.toContain(POSTHOG_WILDCARD);
   });

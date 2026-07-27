@@ -14,17 +14,10 @@ const POSTHOG_CSP_SOURCE = " https://*.posthog.com";
 // be in `connect-src` below — `*.sentry.io` covers Sentry Cloud, but a
 // self-hosted/region host is blocked until per-request CSP (middleware) lands.
 const getCspHeader = () => {
-  // PostHog backs the in-app, Cloud-only feedback survey. Its wildcard host is
-  // allowed only on cloud deployments (UI_CLOUD_ENABLED) — the same gate as the
-  // widget itself — so self-hosted OSS omits it entirely and keeps zero
-  // third-party egress by default. When enabled, the SDK loads its
-  // config/surveys bundle, captures events, and fetches survey definitions
-  // across *.posthog.com, so that wildcard goes in script-src, connect-src,
-  // img-src, and frame-src (same placement as Prowler Cloud). NEXT_PUBLIC_* vars
-  // are not visible to next.config at load time, so the plain UI_CLOUD_ENABLED
-  // runtime flag is used here rather than NEXT_PUBLIC_POSTHOG_KEY.
-  const posthog =
-    process.env.UI_CLOUD_ENABLED === "true" ? POSTHOG_CSP_SOURCE : "";
+  // PostHog is runtime configuration, so next.config cannot gate this
+  // permission from the runtime island. CSP permission alone does not initiate
+  // network traffic; the survey's runtime guards control initialization.
+  const posthog = POSTHOG_CSP_SOURCE;
 
   return `
   default-src 'self';

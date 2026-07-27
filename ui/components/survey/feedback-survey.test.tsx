@@ -7,6 +7,7 @@ type SurveyCallback = (surveys: Survey[]) => void;
 
 const mocks = vi.hoisted(() => ({
   isCloud: vi.fn(),
+  useRuntimeConfig: vi.fn(),
   init: vi.fn(),
   onSurveysLoaded: vi.fn(),
   capture: vi.fn(),
@@ -16,6 +17,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/shared/env", () => ({ isCloud: mocks.isCloud }));
+vi.mock("@/hooks/use-runtime-config", () => ({
+  useRuntimeConfig: mocks.useRuntimeConfig,
+}));
 vi.mock("posthog-js", () => ({
   default: {
     get __loaded() {
@@ -70,8 +74,11 @@ describe("FeedbackSurvey", () => {
     vi.resetAllMocks();
     mocks.loaded = false;
     mocks.isCloud.mockReturnValue(true);
-    // Build-time public key present by default (self-hosted opt-in / Cloud).
-    vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", POSTHOG_KEY);
+    mocks.useRuntimeConfig.mockReturnValue({
+      cloudEnabled: true,
+      posthogKey: POSTHOG_KEY,
+      posthogHost: "https://eu.posthog.com",
+    });
     provideSurveys([SURVEY_FIXTURE]);
   });
 
@@ -265,10 +272,10 @@ describe("FeedbackSurvey", () => {
     );
   });
 
-  it("initializes PostHog once with the Cloud-matching config, then loads surveys, when Cloud with a public key and no existing instance", async () => {
+  it("initializes PostHog once with the runtime config, then loads surveys, when Cloud with a key and host and no existing instance", async () => {
     // Given - no PostHog instance exists yet (self-hosted opt-in path). Init is
     // deferred to this component effect (post-hydration) to avoid a hydration
-    // mismatch, and mirrors Prowler Cloud's app/providers.tsx config.
+    // mismatch, using the runtime public config island.
     mocks.loaded = false;
 
     // When
@@ -304,10 +311,14 @@ describe("FeedbackSurvey", () => {
     ).toBeVisible();
   });
 
-  it("does not initialize or load surveys when Cloud but the public key is absent", async () => {
-    // Given - no existing instance and no build-time public key
+  it("does not initialize or load surveys when the runtime config is empty", async () => {
+    // Given - the runtime config island has not provided PostHog settings
     mocks.loaded = false;
-    vi.stubEnv("NEXT_PUBLIC_POSTHOG_KEY", undefined);
+    mocks.useRuntimeConfig.mockReturnValue({
+      cloudEnabled: false,
+      posthogKey: null,
+      posthogHost: null,
+    });
 
     // When
     const view = await renderSurvey();
