@@ -27,6 +27,7 @@ INT_BOUND_CASES = [
     ("aws", "max_unused_sagemaker_access_days", 7, 180),
     ("aws", "max_security_group_rules", 1, 1000),
     ("aws", "max_ec2_instance_age_in_days", 1, 1095),
+    ("aws", "max_ec2_instance_stopped_days", 1, 1095),
     ("aws", "recommended_cdk_bootstrap_version", 1, 100),
     ("aws", "max_idle_disconnect_timeout_in_seconds", 60, 1800),
     ("aws", "max_disconnect_timeout_in_seconds", 60, 3600),
