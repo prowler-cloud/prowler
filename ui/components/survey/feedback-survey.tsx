@@ -121,9 +121,12 @@ export function FeedbackSurvey() {
           type="button"
           aria-label="Give feedback"
           size="xl"
-          className="fixed right-6 bottom-20 z-50"
+          className="group fixed right-6 bottom-20 z-50 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] motion-reduce:transform-none motion-reduce:transition-none"
         >
-          <MessageSquareText aria-hidden="true" />
+          <MessageSquareText
+            aria-hidden="true"
+            className="transition-transform duration-200 group-hover:scale-110 group-hover:-rotate-6 motion-reduce:transform-none motion-reduce:transition-none"
+          />
           <span>Feedback</span>
         </Button>
       </PopoverTrigger>
