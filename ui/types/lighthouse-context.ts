@@ -8,9 +8,6 @@ export const LIGHTHOUSE_CONTEXT_KIND = {
   PROVIDER: "provider",
 } as const;
 
-export type LighthouseContextKind =
-  (typeof LIGHTHOUSE_CONTEXT_KIND)[keyof typeof LIGHTHOUSE_CONTEXT_KIND];
-
 export const LIGHTHOUSE_CONTEXT_SOURCE = {
   AUTOMATIC: "automatic",
   FOCUSED: "focused",
@@ -23,6 +20,13 @@ export type LighthouseContextSource =
 
 export const LIGHTHOUSE_CONTEXT_TRANSPORT = {
   INLINE: "inline",
+} as const;
+
+export const LIGHTHOUSE_CONTEXT_LIMIT = {
+  STRING_LENGTH: 256,
+  FILTER_VALUES: 20,
+  ITEMS: 8,
+  ATTACK_PATH_PARAMETERS: 8,
 } as const;
 
 export type LighthouseContextTransport =

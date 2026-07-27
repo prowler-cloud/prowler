@@ -73,15 +73,7 @@ describe("createLighthouseChatStore", () => {
     updateConfigurationMock.mockReset();
     eventSources = stubEventSource();
 
-    createSessionMock.mockResolvedValue({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    createSessionMock.mockResolvedValue(sessionResult());
     getMessagesMock.mockResolvedValue({ data: [] });
     sendMessageMock.mockResolvedValue({
       data: {
@@ -407,15 +399,7 @@ describe("createLighthouseChatStore", () => {
     store.getState().destroy();
 
     // When
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then: no URL rewrite on whatever page is now open, no orphan stream
@@ -437,15 +421,7 @@ describe("createLighthouseChatStore", () => {
 
     // When: the user opens another conversation before creation resolves
     await store.getState().openSession("session-9");
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then: the stale creation cannot replace or submit into the open chat
@@ -467,20 +443,56 @@ describe("createLighthouseChatStore", () => {
 
     // When: the user resets to a new chat before creation resolves
     store.getState().resetToNewChat();
-    resolveCreate({
-      data: {
-        id: "session-1",
-        title: "Summarize findings",
-        isArchived: false,
-        insertedAt: "2026-06-24T10:00:00Z",
-        updatedAt: "2026-06-24T10:00:00Z",
-      },
-    });
+    resolveCreate(sessionResult());
     await submitting;
 
     // Then
     expect(store.getState().activeSessionId).toBeNull();
     expect(sendMessageMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a replacement submission locked when an older submit settles", async () => {
+    // Given: two new-chat submissions are creating sessions concurrently
+    const store = makeStore();
+    let resolveFirstCreate: (value: unknown) => void = () => {};
+    let resolveSecondCreate: (value: unknown) => void = () => {};
+    createSessionMock
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirstCreate = resolve;
+        }),
+      )
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveSecondCreate = resolve;
+        }),
+      );
+    const firstSubmission = store.getState().submitMessage("First question");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
+    store.getState().resetToNewChat();
+    const replacementSubmission = store
+      .getState()
+      .submitMessage("Replacement question");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledTimes(2));
+
+    // When: the cancelled submission settles before its replacement
+    resolveFirstCreate(sessionResult("session-stale", "First question"));
+    await firstSubmission;
+
+    // Then: only the replacement still owns the submission lock
+    expect(store.getState().isSubmitting).toBe(true);
+
+    resolveSecondCreate(
+      sessionResult("session-current", "Replacement question"),
+    );
+    await replacementSubmission;
+    expect(sendMessageMock).toHaveBeenCalledOnce();
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        sessionId: "session-current",
+        displayText: "Replacement question",
+      }),
+    );
   });
 
   it("opens an existing session client-side without navigation", async () => {
@@ -586,6 +598,18 @@ function makeStore(
     syncUrlToSession: false,
     ...overrides,
   });
+}
+
+function sessionResult(id = "session-1", title = "Summarize findings") {
+  return {
+    data: {
+      id,
+      title,
+      isArchived: false,
+      insertedAt: "2026-06-24T10:00:00Z",
+      updatedAt: "2026-06-24T10:00:00Z",
+    },
+  };
 }
 
 function model(id: string, name = id): LighthouseV2SupportedModel {

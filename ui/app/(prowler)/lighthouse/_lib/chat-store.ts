@@ -131,6 +131,9 @@ export function createLighthouseChatStore(
   // only activeSessionId is insufficient because both the initial chat and a
   // later reset intentionally use null.
   let sessionIntentVersion = 0;
+  // Each accepted submit owns its loading state. A reset can start a
+  // replacement while the cancelled submit is still settling.
+  let submissionIntentVersion = 0;
   let syncUrlToSession = options.syncUrlToSession;
 
   const syncSessionUrl = (sessionId: string | null) => {
@@ -279,6 +282,7 @@ export function createLighthouseChatStore(
       }
       if (!selectLighthouseChatCanSend(get())) return;
 
+      const submissionVersion = ++submissionIntentVersion;
       const shouldUseContext =
         submitOptions.bypassContextGate === true || get().isContextEnabled;
       const contextSnapshot = shouldUseContext
@@ -288,7 +292,13 @@ export function createLighthouseChatStore(
       set({ isSubmitting: true });
       try {
         const sessionId = await ensureSession(displayText);
-        if (!sessionId || destroyed) return;
+        if (
+          !sessionId ||
+          destroyed ||
+          submissionVersion !== submissionIntentVersion
+        ) {
+          return;
+        }
 
         const selection = get().selectedModelSelection;
         if (!selection) return;
@@ -322,7 +332,7 @@ export function createLighthouseChatStore(
           provider: selection.providerType,
           model: selection.modelId,
         });
-        if (destroyed) return;
+        if (destroyed || submissionVersion !== submissionIntentVersion) return;
 
         if ("error" in result) {
           // Stale guard: the chat may point at another session by now, so
@@ -350,7 +360,9 @@ export function createLighthouseChatStore(
         }));
         notifyLighthouseV2SessionsChanged();
       } finally {
-        set({ isSubmitting: false });
+        if (submissionVersion === submissionIntentVersion) {
+          set({ isSubmitting: false });
+        }
       }
     };
 
@@ -428,6 +440,7 @@ export function createLighthouseChatStore(
       openSession: async (sessionId) => {
         if (get().activeSessionId === sessionId) return;
         sessionIntentVersion += 1;
+        submissionIntentVersion += 1;
         closeStream();
         set({
           activeSessionId: sessionId,
@@ -456,6 +469,7 @@ export function createLighthouseChatStore(
 
       resetToNewChat: () => {
         sessionIntentVersion += 1;
+        submissionIntentVersion += 1;
         closeStream();
         set({
           activeSessionId: null,
@@ -483,6 +497,7 @@ export function createLighthouseChatStore(
 
       destroy: () => {
         destroyed = true;
+        submissionIntentVersion += 1;
         closeStream();
       },
     };

@@ -2,11 +2,16 @@ import { z } from "zod";
 
 import {
   LIGHTHOUSE_CONTEXT_KIND,
+  LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
   LIGHTHOUSE_CONTEXT_TRANSPORT,
+  type LighthouseContextEnvelope,
+  type LighthouseContextItem,
 } from "@/types/lighthouse-context";
 
-const boundedStringSchema = z.string().max(256);
+const boundedStringSchema = z
+  .string()
+  .max(LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 const boundedCountSchema = z.number().int().nonnegative();
 const filtersSchema = z
   .record(boundedStringSchema, z.array(boundedStringSchema))
@@ -15,8 +20,10 @@ const filtersSchema = z
       Object.values(filters).reduce(
         (total, values) => total + values.length,
         0,
-      ) <= 20,
-    { error: "Filters may contain at most 20 values." },
+      ) <= LIGHTHOUSE_CONTEXT_LIMIT.FILTER_VALUES,
+    {
+      error: `Filters may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.FILTER_VALUES} values.`,
+    },
   );
 
 const baseContextItemSchema = z.object({
@@ -107,18 +114,22 @@ const providerContextItemSchema = baseContextItemSchema.extend({
   total: boundedCountSchema.optional(),
 });
 
-export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
-  pageContextItemSchema,
-  findingContextItemSchema,
-  resourceContextItemSchema,
-  complianceContextItemSchema,
-  attackPathContextItemSchema,
-  scanContextItemSchema,
-  providerContextItemSchema,
-]);
+export const lighthouseContextItemSchema: z.ZodType<LighthouseContextItem> =
+  z.discriminatedUnion("kind", [
+    pageContextItemSchema,
+    findingContextItemSchema,
+    resourceContextItemSchema,
+    complianceContextItemSchema,
+    attackPathContextItemSchema,
+    scanContextItemSchema,
+    providerContextItemSchema,
+  ]);
 
-export const lighthouseContextEnvelopeSchema = z.object({
-  schemaVersion: z.literal(1),
-  transport: z.literal(LIGHTHOUSE_CONTEXT_TRANSPORT.INLINE),
-  items: z.array(lighthouseContextItemSchema).max(8),
-});
+export const lighthouseContextEnvelopeSchema: z.ZodType<LighthouseContextEnvelope> =
+  z.object({
+    schemaVersion: z.literal(1),
+    transport: z.literal(LIGHTHOUSE_CONTEXT_TRANSPORT.INLINE),
+    items: z
+      .array(lighthouseContextItemSchema)
+      .max(LIGHTHOUSE_CONTEXT_LIMIT.ITEMS),
+  });

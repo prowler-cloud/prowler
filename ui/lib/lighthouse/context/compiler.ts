@@ -1,5 +1,6 @@
 import {
   LIGHTHOUSE_CONTEXT_KIND,
+  LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
   LIGHTHOUSE_CONTEXT_TRANSPORT,
   type LighthouseContextEnvelope,
@@ -12,7 +13,7 @@ import {
 } from "./schema";
 import { getApiLighthouseContextByteLength } from "./transport";
 
-export const LIGHTHOUSE_CONTEXT_MAX_BYTES = 2 * 1024;
+const LIGHTHOUSE_CONTEXT_MAX_BYTES = 2 * 1024;
 
 export function prepareLighthouseContext(
   value: unknown,
@@ -71,7 +72,9 @@ function getItemOrder(item: LighthouseContextItem): number {
 function buildEnvelopeWithinLimits(
   items: LighthouseContextItem[],
 ): LighthouseContextEnvelope | undefined {
-  if (items.length === 0 || items.length > 8) return undefined;
+  if (items.length === 0 || items.length > LIGHTHOUSE_CONTEXT_LIMIT.ITEMS) {
+    return undefined;
+  }
 
   const result = lighthouseContextEnvelopeSchema.safeParse({
     schemaVersion: 1,
@@ -87,7 +90,7 @@ function buildEnvelopeWithinLimits(
 function buildEnvelopeWithProgressiveDegradation(
   items: LighthouseContextItem[],
 ): LighthouseContextEnvelope | undefined {
-  const retainedItems = items.slice(0, 8);
+  const retainedItems = items.slice(0, LIGHTHOUSE_CONTEXT_LIMIT.ITEMS);
 
   while (retainedItems.length > 0) {
     const context = buildEnvelopeWithinLimits(retainedItems);
