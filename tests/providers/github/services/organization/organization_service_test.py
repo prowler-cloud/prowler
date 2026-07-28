@@ -514,8 +514,30 @@ class Test_Organization_Default_Workflow_Permissions:
         )
 
         assert (
-            organization_service._get_default_workflow_permissions(mock_org) == "read"
+            organization_service._get_actions_workflow_permissions(mock_org)[0]
+            == "read"
         ), "The organization default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+
+    def test_can_approve_pull_request_reviews(self):
+        """Test that the pull request approval setting is read from the same API response"""
+        organization_service = self._get_service()
+        mock_org = MagicMock()
+        mock_org.login = "test-org"
+        mock_org._requester.requestJsonAndCheck.return_value = (
+            {},
+            {
+                "default_workflow_permissions": "write",
+                "can_approve_pull_request_reviews": True,
+            },
+        )
+
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            "write",
+            True,
+        ), "Both Actions workflow permissions settings should come from a single request"
+        assert (
+            mock_org._requester.requestJsonAndCheck.call_count == 1
+        ), "Both settings should be read without issuing a second request"
 
     def test_default_workflow_permissions_missing_field(self):
         """Test that a response without the permissions field yields no value"""
@@ -524,8 +546,9 @@ class Test_Organization_Default_Workflow_Permissions:
         mock_org.login = "test-org"
         mock_org._requester.requestJsonAndCheck.return_value = ({}, {})
 
-        assert (
-            organization_service._get_default_workflow_permissions(mock_org) is None
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
         ), "An unexpected response payload should not be reported as a permissions value"
 
     def test_default_workflow_permissions_not_available(self):
@@ -537,8 +560,9 @@ class Test_Organization_Default_Workflow_Permissions:
             404, "Not Found", None
         )
 
-        assert (
-            organization_service._get_default_workflow_permissions(mock_org) is None
+        assert organization_service._get_actions_workflow_permissions(mock_org) == (
+            None,
+            None,
         ), "Accounts without Actions permissions settings should not produce a value"
 
     def test_default_workflow_permissions_access_denied(self):
@@ -553,8 +577,9 @@ class Test_Organization_Default_Workflow_Permissions:
         with patch(
             "prowler.providers.github.services.organization.organization_service.logger"
         ) as mock_logger:
-            assert (
-                organization_service._get_default_workflow_permissions(mock_org) is None
+            assert organization_service._get_actions_workflow_permissions(mock_org) == (
+                None,
+                None,
             ), "Insufficient permissions should not produce a value"
             mock_logger.warning.assert_called()
 
@@ -568,4 +593,4 @@ class Test_Organization_Default_Workflow_Permissions:
         )
 
         with raises(RateLimitExceededException):
-            organization_service._get_default_workflow_permissions(mock_org)
+            organization_service._get_actions_workflow_permissions(mock_org)
