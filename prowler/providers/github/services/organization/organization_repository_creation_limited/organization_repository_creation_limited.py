@@ -64,7 +64,12 @@ class organization_repository_creation_limited(Check):
 
             if global_creation is not None:
                 if global_creation:
-                    enabled_types.append("repositories of any type")
+                    public_known_disabled = (
+                        public_creation is False
+                        or normalized_type in NON_PUBLIC_CREATION_TYPES
+                    )
+                    if not public_known_disabled:
+                        enabled_types.append("repositories of any type")
                 else:
                     type_flags.append(False)
 
@@ -116,14 +121,11 @@ class organization_repository_creation_limited(Check):
                         or internal_creation is True
                         or normalized_type in NON_PUBLIC_CREATION_TYPES
                     )
-                    visibility_known = any(
-                        flag is not None
-                        for flag in (public_creation, private_creation, internal_creation)
-                    ) or normalized_type in (
+                    public_known = public_creation is not None or normalized_type in (
                         PUBLIC_CREATION_TYPES | NON_PUBLIC_CREATION_TYPES | {"none"}
                     )
 
-                    if not public_allowed and non_public_allowed and visibility_known:
+                    if not public_allowed and non_public_allowed and public_known:
                         report.check_metadata.Severity = Severity.low
                         report.status_extended = (
                             f"Organization {org.name} allows members to create {allowed_desc}. "
