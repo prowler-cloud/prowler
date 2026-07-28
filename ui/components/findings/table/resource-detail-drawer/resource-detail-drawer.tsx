@@ -47,16 +47,17 @@ export function ResourceDetailDrawer({
   onTriageUpdate,
 }: ResourceDetailDrawerProps) {
   const pathname = usePathname();
+  const focusedFinding = isNavigating ? null : currentFinding;
   const context = currentResource
     ? buildFocusedFindingContext({
         pathname,
-        findingId: currentFinding?.id ?? currentResource.findingId,
-        checkId: currentFinding?.checkId ?? currentResource.checkId,
-        severity: currentFinding?.severity ?? currentResource.severity,
-        status: currentFinding?.status ?? currentResource.status,
-        providerUid: currentFinding?.providerUid ?? currentResource.providerUid,
-        resourceUid: currentFinding?.resourceUid ?? currentResource.resourceUid,
-        region: currentFinding?.resourceRegion ?? currentResource.region,
+        findingId: focusedFinding?.id ?? currentResource.findingId,
+        checkId: focusedFinding?.checkId ?? currentResource.checkId,
+        severity: focusedFinding?.severity ?? currentResource.severity,
+        status: focusedFinding?.status ?? currentResource.status,
+        providerUid: focusedFinding?.providerUid ?? currentResource.providerUid,
+        resourceUid: focusedFinding?.resourceUid ?? currentResource.resourceUid,
+        region: focusedFinding?.resourceRegion ?? currentResource.region,
       })
     : undefined;
 
