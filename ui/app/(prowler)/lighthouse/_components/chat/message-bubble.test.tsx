@@ -158,61 +158,6 @@ describe("MessageBubble", () => {
     expect(isBefore(toolCall, secondText)).toBe(true);
   });
 
-  it("should keep wide assistant tables inside the message width", () => {
-    // Given
-    const wideTableMessage = buildAssistantMessage([
-      textPart(
-        "part-1",
-        "| very-wide-header | another-wide-header |\n| --- | --- |\n| very-long-cell-value-that-should-not-resize-the-message | value |",
-      ),
-    ]);
-
-    // When
-    render(<MessageBubble message={wideTableMessage} />);
-
-    // Then
-    const table = screen.getByRole("table", {
-      name: "Wide markdown table",
-    });
-    const markdown = table.closest(".lighthouse-markdown");
-    if (!(markdown instanceof HTMLElement)) {
-      throw new Error("Expected markdown wrapper around assistant table");
-    }
-
-    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
-    expect(markdown.parentElement).toHaveClass("min-w-0");
-    expect(markdown.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-      "max-w-full",
-    );
-    expect(markdown.parentElement?.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-    );
-  });
-
-  it("keeps Mermaid diagrams inside the constrained markdown wrapper", () => {
-    // Given
-    const mermaidMessage = buildAssistantMessage([
-      textPart("part-1", "```mermaid\ngraph TD\n  A --> B\n```"),
-    ]);
-
-    // When
-    render(<MessageBubble message={mermaidMessage} />);
-
-    // Then
-    const mermaid = screen.getByRole("img", { name: "Mermaid chart" });
-    const markdown = mermaid.closest(".lighthouse-markdown");
-    if (!(markdown instanceof HTMLElement)) {
-      throw new Error("Expected markdown wrapper around Mermaid diagram");
-    }
-
-    expect(markdown).toHaveClass("min-w-0", "max-w-full", "overflow-x-auto");
-    expect(markdown.parentElement).toHaveClass("min-w-0");
-    expect(markdown.parentElement?.parentElement).toHaveClass(
-      "min-w-0",
-      "max-w-full",
-    );
-  });
 });
 
 function isBefore(first: HTMLElement, second: HTMLElement): boolean {

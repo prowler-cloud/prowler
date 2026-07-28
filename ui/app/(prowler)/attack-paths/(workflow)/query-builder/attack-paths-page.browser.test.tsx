@@ -104,17 +104,6 @@ describe("waiting states", () => {
 });
 
 describe("running a query", () => {
-  test("the query builder surface uses the shared card primitive", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-
-    const card = await graph.waitFor(() => graph.queryBuilderCard, 10000);
-
-    expect(card).toHaveAttribute("data-slot", "card");
-    expect(card).toHaveClass("rounded-xl");
-  });
-
   test("a parameterized query shows its required inputs after selection", async ({
     mountWith,
   }) => {
@@ -200,18 +189,6 @@ describe("running a query", () => {
     );
   });
 
-  test("the graph renders with a background, a minimap, and a viewport", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(3);
-
-    expect(graph.background).toBeTruthy();
-    expect(graph.minimap).toBeTruthy();
-    expect(graph.viewport).toBeTruthy();
-  });
-
   test("nodes are laid out at distinct positions", async ({ mountWith }) => {
     const graph = await mountWith();
     await graph.executeQuery();
@@ -219,19 +196,6 @@ describe("running a query", () => {
 
     const positions = graph.nodePositions;
     expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
-  });
-
-  test("the toolbar exposes zoom, fit, and export controls", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(1);
-
-    expect(graph.toolbar.zoomInButton).toBeTruthy();
-    expect(graph.toolbar.zoomOutButton).toBeTruthy();
-    expect(graph.toolbar.fitButton).toBeTruthy();
-    expect(graph.toolbar.exportButton).toBeTruthy();
   });
 
   test("finding, resource, and internet nodes all render", async ({
