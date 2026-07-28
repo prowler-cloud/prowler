@@ -14,7 +14,8 @@ def decode_celery_field(value: Any, default: Any) -> Any:
 
         text = decoded.strip()
         if not text:
-            return default
+            decoded = default
+            break
 
         parsed = _UNPARSED
         for parser in (json.loads, ast.literal_eval):

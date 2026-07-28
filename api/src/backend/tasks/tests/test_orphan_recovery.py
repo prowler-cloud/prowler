@@ -79,6 +79,10 @@ class TestDecodeCeleryField:
         assert decode_celery_field("null", {}) == {}
         assert decode_celery_field("None", []) == []
 
+    def test_empty_validates_default(self):
+        with pytest.raises(ValueError):
+            decode_celery_field("", {"value": ...})
+
     def test_unparseable_raises(self):
         with pytest.raises(ValueError):
             decode_celery_field("<<not a literal>>", {})
