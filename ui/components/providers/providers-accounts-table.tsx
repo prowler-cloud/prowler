@@ -9,6 +9,7 @@ import type {
   ProviderWizardInitialData,
 } from "@/components/providers/wizard/types";
 import { DataTable } from "@/components/shadcn/table";
+import { LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT } from "@/lib/lighthouse/context/constants";
 import {
   buildProviderContext,
   buildProviderSummaryContext,
@@ -235,20 +236,22 @@ function ProvidersAccountsTableContent({
           item={buildProviderSummaryContext(metadata.pagination.count)}
         />
       )}
-      {selectedScheduleProviderIds.slice(0, 6).map((providerId) => {
-        const provider = selectedProviderDetails.get(providerId);
-        return (
-          <LighthouseContextContributor
-            key={`provider-${providerId}`}
-            contributorId={`provider-${providerId}`}
-            item={buildProviderContext({
-              id: providerId,
-              uid: provider?.providerUid,
-              type: provider?.providerType,
-            })}
-          />
-        );
-      })}
+      {selectedScheduleProviderIds
+        .slice(0, LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT.AFTER_PAGE_AND_SUMMARY)
+        .map((providerId) => {
+          const provider = selectedProviderDetails.get(providerId);
+          return (
+            <LighthouseContextContributor
+              key={`provider-${providerId}`}
+              contributorId={`provider-${providerId}`}
+              item={buildProviderContext({
+                id: providerId,
+                uid: provider?.providerUid,
+                type: provider?.providerType,
+              })}
+            />
+          );
+        })}
       <DataTable
         columns={columns}
         data={rows}
