@@ -154,6 +154,84 @@ def test_execute_query_serializes_graph(
     assert result["relationships"][0]["label"] == "OWNS"
 
 
+def test_execute_query_injects_provider_label_when_migrated(
+    attack_paths_query_definition_factory,
+    sink_backend_stub,
+):
+    # On migrated graphs the predefined cypher must be scoped with the
+    # provider label so the planner seeds from the label index instead of a
+    # global label scan (the Neptune cartesian/timeout fix).
+    definition = attack_paths_query_definition_factory(
+        id="aws-iam",
+        name="IAM",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (aws:AWSAccount)--(target_role:AWSRole) RETURN target_role",
+        parameters=[],
+    )
+    provider_id = "test-provider-123"
+    plabel = get_provider_label(provider_id)
+    parameters = {"provider_uid": "123"}
+
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
+    # Injection is gated on `is_migrated`, not the sink (it is a pure string
+    # transform), so `neo4j` exercises the same code path as Neptune here.
+    views_helpers.execute_query(
+        "db-tenant-test",
+        definition,
+        parameters,
+        provider_id=provider_id,
+        scan=MagicMock(is_migrated=True, sink_backend="neo4j"),
+    )
+
+    executed_cypher = sink_backend_stub.execute_read_query.call_args[0][1]
+    assert executed_cypher != definition.cypher
+    # Every node pattern is scoped, and injection only inserted labels
+    # (stripping them restores the original cypher verbatim).
+    assert f":{plabel}" in executed_cypher
+    assert executed_cypher.replace(f":{plabel}", "") == definition.cypher
+    # Parameters are passed through untouched.
+    assert sink_backend_stub.execute_read_query.call_args[0][2] == parameters
+
+
+def test_execute_query_does_not_inject_label_when_deprecated(
+    attack_paths_query_definition_factory,
+    sink_backend_stub,
+):
+    # Deprecated (pre-cutover) graphs isolate via the `_provider_id` property,
+    # not the label, so the legacy cypher must run verbatim.
+    definition = attack_paths_query_definition_factory(
+        id="aws-iam",
+        name="IAM",
+        short_description="Short desc",
+        description="",
+        cypher="MATCH (aws:AWSAccount)--(target_role:AWSRole) RETURN target_role",
+        parameters=[],
+    )
+    parameters = {"provider_uid": "123"}
+
+    graph_result = MagicMock()
+    graph_result.nodes = []
+    graph_result.relationships = []
+    sink_backend_stub.execute_read_query.return_value = graph_result
+
+    views_helpers.execute_query(
+        "db-tenant-test",
+        definition,
+        parameters,
+        provider_id="test-provider-123",
+        scan=MagicMock(is_migrated=False, sink_backend="neo4j"),
+    )
+
+    sink_backend_stub.execute_read_query.assert_called_once_with(
+        "db-tenant-test", definition.cypher, parameters
+    )
+
+
 def test_execute_query_wraps_graph_errors(
     attack_paths_query_definition_factory,
     sink_backend_stub,

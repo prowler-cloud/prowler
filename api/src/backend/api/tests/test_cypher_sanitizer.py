@@ -427,3 +427,65 @@ class TestValidation:
     )
     def test_allows_clean_queries(self, cypher):
         validate_custom_query(cypher)
+
+
+# ---------------------------------------------------------------------------
+# Predefined-catalog injection (Option 1: label-scoped predefined queries)
+# ---------------------------------------------------------------------------
+
+
+def _all_predefined_queries():
+    """Every predefined query in the migrated catalog, as (id, cypher)."""
+    from api.attack_paths.queries.registry import _QUERY_DEFINITIONS
+
+    return [
+        (definition.id, definition.cypher)
+        for definitions in _QUERY_DEFINITIONS.values()
+        for definition in definitions
+    ]
+
+
+_PREDEFINED_QUERIES = _all_predefined_queries()
+
+
+class TestPredefinedCatalogInjection:
+    """`execute_query` injects the provider label into predefined queries on
+    migrated graphs. The injection must be *lossless* for every catalog query:
+    it may only insert `:_Provider_{uuid}` tokens and must not otherwise alter
+    the cypher (which would corrupt a hand-authored query). This runs over the
+    whole catalog so a regex regression is caught for all queries at once.
+
+    Injection is a pure string transform, so it is sink-independent (the same
+    result is sent to Neo4j and Neptune)."""
+
+    def test_catalog_is_not_empty(self):
+        # Guard against the parametrized tests silently covering nothing.
+        assert len(_PREDEFINED_QUERIES) > 0
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [cypher for _, cypher in _PREDEFINED_QUERIES],
+        ids=[query_id for query_id, _ in _PREDEFINED_QUERIES],
+    )
+    def test_injection_is_lossless(self, cypher):
+        injected = _inject(cypher)
+
+        # Something was scoped ...
+        assert f":{LABEL}" in injected
+        # ... and stripping the injected tokens restores the query verbatim,
+        # proving injection changed nothing but the labels.
+        assert injected.replace(f":{LABEL}", "") == cypher
+
+    @pytest.mark.parametrize(
+        "cypher",
+        [cypher for _, cypher in _PREDEFINED_QUERIES],
+        ids=[query_id for query_id, _ in _PREDEFINED_QUERIES],
+    )
+    def test_injection_preserves_parameter_placeholders(self, cypher):
+        # Label injection must never touch `$param` bindings.
+        import re
+
+        original_params = sorted(set(re.findall(r"\$\w+", cypher)))
+        injected_params = sorted(set(re.findall(r"\$\w+", _inject(cypher))))
+
+        assert injected_params == original_params
