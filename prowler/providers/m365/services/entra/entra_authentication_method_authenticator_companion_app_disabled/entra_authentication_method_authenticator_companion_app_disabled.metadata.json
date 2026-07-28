@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_authenticator_companion_app_disabled",
+  "CheckTitle": "Microsoft Authenticator on companion applications is disabled",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The Microsoft Authenticator method should have **Authenticator Lite on companion applications** (**featureSettings.companionAppAllowedState**) set to **disabled**. Authenticator Lite embeds a subset of Authenticator functionality into companion apps such as Outlook mobile, expanding where approvals can occur.",
+  "Risk": "Allowing **MFA** approvals from **companion applications** broadens the set of apps and devices that can approve sign-ins, increasing the attack surface for MFA fatigue and reducing the assurance provided by the dedicated Authenticator app.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/how-to-mfa-authenticator-lite"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Authentication methods** > **Policies** > **Microsoft Authenticator**\n3. Select **Configure**\n4. Set **Microsoft Authenticator on companion applications** to **Disabled**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable Microsoft Authenticator on companion applications (Authenticator Lite) so that MFA approvals require the full Microsoft Authenticator app.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_authenticator_companion_app_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

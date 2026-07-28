@@ -107,6 +107,9 @@ class Entra(M365Service):
                 self._get_b2b_collaboration_policy(),
                 self._get_activity_based_timeout_policies(),
                 self._get_named_locations(),
+                self._get_authentication_methods_policy_settings(),
+                self._get_pim_role_approval_settings(),
+                self._get_access_review_definitions(),
             )
         )
 
@@ -136,6 +139,13 @@ class Entra(M365Service):
             attributes[16]
         )
         self.named_locations: List[NamedLocation] = attributes[17]
+        self.authentication_methods_policy_settings: Optional[
+            AuthenticationMethodsPolicySettings
+        ] = attributes[18]
+        self.pim_role_approval_settings: Dict[str, PimRoleApprovalSetting] = attributes[
+            19
+        ]
+        self.access_review_definitions: List[AccessReviewDefinition] = attributes[20]
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -1284,6 +1294,150 @@ OAuthAppInfo
             )
         return device_registration_policy
 
+    async def _get_pim_role_approval_settings(self):
+        """Retrieve PIM approval-to-activate settings per directory role.
+
+        Fetches ``policies/roleManagementPolicyAssignments`` for directory roles with
+        their expanded policy rules, and extracts, per role definition, whether
+        approval is required to activate and whether approvers are configured.
+
+        Returns:
+            Dict[str, PimRoleApprovalSetting]: Keyed by role definition (template) id.
+        """
+        logger.info("Entra - Getting PIM role approval settings...")
+        settings: Dict[str, PimRoleApprovalSetting] = {}
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/policies/"
+                "roleManagementPolicyAssignments?$filter=scopeId%20eq%20'/'%20and%20"
+                "scopeType%20eq%20'DirectoryRole'&$expand=policy($expand=rules)"
+            )
+            request_info = self.client.policies.with_url(
+                url
+            ).to_get_request_information()
+            assignments = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                assignments.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.policies.with_url(
+                    next_link
+                ).to_get_request_information()
+            for assignment in assignments:
+                role_id = assignment.get("roleDefinitionId")
+                if not role_id:
+                    continue
+                rules = (assignment.get("policy", {}) or {}).get("rules", []) or []
+                is_approval_required = False
+                has_approvers = False
+                for rule in rules:
+                    if rule.get("id") == "Approval_EndUser_Assignment":
+                        setting = rule.get("setting", {}) or {}
+                        is_approval_required = bool(
+                            setting.get("isApprovalRequired", False)
+                        )
+                        for stage in setting.get("approvalStages", []) or []:
+                            if stage.get("primaryApprovers"):
+                                has_approvers = True
+                                break
+                settings[role_id] = PimRoleApprovalSetting(
+                    role_definition_id=role_id,
+                    is_approval_required=is_approval_required,
+                    has_approvers=has_approvers,
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
+
+    async def _get_access_review_definitions(self):
+        """Retrieve access review definitions from Microsoft Entra ID Governance.
+
+        Fetches ``identityGovernance/accessReviews/definitions`` and captures the
+        status and scope query of each definition for the access-review checks.
+
+        Returns:
+            List[AccessReviewDefinition]: The parsed access review definitions.
+        """
+        logger.info("Entra - Getting access review definitions...")
+        definitions = []
+        try:
+            url = (
+                "https://graph.microsoft.com/v1.0/identityGovernance/"
+                "accessReviews/definitions"
+            )
+            request_info = self.client.identity_governance.with_url(
+                url
+            ).to_get_request_information()
+            raw_definitions = []
+            while True:
+                response = await self.client.request_adapter.send_primitive_async(
+                    request_info, "bytes", {}
+                )
+                if not response:
+                    break
+                data = json.loads(response)
+                page = data.get("value", []) or []
+                if not page:
+                    break
+                raw_definitions.extend(page)
+                next_link = data.get("@odata.nextLink") or data.get("nextLink")
+                if not next_link:
+                    break
+                request_info = self.client.identity_governance.with_url(
+                    next_link
+                ).to_get_request_information()
+            for definition in raw_definitions:
+                scope = definition.get("scope", {}) or {}
+                settings = definition.get("settings", {}) or {}
+                definitions.append(
+                    AccessReviewDefinition(
+                        id=definition.get("id", ""),
+                        display_name=definition.get("displayName"),
+                        status=definition.get("status"),
+                        scope_query=str(scope.get("query", "")),
+                        resource_scope_queries=[
+                            str(resource_scope.get("query", ""))
+                            for resource_scope in (
+                                scope.get("resourceScopes", []) or []
+                            )
+                        ],
+                        principal_scope_queries=[
+                            str(principal_scope.get("query", ""))
+                            for principal_scope in (
+                                scope.get("principalScopes", []) or []
+                            )
+                        ],
+                        default_decision=settings.get("defaultDecision"),
+                        auto_apply_enabled=bool(
+                            settings.get("autoApplyDecisionsEnabled", False)
+                        ),
+                        mail_notifications_enabled=bool(
+                            settings.get("mailNotificationsEnabled", False)
+                        ),
+                        reminders_enabled=bool(
+                            settings.get("reminderNotificationsEnabled", False)
+                        ),
+                        duration_in_days=settings.get("instanceDurationInDays"),
+                    )
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return definitions
+
     async def _get_b2b_collaboration_policy(self):
         """Retrieve the legacy B2B collaboration (invitation domains) policy.
 
@@ -1489,6 +1643,66 @@ OAuthAppInfo
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
         return policies
+
+    async def _get_authentication_methods_policy_settings(self):
+        """Retrieve advanced settings from the beta authentication methods policy.
+
+        Fetches ``policies/authenticationMethodsPolicy`` from the beta Graph endpoint
+        to extract settings not exposed on the v1.0 typed model: the
+        ``systemCredentialPreferences`` block and the Microsoft Authenticator
+        ``featureSettings`` (app-information / location-information / companion-app
+        states). Parsed from raw JSON because these fields are beta-only.
+
+        Returns:
+            Optional[AuthenticationMethodsPolicySettings]: Parsed settings, or None.
+        """
+        logger.info("Entra - Getting authentication methods policy settings...")
+        settings = None
+        try:
+            builder = self.client.policies.authentication_methods_policy.with_url(
+                "https://graph.microsoft.com/beta/policies/authenticationMethodsPolicy"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                system_prefs = data.get("systemCredentialPreferences", {}) or {}
+                include_targets = [
+                    target.get("id")
+                    for target in (system_prefs.get("includeTargets", []) or [])
+                    if target.get("id")
+                ]
+                authenticator = {}
+                for config in data.get("authenticationMethodConfigurations", []) or []:
+                    if config.get("id") == "MicrosoftAuthenticator":
+                        authenticator = config
+                        break
+                feature_settings = authenticator.get("featureSettings", {}) or {}
+                settings = AuthenticationMethodsPolicySettings(
+                    system_preferred_mfa_state=system_prefs.get("state"),
+                    system_preferred_mfa_include_targets=include_targets,
+                    authenticator_state=authenticator.get("state"),
+                    authenticator_display_app_information_state=(
+                        feature_settings.get("displayAppInformationRequiredState", {})
+                        or {}
+                    ).get("state"),
+                    authenticator_display_location_information_state=(
+                        feature_settings.get(
+                            "displayLocationInformationRequiredState", {}
+                        )
+                        or {}
+                    ).get("state"),
+                    authenticator_companion_app_state=(
+                        feature_settings.get("companionAppAllowedState", {}) or {}
+                    ).get("state"),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return settings
 
     async def _get_directory_settings(self):
         """Retrieve tenant directory (group) settings from Microsoft Entra.
@@ -2267,6 +2481,10 @@ class AuthorizationPolicy(BaseModel):
 GROUP_UNIFIED_SETTINGS_TEMPLATE_ID = "62375ab9-6b52-47ed-826b-58e47e0e304b"
 PASSWORD_RULE_SETTINGS_TEMPLATE_ID = "5cf42378-d67d-4f36-ba46-e8b86229381d"
 
+# Well-known directory role template IDs.
+GLOBAL_ADMINISTRATOR_ROLE_TEMPLATE_ID = "62e90394-69f5-4237-9190-012177145e10"
+PRIVILEGED_ROLE_ADMINISTRATOR_ROLE_TEMPLATE_ID = "e8611ab8-c189-46e8-94e1-60213ab1f814"
+
 
 class DeviceRegistrationMembershipType(str, Enum):
     """OData types for Entra device registration membership settings."""
@@ -2304,11 +2522,46 @@ class NamedLocation(BaseModel):
     ip_ranges_count: int = 0
 
 
+class PimRoleApprovalSetting(BaseModel):
+    """PIM approval-to-activate setting for a directory role."""
+
+    role_definition_id: str
+    is_approval_required: bool = False
+    has_approvers: bool = False
+
+
+class AccessReviewDefinition(BaseModel):
+    """Access review definition (identityGovernance/accessReviews/definitions)."""
+
+    id: str
+    display_name: Optional[str] = None
+    status: Optional[str] = None
+    scope_query: str = ""
+    resource_scope_queries: List[str] = []
+    principal_scope_queries: List[str] = []
+    default_decision: Optional[str] = None
+    auto_apply_enabled: bool = False
+    mail_notifications_enabled: bool = False
+    reminders_enabled: bool = False
+    duration_in_days: Optional[int] = None
+
+
 class B2BCollaborationPolicy(BaseModel):
     """Legacy B2B collaboration (invitation domains) policy."""
 
     invitations_restricted_to_allowed_domains: bool = False
     allowed_domains: List[str] = []
+
+
+class AuthenticationMethodsPolicySettings(BaseModel):
+    """Advanced settings from the beta authentication methods policy."""
+
+    system_preferred_mfa_state: Optional[str] = None
+    system_preferred_mfa_include_targets: List[str] = []
+    authenticator_state: Optional[str] = None
+    authenticator_display_app_information_state: Optional[str] = None
+    authenticator_display_location_information_state: Optional[str] = None
+    authenticator_companion_app_state: Optional[str] = None
 
 
 class Organization(BaseModel):

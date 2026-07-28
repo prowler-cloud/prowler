@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_authentication_method_system_preferred_mfa_enabled",
+  "CheckTitle": "System-preferred multifactor authentication is enabled for all users",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The tenant authentication methods policy should have **system-preferred multifactor authentication** (**systemCredentialPreferences**) enabled and targeting **all users**. System-preferred MFA prompts users to authenticate with the most secure method they have registered.",
+  "Risk": "Without **system-preferred** **MFA**, users may default to weaker registered methods (such as SMS) instead of stronger ones (such as Authenticator push or passwordless), lowering the overall assurance of multifactor authentication.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/identity/authentication/concept-system-preferred-multifactor-authentication"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Protection** > **Authentication methods** > **Settings**\n3. Set **System-preferred multifactor authentication** to **Enabled** and Target **All users**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable system-preferred multifactor authentication for all users so Entra prompts each user to sign in with the most secure method they have registered.",
+      "Url": "https://hub.prowler.com/check/entra_authentication_method_system_preferred_mfa_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
