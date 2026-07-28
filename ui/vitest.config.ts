@@ -8,14 +8,6 @@ export default defineConfig(() => {
   const apiBaseUrl = process.env.UI_API_BASE_URL ?? "http://localhost/api/v1";
 
   return {
-    // Enable react compiler for test environment
-    plugins: [
-      react({
-        babel: {
-          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
-        },
-      }),
-    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./"),
@@ -45,6 +37,11 @@ export default defineConfig(() => {
       projects: [
         {
           extends: true,
+          // Unit (jsdom) suite runs without the React Compiler: enabling it
+          // breaks async Server Components (`useMemoCache` on a null
+          // dispatcher) and some form-validation renders. Only the browser
+          // suite below needs it.
+          plugins: [react()],
           test: {
             name: "unit",
             environment: "jsdom",
@@ -60,6 +57,13 @@ export default defineConfig(() => {
         },
         {
           extends: true,
+          plugins: [
+            react({
+              babel: {
+                plugins: [["babel-plugin-react-compiler", { target: "19" }]],
+              },
+            }),
+          ],
           test: {
             name: "integration",
             setupFiles: ["./vitest.integration.setup.ts"],
