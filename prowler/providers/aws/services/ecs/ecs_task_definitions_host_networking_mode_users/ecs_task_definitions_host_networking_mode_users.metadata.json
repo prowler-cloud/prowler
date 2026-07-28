@@ -34,7 +34,7 @@
       "Terraform": "```hcl\n# ECS task definition not using host network mode\nresource \"aws_ecs_task_definition\" \"<example_resource_name>\" {\n  family                = \"<example_resource_name>\"\n  network_mode          = \"awsvpc\"  # CRITICAL: avoids host mode to pass the check\n  container_definitions = jsonencode([\n    {\n      name  = \"<example_resource_name>\"\n      image = \"nginx\"\n    }\n  ])\n}\n```"
     },
     "Recommendation": {
-      "Text": "Prefer `awsvpc` for isolation. If `host` is required, enforce **least privilege**:\n- Run as a non-root `user`\n- Avoid `privileged` unless strictly justified\n- Limit capabilities and exposed ports\n\nApply **defense in depth** with network segmentation and minimal IAM permissions.",
+      "Text": "Prefer **`awsvpc`** for isolation. If `host` is required, enforce **least privilege**:\n- Run as a non-root `user`\n- Avoid `privileged` unless strictly justified\n- Limit capabilities and exposed ports\n\nApply **defense in depth** with network segmentation and minimal IAM permissions.",
       "Url": "https://hub.prowler.com/check/ecs_task_definitions_host_networking_mode_users"
     }
   },

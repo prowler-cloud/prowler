@@ -13,7 +13,7 @@
   "Severity": "high",
   "ResourceType": "AwsRoute53HostedZone",
   "ResourceGroup": "network",
-  "Description": "**Route 53 records** are evaluated for two **subdomain takeover** vectors: (1) non-alias `A` **records** using literal IPs in **public AWS ranges** that are not assigned to resources in the account (released EIPs/ENI public IPs); and (2) non-alias `CNAME` **records** targeting an **S3 website endpoint** (`*.s3-website[.-]<region>.amazonaws.com`) whose bucket no longer exists in the account.",
+  "Description": "**Route 53 records** are evaluated for two **subdomain takeover** vectors: (1) non-alias **`A` records** using literal IPs in **public AWS ranges** that are not assigned to resources in the account (released EIPs/ENI public IPs); and (2) non-alias **`CNAME` records** targeting an **S3 website endpoint** (`*.s3-website[.-]<region>.amazonaws.com`) whose bucket no longer exists in the account.",
   "Risk": "**Dangling DNS records** pointing to released AWS resources enable **subdomain takeover**. An attacker who later claims the IP — or registers an S3 bucket with the same name in any AWS account — can:\n- Redirect or alter content (integrity)\n- Capture credentials/cookies (confidentiality)\n- Disrupt or impersonate services (availability)",
   "RelatedUrl": "",
   "AdditionalURLs": [

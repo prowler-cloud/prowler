@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "Zone",
   "ResourceGroup": "network",
-  "Description": "**Cloudflare zones** are assessed for **SPF (Sender Policy Framework)** records by checking if a TXT record exists that specifies which mail servers are **authorized to send email** on behalf of the domain, and verifies that the record uses a **strict policy** (`-all`) to reject unauthorized senders.",
+  "Description": "**Cloudflare zones** are assessed for **SPF (Sender Policy Framework)** records by checking if a TXT record exists that specifies which mail servers are **authorized to send email** on behalf of the domain, and verifies that the record uses a **strict policy (`-all`)** to reject unauthorized senders.",
   "Risk": "Without **SPF** or with a permissive policy (`~all`, `?all`, `+all`), attackers can forge emails from your domain. Phishing attacks can harvest sensitive information from recipients who trust spoofed emails. Brand reputation is damaged by fraudulent emails. `~all` only marks emails as suspicious without rejecting them.",
   "RelatedUrl": "",
   "AdditionalURLs": [

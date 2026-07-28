@@ -9,7 +9,7 @@
   "Severity": "low",
   "ResourceType": "Zone",
   "ResourceGroup": "network",
-  "Description": "**Cloudflare zones** are assessed for **CAA (Certificate Authority Authorization)** DNS records by checking if they exist with `issue` **or** `issuewild` **tags** that specify which **certificate authorities** are permitted to issue SSL/TLS certificates for the domain.",
+  "Description": "**Cloudflare zones** are assessed for **CAA (Certificate Authority Authorization)** DNS records by checking if they exist with **`issue` or `issuewild` tags** that specify which **certificate authorities** are permitted to issue SSL/TLS certificates for the domain.",
   "Risk": "Without **CAA** records or `issue`/`issuewild` tags, any certificate authority can issue certificates for your domain. Unauthorized certificates enable **man-in-the-middle attacks** and domain impersonation. CAA records with only `iodef` tags do not restrict certificate issuance.",
   "RelatedUrl": "",
   "AdditionalURLs": [

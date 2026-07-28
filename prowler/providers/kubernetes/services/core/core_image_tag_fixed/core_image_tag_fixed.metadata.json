@@ -10,7 +10,7 @@
   "ResourceType": "Pod",
   "ResourceGroup": "container",
   "Description": "**Kubernetes Pods** are evaluated for containers using images without a **fixed version tag**, such as `latest` or no tag at all, which results in unpredictable image versions being pulled.",
-  "Risk": "Using `latest` **or untagged images** breaks reproducibility and introduces risk:\n- Deployments may pull different image versions across nodes (integrity)\n- Rollbacks become unreliable when the exact image is unknown\n- Supply-chain attacks can inject malicious code via mutable tags\nCompromised or unexpected images can lead to **data breaches**, **lateral movement**, and **service disruption**.",
+  "Risk": "Using **`latest` or untagged images** breaks reproducibility and introduces risk:\n- Deployments may pull different image versions across nodes (integrity)\n- Rollbacks become unreliable when the exact image is unknown\n- Supply-chain attacks can inject malicious code via mutable tags\nCompromised or unexpected images can lead to **data breaches**, **lateral movement**, and **service disruption**.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://kubernetes.io/docs/concepts/containers/images/",

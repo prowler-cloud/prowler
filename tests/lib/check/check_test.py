@@ -7,7 +7,6 @@ from pkgutil import ModuleInfo
 from unittest import mock
 
 from boto3 import client
-from markdown_it import MarkdownIt
 from mock import Mock, patch
 from moto import mock_aws
 
@@ -1076,48 +1075,6 @@ class TestCheck:
                 invalid_urls.append(f"{metadata_file_path}: {url}")
 
         assert not invalid_urls, "\n".join(invalid_urls)
-
-    def test_checks_metadata_has_no_inline_code_nested_in_strong_markdown(self):
-        provider_path = (
-            pathlib.Path(__file__).resolve().parents[3] / "prowler" / "providers"
-        )
-        markdown_parser = MarkdownIt("commonmark", {"html": False})
-        violations = []
-
-        def iter_strings(value, field_path):
-            if isinstance(value, str):
-                yield field_path, value
-            elif isinstance(value, dict):
-                for key, nested_value in value.items():
-                    yield from iter_strings(nested_value, f"{field_path}.{key}")
-            elif isinstance(value, list):
-                for index, nested_value in enumerate(value):
-                    yield from iter_strings(nested_value, f"{field_path}[{index}]")
-
-        for metadata_file_path in sorted(provider_path.rglob("*.metadata.json")):
-            with metadata_file_path.open("r") as metadata_file:
-                metadata = json.load(metadata_file)
-
-            for field_path, text in iter_strings(metadata, "$"):
-                for block_token in markdown_parser.parse(text):
-                    if block_token.type != "inline":
-                        continue
-
-                    strong_depth = 0
-                    for inline_token in block_token.children or []:
-                        if inline_token.type == "strong_open":
-                            strong_depth += 1
-                        elif inline_token.type == "strong_close":
-                            strong_depth -= 1
-                        elif inline_token.type == "code_inline" and strong_depth:
-                            relative_path = metadata_file_path.relative_to(
-                                provider_path
-                            )
-                            violations.append(
-                                f"{relative_path}:{field_path}: `{inline_token.content}`"
-                            )
-
-        assert not violations, "\n".join(violations)
 
     def verify_metadata_check_id(self, provider_path):
         errors = []

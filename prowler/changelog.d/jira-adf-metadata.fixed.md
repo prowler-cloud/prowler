@@ -1,1 +1,1 @@
-Check metadata no longer produces invalid Jira ADF when inline code appears in emphasized text
+Jira descriptions with inline code nested in bold or italic Markdown now render as valid ADF
