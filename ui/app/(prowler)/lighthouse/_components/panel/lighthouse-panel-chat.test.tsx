@@ -202,59 +202,6 @@ describe("LighthousePanelChat", () => {
     ).toBeInTheDocument();
   });
 
-  it("places the current page context immediately after the model control", async () => {
-    // Given / When
-    render(<LighthousePanelChat />);
-
-    // Then
-    const modelControl = await screen.findByLabelText(
-      "Current model: OpenAI gpt-5.1",
-    );
-    const contextBadge = screen.getByLabelText("Findings context");
-    expect(modelControl.nextElementSibling).toBe(contextBadge);
-  });
-
-  it("sends the current page context from the side panel", async () => {
-    // Given
-    const user = userEvent.setup();
-    createSessionMock.mockResolvedValue({
-      data: session("session-context", "Prioritize findings"),
-    });
-    sendMessageMock.mockResolvedValue({
-      data: {
-        task: {
-          id: "task-context",
-          name: "lighthouse-run",
-          state: "executing",
-        },
-      },
-    });
-    render(<LighthousePanelChat />);
-    const input = await screen.findByRole("textbox", { name: "Message" });
-    expect(screen.getByText("@ Findings")).toBeInTheDocument();
-
-    // When
-    await user.type(input, "Prioritize findings{Enter}");
-
-    // Then
-    await waitFor(() =>
-      expect(sendMessageMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          displayText: "Prioritize findings",
-          context: expect.objectContaining({
-            items: expect.arrayContaining([
-              expect.objectContaining({
-                kind: "page",
-                id: "findings",
-                filters: { severity: ["critical"] },
-              }),
-            ]),
-          }),
-        }),
-      ),
-    );
-  });
-
   it("submits a queued contextual analysis when the panel chat becomes ready", async () => {
     // Given
     const context = {

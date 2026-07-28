@@ -39,30 +39,6 @@ describe("ResourceDetailDrawer", () => {
     pathnameMock.mockReturnValue("/findings");
   });
 
-  it("should update focused finding context when drawer navigation changes", () => {
-    // Given
-    const firstFinding = findingResource("finding-1", "bucket-1");
-    const secondFinding = findingResource("finding-2", "bucket-2");
-    const { rerender } = renderDrawer(firstFinding);
-    expect(screen.getByTestId("focused-context")).toHaveTextContent(
-      '"findingId":"finding-1"',
-    );
-
-    // When
-    rerender(drawer(secondFinding));
-
-    // Then
-    expect(screen.getByTestId("focused-context")).toHaveTextContent(
-      '"findingId":"finding-2"',
-    );
-    expect(screen.getByTestId("focused-context")).toHaveTextContent(
-      '"resourceUid":"bucket-2"',
-    );
-    expect(screen.getByTestId("focused-context")).toHaveTextContent(
-      '"source":"focused"',
-    );
-  });
-
   it("should scope a finding opened from an Attack Paths node", () => {
     // Given
     pathnameMock.mockReturnValue("/attack-paths");

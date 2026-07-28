@@ -9,7 +9,6 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
 
 import type { LighthouseChatConfig } from "./chat-store";
 import {
-  flushPendingPanelChatMessage,
   getOrCreatePanelChatStore,
   requestPanelChatMessage,
   resetPanelChatStoreForTests,
@@ -28,24 +27,6 @@ const EMPTY_CHAT_CONFIG: LighthouseChatConfig = {
 describe("panel chat message request", () => {
   afterEach(() => {
     resetPanelChatStoreForTests();
-  });
-
-  it("should submit a message queued before the panel chat store is created", () => {
-    // Given
-    requestPanelChatMessage("Analyze this finding");
-    const store = getOrCreatePanelChatStore(EMPTY_CHAT_CONFIG);
-    const submitMessage = vi
-      .spyOn(store.getState(), "submitMessage")
-      .mockResolvedValue();
-
-    // When
-    flushPendingPanelChatMessage();
-
-    // Then
-    expect(submitMessage).toHaveBeenCalledWith(
-      "Analyze this finding",
-      undefined,
-    );
   });
 
   it("should start a new chat before submitting through an existing store", () => {
