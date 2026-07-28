@@ -71,4 +71,47 @@ describe("useLighthouseContextStore", () => {
     // Then
     expect(useLighthouseContextStore.getState().focused).toBeNull();
   });
+
+  it("should reject focus updates from an older detail panel", () => {
+    // Given
+    const { clearFocusedContext, setFocusedContext } =
+      useLighthouseContextStore.getState();
+    setFocusedContext(2, {
+      kind: "resource",
+      id: "resource-2",
+      source: "focused",
+      scopeKey: "resources:/resources",
+      label: "Focused resource",
+      resourceId: "resource-2",
+    });
+
+    // When
+    setFocusedContext(1, {
+      kind: "finding",
+      id: "stale-finding",
+      source: "focused",
+      scopeKey: "findings:/findings",
+      label: "Stale focused finding",
+      findingId: "stale-finding",
+    });
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused?.id).toBe("resource-2");
+    expect(useLighthouseContextStore.getState().focusedOwnerToken).toBe(2);
+
+    // When
+    clearFocusedContext(2);
+    setFocusedContext(1, {
+      kind: "finding",
+      id: "stale-finding-after-clear",
+      source: "focused",
+      scopeKey: "findings:/findings",
+      label: "Stale focused finding after clear",
+      findingId: "stale-finding-after-clear",
+    });
+
+    // Then
+    expect(useLighthouseContextStore.getState().focused).toBeNull();
+    expect(useLighthouseContextStore.getState().focusedOwnerToken).toBe(2);
+  });
 });

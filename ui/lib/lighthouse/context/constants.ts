@@ -33,6 +33,15 @@ export const LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT = {
   AFTER_PAGE_AND_SUMMARY: LIGHTHOUSE_CONTEXT_LIMIT.ITEMS - 2,
 } as const;
 
+export const LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE = {
+  PER_SCAN: "per-scan",
+  CROSS_PROVIDER: "cross-provider",
+  CROSS_ACCOUNT: "cross-account",
+} as const;
+
+export type LighthouseComplianceContextMode =
+  (typeof LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE)[keyof typeof LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE];
+
 export const LIGHTHOUSE_PAGE_ID = {
   OVERVIEW: "overview",
   FINDINGS: "findings",

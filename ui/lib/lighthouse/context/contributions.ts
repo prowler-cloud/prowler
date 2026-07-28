@@ -17,6 +17,7 @@ import {
   type LighthouseScanContextItem,
 } from "@/types/lighthouse-context";
 
+import type { LighthouseComplianceContextMode } from "./constants";
 import {
   containsSensitiveLighthouseContextValue,
   getLighthouseScopeKey,
@@ -74,7 +75,7 @@ interface ComplianceContextInput {
   version?: string;
   scanId?: string;
   providerUid?: string;
-  mode?: string;
+  mode?: LighthouseComplianceContextMode;
   section?: string;
   region?: string;
   score?: number;
@@ -262,7 +263,7 @@ export function buildComplianceContext(
     version: optionalBoundedString(input.version),
     scanId: optionalBoundedString(input.scanId),
     providerUid: optionalBoundedString(input.providerUid),
-    mode: optionalBoundedString(input.mode),
+    mode: input.mode,
     section: optionalBoundedString(input.section),
     region: optionalBoundedString(input.region),
     score,

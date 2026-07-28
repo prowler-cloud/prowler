@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { LIGHTHOUSE_CONTEXT_LIMIT } from "./constants";
 import {
   buildLighthousePageContext,
   getLighthouseScopeKey,
@@ -50,7 +51,9 @@ describe("resolveLighthousePage", () => {
 
     // Then
     expect(context.scopeKey).toBe(getLighthouseScopeKey(pathname));
-    expect(context.scopeKey.length).toBeLessThanOrEqual(256);
+    expect(context.scopeKey.length).toBeLessThanOrEqual(
+      LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH,
+    );
   });
 });
 

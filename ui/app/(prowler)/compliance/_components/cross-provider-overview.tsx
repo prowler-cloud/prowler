@@ -11,7 +11,10 @@ import {
   SectionHeader,
   SectionTitle,
 } from "@/components/shadcn/section/section";
-import { LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT } from "@/lib/lighthouse/context/constants";
+import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
+  LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
+} from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { SearchParamsProps } from "@/types";
 import type { KnownProviderType } from "@/types/providers";
@@ -172,7 +175,7 @@ export const CrossProviderOverview = async ({
               id: summary.complianceId,
               framework: summary.title,
               version: summary.version,
-              mode: "cross-provider",
+              mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER,
               passed: summary.requirementsPassed,
               failed: summary.requirementsFailed,
               total: summary.totalRequirements,

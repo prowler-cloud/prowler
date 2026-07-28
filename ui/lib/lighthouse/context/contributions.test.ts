@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
 
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "./constants";
 import {
   buildAttackPathContext,
   buildComplianceContext,
@@ -182,7 +183,7 @@ describe("Lighthouse page contributions", () => {
         version: "1.5",
         scanId: "scan-1",
         providerUid: "123456789012",
-        mode: "per-scan",
+        mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN,
         section: "IAM",
         region: "eu-west-1",
         passed: 8,
@@ -205,6 +206,14 @@ describe("Lighthouse page contributions", () => {
       score: 80,
       totals: { passed: 8, failed: 2, total: 10 },
     });
+  });
+
+  it("defines every supported compliance context mode", () => {
+    expect(Object.values(LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE)).toEqual([
+      "per-scan",
+      "cross-provider",
+      "cross-account",
+    ]);
   });
 
   it("builds an attack-path snapshot and excludes unsafe query parameters", () => {
@@ -336,6 +345,26 @@ describe("Lighthouse page contributions", () => {
       redactedParameters: ["ip"],
     });
     expect(context.parameters).toBeUndefined();
+  });
+
+  it("marks a predefined query without redacted parameters as replayable", () => {
+    // Given / When
+    const context = buildAttackPathContext({
+      pathname: "/attack-paths",
+      scanId: "scan-1",
+      queryId: "aws-internet-exposed-resources",
+      queryLabel: "Internet-exposed resources",
+      queryKind: ATTACK_PATH_QUERY_KIND.PREDEFINED,
+      parameters: { region: "eu-west-1" },
+    });
+
+    // Then
+    expect(context).toMatchObject({
+      queryKind: "predefined",
+      canReplayQuery: true,
+      parameters: { region: "eu-west-1" },
+    });
+    expect(context.redactedParameters).toBeUndefined();
   });
 
   it("builds an attack-path scope from the current route", () => {

@@ -6,6 +6,7 @@ import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance"
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 
 import {
@@ -163,7 +164,7 @@ export const CrossProviderDetail = async ({
           id: complianceId,
           framework: attrs.name || attrs.framework,
           version: attrs.version,
-          mode: "cross-provider",
+          mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER,
           section: targetSection,
           passed: totals.pass,
           failed: totals.fail,

@@ -35,6 +35,7 @@ import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
@@ -79,7 +80,7 @@ export default async function ComplianceDetail({
   // Cross-provider mode replaces the per-scan pipeline with the universal
   // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
   // the route is blocked in OSS the same way the compliance tab is.
-  if (mode === "cross-provider") {
+  if (mode === LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER) {
     if (!isCloud()) {
       redirect("/compliance");
     }
@@ -119,7 +120,7 @@ export default async function ComplianceDetail({
   }
   // Cross-account mode: one regular framework aggregated across every
   // account of one provider type. Cloud-only, like cross-provider.
-  if (mode === "cross-account") {
+  if (mode === LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_ACCOUNT) {
     if (!isCloud()) {
       redirect("/compliance");
     }
@@ -347,7 +348,7 @@ export default async function ComplianceDetail({
           pathname={`/compliance/${compliancetitle}`}
           scanId={selectedScanId || ""}
           providerUid={selectedScan?.providerInfo.uid}
-          mode="per-scan"
+          mode={LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN}
           region={regionFilter}
           filter={cisProfileFilter}
           attributesData={attributesData}
@@ -375,7 +376,7 @@ const SSRComplianceContent = async ({
   pathname: string;
   scanId: string;
   providerUid?: string;
-  mode: string;
+  mode: typeof LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN;
   region?: string;
   filter?: string;
   attributesData: AttributesData;

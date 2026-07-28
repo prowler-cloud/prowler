@@ -39,12 +39,14 @@ export const useLighthouseContextStore = create<LighthouseContextStoreState>(
         ),
       })),
     setFocusedContext: (ownerToken, focused) =>
-      set({ focused, focusedOwnerToken: ownerToken }),
+      set((state) =>
+        ownerToken >= state.focusedOwnerToken
+          ? { focused, focusedOwnerToken: ownerToken }
+          : state,
+      ),
     clearFocusedContext: (ownerToken) =>
       set((state) =>
-        state.focusedOwnerToken === ownerToken
-          ? { focused: null, focusedOwnerToken: 0 }
-          : state,
+        state.focusedOwnerToken === ownerToken ? { focused: null } : state,
       ),
   }),
 );

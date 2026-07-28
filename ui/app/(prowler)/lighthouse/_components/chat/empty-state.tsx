@@ -42,6 +42,7 @@ interface ChatEmptyStateProps {
   input: string;
   isStreaming: boolean;
   modelSelector: ReactNode;
+  contextControl?: ReactNode;
   selectedConfigurationConnected: boolean;
   onInputChange: (value: string) => void;
   onSubmit: (event: SubmitEvent<HTMLFormElement>) => void;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
 
 import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
   LIGHTHOUSE_CONTEXT_KIND,
   LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
@@ -94,7 +95,7 @@ export const lighthouseComplianceContextItemSchema =
     version: boundedStringSchema.optional(),
     scanId: boundedStringSchema.optional(),
     providerUid: boundedStringSchema.optional(),
-    mode: boundedStringSchema.optional(),
+    mode: z.enum(LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE).optional(),
     section: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     score: z.number().min(0).max(100).optional(),

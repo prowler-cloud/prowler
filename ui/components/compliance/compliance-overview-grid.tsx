@@ -8,7 +8,10 @@ import { LighthouseContextContributor } from "@/components/lighthouse/context-co
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTableSearch } from "@/components/shadcn/table/data-table-search";
 import { buildComplianceDetailPath } from "@/lib/compliance/compliance-detail-url";
-import { LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT } from "@/lib/lighthouse/context/constants";
+import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
+  LIGHTHOUSE_CONTEXT_CONTRIBUTOR_LIMIT,
+} from "@/lib/lighthouse/context/constants";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { getFlowById } from "@/lib/onboarding";
 import { createViewComplianceTourStepHandlers } from "@/lib/tours/view-compliance.tour";
@@ -86,7 +89,7 @@ export const ComplianceOverviewGrid = ({
               version: attributes.version,
               scanId,
               providerUid: selectedScan?.providerInfo.uid,
-              mode: "per-scan",
+              mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN,
               region: searchParams.get("filter[region__in]") ?? undefined,
               passed: attributes.requirements_passed,
               failed: attributes.requirements_failed,

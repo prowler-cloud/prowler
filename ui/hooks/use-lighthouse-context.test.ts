@@ -37,6 +37,10 @@ describe("buildCurrentLighthouseContext", () => {
       "findings",
       "findings-summary",
     ]);
+    expect(current.context?.items[0]).toMatchObject({
+      kind: "page",
+      filters: { severity: ["critical"] },
+    });
     expect(current.page.label).toBe("Findings");
     expect(current.selectionCount).toBe(0);
   });
@@ -81,5 +85,30 @@ describe("buildCurrentLighthouseContext", () => {
       filters: { scanId: ["scan-1"] },
     });
     expect(current.selectionCount).toBe(0);
+  });
+
+  it("should ignore focused context from a different page scope", () => {
+    // Given
+    const staleFocusedContext = {
+      kind: "finding" as const,
+      id: "stale-finding",
+      source: "focused" as const,
+      scopeKey: "findings:/findings",
+      label: "Stale focused finding",
+      findingId: "stale-finding",
+    };
+
+    // When
+    const current = buildCurrentLighthouseContext(
+      "/resources",
+      new URLSearchParams(),
+      [],
+      staleFocusedContext,
+    );
+
+    // Then
+    expect(current.context?.items.map((item) => item.id)).toEqual([
+      "resources",
+    ]);
   });
 });
