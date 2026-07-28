@@ -481,11 +481,9 @@ export const SecurityHubIntegrationForm = ({
 
   const renderStepButtons = () => {
     if (isEditingConfig || isEditingCredentials) {
-      const updateText = isEditingConfig
-        ? "Update Configuration"
-        : "Update Credentials";
+      const updateText = isEditingConfig ? "Update" : "Update Credentials";
       const loadingText = isEditingConfig
-        ? "Updating Configuration..."
+        ? "Updating..."
         : "Updating Credentials...";
 
       return (

@@ -226,6 +226,10 @@ describe("S3IntegrationForm", () => {
     expect(
       screen.queryByLabelText(/Bucket owner account ID/i),
     ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Update Configuration" }),
+    ).not.toBeInTheDocument();
   });
 
   it("should allow changing the bucket owner account for credential updates", () => {

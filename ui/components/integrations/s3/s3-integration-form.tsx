@@ -433,11 +433,9 @@ export const S3IntegrationForm = ({
   const renderStepButtons = () => {
     // Single edit mode (configuration or credentials)
     if (isEditingConfig || isEditingCredentials) {
-      const updateText = isEditingConfig
-        ? "Update Configuration"
-        : "Update Credentials";
+      const updateText = isEditingConfig ? "Update" : "Update Credentials";
       const loadingText = isEditingConfig
-        ? "Updating Configuration..."
+        ? "Updating..."
         : "Updating Credentials...";
 
       return (
