@@ -31,11 +31,12 @@ const SURVEY_EVENT = {
 } as const;
 
 export function FeedbackSurvey() {
-  const { posthogKey, posthogHost } = useRuntimeConfig();
+  const { posthogEnabled, posthogKey, posthogHost } = useRuntimeConfig();
 
   // Cloud-only is the PRIMARY guard: OSS / self-hosted deployments never fetch
-  // surveys, never render UI, and never call posthog.capture.
-  if (!isCloud() || !posthogKey || !posthogHost) return null;
+  // surveys, never render UI, and never call posthog.capture. `posthogEnabled`
+  // then keeps a stale key/host from activating the widget.
+  if (!isCloud() || !posthogEnabled || !posthogKey || !posthogHost) return null;
 
   return (
     <RuntimeFeedbackSurvey

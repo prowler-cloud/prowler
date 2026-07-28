@@ -76,6 +76,7 @@ describe("FeedbackSurvey", () => {
     mocks.isCloud.mockReturnValue(true);
     mocks.useRuntimeConfig.mockReturnValue({
       cloudEnabled: true,
+      posthogEnabled: true,
       posthogKey: POSTHOG_KEY,
       posthogHost: "https://eu.posthog.com",
     });
@@ -316,6 +317,7 @@ describe("FeedbackSurvey", () => {
     mocks.loaded = false;
     mocks.useRuntimeConfig.mockReturnValue({
       cloudEnabled: false,
+      posthogEnabled: false,
       posthogKey: null,
       posthogHost: null,
     });
@@ -327,6 +329,29 @@ describe("FeedbackSurvey", () => {
     expect(mocks.init).not.toHaveBeenCalled();
     expect(mocks.onSurveysLoaded).not.toHaveBeenCalled();
     expect(view.container).toBeEmptyDOMElement();
+  });
+
+  it("renders nothing and touches no PostHog surface when PostHog is disabled, even with a key and host present", async () => {
+    // Given - the integration is off with a stale key/host still present
+    mocks.loaded = false;
+    mocks.useRuntimeConfig.mockReturnValue({
+      cloudEnabled: true,
+      posthogEnabled: false,
+      posthogKey: POSTHOG_KEY,
+      posthogHost: "https://eu.posthog.com",
+    });
+
+    // When
+    const view = await renderSurvey();
+
+    // Then
+    expect(view.container).toBeEmptyDOMElement();
+    expect(
+      screen.queryByRole("button", { name: "Give feedback" }),
+    ).not.toBeInTheDocument();
+    expect(mocks.init).not.toHaveBeenCalled();
+    expect(mocks.onSurveysLoaded).not.toHaveBeenCalled();
+    expect(mocks.capture).not.toHaveBeenCalled();
   });
 
   it("renders nothing and touches no PostHog surface when not Cloud, even with a survey and key present", async () => {
