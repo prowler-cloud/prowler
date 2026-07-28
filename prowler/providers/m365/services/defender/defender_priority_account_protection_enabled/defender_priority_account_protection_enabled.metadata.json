@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "defender_priority_account_protection_enabled",
+  "CheckTitle": "Priority account protection is enabled",
+  "CheckType": [],
+  "ServiceName": "defender",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "security",
+  "Description": "Priority account protection applies enhanced monitoring and protection to high-value accounts. The tenant-level flag **EnablePriorityAccountProtection** (from Get-EmailTenantSettings) should be enabled. This check evaluates the tenant-level enablement flag; tagging priority accounts and configuring alert policies must be verified separately.",
+  "Risk": "Without **priority account** protection, high-value targets such as executives receive the same protection as standard users, despite being far more likely to be targeted by **phishing** and **business email compromise**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/defender-office-365/priority-accounts-security-recommendations"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to Microsoft Defender at https://security.microsoft.com/\n2. Go to **System** > **Settings** > **Email & collaboration** > **Priority account protection**\n3. Set **Priority account protection** to **On**\n4. Tag priority accounts and configure the associated alert policies",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable priority account protection, tag your high-value accounts as priority accounts, and configure the associated alert policies for enhanced monitoring.",
+      "Url": "https://hub.prowler.com/check/defender_priority_account_protection_enabled"
+    }
+  },
+  "Categories": [
+    "email-security",
+    "e5"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Covers the tenant-level EnablePriorityAccountProtection flag only; alert-policy verification (Get-ProtectionAlert) requires a Security & Compliance PowerShell session that Prowler does not currently establish."
+}
