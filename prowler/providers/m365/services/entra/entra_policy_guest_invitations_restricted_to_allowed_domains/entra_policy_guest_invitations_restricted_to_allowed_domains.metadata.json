@@ -1,0 +1,38 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_policy_guest_invitations_restricted_to_allowed_domains",
+  "CheckTitle": "Guest invitations are restricted to an allow-list of domains",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The external collaboration settings should **allow invitations only to specified domains** (most restrictive), with an explicit allow-list of target domains. This limits B2B guest invitations to a set of trusted partner organizations.",
+  "Risk": "Allowing invitations to any domain lets users invite guests from arbitrary or malicious organizations, increasing the risk of data exposure to untrusted external parties and expanding the tenant's collaboration attack surface.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/entra/external-id/allow-deny-list"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center at https://entra.microsoft.com/\n2. Go to **Entra ID** > **External Identities** > **External collaboration settings**\n3. Under **Collaboration restrictions**, select **Allow invitations only to the specified domains (most restrictive)**\n4. Add the trusted partner domains under **Target domains**\n5. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Restrict guest invitations to an allow-list of trusted partner domains so users cannot invite guests from arbitrary organizations.",
+      "Url": "https://hub.prowler.com/check/entra_policy_guest_invitations_restricted_to_allowed_domains"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
