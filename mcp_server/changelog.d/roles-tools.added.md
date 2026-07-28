@@ -1,1 +1,1 @@
-RBAC role tools `prowler_list_roles`, `prowler_get_role`, `prowler_get_user_roles`, `prowler_assign_role_to_user`, and `prowler_remove_role_from_user` for browsing roles and managing a user's role assignments
+RBAC role tools `prowler_list_roles`, `prowler_get_role`, `prowler_get_user_roles`, and `prowler_set_user_role` for browsing roles and setting the role a user holds

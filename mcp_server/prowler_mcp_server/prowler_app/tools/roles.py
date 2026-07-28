@@ -1,11 +1,12 @@
 """Role (RBAC) tools for Prowler MCP Server.
 
-This module provides read tools for browsing roles and inspecting the roles
-assigned to a user, plus two convenience tools for assigning and removing a
-role from a user. The assignment tools wrap Prowler's JSON:API relationship
-endpoints (which have append/replace/remove semantics and several guard rails)
-behind an idempotent, single-role interface so agents do not have to reason
-about those low-level details.
+This module provides read tools for browsing roles and inspecting the role a
+user holds, plus a tool for setting it.
+
+A user holds exactly one role: the API resolves a user's permissions from a
+single role (`get_role` in `api.rbac.permissions`) and the UI only ever assigns
+one, so setting a role replaces the one the user currently holds instead of
+adding to it.
 """
 
 from typing import Any
@@ -27,8 +28,7 @@ class RolesTools(BaseTool):
     - prowler_list_roles: List the roles defined in the tenant
     - prowler_get_role: Get detailed information about a specific role by ID
     - prowler_get_user_roles: List the roles assigned to a specific user
-    - prowler_assign_role_to_user: Assign a role to a user (idempotent)
-    - prowler_remove_role_from_user: Remove a role from a user (idempotent)
+    - prowler_set_user_role: Set the role a user holds (idempotent)
     """
 
     async def list_roles(
@@ -77,7 +77,8 @@ class RolesTools(BaseTool):
         """Retrieve detailed information about a specific role by its ID.
 
         Returns everything `prowler_list_roles` returns PLUS:
-        - permissions: The management capabilities the role grants (only the enabled ones)
+        - permissions: The management capabilities the role grants (only the enabled ones). Read `permission_state` for the authoritative summary: 'unlimited' means the role grants every capability, including any this deployment does not list individually
+
         - unlimited_visibility: Whether the role can see all providers or only its provider groups
         - provider_group_ids: Provider groups the role is scoped to (empty list means it is scoped to no provider group)
         - user_ids: Users the role is assigned to (empty list means it is assigned to no user)
@@ -104,7 +105,8 @@ class RolesTools(BaseTool):
         """List the roles currently assigned to a specific user.
 
         Returns the user's roles with the concrete capabilities each one grants,
-        so you can see what the user is allowed to do in the tenant.
+        so you can see what the user is allowed to do in the tenant. A user
+        normally holds a single role.
 
         Note: this reads the user's record, so it requires MANAGE_USERS (the same
         permission `prowler_get_user` needs). Each role's `user_ids` and
@@ -113,128 +115,78 @@ class RolesTools(BaseTool):
 
         Workflow:
         1. Use `prowler_list_users` (or `prowler_get_current_user`) to find the user 'id'
-        2. Use this tool to see which roles they hold and what those roles grant
-        3. Use `prowler_assign_role_to_user` / `prowler_remove_role_from_user` to change them
+        2. Use this tool to see which role they hold and what it grants
+        3. Use `prowler_set_user_role` to change it
         """
         roles = await self._fetch_user_roles(user_id)
 
         return UserRolesResult.build(user_id=user_id, roles=roles).model_dump()
 
-    async def assign_role_to_user(
+    async def set_user_role(
         self,
         user_id: str = Field(
-            description="Prowler's internal UUID (v4) for the user to assign the role to. Use `prowler_list_users` to find user IDs."
+            description="Prowler's internal UUID (v4) for the user whose role you want to set. Use `prowler_list_users` to find user IDs."
         ),
         role_id: str = Field(
-            description="Prowler's internal UUID (v4) for the role to assign. Use `prowler_list_roles` to find role IDs."
+            description="Prowler's internal UUID (v4) for the role the user should hold. Use `prowler_list_roles` to find role IDs."
         ),
     ) -> dict[str, Any]:
-        """Assign a role to a user, keeping their other roles intact.
+        """Set the role a user holds, replacing the role they had before.
 
-        This tool is idempotent: if the user already has the role, it makes no
-        change and reports `changed: false`. It always returns the user's full,
-        up-to-date role set after the operation.
+        A user holds exactly one role in Prowler: their permissions are resolved
+        from a single role, so granting a new one REPLACES the previous one
+        instead of adding to it. To change what a user can do, set the role that
+        grants the capabilities they should have.
+
+        This tool is idempotent: if the user already holds only this role, it
+        makes no change and reports `changed: false`. It always returns the
+        user's up-to-date role after the operation.
 
         Note: this operation requires both MANAGE_ACCOUNT (to change role
-        assignments) and MANAGE_USERS (to read the user's current roles). The API
-        also enforces guard rails (for example, it keeps at least one user with
-        MANAGE_ACCOUNT in the tenant); such rejections are surfaced as errors.
+        assignments) and MANAGE_USERS (to read the user's current role). The API
+        rejects the change when it would leave the tenant without a user holding
+        MANAGE_ACCOUNT; such rejections are surfaced as errors.
 
         Workflow:
         1. Use `prowler_list_roles` to find the role 'id' to grant
         2. Use `prowler_list_users` to find the target user 'id'
-        3. Use this tool to assign the role
+        3. Use this tool to set the user's role
         """
         current_roles = await self._fetch_user_roles(user_id)
-        if any(role.id == role_id for role in current_roles):
+        if [role.id for role in current_roles] == [role_id]:
             return UserRolesResult.build(
                 user_id=user_id,
                 roles=current_roles,
                 changed=False,
-                message=f"Role {role_id} is already assigned to user {user_id}; no change made.",
+                message=f"User {user_id} already holds role {role_id}; no change made.",
             ).model_dump()
 
-        # POST appends the role to the user's existing roles.
-        await self.api_client.post(
+        # The relationship endpoint accepts any well-formed UUID and silently
+        # drops role IDs that do not exist in this tenant, which would leave the
+        # user with no role at all. Confirm the role exists before replacing.
+        try:
+            await self.api_client.get(f"/roles/{role_id}")
+        except Exception as e:
+            raise ValueError(
+                f"Role {role_id} could not be read ({e}), so user {user_id} was left "
+                f"unchanged. Use `prowler_list_roles` to find a valid role ID."
+            ) from e
+
+        # PATCH replaces the user's whole role set with this single role, the
+        # same call the Prowler UI makes when changing a user's role.
+        await self.api_client.patch(
             f"/users/{user_id}/relationships/roles",
             json_data={"data": [{"type": "roles", "id": role_id}]},
         )
 
+        # After the change, fetch the user's roles again to report the authoritative state
         updated_roles = await self._fetch_user_roles(user_id)
-        if not any(role.id == role_id for role in updated_roles):
-            # The relationship endpoint silently ignores role IDs that don't
-            # exist in this tenant (an unknown ID, or a role from another
-            # tenant): it returns success without assigning anything. Detect that
-            # here so we never report a change that did not actually happen.
-            #
-            # TODO: This should be a raise ValueError(...) instead of returning an error dict, but we don't have
-            # a good standard for error handling in the tools yet. We should unify that across all tools.
-            return {
-                "error": f"Role {role_id} could not be assigned to user {user_id}: the role "
-                f"was not found in this tenant. Use `prowler_list_roles` to find a "
-                f"valid role ID."
-            }
 
         return UserRolesResult.build(
             user_id=user_id,
             roles=updated_roles,
             changed=True,
-            message=f"Role {role_id} assigned to user {user_id}.",
-        ).model_dump()
-
-    async def remove_role_from_user(
-        self,
-        user_id: str = Field(
-            description="Prowler's internal UUID (v4) for the user to remove the role from. Use `prowler_list_users` to find user IDs."
-        ),
-        role_id: str = Field(
-            description="Prowler's internal UUID (v4) for the role to remove. Use `prowler_get_user_roles` to see which roles the user currently holds."
-        ),
-    ) -> dict[str, Any]:
-        """Remove a single role from a user, keeping their other roles intact.
-
-        This tool is idempotent: if the user does not have the role, it makes no
-        change and reports `changed: false`. It always returns the user's full,
-        up-to-date role set after the operation.
-
-        Note: this operation requires both MANAGE_ACCOUNT (to change role
-        assignments) and MANAGE_USERS (to read the user's current roles). The API
-        also enforces a guard rail — the last user holding MANAGE_ACCOUNT in the
-        tenant cannot lose it; such rejections are surfaced as errors.
-
-        Workflow:
-        1. Use `prowler_get_user_roles` to see the user's current roles
-        2. Use this tool with the role 'id' you want to remove
-        """
-        current_roles = await self._fetch_user_roles(user_id)
-        if not any(role.id == role_id for role in current_roles):
-            return UserRolesResult.build(
-                user_id=user_id,
-                roles=current_roles,
-                changed=False,
-                message=f"Role {role_id} is not assigned to user {user_id}; no change made.",
-            ).model_dump()
-
-        # The DELETE relationship endpoint cannot remove a single role reliably:
-        # a JSON:API to-many payload is parsed as a list, which the API treats as
-        # "clear all of the user's roles". Instead, PATCH the relationship with
-        # the roles the user should keep, replacing the full set in one request.
-        remaining_roles = [
-            {"type": "roles", "id": role.id}
-            for role in current_roles
-            if role.id != role_id
-        ]
-        await self.api_client.patch(
-            f"/users/{user_id}/relationships/roles",
-            json_data={"data": remaining_roles},
-        )
-
-        updated_roles = await self._fetch_user_roles(user_id)
-        return UserRolesResult.build(
-            user_id=user_id,
-            roles=updated_roles,
-            changed=True,
-            message=f"Role {role_id} removed from user {user_id}.",
+            message=f"Role {role_id} set for user {user_id}.",
         ).model_dump()
 
     # Private helper methods

@@ -10,7 +10,7 @@ Complete reference guide for all tools available in the Prowler MCP Server. Tool
 |----------|------------|------------------------|
 | Prowler Hub | 10 tools | No |
 | Prowler Documentation | 2 tools | No |
-| Prowler Cloud, Private Cloud & Local Server | 40 tools | Yes |
+| Prowler Cloud, Private Cloud & Local Server | 39 tools | Yes |
 
 ## Tool Naming Convention
 
@@ -115,13 +115,12 @@ Tools for viewing the users in your tenant and identifying the authenticated use
 
 ### Role Management
 
-Tools for browsing RBAC roles and managing the roles assigned to a user.
+Tools for browsing RBAC roles and managing the role assigned to a user. A user holds exactly one role, so setting a role replaces the one they held before.
 
 - **`prowler_list_roles`** - List the roles defined in the tenant with their permission scope
 - **`prowler_get_role`** - Get detailed information about a specific role by ID, including granted capabilities, visibility scope, assigned users, and provider groups
 - **`prowler_get_user_roles`** - List the roles assigned to a specific user, with the capabilities each role grants
-- **`prowler_assign_role_to_user`** - Assign a role to a user, keeping their other roles intact (idempotent)
-- **`prowler_remove_role_from_user`** - Remove a role from a user, keeping their other roles intact (idempotent)
+- **`prowler_set_user_role`** - Set the role a user holds, replacing the role they had before (idempotent)
 
 ## Prowler Hub Tools
 

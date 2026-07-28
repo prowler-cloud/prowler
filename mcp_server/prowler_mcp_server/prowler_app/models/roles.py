@@ -20,18 +20,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from prowler_mcp_server.prowler_app.models.base import MinimalSerializerMixin
 from prowler_mcp_server.prowler_app.models.utils import extract_relationship_ids
 
-# Boolean "manage_*" attributes that describe what a role is allowed to do.
-# Only the enabled ones are surfaced as a flat `permissions` list.
-_MANAGE_PERMISSIONS = (
-    "manage_users",
-    "manage_account",
-    "manage_billing",
-    "manage_integrations",
-    "manage_providers",
-    "manage_scans",
-    "manage_ingestions",
-    "manage_alerts",
-)
+# Role capabilities are exposed by the API as boolean "manage_*" attributes.
+_PERMISSION_ATTRIBUTE_PREFIX = "manage_"
 
 
 class SimplifiedRole(MinimalSerializerMixin, BaseModel):
@@ -76,14 +66,14 @@ class DetailedRole(SimplifiedRole):
 
     Extends SimplifiedRole with the concrete management capabilities the role
     grants, its visibility scope, and the IDs of related users and provider
-    groups. Used by get_role(), get_user_roles() and the role assignment tools.
+    groups. Used by get_role(), get_user_roles() and set_user_role().
     """
 
     model_config = ConfigDict(frozen=True)
 
     permissions: list[str] | None = Field(
         default=None,
-        description="Management capabilities granted by this role (only the enabled ones), e.g. ['manage_users', 'manage_scans']",
+        description="Management capabilities granted by this role, as reported by the API (only the enabled ones), e.g. ['manage_users', 'manage_scans']. Deployments do not all expose the same capabilities, so read `permission_state` for the authoritative summary: 'unlimited' means the role grants every capability, including any not listed here.",
     )
     unlimited_visibility: bool | None = Field(
         default=None,
@@ -137,9 +127,9 @@ class DetailedRole(SimplifiedRole):
         relationships = data.get("relationships", {})
 
         permissions = [
-            permission
-            for permission in _MANAGE_PERMISSIONS
-            if attributes.get(permission)
+            name
+            for name, enabled in attributes.items()
+            if name.startswith(_PERMISSION_ATTRIBUTE_PREFIX) and enabled
         ]
 
         return cls(
@@ -195,9 +185,9 @@ class RolesListResponse(BaseModel):
 class UserRolesResult(MinimalSerializerMixin, BaseModel):
     """The roles currently assigned to a user.
 
-    Used by get_user_roles() to report a user's roles, and by the assignment
-    tools to report the authoritative role set after a change (with `changed`
-    and `message` describing the outcome).
+    Used by get_user_roles() to report a user's roles, and by set_user_role()
+    to report the authoritative role set after a change (with `changed` and
+    `message` describing the outcome).
     """
 
     user_id: str = Field(description="UUIDv4 identifier of the user")
