@@ -12,7 +12,7 @@ export default defineConfig(() => {
     plugins: [
       react({
         babel: {
-          plugins: [["babel-plugin-react-compiler"]],
+          plugins: [["babel-plugin-react-compiler", { target: "19" }]],
         },
       }),
     ],
@@ -100,6 +100,10 @@ export default defineConfig(() => {
         "vitest-browser-react",
         "msw/browser",
 
+        // React runtime (pre-bundle so a cold run doesn't re-optimize and
+        // reload mid-test — see the on-demand-reload note above).
+        "react-dom/client",
+
         // Next runtime
         "next/navigation",
         "next/link",
@@ -124,6 +128,7 @@ export default defineConfig(() => {
         "@radix-ui/react-icons",
         "@radix-ui/react-label",
         "@radix-ui/react-popover",
+        "@radix-ui/react-progress",
         "@radix-ui/react-radio-group",
         "@radix-ui/react-scroll-area",
         "@radix-ui/react-select",
@@ -158,6 +163,7 @@ export default defineConfig(() => {
         "modern-screenshot",
         "framer-motion",
         "cmdk",
+        "driver.js",
         "react-markdown",
         "jwt-decode",
         "date-fns",

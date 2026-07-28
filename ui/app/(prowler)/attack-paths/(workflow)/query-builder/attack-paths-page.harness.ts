@@ -213,9 +213,11 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
     return this.containsText(/Query Parameters/i);
   }
 
-  /** Whether a query-parameter field label is shown. */
+  /** Whether a query-parameter field label is shown (case-insensitive). */
   showsParameterLabel(label: string): boolean {
-    return this.containsText(new RegExp(label, "i"));
+    return (this.container.textContent ?? "")
+      .toLowerCase()
+      .includes(label.toLowerCase());
   }
 
   /** Whether a query-parameter input is rendered, addressed by its name. */

@@ -96,13 +96,23 @@ export interface FixtureConnectionOutcome {
   error?: string;
 }
 
+export interface FixtureAccountProviderMapping {
+  account_id: string;
+  provider_id: string;
+}
+
+export interface FixtureApplyError {
+  status: number;
+  detail: string;
+}
+
 export interface FixtureApplyOutcome {
   createdProviderIds: string[];
   providersCreatedCount: number;
   providersLinkedCount: number;
   nodesCreatedCount: number;
-  accountProviderMappings: Array<{ account_id: string; provider_id: string }>;
-  error: { status: number; detail: string } | null;
+  accountProviderMappings: FixtureAccountProviderMapping[];
+  error: FixtureApplyError | null;
 }
 
 export interface FixtureDiscovery {

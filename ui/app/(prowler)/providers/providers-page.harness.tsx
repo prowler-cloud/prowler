@@ -5,8 +5,11 @@
  * Mirrors the attack-paths harness pattern: it owns mounting and MSW wiring and
  * exposes semantic methods so tests interact through intent ("choose AWS
  * Organizations", "authenticate", "test connections") rather than raw
- * selectors. Discovery/connection polling is real (MSW returns terminal states
- * on the first poll), so flow methods wait on the resulting UI.
+ * selectors. Request assertions are domain-named too (`applyCallCount`,
+ * `waitForOrganizationRename`, `taskPollCount`, …); the raw HTTP-verb+path
+ * `waitForRequest` primitive stays internal. Discovery/connection polling is
+ * real (MSW returns terminal states on the first poll), so flow methods wait
+ * on the resulting UI.
  */
 
 import { SessionProvider } from "next-auth/react";
@@ -514,7 +517,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   }
 
   /** Wait until the app has issued the given request (defaults to at least one). */
-  async waitForRequest(
+  protected async waitForRequest(
     method: string,
     pathIncludes: string,
     count = 1,
@@ -524,6 +527,21 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
       () => this.countRequests(method, pathIncludes) >= count,
       timeoutMs,
     );
+  }
+
+  /** Wait until the app has PATCHed (renamed) the given organization. */
+  async waitForOrganizationRename(orgId: string): Promise<void> {
+    await this.waitForRequest("PATCH", `/organizations/${orgId}`);
+  }
+
+  /** Wait until the app has issued the DELETE for the given organization. */
+  async waitForOrganizationDelete(orgId: string): Promise<void> {
+    await this.waitForRequest("DELETE", `/organizations/${orgId}`);
+  }
+
+  /** How many times the app polled a task (`GET /tasks/:id`). */
+  get taskPollCount(): number {
+    return this.countRequests("GET", "/tasks/");
   }
 
   // --- Table: edit-name modal ---------------------------------------------

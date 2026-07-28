@@ -3,8 +3,11 @@
  *
  * Owns the generic DOM / wait / interaction plumbing every page harness needs,
  * so concrete harnesses (providers, attack-paths, …) only declare their own
- * domain vocabulary. Everything here is `protected`: subclasses build their
- * semantic API on top of these primitives, and tests never reach them directly.
+ * domain vocabulary. The DOM / wait / interaction primitives are `protected` —
+ * subclasses build their semantic API on top of them and tests don't reach
+ * them directly. The public members are the deliberate exceptions: `user`
+ * (harness tests spy on it) and the request-tracking assertion helpers
+ * (`requestLog`, `countRequests`) that page harnesses expose as domain vocab.
  *
  * Mount-agnostic on purpose — some harnesses mount the page themselves, others
  * are mounted by the test — so there is no `render` here. Request tracking is
@@ -26,7 +29,9 @@ export abstract class BrowserHarness<TFixture> {
 
   /** Start recording MSW requests into `requestLog`. Call once, after mounting. */
   protected trackRequests(worker: SetupWorker): void {
-    worker.events.removeAllListeners();
+    // Clear only our own `request:start` listeners from a prior harness on the
+    // shared worker — not every listener on the public event emitter.
+    worker.events.removeAllListeners("request:start");
     worker.events.on("request:start", ({ request }) => {
       this.requestLog.push({ method: request.method, url: request.url });
     });
@@ -53,18 +58,20 @@ export abstract class BrowserHarness<TFixture> {
     name: RegExp,
     scope: ParentNode = document,
   ): HTMLElement | null {
-    const nodes = Array.from(
+    const explicit = Array.from(
       scope.querySelectorAll<HTMLElement>(`[role="${role}"]`),
-    );
-    return (
-      nodes.find((el) => name.test(el.textContent ?? "")) ??
-      // Buttons expose their role implicitly.
-      Array.from(scope.querySelectorAll<HTMLElement>("button")).find(
-        (el) =>
-          el.getAttribute("role") === role && name.test(el.textContent ?? ""),
-      ) ??
-      null
-    );
+    ).find((el) => name.test(el.textContent ?? ""));
+    if (explicit) return explicit;
+    // A native <button> exposes role "button" implicitly, without the
+    // attribute — so it isn't matched by the `[role="button"]` query above.
+    if (role === "button") {
+      return (
+        Array.from(scope.querySelectorAll<HTMLElement>("button")).find(
+          (el) => !el.hasAttribute("role") && name.test(el.textContent ?? ""),
+        ) ?? null
+      );
+    }
+    return null;
   }
 
   protected buttonByText(

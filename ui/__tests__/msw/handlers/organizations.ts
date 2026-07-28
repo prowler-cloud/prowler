@@ -32,7 +32,21 @@ const errorBody = (detail: string, status: number): JsonApiError => ({
 const providerRefs = (ids: string[]) =>
   ids.map((id) => ({ type: "providers", id }));
 
-const organizationResource = (org: FixtureOrganization) => ({
+interface OrgResourceOptions {
+  /** Emit the deprecated `organizational_units` alias alongside canonical. */
+  includeAliases: boolean;
+  /**
+   * Node ids to surface under the deprecated `organizational_units` alias.
+   * Only organizational-unit-kind nodes belong here — the deprecated route
+   * never surfaced GCP folders.
+   */
+  unitNodeIds: string[];
+}
+
+const organizationResource = (
+  org: FixtureOrganization,
+  { includeAliases, unitNodeIds }: OrgResourceOptions,
+) => ({
   id: org.id,
   type: "organizations",
   attributes: {
@@ -46,13 +60,15 @@ const organizationResource = (org: FixtureOrganization) => ({
   },
   relationships: {
     providers: { data: providerRefs(org.providerIds) },
-    // Canonical relationship + deprecated alias, both over the same node ids.
     organization_nodes: {
       data: org.nodeIds.map((id) => ({ type: "organization-nodes", id })),
     },
-    organizational_units: {
-      data: org.nodeIds.map((id) => ({ type: "organizational-units", id })),
-    },
+    // Deprecated alias, gated on `includeAwsAliases`.
+    ...(includeAliases && {
+      organizational_units: {
+        data: unitNodeIds.map((id) => ({ type: "organizational-units", id })),
+      },
+    }),
   },
 });
 
@@ -106,9 +122,11 @@ const applyResultResponse = (fx: OrgFixture) => ({
       providers_linked_count: fx.apply.providersLinkedCount,
       providers_applied_count:
         fx.apply.providersCreatedCount + fx.apply.providersLinkedCount,
-      // Canonical counter + deprecated alias.
       organization_nodes_created_count: fx.apply.nodesCreatedCount,
-      organizational_units_created_count: fx.apply.nodesCreatedCount,
+      // Deprecated counter alias, gated on `includeAwsAliases`.
+      ...(fx.includeAwsAliases && {
+        organizational_units_created_count: fx.apply.nodesCreatedCount,
+      }),
       account_provider_mappings: fx.apply.accountProviderMappings,
     },
     relationships: {
@@ -120,10 +138,13 @@ const applyResultResponse = (fx: OrgFixture) => ({
         data: [],
         meta: { count: fx.apply.nodesCreatedCount },
       },
-      organizational_units: {
-        data: [],
-        meta: { count: fx.apply.nodesCreatedCount },
-      },
+      // Deprecated relationship alias, gated on `includeAwsAliases`.
+      ...(fx.includeAwsAliases && {
+        organizational_units: {
+          data: [],
+          meta: { count: fx.apply.nodesCreatedCount },
+        },
+      }),
     },
   },
 });
@@ -157,6 +178,16 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
   let orgSeq = 0;
   let secretSeq = 0;
 
+  const unitNodeIds = (org: FixtureOrganization): string[] =>
+    org.nodeIds.filter((id) =>
+      fx.nodes.some((n) => n.id === id && n.kind === "organizational-unit"),
+    );
+  const orgResource = (org: FixtureOrganization) =>
+    organizationResource(org, {
+      includeAliases: fx.includeAwsAliases,
+      unitNodeIds: unitNodeIds(org),
+    });
+
   const handlers = [
     // --- organizations CRUD + filters ------------------------------------
     http.get(`${API}/organizations`, ({ request }) => {
@@ -166,7 +197,7 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
       const data = organizations
         .filter((o) => (externalId ? o.externalId === externalId : true))
         .filter((o) => (orgType ? o.orgType === orgType : true))
-        .map(organizationResource);
+        .map(orgResource);
       return HttpResponse.json({ data, meta: { version: "v1" } });
     }),
 
@@ -187,10 +218,7 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
         secretId: null,
       };
       organizations.push(created);
-      return HttpResponse.json(
-        { data: organizationResource(created) },
-        { status: 201 },
-      );
+      return HttpResponse.json({ data: orgResource(created) }, { status: 201 });
     }),
 
     http.patch<{ id: string }>(
@@ -206,7 +234,7 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
           });
         }
         org.name = body?.data?.attributes?.name ?? org.name;
-        return HttpResponse.json({ data: organizationResource(org) });
+        return HttpResponse.json({ data: orgResource(org) });
       },
     ),
 

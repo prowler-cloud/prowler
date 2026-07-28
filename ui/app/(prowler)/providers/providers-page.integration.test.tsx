@@ -132,10 +132,7 @@ describe("AWS Organizations providers page (baseline)", () => {
     await harness.fillEditName("Renamed AWS Org");
     await harness.saveName();
 
-    await harness.waitForRequest(
-      "PATCH",
-      `/organizations/${AWS_HIERARCHY_ORG_ID}`,
-    );
+    await harness.waitForOrganizationRename(AWS_HIERARCHY_ORG_ID);
   }, 30000);
 
   it("re-enters the wizard at the authentication step to update credentials", async () => {
@@ -165,12 +162,9 @@ describe("AWS Organizations providers page (baseline)", () => {
 
     await harness.confirmDelete();
 
-    await harness.waitForRequest(
-      "DELETE",
-      `/organizations/${AWS_HIERARCHY_ORG_ID}`,
-    );
+    await harness.waitForOrganizationDelete(AWS_HIERARCHY_ORG_ID);
     // Current behaviour: single DELETE, no deletion-task polling (Phase 2 adds it).
-    expect(harness.countRequests("GET", "/tasks/")).toBe(0);
+    expect(harness.taskPollCount).toBe(0);
   }, 30000);
 
   it("renders a flat provider list (no org/OU grouping) on-prem", async ({
