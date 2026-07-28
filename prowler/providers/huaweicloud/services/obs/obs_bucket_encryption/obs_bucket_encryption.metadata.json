@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "obs_bucket_encryption",
+  "CheckTitle": "OBS buckets have encryption enabled",
+  "CheckType": [],
+  "ServiceName": "obs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::OBS::Bucket",
+  "ResourceGroup": "storage",
+  "Description": "Ensure that OBS buckets have server-side encryption enabled to protect data at rest.",
+  "Risk": "Without server-side encryption, objects stored in OBS buckets are not encrypted at rest, exposing sensitive data if the underlying storage is compromised.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-obs/obs_03_0088.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Object Storage Service.\n3. Select the bucket.\n4. Click the Encryption tab.\n5. Enable server-side encryption and select a KMS key.\n6. Click Save.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable server-side encryption (SSE-KMS) for all OBS buckets.",
+      "Url": "https://hub.prowler.com/check/obs_bucket_encryption"
+    }
+  },
+  "Categories": [
+    "encryption"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
