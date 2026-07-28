@@ -4,6 +4,10 @@ import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import {
+  FINDINGS_ROW_TYPE,
+  type FindingGroupRow,
+} from "@/types/findings-table";
 import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 import { FindingsGroupTable } from "./findings-group-table";
@@ -172,10 +176,14 @@ vi.mock("../floating-selection-actions", () => ({
   FloatingSelectionActions: FloatingSelectionActionsMock,
 }));
 
-function makeGroup(checkId: string, resourcesFail = 2) {
+function makeGroup(
+  checkId: string,
+  resourcesFail = 2,
+  overrides: Partial<FindingGroupRow> = {},
+): FindingGroupRow {
   return {
     id: `group-${checkId}`,
-    rowType: "group",
+    rowType: FINDINGS_ROW_TYPE.GROUP,
     checkId,
     checkTitle: `Title ${checkId}`,
     severity: "high",
@@ -187,7 +195,8 @@ function makeGroup(checkId: string, resourcesFail = 2) {
     mutedCount: 0,
     providers: [],
     updatedAt: "2026-07-27T00:00:00Z",
-  } as unknown as Parameters<typeof FindingsGroupTable>[0]["data"][number];
+    ...overrides,
+  };
 }
 
 function getLastFloatingActionsProps(): {
@@ -211,17 +220,12 @@ describe("FindingsGroupTable", () => {
     // Given
     const user = userEvent.setup();
     const data = [
-      {
+      makeGroup("check-a", 1, {
         id: "group-1",
-        checkId: "check-a",
         checkTitle: "Public bucket",
         severity: "critical",
-        status: "FAIL",
-        resourcesFail: 1,
-        resourcesTotal: 1,
-        mutedCount: 0,
-      },
-    ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+      }),
+    ];
 
     render(
       <FindingsGroupTable

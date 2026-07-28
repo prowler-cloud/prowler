@@ -210,6 +210,26 @@ describe("ProvidersAccountsTable", () => {
     expect(screen.getByTestId("context-provider-provider-1")).toHaveTextContent(
       '"providerUid":"111111111111"',
     );
+    expect(getColumnProvidersMock).toHaveBeenLastCalledWith(
+      { "0": true },
+      ["provider-1"],
+      ["provider-1"],
+      [
+        {
+          providerAlias: "Prod",
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+        },
+      ],
+      expect.any(Function),
+      expect.any(Function),
+      expect.any(Function),
+      undefined,
+      [],
+      SCAN_CONFIGURATION_LIST_STATUS.AVAILABLE,
+      expect.any(Map),
+    );
   });
 
   it("passes populated scan configs to provider row action columns", () => {
