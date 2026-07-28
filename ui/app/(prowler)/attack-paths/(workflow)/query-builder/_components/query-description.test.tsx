@@ -1,7 +1,10 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import type { AttackPathQuery } from "@/types/attack-paths";
+import {
+  ATTACK_PATH_QUERY_IDS,
+  type AttackPathQuery,
+} from "@/types/attack-paths";
 
 import { QueryDescription } from "./query-description";
 
@@ -23,7 +26,51 @@ const customQuery: AttackPathQuery = {
   },
 };
 
+const builtInQuery: AttackPathQuery = {
+  type: "attack-paths-scans",
+  id: "aws-sts-privesc-assume-role",
+  attributes: {
+    name: "Role Assumption for Privilege Escalation (STS-001)",
+    short_description: "Detect principals who can assume other IAM roles.",
+    description:
+      "Detect principals who can assume other IAM roles via sts:AssumeRole.",
+    provider: "aws",
+    attribution: null,
+    parameters: [],
+  },
+};
+
 describe("QueryDescription", () => {
+  it("renders a Prowler Hub link for a built-in query", () => {
+    // Given
+    render(<QueryDescription query={builtInQuery} />);
+
+    // When
+    const link = screen.getByRole("link", { name: /view on prowler hub/i });
+
+    // Then
+    expect(link).toHaveAttribute(
+      "href",
+      "https://hub.prowler.com/attack-paths/aws-sts-privesc-assume-role",
+    );
+  });
+
+  it("does not render a Prowler Hub link for the custom query", () => {
+    // Given
+    const query: AttackPathQuery = {
+      ...customQuery,
+      id: ATTACK_PATH_QUERY_IDS.CUSTOM,
+    };
+
+    // When
+    render(<QueryDescription query={query} />);
+
+    // Then
+    expect(
+      screen.queryByRole("link", { name: /view on prowler hub/i }),
+    ).not.toBeInTheDocument();
+  });
+
   it("renders the documentation link inside an info alert", () => {
     // Given
     render(<QueryDescription query={customQuery} />);
