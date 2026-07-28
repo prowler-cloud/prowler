@@ -4,6 +4,23 @@ All notable changes to the **Prowler SDK** are documented in this file.
 
 <!-- changelog: release notes start -->
 
+## [5.36.0] (Prowler v5.36.0)
+
+### 🚀 Added
+
+- `sagemaker_notebook_instance_no_secrets` check for AWS provider, scanning SageMaker notebook instance lifecycle configuration scripts (`OnCreate` and `OnStart`) for hardcoded secrets such as API keys, passwords, tokens, and connection strings [(#11843)](https://github.com/prowler-cloud/prowler/pull/11843)
+
+### 🔄 Changed
+
+- Jira output rendering supports grouped Finding Group issues with caller-provided links and capped or uncapped finding copy [(#12035)](https://github.com/prowler-cloud/prowler/pull/12035)
+
+### 🐞 Fixed
+
+- Fix invalid escape sequence `SyntaxWarning` raised on startup by the S3 bucket name validation regex [(#12041)](https://github.com/prowler-cloud/prowler/pull/12041)
+- Alibaba Cloud SSH and RDP security group checks no longer produce false negatives when allowed rules use capitalized `Policy="Accept"` values [(#12049)](https://github.com/prowler-cloud/prowler/pull/12049)
+
+---
+
 ## [5.35.0] (Prowler v5.35.0)
 
 ### 🚀 Added

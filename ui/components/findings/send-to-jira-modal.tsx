@@ -9,8 +9,6 @@ import { z } from "zod";
 import {
   getJiraIntegrations,
   getJiraIssueTypes,
-  sendFindingToJira,
-  sendJiraDispatch,
 } from "@/actions/integrations/jira-dispatch";
 import { CustomBanner } from "@/components/shadcn/custom/custom-banner";
 import { CustomRadio } from "@/components/shadcn/custom/custom-radio";
@@ -23,24 +21,16 @@ import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 import { toast, ToastAction } from "@/components/shadcn/toast";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import {
-  evaluateJiraDispatchTask,
-  getJiraDispatchSuccessCount,
-} from "@/lib/jira-dispatch-result";
+  executeJiraDispatchBatches,
+  type JiraDispatchSettings,
+} from "@/lib/jira-dispatch-execution";
 import { getJiraSelectionBatches } from "@/lib/jira-dispatch-selection";
-import { buildJiraDispatchTaskMeta } from "@/lib/jira-dispatch-task";
-import {
-  TASK_WATCHER_STATUS,
-  type TaskTrackingResult,
-  trackAndPollTask,
-} from "@/store/task-watcher/store";
 import {
   type IntegrationProps,
   JIRA_DISPATCH_MODE,
   JIRA_DISPATCH_TARGET,
-  JIRA_DISPATCH_TASK_KIND,
   type JiraDispatchMode,
   type JiraDispatchTargetBatch,
-  type JiraDispatchTaskResult,
   type JiraSelection,
 } from "@/types/integrations";
 
@@ -59,27 +49,6 @@ export interface SendToJiraModalProps {
   isFindingGroupSelection?: boolean;
   selectedResourceCount?: number;
   description?: string;
-}
-
-interface JiraDispatchSettings {
-  integrationId: string;
-  projectKey: string;
-  issueType: string;
-  dispatchMode: JiraDispatchMode;
-}
-
-interface StartedJiraTask {
-  taskId: string;
-  dispatchMode: JiraDispatchMode;
-}
-
-interface JiraTrackedOutcome {
-  success: boolean;
-  message?: string;
-  error?: string;
-  warning?: string;
-  retryBatch?: JiraDispatchTargetBatch;
-  successfulCount?: number;
 }
 
 const sendToJiraSchema = z.object({
@@ -106,20 +75,6 @@ const getConfiguredIssueTypes = (
     !Array.isArray(configuredIssueTypes)
     ? (configuredIssueTypes[projectKey] ?? [])
     : [];
-};
-
-const getRetryBatch = (
-  failedFindingIds: string[] | undefined,
-): JiraDispatchTargetBatch | undefined => {
-  const [firstFindingId, ...remainingFindingIds] =
-    failedFindingIds?.filter(Boolean) ?? [];
-  if (!firstFindingId) return undefined;
-
-  return {
-    targetIds: [firstFindingId, ...remainingFindingIds],
-    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
-    dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
-  };
 };
 
 const SendToJiraModalContent = ({
@@ -281,136 +236,8 @@ const SendToJiraModalContent = ({
     batches: JiraDispatchTargetBatch[],
     settings: JiraDispatchSettings,
   ) {
-    const startedTasks: StartedJiraTask[] = [];
-    const launchErrors: string[] = [];
-    const unknownLaunchErrors: string[] = [];
-
-    for (const batch of batches) {
-      const dispatchMode = batch.dispatchMode ?? settings.dispatchMode;
-      try {
-        const result =
-          batch.targetIds.length === 1 &&
-          batch.targetType === JIRA_DISPATCH_TARGET.FINDING_ID &&
-          dispatchMode === JIRA_DISPATCH_MODE.INDIVIDUAL
-            ? await sendFindingToJira(
-                settings.integrationId,
-                batch.targetIds[0],
-                settings.projectKey,
-                settings.issueType,
-              )
-            : await sendJiraDispatch({
-                integrationId: settings.integrationId,
-                targetIds: batch.targetIds,
-                filter: batch.targetType,
-                projectKey: settings.projectKey,
-                issueType: settings.issueType,
-                dispatchMode,
-              });
-
-        if (!result.success) {
-          launchErrors.push(result.error || "Failed to send to Jira");
-          continue;
-        }
-
-        startedTasks.push({ taskId: result.taskId, dispatchMode });
-      } catch {
-        // The request may have reached the server before the RPC failed. Do
-        // not offer an automatic retry because that could create duplicates.
-        unknownLaunchErrors.push(
-          "The Jira dispatch status is unknown after a connection error. Check Jira before retrying.",
-        );
-      }
-    }
-
-    const trackedOutcomes = await Promise.all(
-      startedTasks.map(async ({ taskId, dispatchMode }) => {
-        let trackedTask: TaskTrackingResult<JiraDispatchTaskResult>;
-        try {
-          trackedTask = await trackAndPollTask<JiraDispatchTaskResult>({
-            taskId,
-            kind: JIRA_DISPATCH_TASK_KIND,
-            meta: buildJiraDispatchTaskMeta({
-              integrationId: settings.integrationId,
-              projectKey: settings.projectKey,
-              issueType: settings.issueType,
-              dispatchMode,
-            }),
-            notifyHandler: false,
-          });
-        } catch {
-          return {
-            success: false,
-            error:
-              "Tracking the Jira dispatch failed unexpectedly. Check Jira before retrying.",
-          } satisfies JiraTrackedOutcome;
-        }
-
-        if (trackedTask.status !== TASK_WATCHER_STATUS.READY) {
-          return {
-            success: false,
-            error: trackedTask.error || "Failed to track Jira issue creation.",
-          } satisfies JiraTrackedOutcome;
-        }
-
-        const outcome = evaluateJiraDispatchTask(
-          "completed",
-          trackedTask.result,
-        );
-        if (outcome.success) {
-          return {
-            success: true,
-            message: outcome.message,
-            warning: outcome.warning,
-            retryBatch: getRetryBatch(outcome.failedFindingIds),
-            successfulCount: getJiraDispatchSuccessCount(trackedTask.result),
-          } satisfies JiraTrackedOutcome;
-        }
-
-        return {
-          success: false,
-          error: outcome.error,
-          retryBatch: getRetryBatch(outcome.failedFindingIds),
-        } satisfies JiraTrackedOutcome;
-      }),
-    );
-
-    const successfulOutcomes = trackedOutcomes.filter(
-      (outcome) => outcome.success,
-    );
-    const warnings = Array.from(
-      new Set(
-        trackedOutcomes.flatMap((outcome) =>
-          outcome.warning ? [outcome.warning] : [],
-        ),
-      ),
-    );
-    const successfulIssueCount = successfulOutcomes.reduce(
-      (count, outcome) => count + (outcome.successfulCount ?? 0),
-      0,
-    );
-    const successMessage =
-      successfulOutcomes.length === 1
-        ? successfulOutcomes[0].message
-        : `${successfulIssueCount} Jira issues were created or updated successfully.`;
-    const errors = Array.from(
-      new Set([
-        ...trackedOutcomes.flatMap((outcome) =>
-          outcome.error ? [outcome.error] : [],
-        ),
-        ...launchErrors,
-        ...unknownLaunchErrors,
-      ]),
-    );
-    const retryBatch = getRetryBatch(
-      Array.from(
-        new Set(
-          trackedOutcomes.flatMap(
-            (outcome) => outcome.retryBatch?.targetIds ?? [],
-          ),
-        ),
-      ),
-    );
-    const retryBatches = retryBatch ? [retryBatch] : [];
+    const result = await executeJiraDispatchBatches(batches, settings);
+    const retryBatches = result.retryBatch ? [result.retryBatch] : [];
     const retryAction =
       retryBatches.length > 0 ? (
         <ToastAction
@@ -427,13 +254,13 @@ const SendToJiraModalContent = ({
         </ToastAction>
       ) : undefined;
 
-    if (errors.length > 0 || warnings.length > 0) {
-      if (successfulOutcomes.length > 0) {
+    if (result.errors.length > 0 || result.warnings.length > 0) {
+      if (result.successfulTaskCount > 0) {
         toast({
           title: "Partial success",
-          description: `${successMessage || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${[
-            ...warnings,
-            ...errors,
+          description: `${result.successMessage || "Some Jira issues were created successfully."} Some Jira dispatches failed: ${[
+            ...result.warnings,
+            ...result.errors,
           ].join(" ")}`,
           ...(retryAction ? { action: retryAction } : {}),
         });
@@ -443,7 +270,7 @@ const SendToJiraModalContent = ({
       toast({
         variant: "destructive",
         title: "Error",
-        description: [...warnings, ...errors].join(" "),
+        description: [...result.warnings, ...result.errors].join(" "),
         ...(retryAction ? { action: retryAction } : {}),
       });
       return;
@@ -451,7 +278,7 @@ const SendToJiraModalContent = ({
 
     toast({
       title: "Success!",
-      description: successMessage || "Finding sent to Jira successfully",
+      description: result.successMessage || "Finding sent to Jira successfully",
     });
   }
 
@@ -679,6 +506,7 @@ const SendToJiraModalContent = ({
               message="Please add or connect an integration first"
               buttonLabel="Configure"
               buttonLink="/integrations/jira"
+              onButtonClick={() => onOpenChange(false)}
             />
           ) : (
             <FormButtons

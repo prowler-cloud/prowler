@@ -24,64 +24,11 @@ import {
   extractSortAndKey,
   hasDateOrScanFilter,
 } from "@/lib";
+import { getFindingGroupFilterOptions } from "@/lib/finding-group-filter-options";
 import { resolveFindingScanDateFilters } from "@/lib/findings-scan-filters";
 import { isCloud } from "@/lib/shared/env";
 import { ScanEntity, ScanProps } from "@/types";
 import { SearchParamsProps } from "@/types/components";
-
-const FINDING_GROUP_FILTER_OPTION_PAGE_SIZE = 100;
-const FINDING_GROUP_OWN_FILTER_KEYS = [
-  "filter[check_id]",
-  "filter[check_id__in]",
-] as const;
-
-type FindingGroupFilterFetcher = typeof getFindingGroups;
-
-function excludeFindingGroupOwnFilters(
-  filters: Record<string, string | string[] | undefined>,
-) {
-  return Object.fromEntries(
-    Object.entries(filters).filter(
-      ([key]) =>
-        !FINDING_GROUP_OWN_FILTER_KEYS.includes(
-          key as (typeof FINDING_GROUP_OWN_FILTER_KEYS)[number],
-        ),
-    ),
-  );
-}
-
-async function getFindingGroupFilterOptions({
-  fetchFindingGroups,
-  filters,
-}: {
-  fetchFindingGroups: FindingGroupFilterFetcher;
-  filters: Record<string, string | string[] | undefined>;
-}) {
-  const optionFilters = excludeFindingGroupOwnFilters(filters);
-  const options = new Map<string, { checkId: string; checkTitle: string }>();
-  let page = 1;
-
-  while (true) {
-    const response = await fetchFindingGroups({
-      filters: optionFilters,
-      page,
-      pageSize: FINDING_GROUP_FILTER_OPTION_PAGE_SIZE,
-    });
-
-    for (const group of adaptFindingGroupsResponse(response)) {
-      options.set(group.checkId, {
-        checkId: group.checkId,
-        checkTitle: group.checkTitle,
-      });
-    }
-
-    const totalPages = response?.meta?.pagination?.pages ?? page;
-    if (page >= totalPages) break;
-    page += 1;
-  }
-
-  return Array.from(options.values());
-}
 
 export default async function Findings({
   searchParams,

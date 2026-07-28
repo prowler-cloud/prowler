@@ -6,11 +6,18 @@ import {
   type JiraSelection,
   type NonEmptyStringArray,
 } from "@/types/integrations";
+import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 export interface JiraDispatchTargetBatchInput {
   targetIds: string[];
   targetType: JiraDispatchTarget;
   dispatchMode?: JiraDispatchTargetBatch["dispatchMode"];
+}
+
+export interface CreateJiraDispatchPayloadInput
+  extends Omit<JiraDispatchModalPayload, "selection"> {
+  targetIds: string[];
+  targetType: JiraDispatchTarget;
 }
 
 export const toNonEmptyStringArray = (
@@ -40,6 +47,16 @@ export const createJiraTargetSelection = (
     targetIds: nonEmptyTargetIds,
     targetType,
   };
+};
+
+export const createJiraDispatchPayload = ({
+  targetIds,
+  targetType,
+  ...payload
+}: CreateJiraDispatchPayloadInput): JiraDispatchModalPayload | null => {
+  const selection = createJiraTargetSelection(targetIds, targetType);
+
+  return selection ? { selection, ...payload } : null;
 };
 
 export const createJiraBatchSelection = (

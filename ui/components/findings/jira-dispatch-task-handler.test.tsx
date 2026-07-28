@@ -103,6 +103,7 @@ describe("jiraDispatchTaskHandler", () => {
         ...task.meta,
         dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
       },
+      notifyHandler: true,
     });
   });
 

@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
 
+import { JiraDispatchModalHost } from "@/components/findings/jira-dispatch-modal-host";
 import { AppSidebar } from "@/components/layout/app-sidebar";
 import { CloudUpgradeModal } from "@/components/shared/cloud-upgrade-modal";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -38,6 +39,7 @@ export default function MainLayout({ children }: { children: ReactNode }) {
     <div className="relative flex h-dvh items-center justify-center overflow-hidden">
       <AppSidebar />
       <CloudUpgradeModal />
+      <JiraDispatchModalHost />
       <main
         // @container: <main> is the reference for the app's (container-query)
         // breakpoints, so pushing it with the side panel re-evaluates them.

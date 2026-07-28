@@ -5,28 +5,22 @@ import { VolumeOff, VolumeX } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useContext, useState } from "react";
 
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import {
-  isGroupedJiraDispatchEnabled,
-  PROWLER_CLOUD_ONLY_TOOLTIP,
-} from "@/lib/deployment";
 import { isFindingGroupMuted } from "@/lib/findings-groups";
-import { createJiraTargetSelection } from "@/lib/jira-dispatch-selection";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { getOptionalText } from "@/lib/utils";
-import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 import type {
   FindingTriageLoadedNote,
   FindingTriageSummary,
 } from "@/types/findings-triage";
-import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 import type { ProviderType } from "@/types/providers";
 
 import { canMuteFindingGroup } from "./finding-group-selection";
@@ -117,15 +111,11 @@ export function DataTableRowActions<T extends FindingRowData>({
 }: DataTableRowActionsProps<T>) {
   const router = useRouter();
   const finding = row.original;
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
   const [isPreparingMuteModal, setIsPreparingMuteModal] = useState(false);
   const [mutePreparationError, setMutePreparationError] = useState<
     string | null
   >(null);
-  const openCloudUpgrade = useCloudUpgradeStore(
-    (state) => state.openCloudUpgrade,
-  );
 
   const { isMuted, canMute, title: findingTitle } = extractRowInfo(finding);
   const resolvedFindingContext = findingContext ?? {
@@ -160,62 +150,34 @@ export function DataTableRowActions<T extends FindingRowData>({
   // Otherwise, just mute this single finding
   const isCurrentSelected = selectedFindingIds.includes(muteKey);
   const hasMultipleSelected = selectedFindingIds.length > 1;
-  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
-  const getDisplayIds = (): string[] => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      return selectedFindingIds;
-    }
-    return [muteKey];
-  };
+  const actionTargetIds =
+    isCurrentSelected && hasMultipleSelected ? selectedFindingIds : [muteKey];
 
   const getMuteLabel = () => {
     if (isMuted) return "Muted";
-    const ids = getDisplayIds();
-    if (ids.length > 1) {
-      return `Mute ${ids.length} ${isGroup ? "Finding Groups" : "Findings"}`;
+    if (actionTargetIds.length > 1) {
+      return `Mute ${actionTargetIds.length} ${isGroup ? "Finding Groups" : "Findings"}`;
     }
     return isGroup ? "Mute Finding Group" : "Mute Finding";
   };
 
-  const getJiraTargetIds = (): string[] => {
-    if (isCurrentSelected && hasMultipleSelected) {
-      return selectedFindingIds;
-    }
-    return [muteKey];
-  };
-
-  const getJiraLabel = () => {
-    const ids = getJiraTargetIds();
-    if (ids.length > 1) {
-      return `Send ${ids.length} ${isGroup ? "Finding Groups" : "Findings"} to Jira`;
-    }
-    return isGroup ? "Send Finding Group to Jira" : "Send 1 Finding to Jira";
-  };
-
-  const jiraTargetIds = getJiraTargetIds();
   const jiraTargetType = isGroup
     ? JIRA_DISPATCH_TARGET.CHECK_ID
     : JIRA_DISPATCH_TARGET.FINDING_ID;
-  const jiraSelection = createJiraTargetSelection(
-    jiraTargetIds,
-    jiraTargetType,
-  );
-  const requiresJiraUpgrade =
-    (isGroup || jiraTargetIds.length > 1) && !groupedJiraDispatchEnabled;
   const selectedJiraResourceCount = isGroup
     ? (finding.resourcesFail ?? 0)
     : undefined;
-  const hasMultipleSelectedFindings = !isGroup && jiraTargetIds.length > 1;
-  const jiraDefaultDispatchMode =
-    isGroup || hasMultipleSelectedFindings
-      ? JIRA_DISPATCH_MODE.GROUPED
-      : JIRA_DISPATCH_MODE.INDIVIDUAL;
-  const canChooseGroupedJiraDispatch = groupedJiraDispatchEnabled
-    ? isGroup
-      ? jiraTargetIds.length === 1 && (selectedJiraResourceCount ?? 0) > 1
-      : hasMultipleSelectedFindings
-    : false;
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: actionTargetIds,
+    targetType: jiraTargetType,
+    findingTitle,
+    selectedResourceCount: selectedJiraResourceCount,
+  });
+  const jiraLabel = buildJiraActionLabel({
+    findingGroupCount: isGroup ? actionTargetIds.length : 0,
+    findingCount: isGroup ? 0 : actionTargetIds.length,
+  });
 
   const handleMuteModalOpenChange = (
     nextOpen: boolean | ((previousOpen: boolean) => boolean),
@@ -232,8 +194,6 @@ export function DataTableRowActions<T extends FindingRowData>({
   };
 
   const handleMuteClick = async () => {
-    const displayIds = getDisplayIds();
-
     if (resolveMuteIds) {
       setResolvedIds([]);
       setMutePreparationError(null);
@@ -241,7 +201,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       setIsMuteModalOpen(true);
       setIsResolving(true);
       try {
-        const ids = await resolveMuteIds(displayIds);
+        const ids = await resolveMuteIds(actionTargetIds);
         setResolvedIds(ids);
         setMutePreparationError(
           ids.length === 0
@@ -258,7 +218,7 @@ export function DataTableRowActions<T extends FindingRowData>({
       }
     } else {
       // Regular findings — IDs are already valid finding UUIDs
-      setResolvedIds(displayIds);
+      setResolvedIds(actionTargetIds);
       setIsMuteModalOpen(true);
     }
   };
@@ -270,36 +230,15 @@ export function DataTableRowActions<T extends FindingRowData>({
     clearSelection();
     setResolvedIds([]);
     if (onMuteComplete) {
-      onMuteComplete(getDisplayIds());
+      onMuteComplete(actionTargetIds);
       return;
     }
 
     router.refresh();
   };
 
-  const handleJiraClick = () => {
-    if (requiresJiraUpgrade) {
-      openCloudUpgrade(CLOUD_UPGRADE_FEATURE.JIRA_DISPATCH);
-      return;
-    }
-
-    setIsJiraModalOpen(true);
-  };
-
   return (
     <>
-      {(!isGroup || groupedJiraDispatchEnabled) && jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingTitle={findingTitle}
-          selection={jiraSelection}
-          defaultDispatchMode={jiraDefaultDispatchMode}
-          canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
-          selectedResourceCount={selectedJiraResourceCount}
-        />
-      )}
-
       <MuteFindingsModal
         isOpen={isMuteModalOpen}
         onOpenChange={handleMuteModalOpenChange}
@@ -337,14 +276,7 @@ export function DataTableRowActions<T extends FindingRowData>({
             disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
-          <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label={getJiraLabel()}
-            tooltip={
-              requiresJiraUpgrade ? PROWLER_CLOUD_ONLY_TOOLTIP : undefined
-            }
-            onSelect={handleJiraClick}
-          />
+          <JiraDispatchActionItem label={jiraLabel} payload={jiraPayload} />
         </ActionDropdown>
       </div>
     </>

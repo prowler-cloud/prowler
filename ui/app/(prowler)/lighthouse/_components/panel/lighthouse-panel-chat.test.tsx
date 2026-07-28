@@ -170,7 +170,8 @@ describe("LighthousePanelChat", () => {
     // When
     render(<LighthousePanelChat />);
 
-    // Then: composer is live and the empty state lists recent chats
+    // Then: composer is live and the empty state lists recent chats.
+    // Sessions load on a later render than the composer, so await them.
     expect(
       await screen.findByRole("textbox", { name: "Message" }),
     ).toBeInTheDocument();

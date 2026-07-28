@@ -6,11 +6,10 @@ import { Suspense, useRef, useState } from "react";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
 import { CustomCheckboxMutedFindings } from "@/components/filters/custom-checkbox-muted-findings";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
 import { OnboardingTrigger, PageReady } from "@/components/onboarding";
 import { DataTable } from "@/components/shadcn/table";
-import { isGroupedJiraDispatchEnabled } from "@/lib/deployment";
 import { canDrillDownFindingGroup } from "@/lib/findings-groups";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
 import {
   createJiraBatchSelection,
   createJiraTargetSelection,
@@ -20,7 +19,7 @@ import { createExploreFindingsTourStepHandlers } from "@/lib/tours/explore-findi
 import { FindingGroupRow, MetaDataProps } from "@/types";
 import { JIRA_DISPATCH_MODE, JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
-import { FloatingMuteButton } from "../floating-mute-button";
+import { FloatingSelectionActions } from "../floating-selection-actions";
 
 import { getColumnFindingGroups } from "./column-finding-groups";
 import { canMuteFindingGroup } from "./finding-group-selection";
@@ -45,13 +44,6 @@ function buildMuteActionLabel(
   findingCount: number,
 ): string {
   return `Mute ${buildSelectionEntityLabel(groupCount, findingCount)}`;
-}
-
-function buildJiraActionLabel(
-  groupCount: number,
-  findingCount: number,
-): string {
-  return `Send ${buildSelectionEntityLabel(groupCount, findingCount)} to Jira`;
 }
 
 function buildSelectionEntityLabel(
@@ -137,7 +129,6 @@ const FindingsGroupTableContent = ({
   const [resourceSearchInput, setResourceSearchInput] = useState("");
   const [resourceSearch, setResourceSearch] = useState("");
   const [resourceSelection, setResourceSelection] = useState<string[]>([]);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const inlineRef = useRef<InlineResourceContainerHandle>(null);
 
   const safeData = data ?? EMPTY_FINDING_GROUPS;
@@ -152,7 +143,6 @@ const FindingsGroupTableContent = ({
   const activeResourceSelection = expandedCheckId ? resourceSelection : [];
   const hasResourceSelection = activeResourceSelection.length > 0;
   const filters = resolvedFilters;
-  const groupedJiraDispatchEnabled = isGroupedJiraDispatchEnabled();
 
   // Exclude expanded group from group-level mutes when it has resource selections.
   const selectedCheckIds = Object.keys(rowSelection)
@@ -190,16 +180,6 @@ const FindingsGroupTableContent = ({
       ? singleSelectedGroup.resourcesFail
       : selectedCheckIds.length
     : activeResourceSelection.length;
-  const jiraDispatchMode = jiraGroupSelectionTakesPrecedence
-    ? JIRA_DISPATCH_MODE.GROUPED
-    : activeResourceSelection.length > 1
-      ? JIRA_DISPATCH_MODE.GROUPED
-      : JIRA_DISPATCH_MODE.INDIVIDUAL;
-  const canChooseGroupedJiraDispatch = jiraGroupSelectionTakesPrecedence
-    ? !hasMixedJiraSelection &&
-      selectedCheckIds.length === 1 &&
-      selectedJiraResourceCount > 1
-    : activeResourceSelection.length > 1;
   const jiraTitle = hasMixedJiraSelection
     ? undefined
     : jiraGroupSelectionTakesPrecedence
@@ -227,16 +207,20 @@ const FindingsGroupTableContent = ({
         activeResourceSelection.length,
       )}.`
     : undefined;
-  const hasJiraTargets = jiraTargetIds.length > 0;
-  const isSingleFindingJiraDispatch =
-    !jiraGroupSelectionTakesPrecedence && activeResourceSelection.length === 1;
-  const canSendToJira =
-    hasJiraTargets &&
-    (isSingleFindingJiraDispatch || groupedJiraDispatchEnabled);
-  const sendToJiraLabel = buildJiraActionLabel(
-    selectedCheckIds.length,
-    activeResourceSelection.length,
-  );
+  const jiraPayload = jiraSelection
+    ? {
+        selection: jiraSelection,
+        findingTitle: jiraTitle,
+        selectedResourceCount: selectedJiraResourceCount,
+        isFindingGroupSelection:
+          !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup),
+        description: jiraDescription,
+      }
+    : undefined;
+  const sendToJiraLabel = buildJiraActionLabel({
+    findingGroupCount: selectedCheckIds.length,
+    findingCount: activeResourceSelection.length,
+  });
 
   const selectableRowCount = safeData.filter((g) =>
     canMuteFindingGroup({
@@ -409,8 +393,8 @@ const FindingsGroupTableContent = ({
         />
       </div>
 
-      {(selectedCheckIds.length > 0 || hasResourceSelection) && (
-        <FloatingMuteButton
+      {(selectedCheckIds.length > 0 || hasResourceSelection) && jiraPayload && (
+        <FloatingSelectionActions
           selectedCount={
             selectedCheckIds.length + activeResourceSelection.length
           }
@@ -438,26 +422,8 @@ const FindingsGroupTableContent = ({
           isBulkOperation={
             selectedCheckIds.length > 0 || activeResourceSelection.length > 1
           }
-          showSendToJira={hasJiraTargets}
-          canSendToJira={canSendToJira}
-          sendToJiraLabel={sendToJiraLabel}
-          onSendToJira={() => setIsJiraModalOpen(true)}
-        />
-      )}
-
-      {canSendToJira && jiraSelection && (
-        <SendToJiraModal
-          isOpen={isJiraModalOpen}
-          onOpenChange={setIsJiraModalOpen}
-          findingTitle={jiraTitle}
-          selection={jiraSelection}
-          defaultDispatchMode={jiraDispatchMode}
-          isFindingGroupSelection={
-            !jiraGroupSelectionTakesPrecedence && Boolean(expandedGroup)
-          }
-          canChooseGroupedDispatch={canChooseGroupedJiraDispatch}
-          selectedResourceCount={selectedJiraResourceCount}
-          description={jiraDescription}
+          jiraPayload={jiraPayload}
+          jiraLabel={sendToJiraLabel}
         />
       )}
     </FindingsSelectionContext.Provider>

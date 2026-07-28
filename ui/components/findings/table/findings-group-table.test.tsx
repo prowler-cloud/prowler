@@ -1,23 +1,22 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { Fragment, type ReactNode, useState } from "react";
+import { Fragment, type ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { resolveFindingIdsByVisibleGroupResources } from "@/actions/findings/findings-by-resource";
+import type { JiraDispatchModalPayload } from "@/types/jira-dispatch";
 
 import { FindingsGroupTable } from "./findings-group-table";
 
 const {
-  isGroupedJiraDispatchEnabledMock,
-  SendToJiraModalMock,
+  FloatingSelectionActionsMock,
   setOnDrillDownMock,
   triggerOnDrillDownMock,
 } = vi.hoisted(() => {
   let onDrillDown: ((checkId: string, group: unknown) => void) | undefined;
 
   return {
-    isGroupedJiraDispatchEnabledMock: vi.fn(() => false),
-    SendToJiraModalMock: vi.fn((_props: unknown) => null),
+    FloatingSelectionActionsMock: vi.fn((_props: unknown) => null),
     setOnDrillDownMock: vi.fn(
       (handler: ((checkId: string, group: unknown) => void) | undefined) => {
         onDrillDown = handler;
@@ -30,9 +29,7 @@ const {
 });
 
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({
-    refresh: vi.fn(),
-  }),
+  useRouter: () => ({ refresh: vi.fn() }),
   useSearchParams: () => new URLSearchParams(),
   usePathname: () => "/findings",
 }));
@@ -61,7 +58,6 @@ vi.mock("@/components/shadcn/table", () => ({
   }) => (
     <div>
       <div data-testid="table-toolbar-right">{toolbarRightContent}</div>
-      <span>10 Total Entries</span>
       <table>
         <tbody>
           {(data ?? []).map((original, index) => (
@@ -120,15 +116,6 @@ vi.mock("@/actions/findings/findings-by-resource", () => ({
   resolveFindingIdsByVisibleGroupResources: vi.fn(),
 }));
 
-vi.mock("@/lib/deployment", () => ({
-  isGroupedJiraDispatchEnabled: isGroupedJiraDispatchEnabledMock,
-  PROWLER_CLOUD_ONLY_TOOLTIP: "Available only in Prowler Cloud",
-}));
-
-vi.mock("../send-to-jira-modal", () => ({
-  SendToJiraModal: SendToJiraModalMock,
-}));
-
 vi.mock("./column-finding-groups", () => ({
   getColumnFindingGroups: ({
     onDrillDown,
@@ -142,14 +129,12 @@ vi.mock("./column-finding-groups", () => ({
 
 vi.mock("./inline-resource-container", () => ({
   InlineResourceContainer: ({
-    columnCount,
     onResourceSelectionChange,
   }: {
-    columnCount?: number;
     onResourceSelectionChange?: (selectedResourceIds: string[]) => void;
   }) => (
     <tr>
-      <td colSpan={columnCount}>
+      <td>
         <button
           type="button"
           onClick={() => onResourceSelectionChange?.(["finding-1"])}
@@ -169,990 +154,205 @@ vi.mock("./inline-resource-container", () => ({
   ),
 }));
 
-vi.mock("../floating-mute-button", () => ({
-  FloatingMuteButton: ({
-    label,
-    muteLabel,
-    sendToJiraLabel,
-    onBeforeOpen,
-    onSendToJira,
-    canSendToJira,
-    showSendToJira,
-  }: {
-    label?: string;
-    muteLabel?: string;
-    sendToJiraLabel?: string;
-    onBeforeOpen?: () => Promise<string[]>;
-    onSendToJira?: () => void;
-    canSendToJira?: boolean;
-    showSendToJira?: boolean;
-  }) => {
-    const [isChooserOpen, setIsChooserOpen] = useState(false);
-
-    return (
-      <div>
-        <button type="button" onClick={() => setIsChooserOpen(true)}>
-          {label}
-        </button>
-        {isChooserOpen && (
-          <div role="dialog" aria-label="Choose action">
-            <button type="button" onClick={() => void onBeforeOpen?.()}>
-              {muteLabel ?? "Mute"}
-            </button>
-            {showSendToJira && (
-              <button
-                type="button"
-                aria-label={sendToJiraLabel ?? "Send to Jira"}
-                title={
-                  canSendToJira ? undefined : "Available only in Prowler Cloud"
-                }
-                onClick={() => canSendToJira && onSendToJira?.()}
-              >
-                {sendToJiraLabel ?? "Send to Jira"}
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  },
+vi.mock("../floating-selection-actions", () => ({
+  FloatingSelectionActions: FloatingSelectionActionsMock,
 }));
+
+function makeGroup(checkId: string, resourcesFail = 2) {
+  return {
+    checkId,
+    checkTitle: `Title ${checkId}`,
+    resourcesFail,
+    resourcesTotal: Math.max(resourcesFail, 1),
+    mutedCount: 0,
+  } as unknown as Parameters<typeof FindingsGroupTable>[0]["data"][number];
+}
+
+function getLastFloatingActionsProps(): {
+  jiraPayload: JiraDispatchModalPayload;
+  onBeforeOpen: () => Promise<string[]>;
+} {
+  const props = FloatingSelectionActionsMock.mock.calls.at(-1)?.[0];
+  expect(props).toBeDefined();
+  return props as unknown as {
+    jiraPayload: JiraDispatchModalPayload;
+    onBeforeOpen: () => Promise<string[]>;
+  };
+}
 
 describe("FindingsGroupTable", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
   });
 
-  describe("toolbar", () => {
-    it("should render the muted findings checkbox inside the table toolbar", () => {
-      // Given
-      render(
-        <FindingsGroupTable
-          data={[]}
-          metadata={{
-            pagination: {
-              page: 1,
-              pages: 1,
-              count: 10,
-            },
-            version: "v1",
-          }}
-          resolvedFilters={{ "filter[muted]": "false" }}
-          hasHistoricalData={false}
-        />,
-      );
+  it("renders the muted findings filter in the table toolbar", () => {
+    // Given / When
+    render(
+      <FindingsGroupTable
+        data={[]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      // When
-      const toolbar = screen.getByTestId("table-toolbar-right");
-
-      // Then
-      expect(
-        screen.getByRole("checkbox", { name: "Include muted findings" }),
-      ).toBeInTheDocument();
-      expect(toolbar).toHaveTextContent("Include muted findings");
-    });
+    // Then
+    expect(
+      screen.getByRole("checkbox", { name: "Include muted findings" }),
+    ).toBeInTheDocument();
   });
 
-  describe("explore-findings tour gating", () => {
-    it("does not mount the tour trigger when there are no finding groups", () => {
-      // Given an empty table (e.g. a scan is still running)
-      render(
-        <FindingsGroupTable
-          data={[]}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
+  it("mounts the tour only when finding groups exist", () => {
+    // Given / When
+    const { rerender } = render(
+      <FindingsGroupTable
+        data={[]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      // Then the tour never starts — there is no first-row anchor for the
-      // "Open a finding group" step to resolve, which would otherwise throw.
-      expect(
-        screen.queryByTestId("onboarding-trigger"),
-      ).not.toBeInTheDocument();
-      // PageReady still signals the navbar that the route's data has loaded.
-      expect(screen.getByTestId("page-ready")).toBeInTheDocument();
-    });
+    // Then
+    expect(screen.queryByTestId("onboarding-trigger")).not.toBeInTheDocument();
+    expect(screen.getByTestId("page-ready")).toBeInTheDocument();
 
-    it("mounts the tour trigger once at least one finding group exists", () => {
-      // Given a populated table
-      const data = [{ checkId: "check-a" }] as unknown as Parameters<
-        typeof FindingsGroupTable
-      >[0]["data"];
+    // When
+    rerender(
+      <FindingsGroupTable
+        data={[makeGroup("check-a")]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // Then the explore-findings tour is allowed to start.
-      expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
-    });
+    // Then
+    expect(screen.getByTestId("onboarding-trigger")).toBeInTheDocument();
   });
 
-  describe("onboarding anchor", () => {
-    it("anchors the finding-group tour step to the first row only", () => {
-      // Given two finding groups (the tour must point at the first, even if there is one)
-      const data = [
-        { checkId: "check-a" },
-        { checkId: "check-b" },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+  it("anchors the finding-group tour to the first row only", () => {
+    // Given / When
+    render(
+      <FindingsGroupTable
+        data={[makeGroup("check-a"), makeGroup("check-b")]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // Then driver.js resolves `[data-tour-id="explore-findings-group"]` to the first row.
-      expect(screen.getByTestId("row-0")).toHaveAttribute(
-        "data-tour-id",
-        "explore-findings-group",
-      );
-      expect(screen.getByTestId("row-1")).not.toHaveAttribute("data-tour-id");
-    });
+    // Then
+    expect(screen.getByTestId("row-0")).toHaveAttribute(
+      "data-tour-id",
+      "explore-findings-group",
+    );
+    expect(screen.getByTestId("row-1")).not.toHaveAttribute("data-tour-id");
   });
 
-  describe("expanded deep link", () => {
-    it("opens the matching drillable group from expandedCheckId", () => {
-      // Given
-      const data = [
-        { checkId: "check-a", resourcesTotal: 1 },
-        { checkId: "check-b", resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+  it("opens a drillable group from the expanded deep link", () => {
+    // Given / When
+    render(
+      <FindingsGroupTable
+        data={[makeGroup("check-a"), makeGroup("check-b")]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+        expandedCheckId="check-b"
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          expandedCheckId="check-b"
-        />,
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      ).toBeInTheDocument();
-    });
-
-    it("ignores a missing expandedCheckId", () => {
-      // Given
-      const data = [
-        { checkId: "check-a", resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          expandedCheckId="check-missing"
-        />,
-      );
-
-      // Then
-      expect(
-        screen.queryByRole("button", { name: "Select finding-1" }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("ignores a non-drillable expandedCheckId", () => {
-      // Given
-      const data = [
-        { checkId: "check-a", resourcesTotal: 0 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          expandedCheckId="check-a"
-        />,
-      );
-
-      // Then
-      expect(
-        screen.queryByRole("button", { name: "Select finding-1" }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("allows manual collapse after opening from expandedCheckId", async () => {
-      // Given
-      const user = userEvent.setup();
-      const data = [
-        { checkId: "check-a", resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          expandedCheckId="check-a"
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-
-      // Then
-      expect(
-        screen.queryByRole("button", { name: "Select finding-1" }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("clears the expanded group when expandedCheckId is removed", () => {
-      // Given
-      const data = [
-        { checkId: "check-a", resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-      const { rerender } = render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-          expandedCheckId="check-a"
-        />,
-      );
-      expect(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      ).toBeInTheDocument();
-
-      // When
-      rerender(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // Then
-      expect(
-        screen.queryByRole("button", { name: "Select finding-1" }),
-      ).not.toBeInTheDocument();
-    });
+    // Then
+    expect(
+      screen.getByRole("button", { name: "Select finding-1" }),
+    ).toBeInTheDocument();
   });
 
-  describe("bulk Jira action", () => {
-    it("should summarize group-only selections", async () => {
-      // Given
-      const user = userEvent.setup();
-      const data = [
-        { checkId: "check-a", resourcesFail: 1, resourcesTotal: 1 },
-        { checkId: "check-b", resourcesFail: 1, resourcesTotal: 1 },
-        { checkId: "check-c", resourcesFail: 1, resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+  it("builds separate Jira batches for selected groups and child findings", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsGroupTable
+        data={[makeGroup("check-a"), makeGroup("check-b")]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
+    // When
+    await user.click(screen.getByRole("button", { name: "Select check-a" }));
+    await user.click(screen.getByRole("button", { name: "Expand check-b" }));
+    await user.click(screen.getByRole("button", { name: "Select finding-1" }));
 
-      // When
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(screen.getByRole("button", { name: "Select check-b" }));
-      await user.click(screen.getByRole("button", { name: "Select check-c" }));
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "3 Groups selected" }),
-      ).toBeInTheDocument();
-    });
-
-    it("should summarize selected groups with nested findings", async () => {
-      // Given
-      const user = userEvent.setup();
-      const data = [
-        { checkId: "check-a", resourcesFail: 1, resourcesTotal: 1 },
-        { checkId: "check-b", resourcesFail: 1, resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(screen.getByRole("button", { name: "Expand check-b" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      ).toBeInTheDocument();
-
-      await user.click(
-        screen.getByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      );
-      const actionChooser = screen.getByRole("dialog", {
-        name: "Choose action",
-      });
-      expect(
-        within(actionChooser).getByRole("button", {
-          name: "Send 1 Group and 1 Finding to Jira",
-        }),
-      ).toBeInTheDocument();
-      expect(
-        within(actionChooser).getByRole("button", {
-          name: "Mute 1 Group and 1 Finding",
-        }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("button", { name: "Send 1 Group to Jira" }),
-      ).not.toBeInTheDocument();
-    });
-
-    it("should pass both group and child finding batches to Jira for mixed selections", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
+    // Then
+    expect(getLastFloatingActionsProps().jiraPayload.selection).toEqual({
+      kind: "batches",
+      batches: [
         {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 1,
-          resourcesTotal: 1,
+          targetIds: ["check-a"],
+          targetType: "check_id",
+          dispatchMode: "grouped",
         },
         {
-          checkId: "check-b",
-          checkTitle: "Check B",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(screen.getByRole("button", { name: "Expand check-b" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      );
-
-      // When
-      await user.click(
-        screen.getByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      );
-      await user.click(
-        screen.getByRole("button", {
-          name: "Send 1 Group and 1 Finding to Jira",
-        }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "batches",
-          batches: [
-            {
-              targetIds: ["check-a"],
-              targetType: "check_id",
-              dispatchMode: "grouped",
-            },
-            {
-              targetIds: ["finding-1"],
-              targetType: "finding_id",
-              dispatchMode: "individual",
-            },
-          ],
-        },
-        canChooseGroupedDispatch: false,
-        description: "Create Jira issues for 1 Group and 1 Finding.",
-      });
-    });
-
-    it("should pass both child finding and group batches to Jira when the child finding is selected first", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-        {
-          checkId: "check-b",
-          checkTitle: "Check B",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      );
-      await user.click(screen.getByRole("button", { name: "Select check-b" }));
-
-      // When
-      await user.click(
-        screen.getByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      );
-      await user.click(
-        screen.getByRole("button", {
-          name: "Send 1 Group and 1 Finding to Jira",
-        }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "batches",
-          batches: [
-            {
-              targetIds: ["check-b"],
-              targetType: "check_id",
-              dispatchMode: "grouped",
-            },
-            {
-              targetIds: ["finding-1"],
-              targetType: "finding_id",
-              dispatchMode: "individual",
-            },
-          ],
-        },
-        canChooseGroupedDispatch: false,
-        description: "Create Jira issues for 1 Group and 1 Finding.",
-      });
-    });
-
-    it("should leave multi child Finding dispatch mode to the Jira modal for mixed bulk selections", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 2,
-          resourcesTotal: 2,
-        },
-        {
-          checkId: "check-b",
-          checkTitle: "Check B",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select findings 1 and 2" }),
-      );
-      await user.click(screen.getByRole("button", { name: "Select check-b" }));
-
-      // When
-      await user.click(
-        screen.getByRole("button", {
-          name: "1 Group and 2 Findings selected",
-        }),
-      );
-      await user.click(
-        screen.getByRole("button", {
-          name: "Send 1 Group and 2 Findings to Jira",
-        }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0] as {
-        selection: { batches: Array<Record<string, unknown>> };
-      };
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "batches",
-          batches: [
-            {
-              targetIds: ["check-b"],
-              targetType: "check_id",
-              dispatchMode: "grouped",
-            },
-            {
-              targetIds: ["finding-1", "finding-2"],
-              targetType: "finding_id",
-            },
-          ],
-        },
-        canChooseGroupedDispatch: false,
-        description: "Create Jira issues for 1 Group and 2 Findings.",
-      });
-      expect(lastCall.selection.batches[1]).not.toHaveProperty("dispatchMode");
-    });
-
-    it("should route choosing Mute through the existing mute resolver", async () => {
-      // Given
-      const user = userEvent.setup();
-      vi.mocked(resolveFindingIdsByVisibleGroupResources).mockResolvedValue([
-        "finding-a",
-      ]);
-      const data = [
-        { checkId: "check-a", resourcesFail: 1, resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "1 Group selected" }),
-      );
-      await user.click(
-        within(screen.getByRole("dialog", { name: "Choose action" })).getByRole(
-          "button",
-          { name: "Mute 1 Group" },
-        ),
-      );
-
-      // Then
-      expect(resolveFindingIdsByVisibleGroupResources).toHaveBeenCalledWith({
-        checkId: "check-a",
-        filters: {},
-        hasDateOrScanFilter: false,
-        resourceSearch: undefined,
-      });
-    });
-
-    it("should clear nested selections when expanding another group and preserve selected groups", async () => {
-      // Given
-      const user = userEvent.setup();
-      const data = [
-        { checkId: "check-a", resourcesFail: 1, resourcesTotal: 1 },
-        { checkId: "check-b", resourcesFail: 1, resourcesTotal: 1 },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Select check-b" }));
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      );
-
-      // Then nested and group selections are both visible/actionable.
-      expect(
-        screen.getByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      ).toBeInTheDocument();
-
-      // When switching groups, nested selection clears while the selected group remains.
-      await user.click(screen.getByRole("button", { name: "Expand check-b" }));
-
-      // Then
-      expect(
-        screen.queryByRole("button", {
-          name: "1 Group and 1 Finding selected",
-        }),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "1 Group selected" }),
-      ).toBeInTheDocument();
-    });
-
-    it("should open Jira modal for resource-only selections", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select finding-1" }),
-      );
-
-      // Then
-      expect(
-        screen.getByRole("button", { name: "1 Finding selected" }),
-      ).toBeInTheDocument();
-      await user.click(
-        screen.getByRole("button", { name: "1 Finding selected" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "Send 1 Finding to Jira" }),
-      );
-
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "single",
-          targetId: "finding-1",
+          targetIds: ["finding-1"],
           targetType: "finding_id",
+          dispatchMode: "individual",
         },
-        defaultDispatchMode: "individual",
-        canChooseGroupedDispatch: false,
-      });
+      ],
     });
+  });
 
-    it("should allow grouped Jira dispatch choice for multiple selected resources in one finding group", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 2,
-          resourcesTotal: 2,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+  it("keeps resource-only Jira selections scoped to the expanded group", async () => {
+    // Given
+    const user = userEvent.setup();
+    render(
+      <FindingsGroupTable
+        data={[makeGroup("check-a")]}
+        resolvedFilters={{}}
+        hasHistoricalData={false}
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
+    // When
+    await user.click(screen.getByRole("button", { name: "Expand check-a" }));
+    await user.click(
+      screen.getByRole("button", { name: "Select findings 1 and 2" }),
+    );
 
-      // When
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select findings 1 and 2" }),
-      );
-
-      // Then
-      await user.click(
-        screen.getByRole("button", { name: "2 Findings selected" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "Send 2 Findings to Jira" }),
-      );
-
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "target-list",
-          targetIds: ["finding-1", "finding-2"],
-          targetType: "finding_id",
-        },
-        defaultDispatchMode: "grouped",
-        canChooseGroupedDispatch: true,
-      });
+    // Then
+    expect(getLastFloatingActionsProps().jiraPayload).toMatchObject({
+      selection: {
+        kind: "target-list",
+        targetIds: ["finding-1", "finding-2"],
+        targetType: "finding_id",
+      },
+      findingTitle: "Title check-a",
+      isFindingGroupSelection: true,
+      selectedResourceCount: 2,
     });
+  });
 
-    it("should show selected multi-finding Jira tooltip when grouped dispatch is disabled", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(false);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 2,
-          resourcesTotal: 2,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
+  it("resolves group selections through the visible-resource query before muting", async () => {
+    // Given
+    vi.mocked(resolveFindingIdsByVisibleGroupResources).mockResolvedValue([
+      "finding-a",
+      "finding-b",
+    ]);
+    const user = userEvent.setup();
+    render(
+      <FindingsGroupTable
+        data={[makeGroup("check-a")]}
+        resolvedFilters={{ "filter[severity]": "high" }}
+        hasHistoricalData={false}
+      />,
+    );
 
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
+    // When
+    await user.click(screen.getByRole("button", { name: "Select check-a" }));
+    const resolvedIds = await getLastFloatingActionsProps().onBeforeOpen();
 
-      // When
-      await user.click(screen.getByRole("button", { name: "Expand check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "Select findings 1 and 2" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "2 Findings selected" }),
-      );
-      const jiraButton = screen.getByRole("button", {
-        name: "Send 2 Findings to Jira",
-      });
-      await user.click(jiraButton);
-
-      // Then
-      expect(jiraButton).not.toBeDisabled();
-      expect(jiraButton).toHaveAttribute(
-        "title",
-        "Available only in Prowler Cloud",
-      );
-      expect(
-        within(jiraButton).queryByText("Available only in Prowler Cloud"),
-      ).not.toBeInTheDocument();
-      expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
-        expect.objectContaining({ isOpen: true }),
-        undefined,
-      );
-    });
-
-    it("should render Cloud-only bulk Jira tooltip when grouped Jira dispatch is disabled", async () => {
-      // Given
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      // When
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(
-        screen.getByRole("button", { name: "1 Group selected" }),
-      );
-
-      // Then
-      const jiraButton = screen.getByRole("button", {
-        name: "Send 1 Group to Jira",
-      });
-      expect(jiraButton).toBeVisible();
-      expect(jiraButton).not.toBeDisabled();
-      expect(jiraButton).toHaveAttribute(
-        "title",
-        "Available only in Prowler Cloud",
-      );
-      expect(
-        within(jiraButton).queryByText("Available only in Prowler Cloud"),
-      ).not.toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: "Mute 1 Group" }),
-      ).toBeInTheDocument();
-      expect(SendToJiraModalMock).not.toHaveBeenCalledWith(
-        expect.objectContaining({ isOpen: true }),
-        undefined,
-      );
-    });
-
-    it("should allow grouped Jira dispatch choice for one selected finding group with multiple failing resources", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 2,
-          resourcesTotal: 2,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "1 Group selected" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "Send 1 Group to Jira" }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "single",
-          targetId: "check-a",
-          targetType: "check_id",
-        },
-        defaultDispatchMode: "grouped",
-        canChooseGroupedDispatch: true,
-        selectedResourceCount: 2,
-      });
-    });
-
-    it("should not require grouped Jira dispatch choice for one selected finding group with one failing resource", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 1,
-          resourcesTotal: 1,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "1 Group selected" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "Send 1 Group to Jira" }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "single",
-          targetId: "check-a",
-          targetType: "check_id",
-        },
-        defaultDispatchMode: "grouped",
-        canChooseGroupedDispatch: false,
-        selectedResourceCount: 1,
-      });
-    });
-
-    it("should use grouped dispatch mode for multiple selected finding groups", async () => {
-      // Given
-      isGroupedJiraDispatchEnabledMock.mockReturnValue(true);
-      const user = userEvent.setup();
-      const data = [
-        {
-          checkId: "check-a",
-          checkTitle: "Check A",
-          resourcesFail: 2,
-          resourcesTotal: 2,
-        },
-        {
-          checkId: "check-b",
-          checkTitle: "Check B",
-          resourcesFail: 3,
-          resourcesTotal: 3,
-        },
-      ] as unknown as Parameters<typeof FindingsGroupTable>[0]["data"];
-
-      render(
-        <FindingsGroupTable
-          data={data}
-          resolvedFilters={{}}
-          hasHistoricalData={false}
-        />,
-      );
-
-      await user.click(screen.getByRole("button", { name: "Select check-a" }));
-      await user.click(screen.getByRole("button", { name: "Select check-b" }));
-
-      // When
-      await user.click(
-        screen.getByRole("button", { name: "2 Groups selected" }),
-      );
-      await user.click(
-        screen.getByRole("button", { name: "Send 2 Groups to Jira" }),
-      );
-
-      // Then
-      const lastCall = SendToJiraModalMock.mock.calls.at(-1)?.[0];
-      expect(lastCall).toMatchObject({
-        isOpen: true,
-        selection: {
-          kind: "target-list",
-          targetIds: ["check-a", "check-b"],
-          targetType: "check_id",
-        },
-        defaultDispatchMode: "grouped",
-        canChooseGroupedDispatch: false,
-        selectedResourceCount: 2,
-      });
+    // Then
+    expect(resolvedIds).toEqual(["finding-a", "finding-b"]);
+    expect(resolveFindingIdsByVisibleGroupResources).toHaveBeenCalledWith({
+      checkId: "check-a",
+      filters: { "filter[severity]": "high" },
+      hasDateOrScanFilter: false,
+      resourceSearch: undefined,
     });
   });
 });

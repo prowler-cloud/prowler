@@ -129,6 +129,20 @@ export interface AttackPathQueryDocumentationLink {
   link: string;
 }
 
+export const ATTACK_PATH_QUERY_STATUSES = {
+  OK: "ok",
+  ERROR: "error",
+} as const;
+
+export type AttackPathQueryStatus =
+  (typeof ATTACK_PATH_QUERY_STATUSES)[keyof typeof ATTACK_PATH_QUERY_STATUSES];
+
+// Cloud-only precomputed query summary. Missing/null means no definitive empty verdict.
+export interface AttackPathQueryResultSummary {
+  status: AttackPathQueryStatus;
+  has_data: boolean | null;
+}
+
 export interface AttackPathQueryAttributes {
   name: string;
   short_description: string;
@@ -137,6 +151,7 @@ export interface AttackPathQueryAttributes {
   parameters: AttackPathQueryParameter[];
   attribution: AttackPathQueryAttribution | null;
   documentation_link?: AttackPathQueryDocumentationLink | null;
+  result_summary?: AttackPathQueryResultSummary | null;
 }
 
 export interface AttackPathQuery {

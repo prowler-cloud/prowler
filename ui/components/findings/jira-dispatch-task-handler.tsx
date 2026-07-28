@@ -1,21 +1,15 @@
 "use client";
 
-import { sendJiraDispatch } from "@/actions/integrations/jira-dispatch";
 import { toast, ToastAction } from "@/components/shadcn/toast";
+import {
+  executeJiraDispatchBatches,
+  getJiraRetryBatch,
+} from "@/lib/jira-dispatch-execution";
 import { evaluateJiraDispatchTask } from "@/lib/jira-dispatch-result";
-import {
-  buildJiraDispatchTaskMeta,
-  parseJiraDispatchTaskMeta,
-} from "@/lib/jira-dispatch-task";
-import {
-  type TaskKindHandler,
-  trackAndPollTask,
-  type WatchedTask,
-} from "@/store/task-watcher/store";
+import { parseJiraDispatchTaskMeta } from "@/lib/jira-dispatch-task";
+import type { TaskKindHandler, WatchedTask } from "@/store/task-watcher/store";
 import {
   JIRA_DISPATCH_MODE,
-  JIRA_DISPATCH_TARGET,
-  JIRA_DISPATCH_TASK_KIND,
   type JiraDispatchTaskResult,
 } from "@/types/integrations";
 
@@ -33,38 +27,32 @@ const retryFailedFindings = async (
     return;
   }
 
+  const retryBatch = getJiraRetryBatch(failedFindingIds);
+  if (!retryBatch) return;
+
   try {
-    const response = await sendJiraDispatch({
-      integrationId: meta.integrationId,
-      targetIds: failedFindingIds,
-      filter: JIRA_DISPATCH_TARGET.FINDING_ID,
-      projectKey: meta.projectKey,
-      issueType: meta.issueType,
-      dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
-    });
-
-    if (!response.success) {
-      toast({
-        variant: "destructive",
-        title: "Jira retry failed",
-        description: response.error,
-      });
-      return;
-    }
-
     toast({
       title: "Retry started",
       description: `Retrying ${failedFindingIds.length} failed Finding${failedFindingIds.length === 1 ? "" : "s"}.`,
     });
 
-    await trackAndPollTask<JiraDispatchTaskResult>({
-      taskId: response.taskId,
-      kind: JIRA_DISPATCH_TASK_KIND,
-      meta: buildJiraDispatchTaskMeta({
-        ...meta,
+    const result = await executeJiraDispatchBatches(
+      [retryBatch],
+      {
+        integrationId: meta.integrationId,
+        projectKey: meta.projectKey,
+        issueType: meta.issueType,
         dispatchMode: JIRA_DISPATCH_MODE.INDIVIDUAL,
-      }),
-    });
+      },
+      { notifyHandler: true },
+    );
+    if (result.startedTaskCount === 0 && result.errors.length > 0) {
+      toast({
+        variant: "destructive",
+        title: "Jira retry failed",
+        description: result.errors.join(" "),
+      });
+    }
   } catch {
     toast({
       variant: "destructive",
