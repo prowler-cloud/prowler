@@ -10,10 +10,10 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/shadcn";
+import { buildPerScanComplianceHref } from "@/lib/compliance/compliance-tab-url";
 import { useCloudUpgradeStore } from "@/store";
 import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
-
-import { COMPLIANCE_TAB, type ComplianceTab } from "../_types";
+import { COMPLIANCE_TAB, type ComplianceTab } from "@/types/compliance";
 
 interface CompliancePageTabsProps {
   activeTab: ComplianceTab;
@@ -47,13 +47,13 @@ export const CompliancePageTabs = ({
       return;
     }
 
-    // Per Scan renders without the query param so existing bookmarks and
-    // shared links keep resolving to the default view.
-    if (typedTab === COMPLIANCE_TAB.PER_SCAN) {
-      router.push("/compliance");
-    } else {
-      router.push(`/compliance?tab=${typedTab}`);
-    }
+    // Multiple Scans is the landing view, so it owns the bare route; Single
+    // Scan pins `?tab=` to stay linkable.
+    router.push(
+      typedTab === COMPLIANCE_TAB.CROSS_PROVIDER
+        ? "/compliance"
+        : buildPerScanComplianceHref(),
+    );
   };
 
   return (
@@ -61,9 +61,6 @@ export const CompliancePageTabs = ({
       <div className="flex flex-col gap-[18px]">
         <div data-tour-id="view-compliance-tabs" className="overflow-x-auto">
           <TabsList>
-            <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
-              Single Scan
-            </TabsTrigger>
             <TabsTrigger
               value={COMPLIANCE_TAB.CROSS_PROVIDER}
               adornment={
@@ -74,14 +71,17 @@ export const CompliancePageTabs = ({
             >
               Multiple Scans
             </TabsTrigger>
+            <TabsTrigger value={COMPLIANCE_TAB.PER_SCAN}>
+              Single Scan
+            </TabsTrigger>
           </TabsList>
         </div>
 
-        <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
-          {perScanContent}
-        </TabsContent>
         <TabsContent value={COMPLIANCE_TAB.CROSS_PROVIDER}>
           {crossProviderContent}
+        </TabsContent>
+        <TabsContent value={COMPLIANCE_TAB.PER_SCAN}>
+          {perScanContent}
         </TabsContent>
       </div>
     </Tabs>

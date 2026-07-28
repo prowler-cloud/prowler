@@ -34,7 +34,7 @@ export const viewComplianceTour = defineTour<ViewComplianceTourTarget>({
       align: TOUR_STEP_ALIGNMENTS.START,
       title: "Choose how to combine scans",
       description:
-        "Single Scan reviews one scan at a time. Multiple Scans combines results across provider types or across accounts of the same provider type.",
+        "Multiple Scans combines results across provider types or across accounts of the same provider type. Single Scan reviews one scan at a time.",
     },
     {
       target: "search",

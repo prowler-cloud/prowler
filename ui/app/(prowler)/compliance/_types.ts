@@ -7,14 +7,6 @@ import type { KnownProviderType, ProviderType } from "@/types/providers";
 // aggregated across one scan per compatible provider; roll-up status is
 // computed server-side as FAIL > PASS > MANUAL).
 
-export const COMPLIANCE_TAB = {
-  PER_SCAN: "per-scan",
-  CROSS_PROVIDER: "cross-provider",
-} as const;
-
-export type ComplianceTab =
-  (typeof COMPLIANCE_TAB)[keyof typeof COMPLIANCE_TAB];
-
 export const CROSS_PROVIDER_OVERVIEW_TYPE =
   "cross-provider-compliance-overviews" as const;
 

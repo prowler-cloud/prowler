@@ -6,7 +6,7 @@ import {
   getCompliancesOverview,
 } from "@/actions/compliances";
 import { getThreatScore } from "@/actions/overview";
-import { getScans } from "@/actions/scans";
+import { getScans, getScansByState } from "@/actions/scans";
 import {
   ComplianceSkeletonGrid,
   NoScansAvailable,
@@ -25,13 +25,12 @@ import {
   ScanProps,
   SearchParamsProps,
 } from "@/types";
-import { ComplianceOverviewData } from "@/types/compliance";
+import { COMPLIANCE_TAB, ComplianceOverviewData } from "@/types/compliance";
 
 import { CompliancePageTabs } from "./_components/compliance-page-tabs";
 import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
 import { CrossAccountOverviewSection } from "./_components/cross-account-overview-section";
 import { CrossProviderOverview } from "./_components/cross-provider-overview";
-import { COMPLIANCE_TAB } from "./_types";
 
 export default async function Compliance({
   searchParams,
@@ -42,21 +41,39 @@ export default async function Compliance({
   const searchParamsKey = JSON.stringify(resolvedSearchParams || {});
 
   // Cross-Provider is Prowler Cloud-only (the OSS API has no
-  // cross-provider-compliance-overviews endpoint): in OSS the tab renders
-  // disabled with the upsell badge and Per Scan is forced active.
+  // cross-provider-compliance-overviews endpoint). It is the landing tab in
+  // Cloud; in OSS its trigger only carries the upsell badge, so Per Scan
+  // stays active regardless of `?tab=`.
   const crossProviderEnabled = isCloud();
   const activeTab = crossProviderEnabled
-    ? getComplianceTab(resolvedSearchParams.tab)
+    ? getComplianceTab(resolvedSearchParams.tab, resolvedSearchParams.scanId)
     : COMPLIANCE_TAB.PER_SCAN;
 
   // Only the active tab's payload is built: switching tabs is a real
   // navigation, so pre-building the inactive tab buys nothing.
   if (activeTab === COMPLIANCE_TAB.CROSS_PROVIDER) {
+    // The tour's anchors (search, framework cards) only exist on Single Scan,
+    // so replaying it from here navigates there — and with no scan to render
+    // those anchors never mount. Fall back to the scan flow instead, matching
+    // the Per Scan branch below. Fail-open: a failed fetch assumes scans exist.
+    const scansByState = await getScansByState();
+    const hasCompletedScan = Array.isArray(scansByState?.data)
+      ? scansByState.data.length > 0
+      : true;
+
     return (
       <ContentLayout
         title="Compliance"
         icon="lucide:shield-check"
-        onboardingAction={{ flowId: "view-compliance" }}
+        onboardingAction={
+          hasCompletedScan
+            ? { flowId: "view-compliance" }
+            : {
+                flowId: "view-compliance",
+                fallbackFlowId: "view-first-scan",
+                useFallback: true,
+              }
+        }
       >
         <CompliancePageTabs
           activeTab={activeTab}
