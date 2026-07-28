@@ -1,0 +1,1 @@
+Finding delta colors restored

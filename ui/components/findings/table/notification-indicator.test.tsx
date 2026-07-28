@@ -61,6 +61,28 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 import { NotificationIndicator } from "./notification-indicator";
 
 describe("NotificationIndicator", () => {
+  it("uses the design-system fail color for new findings", () => {
+    // Given
+    const { container } = render(<NotificationIndicator delta="new" />);
+
+    // When
+    const deltaDot = container.querySelector(".rounded-full");
+
+    // Then
+    expect(deltaDot).toHaveClass("bg-bg-fail");
+  });
+
+  it("uses the design-system warning color for changed findings", () => {
+    // Given
+    const { container } = render(<NotificationIndicator delta="changed" />);
+
+    // When
+    const deltaDot = container.querySelector(".rounded-full");
+
+    // Then
+    expect(deltaDot).toHaveClass("bg-bg-warning");
+  });
+
   it("reserves the muted slot for delta-only rows when requested", () => {
     const { container } = render(
       <NotificationIndicator delta="new" showDeltaWhenMuted reserveMutedSlot />,
