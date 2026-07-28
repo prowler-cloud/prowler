@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   init: vi.fn(),
   onSurveysLoaded: vi.fn(),
   capture: vi.fn(),
+  moduleLoaded: vi.fn(),
   // Mirrors the singleton's `__loaded` flag: true when a PostHog instance
   // already exists (as on Prowler Cloud, initialized in app/providers.tsx).
   loaded: false,
@@ -20,16 +21,19 @@ vi.mock("@/lib/shared/env", () => ({ isCloud: mocks.isCloud }));
 vi.mock("@/hooks/use-runtime-config", () => ({
   useRuntimeConfig: mocks.useRuntimeConfig,
 }));
-vi.mock("posthog-js", () => ({
-  default: {
-    get __loaded() {
-      return mocks.loaded;
+vi.mock("posthog-js", () => {
+  mocks.moduleLoaded();
+  return {
+    default: {
+      get __loaded() {
+        return mocks.loaded;
+      },
+      init: mocks.init,
+      onSurveysLoaded: mocks.onSurveysLoaded,
+      capture: mocks.capture,
     },
-    init: mocks.init,
-    onSurveysLoaded: mocks.onSurveysLoaded,
-    capture: mocks.capture,
-  },
-}));
+  };
+});
 
 const POSTHOG_KEY = "phc_key";
 
@@ -328,6 +332,7 @@ describe("FeedbackSurvey", () => {
     // Then - no init, no survey fetch, nothing rendered
     expect(mocks.init).not.toHaveBeenCalled();
     expect(mocks.onSurveysLoaded).not.toHaveBeenCalled();
+    expect(mocks.moduleLoaded).not.toHaveBeenCalled();
     expect(view.container).toBeEmptyDOMElement();
   });
 
@@ -352,6 +357,7 @@ describe("FeedbackSurvey", () => {
     expect(mocks.init).not.toHaveBeenCalled();
     expect(mocks.onSurveysLoaded).not.toHaveBeenCalled();
     expect(mocks.capture).not.toHaveBeenCalled();
+    expect(mocks.moduleLoaded).not.toHaveBeenCalled();
   });
 
   it("renders nothing and touches no PostHog surface when not Cloud, even with a survey and key present", async () => {
@@ -371,6 +377,7 @@ describe("FeedbackSurvey", () => {
     expect(mocks.init).not.toHaveBeenCalled();
     expect(mocks.onSurveysLoaded).not.toHaveBeenCalled();
     expect(mocks.capture).not.toHaveBeenCalled();
+    expect(mocks.moduleLoaded).not.toHaveBeenCalled();
   });
 
   it("renders nothing when Cloud but the named survey is not available", async () => {

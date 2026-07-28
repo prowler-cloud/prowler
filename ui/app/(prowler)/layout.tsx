@@ -53,8 +53,8 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Onboarding is Cloud-only; skip its fetches and orchestrators in OSS.
-  const onboardingEnabled = isCloud();
+  // Skip Cloud-only onboarding fetches and orchestrators in OSS.
+  const cloudEnabled = isCloud();
 
   // Fail-open: unknown scan state is treated as "has data" so the banner never blocks
   // progression on a fetch error.
@@ -62,7 +62,7 @@ export default async function RootLayout({
   // Tri-state: true = has providers, false = zero providers, undefined = fetch failed (gate fails open).
   let hasProviders: boolean | undefined = false;
 
-  if (onboardingEnabled) {
+  if (cloudEnabled) {
     const [providersData, scansByState] = await Promise.all([
       getProviders({ page: 1, pageSize: 1 }),
       getScansByState(),
@@ -99,7 +99,7 @@ export default async function RootLayout({
           </Suspense>
           {/* Store uses boolean; gate receives tri-state to fail open on fetch errors. */}
           <StoreInitializer values={{ hasProviders: hasProviders ?? false }} />
-          {onboardingEnabled && (
+          {cloudEnabled && (
             <>
               <OnboardingGate hasProviders={hasProviders} />
               {/* Single mount point so the watcher survives post-connect navigation. */}
@@ -109,7 +109,7 @@ export default async function RootLayout({
             </>
           )}
           <MainLayout>{children}</MainLayout>
-          <FeedbackSurvey />
+          {cloudEnabled && <FeedbackSurvey />}
           {/* Always mounted: it hosts the detail (finding/resource) views in
               every deployment; the AI tab inside is cloud-gated on its own. */}
           <GlobalSidePanel />

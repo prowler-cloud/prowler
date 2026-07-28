@@ -39,9 +39,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_PROWLER_RELEASE_VERSION
 ENV NEXT_PUBLIC_PROWLER_RELEASE_VERSION=${NEXT_PUBLIC_PROWLER_RELEASE_VERSION}
 
-# Cloud/PostHog values are runtime configuration. UI_POSTHOG_ENABLED gates the
-# integration, and UI_POSTHOG_KEY/UI_POSTHOG_HOST supply its public settings.
-# GTM and API base/docs URLs remain runtime configuration.
+# GTM / API base+docs URLs are runtime container env (prod stage), not build ARGs.
 
 RUN pnpm run build
 
@@ -78,18 +76,18 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
-# Remaining runtime configuration is read by `node server.js` at container
-# start and is not baked into the image. Supply it through Docker Compose,
-# Helm, or Kubernetes:
+# Runtime configuration is read by `node server.js` at container start and is
+# NOT baked into the image. Supply it via your orchestrator (docker-compose,
+# Helm/K8s):
 #   - required: UI_API_BASE_URL, AUTH_URL, AUTH_SECRET (missing ⇒ fail fast at boot)
 #   - optional: UI_API_DOCS_URL
-#   - Cloud mode: pass UI_CLOUD_ENABLED="true" at runtime
+#   - optional: UI_CLOUD_ENABLED ("true" only in Prowler Cloud deployments)
 #   - gated integrations (load only when *_ENABLED="true"; the value is then
 #     required or boot fails). Their legacy names (NEXT_PUBLIC_SENTRY_*,
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
 #       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
 #       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
-#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (runtime config)
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (feedback survey)
 #   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
