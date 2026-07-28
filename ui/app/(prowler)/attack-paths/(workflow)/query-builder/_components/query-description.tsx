@@ -22,7 +22,6 @@ const isSafeUrl = (url: string): boolean => {
 
 export const QueryDescription = ({ query }: QueryDescriptionProps) => {
   const documentationLink = query.attributes.documentation_link;
-  const attribution = query.attributes.attribution;
   // Every built-in query has a Prowler Hub page keyed by its id. The synthetic
   // custom query has no catalog entry, so it gets no hub link.
   const hubUrl =
@@ -62,28 +61,6 @@ export const QueryDescription = ({ query }: QueryDescriptionProps) => {
               </a>
             ) : (
               <span className="font-medium">{documentationLink.text}</span>
-            )}
-          </p>
-        )}
-
-        {attribution && (
-          <p className="text-xs">
-            {isSafeUrl(attribution.link) ? (
-              <>
-                Source:{" "}
-                <a
-                  href={attribution.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  {attribution.text}
-                </a>
-              </>
-            ) : (
-              <>
-                Source: <span>{attribution.text}</span>
-              </>
             )}
           </p>
         )}

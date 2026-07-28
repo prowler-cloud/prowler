@@ -86,9 +86,9 @@ describe("QueryDescription", () => {
     expect(link).toHaveAttribute("href", "https://example.com/docs");
   });
 
-  it("does not render unsafe documentation or attribution URLs as clickable links", () => {
+  it("does not render an unsafe documentation URL as a clickable link", () => {
     // Given
-    const queryWithUnsafeLinks: AttackPathQuery = {
+    const queryWithUnsafeLink: AttackPathQuery = {
       ...customQuery,
       attributes: {
         ...customQuery.attributes,
@@ -96,15 +96,11 @@ describe("QueryDescription", () => {
           text: "Learn how to write custom openCypher queries",
           link: "javascript:alert('xss')",
         },
-        attribution: {
-          text: "Unsafe source",
-          link: "javascript:alert('xss')",
-        },
       },
     };
 
     // When
-    render(<QueryDescription query={queryWithUnsafeLinks} />);
+    render(<QueryDescription query={queryWithUnsafeLink} />);
 
     // Then
     expect(
@@ -113,11 +109,7 @@ describe("QueryDescription", () => {
       }),
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("link", { name: /unsafe source/i }),
-    ).not.toBeInTheDocument();
-    expect(
       screen.getByText(/learn how to write custom opencypher queries/i),
     ).toBeInTheDocument();
-    expect(screen.getByText(/unsafe source/i)).toBeInTheDocument();
   });
 });
