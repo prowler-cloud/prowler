@@ -102,6 +102,7 @@ class Entra(M365Service):
                 self._get_service_principals(),
                 self._get_app_registrations(),
                 self._get_exchange_mailbox_permission_service_principals(),
+                self._get_device_registration_policy(),
             )
         )
 
@@ -122,6 +123,9 @@ class Entra(M365Service):
         self.exchange_mailbox_permission_service_principals: Dict[
             str, "ServicePrincipal"
         ] = attributes[12]
+        self.device_registration_policy: Optional[DeviceRegistrationPolicy] = (
+            attributes[13]
+        )
         self.user_accounts_status = {}
 
         # Resolve directory-object identifiers referenced by Conditional Access
@@ -1192,6 +1196,54 @@ OAuthAppInfo
             )
         return authentication_method_configurations
 
+    async def _get_device_registration_policy(self):
+        """Retrieve the tenant device registration policy from Microsoft Entra.
+
+        Fetches the ``policies/deviceRegistrationPolicy`` singleton from the beta
+        Graph endpoint because several fields required for auditing (the
+        ``azureADJoin.*`` local-admin and membership settings) are only exposed on
+        beta. The response is parsed from raw JSON since those fields are not
+        present on the v1.0 typed SDK model.
+
+        Returns:
+            Optional[DeviceRegistrationPolicy]: The parsed policy, or None on error.
+        """
+        logger.info("Entra - Getting device registration policy...")
+        device_registration_policy = None
+        try:
+            builder = self.client.policies.device_registration_policy.with_url(
+                "https://graph.microsoft.com/beta/policies/deviceRegistrationPolicy"
+            )
+            request_info = builder.to_get_request_information()
+            response = await self.client.request_adapter.send_primitive_async(
+                request_info, "bytes", {}
+            )
+            if response:
+                data = json.loads(response)
+                azure_ad_join = data.get("azureADJoin", {}) or {}
+                local_admins = azure_ad_join.get("localAdmins", {}) or {}
+                allowed_to_join = azure_ad_join.get("allowedToJoin", {}) or {}
+                registering_users = local_admins.get("registeringUsers", {}) or {}
+                local_admin_password = data.get("localAdminPassword", {}) or {}
+                device_registration_policy = DeviceRegistrationPolicy(
+                    user_device_quota=data.get("userDeviceQuota"),
+                    azure_ad_join_allowed_to_join_type=allowed_to_join.get(
+                        "@odata.type"
+                    ),
+                    azure_ad_join_global_admins_enabled=local_admins.get(
+                        "enableGlobalAdmins"
+                    ),
+                    azure_ad_join_registering_users_type=registering_users.get(
+                        "@odata.type"
+                    ),
+                    local_admin_password_enabled=local_admin_password.get("isEnabled"),
+                )
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+        return device_registration_policy
+
     async def _get_service_principals(self):
         """Retrieve service principals owned by the audited tenant.
 
@@ -1923,6 +1975,24 @@ class AuthorizationPolicy(BaseModel):
     default_user_role_permissions: Optional[DefaultUserRolePermissions]
     guest_invite_settings: Optional[str]
     guest_user_role_id: Optional[UUID]
+
+
+class DeviceRegistrationMembershipType(str, Enum):
+    """OData types for Entra device registration membership settings."""
+
+    ALL = "#microsoft.graph.allDeviceRegistrationMembership"
+    ENUMERATED = "#microsoft.graph.enumeratedDeviceRegistrationMembership"
+    NONE = "#microsoft.graph.noDeviceRegistrationMembership"
+
+
+class DeviceRegistrationPolicy(BaseModel):
+    """Tenant device registration policy (policies/deviceRegistrationPolicy)."""
+
+    user_device_quota: Optional[int] = None
+    azure_ad_join_allowed_to_join_type: Optional[str] = None
+    azure_ad_join_global_admins_enabled: Optional[bool] = None
+    azure_ad_join_registering_users_type: Optional[str] = None
+    local_admin_password_enabled: Optional[bool] = None
 
 
 class Organization(BaseModel):

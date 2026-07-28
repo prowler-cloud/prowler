@@ -1244,7 +1244,9 @@
     {
       "Id": "5.1.4.1",
       "Description": "This setting enables you to select the users who can register their devices as Microsoft Entra joined devices. The recommended state is Selected or None. Note: This setting is applicable only to Microsoft Entra join on Windows 10 or newer. This setting doesn't apply to Microsoft Entra hybrid joined devices, Microsoft Entra joined VMs in Azure, or Microsoft Entra joined devices that use Windows Autopilot self- deployment mode because these methods work in a userless context.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_join_restricted"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1265,7 +1267,9 @@
     {
       "Id": "5.1.4.2",
       "Description": "This setting defines the maximum number of Microsoft Entra joined or registered devices that a user can have in Microsoft Entra ID. Once this limit is reached, no additional devices can be added until existing ones are removed. Values above 100 are automatically capped at 100. The recommended state is 10 or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_max_devices_per_user_limited"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1286,7 +1290,9 @@
     {
       "Id": "5.1.4.3",
       "Description": "This setting controls whether the Global Administrator role is automatically added to the local administrators group on a device during the Microsoft Entra join process. The recommended state is No.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_global_admins_not_local_admins"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1307,7 +1313,9 @@
     {
       "Id": "5.1.4.4",
       "Description": "This setting determines if the Microsoft Entra user registering their device as Microsoft Entra join will be added to the local administrators group. This setting applies only once during the actual registration of the device as Microsoft Entra join. The recommended state is Selected or None.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_registering_user_not_local_admin"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1328,7 +1336,9 @@
     {
       "Id": "5.1.4.5",
       "Description": "Local Administrator Password Solution (LAPS) is the management of local account passwords on Windows devices. LAPS provides a solution to securely manage and retrieve the built-in local admin password. With cloud version of LAPS, customers can enable storing and rotation of local admin passwords for both Microsoft Entra and Microsoft Entra hybrid join devices The recommended state is Yes.",
-      "Checks": [],
+      "Checks": [
+        "entra_device_registration_laps_enabled"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1349,7 +1359,9 @@
     {
       "Id": "5.1.4.6",
       "Description": "This setting determines if users can self-service recover their BitLocker key(s). 'Yes' restricts non-admin users from being able to see the BitLocker key(s) for their owned devices if there are any. 'No' allows all users to recover their BitLocker key(s). The recommended state is Yes.",
-      "Checks": [],
+      "Checks": [
+        "entra_policy_default_user_cannot_read_bitlocker_keys"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
