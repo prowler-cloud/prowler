@@ -119,6 +119,9 @@ class Teams(M365Service):
                     allow_teams_consumer_inbound=settings.get(
                         "AllowTeamsConsumerInbound", True
                     ),
+                    external_access_with_trial_tenants=settings.get(
+                        "ExternalAccessWithTrialTenants", "Allowed"
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -160,3 +163,4 @@ class UserSettings(BaseModel):
     allow_external_access: bool = True
     allow_teams_consumer: bool = True
     allow_teams_consumer_inbound: bool = True
+    external_access_with_trial_tenants: str = "Allowed"

@@ -3088,7 +3088,9 @@
     {
       "Id": "8.2.4",
       "Description": "This setting controls the organization's external access with Teams \"trial-only\" tenants. These are tenants that don't have any purchased seats. When set to Blocked, users from these trial-only tenants aren't able to search and contact your users via chats, Teams calls, and meetings (using the users' authenticated identities) and your users aren't able to reach users in these trial-only tenants. Users from the trial-only tenant are also removed from existing chats. The recommended state for People in my organization can communicate with accounts in trial Teams tenant is Off.",
-      "Checks": [],
+      "Checks": [
+        "teams_external_access_trial_tenants_blocked"
+      ],
       "Attributes": [
         {
           "Section": "8 Microsoft Teams admin center",

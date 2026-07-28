@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "teams_external_access_trial_tenants_blocked",
+  "CheckTitle": "External access with Teams trial-only tenants is blocked",
+  "CheckType": [],
+  "ServiceName": "teams",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The Teams external access configuration should **block** communication with **trial-only** tenants (tenants that don't have any purchased seats). When blocked, users from these trial-only tenants cannot search for, contact, call, or meet with the organization's users via Teams external access.",
+  "Risk": "Trial-only tenants can be created quickly and anonymously, making them a common vector for social engineering and **phishing**. Allowing external access with them lets untrusted actors reach employees through Teams chats, calls, and meetings.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/microsoftteams/manage-external-access"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-CsTenantFederationConfiguration -ExternalAccessWithTrialTenants Blocked",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Teams admin center at https://admin.teams.microsoft.com/\n2. Go to **External collaboration** > **External access** > **Organization settings**\n3. Set **People in my organization can communicate with accounts in trial Teams tenants** to **Off**\n4. Click **Save**",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Block external access with Teams trial-only tenants so that users from tenants without purchased seats cannot contact your organization through Teams.",
+      "Url": "https://hub.prowler.com/check/teams_external_access_trial_tenants_blocked"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
