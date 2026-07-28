@@ -318,7 +318,7 @@ The provider catalog lives in `api/src/backend/tasks/jobs/attack_paths/provider_
 
 ## Common openCypher patterns
 
-The account/principal match, the service-trust and assume-role target shapes, the Internet probe, and the finding tail all appear in the template, sub-patterns, and network-exposure sections above. Two patterns not covered there:
+The account/principal match and the service-trust and assume-role target shapes appear in the template and sub-patterns above. Additional reusable patterns:
 
 ### JSON-encoded properties
 
@@ -330,6 +330,14 @@ WHERE stmt.condition CONTAINS '"aws:SourceAccount"'
 
 For structured inspection, fetch the rows and parse in Python. Cypher cannot navigate JSON object keys.
 
+### Internet node via path connectivity
+
+```cypher
+OPTIONAL MATCH (internet:Internet)-[can_access:CAN_ACCESS]->(resource)
+```
+
+`resource` must already be bound by the account-anchored pattern above.
+
 ### Multi-label OR (multiple resource types)
 
 ```cypher
@@ -338,6 +346,37 @@ WHERE (x:EC2PrivateIp AND x.public_ip = $ip)
    OR (x:EC2Instance AND x.publicipaddress = $ip)
    OR (x:NetworkInterface AND x.public_ip = $ip)
    OR (x:ElasticIPAddress AND x.public_ip = $ip)
+```
+
+### Include Prowler findings
+
+Deduplicate nodes before the typed finding probe to avoid one `OPTIONAL MATCH` per path-occurrence of the same node:
+
+```cypher
+WITH collect(path_principal) + collect(path_target) AS paths
+UNWIND paths AS p
+UNWIND nodes(p) AS n
+
+WITH paths, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
+OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+```
+
+For network-exposure queries, aggregate the Internet node and its edge alongside paths:
+
+```cypher
+WITH collect(path) AS paths, head(collect(internet)) AS internet, collect(can_access) AS can_access
+UNWIND paths AS p
+UNWIND nodes(p) AS n
+
+WITH paths, internet, can_access, collect(DISTINCT n) AS unique_nodes
+UNWIND unique_nodes AS n
+OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr,
+    internet, can_access
 ```
 
 ---
