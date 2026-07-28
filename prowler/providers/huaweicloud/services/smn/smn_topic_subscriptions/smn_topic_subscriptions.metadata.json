@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "smn_topic_subscriptions",
+  "CheckTitle": "SMN topics have at least one subscription configured",
+  "CheckType": [],
+  "ServiceName": "smn",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::SMN::Topic",
+  "ResourceGroup": "messaging",
+  "Description": "Ensure that SMN notification topics have at least one subscription so alerts are delivered to recipients.",
+  "Risk": "Topics without subscriptions will not deliver notifications, meaning critical alerts may go unnoticed by operations and security teams.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-smn/en-us_topic_0043961400.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Simple Message Notification (SMN).\n3. Select the topic without subscriptions.\n4. Click Add Subscription.\n5. Configure the subscription protocol and endpoint.\n6. Confirm the subscription.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Add at least one subscription to each SMN topic to ensure notifications are delivered.",
+      "Url": "https://hub.prowler.com/check/smn_topic_subscriptions"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Checks if SMN topics have at least one subscription. Topics with zero subscriptions fail because notifications won't be delivered."
+}
