@@ -1,1 +1,1 @@
-Finding delta colors restored
+Finding delta colors and integration update button labels restored
