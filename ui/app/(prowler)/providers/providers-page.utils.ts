@@ -558,8 +558,6 @@ export async function loadProvidersAccountsViewData({
   const nodes = organizationNodesResponse.data;
   const providers = enrichProviders(providersResponse, schedulesByProviderId);
 
-  // Degraded-view signal: either hierarchy request failing (not a genuinely
-  // empty hierarchy) surfaces a non-blocking notice while providers stay flat.
   const hierarchyStatus: HierarchyStatus =
     isCloud &&
     (Boolean(organizationsResponse.error) ||

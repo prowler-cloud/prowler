@@ -189,8 +189,7 @@ export const listOrganizationsSafe = async (): Promise<
 };
 
 /**
- * Lists organization nodes (AWS organizational units, GCP folders) via the
- * canonical route.
+ * Lists organization nodes.
  * GET /api/v1/organization-nodes
  */
 export const listOrganizationNodesSafe = async (): Promise<
@@ -339,8 +338,7 @@ export const deleteOrganization = async (organizationId: string) => {
 };
 
 /**
- * Deletes an organization node (AWS organizational unit, GCP folder) via the
- * canonical route.
+ * Deletes an organization node.
  * DELETE /api/v1/organization-nodes/{id}
  */
 export const deleteOrganizationNode = async (organizationNodeId: string) => {

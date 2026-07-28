@@ -35,11 +35,9 @@ interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
   /**
-   * Whether the hierarchy reads succeed. `unavailable` fails both of them
-   * (`/organizations`, `/organization-nodes`), which is what the loader turns
-   * into the degraded-view notice — the status is never injected as a prop, so
-   * the notice is only ever reached the way production reaches it. Default
-   * available.
+   * `unavailable` fails both hierarchy reads (`/organizations`,
+   * `/organization-nodes`) so the loader derives the degraded status itself —
+   * it is never injected as a prop. Default available.
    */
   hierarchyStatus?: HierarchyStatus;
 }
