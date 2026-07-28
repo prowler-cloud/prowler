@@ -80,7 +80,24 @@
               {
                 "group": "Prowler for AI Agents",
                 "pages": [
-                  "getting-started/products/prowler-claude-code-plugin"
+                  "user-guide/ai-agents/index",
+                  "user-guide/ai-agents/claude-code",
+                  "user-guide/ai-agents/claude-desktop",
+                  "user-guide/ai-agents/codex",
+                  "user-guide/ai-agents/cursor",
+                  "user-guide/ai-agents/vscode"
+                ]
+              },
+              {
+                "group": "Prowler for MSPs and MSSPs",
+                "pages": [
+                  "getting-started/products/prowler-for-msps",
+                  "user-guide/tutorials/prowler-for-msps-sign-up",
+                  "user-guide/tutorials/prowler-for-msps-organization",
+                  "user-guide/tutorials/prowler-for-msps-team",
+                  "user-guide/tutorials/prowler-for-msps-customers",
+                  "user-guide/tutorials/prowler-for-msps-billing",
+                  "user-guide/tutorials/prowler-for-msps-branding"
                 ]
               }
             ]
@@ -196,6 +213,17 @@
             ]
           },
           {
+            "group": "Prowler for MSPs and MSSPs",
+            "pages": [
+              "user-guide/tutorials/prowler-for-msps-sign-up",
+              "user-guide/tutorials/prowler-for-msps-organization",
+              "user-guide/tutorials/prowler-for-msps-team",
+              "user-guide/tutorials/prowler-for-msps-customers",
+              "user-guide/tutorials/prowler-for-msps-billing",
+              "user-guide/tutorials/prowler-for-msps-branding"
+            ]
+          },
+          {
             "group": "Prowler Lighthouse AI",
             "pages": [
               {
@@ -217,7 +245,12 @@
           {
             "group": "Prowler for AI Agents",
             "pages": [
-              "getting-started/products/prowler-claude-code-plugin"
+              "user-guide/ai-agents/index",
+              "user-guide/ai-agents/claude-code",
+              "user-guide/ai-agents/claude-desktop",
+              "user-guide/ai-agents/codex",
+              "user-guide/ai-agents/cursor",
+              "user-guide/ai-agents/vscode"
             ]
           },
           {
@@ -331,6 +364,13 @@
                 "pages": [
                   "user-guide/providers/googleworkspace/getting-started-googleworkspace",
                   "user-guide/providers/googleworkspace/authentication"
+                ]
+              },
+              {
+                "group": "Huawei Cloud",
+                "pages": [
+                  "user-guide/providers/huaweicloud/getting-started-huaweicloud",
+                  "user-guide/providers/huaweicloud/authentication"
                 ]
               },
               {
@@ -526,14 +566,15 @@
         ]
       },
       {
+        "tab": "Changelog",
+        "pages": [
+          "changelog"
+        ]
+      },
+      {
         "tab": "About Us",
         "icon": "/favicon.ico",
         "href": "https://prowler.com/about#team"
-      },
-      {
-        "tab": "Changelog",
-        "icon": "github",
-        "href": "https://github.com/prowler-cloud/prowler/releases"
       }
     ],
     "global": {
@@ -570,7 +611,7 @@
     ]
   },
   "banner": {
-    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products).",
+    "content": "Prowler App is now Prowler Local Server, and Prowler Enterprise is now Prowler Private Cloud. See [Prowler product families](/getting-started/products). Check the [latest changes](/changelog).",
     "dismissible": false
   },
   "markdown": {
@@ -660,6 +701,10 @@
     {
       "source": "/user-guide/tutorials/prowler-cloud-public-ips",
       "destination": "/security/networking"
+    },
+    {
+      "source": "/getting-started/products/prowler-claude-code-plugin",
+      "destination": "/user-guide/ai-agents/claude-code"
     }
   ]
 }

@@ -14,12 +14,14 @@ import {
 } from "@/lib/cloud-upgrade";
 import { isCloud } from "@/lib/shared/env";
 import { useCloudUpgradeStore } from "@/store";
-import { CLOUD_UPGRADE_FEATURE } from "@/types/cloud-upgrade";
 
 const allowInitialAutoFocus = () => {};
 
 export const CloudUpgradeModal = () => {
   const activeFeature = useCloudUpgradeStore((state) => state.activeFeature);
+  const retainedFeature = useCloudUpgradeStore(
+    (state) => state.retainedFeature,
+  );
   const closeCloudUpgrade = useCloudUpgradeStore(
     (state) => state.closeCloudUpgrade,
   );
@@ -29,7 +31,7 @@ export const CloudUpgradeModal = () => {
 
   if (isCloud()) return null;
 
-  const feature = activeFeature ?? CLOUD_UPGRADE_FEATURE.GENERAL;
+  const feature = activeFeature ?? retainedFeature;
   const content = CLOUD_UPGRADE_CONTENT[feature];
 
   return (

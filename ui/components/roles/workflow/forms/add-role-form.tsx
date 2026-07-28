@@ -6,6 +6,7 @@ import { DefaultValues } from "react-hook-form";
 import { addRole } from "@/actions/roles/roles";
 import { useToast } from "@/components/shadcn";
 import { getErrorMessage } from "@/lib";
+import { isCloud } from "@/lib/shared/env";
 import { RoleFormValues } from "@/types";
 
 import { RoleForm, RoleFormSubmitContext, RoleGroupOption } from "./role-form";
@@ -13,7 +14,7 @@ import { RoleForm, RoleFormSubmitContext, RoleGroupOption } from "./role-form";
 export const AddRoleForm = ({ groups }: { groups: RoleGroupOption[] }) => {
   const { toast } = useToast();
   const router = useRouter();
-  const isCloudEnvironment = process.env.NEXT_PUBLIC_IS_CLOUD_ENV === "true";
+  const isCloudEnvironment = isCloud();
 
   const defaultValues: DefaultValues<RoleFormValues> = {
     name: "",

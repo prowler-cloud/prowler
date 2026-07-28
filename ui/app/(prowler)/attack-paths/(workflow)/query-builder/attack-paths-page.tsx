@@ -28,13 +28,13 @@ import {
 import { StatusAlert } from "@/components/shared/status-alert";
 import { useMountEffect } from "@/hooks/use-mount-effect";
 import { isCloud } from "@/lib/shared/env";
+import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import {
   attackPathsTour,
   type AttackPathsTourTarget,
   pickDemoQuery,
   pickDemoScan,
 } from "@/lib/tours/attack-paths.tour";
-import { attackPathsEmptyTour } from "@/lib/tours/attack-paths-empty.tour";
 import { advanceActiveTour, useDriverTour } from "@/lib/tours/use-driver-tour";
 import type {
   AttackPathQuery,
@@ -60,7 +60,7 @@ import type { GraphHandle } from "./_components/graph/attack-path-graph";
 import { useAttackPathScans } from "./_hooks/use-attack-path-scans";
 import { useGraphState } from "./_hooks/use-graph-state";
 import { useQueryBuilder } from "./_hooks/use-query-builder";
-import { exportGraphAsPNG } from "./_lib";
+import { exportGraphAsPNG, isProwlerFindingNode } from "./_lib";
 import {
   ATTACK_PATHS_VIEW_STATES,
   getAttackPathsViewState,
@@ -325,9 +325,7 @@ export default function AttackPathsPage() {
   };
 
   const handleNodeClick = (node: GraphNode) => {
-    const isFinding = node.labels.some((label) =>
-      label.toLowerCase().includes("finding"),
-    );
+    const isFinding = isProwlerFindingNode(node.labels);
 
     if (isFinding) {
       if (findingNavigationInFlightRef.current) {
@@ -347,9 +345,7 @@ export default function AttackPathsPage() {
       if (edge.source !== node.id && edge.target !== node.id) return false;
       const otherId = edge.source === node.id ? edge.target : edge.source;
       const otherNode = sourceData.nodes?.find(({ id }) => id === otherId);
-      return otherNode?.labels.some((label) =>
-        label.toLowerCase().includes("finding"),
-      );
+      return otherNode ? isProwlerFindingNode(otherNode.labels) : false;
     });
 
     if (hasFindings) {

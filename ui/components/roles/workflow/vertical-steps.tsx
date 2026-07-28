@@ -2,19 +2,18 @@
 
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
-import type { ComponentProps } from "react";
-import React from "react";
+import { forwardRef, useMemo } from "react";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
 
 import { cn } from "@/lib/utils";
 
 export type VerticalStepProps = {
   className?: string;
-  description?: React.ReactNode;
-  title?: React.ReactNode;
+  description?: ReactNode;
+  title?: ReactNode;
 };
 
-export interface VerticalStepsProps
-  extends React.HTMLAttributes<HTMLButtonElement> {
+export interface VerticalStepsProps extends HTMLAttributes<HTMLButtonElement> {
   /**
    * An array of steps.
    *
@@ -89,10 +88,7 @@ function CheckIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export const VerticalSteps = React.forwardRef<
-  HTMLButtonElement,
-  VerticalStepsProps
->(
+export const VerticalSteps = forwardRef<HTMLButtonElement, VerticalStepsProps>(
   (
     {
       color = "primary",
@@ -113,7 +109,7 @@ export const VerticalSteps = React.forwardRef<
       onStepChange,
     );
 
-    const colors = React.useMemo(() => {
+    const colors = useMemo(() => {
       let userColor;
       let fgColor;
 

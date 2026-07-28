@@ -42,6 +42,7 @@ import {
   LIGHTHOUSE_CHAT_SURFACE,
   LighthouseV2ChatView,
 } from "../chat/lighthouse-v2-chat-view";
+
 import { LighthousePanelChatSkeleton } from "./lighthouse-panel-chat-skeleton";
 
 const PANEL_CHAT_STATUS = {

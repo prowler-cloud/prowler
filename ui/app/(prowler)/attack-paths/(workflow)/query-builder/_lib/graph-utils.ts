@@ -4,6 +4,8 @@
 
 import type { AttackPathGraphData } from "@/types/attack-paths";
 
+import { isProwlerFindingNode } from "./node-types";
+
 export const resolveHiddenFindingIds = ({
   expandedResources,
   findingNodeIds,
@@ -103,11 +105,11 @@ export const computeFilteredSubgraph = (
   // Also include findings directly connected to the selected node
   const nodeLabelMap = new Map(nodes.map((n) => [n.id, n.labels]));
   edges.forEach((edge) => {
-    const sourceIsFinding = (nodeLabelMap.get(edge.source) ?? []).some((l) =>
-      l.toLowerCase().includes("finding"),
+    const sourceIsFinding = isProwlerFindingNode(
+      nodeLabelMap.get(edge.source) ?? [],
     );
-    const targetIsFinding = (nodeLabelMap.get(edge.target) ?? []).some((l) =>
-      l.toLowerCase().includes("finding"),
+    const targetIsFinding = isProwlerFindingNode(
+      nodeLabelMap.get(edge.target) ?? [],
     );
 
     // Include findings connected to the selected node

@@ -65,7 +65,7 @@ describe("AppSidebarContent", () => {
 
   it("shares the brand, Launch Scan action and Local Server Cloud affordances", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
     vi.stubEnv("NEXT_PUBLIC_PROWLER_RELEASE_VERSION", "5.8.0");
     const user = userEvent.setup();
 
@@ -91,7 +91,7 @@ describe("AppSidebarContent", () => {
 
   it("keeps the existing Lighthouse chat sidebar in Cloud Chat mode", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.CHAT });
 
     // When
@@ -109,7 +109,7 @@ describe("AppSidebarContent", () => {
 
   it("opens the current scan modal instead of navigating from the scans route", async () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
     pathnameValue.current = "/scans";
     const user = userEvent.setup();
 

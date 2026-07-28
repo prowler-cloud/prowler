@@ -676,6 +676,21 @@ class Provider(ABC):
                         fixer_config=fixer_config,
                         regions=getattr(arguments, "region", None),
                     )
+                elif arguments.provider == "huaweicloud":
+                    # Credentials are read from the HUAWEICLOUD_* (or HW_*) env
+                    # vars by the provider itself; there are no credential CLI
+                    # flags to avoid leaking secrets.
+                    provider_class(
+                        cloud=getattr(arguments, "cloud", None),
+                        regions=(
+                            set(arguments.regions)
+                            if getattr(arguments, "regions", None)
+                            else None
+                        ),
+                        config_path=arguments.config_file,
+                        mutelist_path=arguments.mutelist_file,
+                        fixer_config=fixer_config,
+                    )
                 else:
                     # Dynamic fallback: any external/custom provider.
                     # Honor the from_cli_args type hint (-> Provider): if the

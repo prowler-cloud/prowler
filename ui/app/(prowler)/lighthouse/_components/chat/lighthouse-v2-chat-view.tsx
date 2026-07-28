@@ -29,6 +29,7 @@ import {
 import { Skeleton } from "@/components/shadcn/skeleton/skeleton";
 
 import { ProviderIcon } from "../config/provider-icon";
+
 import { ChatComposerPanel } from "./composer";
 import { ChatEmptyState } from "./empty-state";
 import { useLighthouseChatStore } from "./lighthouse-chat-store-provider";

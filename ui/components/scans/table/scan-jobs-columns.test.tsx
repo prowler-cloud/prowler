@@ -3,7 +3,11 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { ScanProps } from "@/types";
+import { type ScanProps, SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
+import {
+  SCAN_SCHEDULE_CAPABILITY,
+  type ScanScheduleCapability,
+} from "@/types/schedules";
 
 vi.mock("@/components/shadcn", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -64,12 +68,6 @@ vi.mock("./scan-jobs-row-actions", () => ({
     <button type="button">{capability ?? "no-capability"}</button>
   ),
 }));
-
-import { SCAN_JOBS_TAB, type ScanJobsTab } from "@/types";
-import {
-  SCAN_SCHEDULE_CAPABILITY,
-  type ScanScheduleCapability,
-} from "@/types/schedules";
 
 import { getScanJobsColumns } from "./scan-jobs-columns";
 
