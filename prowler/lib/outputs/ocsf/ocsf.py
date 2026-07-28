@@ -1,4 +1,3 @@
-import importlib
 import json
 import os
 from datetime import datetime, timezone
@@ -351,9 +350,14 @@ def _build_analytic(finding: Finding) -> Analytic:
 def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
     """Load and cache MITRE ATT&CK techniques for a provider."""
     try:
-        compliance_root = importlib.import_module("prowler.compliance").__path__[0]
         mitre_file = os.path.join(
-            compliance_root, provider, f"mitre_attack_{provider}.json"
+            os.path.dirname(__file__),
+            "..",
+            "..",
+            "..",
+            "compliance",
+            provider,
+            f"mitre_attack_{provider}.json",
         )
         with open(mitre_file) as file:
             data = json.load(file)
