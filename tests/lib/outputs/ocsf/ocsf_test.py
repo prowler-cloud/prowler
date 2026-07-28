@@ -28,11 +28,6 @@ from py_ocsf_models.objects.resource_details import ResourceDetails
 from pydantic.v1 import BaseModel as V1BaseModel
 
 from prowler.config.config import prowler_version
-from prowler.lib.check.compliance_models import (
-    Compliance,
-    Mitre_Requirement,
-    Mitre_Requirement_Attribute_AWS,
-)
 from prowler.lib.outputs.ocsf.ocsf import OCSF
 from tests.lib.outputs.fixtures.fixtures import generate_finding_output
 from tests.providers.aws.utils import AWS_REGION_EU_WEST_1
@@ -148,80 +143,57 @@ class TestOCSF:
             1619600000, tz=timezone.utc
         )
 
-    def test_transform_mitre_attacks_populated(self):
+    def test_transform_mitre_attacks_from_multiple_finding_compliance_ids(self):
         finding = generate_finding_output(
             provider="aws",
-            compliance={"MITRE-ATTACK": ["T4242"]},
+            compliance={"MITRE-ATTACK": ["T1078", "T1098"]},
             check_id="iam_user_mfa_enabled_console_access",
             check_title="IAM users with console access have MFA enabled",
             service_name="iam",
         )
-        finding.metadata.Compliance = [
-            Compliance(
-                Framework="MITRE-ATTACK",
-                Name="MITRE ATT&CK compliance framework",
-                Provider="AWS",
-                Version="",
-                Description="MITRE ATT&CK test framework",
-                Requirements=[
-                    Mitre_Requirement(
-                        Name="Synthetic Valid Accounts",
-                        Id="T4242",
-                        Tactics=["Persistence", "Privilege Escalation"],
-                        SubTechniques=[],
-                        Description="Synthetic MITRE technique for OCSF tests.",
-                        Platforms=["IaaS"],
-                        TechniqueURL="https://attack.mitre.org/techniques/T4242/",
-                        Attributes=[
-                            Mitre_Requirement_Attribute_AWS(
-                                AWSService="AWS IAM",
-                                Category="Protect",
-                                Value="Significant",
-                                Comment="Test mapping",
-                            )
-                        ],
-                        Checks=["iam_user_mfa_enabled_console_access"],
-                    )
-                ],
-            )
-        ]
 
         ocsf = OCSF([finding])
         output_data = ocsf.data[0]
 
         assert output_data.finding_info.attacks is not None
-        assert len(output_data.finding_info.attacks) == 2
+        assert len(output_data.finding_info.attacks) == 5
         attack = output_data.finding_info.attacks[0]
         assert isinstance(attack, MITREAttack)
-        assert attack.technique.uid == "T4242"
-        assert attack.technique.name == "Synthetic Valid Accounts"
-        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T4242/"
+        assert attack.technique.uid == "T1078"
+        assert attack.technique.name == "Valid Accounts"
+        assert attack.technique.src_url == "https://attack.mitre.org/techniques/T1078/"
         assert attack.tactic is not None
         assert [attack.tactic.name for attack in output_data.finding_info.attacks] == [
+            "Defense Evasion",
             "Persistence",
             "Privilege Escalation",
+            "Initial Access",
+            "Persistence",
+        ]
+        assert [
+            attack.technique.uid for attack in output_data.finding_info.attacks
+        ] == [
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1078",
+            "T1098",
         ]
 
-    def test_transform_mitre_attacks_unknown_technique(self):
+    def test_transform_mitre_attacks_ignores_unknown_technique(self):
         finding = generate_finding_output(
             provider="aws",
-            compliance={"MITRE-ATTACK": ["T9999"]},
+            compliance={"MITRE-ATTACK": ["T9999", "T1098"]},
         )
-        finding.metadata.Compliance = [
-            Compliance(
-                Framework="MITRE-ATTACK",
-                Name="MITRE ATT&CK compliance framework",
-                Provider="AWS",
-                Version="",
-                Description="MITRE ATT&CK test framework",
-                Requirements=[],
-            )
-        ]
 
         ocsf = OCSF([finding])
-        assert ocsf.data[0].finding_info.attacks is None
+        attacks = ocsf.data[0].finding_info.attacks
 
-    def test_transform_mitre_attacks_without_mitre_metadata(self):
+        assert attacks is not None
+        assert len(attacks) == 1
+        assert attacks[0].technique.uid == "T1098"
+
+    def test_transform_mitre_attacks_provider_without_catalog(self):
         finding = generate_finding_output(
             provider="kubernetes",
             compliance={"MITRE-ATTACK": ["T1078"]},
