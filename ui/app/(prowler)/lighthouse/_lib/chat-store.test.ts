@@ -151,6 +151,36 @@ describe("createLighthouseChatStore", () => {
     );
   });
 
+  it("uses the model selected when submission starts", async () => {
+    // Given
+    const store = makeStore();
+    let resolveCreate: (value: unknown) => void = () => {};
+    createSessionMock.mockReturnValueOnce(
+      new Promise((resolve) => {
+        resolveCreate = resolve;
+      }),
+    );
+    updateConfigurationMock.mockResolvedValue({ data: configurations[0] });
+    const submitting = store.getState().submitMessage("Summarize findings");
+    await vi.waitFor(() => expect(createSessionMock).toHaveBeenCalledOnce());
+
+    // When
+    await store.getState().selectModel({
+      providerType: "openai",
+      modelId: "gpt-5.2",
+    });
+    resolveCreate(sessionResult());
+    await submitting;
+
+    // Then
+    expect(sendMessageMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        provider: "openai",
+        model: "gpt-5.1",
+      }),
+    );
+  });
+
   it("retries with the original context snapshot", async () => {
     // Given
     const store = makeStore();

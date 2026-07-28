@@ -28,7 +28,7 @@ export function buildAgentText(
   return [
     CONTEXT_BLOCK_START,
     CONTEXT_SAFETY_NOTICE,
-    stableStringify(apiContext),
+    serializeApiContext(apiContext),
     CONTEXT_BLOCK_END,
     "",
     displayText,
@@ -69,7 +69,7 @@ export function getApiLighthouseContextByteLength(
 ): number {
   const apiContext = toApiLighthouseContext(context);
   return apiContext
-    ? new TextEncoder().encode(stableStringify(apiContext)).byteLength
+    ? new TextEncoder().encode(serializeApiContext(apiContext)).byteLength
     : Number.POSITIVE_INFINITY;
 }
 
@@ -249,6 +249,16 @@ function compact<T extends Record<string, unknown>>(value: T): Partial<T> {
 
 function stableStringify(value: unknown): string {
   return JSON.stringify(sortJsonValue(value));
+}
+
+function serializeApiContext(context: ApiLighthouseContextEnvelope): string {
+  return escapeContextSentinels(stableStringify(context));
+}
+
+function escapeContextSentinels(serializedContext: string): string {
+  return serializedContext
+    .replaceAll(CONTEXT_BLOCK_START, `\\u005B${CONTEXT_BLOCK_START.slice(1)}`)
+    .replaceAll(CONTEXT_BLOCK_END, `\\u005B${CONTEXT_BLOCK_END.slice(1)}`);
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -276,7 +276,8 @@ export function createLighthouseChatStore(
       submitOptions: LighthouseChatSubmitOptions = {},
     ): Promise<void> => {
       if (!displayText.trim()) return;
-      if (!get().selectedModelSelection) {
+      const selection = get().selectedModelSelection;
+      if (!selection) {
         set({ feedback: "Select a model before sending a message." });
         return;
       }
@@ -299,9 +300,6 @@ export function createLighthouseChatStore(
         ) {
           return;
         }
-
-        const selection = get().selectedModelSelection;
-        if (!selection) return;
 
         const provisionalTaskId = `pending-${Date.now()}`;
         const lastSubmission = contextSnapshot
@@ -332,6 +330,8 @@ export function createLighthouseChatStore(
           provider: selection.providerType,
           model: selection.modelId,
         });
+        // Sending is another async boundary: reset, session navigation, or
+        // teardown may invalidate this submission while the request is pending.
         if (destroyed || submissionVersion !== submissionIntentVersion) return;
 
         if ("error" in result) {
