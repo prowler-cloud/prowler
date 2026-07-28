@@ -13,7 +13,7 @@
   "Severity": "medium",
   "ResourceType": "Other",
   "ResourceGroup": "database",
-  "Description": "**Amazon DynamoDB Accelerator (DAX) clusters** are evaluated for **server-side `encryption at rest`**. The finding indicates whether the cluster's on-disk cache, configuration, and logs are encrypted using service-managed keys.",
+  "Description": "**Amazon DynamoDB Accelerator (DAX) clusters** are evaluated for **server-side** `encryption at rest`. The finding indicates whether the cluster's on-disk cache, configuration, and logs are encrypted using service-managed keys.",
   "Risk": "Without **encryption at rest**, DAX on-disk cache and logs can be extracted from underlying storage by those with low-level access, compromising **confidentiality** and enabling offline data mining.\n\nThreats:\n- Compromised host or admin\n- Lost/retired media\n- Unauthorized backups or snapshots",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -29,7 +29,7 @@
       "Terraform": "```hcl\nresource \"aws_dax_cluster\" \"example\" {\n  cluster_name       = \"<example_resource_name>\"\n  node_type          = \"<NODE_TYPE>\"\n  replication_factor = 1\n  iam_role_arn       = \"<example_resource_id>\"\n\n  # Critical: enables encryption at rest\n  server_side_encryption {\n    enabled = true  # Encrypts DAX cluster data at rest\n  }\n}\n```"
     },
     "Recommendation": {
-      "Text": "Provision DAX clusters with **`encryption at rest`** enabled. Apply **least privilege** for DAX administration and data access, and monitor with logging.\n\nAdopt **defense in depth**: enable encryption in transit, restrict network exposure, and avoid caching highly sensitive data. Re-create unencrypted clusters to enforce this setting.",
+      "Text": "Provision DAX clusters with `encryption at rest` enabled. Apply **least privilege** for DAX administration and data access, and monitor with logging.\n\nAdopt **defense in depth**: enable encryption in transit, restrict network exposure, and avoid caching highly sensitive data. Re-create unencrypted clusters to enforce this setting.",
       "Url": "https://hub.prowler.com/check/dynamodb_accelerator_cluster_encryption_enabled"
     }
   },

@@ -15,7 +15,7 @@
   "ResourceType": "AwsIamPolicy",
   "ResourceGroup": "IAM",
   "Description": "**IAM AWS-managed policies** attached to identities are inspected for statements that allow `Action:'*'` on `Resource:'*'`-i.e., full administrative `*:*` permissions",
-  "Risk": "**Unrestricted `*:*` access** enables any action on any resource, risking:\n- Data exfiltration (**confidentiality**)\n- Unauthorized changes and policy tampering (**integrity**)\n- Service deletion or shutdown (**availability**)\nAttackers can disable logging, create backdoor principals, and expand lateral movement.",
+  "Risk": "**Unrestricted** `*:*` **access** enables any action on any resource, risking:\n- Data exfiltration (**confidentiality**)\n- Unauthorized changes and policy tampering (**integrity**)\n- Service deletion or shutdown (**availability**)\nAttackers can disable logging, create backdoor principals, and expand lateral movement.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.aws.amazon.com/aws-managed-policy/latest/reference/AdministratorAccess.html",

@@ -13,7 +13,7 @@
   "Severity": "medium",
   "ResourceType": "AwsIamUser",
   "ResourceGroup": "IAM",
-  "Description": "**IAM users** are evaluated for having **two `Active` access keys** simultaneously.\n\nThe check identifies users whose two access key slots are enabled at the same time.",
+  "Description": "**IAM users** are evaluated for having **two** `Active` **access keys** simultaneously.\n\nThe check identifies users whose two access key slots are enabled at the same time.",
   "Risk": "**Two active keys per user** widen exposure and weaken credential governance.\n- Any leaked key enables unauthorized API actions, risking data exfiltration and resource changes\n- Rotation and response become error-prone, allowing attacker persistence if one key remains unnoticed",
   "RelatedUrl": "",
   "AdditionalURLs": [
@@ -30,7 +30,7 @@
       "Terraform": "```hcl\n# Deactivate one IAM access key so the user has at most one active key\nresource \"aws_iam_access_key\" \"<example_resource_name>\" {\n  user   = \"<example_resource_name>\"\n  status = \"Inactive\"  # Critical: deactivates this key to avoid 2 active keys\n}\n```"
     },
     "Recommendation": {
-      "Text": "Maintain **one `Active` access key** per IAM user; permit only a brief overlap for rotation, then promptly deactivate and delete the old key. Prefer **temporary credentials** via roles/federation over long-lived keys. Apply **least privilege**, periodic rotation, and monitor for unused or aged keys.",
+      "Text": "Maintain **one** `Active` **access key** per IAM user; permit only a brief overlap for rotation, then promptly deactivate and delete the old key. Prefer **temporary credentials** via roles/federation over long-lived keys. Apply **least privilege**, periodic rotation, and monitor for unused or aged keys.",
       "Url": "https://hub.prowler.com/check/iam_user_two_active_access_key"
     }
   },

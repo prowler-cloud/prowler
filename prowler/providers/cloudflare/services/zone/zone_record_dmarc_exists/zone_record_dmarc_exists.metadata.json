@@ -9,7 +9,7 @@
   "Severity": "medium",
   "ResourceType": "Zone",
   "ResourceGroup": "network",
-  "Description": "**Cloudflare zones** are assessed for **DMARC (Domain-based Message Authentication, Reporting, and Conformance)** records by checking if a TXT record exists at `_dmarc` subdomain with an **enforcement policy (`p=reject` or `p=quarantine`)** to actively block or quarantine spoofed emails.",
+  "Description": "**Cloudflare zones** are assessed for **DMARC (Domain-based Message Authentication, Reporting, and Conformance)** records by checking if a TXT record exists at `_dmarc` subdomain with an **enforcement policy** (`p=reject` **or** `p=quarantine`) to actively block or quarantine spoofed emails.",
   "Risk": "Without **DMARC** or with `p=none`, there is no active protection against email spoofing. Attackers can spoof emails for **phishing campaigns** to steal credentials. Domain reputation is damaged by spoofed emails. The `p=none` policy only generates reports but does not block or quarantine spoofed emails.",
   "RelatedUrl": "",
   "AdditionalURLs": [

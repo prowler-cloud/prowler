@@ -26,7 +26,7 @@
       "Terraform": ""
     },
     "Recommendation": {
-      "Text": "Adopt a continuous process to remediate Trusted Advisor findings:\n- Prioritize **`error`** then `warning`\n- Assign ownership and SLAs\n- Integrate alerts with workflows\n- Enforce **least privilege**, segmentation, encryption, MFA, and tested backups\n- Reassess regularly to confirm fixes and prevent regression",
+      "Text": "Adopt a continuous process to remediate Trusted Advisor findings:\n- Prioritize `error` then `warning`\n- Assign ownership and SLAs\n- Integrate alerts with workflows\n- Enforce **least privilege**, segmentation, encryption, MFA, and tested backups\n- Reassess regularly to confirm fixes and prevent regression",
       "Url": "https://hub.prowler.com/check/trustedadvisor_errors_and_warnings"
     }
   },
