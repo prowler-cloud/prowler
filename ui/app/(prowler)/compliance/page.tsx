@@ -31,6 +31,10 @@ import { CompliancePageTabs } from "./_components/compliance-page-tabs";
 import { getComplianceTab } from "./_components/compliance-page-tabs.shared";
 import { CrossAccountOverviewSection } from "./_components/cross-account-overview-section";
 import { CrossProviderOverview } from "./_components/cross-provider-overview";
+import {
+  CrossAccountOverviewSkeleton,
+  CrossProviderOverviewSkeleton,
+} from "./_components/multiple-scans-skeleton";
 
 export default async function Compliance({
   searchParams,
@@ -86,20 +90,16 @@ export default async function Compliance({
             <div className="flex flex-col gap-6">
               <Suspense
                 key={`cross-provider-${searchParamsKey}`}
-                fallback={
-                  <ComplianceOverviewPanel>
-                    <ComplianceSkeletonGrid />
-                  </ComplianceOverviewPanel>
-                }
+                fallback={<CrossProviderOverviewSkeleton />}
               >
                 <CrossProviderOverview searchParams={resolvedSearchParams} />
               </Suspense>
               {/* Regular per-provider frameworks viewable across accounts.
-                  Renders nothing for single-account tenants; no fallback so
-                  the universal grid above never waits on it. */}
+                  Its fallback mirrors the provider groups while this island
+                  loads independently from the universal frameworks above. */}
               <Suspense
                 key={`cross-account-${searchParamsKey}`}
-                fallback={null}
+                fallback={<CrossAccountOverviewSkeleton />}
               >
                 <CrossAccountOverviewSection
                   searchParams={resolvedSearchParams}
