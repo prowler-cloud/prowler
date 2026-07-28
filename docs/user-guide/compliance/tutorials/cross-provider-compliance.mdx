@@ -1,7 +1,7 @@
 ---
 title: 'Cross-Provider Compliance'
 sidebarTitle: 'Cross-Provider Compliance'
-description: 'Aggregate a universal compliance framework across compatible providers with completed scans, or a single-provider framework across every provider of one type, review consolidated roll-ups and per-provider breakdowns, and download combined PDF reports.'
+description: 'Aggregate a universal compliance framework across every compatible provider with a completed scan, review the consolidated roll-up and per-provider breakdown, and download a combined PDF report.'
 ---
 
 import { VersionBadge } from "/snippets/version-badge.mdx"
@@ -50,15 +50,15 @@ The catalog grows as new universal frameworks ship in Prowler. Browse the full c
   <Step title="Open the Compliance section">
     Sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) and select **Compliance** from the left navigation.
   </Step>
-  <Step title="Switch to the Multiple Scans tab">
-    At the top of the Compliance page, select the **Multiple Scans** tab. The **Single Scan** tab (the default) keeps the single-provider compliance experience unchanged.
+  <Step title="Open the Multiple Scans tab">
+    In Prowler Cloud, **Multiple Scans** is the landing tab of the Compliance page, so it opens already selected. Select **Single Scan** at the top of the page to return to the per-scan compliance experience, which remains unchanged.
   </Step>
 </Steps>
 
 <img src="/images/compliance/prowler-app-cross-provider-tab.png" alt="Compliance page showing the Single Scan and Multiple Scans tabs, with the Multiple Scans tab highlighted" width="900" />
 
 <Note>
-The **Across provider types** section requires at least one completed scan for a provider compatible with a universal framework. If none is available, that section shows a notice prompting you to launch or wait for a scan to complete. The **Across providers** section can still list single-provider frameworks when its own account and scan requirements are met.
+The **Across provider types** section requires at least one completed scan for a provider compatible with a universal framework. If none is available, that section shows a notice prompting you to launch or wait for a scan to complete. The **Across providers** section below it has its own requirements — see [Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance).
 </Note>
 
 ## Exploring the Overview
@@ -66,7 +66,7 @@ The **Across provider types** section requires at least one completed scan for a
 The Multiple Scans tab is organized into two sections, each labeled with the axis it aggregates across:
 
 * **Across provider types:** One card per supported universal framework, aggregating every compatible provider type. This is the Cross-Provider Compliance experience described in the rest of this guide.
-* **Across providers:** One card per single-provider framework (for example, CIS AWS) that can be aggregated across every connected provider of the same type. See [Aggregating a Single-Provider Framework Across Providers](#aggregating-a-single-provider-framework-across-providers).
+* **Across providers:** One card per single-provider framework (for example, CIS AWS) that can be aggregated across every provider of the same type. See [Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance).
 
 The **Across provider types** section presents one card per supported universal framework, each summarizing the consolidated posture across every contributing provider.
 
@@ -87,8 +87,8 @@ Select any card to open the framework detail page.
 The filters bar controls which providers and accounts feed every card and detail view. Cross-Provider Compliance supports three filters:
 
 * **Provider type:** Narrow the roll-up to specific provider types (for example, only AWS and Azure).
-* **Provider / account:** Narrow to specific connected accounts.
-* **Provider group:** Narrow to accounts within one or more provider groups.
+* **Providers:** Narrow to specific providers — accounts, subscriptions, or projects — listed by alias and unique identifier (UID).
+* **Provider group:** Narrow to the providers belonging to one or more provider groups.
 
 Select **Clear filters** to reset all filters. Filters applied on the overview are carried through into the detail page and the PDF report so the view stays consistent end to end.
 
@@ -120,7 +120,7 @@ The accordion organizes every requirement of the framework. For each requirement
 
 * **Requirement ID and title:** The official identifier from the framework.
 * **Roll-up status badge:** A single `Pass`, `Fail`, or `Manual` badge representing the consolidated status across all contributing providers.
-* **Per-provider status:** The status each contributing provider returned for that requirement, so a single failing provider is immediately attributable.
+* **Per-provider status:** The status each contributing provider returned for that requirement, so a single failing provider is immediately attributable. Up to five providers are shown as inline chips; beyond that the row condenses into per-status counts (for example, `Fail ×3 Pass ×6`), and selecting the counts opens the full provider-by-provider breakdown.
 * **Provider-labeled checks:** When you expand a requirement, the underlying checks are labeled with the provider they belong to (each universal requirement maps to different check IDs per provider).
 
 Expand a requirement to review the failing checks per provider, the affected resources, and remediation guidance. Findings are queried across every contributing scan and merged into a single table.
@@ -155,7 +155,13 @@ By default, Cross-Provider Compliance auto-selects the **latest completed scan**
 
 * The view always reflects your most recent posture per provider, without any manual scan selection.
 * Adding a new compatible provider and running a scan automatically brings it into the roll-up.
-* Provider visibility follows your role: you only ever see providers your permissions allow, and the roll-up is scoped accordingly.
+* Provider visibility follows your role: only the providers your permissions allow are ever shown, and the roll-up is scoped accordingly. See [Role-Based Access Control (RBAC)](/user-guide/tutorials/prowler-app-rbac).
+
+What makes a provider contribute is **having a completed scan**, not its current connection status:
+
+* Only scans in the **completed** state are eligible. Failed, cancelled, and in-progress scans are ignored, so a provider whose latest scan is still running keeps contributing its previous completed one.
+* A provider whose credentials stopped working still contributes its last completed scan. The posture it shows is as old as that scan.
+* A provider connected but never scanned contributes nothing until its first scan completes. On the framework cards it appears dimmed instead of disappearing, so the coverage gap stays visible.
 
 ## Downloading the Combined PDF Report
 
@@ -163,7 +169,7 @@ The **Report** button on the detail page generates a single PDF that combines ev
 
 ### The Report Follows Your Filters
 
-A report covers the exact set of scans your current filters resolve to. The provider type, provider / account, and provider group filters applied on the detail page determine which providers contribute, and the auto-select rule pins each contributing provider's latest completed scan. The PDF is built from that resolved scan set together with the framework.
+A report covers the exact set of scans your current filters resolve to. The provider type, providers, and provider group filters applied on the detail page determine which providers contribute, and the auto-select rule pins each contributing provider's latest completed scan. The PDF is built from that resolved scan set together with the framework.
 
 As a result, each filter combination produces its own report. For example:
 
@@ -210,25 +216,11 @@ The PDF detail section renders only **failed** requirements by default so the re
 
 Universal frameworks answer the cross-provider-type question, but most compliance frameworks target a single provider type — CIS AWS, CIS GCP, ENS for Azure. The **Across providers** section of the Multiple Scans tab answers the sibling question for those frameworks: **"How compliant are all of my AWS accounts against CIS AWS, together?"**
 
-For every provider type with **two or more connected providers**, the section shows a collapsible group headed by the provider type and its counts (frameworks available and providers connected). Expanding a group reveals one card per single-provider framework available for that type, keeping the section compact even when several multi-provider types are connected. Selecting a card opens a detail page with the same layout as the cross-provider detail, with the column axis swapped from provider type to provider:
-
-* **One column per provider:** Prowler auto-selects the latest completed scan of every provider of that type you are allowed to see, and each requirement shows a status chip per provider (labeled with its alias or account ID).
-* **Account Coverage:** The coverage card ranks each provider's individual posture so the weakest account is visible at a glance.
-* **Filters:** Narrow the aggregation to specific providers or provider groups. The provider type is fixed by the framework, so there is no type filter here.
-* **Findings drill-down:** Expanding a requirement queries the findings of every contributing provider's scan and merges them into a single table.
-
-The roll-up rules are identical to the cross-provider ones (**FAIL > PASS > MANUAL**, only providers that contributed a result count), applied per provider instead of per provider type. Scan selection, RBAC scoping, and staleness behavior also match: the view always reflects each provider's most recent completed scan, scoped to your role's visibility.
-
-<Note>
-Provider types with a single connected provider are not listed — with one provider the aggregation is identical to the standard per-scan [Compliance](/user-guide/compliance/tutorials/compliance) view.
-</Note>
-
-### Cross-Account PDF Report
-
-The detail page's **Report** button produces a single combined PDF across every contributing provider of the type, with the same asynchronous generation, background notification, and **Download latest** reuse flow as the [cross-provider report](#downloading-the-combined-pdf-report). The report is tied to the exact resolved scan set, so a new completed scan in any contributing provider makes the previous report stale and Prowler offers to generate an up-to-date one.
+The aggregation works the same way, with the column axis swapped from provider type to individual provider, and it produces its own combined PDF report. See [Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance) for the full guide.
 
 ## Related Documentation
 
+* [Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance)
 * [Compliance](/user-guide/compliance/tutorials/compliance)
 * [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore)
 * [Creating a New Security Compliance Framework in Prowler](/developer-guide/security-compliance-framework)

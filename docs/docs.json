@@ -158,6 +158,7 @@
                 "pages": [
                   "user-guide/compliance/tutorials/compliance",
                   "user-guide/compliance/tutorials/cross-provider-compliance",
+                  "user-guide/compliance/tutorials/cross-account-compliance",
                   "user-guide/compliance/tutorials/threatscore"
                 ]
               },

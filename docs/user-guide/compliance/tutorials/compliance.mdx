@@ -32,12 +32,15 @@ To open the compliance overview, follow these steps:
 1. Sign in to Prowler Cloud at [cloud.prowler.com](https://cloud.prowler.com/sign-in) or to a Prowler Local Server instance.
 2. Select **Compliance** from the left navigation.
 
-The page lists every framework evaluated by the most recent completed scan of the selected provider.
+The Compliance page is organized into two tabs:
 
-<img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and App showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
+* **Single Scan:** Lists every framework evaluated by one completed scan of one provider. This is the experience described in the rest of this guide, and the default view in Prowler Local Server.
+* **Multiple Scans:** Aggregates one framework across several scans at once, either across provider types ([Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)) or across every provider of the same type ([Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance)). It is the landing tab in Prowler Cloud; in Prowler Local Server it carries a **Cloud** badge, since it requires a subscription.
+
+<img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and Prowler Local Server showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
 
 <Note>
-Compliance results require at least one completed scan. If no scan has finished yet, Prowler Cloud and App display a notice prompting to launch or wait for a scan to complete.
+Compliance results require at least one completed scan. If no scan has finished yet, Prowler Cloud and Prowler Local Server display a notice prompting to launch or wait for a scan to complete.
 </Note>
 
 ### Filtering Compliance Results
@@ -145,7 +148,7 @@ Frameworks without a custom layout fall back to the generic details panel, which
 
 ### Downloading Compliance Reports
 
-Prowler Cloud and App expose two formats:
+Prowler Cloud and Prowler Local Server expose two formats:
 
 * **CSV report:** Every requirement, every check, and every finding for the selected scan and filters. Available for all supported frameworks.
 * **PDF report:** Curated executive-style report. Currently supported for Prowler ThreatScore, ENS RD2022, NIS2, and CSA CCM. Additional PDF reports are added in subsequent Prowler releases.
@@ -183,7 +186,7 @@ Use the API to integrate compliance evidence into ticketing systems, executive d
 
 ## Prowler CLI
 
-Prowler CLI evaluates the same compliance frameworks as Prowler Cloud and App, and produces detailed CSV outputs alongside the standard scan results. By default, it runs every supported framework and prints a status summary at the end of the scan:
+Prowler CLI evaluates the same compliance frameworks as Prowler Cloud and Prowler Local Server, and produces detailed CSV outputs alongside the standard scan results. By default, it runs every supported framework and prints a status summary at the end of the scan:
 
 <img src="/images/cli/compliance/compliance.png" />
 
@@ -264,6 +267,7 @@ To request a new framework or contribute one, see [Creating a New Security Compl
 ## Related Documentation
 
 * [Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)
+* [Cross-Account Compliance](/user-guide/compliance/tutorials/cross-account-compliance)
 * [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore)
 * [Creating a New Security Compliance Framework in Prowler](/developer-guide/security-compliance-framework)
 * [Prowler Cloud — Getting Started](/user-guide/tutorials/prowler-app)
