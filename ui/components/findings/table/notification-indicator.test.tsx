@@ -1,4 +1,4 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -61,6 +61,17 @@ vi.mock("@/components/shadcn/tooltip", () => ({
 import { NotificationIndicator } from "./notification-indicator";
 
 describe("NotificationIndicator", () => {
+  it("does not show a ring around the delta trigger", () => {
+    // Given
+    render(<NotificationIndicator delta="new" />);
+
+    // When
+    const deltaTrigger = screen.getByRole("button");
+
+    // Then
+    expect(deltaTrigger).toHaveClass("outline-none", "ring-0");
+  });
+
   it("uses the design-system fail color for new findings", () => {
     // Given
     const { container } = render(<NotificationIndicator delta="new" />);
