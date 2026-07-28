@@ -129,8 +129,10 @@ describe("CrossAccountOverviewSection", () => {
     // Then: one collapsed group per eligible type, counts on the header,
     // cards revealed only on expand.
     expect(screen.getByText("Across providers")).toBeInTheDocument();
-    expect(screen.getByText("AWS")).toBeInTheDocument();
-    expect(screen.getByText("1 framework · 2 providers")).toBeInTheDocument();
+    const providerName = screen.getByText("AWS");
+    const providerSummary = screen.getByText("1 framework · 2 providers");
+    expect(providerName.parentElement).toContainElement(providerSummary);
+    expect(screen.queryByText("Google Cloud")).not.toBeInTheDocument();
     expect(screen.queryByTestId("cross-account-card")).not.toBeInTheDocument();
 
     await userEvent

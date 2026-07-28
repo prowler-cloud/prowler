@@ -152,12 +152,17 @@ export const CrossAccountOverviewSection = async ({
     return {
       key: providerType,
       title: (
-        <span className="flex items-center gap-2 text-sm font-medium">
-          <ProviderTypeIcon type={providerType} size={18} />
-          {PROVIDER_DISPLAY_NAMES[providerType]}
+        <span className="flex min-w-0 items-center gap-3">
+          <span className="flex shrink-0 items-center gap-2 text-sm font-medium">
+            <ProviderTypeIcon type={providerType} size={18} />
+            {PROVIDER_DISPLAY_NAMES[providerType]}
+          </span>
+          <span className="text-text-neutral-tertiary truncate text-xs">
+            {entries.length} {entries.length === 1 ? "framework" : "frameworks"}{" "}
+            · {accountCount} providers
+          </span>
         </span>
       ),
-      subtitle: `${entries.length} ${entries.length === 1 ? "framework" : "frameworks"} · ${accountCount} providers`,
       content: (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           {entries.map((entry) => (
