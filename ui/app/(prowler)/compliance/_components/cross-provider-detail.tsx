@@ -156,12 +156,9 @@ export const CrossProviderDetail = async ({
       compliancetitle={compliancetitle}
       logoPath={logoPath}
       title={
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="truncate text-sm font-medium">
-            {attrs.name || compliancetitle.split("-").join(" ")}
-          </span>
-          <CrossProviderHubLink complianceId={complianceId} />
-        </div>
+        <span className="truncate text-sm font-medium">
+          {attrs.name || compliancetitle.split("-").join(" ")}
+        </span>
       }
       description={
         <p className="text-text-neutral-tertiary text-xs">
@@ -170,6 +167,7 @@ export const CrossProviderDetail = async ({
           {attrs.scan_ids.length === 1 ? "scan" : "scans"} aggregated
         </p>
       }
+      headerLink={<CrossProviderHubLink complianceId={complianceId} />}
       reportAction={
         <CrossProviderPdfButton
           complianceId={complianceId}
