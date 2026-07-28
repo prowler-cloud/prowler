@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 import github
 from pydantic.v1 import BaseModel
@@ -205,7 +205,10 @@ class Organization(GithubService):
             else None
         )
         is_verified = _extract_flag("is_verified", bool)
-        default_workflow_permissions = self._get_default_workflow_permissions(org)
+        (
+            default_workflow_permissions,
+            can_approve_pull_request_reviews,
+        ) = self._get_actions_workflow_permissions(org)
         organizations[org.id] = Org(
             id=org.id,
             name=org.login,
@@ -229,20 +232,33 @@ class Organization(GithubService):
             base_permission=base_permission,
             is_verified=is_verified,
             default_workflow_permissions=default_workflow_permissions,
+            can_approve_pull_request_reviews=can_approve_pull_request_reviews,
         )
 
-    def _get_default_workflow_permissions(self, org) -> Optional[str]:
-        """Fetch the default GITHUB_TOKEN permissions granted to workflows in the organization.
+    def _get_actions_workflow_permissions(
+        self, org
+    ) -> Tuple[Optional[str], Optional[bool]]:
+        """Fetch the Actions workflow permissions settings of the organization.
+
+        The API returns a response in the format:
+        {
+            "default_workflow_permissions": "read",
+            "can_approve_pull_request_reviews": false
+        }
 
         Args:
             org: PyGithub Organization object.
 
         Returns:
-            Optional[str]: "read" or "write", or None when the setting cannot be read.
+            Tuple[Optional[str], Optional[bool]]: The default GITHUB_TOKEN permissions
+                ("read" or "write") and whether workflows can approve pull requests.
+                Each value is None when it cannot be read.
 
         Raises:
             github.RateLimitExceededException: When API rate limits are exceeded
         """
+        default_workflow_permissions = None
+        can_approve_pull_request_reviews = None
         try:
             _, response = org._requester.requestJsonAndCheck(  # type: ignore[attr-defined]
                 "GET",
@@ -255,7 +271,10 @@ class Organization(GithubService):
             if isinstance(response, dict):
                 permissions = response.get("default_workflow_permissions")
                 if isinstance(permissions, str):
-                    return permissions
+                    default_workflow_permissions = permissions
+                can_approve = response.get("can_approve_pull_request_reviews")
+                if isinstance(can_approve, bool):
+                    can_approve_pull_request_reviews = can_approve
         except github.RateLimitExceededException as error:
             logger.error(f"GitHub API rate limit exceeded: {error}")
             raise  # Re-raise rate limit errors as they need special handling
@@ -277,7 +296,7 @@ class Organization(GithubService):
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
-        return None
+        return default_workflow_permissions, can_approve_pull_request_reviews
 
 
 class Org(BaseModel):
@@ -295,3 +314,4 @@ class Org(BaseModel):
     base_permission: Optional[str] = None
     is_verified: Optional[bool] = None
     default_workflow_permissions: Optional[str] = None
+    can_approve_pull_request_reviews: Optional[bool] = None
