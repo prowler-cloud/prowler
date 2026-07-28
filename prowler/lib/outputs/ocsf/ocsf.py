@@ -365,7 +365,10 @@ def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
             requirement["Id"]: requirement
             for requirement in data.get("Requirements", [])
         }
-    except Exception:
+    except Exception as error:
+        logger.error(
+            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+        )
         return {}
 
 
@@ -385,9 +388,15 @@ def _build_mitre_attacks(finding: Finding) -> Optional[List[MITREAttack]]:
         requirement = technique_map.get(technique_id)
         if not requirement:
             continue
+        technique_name = requirement.get("Name")
+        if not technique_name:
+            logger.warning(
+                f"Skipping MITRE ATT&CK technique {technique_id} for provider {finding.provider}: missing Name"
+            )
+            continue
         technique = Technique(
             uid=technique_id,
-            name=requirement["Name"],
+            name=technique_name,
             src_url=requirement.get("TechniqueURL"),
         )
         for tactic_name in requirement.get("Tactics", []):
