@@ -960,7 +960,9 @@ def generate_compliance_reports(
             first_output_path = next(iter(output_paths.values()))
             out_dir = str(Path(first_output_path).parent.parent)
     except Exception as e:
-        logger.error("Error generating output directory: %s", e)
+        # logger.exception attaches the exception to the Sentry event so ENOSPC
+        # and ENOENT failures stop being grouped under a single issue.
+        logger.exception("Error generating output directory: %s", e)
         error_dict = {"error": str(e), "upload": False, "path": ""}
         if generate_threatscore:
             results["threatscore"] = error_dict.copy()
