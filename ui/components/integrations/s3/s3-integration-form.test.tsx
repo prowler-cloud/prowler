@@ -244,5 +244,9 @@ describe("S3IntegrationForm", () => {
     expect(
       screen.getByLabelText(/Bucket owner account ID/i),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Update Credentials" }),
+    ).not.toBeInTheDocument();
   });
 });

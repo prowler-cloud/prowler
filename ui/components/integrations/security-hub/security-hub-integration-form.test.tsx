@@ -91,4 +91,16 @@ describe("SecurityHubIntegrationForm", () => {
       screen.queryByRole("button", { name: "Update Configuration" }),
     ).not.toBeInTheDocument();
   });
+
+  it("uses the short update label when editing credentials", () => {
+    renderSecurityHubIntegrationForm({
+      integration,
+      editMode: "credentials",
+    });
+
+    expect(screen.getByRole("button", { name: "Update" })).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "Update Credentials" }),
+    ).not.toBeInTheDocument();
+  });
 });
