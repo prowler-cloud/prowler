@@ -157,7 +157,6 @@ describe("MessageBubble", () => {
     expect(isBefore(firstText, toolCall)).toBe(true);
     expect(isBefore(toolCall, secondText)).toBe(true);
   });
-
 });
 
 function isBefore(first: HTMLElement, second: HTMLElement): boolean {

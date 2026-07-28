@@ -326,5 +326,4 @@ describe("ProvidersAccountsTable", () => {
       expect(result.providerIds).toEqual(["provider-2", "provider-3"]);
     });
   });
-
 });
