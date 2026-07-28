@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "ecs_instance_vpc_configured",
+  "CheckTitle": "ECS instances should be deployed within a VPC",
+  "CheckType": [],
+  "ServiceName": "ecs",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "HUAWEICLOUD::ECS::Instance",
+  "ResourceGroup": "compute",
+  "Description": "Ensure that ECS instances are deployed within a VPC for network isolation, security group enforcement, and controlled connectivity.",
+  "Risk": "ECS instances not deployed within a VPC may lack network isolation and security controls, potentially exposing them to unauthorized access.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-vpc/vpc_Sg_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Elastic Cloud Server.\n3. Select the instance.\n4. Click More > Change VPC.\n5. Select the target VPC and subnet.\n6. Click OK.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy all ECS instances within an appropriate VPC with proper subnet and security group configurations.",
+      "Url": "https://hub.prowler.com/check/ecs_instance_vpc_configured"
+    }
+  },
+  "Categories": [
+    "trust-boundaries"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
