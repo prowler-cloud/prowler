@@ -1,0 +1,34 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "identitycenter_enabled",
+  "CheckTitle": "Identity Center is enabled",
+  "CheckType": [],
+  "ServiceName": "identitycenter",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "IdentityCenterInstance",
+  "ResourceGroup": "IAM",
+  "Description": "Ensure Huawei Cloud Identity Center is enabled",
+  "Risk": "Without Identity Center, there is no centralized identity management for federated access across Huawei Cloud accounts.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable Identity Center in the Huawei Cloud console under IAM > Identity Center.",
+      "Url": "https://hub.prowler.com/check/identitycenter_enabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
