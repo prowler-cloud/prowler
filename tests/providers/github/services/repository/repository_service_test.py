@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import requests
 from github import GithubException, RateLimitExceededException
+from pytest import raises
 
 from prowler.providers.github.services.repository.repository_service import (
     Branch,
@@ -944,3 +945,73 @@ class Test_Repository_BranchProtectionRulesets:
         assert repos[1].default_branch.enforce_admins_source is None
         # The branch is still reported as protected-but-inactive regardless of bypass.
         assert repos[1].default_branch.protected_source == "ruleset_not_active"
+
+
+class Test_Repository_Default_Workflow_Permissions:
+    def setup_method(self):
+        """Build a Repository service instance without contacting GitHub."""
+        self.repository_service = Repository.__new__(Repository)
+        self.repository_service.provider = set_mocked_github_provider()
+
+    def _mock_repo(self):
+        """Create a mocked PyGithub repository."""
+        repo = MagicMock()
+        repo.full_name = "account-name/repo1"
+        return repo
+
+    def test_default_workflow_permissions_read(self):
+        """Test that the default workflow permissions value is read from the API response."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = (
+            {},
+            {"default_workflow_permissions": "read"},
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) == "read"
+        ), "The repository default GITHUB_TOKEN permissions should be read from the Actions permissions endpoint"
+
+    def test_default_workflow_permissions_missing_field(self):
+        """Test that a response without the permissions field yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.return_value = ({}, {})
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "An unexpected response payload should not be reported as a permissions value"
+
+    def test_default_workflow_permissions_not_available(self):
+        """Test that repositories without the setting yield no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            404, "Not Found", None
+        )
+
+        assert (
+            self.repository_service._get_default_workflow_permissions(repo) is None
+        ), "A repository without Actions permissions settings should not produce a value"
+
+    def test_default_workflow_permissions_access_denied(self):
+        """Test that a token without repository administration access yields no value."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = GithubException(
+            403, "Forbidden", None
+        )
+
+        with patch(
+            "prowler.providers.github.services.repository.repository_service.logger"
+        ) as mock_logger:
+            assert (
+                self.repository_service._get_default_workflow_permissions(repo) is None
+            ), "Insufficient permissions should not produce a value"
+            mock_logger.warning.assert_called()
+
+    def test_default_workflow_permissions_rate_limit(self):
+        """Test that rate limit errors are propagated instead of being reported as unavailable."""
+        repo = self._mock_repo()
+        repo._requester.requestJsonAndCheck.side_effect = RateLimitExceededException(
+            403, "Rate limit exceeded", None
+        )
+
+        with raises(RateLimitExceededException):
+            self.repository_service._get_default_workflow_permissions(repo)
