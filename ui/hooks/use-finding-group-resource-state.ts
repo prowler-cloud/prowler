@@ -36,6 +36,7 @@ interface UseFindingGroupResourceStateReturn {
   selectedResources: FindingResourceRow[];
   selectedFindingIds: string[];
   selectableRowCount: number;
+  getRowId: (resource: FindingResourceRow) => string;
   getRowCanSelect: (row: Row<FindingResourceRow>) => boolean;
   clearSelection: () => void;
   isSelected: (id: string) => boolean;
@@ -52,11 +53,16 @@ function getSelectedResources(
   resources: FindingResourceRow[],
   selection: RowSelectionState,
 ): FindingResourceRow[] {
-  return Object.keys(selection)
-    .filter((key) => selection[key])
-    .map((idx) => resources[parseInt(idx)])
-    .filter((resource): resource is FindingResourceRow => Boolean(resource));
+  const selectedFindingIds = new Set(
+    Object.keys(selection).filter((key) => selection[key]),
+  );
+  return resources.filter((resource) =>
+    selectedFindingIds.has(resource.findingId),
+  );
 }
+
+const getFindingResourceRowId = (resource: FindingResourceRow) =>
+  resource.findingId;
 
 export function useFindingGroupResourceState({
   group,
@@ -291,6 +297,7 @@ export function useFindingGroupResourceState({
     selectedResources,
     selectedFindingIds,
     selectableRowCount,
+    getRowId: getFindingResourceRowId,
     getRowCanSelect,
     clearSelection,
     isSelected,

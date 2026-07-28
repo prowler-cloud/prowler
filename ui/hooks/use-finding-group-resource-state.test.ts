@@ -170,7 +170,7 @@ describe("useFindingGroupResourceState", () => {
     ) => void;
     await act(async () => {
       onSetResources([findingResource("FAIL")], false);
-      result.current.handleRowSelectionChange({ "0": true });
+      result.current.handleRowSelectionChange({ "finding-1": true });
     });
 
     // When: a refresh updates the selected finding without another selection event
@@ -185,6 +185,51 @@ describe("useFindingGroupResourceState", () => {
         status: "MUTED",
       }),
     ]);
+  });
+
+  it("keeps selection bound to finding ids when resources are reordered", async () => {
+    // Given
+    const firstResource = findingResource("FAIL");
+    const secondResource = {
+      ...findingResource("PASS"),
+      id: "resource-2",
+      findingId: "finding-2",
+      resourceName: "resource-2",
+      resourceUid: "resource-uid-2",
+    };
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+    await act(async () => {
+      onSetResources([firstResource, secondResource], false);
+      result.current.handleRowSelectionChange({ "finding-1": true });
+    });
+
+    // When
+    await act(async () => {
+      onSetResources(
+        [secondResource, { ...firstResource, status: "MUTED" }],
+        false,
+      );
+    });
+
+    // Then
+    expect(result.current.selectedResources).toEqual([
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: "MUTED",
+      }),
+    ]);
+    expect(result.current.selectedFindingIds).toEqual(["finding-1"]);
   });
 
   it("preserves an existing mute reason for already-muted optimistic shortcut updates", async () => {
