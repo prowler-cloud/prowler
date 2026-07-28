@@ -170,7 +170,10 @@
     {
       "Id": "1.3.2",
       "Description": "Idle session timeout allows the configuration of a setting which will timeout inactive users after a pre-determined amount of time. When a user reaches the set idle timeout session, they'll get a notification that they're about to be signed out. They must choose to stay signed in or they'll be automatically signed out of all Microsoft 365 web apps. Combined with a Conditional Access rule this will only impact unmanaged devices. A managed device is considered a device managed by Intune MDM or joined to a domain (Entra ID or Hybrid joined). The following Microsoft 365 web apps are supported. - Outlook Web App - OneDrive - SharePoint - Microsoft Fabric - Microsoft365.com and other start pages - Microsoft 365 web apps (Word, Excel, PowerPoint) - Microsoft 365 Admin Center - M365 Defender Portal - Microsoft Purview Compliance Portal The recommended setting is 3 hours (or less) for unmanaged devices. Note: Idle session timeout doesn't affect Microsoft 365 desktop and mobile apps.",
-      "Checks": [],
+      "Checks": [
+        "entra_idle_session_timeout_configured",
+        "entra_conditional_access_policy_app_enforced_restrictions"
+      ],
       "Attributes": [
         {
           "Section": "1 Microsoft 365 admin center",
@@ -1783,7 +1786,9 @@
     {
       "Id": "5.2.2.8",
       "Description": "Microsoft Entra ID Protection sign-in risk detects risks in real-time and offline. A risky sign-in is an indicator for a sign-in attempt that might not have been performed by the legitimate owner of a user account. Note: While Identity Protection also provides two risk policies with limited conditions, Microsoft highly recommends setting up risk-based policies in Conditional Access as opposed to the \"legacy method\" for the following benefits: - Enhanced diagnostic data - Report-only mode integration - Graph API support - Use more Conditional Access attributes like sign-in frequency in the policy",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_block_high_medium_sign_in_risk"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1896,7 +1901,9 @@
     {
       "Id": "5.2.2.13",
       "Description": "Sign-in frequency defines the time period before a user is asked to sign in again when attempting to access a resource. The Microsoft Entra ID default configuration for user sign-in frequency is a rolling window of 90 days. The recommended state for all users is to enforce periodic reauthentication for 7 days or less.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_sign_in_frequency_all_users"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1917,7 +1924,9 @@
     {
       "Id": "5.2.2.14",
       "Description": "Microsoft Entra ID Conditional Access allows an organization to configure Named locations and configure whether those locations are trusted or untrusted. These settings provide organizations the means to specify Geographical locations for use in conditional access policies, or define actual IP addresses and IP ranges and whether or not those IP addresses and/or ranges are trusted by the organization. The recommended state is to define at least one trusted, IP range named location.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_trusted_named_location_exists"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1938,7 +1947,9 @@
     {
       "Id": "5.2.2.15",
       "Description": "Conditional Access Policies can be used to block access from geographic locations that are deemed out-of-scope for your organization or application. The scope and variables for this policy should be carefully examined and defined. The recommended state is to configure at least one policy to block access from untrusted locations.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_untrusted_locations_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1959,7 +1970,9 @@
     {
       "Id": "5.2.2.16",
       "Description": "Token Protection is a Conditional Access session control that attempts to reduce token replay attacks by ensuring only device bound sign-in session tokens, like Primary Refresh Tokens (PRTs), are accepted by Microsoft Entra ID when applications request access to protected resources. When a user registers a supported device with Microsoft Entra, a PRT is issued and cryptographically bound to that device. This binding ensures that even if a threat actor steals the token, it can't be used from another device. With Token Protection enforced, Microsoft Entra validates that only these bound sign-in session tokens are used by supported applications. The recommended state is to enforce Token Protection for Office 365 Exchange Online, Office 365 SharePoint Online and Microsoft Teams Services.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_token_protection_enforced"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
@@ -1980,7 +1993,9 @@
     {
       "Id": "5.2.2.17",
       "Description": "Authentication transfer is a flow that lets users seamlessly transfer authenticated state from one device to another. For example, users might see a QR code in the desktop version of Outlook that, when scanned on their mobile device, transfers their authenticated state to the mobile device. The recommended state is to block Authentication transfer.",
-      "Checks": [],
+      "Checks": [
+        "entra_conditional_access_policy_authentication_transfer_blocked"
+      ],
       "Attributes": [
         {
           "Section": "5 Microsoft Entra admin center",
