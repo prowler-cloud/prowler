@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "tms_predefined_tags_configured",
+  "CheckTitle": "TMS predefined tags should be configured",
+  "CheckType": [],
+  "ServiceName": "tms",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "low",
+  "ResourceType": "HUAWEICLOUD::TMS::PredefinedTag",
+  "ResourceGroup": "governance",
+  "Description": "Ensure that predefined tags are configured in Tag Management Service to enable resource classification and governance.",
+  "Risk": "Without predefined tags, resources cannot be consistently classified or audited by owner, project, or environment, leading to governance gaps and difficulty in cost allocation.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-tms/tms_01_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "hcloud TMS CreatePredefineTags --tags '[{\"key\":\"environment\",\"value\":\"production\"},{\"key\":\"owner\",\"value\":\"platform-team\"}]'",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console\n2. Navigate to Tag Management Service\n3. Click Create Tag\n4. Define mandatory tags such as environment, owner, and project",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Define predefined tags (e.g. environment, owner, project) in Tag Management Service to enable resource governance.",
+      "Url": "https://hub.prowler.com/check/tms_predefined_tags_configured"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
