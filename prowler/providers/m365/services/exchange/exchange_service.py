@@ -137,6 +137,9 @@ class Exchange(M365Service):
                     delayed_delicensing_enabled=organization_configuration.get(
                         "DelayedDelicensingEnabled", False
                     ),
+                    reject_direct_send=organization_configuration.get(
+                        "RejectDirectSend", False
+                    ),
                 )
         except Exception as error:
             logger.error(
@@ -255,6 +258,13 @@ class Exchange(M365Service):
                                 id=policy.get("Id", ""),
                                 additional_storage_enabled=policy.get(
                                     "AdditionalStorageProvidersAvailable", True
+                                ),
+                                is_default=policy.get("IsDefault", False),
+                                personal_accounts_enabled=policy.get(
+                                    "PersonalAccountsEnabled", True
+                                ),
+                                personal_account_calendars_enabled=policy.get(
+                                    "PersonalAccountCalendarsEnabled", True
                                 ),
                             )
                         )
@@ -489,6 +499,7 @@ class Organization(BaseModel):
     mailtips_large_audience_threshold: int
     delayed_delicensing_enabled: bool = False
     total_paid_licenses: Optional[int] = None
+    reject_direct_send: bool = False
 
 
 class MailboxAuditConfig(BaseModel):
@@ -516,6 +527,9 @@ class TransportConfig(BaseModel):
 class MailboxPolicy(BaseModel):
     id: str
     additional_storage_enabled: bool
+    is_default: bool = False
+    personal_accounts_enabled: bool = True
+    personal_account_calendars_enabled: bool = True
 
 
 class RoleAssignmentPolicy(BaseModel):

@@ -1,0 +1,37 @@
+{
+  "Provider": "m365",
+  "CheckID": "exchange_owa_mailbox_policy_personal_accounts_disabled",
+  "CheckTitle": "Default OWA mailbox policy disables personal account integration",
+  "CheckType": [],
+  "ServiceName": "exchange",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "collaboration",
+  "Description": "The default Outlook on the web (OWA) mailbox policy should have **PersonalAccountsEnabled** and **PersonalAccountCalendarsEnabled** set to false. These settings control whether users can add personal email accounts (e.g., Outlook.com, Gmail, Yahoo) and personal calendars in the new Outlook for Windows.",
+  "Risk": "Allowing personal account integration lets corporate and personal data mix within the same client, increasing the risk of data leakage and reducing the organization's ability to govern and audit access to corporate mail and calendars.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/powershell/module/exchange/set-owamailboxpolicy"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -PersonalAccountsEnabled $false -PersonalAccountCalendarsEnabled $false",
+      "NativeIaC": "",
+      "Other": "1. Connect to Exchange Online PowerShell using Connect-ExchangeOnline\n2. Run: Set-OwaMailboxPolicy -Identity OwaMailboxPolicy-Default -PersonalAccountsEnabled $false -PersonalAccountCalendarsEnabled $false",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Disable PersonalAccountsEnabled and PersonalAccountCalendarsEnabled on the default OWA mailbox policy to prevent users from integrating personal email accounts and calendars into the new Outlook for Windows.",
+      "Url": "https://hub.prowler.com/check/exchange_owa_mailbox_policy_personal_accounts_disabled"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}
