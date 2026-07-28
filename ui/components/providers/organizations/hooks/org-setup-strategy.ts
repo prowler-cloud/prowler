@@ -42,13 +42,14 @@ export interface OrgSetupStrategy {
     data: OrgSetupSubmissionData,
     externalId: string,
   ) => OrgSecretPayload;
-  /** Normalize the raw discovery result into the common hierarchy model. */
-  mapDiscovery: (rawResult: unknown) => OrgHierarchy;
-  /** Candidates to pre-select once discovery succeeds. */
-  getDefaultSelection: (
-    hierarchy: OrgHierarchy,
+  /**
+   * Normalize the raw discovery result into the common hierarchy model and pick
+   * the candidates to pre-select.
+   */
+  ingestDiscovery: (
+    rawResult: unknown,
     data: OrgSetupSubmissionData,
-  ) => string[];
+  ) => { hierarchy: OrgHierarchy; defaultSelection: string[] };
   /** Copy shown when discovery reports/looks like an auth failure. */
   authFailureMessage: (detail?: string) => string;
   /** Copy shown when polling times out client-side. */
@@ -70,18 +71,22 @@ const awsOrgSetupStrategy: OrgSetupStrategy = {
       external_id: externalId,
     },
   }),
-  mapDiscovery: (rawResult) => mapAwsDiscovery(rawResult as AwsDiscoveryResult),
-  getDefaultSelection: (hierarchy, data) => {
+  ingestDiscovery: (rawResult, data) => {
+    const hierarchy = mapAwsDiscovery(rawResult as AwsDiscoveryResult);
     // The deployment (management/delegated admin) account is where the local
     // role is created; its ID is the one embedded in the Role ARN.
     const deploymentCandidateId = data.roleArn?.match(
       /^arn:aws:iam::(\d{12}):role\//,
     )?.[1];
-    return getSelectableCandidateIdsForTarget(
+
+    return {
       hierarchy,
-      data.organizationalUnitId ?? "",
-      deploymentCandidateId,
-    );
+      defaultSelection: getSelectableCandidateIdsForTarget(
+        hierarchy,
+        data.organizationalUnitId ?? "",
+        deploymentCandidateId,
+      ),
+    };
   },
   authFailureMessage: (detail) =>
     detail ? `${AWS_AUTH_FAILURE} ${detail}` : AWS_AUTH_FAILURE,

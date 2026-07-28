@@ -22,7 +22,7 @@ import {
   FilterOption,
   OrganizationNodeResource,
   OrganizationResource,
-  OrgFlowType,
+  OrganizationType,
   ProvidersApiResponse,
   SearchParamsProps,
 } from "@/types";
@@ -191,7 +191,7 @@ const createOrganizationRow = ({
 }: {
   externalId: string | null;
   groupKind: ProvidersOrganizationRow["groupKind"];
-  orgType: OrgFlowType;
+  orgType: OrganizationType;
   kind?: ProvidersOrganizationRow["kind"];
   id: string;
   name: string;
@@ -277,7 +277,7 @@ function buildOrganizationNodeRows({
   maxDepth = 10,
 }: {
   organizationId: string;
-  organizationType: OrgFlowType;
+  organizationType: OrganizationType;
   organizationNodes: OrganizationNodeResource[];
   parentExternalId: string | null;
   parentOrganizationNodeId: string | null;
@@ -405,7 +405,7 @@ export function buildProvidersTableRows({
 
   const organizationRows = organizations
     .map((organization) => {
-      const organizationType = organization.attributes.org_type as OrgFlowType;
+      const organizationType = organization.attributes.org_type;
       const organizationNodeRows = buildOrganizationNodeRows({
         organizationId: organization.id,
         organizationType,

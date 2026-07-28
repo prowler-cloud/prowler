@@ -34,13 +34,15 @@ import {
 } from "@/components/shadcn/dropdown";
 import { Modal } from "@/components/shadcn/modal";
 import { runWithConcurrencyLimit } from "@/lib/concurrency";
+import { getNameSourceLabel, getNodeLabel } from "@/lib/organizations";
 import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
+  isOrgFlowType,
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
-  ORGANIZATION_TYPE,
+  OrgFlowType,
 } from "@/types/organizations";
 import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
 import { isConfigurableProvider } from "@/types/providers";
@@ -169,20 +171,25 @@ function OrgGroupDropdownActions({
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
 
   const isOrgKind = rowData.groupKind === PROVIDERS_GROUP_KIND.ORGANIZATION;
-  const isGcp = rowData.orgType === ORGANIZATION_TYPE.GCP;
   const testIds = hasSelection ? testableProviderIds : childTestableIds;
   const testCount = testIds.length;
-  const nodeLabel = isGcp ? "folder" : "organizational unit";
-  const entityLabel = isOrgKind ? "organization" : nodeLabel;
-  const nameSourceLabel = isGcp ? "Google Cloud" : "AWS";
+  const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
+  const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
+  const nameSourceLabel = getNameSourceLabel(rowData.orgType);
+  // Credential updates re-enter the organization wizard, which only exists for
+  // organization types with an onboarding flow.
+  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
+    ? rowData.orgType
+    : null;
 
   const openOrgWizardAt = (
+    organizationType: OrgFlowType,
     targetStep: OrgWizardInitialData["targetStep"],
     targetPhase: OrgWizardInitialData["targetPhase"],
     intent?: OrgWizardInitialData["intent"],
   ) => {
     onOpenOrganizationWizard({
-      organizationType: rowData.orgType,
+      organizationType,
       organizationId: rowData.id,
       organizationName: rowData.name,
       externalId: rowData.externalId ?? "",
@@ -220,6 +227,8 @@ function OrgGroupDropdownActions({
           id={rowData.id}
           name={rowData.name}
           variant={rowData.groupKind}
+          orgType={rowData.orgType}
+          kind={rowData.kind}
           setIsOpen={setIsDeleteOrgOpen}
         />
       </Modal>
@@ -233,17 +242,20 @@ function OrgGroupDropdownActions({
                 label="Edit Organization Name"
                 onSelect={() => setIsEditNameOpen(true)}
               />
-              <ActionDropdownItem
-                icon={<KeyRound />}
-                label="Update Credentials"
-                onSelect={() =>
-                  openOrgWizardAt(
-                    ORG_WIZARD_STEP.SETUP,
-                    ORG_SETUP_PHASE.ACCESS,
-                    ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
-                  )
-                }
-              />
+              {orgFlowType && (
+                <ActionDropdownItem
+                  icon={<KeyRound />}
+                  label="Update Credentials"
+                  onSelect={() =>
+                    openOrgWizardAt(
+                      orgFlowType,
+                      ORG_WIZARD_STEP.SETUP,
+                      ORG_SETUP_PHASE.ACCESS,
+                      ORG_WIZARD_INTENT.EDIT_CREDENTIALS,
+                    )
+                  }
+                />
+              )}
             </>
           )}
           {isOrgKind && canEditSchedule && (
@@ -271,9 +283,7 @@ function OrgGroupDropdownActions({
           <ActionDropdownDangerZone>
             <ActionDropdownItem
               icon={<Trash2 />}
-              label={
-                isOrgKind ? "Delete Organization" : "Delete Organization Unit"
-              }
+              label={isOrgKind ? "Delete Organization" : `Delete ${nodeLabel}`}
               destructive
               onSelect={() => setIsDeleteOrgOpen(true)}
             />

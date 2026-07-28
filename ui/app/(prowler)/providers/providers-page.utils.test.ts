@@ -680,6 +680,54 @@ describe("buildProvidersTableRows", () => {
     expect(orgRow.orgType).toBe("aws");
   });
 
+  it("groups organizations of a type that has no onboarding flow, keeping their own type", () => {
+    // Display covers every organization type the API reports; only onboarding is
+    // limited to aws|gcp. The row must carry the real type (never coerced to
+    // aws), so its labels and actions can be derived from it.
+    const providers = providersResponse.data.map((provider) =>
+      toProviderRow(provider, {
+        relationships: {
+          ...provider.relationships,
+          organization: { data: { id: "org-az", type: "organizations" } },
+          organization_node: { data: null },
+        },
+      }),
+    );
+
+    // When
+    const rows = buildProvidersTableRows({
+      providers,
+      organizations: [
+        {
+          id: "org-az",
+          type: "organizations",
+          attributes: {
+            name: "Contoso Tenant",
+            org_type: "azure",
+            external_id: "tenant-az",
+            metadata: {},
+            root_external_id: null,
+          },
+          relationships: {
+            providers: { data: [] },
+            organization_nodes: { data: [] },
+          },
+        },
+      ],
+      organizationNodes: [],
+      isCloud: true,
+    });
+
+    // Then
+    expect(rows).toHaveLength(1);
+    const orgRow = rows[0];
+    if (!isProvidersOrganizationRow(orgRow)) {
+      throw new Error("Expected organization row");
+    }
+    expect(orgRow.orgType).toBe("azure");
+    expect(orgRow.subRows).toHaveLength(2);
+  });
+
   it("keeps organization relationship provider ids even when providers are not in the visible page", () => {
     // Given
     const providers = [

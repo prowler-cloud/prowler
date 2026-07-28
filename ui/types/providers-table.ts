@@ -4,7 +4,7 @@ import {
   NodeKind,
   OrganizationNodeResource,
   OrganizationResource,
-  OrgFlowType,
+  OrganizationType,
 } from "./organizations";
 import { ProviderProps } from "./providers";
 import { ScanScheduleSummary } from "./scans";
@@ -77,8 +77,7 @@ export interface ProvidersOrganizationRow {
   id: string;
   rowType: typeof PROVIDERS_ROW_TYPE.ORGANIZATION;
   groupKind: ProvidersGroupKind;
-
-  orgType: OrgFlowType;
+  orgType: OrganizationType;
   kind?: NodeKind;
   name: string;
   externalId: string | null;

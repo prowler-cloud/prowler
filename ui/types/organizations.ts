@@ -107,10 +107,23 @@ export const ORGANIZATION_TYPE = {
 export type OrganizationType =
   (typeof ORGANIZATION_TYPE)[keyof typeof ORGANIZATION_TYPE];
 
-/** Organization types with an org-level onboarding flow. */
-export type OrgFlowType =
-  | typeof ORGANIZATION_TYPE.AWS
-  | typeof ORGANIZATION_TYPE.GCP;
+/**
+ * Organization types with an org-level onboarding flow (wizard, credentials,
+ * discovery, apply). Display surfaces cover every `OrganizationType`; only these
+ * can be onboarded, so the two domains are narrowed with `isOrgFlowType`.
+ */
+export const ORG_FLOW_TYPES = [
+  ORGANIZATION_TYPE.AWS,
+  ORGANIZATION_TYPE.GCP,
+] as const;
+
+export type OrgFlowType = (typeof ORG_FLOW_TYPES)[number];
+
+export function isOrgFlowType(
+  orgType: OrganizationType,
+): orgType is OrgFlowType {
+  return (ORG_FLOW_TYPES as readonly OrganizationType[]).includes(orgType);
+}
 
 // ─── Candidate Registration (shared wire shape) ───────────────────────────────
 

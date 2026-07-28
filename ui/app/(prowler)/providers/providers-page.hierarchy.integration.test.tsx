@@ -5,6 +5,7 @@ import { describe, expect } from "vitest";
 import { it } from "@/__tests__/fixtures";
 import {
   awsHierarchyFixture,
+  displayOnlyOrgHierarchyFixture,
   mixedHierarchyFixture,
 } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { HIERARCHY_STATUS } from "@/types/providers-table";
@@ -48,6 +49,26 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
 
     // Tripwire: those rows came from a real fetch of the canonical route.
     expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
+  }, 30000);
+});
+
+describe("Providers page — organization type without an onboarding flow", () => {
+  it("groups it with its own wording and offers no wizard re-entry", async () => {
+    const harness = new ProvidersPageHarness(displayOnlyOrgHierarchyFixture());
+    harness.mount({ openWizard: false });
+
+    // Grouping is display-driven, so the organization still renders as a group.
+    await harness.waitForOrganizationRow("Contoso Tenant");
+    expect(harness.hasProviderRow("contoso-prod")).toBe(true);
+
+    // It never inherits AWS wording.
+    expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
+
+    // Credential updates re-enter the organization wizard, which only exists for
+    // onboardable types; renaming is a plain PATCH and stays available.
+    const actions = await harness.actionLabelsFor("Contoso Tenant");
+    expect(actions).toContain("Edit Organization Name");
+    expect(actions).not.toContain("Update Credentials");
   }, 30000);
 });
 

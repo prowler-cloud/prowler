@@ -8,6 +8,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/shadcn/tooltip";
+import { toNodeKind } from "@/lib/organizations";
 import { cn } from "@/lib/utils";
 import { APPLY_STATUS, NODE_KIND, OrgCandidate } from "@/types/organizations";
 import { TreeRenderItemParams } from "@/types/tree";
@@ -47,7 +48,7 @@ export function OrgAccountTreeItem({
     const isEditableNode =
       mode === TREE_ITEM_MODE.SELECTION &&
       onAliasChange &&
-      item.kind === NODE_KIND.ORGANIZATIONAL_UNIT;
+      toNodeKind(item.kind) === NODE_KIND.ORGANIZATIONAL_UNIT;
 
     return (
       <div className="flex flex-1 items-center gap-3">

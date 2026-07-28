@@ -291,8 +291,10 @@ export function useOrgSetupSubmission({
         return;
       }
 
-      const hierarchy = strategy.mapDiscovery(resolvedDiscoveryResult);
-      const defaultSelection = strategy.getDefaultSelection(hierarchy, data);
+      const { hierarchy, defaultSelection } = strategy.ingestDiscovery(
+        resolvedDiscoveryResult,
+        data,
+      );
       setDiscovery(discoveryId, hierarchy);
       setSelectedCandidateIds(defaultSelection);
       onNext();

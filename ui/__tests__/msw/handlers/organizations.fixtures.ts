@@ -550,9 +550,46 @@ export const mixedHierarchyFixture = (
   };
 };
 
+/**
+ * An organization of a type the wizard cannot onboard (display-only): it is still
+ * grouped and labelled from its own `org_type`, but offers no wizard re-entry.
+ */
+export const displayOnlyOrgHierarchyFixture = (
+  overrides: Partial<OrgFixture> = {},
+): OrgFixture => {
+  const orgId = "org-azure-1";
+  return {
+    ...baseFixture(),
+    organizations: [
+      {
+        id: orgId,
+        orgType: ORGANIZATION_TYPE.AZURE,
+        name: "Contoso Tenant",
+        externalId: "11111111-2222-3333-4444-555555555555",
+        rootExternalId: null,
+        providerIds: ["ap-1"],
+        nodeIds: [],
+        secretId: null,
+      },
+    ],
+    nodes: [],
+    providers: [
+      {
+        id: "ap-1",
+        provider: "azure",
+        uid: "99999999-8888-7777-6666-555555555555",
+        alias: "contoso-prod",
+        connected: true,
+      },
+    ],
+    ...overrides,
+  };
+};
+
 export const fixtures = {
   awsOnboarding: awsOnboardingFixture,
   gcpOnboarding: gcpOnboardingFixture,
   awsHierarchy: awsHierarchyFixture,
   mixedHierarchy: mixedHierarchyFixture,
+  displayOnlyOrgHierarchy: displayOnlyOrgHierarchyFixture,
 };

@@ -412,6 +412,15 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.user.click(trigger);
   }
 
+  /** The row-action labels offered for the organization named `name`. */
+  async actionLabelsFor(name: string): Promise<string[]> {
+    await this.openActionsFor(name);
+    await this.waitFor(() => this.q('[role="menuitem"]'));
+    return Array.from(
+      document.querySelectorAll<HTMLElement>('[role="menuitem"]'),
+    ).map((item) => item.textContent?.trim() ?? "");
+  }
+
   /** Open the "Edit Organization Name" flow for the organization `name`. */
   async openEditNameFor(name: string): Promise<void> {
     await this.openActionsFor(name);

@@ -4,11 +4,13 @@ import {
   APPLY_STATUS,
   ApplyStatus,
   AwsDiscoveryResult,
+  GcpOrgHierarchy,
   NODE_KIND,
   ORGANIZATION_TYPE,
 } from "@/types/organizations";
 
 import {
+  buildApplyPayload,
   buildCandidateLookup,
   buildOrgTreeData,
   getNodeIdsForSelectedCandidates,
@@ -272,5 +274,61 @@ describe("getNodeIdsForSelectedCandidates", () => {
 
     expect(nodeIds).toEqual(expect.arrayContaining(["ou-parent", "ou-child"]));
     expect(nodeIds.length).toBe(2);
+  });
+});
+
+describe("buildApplyPayload", () => {
+  it("builds the AWS payload with client-side derived organizational units", () => {
+    const payload = buildApplyPayload(hierarchy, ["111111111111"], {
+      "111111111111": "Renamed App",
+    });
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.AWS,
+      accounts: [{ id: "111111111111", alias: "Renamed App" }],
+      organizationalUnits: [{ id: "ou-child" }, { id: "ou-parent" }],
+    });
+  });
+
+  it("omits the alias when the candidate was not renamed", () => {
+    const payload = buildApplyPayload(hierarchy, ["333333333333"], {});
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.AWS,
+      accounts: [{ id: "333333333333" }],
+      // 333... hangs off the root, so no node ancestors are derived.
+      organizationalUnits: [],
+    });
+  });
+
+  it("builds the GCP payload with projects only (folders are server-derived)", () => {
+    const gcpHierarchy: GcpOrgHierarchy = {
+      orgType: ORGANIZATION_TYPE.GCP,
+      organization: { uid: "456123789012", name: "example.com" },
+      nodes: [
+        {
+          id: "folders/1000000001",
+          kind: NODE_KIND.FOLDER,
+          name: "Engineering",
+          parentId: "organizations/456123789012",
+        },
+      ],
+      candidates: [
+        {
+          uid: "prod-analytics",
+          label: "Prod Analytics",
+          parentId: "folders/1000000001",
+        },
+      ],
+    };
+
+    const payload = buildApplyPayload(gcpHierarchy, ["prod-analytics"], {
+      "prod-analytics": "Analytics",
+    });
+
+    expect(payload).toEqual({
+      orgType: ORGANIZATION_TYPE.GCP,
+      projects: [{ project_id: "prod-analytics", alias: "Analytics" }],
+    });
   });
 });

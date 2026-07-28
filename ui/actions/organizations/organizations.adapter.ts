@@ -2,6 +2,7 @@ import { Box, Folder } from "lucide-react";
 
 import {
   APPLY_STATUS,
+  ApplyDiscoveryPayload,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
   NODE_KIND,
@@ -137,7 +138,7 @@ export function buildCandidateLookup(
  * Returns the selectable candidate uids that fall under a deployment target
  * (an OU or root id), optionally including the deployment candidate itself.
  *
- * AWS-specific (StackSet default-selection). The StackSet only rolls the role
+ * AWS-only by type (StackSet default-selection). The StackSet only rolls the role
  * out to member accounts beneath the chosen target, and the deployment account
  * gets the role via DeployLocalRole even though it usually lives outside that
  * target. Pre-selecting exactly those keeps the confirmation step in sync with
@@ -147,7 +148,7 @@ export function buildCandidateLookup(
  * known node (e.g. a root id), preserving the whole-organization default.
  */
 export function getSelectableCandidateIdsForTarget(
-  hierarchy: OrgHierarchy,
+  hierarchy: AwsOrgHierarchy,
   targetId: string,
   deploymentCandidateId?: string,
 ): string[] {
@@ -199,11 +200,11 @@ export function getSelectableCandidateIdsForTarget(
 
 /**
  * Given selected candidate uids, returns node ids that are ancestors of the
- * selected candidates. AWS-specific (client-side OU derivation for apply); GCP
- * derives folder ancestors server-side.
+ * selected candidates. AWS-only by type (client-side OU derivation for apply);
+ * GCP derives folder ancestors server-side.
  */
 export function getNodeIdsForSelectedCandidates(
-  hierarchy: OrgHierarchy,
+  hierarchy: AwsOrgHierarchy,
   selectedCandidateIds: string[],
 ): string[] {
   const selectedSet = new Set(selectedCandidateIds);
@@ -228,4 +229,45 @@ export function getNodeIdsForSelectedCandidates(
   }
 
   return Array.from(nodeIds);
+}
+
+/**
+ * Builds the apply payload from the hierarchy that is being applied — the
+ * hierarchy's own `orgType` is the discriminant, so there is no second source of
+ * truth to drift from. The switch has no default: a new `OrgHierarchy` arm is a
+ * compile error here, and the AWS-only node derivation is unreachable from any
+ * other arm.
+ */
+export function buildApplyPayload(
+  hierarchy: OrgHierarchy,
+  selectedCandidateIds: string[],
+  candidateAliases: Record<string, string>,
+): ApplyDiscoveryPayload {
+  const aliasOf = (candidateId: string) =>
+    candidateAliases[candidateId]
+      ? { alias: candidateAliases[candidateId] }
+      : {};
+
+  switch (hierarchy.orgType) {
+    case ORGANIZATION_TYPE.AWS:
+      return {
+        orgType: ORGANIZATION_TYPE.AWS,
+        accounts: selectedCandidateIds.map((id) => ({
+          id,
+          ...aliasOf(id),
+        })),
+        organizationalUnits: getNodeIdsForSelectedCandidates(
+          hierarchy,
+          selectedCandidateIds,
+        ).map((id) => ({ id })),
+      };
+    case ORGANIZATION_TYPE.GCP:
+      return {
+        orgType: ORGANIZATION_TYPE.GCP,
+        projects: selectedCandidateIds.map((id) => ({
+          project_id: id,
+          ...aliasOf(id),
+        })),
+      };
+  }
 }

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { applyDiscovery } from "@/actions/organizations/organizations";
-import { getNodeIdsForSelectedCandidates } from "@/actions/organizations/organizations.adapter";
+import { buildApplyPayload } from "@/actions/organizations/organizations.adapter";
 import {
   checkConnectionProvider,
   getProvider,
@@ -14,10 +14,8 @@ import {
 } from "@/components/providers/wizard/steps/footer-controls";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import {
-  ApplyDiscoveryPayload,
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
-  ORGANIZATION_TYPE,
 } from "@/types/organizations";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
@@ -178,7 +176,6 @@ export function useOrgAccountSelectionFlow({
   onFooterChange,
 }: UseOrgAccountSelectionFlowProps) {
   const {
-    organizationType,
     organizationId,
     organizationExternalId,
     discoveryId,
@@ -368,28 +365,14 @@ export function useOrgAccountSelectionFlow({
       .selectedCandidateIds.filter((id) => selectableCandidateIdSet.has(id));
     const currentSelectionKey = getSelectionKey(currentSelectedCandidateIds);
 
-    // Per-type apply payload: AWS derives OU ancestors client-side; GCP sends
-    // projects only (folder ancestors are derived server-side).
-    const payload: ApplyDiscoveryPayload =
-      organizationType === ORGANIZATION_TYPE.GCP
-        ? {
-            orgType: ORGANIZATION_TYPE.GCP,
-            projects: currentSelectedCandidateIds.map((id) => ({
-              project_id: id,
-              ...(candidateAliases[id] ? { alias: candidateAliases[id] } : {}),
-            })),
-          }
-        : {
-            orgType: ORGANIZATION_TYPE.AWS,
-            accounts: currentSelectedCandidateIds.map((id) => ({
-              id,
-              ...(candidateAliases[id] ? { alias: candidateAliases[id] } : {}),
-            })),
-            organizationalUnits: getNodeIdsForSelectedCandidates(
-              hierarchy,
-              currentSelectedCandidateIds,
-            ).map((id) => ({ id })),
-          };
+    // Per-type apply payload, discriminated by the hierarchy being applied: AWS
+    // derives OU ancestors client-side; GCP sends projects only (folder
+    // ancestors are derived server-side).
+    const payload = buildApplyPayload(
+      hierarchy,
+      currentSelectedCandidateIds,
+      candidateAliases,
+    );
 
     const result = await applyDiscovery(organizationId, discoveryId, payload);
     if (!isMountedRef.current) {
