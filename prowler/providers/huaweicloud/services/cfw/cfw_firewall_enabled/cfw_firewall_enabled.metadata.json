@@ -1,0 +1,36 @@
+{
+  "Provider": "huaweicloud",
+  "CheckID": "cfw_firewall_enabled",
+  "CheckTitle": "Cloud Firewall is enabled and active",
+  "CheckType": [],
+  "ServiceName": "cfw",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "HUAWEICLOUD::CFW::Firewall",
+  "ResourceGroup": "network",
+  "Description": "Ensure that Cloud Firewall is deployed and active to inspect network traffic.",
+  "Risk": "Without Cloud Firewall enabled, network traffic is not being inspected for threats. This leaves the cloud environment vulnerable to unauthorized access, malicious traffic, and data exfiltration.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://support.huaweicloud.com/intl/en-us/usermanual-cfw/cfw_01_0001.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log on to the Huawei Cloud console.\n2. Navigate to Cloud Firewall.\n3. Deploy a Cloud Firewall instance if none exists.\n4. Ensure the firewall status is active.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Deploy Cloud Firewall and ensure it is active to inspect north-south network traffic.",
+      "Url": "https://hub.prowler.com/check/cfw_firewall_enabled"
+    }
+  },
+  "Categories": [
+    "threat-detection"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Lists all Cloud Firewall instances and checks if they are active (status=1)."
+}
