@@ -154,6 +154,13 @@
                 ]
               },
               {
+                "group": "Attack Paths",
+                "pages": [
+                  "user-guide/tutorials/prowler-app-attack-paths",
+                  "user-guide/tutorials/prowler-app-attack-paths-cloud"
+                ]
+              },
+              {
                 "group": "Compliance",
                 "pages": [
                   "user-guide/compliance/tutorials/compliance",
@@ -165,7 +172,6 @@
                 "group": "Findings",
                 "pages": [
                   "user-guide/tutorials/prowler-alerts",
-                  "user-guide/tutorials/prowler-app-attack-paths",
                   "user-guide/tutorials/prowler-app-finding-groups",
                   "user-guide/tutorials/prowler-app-findings-triage"
                 ]
@@ -495,7 +501,8 @@
               "developer-guide/mcp-server",
               "developer-guide/ai-skills",
               "developer-guide/prowler-studio",
-              "developer-guide/server-sent-events"
+              "developer-guide/server-sent-events",
+              "developer-guide/attack-paths-queries"
             ]
           },
           {

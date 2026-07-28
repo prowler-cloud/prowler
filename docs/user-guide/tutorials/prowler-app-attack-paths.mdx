@@ -95,6 +95,12 @@ To choose a query, click the dropdown and select from the available options. Eac
 
 Once selected, a description panel appears below the dropdown with more context about the query.
 
+<Note>
+  In Prowler Cloud and Prowler Private Cloud, the query selector hides queries
+  confirmed empty for the selected scan, so only queries that return data remain
+  visible. See [Attack Paths in Prowler Cloud](/user-guide/tutorials/prowler-app-attack-paths-cloud).
+</Note>
+
 ## Configuring Query Parameters
 
 Some queries accept optional or required parameters to narrow the scope of the analysis. When a query has parameters, a form appears below the query description.
@@ -178,107 +184,11 @@ RETURN r.name AS role_name, r.arn AS role_arn, p.arn AS trusted_service
 LIMIT 25
 ```
 
-### Working with List-Typed Properties
+### Graph Schema and Advanced Patterns
 
-Some Cartography node properties carry a list of values, such as `action`, `resource`, `notaction`, and `notresource` on `AWSPolicyStatement` nodes, the algorithms on `KMSKey`, the container-definition lists on `ECSContainerDefinition`, and many others. The Attack Paths graph models each such property as a set of child item nodes connected to the parent by a typed edge. To read the values, traverse the edge; the parent does not carry the list as a single field.
+Custom queries traverse the same Cartography graph the built-in queries use. Node labels, relationships, and properties follow the upstream [Cartography AWS Schema](https://cartography-cncf.github.io/cartography/modules/aws/schema.html), enriched by Prowler with `ProwlerFinding` nodes linked through `HAS_FINDING`, `Internet` exposure nodes, and list-typed properties such as `action` and `resource` modeled as child item nodes.
 
-The naming convention for any list-typed property on a parent label is:
-
-- **Child label:** `<ParentLabel><PropertyPascal>Item`. Example: `AWSPolicyStatement.resource` resolves to `AWSPolicyStatementResourceItem`.
-- **Edge type:** `HAS_<PROPERTY_UPPER>`. Example: `resource` resolves to `HAS_RESOURCE`.
-- **Child property:** `value` for scalar lists (one string per list element). List-of-dict properties (rare; for example `SecretsManagerSecretVersion.tags`) carry the original dict keys as named fields on the child node.
-
-To express "at least one item in the list satisfies a predicate", traverse the `HAS_*` edge in its own `MATCH` clause and apply the predicate in the attached `WHERE`. `RETURN DISTINCT` collapses duplicate parent rows produced when multiple child items satisfy the filter:
-
-```cypher
-MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
-MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-WHERE toLower(a.value) STARTS WITH 's3:get'
-   OR toLower(a.value) STARTS WITH 's3:list'
-RETURN DISTINCT stmt
-LIMIT 25
-```
-
-To check whether every item in the list satisfies a predicate, count the counter-examples and require zero, together with a guard that ensures at least one item is attached. This is the one case where the pattern-comprehension form is the right tool:
-
-```cypher
-MATCH (stmt:AWSPolicyStatement)
-WHERE size([
-    (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-    WHERE NOT toLower(a.value) STARTS WITH 's3:'
-    | a
-  ]) = 0
-  AND size([(stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem) | a]) > 0
-RETURN stmt
-LIMIT 25
-```
-
-For the "is any item of this list a substring of a dynamic value" case, such as "does any resource pattern in this policy match a target role ARN", add the `HAS_*` traversal as its own `MATCH` and check the substring relationship between the item value and the dynamic node in `WHERE`:
-
-```cypher
-MATCH (role:AWSRole)
-WHERE role.name = 'Admin'
-MATCH (principal:AWSPrincipal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {effect: 'Allow'})
-MATCH (stmt)-[:HAS_RESOURCE]->(r:AWSPolicyStatementResourceItem)
-WHERE r.value = '*'
-   OR r.value CONTAINS role.name
-   OR role.arn CONTAINS r.value
-RETURN DISTINCT principal.arn AS principal, stmt, role
-LIMIT 25
-```
-
-To return the list of values directly, collect them from the child items:
-
-```cypher
-MATCH (stmt:AWSPolicyStatement {effect: 'Allow'})
-OPTIONAL MATCH (stmt)-[:HAS_ACTION]->(a:AWSPolicyStatementActionItem)
-RETURN stmt, collect(a.value) AS actions
-LIMIT 25
-```
-
-### Working with JSON-Encoded Properties
-
-Some Cartography properties represent nested objects, most notably `condition` on `AWSPolicyStatement` and `S3PolicyStatement` nodes. In the Attack Paths graph, object-typed properties are stored as JSON-encoded strings to keep the schema portable across graph backends. The value looks like:
-
-```
-'{"StringEquals":{"aws:SourceAccount":"123456789012"}}'
-```
-
-There is no JSON parser available at query time, so use `CONTAINS` for substring checks against keys or known values:
-
-```cypher
-MATCH (stmt:AWSPolicyStatement)
-WHERE stmt.effect = 'Allow'
-  AND stmt.condition CONTAINS '"aws:SourceAccount"'
-RETURN stmt
-LIMIT 25
-```
-
-When a query needs to inspect the structured members of a condition (for example, evaluate every operator and key), fetch the rows first and parse the JSON in application code. Cypher cannot navigate JSON object keys or values.
-
-### Tips for Writing Queries
-
-- Start small with `LIMIT` to inspect the shape of the data before broadening the pattern.
-- Traverse `HAS_*` edges to reach list-typed property values (for example `action`, `resource`). The parent node does not carry the list as a single field; see [Working with List-Typed Properties](#working-with-list-typed-properties) for the patterns.
-- On large scans, avoid broad disconnected patterns such as `MATCH (a:Label), (b:OtherLabel)`. Bind one side with a selective predicate first, and use `WITH DISTINCT` between expanding traversals when duplicates are possible.
-- Use `RETURN` projections (`RETURN n.name, n.region`) instead of returning whole nodes to keep responses compact.
-- Combine resource nodes with `ProwlerFinding` nodes via `HAS_FINDING` to correlate misconfigurations with the affected resources.
-- When a query times out or returns no rows, simplify the pattern step by step until the first variant runs successfully, then add constraints back.
-
-### Cartography Schema Reference
-
-Attack Paths graphs are populated by [Cartography](https://github.com/cartography-cncf/cartography), an open-source graph ingestion framework. The node labels, relationship types, and properties available in custom queries follow the upstream Cartography schema for the corresponding provider.
-
-For the complete catalogue of node labels and relationships available in custom queries, refer to the official Cartography schema documentation:
-
-- **AWS:** [Cartography AWS Schema](https://cartography-cncf.github.io/cartography/modules/aws/schema.html)
-
-In addition to the upstream schema, Prowler enriches the graph with:
-
-- **`ProwlerFinding`** nodes representing Prowler check results, linked to affected resources via `HAS_FINDING` relationships.
-- **`Internet`** nodes used to model exposure paths from the public internet to internal resources.
-- **List-typed properties** such as `action` or `resource` on `AWSPolicyStatement`, the algorithm lists on `KMSKey`, and similar lists on other node types are modeled as child item nodes linked by typed `HAS_*` edges. See [Working with List-Typed Properties](#working-with-list-typed-properties) for the read pattern.
-- **Object-typed properties** such as `condition` on `AWSPolicyStatement` are stored as JSON-encoded strings. See [Working with JSON-Encoded Properties](#working-with-json-encoded-properties) for the read pattern.
+For the complete reference, including the graph model, list-typed and JSON-encoded properties, performance guidance, and openCypher compatibility rules, see [Attack Paths Queries](/developer-guide/attack-paths-queries) in the Developer Guide.
 
 <Note>
   AI assistants connected through Prowler MCP Server can fetch the exact
