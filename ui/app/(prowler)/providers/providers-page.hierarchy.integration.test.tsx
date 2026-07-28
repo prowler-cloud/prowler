@@ -1,7 +1,7 @@
 import { describe, expect } from "vitest";
 
-// The extended `it` carries the auto `seedRuntimeConfig` fixture: grouping is
-// cloud-only, so the runtime-config island has to exist before mounting.
+// The extended `it` carries the auto `seedRuntimeConfig` fixture — grouping is
+// cloud-only, so the runtime-config island must exist before mounting.
 import { it } from "@/__tests__/fixtures";
 import {
   awsHierarchyFixture,
@@ -46,7 +46,7 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
     expect(harness.hasProviderRow("Prod Analytics")).toBe(true);
     expect(harness.hasProviderRow("Prod Platform")).toBe(true);
 
-    // Tripwire: the rows came from real requests over the canonical route.
+    // Tripwire: those rows came from a real fetch of the canonical route.
     expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
   }, 30000);
 });
@@ -60,9 +60,9 @@ describe("Providers page — degraded hierarchy view", () => {
     });
 
     await harness.waitForDegradedHierarchyNotice();
-    expect(harness.saysProvidersAreFlat()).toBe(true);
+    expect(harness.hasFlatListFallbackNotice()).toBe(true);
 
-    // Providers are still listed despite grouping being unavailable, and no
+    // Providers are still present despite grouping being unavailable, and no
     // organization group row survives the failed hierarchy fetch.
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasOrganizationRow("My AWS Organization")).toBe(false);

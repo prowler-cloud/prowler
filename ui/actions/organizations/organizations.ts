@@ -46,8 +46,6 @@ function hasActionError(result: unknown): result is { error: unknown } {
   );
 }
 
-// On failure it yields an empty collection flagged with `error: true` so
-// callers can distinguish a degraded fetch from a genuinely empty collection.
 async function fetchOptionalCollection<T>(
   url: URL,
 ): Promise<CollectionFetch<T>> {

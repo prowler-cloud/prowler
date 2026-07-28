@@ -191,9 +191,6 @@ export const useOrgSetupStore = create<OrgSetupState>()(
     }),
     {
       name: "org-setup-store",
-      // Bumped when the persisted shape changed to the normalized hierarchy +
-      // candidate naming + discovery-resume fields. Old sessions are discarded
-      // (ephemeral wizard state), invalidating any in-flight onboarding.
       version: 1,
       storage: createJSONStorage(() => sessionStorage),
       merge: (persistedState, currentState) => {

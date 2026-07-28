@@ -25,8 +25,6 @@ export const ORG_RELATION = {
 
 export type OrgRelation = (typeof ORG_RELATION)[keyof typeof ORG_RELATION];
 
-// Canonical node-relation vocabulary (replaces the deprecated OU_RELATION /
-// `linked_to_other_ou`). `unchanged` was dropped from the contract.
 export const NODE_RELATION = {
   NOT_APPLICABLE: "not_applicable",
   ALREADY_LINKED: "already_linked",
@@ -36,8 +34,6 @@ export const NODE_RELATION = {
 
 export type NodeRelation = (typeof NODE_RELATION)[keyof typeof NODE_RELATION];
 
-// Canonical provider-secret state (replaces the deprecated `already_exists` /
-// `manual_required`).
 export const PROVIDER_SECRET_STATE = {
   WILL_CREATE: "will_create",
   WILL_REPLACE: "will_replace",
@@ -46,7 +42,6 @@ export const PROVIDER_SECRET_STATE = {
 export type ProviderSecretState =
   (typeof PROVIDER_SECRET_STATE)[keyof typeof PROVIDER_SECRET_STATE];
 
-// Canonical node kinds: AWS organizational units vs GCP folders.
 export const NODE_KIND = {
   ORGANIZATIONAL_UNIT: "organizational-unit",
   FOLDER: "folder",
@@ -54,7 +49,6 @@ export const NODE_KIND = {
 
 export type NodeKind = (typeof NODE_KIND)[keyof typeof NODE_KIND];
 
-// Organization-secret types per provider (API vocabulary — underscore form).
 export const ORG_SECRET_TYPE = {
   ROLE: "role",
   SERVICE_ACCOUNT: "service_account",
@@ -120,11 +114,6 @@ export type OrgFlowType =
 
 // ─── Candidate Registration (shared wire shape) ───────────────────────────────
 
-/**
- * Registration state of a discovered account/project — its candidacy to become
- * a provider. Shared by AWS accounts and GCP projects; all fields use canonical
- * names (`organization_node_relation`, `provider_secret_state`).
- */
 export interface CandidateRegistration {
   provider_exists: boolean;
   provider_id: string | null;
@@ -180,14 +169,12 @@ export interface GcpDiscoveredOrganization {
 export interface GcpDiscoveredFolder {
   id: string;
   display_name: string;
-  /** Canonical name-ref of the parent: `organizations/{id}` or `folders/{id}`. */
   parent: string;
 }
 
 export interface GcpDiscoveredProject {
   project_id: string;
   name: string;
-  /** Canonical name-ref of the parent: `organizations/{id}` or `folders/{id}`. */
   parent: string;
   registration?: CandidateRegistration;
 }
@@ -204,9 +191,7 @@ export type DiscoveryResult = AwsDiscoveryResult | GcpDiscoveryResult;
 // ─── Normalized Hierarchy Model (store currency) ───────────────────────────────
 
 export interface OrgHierarchyOrganization {
-  /** External id / uid (AWS org external id, GCP numeric org id). */
   uid: string;
-  /** Human label (AWS root name / GCP org display name). */
   name: string;
 }
 
@@ -214,16 +199,10 @@ export interface OrgNode {
   id: string;
   kind: NodeKind;
   name: string;
-  /**
-   * Identifier of the containing node. Points at the organization root
-   * (AWS root id / GCP `organizations/{id}`) for top-level nodes; such refs are
-   * absent from the node set, so tree rebuild treats them as top-level.
-   */
   parentId: string;
 }
 
 export interface OrgCandidate {
-  /** Provider uid by contract: AWS account id, GCP `project_id`. */
   uid: string;
   label: string;
   parentId: string;

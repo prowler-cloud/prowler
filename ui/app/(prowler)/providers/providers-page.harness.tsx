@@ -381,20 +381,22 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.containsText(new RegExp(`${count} Providers`));
   }
 
-  /** Wait until the degraded-hierarchy notice surfaces above the table. */
+  // --- Table: degraded-hierarchy notice ------------------------------------
+
+  /** Wait until the notice for a failed hierarchy fetch surfaces. */
   async waitForDegradedHierarchyNotice(): Promise<void> {
     await this.waitForText(/Organization grouping is temporarily unavailable/);
   }
 
-  /** Whether the degraded-hierarchy notice is showing. */
+  /** Whether the degraded-hierarchy notice is present. */
   hasDegradedHierarchyNotice(): boolean {
     return this.containsText(
       /Organization grouping is temporarily unavailable/,
     );
   }
 
-  /** Whether the degraded notice says providers stay listed flat. */
-  saysProvidersAreFlat(): boolean {
+  /** Whether the notice explains that providers fall back to a flat list. */
+  hasFlatListFallbackNotice(): boolean {
     return this.containsText(/Providers are shown as a flat list/);
   }
 

@@ -7,8 +7,6 @@ const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 
 interface CandidateProviderMapping {
-  // Wire field name is `account_id` for both providers (it carries the
-  // candidate uid: AWS account id / GCP project id).
   account_id: string;
   provider_id: string;
 }

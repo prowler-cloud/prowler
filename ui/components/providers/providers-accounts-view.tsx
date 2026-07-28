@@ -71,7 +71,6 @@ interface ProvidersAccountsViewProps {
   scanConfigs?: ScanConfigurationData[];
   scanConfigStatus?: ScanConfigurationListStatus;
   isScanLimitReached?: boolean;
-  /** `unavailable` surfaces the non-blocking hierarchy-grouping notice. */
   hierarchyStatus?: HierarchyStatus;
 }
 
