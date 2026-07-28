@@ -1015,3 +1015,32 @@ class Test_Repository_Default_Workflow_Permissions:
 
         with raises(RateLimitExceededException):
             self.repository_service._get_default_workflow_permissions(repo)
+
+    def test_process_repository_propagates_rate_limit(self):
+        """Test that a rate limit while reading the setting aborts repository processing."""
+        self.repository_service.clients = []
+        self.repository_service.audit_config = None
+        self.repository_service.fixer_config = None
+
+        repo = MagicMock()
+        repo.id = 1
+        repo.name = "repo1"
+        repo.owner.login = "account-name"
+        repo.full_name = "account-name/repo1"
+        repo.default_branch = "main"
+        repo.private = False
+        repo.archived = False
+        repo.pushed_at = datetime.now(timezone.utc)
+        repo.delete_branch_on_merge = False
+        repo.security_and_analysis = None
+        repo.get_contents.side_effect = [None, None, None, None]
+        repo.get_dependabot_alerts.side_effect = Exception("403 Forbidden")
+        repo._requester.requestJsonAndCheck.side_effect = RateLimitExceededException(
+            403, "Rate limit exceeded", None
+        )
+
+        repos = {}
+        with raises(RateLimitExceededException):
+            self.repository_service._process_repository(repo, repos)
+
+        assert repos == {}, "A rate limited repository should not be partially recorded"

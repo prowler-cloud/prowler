@@ -761,6 +761,8 @@ class Repository(GithubService):
                 dependabot_alerts_enabled=dependabot_alerts_enabled,
                 delete_branch_on_merge=delete_branch_on_merge,
             )
+        except github.RateLimitExceededException:
+            raise  # Re-raise rate limit errors so the listing flow can handle them
         except Exception as error:
             logger.error(
                 f"{repo.full_name}: {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
