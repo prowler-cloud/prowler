@@ -26,12 +26,18 @@ describe("Toaster", () => {
 
     const description = screen.getByText(LONG_ERROR);
 
-    expect(description).toHaveClass("break-words", "whitespace-pre-wrap");
+    expect(description).toHaveClass(
+      "max-h-48",
+      "overflow-x-hidden",
+      "overflow-y-auto",
+      "break-all",
+      "whitespace-pre-wrap",
+    );
     expect(description.parentElement).toHaveClass(
       "min-w-0",
       "max-w-full",
       "flex-1",
-      "overflow-x-auto",
+      "overflow-x-hidden",
     );
   });
 });
