@@ -42,8 +42,10 @@ import {
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
+import { isKnownProviderType } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
+import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
 import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
@@ -113,6 +115,51 @@ export default async function ComplianceDetail({
       </ContentLayout>
     );
   }
+  // Cross-account mode: one regular framework aggregated across every
+  // account of one provider type. Cloud-only, like cross-provider.
+  if (mode === "cross-account") {
+    if (!isCloud()) {
+      redirect("/compliance");
+    }
+
+    const providerType = getSingleSearchParam(
+      resolvedSearchParams.providerType,
+    );
+    if (!providerType || !isKnownProviderType(providerType)) {
+      notFound();
+    }
+
+    const crossAccountTitle = compliancetitle.split("-").join(" ");
+    return (
+      <ContentLayout
+        title={
+          version ? `${crossAccountTitle} - ${version}` : crossAccountTitle
+        }
+      >
+        <Suspense
+          key={buildSearchParamsKey(resolvedSearchParams)}
+          fallback={
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
+                <RequirementsStatusCardSkeleton />
+                <TopFailedSectionsCardSkeleton />
+              </div>
+              <SkeletonAccordion />
+            </div>
+          }
+        >
+          <CrossAccountDetail
+            compliancetitle={compliancetitle}
+            complianceId={complianceId}
+            providerType={providerType}
+            searchParams={resolvedSearchParams}
+            targetSection={section}
+          />
+        </Suspense>
+      </ContentLayout>
+    );
+  }
+
   const regionFilter = getSingleSearchParam(
     resolvedSearchParams["filter[region__in]"],
   );

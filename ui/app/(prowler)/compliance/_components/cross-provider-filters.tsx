@@ -31,8 +31,10 @@ export interface CrossProviderGroupOption {
 }
 
 interface CrossProviderFiltersProps {
-  /** Provider types offered by the visible universal frameworks. */
-  providerTypes: readonly KnownProviderType[];
+  /** Provider types offered by the visible universal frameworks. Omit (or
+   *  pass empty) to hide the type select — the cross-account detail does,
+   *  since its provider type is fixed by the framework being viewed. */
+  providerTypes?: readonly KnownProviderType[];
   providerAccounts: CrossProviderAccountOption[];
   providerGroups: CrossProviderGroupOption[];
 }
@@ -89,14 +91,16 @@ export const CrossProviderFilters = ({
 }: CrossProviderFiltersProps) => {
   return (
     <div className="flex flex-wrap items-center gap-4">
-      <UrlMultiSelect
-        filterKey="provider_type__in"
-        placeholder="Provider type"
-        options={providerTypes.map((type) => ({
-          value: type,
-          label: PROVIDER_DISPLAY_NAMES[type],
-        }))}
-      />
+      {providerTypes && providerTypes.length > 0 && (
+        <UrlMultiSelect
+          filterKey="provider_type__in"
+          placeholder="Provider type"
+          options={providerTypes.map((type) => ({
+            value: type,
+            label: PROVIDER_DISPLAY_NAMES[type],
+          }))}
+        />
+      )}
       <UrlMultiSelect
         filterKey="provider_id__in"
         placeholder="Providers"
