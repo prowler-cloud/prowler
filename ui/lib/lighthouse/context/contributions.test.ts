@@ -6,12 +6,14 @@ import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "./constants";
 import {
   buildAttackPathContext,
   buildComplianceContext,
+  buildFilteredProviderContext,
   buildFindingGroupContext,
   buildFindingResourceContext,
   buildFindingSummaryContext,
   buildFocusedFindingContext,
   buildFocusedResourceContext,
   buildProviderContext,
+  buildProviderGroupContext,
   buildProviderSummaryContext,
   buildResourceContext,
   buildResourceSummaryContext,
@@ -236,6 +238,54 @@ describe("Lighthouse page contributions", () => {
       worstSection: "1.2 Attack Surface",
       worstSectionScore: 38.6,
       totals: { passed: 120, failed: 40, total: 160 },
+    });
+  });
+
+  it("builds automatic provider context for URL-filtered providers", () => {
+    expect(
+      buildFilteredProviderContext({
+        pathname: "/",
+        id: "prov-1",
+        uid: "123456789012",
+        type: "aws",
+        alias: "Production",
+      }),
+    ).toEqual({
+      kind: "provider",
+      id: "prov-1",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Production",
+      providerId: "prov-1",
+      providerUid: "123456789012",
+      providerType: "aws",
+    });
+  });
+
+  it("falls back to the provider uid when no alias exists", () => {
+    expect(
+      buildFilteredProviderContext({
+        pathname: "/",
+        id: "prov-2",
+        uid: "999888777666",
+        type: "gcp",
+      }).label,
+    ).toBe("999888777666");
+  });
+
+  it("builds automatic context for a URL-filtered provider group", () => {
+    expect(
+      buildProviderGroupContext({
+        pathname: "/",
+        id: "group-uuid-1",
+        name: "Production accounts",
+      }),
+    ).toEqual({
+      kind: "provider",
+      id: "group-group-uuid-1",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Provider group: Production accounts",
     });
   });
 

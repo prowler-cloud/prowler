@@ -118,6 +118,20 @@ interface ProviderContextInput {
   type?: string;
 }
 
+interface FilteredProviderContextInput {
+  pathname: string;
+  id: string;
+  uid?: string;
+  type?: string;
+  alias?: string;
+}
+
+interface ProviderGroupContextInput {
+  pathname: string;
+  id: string;
+  name: string;
+}
+
 export function buildFindingSummaryContext(
   total: number,
 ): LighthouseFindingContextItem {
@@ -382,6 +396,34 @@ export function buildProviderContext(
     providerId: toBoundedString(input.id),
     providerUid: optionalBoundedString(input.uid),
     providerType: optionalBoundedString(input.type),
+  };
+}
+
+export function buildFilteredProviderContext(
+  input: FilteredProviderContextInput,
+): LighthouseProviderContextItem {
+  const safeId = toBoundedString(input.id);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.PROVIDER,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(input.alias || input.uid || "Filtered provider"),
+    providerId: safeId,
+    providerUid: optionalBoundedString(input.uid),
+    providerType: optionalBoundedString(input.type),
+  };
+}
+
+export function buildProviderGroupContext(
+  input: ProviderGroupContextInput,
+): LighthouseProviderContextItem {
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.PROVIDER,
+    id: toBoundedString(`group-${input.id}`),
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(`Provider group: ${input.name}`),
   };
 }
 
