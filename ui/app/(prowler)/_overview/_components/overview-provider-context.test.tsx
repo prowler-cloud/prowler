@@ -30,7 +30,7 @@ describe("OverviewProviderContext", () => {
     );
 
     const context = screen.getByTestId("provider-context");
-    expect(context).toHaveTextContent('"label":"Production"');
+    expect(context).toHaveTextContent('"label":"Provider: Production"');
     expect(context).toHaveTextContent('"providerUid":"111111111111"');
   });
 });

@@ -365,7 +365,7 @@ describe("Lighthouse page contributions", () => {
       id: "prov-1",
       source: "automatic",
       scopeKey: "overview:/",
-      label: "Production",
+      label: "Provider: Production",
       providerId: "prov-1",
       providerUid: "123456789012",
       providerType: "aws",

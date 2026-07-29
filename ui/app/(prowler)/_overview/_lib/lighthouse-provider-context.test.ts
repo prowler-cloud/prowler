@@ -40,13 +40,13 @@ describe("buildOverviewProviderContextItems", () => {
         id: "prov-1",
         source: "automatic",
         scopeKey: "overview:/",
-        label: "Production",
+        label: "Provider: Production",
         providerUid: "111111111111",
         providerType: "aws",
       }),
       expect.objectContaining({
         id: "prov-2",
-        label: "gcp-project",
+        label: "Provider: gcp-project",
         providerType: "gcp",
       }),
     ]);

@@ -528,7 +528,9 @@ export function buildFilteredProviderContext(
     id: safeId,
     source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
     scopeKey: getLighthouseScopeKey(input.pathname),
-    label: toBoundedString(input.alias || input.uid || "Filtered provider"),
+    label: toBoundedString(
+      `Provider: ${input.alias || input.uid || "filtered"}`,
+    ),
     providerId: safeId,
     providerUid: optionalBoundedString(input.uid),
     providerType: optionalBoundedString(input.type),
