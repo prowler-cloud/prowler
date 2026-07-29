@@ -49,12 +49,21 @@ DATABASES = {
         "HOST": env("POSTGRES_REPLICA_HOST", default=default_db_host),
         "PORT": env("POSTGRES_REPLICA_PORT", default=default_db_port),
     },
+    # TODO: drop after Neptune cutover just loosen defaults to `""`
     "neo4j": {
         "HOST": env.str("NEO4J_HOST"),
         "PORT": env.str("NEO4J_PORT"),
         "USER": env.str("NEO4J_USER"),
         "PASSWORD": env.str("NEO4J_PASSWORD"),
     },
+    "neptune": {
+        "WRITER_ENDPOINT": env.str("NEPTUNE_WRITER_ENDPOINT", default=""),
+        "READER_ENDPOINT": env.str("NEPTUNE_READER_ENDPOINT", default=""),
+        "PORT": env.str("NEPTUNE_PORT", default="8182"),
+        "REGION": env.str("AWS_REGION", default=""),
+    },
 }
 
 DATABASES["default"] = DATABASES["prowler_user"]
+
+label_postgres_connections(DATABASES)  # noqa: F405

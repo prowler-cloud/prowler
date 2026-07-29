@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "databricks_workspace_no_public_ip_enabled",
+  "CheckTitle": "Databricks workspace has secure cluster connectivity (no public IP)",
+  "CheckType": [],
+  "ServiceName": "databricks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.databricks/workspaces",
+  "ResourceGroup": "ai_ml",
+  "Description": "**Azure Databricks workspaces** are evaluated for **secure cluster connectivity** (No Public IP / NPIP). When enabled, compute (cluster) nodes are deployed without public IP addresses and communicate with the control plane through a secure relay, reducing the workspace's exposure to the internet.",
+  "Risk": "Without **secure cluster connectivity**, Databricks compute nodes are assigned **public IP addresses** and are directly reachable from the internet. This enables **port scanning**, **lateral movement** from a compromised node, and **data exfiltration** that bypasses private-network controls.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/secure-cluster-connectivity",
+    "https://learn.microsoft.com/en-us/azure/databricks/security/network/classic/vnet-inject",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.databricks/workspaces"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az databricks workspace create --name <workspace_name> --resource-group <resource_group_name> --location <region> --sku premium --enable-no-public-ip",
+      "NativeIaC": "```bicep\n// Bicep: Deploy a Databricks workspace with secure cluster connectivity (No Public IP)\nresource workspace 'Microsoft.Databricks/workspaces@2023-02-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  sku: {\n    name: 'premium'\n  }\n  properties: {\n    managedResourceGroupId: '/subscriptions/<example_resource_id>/resourceGroups/<example_resource_name>'\n    parameters: {\n      enableNoPublicIp: {\n        value: true // CRITICAL: Deploys cluster nodes without public IP addresses\n      }\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and start creating a new Azure Databricks workspace (No Public IP must be set at creation; it cannot be enabled on an existing workspace)\n2. On the Networking tab, set Deploy Azure Databricks workspace with Secure Cluster Connectivity (No Public IP) to Yes\n3. Complete the VNet injection configuration if required\n4. Review + create the workspace\n5. Migrate workloads to the new workspace and decommission the old one",
+      "Terraform": "```hcl\n# Terraform: Databricks workspace with secure cluster connectivity (No Public IP)\nresource \"azurerm_databricks_workspace\" \"<example_resource_name>\" {\n  name                = \"<example_resource_name>\"\n  resource_group_name = \"<example_resource_name>\"\n  location            = \"<region>\"\n  sku                 = \"premium\"\n\n  custom_parameters {\n    no_public_ip = true # CRITICAL: Deploys cluster nodes without public IP addresses\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Deploy Databricks workspaces with **secure cluster connectivity (No Public IP)** so compute nodes have no public IP addresses. Because this is set at creation, plan a migration for existing workspaces, and pair it with **VNet injection**, **private endpoints / disabled public network access**, and least-privilege NSG rules to uphold **defense in depth**.",
+      "Url": "https://hub.prowler.com/check/databricks_workspace_no_public_ip_enabled"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Secure cluster connectivity (No Public IP) applies to classic compute and is set at workspace creation. Serverless workspaces do not expose this setting (they have no customer-managed cluster nodes with public IPs) and are reported as MANUAL for verification."
+}

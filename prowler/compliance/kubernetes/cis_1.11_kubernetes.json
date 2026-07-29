@@ -820,6 +820,14 @@
       "Checks": [
         "apiserver_audit_log_maxage_set"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxage_set",
+          "ConfigKey": "audit_log_maxage",
+          "Operator": "gte",
+          "Value": 30
+        }
+      ],
       "Attributes": [
         {
           "Section": "1 Control Plane Components",
@@ -858,6 +866,14 @@
           "References": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/:https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/:https://github.com/kubernetes/enhancements/issues/22",
           "DefaultValue": "By default, auditing is not enabled."
         }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxbackup_set",
+          "ConfigKey": "audit_log_maxbackup",
+          "Operator": "gte",
+          "Value": 10
+        }
       ]
     },
     {
@@ -880,6 +896,14 @@
           "AdditionalInformation": "",
           "References": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/:https://kubernetes.io/docs/tasks/debug/debug-cluster/audit/:https://github.com/kubernetes/enhancements/issues/22",
           "DefaultValue": "By default, auditing is not enabled."
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_audit_log_maxsize_set",
+          "ConfigKey": "audit_log_maxsize",
+          "Operator": "gte",
+          "Value": 100
         }
       ]
     },
@@ -1108,6 +1132,18 @@
           "AdditionalInformation": "Insecure values: TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_ECDSA_WITH_RC4_128_SHA, TLS_ECDHE_RSA_WITH_3DES_EDE_CBC_SHA, TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256, TLS_ECDHE_RSA_WITH_RC4_128_SHA, TLS_RSA_WITH_3DES_EDE_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA, TLS_RSA_WITH_AES_128_CBC_SHA256, TLS_RSA_WITH_AES_128_GCM_SHA256, TLS_RSA_WITH_AES_256_CBC_SHA, TLS_RSA_WITH_AES_256_GCM_SHA384, TLS_RSA_WITH_RC4_128_SHA.",
           "References": "https://kubernetes.io/docs/reference/command-line-tools-reference/kube-apiserver/:https://github.com/ssllabs/research/wiki/SSL-and-TLS-Deployment-Best-Practices#23-use-secure-cipher-suites",
           "DefaultValue": "By default the Kubernetes API server supports a wide range of TLS ciphers"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "apiserver_strong_ciphers_only",
+          "ConfigKey": "apiserver_strong_ciphers",
+          "Operator": "subset",
+          "Value": [
+            "TLS_AES_128_GCM_SHA256",
+            "TLS_AES_256_GCM_SHA384",
+            "TLS_CHACHA20_POLY1305_SHA256"
+          ]
         }
       ]
     },
@@ -2111,6 +2147,23 @@
           "AdditionalInformation": "The list chosen above should be fine for modern clients. It's essentially the list from the Mozilla Modern cipher option with the ciphersuites supporting CBC mode removed, as CBC has traditionally had a lot of issues",
           "References": "",
           "DefaultValue": "By default the Kubernetes API server supports a wide range of TLS ciphers"
+        }
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "kubelet_strong_ciphers_only",
+          "ConfigKey": "kubelet_strong_ciphers",
+          "Operator": "subset",
+          "Value": [
+            "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256",
+            "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305",
+            "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_256_GCM_SHA384",
+            "TLS_RSA_WITH_AES_128_GCM_SHA256"
+          ]
         }
       ]
     },

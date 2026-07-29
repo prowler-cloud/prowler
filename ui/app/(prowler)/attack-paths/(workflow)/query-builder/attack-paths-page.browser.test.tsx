@@ -15,6 +15,8 @@ import { beforeEach, describe, expect, test as base, vi } from "vitest";
 import { handlersForFixture } from "@/__tests__/msw/handlers/attack-paths";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
 
 const { getFindingByIdMock } = vi.hoisted(() => ({
   getFindingByIdMock: vi.fn(),
@@ -35,8 +37,8 @@ vi.mock("@/actions/findings", async () => {
 });
 
 import { useGraphStore } from "./_hooks/use-graph-state";
-import { getPathEdges } from "./_lib";
-import { isFindingNode, layoutWithDagre } from "./_lib/layout";
+import { getPathEdges, isProwlerFindingNode } from "./_lib";
+import { layoutWithDagre } from "./_lib/layout";
 import AttackPathsPage from "./attack-paths-page";
 import { fixtures, type PageFixture } from "./attack-paths-page.fixtures";
 import { AttackPathPageHarness } from "./attack-paths-page.harness";
@@ -50,6 +52,7 @@ interface Fixtures {
 // one (selection, filtered view, expanded resources, etc.).
 beforeEach(() => {
   useGraphStore.getState().reset();
+  resetLighthouseContextStore();
   getFindingByIdMock.mockClear();
 });
 
@@ -75,17 +78,115 @@ describe("loading the page", () => {
   });
 });
 
-describe("running a query", () => {
-  test("the graph renders with a background, a minimap, and a viewport", async ({
+describe("waiting states", () => {
+  test("a pending scan shows the scan-in-progress message", async ({
     mountWith,
   }) => {
+    const graph = await mountWith(fixtures.scanPending());
+    expect(await graph.emptyStateMessage()).toMatch(/scan in progress/i);
+  });
+
+  test("a building graph shows the preparing message with progress", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.graphBuilding());
+    const message = await graph.emptyStateMessage();
+    expect(message).toMatch(/preparing attack paths data/i);
+    expect(message).toMatch(/45%/);
+  });
+
+  test("a completed scan with no graph shows the no-data message", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.noGraphData());
+    expect(await graph.emptyStateMessage()).toMatch(/no attack paths data/i);
+  });
+});
+
+describe("running a query", () => {
+  test("a parameterized query shows its required inputs after selection", async ({
+    mountWith,
+  }) => {
+    const graph = await mountWith(fixtures.parameterizedQuery());
+
+    await graph.selectQuery();
+
+    expect(graph.containsText(/Query Parameters/i)).toBe(true);
+    expect(graph.containsText(/Tag key/i)).toBe(true);
+    expect(graph.getInputByName("tag_key")).toBeTruthy();
+    expect(graph.containsText(/Tag value/i)).toBe(true);
+    expect(graph.getInputByName("tag_value")).toBeTruthy();
+  });
+
+  test("changing the form keeps Lighthouse bound to the query that produced the graph", async ({
+    mountWith,
+  }) => {
+    // Given
+    const fixture = fixtures.typical();
+    const graph = await mountWith(fixture);
+    await graph.executeQuery();
+
+    // When
+    await graph.selectQuery("aws-open-security-groups");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      queryId: fixture.queryId,
+      queryKind: "predefined",
+      canReplayQuery: true,
+      label: "Public S3 buckets",
+      nodeCount: fixture.queryResult?.nodes.length,
+      edgeCount: fixture.queryResult?.relationships?.length,
+    });
+  });
+
+  test("editing parameters keeps Lighthouse bound to the executed values", async ({
+    mountWith,
+  }) => {
+    // Given
+    const graph = await mountWith(fixtures.parameterizedQuery());
+    await graph.selectQuery();
+    await graph.fillInput("tag_key", "DataClassification");
+    await graph.fillInput("tag_value", "Sensitive");
+    await graph.executeQuery({ selectFirst: false });
+
+    // When
+    await graph.fillInput("tag_value", "Confidential");
+
+    // Then
+    expect(
+      useLighthouseContextStore.getState().contributions["attack-path-current"],
+    ).toMatchObject({
+      parameters: {
+        tag_key: "DataClassification",
+        tag_value: "Sensitive",
+      },
+    });
+  });
+
+  test("loading another execution removes stale graph context", async ({
+    mountWith,
+  }) => {
+    // Given
     const graph = await mountWith();
     await graph.executeQuery();
-    await graph.waitForGraphStable(3);
 
-    expect(graph.background).toBeTruthy();
-    expect(graph.minimap).toBeTruthy();
-    expect(graph.viewport).toBeTruthy();
+    // When
+    useGraphStore.getState().setLoading(true);
+
+    // Then
+    await vi.waitFor(() =>
+      expect(
+        useLighthouseContextStore.getState().contributions[
+          "attack-path-current"
+        ],
+      ).toMatchObject({
+        id: "current-scan",
+        queryId: undefined,
+      }),
+    );
   });
 
   test("nodes are laid out at distinct positions", async ({ mountWith }) => {
@@ -95,19 +196,6 @@ describe("running a query", () => {
 
     const positions = graph.nodePositions;
     expect(positions.some((p) => p.x !== 0 || p.y !== 0)).toBe(true);
-  });
-
-  test("the toolbar exposes zoom, fit, and export controls", async ({
-    mountWith,
-  }) => {
-    const graph = await mountWith();
-    await graph.executeQuery();
-    await graph.waitForGraphStable(1);
-
-    expect(graph.toolbar.zoomInButton).toBeTruthy();
-    expect(graph.toolbar.zoomOutButton).toBeTruthy();
-    expect(graph.toolbar.fitButton).toBeTruthy();
-    expect(graph.toolbar.exportButton).toBeTruthy();
   });
 
   test("finding, resource, and internet nodes all render", async ({
@@ -218,7 +306,7 @@ describe("running a query", () => {
     if (!fixture.queryResult) throw new Error("Expected graph fixture data");
 
     const visibleNodes = fixture.queryResult.nodes.filter(
-      (node) => !isFindingNode(node.labels),
+      (node) => !isProwlerFindingNode(node.labels),
     );
     const visibleNodeIds = new Set(visibleNodes.map((node) => node.id));
     const visibleEdges = (fixture.queryResult.relationships ?? [])
@@ -427,7 +515,7 @@ describe("exploring the graph", () => {
 
     const findingIds = new Set(
       (fixture.queryResult?.nodes ?? [])
-        .filter((node) => isFindingNode(node.labels))
+        .filter((node) => isProwlerFindingNode(node.labels))
         .map((node) => node.id),
     );
     const visibleEdges = (fixture.queryResult?.relationships ?? [])

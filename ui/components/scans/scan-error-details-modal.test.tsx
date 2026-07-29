@@ -6,7 +6,7 @@ import {
   type ScanErrorDetailsState,
 } from "./scan-error-details-modal";
 
-vi.mock("@/components/ui/code-snippet/code-snippet", () => ({
+vi.mock("@/components/shadcn/code-snippet/code-snippet", () => ({
   CodeSnippet: ({
     value,
     formatter,

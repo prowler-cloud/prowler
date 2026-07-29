@@ -9,12 +9,13 @@
   "Severity": "high",
   "ResourceType": "NotDefined",
   "ResourceGroup": "devops",
-  "Description": "**GitHub repository default branch** requires **Code Owners** approval for pull requests that modify paths declared in `CODEOWNERS`",
+  "Description": "**GitHub repository default branch** requires **Code Owners** approval for pull requests that modify paths declared in `CODEOWNERS`. This protection can be enforced through classic **branch protection** or repository **rulesets**.",
   "Risk": "Without required **Code Owners** review, non-owners can merge changes to sensitive code, undermining **integrity**.\nThis increases the chance of **malicious code injection**, hidden backdoors, or fragile changes that enable **data exfiltration** or cause outages, impacting confidentiality and availability.",
   "RelatedUrl": "",
   "AdditionalURLs": [
     "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-review-from-code-owners",
-    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule"
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule",
+    "https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/about-rulesets"
   ],
   "Remediation": {
     "Code": {

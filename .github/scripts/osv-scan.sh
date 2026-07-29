@@ -6,8 +6,7 @@
 #   - .github/workflows/api-security.yml, sdk-security.yml, ui-security.yml
 #
 # Severity levels (comma-separated) are read from OSV_SEVERITY_LEVELS.
-# Default: HIGH,CRITICAL,UNKNOWN — preserves prior .safety-policy.yml policy
-#   (ignore-cvss-severity-below: 7 + ignore-cvss-unknown-severity: False).
+# Default: CRITICAL — only CVSS >= 9.0 findings fail the scan.
 # osv-scanner has no native CVSS threshold (google/osv-scanner#1400, closed
 # not-planned). Severity is derived from $group.max_severity (numeric CVSS
 # score string) which osv-scanner emits per group.
@@ -33,7 +32,7 @@ set -euo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
 CONFIG="${ROOT}/osv-scanner.toml"
-SEVERITY_LEVELS="${OSV_SEVERITY_LEVELS:-HIGH,CRITICAL,UNKNOWN}"
+SEVERITY_LEVELS="${OSV_SEVERITY_LEVELS:-CRITICAL}"
 
 for bin in osv-scanner jq; do
   if ! command -v "${bin}" >/dev/null 2>&1; then

@@ -1,4 +1,12 @@
-import { cn } from "@/lib/utils";
+import { VariantProps } from "class-variance-authority";
+
+import { Badge, badgeVariants } from "@/components/shadcn/badge/badge";
+
+// Variants come straight from the canonical shadcn Badge so compliance panels
+// share the same badge vocabulary (and tokens) as the rest of the app.
+export type ComplianceBadgeVariant = NonNullable<
+  VariantProps<typeof badgeVariants>["variant"]
+>;
 
 export const ComplianceDetailContainer = ({
   children,
@@ -43,55 +51,28 @@ export const ComplianceBadgeContainer = ({
   return <div className="flex flex-wrap items-center gap-3">{children}</div>;
 };
 
-type BadgeColor =
-  | "red" // Risk/Level/Severity
-  | "blue" // Assessment/Method
-  | "orange" // Type/Category
-  | "green" // Weight/Score (positive)
-  | "purple" // Profile
-  | "indigo" // IDs/References
-  | "gray"; // Additional Info/Neutral
-
 export const ComplianceBadge = ({
   label,
   value,
-  color,
+  variant,
   conditional = false,
 }: {
   label: string;
   value: string | number;
-  color: BadgeColor;
+  variant: ComplianceBadgeVariant;
   conditional?: boolean;
 }) => {
-  const actualColor = conditional && Number(value) === 0 ? "gray" : color;
-
-  const colorClasses = {
-    red: "bg-red-50 text-red-700 ring-red-600/10 dark:bg-red-400/10 dark:text-red-400 dark:ring-red-400/20",
-    blue: "bg-blue-50 text-blue-700 ring-blue-600/10 dark:bg-blue-400/10 dark:text-blue-400 dark:ring-blue-400/20",
-    orange:
-      "bg-orange-50 text-orange-700 ring-orange-600/10 dark:bg-orange-400/10 dark:text-orange-400 dark:ring-orange-400/20",
-    green:
-      "bg-green-50 text-green-700 ring-green-600/10 dark:bg-green-400/10 dark:text-green-400 dark:ring-green-400/20",
-    purple:
-      "bg-purple-50 text-purple-700 ring-purple-600/10 dark:bg-purple-400/10 dark:text-purple-400 dark:ring-purple-400/20",
-    indigo:
-      "bg-indigo-50 text-indigo-700 ring-indigo-600/10 dark:bg-indigo-400/10 dark:text-indigo-400 dark:ring-indigo-400/20",
-    gray: "bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20",
-  };
+  // A "conditional" metric badge with a zero value drops to a neutral variant
+  // so empty scores don't read as a meaningful (e.g. positive) result.
+  const actualVariant: ComplianceBadgeVariant =
+    conditional && Number(value) === 0 ? "secondary" : variant;
 
   return (
     <div className="flex items-center gap-2">
       <span className="text-muted-foreground text-sm font-medium">
         {label}:
       </span>
-      <span
-        className={cn(
-          "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-          colorClasses[actualColor],
-        )}
-      >
-        {value}
-      </span>
+      <Badge variant={actualVariant}>{value}</Badge>
     </div>
   );
 };
@@ -132,12 +113,9 @@ export const ComplianceChipContainer = ({
     <ComplianceDetailSection title={title}>
       <div className="flex flex-wrap gap-2">
         {items.map((item: string, index: number) => (
-          <span
-            key={index}
-            className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-gray-500/10 ring-inset dark:bg-gray-400/10 dark:text-gray-400 dark:ring-gray-400/20"
-          >
+          <Badge key={index} variant="tag">
             {item}
-          </span>
+          </Badge>
         ))}
       </div>
     </ComplianceDetailSection>

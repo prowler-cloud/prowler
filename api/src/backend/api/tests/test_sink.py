@@ -1,0 +1,716 @@
+"""Tests for the attack-paths sink factory and Neo4j sink.
+
+The sink module picks a backend per ``settings.ATTACK_PATHS_SINK_DATABASE``.
+Neo4j is the default and preserves today's behavior; Neptune is opt-in and
+builds dual writer/reader Bolt drivers.
+"""
+
+import json
+from unittest.mock import MagicMock, patch
+
+import neo4j
+import pytest
+from api.attack_paths import sink as sink_module
+from api.attack_paths.database import (
+    GraphDatabaseQueryException,
+    NeptuneWriteRetryExhaustedException,
+)
+from api.attack_paths.retryable_session import RetryExhaustedError
+from api.attack_paths.sink import factory
+from api.attack_paths.sink.neo4j import DATABASE_NOT_FOUND_CODE, Neo4jSink
+from api.attack_paths.sink.neptune import (
+    NEPTUNE_WRITE_RETRY_DELAY_SECONDS,
+    NeptuneSink,
+    _is_retryable_write_error,
+    _NeptuneAuthToken,
+)
+
+
+@pytest.fixture(autouse=True)
+def reset_sink_state():
+    """Reset the module-level backend singletons around each test.
+
+    The cache lives in `api.attack_paths.sink.factory`, not on the package.
+    """
+    original_backend = factory._backend
+    original_secondary = dict(factory._secondary_backends)
+    factory._backend = None
+    factory._secondary_backends.clear()
+    yield
+    factory._backend = original_backend
+    factory._secondary_backends.clear()
+    factory._secondary_backends.update(original_secondary)
+
+
+class TestSinkFactory:
+    def test_default_resolves_to_neo4j(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        assert factory._resolve_setting() == "neo4j"
+
+    def test_neptune_resolves_correctly(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        assert factory._resolve_setting() == "neptune"
+
+    def test_invalid_value_raises(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "foo"
+        with pytest.raises(RuntimeError, match="ATTACK_PATHS_SINK_DATABASE"):
+            factory._resolve_setting()
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_init_builds_neo4j_backend_by_default(self, mock_driver, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        mock_driver.return_value = MagicMock()
+
+        backend = sink_module.init()
+
+        assert isinstance(backend, Neo4jSink)
+        mock_driver.assert_called_once()
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_init_builds_neptune_backend(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "reader.example",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        mock_driver.return_value = MagicMock()
+        mock_auth_provider.return_value = lambda: None
+
+        backend = sink_module.init()
+
+        assert isinstance(backend, NeptuneSink)
+        # Writer + reader endpoints both trigger driver construction
+        assert mock_driver.call_count == 2
+        writer_uri = mock_driver.call_args_list[0][0][0]
+        reader_uri = mock_driver.call_args_list[1][0][0]
+        assert writer_uri == "bolt+s://writer.example:8182"
+        assert reader_uri == "bolt+s://reader.example:8182"
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_neptune_reader_falls_back_to_writer(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        mock_driver.return_value = MagicMock()
+        mock_auth_provider.return_value = lambda: None
+
+        sink_module.init()
+
+        # Only one driver call — reader aliases writer
+        assert mock_driver.call_count == 1
+
+
+def test_neo4j_sync_batch_size_defaults_to_1000():
+    assert Neo4jSink.sync_batch_size == 1000
+
+
+def test_neptune_sync_batch_size_defaults_to_500():
+    assert NeptuneSink.sync_batch_size == 500
+
+
+class TestGetBackendForScan:
+    """``get_backend_for_scan`` routes by the row's recorded sink backend."""
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_legacy_scan_in_neo4j_process_uses_active_backend(
+        self, mock_driver, settings
+    ):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        mock_driver.return_value = MagicMock()
+
+        scan = MagicMock(sink_backend="neo4j")
+        backend = sink_module.get_backend_for_scan(scan)
+
+        assert backend is sink_module.get_backend()
+
+    def test_neptune_scan_on_neo4j_process_uses_neptune_secondary(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neo4j"
+        active_neo4j = MagicMock(name="neo4j-active")
+        factory._backend = active_neo4j
+
+        secondary_neptune = MagicMock(name="neptune-secondary")
+        with patch.object(factory, "_build_backend", return_value=secondary_neptune):
+            scan = MagicMock(sink_backend="neptune")
+            backend = factory.get_backend_for_scan(scan)
+
+        assert backend is secondary_neptune
+        assert backend is not active_neo4j
+
+
+def _session_ctx(session: MagicMock) -> MagicMock:
+    ctx = MagicMock()
+    ctx.__enter__ = MagicMock(return_value=session)
+    ctx.__exit__ = MagicMock(return_value=False)
+    return ctx
+
+
+def _count_result(key: str, count: int) -> MagicMock:
+    return MagicMock(single=MagicMock(return_value={key: count}))
+
+
+def _run_managed_write(session: MagicMock) -> MagicMock:
+    transaction = MagicMock()
+    session.execute_write.call_args.args[0](transaction)
+    return transaction
+
+
+def _managed_write_session(
+    results: list[MagicMock],
+) -> tuple[MagicMock, list[MagicMock]]:
+    session = MagicMock()
+    transactions: list[MagicMock] = []
+    result_iter = iter(results)
+
+    def execute_write(work):
+        transaction = MagicMock()
+        transaction.run.return_value = next(result_iter)
+        transactions.append(transaction)
+        return work(transaction)
+
+    session.execute_write.side_effect = execute_write
+    return session, transactions
+
+
+def _directed_drop_results(
+    outgoing_rels: int,
+    incoming_rels: int,
+    nodes: int,
+) -> list[MagicMock]:
+    return [
+        _count_result("deleted_rels_count", outgoing_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_rels_count", incoming_rels),
+        _count_result("deleted_rels_count", 0),
+        _count_result("deleted_nodes_count", nodes),
+        _count_result("deleted_nodes_count", 0),
+    ]
+
+
+class TestNeo4jSinkSyncWrites:
+    def test_ensure_sync_indexes_runs_create_index_idempotent(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.ensure_sync_indexes("db-tenant-x")
+
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
+        assert "CREATE INDEX" in query
+        assert "IF NOT EXISTS" in query
+        assert "`_ProviderResource`" in query
+        assert "`_provider_element_id`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
+
+    def test_write_nodes_skips_empty_batch(self):
+        sink = Neo4jSink()
+        with patch.object(sink, "get_session") as get_session:
+            sink.write_nodes("db-tenant-x", "`AWSUser`", [])
+            get_session.assert_not_called()
+
+    def test_write_nodes_merges_on_provider_resource_label(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_nodes(
+                "db-tenant-x",
+                "`AWSUser`:`_ProviderResource`",
+                [{"provider_element_id": "p:e", "props": {"k": "v"}}],
+            )
+
+        transaction = _run_managed_write(session)
+        query, params = transaction.run.call_args.args
+        assert "MERGE (n:`_ProviderResource`" in query
+        assert "`_provider_element_id`: row.provider_element_id" in query
+        assert "SET n:`AWSUser`:`_ProviderResource`" in query
+        assert params == {"rows": [{"provider_element_id": "p:e", "props": {"k": "v"}}]}
+        transaction.run.return_value.consume.assert_called_once_with()
+
+    def test_write_relationships_scopes_endpoints_by_provider_label(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        provider_id = "00000000-0000-0000-0000-000000000abc"
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_relationships(
+                "db-tenant-x",
+                "RESOURCE",
+                provider_id,
+                [
+                    {
+                        "start_element_id": "s",
+                        "end_element_id": "e",
+                        "provider_element_id": "pe",
+                        "props": {},
+                    }
+                ],
+            )
+
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
+        assert ":`_Provider_00000000000000000000000000000abc`" in query
+        assert ":RESOURCE" in query.replace("`", "")
+        assert "MERGE (s)-[r:`RESOURCE`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
+
+
+class TestNeptuneSinkSyncWrites:
+    def test_ensure_sync_indexes_is_noop(self):
+        sink = NeptuneSink()
+        with patch.object(sink, "get_session") as get_session:
+            sink.ensure_sync_indexes("ignored")
+            get_session.assert_not_called()
+
+    def test_write_nodes_merges_on_neptune_id_with_provider_resource_label(self):
+        sink = NeptuneSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_nodes(
+                "ignored",
+                "`AWSUser`",
+                [{"provider_element_id": "p:e", "props": {"k": "v"}}],
+            )
+
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
+        # Neptune assigns a default `vertex` label to any unlabeled node,
+        # so the MERGE must pin a real label at creation time.
+        assert "MERGE (n:`_ProviderResource` {`~id`: row.provider_element_id})" in query
+        assert "SET n:`AWSUser`" in query
+        assert "SET n.`_provider_element_id` = row.provider_element_id" in query
+        transaction.run.return_value.consume.assert_called_once_with()
+
+    def test_write_relationships_matches_endpoints_by_id(self):
+        sink = NeptuneSink()
+        session = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            sink.write_relationships(
+                "ignored",
+                "RESOURCE",
+                "provider-1",
+                [
+                    {
+                        "start_element_id": "s",
+                        "end_element_id": "e",
+                        "provider_element_id": "pe",
+                        "props": {},
+                    }
+                ],
+            )
+
+        transaction = _run_managed_write(session)
+        query = transaction.run.call_args.args[0]
+        assert "MATCH (s) WHERE id(s) = row.start_element_id" in query
+        assert "MATCH (e) WHERE id(e) = row.end_element_id" in query
+        assert "MERGE (s)-[r:`RESOURCE`" in query
+        transaction.run.return_value.consume.assert_called_once_with()
+
+
+class TestNeptuneRetryPolicy:
+    @pytest.mark.parametrize(
+        "message",
+        [
+            "Unexpected server exception 'Operation failed due to conflicting "
+            "concurrent operations (please retry), 0 transactions are currently "
+            "rolling back.'",
+            "Unexpected server exception 'Operation terminated (deadline exceeded)'",
+        ],
+    )
+    def test_observed_transient_write_errors_are_retryable(self, message):
+        error = MagicMock(spec=neo4j.exceptions.Neo4jError)
+        error.message = message
+
+        assert _is_retryable_write_error(error) is True
+
+    def test_unrelated_database_error_is_not_retryable(self):
+        error = MagicMock(spec=neo4j.exceptions.Neo4jError)
+        error.message = (
+            "Unexpected server exception 'Operation terminated (out of memory)'"
+        )
+
+        assert _is_retryable_write_error(error) is False
+
+    def test_non_neo4j_error_is_not_retryable(self):
+        error = RuntimeError(
+            "Operation failed due to conflicting concurrent operations"
+        )
+
+        assert _is_retryable_write_error(error) is False
+
+    @patch("api.attack_paths.sink.neptune.RetryableSession")
+    def test_writer_session_enables_neptune_retry_policy(self, retryable_session):
+        sink = NeptuneSink()
+        driver = MagicMock()
+        with patch.object(sink, "_get_writer", return_value=driver):
+            with sink.get_session():
+                pass
+
+        kwargs = retryable_session.call_args.kwargs
+        assert kwargs["retry_if"] is _is_retryable_write_error
+        assert (
+            kwargs["initial_retry_delay_seconds"] == NEPTUNE_WRITE_RETRY_DELAY_SECONDS
+        )
+        assert kwargs["retry_context"] == "Neptune write"
+
+    @patch("api.attack_paths.sink.neptune.RetryableSession")
+    def test_reader_session_does_not_enable_write_retry_policy(self, retryable_session):
+        sink = NeptuneSink()
+        driver = MagicMock()
+        with patch.object(sink, "_get_reader", return_value=driver):
+            with sink.get_session(default_access_mode=neo4j.READ_ACCESS):
+                pass
+
+        kwargs = retryable_session.call_args.kwargs
+        assert kwargs["retry_if"] is None
+        assert kwargs["initial_retry_delay_seconds"] == 0
+        assert kwargs["retry_context"] is None
+
+    def test_writer_retry_exhaustion_preserves_neptune_error_details(self):
+        message = (
+            "Unexpected server exception 'Operation failed due to conflicting "
+            "concurrent operations (please retry), 0 transactions are currently "
+            "rolling back.'"
+        )
+        error = neo4j.exceptions.Neo4jError._hydrate_neo4j(
+            code="BoltProtocol.unexpectedException",
+            message=message,
+        )
+        retry_error = RetryExhaustedError(
+            retry_context="Neptune write",
+            method_name="execute_write",
+            attempts=4,
+            elapsed_seconds=27.1234,
+            last_error=error,
+        )
+        sink = NeptuneSink()
+        driver = MagicMock()
+        retryable_session = MagicMock()
+        retryable_session.execute_write.side_effect = retry_error
+
+        with (
+            patch.object(sink, "_get_writer", return_value=driver),
+            patch(
+                "api.attack_paths.sink.neptune.RetryableSession",
+                return_value=retryable_session,
+            ),
+            pytest.raises(NeptuneWriteRetryExhaustedException) as exc_info,
+        ):
+            with sink.get_session() as session:
+                session.execute_write(MagicMock())
+
+        assert exc_info.value.code == "BoltProtocol.unexpectedException"
+        assert str(exc_info.value) == (
+            "BoltProtocol.unexpectedException: Neptune write execute_write failed "
+            "after 4 attempts over 27.123s. Last error: "
+            f"{message}"
+        )
+        assert exc_info.value.__cause__ is error
+
+
+class TestNeptuneSinkDropSubgraph:
+    def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
+        sink = NeptuneSink()
+        session, transactions = _managed_write_session(
+            _directed_drop_results(
+                outgoing_rels=50,
+                incoming_rels=30,
+                nodes=10,
+            )
+        )
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("ignored", "provider-1")
+
+        assert deleted == 10
+        assert session.execute_write.call_count == 6
+        queries = [transaction.run.call_args.args[0] for transaction in transactions]
+
+        assert ")-[r]->()" in queries[0]
+        assert ")<-[r]-()" in queries[2]
+        assert "DELETE n" in queries[4]
+        assert all("DETACH DELETE" not in query for query in queries)
+        assert all("DISTINCT r" not in query for query in queries)
+
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
+
+
+class TestNeo4jSinkDropSubgraph:
+    """Neo4j drop deletes relationships then nodes in batches (no ``DETACH DELETE``)."""
+
+    def test_drop_subgraph_deletes_directed_rels_before_nodes_in_bounded_batches(self):
+        sink = Neo4jSink()
+        session, transactions = _managed_write_session(
+            _directed_drop_results(
+                outgoing_rels=50,
+                incoming_rels=30,
+                nodes=10,
+            )
+        )
+
+        provider_id = "00000000-0000-0000-0000-000000000abc"
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("db-tenant-x", provider_id)
+
+        # Only phase-2 node counts contribute to the return value.
+        assert deleted == 10
+        assert session.execute_write.call_count == 6
+
+        queries = [transaction.run.call_args.args[0] for transaction in transactions]
+        # Regression guard: the memory blow-up was caused by DETACH DELETE.
+        assert all("DETACH DELETE" not in query for query in queries)
+        assert all("DISTINCT r" not in query for query in queries)
+
+        first_query = queries[0]
+        assert "DELETE r" in first_query
+        assert ")-[r]->()" in first_query
+        assert ":`_Provider_00000000000000000000000000000abc`" in first_query
+
+        assert ")<-[r]-()" in queries[2]
+        assert "DELETE n" in queries[4]
+
+        # Relationships must be fully drained before nodes are deleted.
+        first_node = next(i for i, q in enumerate(queries) if "DELETE n" in q)
+        last_rel = max(i for i, q in enumerate(queries) if "DELETE r" in q)
+        assert last_rel < first_node
+
+    def test_drop_subgraph_returns_zero_when_database_does_not_exist(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.execute_write.side_effect = GraphDatabaseQueryException(
+            message="db missing", code=DATABASE_NOT_FOUND_CODE
+        )
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            deleted = sink.drop_subgraph("db-tenant-missing", "provider-1")
+
+        assert deleted == 0
+
+
+class TestSinkHasProviderData:
+    """``has_provider_data`` is the read-path probe used by API views."""
+
+    def test_neo4j_returns_true_when_provider_node_exists(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.return_value.single.return_value = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data(
+                "db-tenant-x", "00000000-0000-0000-0000-000000000abc"
+            )
+
+        assert present is True
+        query = session.run.call_args.args[0]
+        assert ":`_Provider_00000000000000000000000000000abc`" in query
+
+    def test_neo4j_returns_false_when_database_does_not_exist(self):
+        sink = Neo4jSink()
+        session = MagicMock()
+        session.run.side_effect = GraphDatabaseQueryException(
+            message="db missing", code=DATABASE_NOT_FOUND_CODE
+        )
+
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data("db-tenant-missing", "provider-1")
+
+        assert present is False
+
+    def test_neptune_returns_true_when_provider_node_exists(self):
+        sink = NeptuneSink()
+        session = MagicMock()
+        session.run.return_value.single.return_value = MagicMock()
+        with patch.object(sink, "get_session", return_value=_session_ctx(session)):
+            present = sink.has_provider_data("ignored", "provider-1")
+
+        assert present is True
+
+
+class TestGetBackendForScanCutover:
+    """``get_backend_for_scan`` keeps old-sink scans queryable after cutover."""
+
+    def test_legacy_scan_on_neptune_process_uses_neo4j_secondary(self, settings):
+        settings.ATTACK_PATHS_SINK_DATABASE = "neptune"
+        active_neptune = MagicMock(name="neptune-active")
+        factory._backend = active_neptune
+
+        secondary_neo4j = MagicMock(name="neo4j-secondary")
+        with patch.object(factory, "_build_backend", return_value=secondary_neo4j):
+            scan = MagicMock(sink_backend="neo4j")
+            backend = factory.get_backend_for_scan(scan)
+
+        assert backend is secondary_neo4j
+        assert backend is not active_neptune
+
+
+class TestSinkVerifyConnectivity:
+    """The readiness probe calls ``verify_connectivity`` through the shim.
+
+    Neo4j checks its single driver; Neptune checks the reader (the API read
+    path), which on single-endpoint clusters aliases the writer.
+    """
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_neo4j_verifies_its_driver(self, mock_driver, settings):
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        driver = MagicMock()
+        mock_driver.return_value = driver
+
+        sink = Neo4jSink()
+        sink.init()
+        driver.verify_connectivity.reset_mock()  # ignore the eager init check
+        sink.verify_connectivity()
+
+        driver.verify_connectivity.assert_called_once_with()
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_neptune_verifies_reader_not_writer(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "reader.example",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        writer, reader = MagicMock(name="writer"), MagicMock(name="reader")
+        mock_driver.side_effect = [writer, reader]
+        mock_auth_provider.return_value = lambda: None
+
+        sink = NeptuneSink()
+        sink.init()
+        writer.verify_connectivity.reset_mock()
+        reader.verify_connectivity.reset_mock()
+
+        sink.verify_connectivity()
+
+        reader.verify_connectivity.assert_called_once_with()
+        writer.verify_connectivity.assert_not_called()
+
+
+class TestSinkInitToleratesUnreachableSink:
+    """Init must not crash the process when the sink is down at boot.
+
+    Same degradation model as Postgres: the driver is retained and
+    reconnects lazily; /health/ready surfaces the outage until it recovers.
+    """
+
+    @patch("api.attack_paths.sink.neo4j.neo4j.GraphDatabase.driver")
+    def test_neo4j_init_continues_when_verify_fails(self, mock_driver, settings):
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neo4j": {
+                "HOST": "localhost",
+                "PORT": "7687",
+                "USER": "neo4j",
+                "PASSWORD": "pw",
+            },
+        }
+        driver = MagicMock()
+        driver.verify_connectivity.side_effect = RuntimeError("unreachable")
+        mock_driver.return_value = driver
+
+        sink = Neo4jSink()
+        # Must not raise.
+        assert sink.init() is driver
+        assert sink._driver is driver
+
+    @patch("api.attack_paths.sink.neptune.neptune_auth_provider")
+    @patch("api.attack_paths.sink.neptune.neo4j.GraphDatabase.driver")
+    def test_neptune_init_continues_when_verify_fails(
+        self, mock_driver, mock_auth_provider, settings
+    ):
+        settings.DATABASES = {
+            **settings.DATABASES,
+            "neptune": {
+                "WRITER_ENDPOINT": "writer.example",
+                "READER_ENDPOINT": "reader.example",
+                "PORT": "8182",
+                "REGION": "eu-west-1",
+            },
+        }
+        driver = MagicMock()
+        driver.verify_connectivity.side_effect = RuntimeError("unreachable")
+        mock_driver.return_value = driver
+        mock_auth_provider.return_value = lambda: None
+
+        sink = NeptuneSink()
+        # Must not raise; both drivers retained.
+        sink.init()
+        assert sink._writer is not None
+        assert sink._reader is not None
+
+
+class TestNeptuneAdminNoOps:
+    """Neptune is single-database; admin DDL has no work to do."""
+
+    @pytest.mark.parametrize("method", ["create_database", "drop_database"])
+    def test_admin_ops_return_none_without_touching_a_session(self, method):
+        sink = NeptuneSink()
+        with patch.object(sink, "get_session") as get_session:
+            assert getattr(sink, method)("ignored") is None
+            get_session.assert_not_called()
+
+
+class TestNeptuneAuthToken:
+    """SigV4 signing for the Neptune Bolt endpoint."""
+
+    @patch("api.attack_paths.sink.neptune.SigV4Auth")
+    @patch("api.attack_paths.sink.neptune.BotoSession")
+    def test_host_header_includes_non_default_port(self, mock_boto, mock_sigv4):
+        # Neptune runs on 8182; the SigV4 canonical Host must keep the port or
+        # the signature is rejected.
+        credentials = MagicMock()
+        credentials.get_frozen_credentials.return_value = MagicMock()
+        mock_boto.return_value.get_credentials.return_value = credentials
+
+        token = _NeptuneAuthToken("eu-west-1", "https://writer.example:8182")
+
+        auth_obj = json.loads(token.credentials)
+        assert auth_obj["Host"] == "writer.example:8182"

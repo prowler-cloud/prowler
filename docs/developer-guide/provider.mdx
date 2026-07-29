@@ -3211,21 +3211,18 @@ class YourProviderAPITestCase(APITestCase):
 
 #### 2.6.1. Add your mocked provider to the tests
 
-If needed, add your mocked provider to the tests config file so you can use it on the tests.
+If needed, add a named provider fixture or extend the provider factory defaults so tests can request only the provider they need.
 
 **File:** `api/src/backend/conftest.py`
 
 ```python
 @pytest.fixture
-def providers_fixture(tenants_fixture):
-    tenant, *_ = tenants_fixture
-    providerX = Provider.objects.create(
+def your_provider(provider_factory):
+    return provider_factory(
         provider="your_provider",
         uid="your_uid",
         alias="your_alias",
-        tenant_id=tenant.id,
     )
-    return provider1, provider2, provider3, ... providerX
 ```
 
 ### 2.7. Compliance and Output Support
@@ -3421,7 +3418,7 @@ Use existing providers as templates, this will help you to understand better the
 - **Documentation & Maintenance**
 
     - **README Updates**: Update provider-specific documentation
-    - **Changelog**: Document changes and new features
+    - **Changelog**: Document changes and new features with a fragment under `prowler/changelog.d/` (see the [Pull Request Template](https://github.com/prowler-cloud/prowler/blob/master/.github/pull_request_template.md))
     - **Examples**: Provide usage examples and common scenarios
     - **Troubleshooting**: Include common issues and solutions
     - **Documentation**: Update the provider documentation to include your new tool provider in the examples and implementation guidance.

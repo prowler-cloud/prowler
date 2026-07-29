@@ -35,6 +35,7 @@ def mock_make_api_call(self, operation_name, kwarg):
                 "Arn": SERVER_ARN,
                 "ServerId": SERVER_ID,
                 "Protocols": ["SFTP"],
+                "SecurityPolicyName": "TransferSecurityPolicy-2025-03",
                 "Tags": [{"Key": "key", "Value": "value"}],
             }
         }
@@ -83,3 +84,7 @@ class Test_transfer_service:
         assert transfer.servers[SERVER_ARN].region == "us-east-1"
         assert transfer.servers[SERVER_ARN].tags == [{"Key": "key", "Value": "value"}]
         assert transfer.servers[SERVER_ARN].protocols[0] == Protocol.SFTP
+        assert (
+            transfer.servers[SERVER_ARN].security_policy_name
+            == "TransferSecurityPolicy-2025-03"
+        )

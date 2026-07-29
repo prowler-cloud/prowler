@@ -2,6 +2,13 @@ from colorama import Fore, Style
 from tabulate import tabulate
 
 from prowler.config.config import orange_color
+from prowler.lib.check.compliance_config_eval import (
+    accumulate_group_status,
+    accumulate_overview_status,
+    get_effective_status,
+    get_scan_audit_config,
+    resolve_requirement_config_status,
+)
 
 
 def get_c5_table(
@@ -18,37 +25,45 @@ def get_c5_table(
         "Status": [],
         "Muted": [],
     }
-    pass_count = []
-    fail_count = []
-    muted_count = []
+    pass_count = set()
+    fail_count = set()
+    muted_count = set()
     sections = {}
+    section_seen = {}
+    provider = ""
+    audit_config = get_scan_audit_config()
+    config_status_cache = {}
     for index, finding in enumerate(findings):
         check = bulk_checks_metadata[finding.check_metadata.CheckID]
         check_compliances = check.Compliance
         for compliance in check_compliances:
             if compliance.Framework == "C5":
+                provider = compliance.Provider
                 for requirement in compliance.Requirements:
+                    config_status = resolve_requirement_config_status(
+                        requirement, audit_config, config_status_cache
+                    )
+                    effective_status = get_effective_status(
+                        finding.status, config_status
+                    )
                     for attribute in requirement.Attributes:
                         section = attribute.Section
 
                         if section not in sections:
                             sections[section] = {"FAIL": 0, "PASS": 0, "Muted": 0}
+                            section_seen[section] = {}
 
-                        if finding.muted:
-                            if index not in muted_count:
-                                muted_count.append(index)
-                                sections[section]["Muted"] += 1
-                        else:
-                            if finding.status == "FAIL" and index not in fail_count:
-                                fail_count.append(index)
-                                sections[section]["FAIL"] += 1
-                            elif finding.status == "PASS" and index not in pass_count:
-                                pass_count.append(index)
-                                sections[section]["PASS"] += 1
+                        status = "Muted" if finding.muted else effective_status
+                        accumulate_overview_status(
+                            index, status, pass_count, fail_count, muted_count
+                        )
+                        accumulate_group_status(
+                            index, status, sections[section], section_seen[section]
+                        )
 
     sections = dict(sorted(sections.items()))
     for section in sections:
-        section_table["Provider"].append(compliance.Provider)
+        section_table["Provider"].append(provider)
         section_table["Section"].append(section)
         if sections[section]["FAIL"] > 0:
             section_table["Status"].append(

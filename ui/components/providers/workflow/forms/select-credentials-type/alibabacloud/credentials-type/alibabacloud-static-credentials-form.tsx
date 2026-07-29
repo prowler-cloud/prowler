@@ -12,10 +12,10 @@ export const AlibabaCloudStaticCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via Access Keys
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide a RAM user Access Key ID and Access Key Secret with read
           access to the resources you want Prowler to assess.
         </div>
@@ -40,7 +40,7 @@ export const AlibabaCloudStaticCredentialsForm = ({
         variant="bordered"
         isRequired
       />
-      <div className="text-default-400 text-xs">
+      <div className="text-text-neutral-tertiary text-xs">
         Keys never leave your browser unencrypted and are stored as secrets in
         the backend. Rotate the key from Alibaba Cloud RAM console anytime if
         needed.

@@ -497,6 +497,85 @@ class Test_OktaProvider_init:
         assert provider.audit_config is not None
         assert provider.mutelist is not None
 
+    def test_default_max_retries_from_config_file(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+            )
+
+        # No CLI override: value comes from the bundled config.yaml default.
+        assert provider.audit_config["okta_max_retries"] == 5
+
+    def test_cli_retries_override_config_file(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                okta_retries_max_attempts=9,
+            )
+
+        assert provider.audit_config["okta_max_retries"] == 9
+
+    def test_cli_retries_override_accepts_zero(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                okta_retries_max_attempts=0,
+            )
+
+        # 0 disables retries and must not be treated as "unset".
+        assert provider.audit_config["okta_max_retries"] == 0
+
+    def test_rate_limiter_built_from_config_file_default(
+        self, _clear_okta_env, tmp_path
+    ):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+            )
+
+        # Bundled config.yaml enables throttling at 4 req/s.
+        assert provider.rate_limiter is not None
+        assert provider.audit_config["okta_requests_per_second"] == 4
+
+    def test_cli_requests_per_second_override(self, _clear_okta_env, tmp_path):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                okta_requests_per_second=10,
+            )
+
+        assert provider.audit_config["okta_requests_per_second"] == 10
+        assert provider.rate_limiter is not None
+
+    def test_requests_per_second_zero_disables_throttling(
+        self, _clear_okta_env, tmp_path
+    ):
+        validate_p, session_p, identity_p = _mock_setup_paths()
+        with validate_p, session_p, identity_p:
+            provider = OktaProvider(
+                okta_org_domain=OKTA_ORG_DOMAIN,
+                okta_client_id=OKTA_CLIENT_ID,
+                okta_private_key_file="/tmp/key.pem",
+                okta_requests_per_second=0,
+            )
+
+        assert provider.rate_limiter is None
+
 
 class Test_OktaProvider_test_connection:
     def test_success(self, _clear_okta_env, tmp_path):

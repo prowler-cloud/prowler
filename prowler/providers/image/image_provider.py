@@ -59,6 +59,7 @@ class ImageProvider(Provider):
     """
 
     _type: str = "image"
+    sdk_only: bool = False
     FINDING_BATCH_SIZE: int = 100
     MAX_IMAGE_LIST_LINES: int = 10_000
     MAX_IMAGE_NAME_LENGTH: int = 500

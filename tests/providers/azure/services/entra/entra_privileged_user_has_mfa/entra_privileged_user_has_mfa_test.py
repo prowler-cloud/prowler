@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_privileged_user_has_mfa:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -30,7 +30,7 @@ class Test_entra_privileged_user_has_mfa:
 
     def test_entra_tenant_no_users(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -53,6 +53,7 @@ class Test_entra_privileged_user_has_mfa:
 
     def test_entra_user_no_privileged_no_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -92,6 +93,7 @@ class Test_entra_privileged_user_has_mfa:
 
     def test_entra_user_no_privileged_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -131,6 +133,7 @@ class Test_entra_privileged_user_has_mfa:
 
     def test_entra_user_privileged_no_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (
@@ -177,6 +180,7 @@ class Test_entra_privileged_user_has_mfa:
 
     def test_entra_user_privileged_mfa(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         user_id = str(uuid4())
 
         with (

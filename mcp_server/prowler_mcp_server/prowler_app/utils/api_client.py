@@ -1,12 +1,13 @@
-"""Shared API client utilities for Prowler App tools."""
+"""Shared API client utilities for Prowler tools."""
 
 import asyncio
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Dict
+from enum import StrEnum
+from typing import Any
 from urllib.parse import urlparse
 
 import httpx
+
 from prowler_mcp_server import __version__
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
@@ -14,7 +15,7 @@ from prowler_mcp_server.prowler_app.utils.auth import ProwlerAppAuth
 ALLOWED_EXTERNAL_DOMAINS: frozenset[str] = frozenset({"raw.githubusercontent.com"})
 
 
-class HTTPMethod(str, Enum):
+class HTTPMethod(StrEnum):
     """HTTP methods enum."""
 
     GET = "GET"
@@ -30,7 +31,7 @@ class SingletonMeta(type):
     All calls to the constructor return the same instance.
     """
 
-    _instances: Dict[type, Any] = {}
+    _instances: dict[type, Any] = {}
 
     def __call__(cls, *args, **kwargs):
         """Control instance creation to ensure singleton behavior."""
@@ -175,13 +176,19 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         )
 
     async def delete(
-        self, path: str, params: dict[str, any] | None = None
+        self,
+        path: str,
+        params: dict[str, any] | None = None,
+        json_data: dict[str, any] | None = None,
     ) -> dict[str, any]:
         """Make DELETE request.
 
         Args:
             path: API endpoint path
             params: Optional query parameters
+            json_data: Optional JSON body data. Some JSON:API relationship
+                endpoints (e.g. ``/users/{id}/relationships/roles``) accept a
+                body listing the specific members to remove.
 
         Returns:
             API response as dictionary
@@ -189,7 +196,9 @@ class ProwlerAPIClient(metaclass=SingletonMeta):
         Raises:
             Exception: If API request fails
         """
-        return await self._make_request(HTTPMethod.DELETE, path, params=params)
+        return await self._make_request(
+            HTTPMethod.DELETE, path, params=params, json_data=json_data
+        )
 
     async def fetch_external_url(self, url: str) -> str:
         """Fetch content from an allowed external URL (unauthenticated).

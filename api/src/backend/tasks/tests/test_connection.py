@@ -1,15 +1,14 @@
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.models import Integration, LighthouseConfiguration, Provider
 from tasks.jobs.connection import (
     check_integration_connection,
     check_lighthouse_connection,
     check_provider_connection,
 )
-
-from api.models import Integration, LighthouseConfiguration, Provider
 
 
 @pytest.mark.parametrize(
@@ -38,7 +37,7 @@ def test_check_provider_connection(
     mock_provider_connection_test.assert_called_once()
     assert provider.connected is True
     assert provider.connection_last_checked_at is not None
-    assert provider.connection_last_checked_at <= datetime.now(tz=timezone.utc)
+    assert provider.connection_last_checked_at <= datetime.now(tz=UTC)
 
 
 @patch("tasks.jobs.connection.Provider.objects.get")

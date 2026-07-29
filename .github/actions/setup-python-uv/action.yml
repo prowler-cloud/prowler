@@ -43,8 +43,17 @@ runs:
       if: github.repository_owner == 'prowler-cloud' && github.repository != 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
-        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+        LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/repos/prowler-cloud/prowler/commits/master" \
+          | jq -er '.sha') || {
+          echo "::error::Failed to fetch latest prowler/master commit from the GitHub API (HTTP error or missing .sha). Check the GITHUB_TOKEN and API rate limits."
+          exit 1
+        }
         echo "Latest commit hash: $LATEST_COMMIT"
         sed -i "s|\(git = \"https://github\.com/prowler-cloud/prowler\.git?rev=master\)#[a-f0-9]\{40\}\"|\1#${LATEST_COMMIT}\"|g" uv.lock
         echo "Updated uv.lock entry:"
@@ -54,8 +63,17 @@ runs:
       if: github.event_name == 'push' && github.ref == 'refs/heads/master' && github.repository == 'prowler-cloud/prowler'
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
       run: |
-        LATEST_COMMIT=$(curl -s "https://api.github.com/repos/prowler-cloud/prowler/commits/master" | jq -r '.sha')
+        LATEST_COMMIT=$(curl -sf --retry 3 --retry-all-errors --retry-delay 2 --retry-max-time 60 \
+          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+          -H "Accept: application/vnd.github+json" \
+          "https://api.github.com/repos/prowler-cloud/prowler/commits/master" \
+          | jq -er '.sha') || {
+          echo "::error::Failed to fetch latest prowler/master commit from the GitHub API (HTTP error or missing .sha). Check the GITHUB_TOKEN and API rate limits."
+          exit 1
+        }
         echo "Latest commit hash: $LATEST_COMMIT"
         sed -i "s|\(git = \"https://github\.com/prowler-cloud/prowler\.git?rev=master\)#[a-f0-9]\{40\}\"|\1#${LATEST_COMMIT}\"|g" uv.lock
         echo "Updated uv.lock entry:"

@@ -8,22 +8,32 @@ import importlib
 import pkgutil
 
 from fastmcp import FastMCP
+
 from prowler_mcp_server.lib.logger import logger
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
 
 
-def load_all_tools(mcp: FastMCP) -> None:
-    """Auto-discover and load all BaseTool subclasses from the tools package.
+def load_all_tools(
+    mcp: FastMCP,
+    tools_package: str = "prowler_mcp_server.prowler_app.tools",
+) -> None:
+    """Auto-discover and load all BaseTool subclasses from a tools package.
 
     This function:
-    1. Dynamically imports all Python modules in the tools package
-    2. Discovers all concrete BaseTool subclasses
+    1. Dynamically imports all Python modules in the given tools package
+    2. Discovers all concrete BaseTool subclasses defined in that package
     3. Instantiates each tool class
     4. Registers all tools with the provided FastMCP instance
 
+    ``BaseTool.__subclasses__()`` returns every subclass in the process, so the
+    discovered classes are filtered by ``__module__`` prefix. This keeps sibling
+    sub-servers (e.g. ``prowler_app`` and ``prowler_cloud``) from cross-registering
+    each other's tools, regardless of import order.
+
     Args:
         mcp: The FastMCP instance to register tools with
-        TOOLS_PACKAGE: The package path containing tool modules (default: prowler_mcp_server.prowler_app.tools)
+        tools_package: The package path containing tool modules
+            (default: prowler_mcp_server.prowler_app.tools)
 
     Example:
         from fastmcp import FastMCP
@@ -32,7 +42,7 @@ def load_all_tools(mcp: FastMCP) -> None:
         app = FastMCP("prowler-app")
         load_all_tools(app)
     """
-    TOOLS_PACKAGE = "prowler_mcp_server.prowler_app.tools"
+    TOOLS_PACKAGE = tools_package
     logger.info(f"Auto-discovering tools from package: {TOOLS_PACKAGE}")
 
     # Import the tools package
@@ -58,11 +68,14 @@ def load_all_tools(mcp: FastMCP) -> None:
         except Exception as e:
             logger.error(f"Failed to import module {module_name}: {e}")
 
-    # Discover all concrete BaseTool subclasses
+    # Discover all concrete BaseTool subclasses defined in this package only.
+    # __subclasses__() is process-wide, so filter by module to avoid sibling
+    # sub-servers cross-registering each other's tools.
     concrete_tools = [
         tool_class
         for tool_class in BaseTool.__subclasses__()
         if not getattr(tool_class, "__abstractmethods__", None)
+        and tool_class.__module__.startswith(TOOLS_PACKAGE)
     ]
 
     logger.info(f"Discovered {len(concrete_tools)} tool classes")

@@ -1,8 +1,9 @@
+import importlib.metadata
 import json
 import os
 import sys
 from enum import Enum
-from typing import Optional, Union
+from typing import Any, Literal, Optional, Union
 
 from pydantic.v1 import BaseModel, Field, ValidationError, root_validator
 
@@ -169,6 +170,79 @@ class ISO27001_2013_Requirement_Attribute(BaseModel):
     Check_Summary: str
 
 
+# Base Compliance Model
+class Compliance_Requirement_ConfigConstraint(BaseModel):
+    """A constraint a requirement places on a configurable check's config.
+
+    Declares that the configurable check ``Check`` must have run with
+    ``ConfigKey`` satisfying ``Operator`` ``Value`` for the requirement's
+    result to be trusted. Example: ``max_unused_access_keys_days <= 45``.
+
+    ``Provider`` scopes the constraint to a single provider. It is required for
+    universal (multi-provider) frameworks, where the same requirement maps
+    checks across providers and a constraint must only apply when that provider
+    is the one being scanned. Single-provider frameworks may omit it (the
+    framework's provider is already the one being scanned).
+
+    Operators:
+    - ``lte``/``gte``/``eq``: scalar comparisons (e.g. a max-age or min-retention
+      threshold, or a boolean toggle).
+    - ``in``: the applied scalar must be one of ``Value`` (a list).
+    - ``subset``: the applied list must be a subset of ``Value`` — for allowlist
+      configs (e.g. ``recommended_minimal_tls_versions``); widening the allowlist
+      with a weaker value (e.g. TLS ``1.0``) breaks the constraint.
+    - ``superset``: the applied list must be a superset of ``Value`` — for
+      denylist configs (e.g. ``insecure_key_algorithms``); removing a forbidden
+      value from the denylist breaks the constraint.
+    """
+
+    Check: str
+    ConfigKey: str
+    Operator: Literal["lte", "gte", "eq", "in", "subset", "superset"]
+    # ``bool`` must precede ``int`` so pydantic v1 keeps booleans (e.g. a
+    # ``mute_non_default_regions == false`` constraint) instead of coercing
+    # them to 0/1.
+    Value: Union[bool, int, float, str, list[Any]]
+    # Provider this constraint applies to (e.g. ``aws``), matched
+    # case-insensitively. ``None`` applies whenever the requirement runs
+    # (single-provider frameworks).
+    Provider: Optional[str] = None
+
+    @root_validator
+    @classmethod
+    def validate_value_matches_operator(cls, values):  # noqa: F841
+        """Ensure ``Value``'s type is consistent with ``Operator``.
+
+        Without this, a mistyped value (e.g. ``gte`` with a list, or ``subset``
+        with a scalar) is not rejected at load time and ``_check_operator``
+        silently treats it as *not satisfied*, forcing the requirement to a
+        spurious config-not-valid FAIL. Validating here turns that into a
+        clear error when the framework is loaded.
+        """
+        operator = values.get("Operator")
+        value = values.get("Value")
+        # If Operator/Value failed their own validation they are absent here.
+        if operator is None or value is None:
+            return values
+        if operator in ("in", "subset", "superset"):
+            if not isinstance(value, list):
+                raise ValueError(
+                    f"operator '{operator}' requires a list Value, got {type(value).__name__}"
+                )
+        elif operator in ("lte", "gte"):
+            # bool is an int subclass but is never a valid numeric threshold.
+            if isinstance(value, bool) or not isinstance(value, (int, float)):
+                raise ValueError(
+                    f"operator '{operator}' requires a numeric Value, got {value!r}"
+                )
+        elif operator == "eq":
+            if not isinstance(value, (bool, int, float, str)):
+                raise ValueError(
+                    f"operator 'eq' requires a scalar Value, got {type(value).__name__}"
+                )
+        return values
+
+
 # MITRE Requirement Attribute for AWS
 class Mitre_Requirement_Attribute_AWS(BaseModel):
     """MITRE Requirement Attribute"""
@@ -216,6 +290,9 @@ class Mitre_Requirement(BaseModel):
         list[Mitre_Requirement_Attribute_GCP],
     ]
     Checks: list[str]
+    # MITRE checks may also declare config constraints; without this field
+    # Pydantic silently drops them during parsing.
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 # KISA-ISMS-P Requirement Attribute
@@ -282,7 +359,26 @@ class CSA_CCM_Requirement_Attribute(BaseModel):
     ScopeApplicability: list[dict]
 
 
-# Base Compliance Model
+class STIG_Requirement_Attribute_Severity(str, Enum):
+    """DISA STIG Requirement Attribute Severity (maps to CAT I/II/III)"""
+
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
+class STIG_Requirement_Attribute(BaseModel):
+    """DISA STIG Requirement Attribute"""
+
+    Section: str
+    Severity: STIG_Requirement_Attribute_Severity
+    RuleID: str
+    StigID: str
+    CCI: Optional[list[str]] = None
+    CheckText: Optional[str] = None
+    FixText: Optional[str] = None
+
+
 # TODO: move this to compliance folder
 class Compliance_Requirement(BaseModel):
     """Compliance_Requirement holds the base model for every requirement within a compliance framework"""
@@ -302,11 +398,13 @@ class Compliance_Requirement(BaseModel):
             CCC_Requirement_Attribute,
             C5Germany_Requirement_Attribute,
             CSA_CCM_Requirement_Attribute,
+            STIG_Requirement_Attribute,
             # Generic_Compliance_Requirement_Attribute must be the last one since it is the fallback for generic compliance framework
             Generic_Compliance_Requirement_Attribute,
         ]
     ]
     Checks: list[str]
+    ConfigRequirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
 
 
 class Compliance(BaseModel):
@@ -434,26 +532,63 @@ class Compliance(BaseModel):
         """Bulk load all compliance frameworks specification into a dict"""
         try:
             bulk_compliance_frameworks = {}
+            # Built-in compliance from prowler/compliance/{provider}/
             available_compliance_framework_modules = list_compliance_modules()
             for compliance_framework in available_compliance_framework_modules:
-                if provider in compliance_framework.name:
+                # Match the provider segment exactly, not as a substring, so
+                # e.g. `cloud` does not capture `cloudflare`.
+                if compliance_framework.name.split(".")[-1] == provider:
                     compliance_specification_dir_path = (
                         f"{compliance_framework.module_finder.path}/{provider}"
                     )
-                    # for compliance_framework in available_compliance_framework_modules:
                     for filename in os.listdir(compliance_specification_dir_path):
                         file_path = os.path.join(
                             compliance_specification_dir_path, filename
                         )
-                        # Check if it is a file and ti size is greater than 0
                         if os.path.isfile(file_path) and os.stat(file_path).st_size > 0:
-                            # Open Compliance file in JSON
-                            # cis_v1.4_aws.json --> cis_v1.4_aws
                             compliance_framework_name = filename.split(".json")[0]
-                            # Store the compliance info
                             bulk_compliance_frameworks[compliance_framework_name] = (
                                 load_compliance_framework(file_path)
                             )
+
+            # External compliance via entry points
+            for ep in importlib.metadata.entry_points(group="prowler.compliance"):
+                if ep.name == provider:
+                    try:
+                        module = ep.load()
+                        compliance_dir = (
+                            module.__path__[0]
+                            if hasattr(module, "__path__")
+                            else os.path.dirname(module.__file__)
+                        )
+                        for filename in os.listdir(compliance_dir):
+                            if filename.endswith(".json"):
+                                file_path = os.path.join(compliance_dir, filename)
+                                if (
+                                    os.path.isfile(file_path)
+                                    and os.stat(file_path).st_size > 0
+                                ):
+                                    compliance_framework_name = filename.split(".json")[
+                                        0
+                                    ]
+                                    if (
+                                        compliance_framework_name
+                                        not in bulk_compliance_frameworks
+                                    ):
+                                        # External JSON: tolerate non-legacy
+                                        # schemas (skip + warn) instead of aborting.
+                                        framework = load_compliance_framework(
+                                            file_path, fatal=False
+                                        )
+                                        if framework is not None:
+                                            bulk_compliance_frameworks[
+                                                compliance_framework_name
+                                            ] = framework
+                    except Exception as error:
+                        logger.warning(
+                            f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                        )
+
         except Exception as e:
             logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")
 
@@ -462,18 +597,26 @@ class Compliance(BaseModel):
 
 # Testing Pending
 def load_compliance_framework(
-    compliance_specification_file: str,
-) -> Compliance:
-    """load_compliance_framework loads and parse a Compliance Framework Specification"""
+    compliance_specification_file: str, fatal: bool = True
+) -> Optional[Compliance]:
+    """load_compliance_framework loads and parse a Compliance Framework Specification.
+
+    With ``fatal=True`` (built-in JSONs) an invalid file aborts the run; with
+    ``fatal=False`` (external JSONs) it is skipped with a warning and ``None``
+    is returned.
+    """
     try:
-        compliance_framework = Compliance.parse_file(compliance_specification_file)
+        return Compliance.parse_file(compliance_specification_file)
     except ValidationError as error:
-        logger.critical(
-            f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+        if fatal:
+            logger.critical(
+                f"Compliance Framework Specification from {compliance_specification_file} is not valid: {error}"
+            )
+            sys.exit(1)
+        logger.warning(
+            f"Skipping invalid compliance framework {compliance_specification_file}: {error}"
         )
-        sys.exit(1)
-    else:
-        return compliance_framework
+        return None
 
 
 # ─── Universal Compliance Schema Models (Phase 1-3) ─────────────────────────
@@ -634,6 +777,10 @@ class UniversalComplianceRequirement(BaseModel):
     name: Optional[str] = None
     attributes: dict = Field(default_factory=dict)
     checks: dict[str, list[str]] = Field(default_factory=dict)
+    # Typed with the same constraint model as legacy so the operator/value
+    # validation also covers universal frameworks. evaluate_config_constraints
+    # accepts both dicts and model objects, so downstream consumers are unaffected.
+    config_requirements: Optional[list[Compliance_Requirement_ConfigConstraint]] = None
     tactics: Optional[list] = None
     sub_techniques: Optional[list] = None
     platforms: Optional[list] = None
@@ -827,6 +974,11 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
             # For MITRE, promote special fields and store raw attributes
             raw_attrs = [attr.dict() for attr in req.Attributes]
             attrs = {"_raw_attributes": raw_attrs}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
             universal_requirements.append(
                 UniversalComplianceRequirement(
                     id=req.Id,
@@ -834,6 +986,7 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                     name=req.Name,
                     attributes=attrs,
                     checks=req_checks,
+                    config_requirements=config_requirements,
                     tactics=req.Tactics,
                     sub_techniques=req.SubTechniques,
                     platforms=req.Platforms,
@@ -846,6 +999,11 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                 attrs = req.Attributes[0].dict()
             else:
                 attrs = {}
+            config_requirements = (
+                [c.dict() for c in req.ConfigRequirements]
+                if getattr(req, "ConfigRequirements", None)
+                else None
+            )
             universal_requirements.append(
                 UniversalComplianceRequirement(
                     id=req.Id,
@@ -853,6 +1011,7 @@ def adapt_legacy_to_universal(legacy: Compliance) -> ComplianceFramework:
                     name=req.Name,
                     attributes=attrs,
                     checks=req_checks,
+                    config_requirements=config_requirements,
                 )
             )
 
@@ -949,6 +1108,25 @@ def get_bulk_compliance_frameworks_universal(provider: str) -> dict:
         # Also scan top-level compliance/ for provider-agnostic JSONs.
         if compliance_root and os.path.isdir(compliance_root):
             _load_jsons_from_dir(compliance_root, provider, bulk)
+
+        # External multi-provider frameworks via the dedicated universal entry
+        # point group, kept separate from the per-provider `prowler.compliance`
+        # group so the legacy loader never parses a universal JSON. Built-ins
+        # (already in bulk) win on a name collision.
+        for ep in importlib.metadata.entry_points(group="prowler.compliance.universal"):
+            try:
+                module = ep.load()
+                ep_dir = (
+                    module.__path__[0]
+                    if hasattr(module, "__path__")
+                    else os.path.dirname(module.__file__)
+                )
+                if os.path.isdir(ep_dir):
+                    _load_jsons_from_dir(ep_dir, provider, bulk)
+            except Exception as error:
+                logger.warning(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                )
 
     except Exception as e:
         logger.error(f"{e.__class__.__name__}[{e.__traceback__.tb_lineno}] -- {e}")

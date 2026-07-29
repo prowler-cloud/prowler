@@ -1,8 +1,8 @@
 import { ClientAccordionContent } from "@/components/compliance/compliance-accordion/client-accordion-content";
 import { ComplianceAccordionRequirementTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-requeriment-title";
 import { ComplianceAccordionTitle } from "@/components/compliance/compliance-accordion/compliance-accordion-title";
-import type { AccordionItemProps } from "@/components/ui/accordion/Accordion";
-import type { FindingStatus } from "@/components/ui/table/status-finding-badge";
+import type { AccordionItemProps } from "@/components/shadcn/accordion/Accordion";
+import type { FindingStatus } from "@/components/shadcn/table/status-finding-badge";
 import {
   type ASDEssentialEightRequirement,
   type AttributesData,
@@ -91,6 +91,7 @@ export const mapComplianceData = (
       description: description,
       status: status,
       check_ids: checks,
+      invalid_config: requirementData.attributes.invalid_config || false,
       pass: status === REQUIREMENT_STATUS.PASS ? 1 : 0,
       fail: status === REQUIREMENT_STATUS.FAIL ? 1 : 0,
       manual: status === REQUIREMENT_STATUS.MANUAL ? 1 : 0,
@@ -150,6 +151,7 @@ export const toAccordionItems = (
                 type=""
                 name={control.label}
                 status={requirement.status as FindingStatus}
+                invalidConfig={requirement.invalid_config}
               />
             ),
             content: (

@@ -1,0 +1,37 @@
+{
+  "Provider": "e2enetworks",
+  "CheckID": "securitygroup_restrictive_default",
+  "CheckTitle": "E2E Networks nodes do not rely on permissive default security groups",
+  "CheckType": [],
+  "ServiceName": "securitygroup",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**E2E Networks nodes** should not rely solely on **default security groups** that have overly permissive inbound rules.",
+  "Risk": "Nodes that rely only on **permissive default security groups** inherit broad inbound access, weakening **network segmentation** and trust boundaries.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.e2enetworks.com/api/myaccount/network/security-group/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Attach custom security groups with **least-privilege** rules to nodes instead of relying on permissive defaults.",
+      "Url": "https://hub.prowler.com/check/securitygroup_restrictive_default"
+    }
+  },
+  "Categories": [
+    "trust-boundaries",
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

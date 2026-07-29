@@ -35,9 +35,32 @@ def init_parser(self):
         nargs="+",
         help=(
             "OAuth scopes to request, space-separated "
-            "(e.g. okta.policies.read okta.brands.read okta.apps.read). "
+            "(e.g. okta.policies.read okta.brands.read okta.apps.read "
+            "okta.logStreams.read okta.idps.read). "
             "Defaults to the read scopes required by the bundled checks."
         ),
         default=None,
         metavar="OKTA_SCOPES",
+    )
+    okta_rate_limit_subparser = okta_parser.add_argument_group("Rate limiting")
+    okta_rate_limit_subparser.add_argument(
+        "--okta-retries-max-attempts",
+        type=int,
+        default=None,
+        help=(
+            "Maximum number of retries on Okta API rate limiting (HTTP 429). "
+            "Overrides the config.yaml value (okta_max_retries). Default: 5."
+        ),
+        metavar="OKTA_RETRIES_MAX_ATTEMPTS",
+    )
+    okta_rate_limit_subparser.add_argument(
+        "--okta-requests-per-second",
+        type=float,
+        default=None,
+        help=(
+            "Maximum aggregate Okta API requests per second. Throttles requests "
+            "to stay under Okta's rate limits. Overrides the config.yaml value "
+            "(okta_requests_per_second); set to 0 to disable. Default: 4."
+        ),
+        metavar="OKTA_REQUESTS_PER_SECOND",
     )

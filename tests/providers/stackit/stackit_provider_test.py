@@ -411,3 +411,68 @@ class Test_StackitProvider_Handle_API_Error:
         with pytest.raises(RuntimeError) as excinfo:
             StackitProvider.handle_api_error(original)
         assert excinfo.value is original
+
+
+class TestGenerateRegionalClients:
+    """Tests for StackitProvider.generate_regional_clients."""
+
+    def _make_provider(self):
+        provider = object.__new__(StackitProvider)
+        provider._service_account_key_path = "/tmp/sa-key.json"
+        provider._service_account_key = None
+        provider._audited_regions = None
+        return provider
+
+    def _fake_classes(self):
+        class FakeConfig:
+            pass
+
+        class FakeIaasClient:
+            def __init__(self, config):
+                pass
+
+        class FakeObjStorageClient:
+            def __init__(self, config):
+                pass
+
+        return FakeConfig, FakeIaasClient, FakeObjStorageClient
+
+    def test_objectstorage_service_uses_objectstorage_api_class(self, monkeypatch):
+        FakeConfig, FakeIaasClient, FakeObjStorageClient = self._fake_classes()
+
+        monkeypatch.setattr(
+            StackitProvider,
+            "_SERVICE_API_CLASS",
+            {"iaas": FakeIaasClient, "objectstorage": FakeObjStorageClient},
+        )
+        provider = self._make_provider()
+        monkeypatch.setattr(
+            provider, "get_available_service_regions", lambda _s, _r: ["eu01"]
+        )
+        with patch.object(
+            StackitProvider, "_build_sdk_configuration", return_value=FakeConfig()
+        ):
+            clients = provider.generate_regional_clients("objectstorage")
+
+        assert "eu01" in clients
+        assert isinstance(clients["eu01"], FakeObjStorageClient)
+
+    def test_iaas_service_uses_iaas_api_class(self, monkeypatch):
+        FakeConfig, FakeIaasClient, FakeObjStorageClient = self._fake_classes()
+
+        monkeypatch.setattr(
+            StackitProvider,
+            "_SERVICE_API_CLASS",
+            {"iaas": FakeIaasClient, "objectstorage": FakeObjStorageClient},
+        )
+        provider = self._make_provider()
+        monkeypatch.setattr(
+            provider, "get_available_service_regions", lambda _s, _r: ["eu01"]
+        )
+        with patch.object(
+            StackitProvider, "_build_sdk_configuration", return_value=FakeConfig()
+        ):
+            clients = provider.generate_regional_clients("iaas")
+
+        assert "eu01" in clients
+        assert isinstance(clients["eu01"], FakeIaasClient)

@@ -1,0 +1,43 @@
+{
+  "Provider": "m365",
+  "CheckID": "entra_conditional_access_policy_explicitly_targets_azure_devops",
+  "CheckTitle": "Conditional Access Policy explicitly targets Azure DevOps",
+  "CheckType": [],
+  "ServiceName": "entra",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Microsoft Entra **Conditional Access** is verified to have at least one **enabled** policy that explicitly includes the **Azure DevOps** cloud application. Policies targeting **All** cloud apps do not satisfy this check because the goal is to verify that Azure DevOps has been deliberately considered.",
+  "Risk": "Without an explicit Conditional Access policy for Azure DevOps, organizations may rely on broad policies that do not account for Azure DevOps-specific access patterns such as CLI, IDE plug-ins, PAT-based workflows, source code access, build pipelines, secrets, and service connections.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccesspolicy?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/graph/api/resources/conditionalaccessapplications?view=graph-rest-1.0",
+    "https://learn.microsoft.com/en-us/azure/devops/organizations/accounts/manage-conditional-access",
+    "https://learn.microsoft.com/en-us/troubleshoot/entra/entra-id/governance/verify-first-party-apps-sign-in"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Navigate to the Microsoft Entra admin center (https://entra.microsoft.com).\n2. Expand **Protection** > **Conditional Access** and select **Policies**.\n3. Create or edit a policy for Azure DevOps.\n4. Under **Target resources**, select **Include** > **Select apps** and choose **Azure DevOps**.\n5. Configure the required grant or session controls for your organization.\n6. Set the policy to **Report-only** until validated, then enable it.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Create and enable a Conditional Access policy that explicitly includes the Azure DevOps cloud application, then configure the appropriate access controls for your organization.",
+      "Url": "https://hub.prowler.com/check/entra_conditional_access_policy_explicitly_targets_azure_devops"
+    }
+  },
+  "Categories": [
+    "identity-access",
+    "trust-boundaries",
+    "e3"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "entra_conditional_access_policy_all_apps_all_users"
+  ],
+  "Notes": "Azure DevOps Services uses appId 499b84ac-1321-427f-aa17-267ca6975798."
+}

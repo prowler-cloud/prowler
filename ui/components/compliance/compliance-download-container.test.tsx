@@ -22,7 +22,8 @@ vi.mock("@/lib/helper", () => ({
   downloadCompliancePdf: downloadCompliancePdfMock,
 }));
 
-vi.mock("@/components/ui", () => ({
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   toast: {},
 }));
 
@@ -39,7 +40,6 @@ describe("ComplianceDownloadContainer", () => {
 
   it("uses the shared action dropdown for the card actions mode", () => {
     expect(source).toContain("ActionDropdown");
-    expect(source).not.toContain("@heroui/button");
   });
 
   it("should expose an accessible actions menu trigger", () => {
@@ -163,7 +163,7 @@ describe("ComplianceDownloadContainer", () => {
         compact
         presentation="dropdown"
         scanId="scan-1"
-        complianceId="dora"
+        complianceId="dora_2022_2554"
       />,
     );
 
@@ -178,7 +178,7 @@ describe("ComplianceDownloadContainer", () => {
 
     expect(downloadComplianceOcsfMock).toHaveBeenCalledWith(
       "scan-1",
-      "dora",
+      "dora_2022_2554",
       {},
     );
   });

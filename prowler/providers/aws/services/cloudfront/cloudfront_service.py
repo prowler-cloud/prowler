@@ -48,6 +48,9 @@ class CloudFront(AWSService):
                                     "SSLSupportMethod", "static-ip"
                                 )
                             )
+                            minimum_protocol_version = item["ViewerCertificate"].get(
+                                "MinimumProtocolVersion", ""
+                            )
                             origins = []
                             for origin in item.get("Origins", {}).get("Items", []):
                                 origins.append(
@@ -79,6 +82,7 @@ class CloudFront(AWSService):
                                 ssl_support_method=ssl_support_method,
                                 default_certificate=default_certificate,
                                 certificate=certificate,
+                                minimum_protocol_version=minimum_protocol_version,
                             )
                             self.distributions[distribution_id] = distribution
 
@@ -268,3 +272,4 @@ class Distribution(BaseModel):
     origin_failover: Optional[bool] = None
     ssl_support_method: Optional[SSLSupportMethod] = None
     certificate: Optional[str] = None
+    minimum_protocol_version: str = ""

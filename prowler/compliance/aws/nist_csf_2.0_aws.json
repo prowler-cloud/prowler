@@ -72,6 +72,20 @@
         "securityhub_enabled",
         "wellarchitected_workload_no_high_or_medium_risks",
         "servicecatalog_portfolio_shared_within_organization_only"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -322,6 +336,26 @@
         "wellarchitected_workload_no_high_or_medium_risks",
         "organizations_delegated_administrators",
         "organizations_tags_policies_enabled_and_attached"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -352,6 +386,26 @@
         "vpc_flow_logs_enabled",
         "iam_root_mfa_enabled",
         "iam_root_credentials_management_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -408,6 +462,20 @@
         "accessanalyzer_enabled",
         "guardduty_no_high_severity_findings",
         "trustedadvisor_errors_and_warnings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -442,6 +510,26 @@
         "organizations_scp_check_deny_regions",
         "organizations_tags_policies_enabled_and_attached",
         "organizations_delegated_administrators"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -574,6 +662,14 @@
         "opensearch_service_domains_encryption_at_rest_enabled",
         "redshift_cluster_encrypted_at_rest",
         "sns_topics_kms_encryption_at_rest_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -610,6 +706,17 @@
         "iam_inline_policy_allows_privilege_escalation",
         "ssm_documents_set_as_public",
         "s3_bucket_shadow_resource_vulnerability"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ]
     },
     {
@@ -726,6 +833,14 @@
         "iam_role_administratoraccess_policy",
         "iam_policy_no_full_access_to_cloudtrail",
         "iam_policy_no_full_access_to_kms"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -853,6 +968,14 @@
         "iam_customer_unattached_policy_no_administrative_privileges",
         "accessanalyzer_enabled",
         "cognito_user_pool_password_policy_symbol"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1224,6 +1347,14 @@
         "inspector2_active_findings_exist",
         "secretsmanager_automatic_rotation_enabled",
         "secretsmanager_secret_rotated_periodically"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1265,6 +1396,14 @@
       "Checks": [
         "ssmincidents_enabled_with_plans",
         "drs_job_exist"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1283,6 +1422,14 @@
         "inspector2_is_enabled",
         "guardduty_is_enabled",
         "inspector2_active_findings_exist"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1329,6 +1476,14 @@
         "vpc_flow_logs_enabled",
         "config_recorder_all_regions_enabled",
         "config_recorder_using_aws_service_role"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1540,6 +1695,14 @@
         "guardduty_is_enabled",
         "inspector2_is_enabled",
         "accessanalyzer_enabled_without_findings"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {
@@ -1662,6 +1825,14 @@
         "guardduty_rds_protection_enabled",
         "guardduty_lambda_protection_enabled",
         "guardduty_eks_runtime_monitoring_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ]
     },
     {

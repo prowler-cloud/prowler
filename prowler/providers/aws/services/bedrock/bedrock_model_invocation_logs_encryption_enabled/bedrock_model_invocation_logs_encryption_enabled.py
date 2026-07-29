@@ -30,12 +30,13 @@ class bedrock_model_invocation_logs_encryption_enabled(Check):
                         s3_encryption = False
                 if logging.cloudwatch_log_group:
                     log_group_arn = f"arn:{logs_client.audited_partition}:logs:{region}:{logs_client.audited_account}:log-group:{logging.cloudwatch_log_group}"
+                    all_log_groups = getattr(logs_client, "all_log_groups", None) or {}
                     if (
-                        log_group_arn in logs_client.log_groups
-                        and not logs_client.log_groups[log_group_arn].kms_id
+                        log_group_arn in all_log_groups
+                        and not all_log_groups[log_group_arn].kms_id
                     ) or (
-                        log_group_arn + ":*" in logs_client.log_groups
-                        and not logs_client.log_groups[log_group_arn + ":*"].kms_id
+                        log_group_arn + ":*" in all_log_groups
+                        and not all_log_groups[log_group_arn + ":*"].kms_id
                     ):
                         cloudwatch_encryption = False
                 if not s3_encryption and not cloudwatch_encryption:

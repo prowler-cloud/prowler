@@ -1,14 +1,31 @@
+import json
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
+from rest_framework_simplejwt.token_blacklist.models import (
+    BlacklistedToken,
+    OutstandingToken,
+)
 
-from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
+PASSWORD_CHANGE_PASSWORD = "InitialSecret123@"
+
+
+@pytest.fixture
+def password_change_user(tenants_fixture):
+    user = User.objects.create_user(
+        name="password_change_user",
+        email=f"password-change-{uuid4()}@prowler.com",
+        password=PASSWORD_CHANGE_PASSWORD,
+    )
+    Membership.objects.create(user=user, tenant=tenants_fixture[0])
+    return user
 
 
 @pytest.mark.django_db
@@ -105,6 +122,120 @@ def test_refresh_token(create_test_user, tenants_fixture):
 
 
 @pytest.mark.django_db
+def test_password_change_invalidates_existing_tokens(password_change_user):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
+    )
+    auth_headers = get_authorization_header(access_token)
+    outstanding_token_ids = list(
+        OutstandingToken.objects.filter(user=password_change_user).values_list(
+            "id", flat=True
+        )
+    )
+    assert outstanding_token_ids
+    assert not BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).exists()
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(password_change_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=auth_headers,
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+    assert BlacklistedToken.objects.filter(
+        token_id__in=outstanding_token_ids
+    ).count() == len(outstanding_token_ids)
+
+    old_access_response = client.get(reverse("user-me"), headers=auth_headers)
+    assert old_access_response.status_code == 401
+
+    old_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_refresh_response.status_code == 400
+
+    new_access_token, _ = get_api_tokens(
+        client, password_change_user.email, new_password
+    )
+    new_access_response = client.get(
+        reverse("user-me"), headers=get_authorization_header(new_access_token)
+    )
+    assert new_access_response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_password_change_invalidates_rotated_refresh_token(
+    password_change_user,
+):
+    client = APIClient()
+    new_password = "ChangedSecret123@"
+
+    access_token, refresh_token = get_api_tokens(
+        client, password_change_user.email, PASSWORD_CHANGE_PASSWORD
+    )
+    rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert rotated_refresh_response.status_code == 200
+    rotated_refresh_token = rotated_refresh_response.json()["data"]["attributes"][
+        "refresh"
+    ]
+
+    password_change_payload = {
+        "data": {
+            "type": "users",
+            "id": str(password_change_user.id),
+            "attributes": {"password": new_password},
+        }
+    }
+    password_change_response = client.patch(
+        reverse("user-detail", kwargs={"pk": password_change_user.id}),
+        data=json.dumps(password_change_payload),
+        headers=get_authorization_header(access_token),
+        content_type="application/vnd.api+json",
+    )
+    assert password_change_response.status_code == 200, password_change_response.json()
+
+    old_rotated_refresh_response = client.post(
+        reverse("token-refresh"),
+        data={
+            "data": {
+                "type": "tokens-refresh",
+                "attributes": {"refresh": rotated_refresh_token},
+            }
+        },
+        format="vnd.api+json",
+    )
+    assert old_rotated_refresh_response.status_code == 400
+
+
+@pytest.mark.django_db
 def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fixture):
     client = APIClient()
 
@@ -188,8 +319,9 @@ def test_user_me_when_inviting_users(create_test_user, tenants_fixture, roles_fi
 
 @pytest.mark.django_db
 class TestTokenSwitchTenant:
-    def test_switch_tenant_with_valid_token(self, tenants_fixture, providers_fixture):
+    def test_switch_tenant_with_valid_token(self, tenants_fixture, aws_provider):
         client = APIClient()
+        assert aws_provider
 
         test_user = "test_email@prowler.com"
         test_password = "Test_password1@"
@@ -468,7 +600,7 @@ class TestAPIKeyErrors:
             name="Expired Key",
             tenant_id=tenants_fixture[0].id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)
@@ -500,7 +632,7 @@ class TestAPIKeyErrors:
         # Create a valid-looking key with non-existent UUID
         crypto = get_crypto()
         fake_uuid = str(uuid4())
-        fake_expiry = (datetime.now(timezone.utc) + timedelta(days=30)).timestamp()
+        fake_expiry = (datetime.now(UTC) + timedelta(days=30)).timestamp()
         payload = {"_pk": fake_uuid, "_exp": fake_expiry}
         encrypted_payload = crypto.generate(payload)
 
@@ -723,7 +855,7 @@ class TestAPIKeyLifecycle:
         assert created_data["attributes"]["revoked"] is False
 
         # Create API key with expiry
-        future_expiry = (datetime.now(timezone.utc) + timedelta(days=90)).isoformat()
+        future_expiry = (datetime.now(UTC) + timedelta(days=90)).isoformat()
         create_with_expiry_response = client.post(
             reverse("api-key-list"),
             data={
@@ -927,9 +1059,9 @@ class TestAPIKeyLifecycle:
         auth_response = client.get(reverse("provider-list"), headers=api_key_headers)
 
         # Must return 401 Unauthorized, not 500 Internal Server Error
-        assert (
-            auth_response.status_code == 401
-        ), f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
+        assert auth_response.status_code == 401, (
+            f"Expected 401 but got {auth_response.status_code}: {auth_response.json()}"
+        )
 
         # Verify error message is present
         response_json = auth_response.json()
@@ -1267,7 +1399,7 @@ class TestAPIKeyRLSBypass:
             name="Expired Test Key",
             tenant_id=tenant.id,
             entity=create_test_user,
-            expiry_date=datetime.now(timezone.utc) - timedelta(days=1),
+            expiry_date=datetime.now(UTC) - timedelta(days=1),
         )
 
         api_key_headers = get_api_key_header(raw_key)
@@ -1397,13 +1529,14 @@ class TestAPIKeyMultiTenantWorkflows:
         assert me_response2.json()["data"]["id"] == str(user.id)
 
     def test_api_key_cannot_access_different_tenant_resources(
-        self, tenants_fixture, providers_fixture
+        self, tenants_fixture, aws_provider
     ):
         """API key from one tenant cannot access resources from another tenant.
 
         Verifies RLS enforcement after authentication ensures tenant isolation.
         """
         client = APIClient()
+        assert aws_provider
 
         user1 = User.objects.create_user(
             name="tenant1_user",

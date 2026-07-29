@@ -1,4 +1,4 @@
-import { cn } from "@/lib";
+import { Badge } from "@/components/shadcn/badge/badge";
 import { CCC_MAPPING_SECTIONS, CCC_TEXT_SECTIONS } from "@/lib/compliance/ccc";
 import { Requirement } from "@/types/compliance";
 
@@ -46,7 +46,7 @@ export const CCCCustomDetails = ({ requirement }: CCCDetailsProps) => {
           <ComplianceBadge
             label="Family"
             value={requirement.family_name as string}
-            color="purple"
+            variant="secondary"
           />
         </ComplianceBadgeContainer>
       )}
@@ -68,15 +68,9 @@ export const CCCCustomDetails = ({ requirement }: CCCDetailsProps) => {
                 </span>
                 <div className="flex flex-wrap gap-2">
                   {mapping.Identifiers.map((identifier, idx) => (
-                    <span
-                      key={idx}
-                      className={cn(
-                        "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-                        section.colorClasses,
-                      )}
-                    >
+                    <Badge key={idx} variant={section.variant}>
                       {identifier}
-                    </span>
+                    </Badge>
                   ))}
                 </div>
               </div>

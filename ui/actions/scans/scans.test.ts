@@ -14,6 +14,8 @@ const {
 
 vi.mock("@/lib", () => ({
   apiBaseUrl: "https://api.example.com/api/v1",
+  GENERIC_SERVER_ERROR_MESSAGE:
+    "Server is temporarily unavailable. Please try again in a few minutes.",
   getAuthHeaders: getAuthHeadersMock,
   getErrorMessage: (error: unknown) =>
     error instanceof Error ? error.message : String(error),
@@ -28,7 +30,7 @@ vi.mock("@/lib/sentry-breadcrumbs", () => ({
   addScanOperation: vi.fn(),
 }));
 
-import { launchOrganizationScans } from "./scans";
+import { getExportsZip, launchOrganizationScans } from "./scans";
 
 describe("launchOrganizationScans", () => {
   beforeEach(() => {
@@ -67,5 +69,36 @@ describe("launchOrganizationScans", () => {
     expect(maxActiveRequests).toBeLessThanOrEqual(5);
     expect(result.successCount).toBe(providerIds.length);
     expect(result.failureCount).toBe(0);
+  });
+});
+
+describe("getExportsZip", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.stubGlobal("fetch", fetchMock);
+    getAuthHeadersMock.mockResolvedValue({ Authorization: "Bearer token" });
+  });
+
+  it("returns a generic server error when the report endpoint returns HTML", async () => {
+    // Given
+    fetchMock.mockResolvedValue(
+      new Response(
+        "<html><head><title>502 Bad Gateway</title></head><body><h1>502 Bad Gateway</h1></body></html>",
+        {
+          status: 502,
+          statusText: "Bad Gateway",
+          headers: { "content-type": "text/html" },
+        },
+      ),
+    );
+
+    // When
+    const result = await getExportsZip("scan-123");
+
+    // Then
+    expect(result).toEqual({
+      error:
+        "Server is temporarily unavailable. Please try again in a few minutes.",
+    });
   });
 });

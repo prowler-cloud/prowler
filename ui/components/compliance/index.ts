@@ -19,6 +19,7 @@ export * from "./compliance-header/compliance-scan-info";
 export * from "./compliance-header/data-compliance";
 export * from "./compliance-header/scan-selector";
 export * from "./compliance-overview-grid";
+export * from "./compliance-warming";
 export * from "./no-scans-available";
 export * from "./skeletons/bar-chart-skeleton";
 export * from "./skeletons/compliance-accordion-skeleton";

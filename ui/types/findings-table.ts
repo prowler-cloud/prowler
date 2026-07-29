@@ -1,4 +1,5 @@
 import { FindingStatus, Severity } from "./components";
+import type { FindingTriageSummary } from "./findings-triage";
 import { ProviderType } from "./providers";
 
 export const FINDINGS_ROW_TYPE = {
@@ -66,6 +67,7 @@ export interface FindingResourceRow {
   mutedReason?: string;
   firstSeenAt: string | null;
   lastSeenAt: string | null;
+  triage?: FindingTriageSummary;
 }
 
 export type FindingsTableRow = FindingGroupRow | FindingResourceRow;

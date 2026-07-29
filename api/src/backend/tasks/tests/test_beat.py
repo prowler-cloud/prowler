@@ -2,17 +2,16 @@ import json
 from unittest.mock import patch
 
 import pytest
-from django_celery_beat.models import IntervalSchedule, PeriodicTask
-from tasks.beat import schedule_provider_scan
-
 from api.exceptions import ConflictException
 from api.models import Scan
+from django_celery_beat.models import IntervalSchedule, PeriodicTask
+from tasks.beat import schedule_provider_scan
 
 
 @pytest.mark.django_db
 class TestScheduleProviderScan:
-    def test_schedule_provider_scan_success(self, providers_fixture):
-        provider_instance, *_ = providers_fixture
+    def test_schedule_provider_scan_success(self, aws_provider):
+        provider_instance = aws_provider
 
         with patch(
             "tasks.tasks.perform_scheduled_scan_task.apply_async"
@@ -42,8 +41,8 @@ class TestScheduleProviderScan:
                 "provider_id": str(provider_instance.id),
             }
 
-    def test_schedule_provider_scan_already_exists(self, providers_fixture):
-        provider_instance, *_ = providers_fixture
+    def test_schedule_provider_scan_already_exists(self, aws_provider):
+        provider_instance = aws_provider
 
         # First, schedule the scan
         with patch("tasks.tasks.perform_scheduled_scan_task.apply_async"):
@@ -57,8 +56,8 @@ class TestScheduleProviderScan:
             exc_info.value
         )
 
-    def test_remove_periodic_task(self, providers_fixture):
-        provider_instance = providers_fixture[0]
+    def test_remove_periodic_task(self, aws_provider):
+        provider_instance = aws_provider
 
         assert Scan.objects.count() == 0
         with patch("tasks.tasks.perform_scheduled_scan_task.apply_async"):

@@ -1,12 +1,27 @@
 import { describe, expect, it } from "vitest";
 
+import { ProviderGroup } from "@/types/components";
 import { ProviderProps } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
 import {
+  buildFindingGroupFilterOption,
   buildFindingsFilterChips,
   getFindingsFilterDisplayValue,
 } from "./findings-filters.utils";
+
+const providerGroups: ProviderGroup[] = [
+  {
+    type: "provider-groups",
+    id: "group-1",
+    attributes: { name: "Production", inserted_at: "", updated_at: "" },
+    relationships: {
+      providers: { meta: { count: 0 }, data: [] },
+      roles: { meta: { count: 0 }, data: [] },
+    },
+    links: { self: "" },
+  },
+];
 
 function makeProvider(
   overrides: Partial<ProviderProps> & { id: string },
@@ -98,6 +113,24 @@ describe("getFindingsFilterDisplayValue", () => {
     ).toBe("missing-provider");
   });
 
+  it("shows the provider group name for provider_groups filters instead of the raw group id", () => {
+    expect(
+      getFindingsFilterDisplayValue("filter[provider_groups__in]", "group-1", {
+        providerGroups,
+      }),
+    ).toBe("Production");
+  });
+
+  it("keeps the raw value when the provider group cannot be resolved", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[provider_groups__in]",
+        "missing-group",
+        { providerGroups },
+      ),
+    ).toBe("missing-group");
+  });
+
   it("shows the resolved scan badge label for scan filters instead of formatting the raw scan id", () => {
     expect(
       getFindingsFilterDisplayValue("filter[scan__in]", "scan-1", { scans }),
@@ -130,6 +163,30 @@ describe("getFindingsFilterDisplayValue", () => {
     expect(getFindingsFilterDisplayValue("filter[delta]", "changed")).toBe(
       "Changed",
     );
+  });
+
+  it("uses the finding group title for check_id filters when available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+        {
+          checkTitles: {
+            teams_external_users_can_join:
+              "External Teams users can join meetings",
+          },
+        },
+      ),
+    ).toBe("External Teams users can join meetings");
+  });
+
+  it("keeps the check id when no finding group title is available", () => {
+    expect(
+      getFindingsFilterDisplayValue(
+        "filter[check_id]",
+        "teams_external_users_can_join",
+      ),
+    ).toBe("teams_external_users_can_join");
   });
 
   it("uses the provider display name regardless of account alias/uid", () => {
@@ -230,6 +287,22 @@ describe("buildFindingsFilterChips", () => {
     ]);
   });
 
+  it("labels provider group chips and resolves their names", () => {
+    const chips = buildFindingsFilterChips(
+      { "filter[provider_groups__in]": ["group-1"] },
+      { providerGroups },
+    );
+
+    expect(chips).toEqual([
+      {
+        key: "filter[provider_groups__in]",
+        label: "Provider Group",
+        value: "group-1",
+        displayValue: "Production",
+      },
+    ]);
+  });
+
   it("treats filter[delta] and filter[delta__in] identically", () => {
     // Given
     const chipsSingular = buildFindingsFilterChips({
@@ -248,6 +321,45 @@ describe("buildFindingsFilterChips", () => {
       chipsPlural.map((c) => ({ label: c.label, v: c.displayValue })),
     ).toEqual([{ label: "Delta", v: "+2" }]);
     expect(chipsPlural[0].displayValues).toEqual(["New", "Changed"]);
+  });
+
+  it("renders filter[check_id] as a first-class Finding Group chip", () => {
+    // Given - exact deep-link params from the grouped findings page.
+    const chips = buildFindingsFilterChips(
+      {
+        "filter[check_id]": ["teams_external_users_can_join"],
+      },
+      {
+        checkTitles: {
+          teams_external_users_can_join:
+            "External Teams users can join meetings",
+        },
+      },
+    );
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "External Teams users can join meetings",
+      },
+    ]);
+  });
+
+  it("renders filter[check_id__in] with the Finding Group chip label", () => {
+    const chips = buildFindingsFilterChips({
+      "filter[check_id__in]": ["teams_external_users_can_join"],
+    });
+
+    expect(chips).toEqual([
+      {
+        key: "filter[check_id__in]",
+        label: "Finding Group",
+        value: "teams_external_users_can_join",
+        displayValue: "teams_external_users_can_join",
+      },
+    ]);
   });
 
   it("skips muted filters because the table toolbar owns that control", () => {
@@ -274,5 +386,49 @@ describe("buildFindingsFilterChips", () => {
         displayValue: "Value",
       },
     ]);
+  });
+});
+
+describe("buildFindingGroupFilterOption", () => {
+  it("builds a selectable Finding Group filter from fetched options and URL-backed values", () => {
+    // Given
+    const filter = buildFindingGroupFilterOption({
+      checkOptions: [
+        {
+          checkId: "teams_external_users_can_join",
+          checkTitle: "External Teams users can join meetings",
+        },
+      ],
+      selectedCheckIds: ["s3_bucket_public_access"],
+      selectedCheckIdsIn: ["teams_external_users_can_join"],
+      checkTitles: {
+        teams_external_users_can_join: "External Teams users can join meetings",
+      },
+    });
+
+    // Then
+    expect(filter).toMatchObject({
+      key: "check_id__in",
+      labelCheckboxGroup: "Finding Group",
+      values: ["teams_external_users_can_join", "s3_bucket_public_access"],
+      index: 3,
+    });
+    expect(filter?.labelFormatter?.("teams_external_users_can_join")).toBe(
+      "External Teams users can join meetings",
+    );
+    expect(filter?.labelFormatter?.("s3_bucket_public_access")).toBe(
+      "s3_bucket_public_access",
+    );
+  });
+
+  it("omits the Finding Group filter when there are no selectable or URL-backed values", () => {
+    expect(
+      buildFindingGroupFilterOption({
+        checkOptions: [],
+        selectedCheckIds: [],
+        selectedCheckIdsIn: [],
+        checkTitles: {},
+      }),
+    ).toBeNull();
   });
 });

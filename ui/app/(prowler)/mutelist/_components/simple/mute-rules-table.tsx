@@ -43,8 +43,10 @@ export async function MuteRulesTable({ searchParams }: MuteRulesTableProps) {
             </h3>
             <p className="text-text-neutral-secondary mt-1 text-sm">
               Mute rules are created when you mute findings from the Findings
-              page. Select findings and click &quot;Mute&quot; to create your
-              first rule.
+              page.
+              <br />
+              Select findings and click &quot;Mute&quot; to create your first
+              rule.
             </p>
           </div>
         </div>
@@ -94,7 +96,7 @@ export function MuteRulesTableSkeleton() {
   return (
     <div
       data-testid="mute-rules-table-skeleton"
-      className="rounded-large shadow-small border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden border p-4"
+      className="border-border-neutral-secondary bg-bg-neutral-secondary flex w-full flex-col gap-4 overflow-hidden rounded-[14px] border p-4 shadow-sm"
     >
       <div
         data-testid="mute-rules-table-skeleton-intro"

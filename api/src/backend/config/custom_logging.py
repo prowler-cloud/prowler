@@ -2,7 +2,6 @@ import json
 import logging
 from enum import StrEnum
 
-
 from config.env import env
 from django_guid.log_filters import CorrelationId
 

@@ -1,4 +1,4 @@
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { useFindingGroupResourcesMock, useResourceDetailDrawerMock } =
@@ -24,7 +24,12 @@ vi.mock("@/components/findings/table/resource-detail-drawer", () => ({
   useResourceDetailDrawer: useResourceDetailDrawerMock,
 }));
 
-import { type FindingGroupRow, FINDINGS_ROW_TYPE } from "@/types";
+import {
+  type FindingGroupRow,
+  type FindingResourceRow,
+  FINDINGS_ROW_TYPE,
+} from "@/types";
+import { FINDING_TRIAGE_STATUS } from "@/types/findings-triage";
 
 import { useFindingGroupResourceState } from "./use-finding-group-resource-state";
 
@@ -43,6 +48,31 @@ const group: FindingGroupRow = {
   providers: ["aws"],
   updatedAt: "2026-04-22T10:00:00Z",
 };
+
+function findingResource(status: string): FindingResourceRow {
+  return {
+    id: "resource-1",
+    rowType: FINDINGS_ROW_TYPE.RESOURCE,
+    findingId: "finding-1",
+    checkId: "check-1",
+    providerType: "aws",
+    providerAlias: "production",
+    providerUid: "provider-1",
+    resourceName: "resource-1",
+    resourceType: "Bucket",
+    resourceGroup: "default",
+    resourceUid: "resource-uid-1",
+    service: "s3",
+    region: "us-east-1",
+    severity: "high",
+    status,
+    statusExtended: `${status} finding`,
+    delta: null,
+    isMuted: false,
+    firstSeenAt: null,
+    lastSeenAt: "2026-04-22T10:00:00Z",
+  };
+}
 
 describe("useFindingGroupResourceState", () => {
   beforeEach(() => {
@@ -120,6 +150,164 @@ describe("useFindingGroupResourceState", () => {
     expect(useResourceDetailDrawerMock).toHaveBeenCalledWith(
       expect.objectContaining({
         includeMutedInOtherFindings: true,
+      }),
+    );
+  });
+
+  it("derives selected resources from the latest loaded data", async () => {
+    // Given
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+    await act(async () => {
+      onSetResources([findingResource("FAIL")], false);
+      result.current.handleRowSelectionChange({ "finding-1": true });
+    });
+
+    // When: a refresh updates the selected finding without another selection event
+    await act(async () => {
+      onSetResources([findingResource("MUTED")], false);
+    });
+
+    // Then
+    expect(result.current.selectedResources).toEqual([
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: "MUTED",
+      }),
+    ]);
+  });
+
+  it("keeps selection bound to finding ids when resources are reordered", async () => {
+    // Given
+    const firstResource = findingResource("FAIL");
+    const secondResource = {
+      ...findingResource("PASS"),
+      id: "resource-2",
+      findingId: "finding-2",
+      resourceName: "resource-2",
+      resourceUid: "resource-uid-2",
+    };
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+    await act(async () => {
+      onSetResources([firstResource, secondResource], false);
+      result.current.handleRowSelectionChange({ "finding-1": true });
+    });
+
+    // When
+    await act(async () => {
+      onSetResources(
+        [secondResource, { ...firstResource, status: "MUTED" }],
+        false,
+      );
+    });
+
+    // Then
+    expect(result.current.selectedResources).toEqual([
+      expect.objectContaining({
+        findingId: "finding-1",
+        status: "MUTED",
+      }),
+    ]);
+    expect(result.current.selectedFindingIds).toEqual(["finding-1"]);
+  });
+
+  it("preserves an existing mute reason for already-muted optimistic shortcut updates", async () => {
+    // Given
+    const mutedResource: FindingResourceRow = {
+      id: "resource-1",
+      rowType: FINDINGS_ROW_TYPE.RESOURCE,
+      findingId: "finding-1",
+      checkId: "check-1",
+      providerType: "aws",
+      providerAlias: "production",
+      providerUid: "provider-1",
+      resourceName: "resource-1",
+      resourceType: "Bucket",
+      resourceGroup: "default",
+      resourceUid: "resource-uid-1",
+      service: "s3",
+      region: "us-east-1",
+      severity: "high",
+      status: "MUTED",
+      statusExtended: "Muted finding",
+      delta: null,
+      isMuted: true,
+      mutedReason: "Existing mute rule",
+      firstSeenAt: null,
+      lastSeenAt: "2026-04-22T10:00:00Z",
+      triage: {
+        findingId: "finding-1",
+        findingUid: "finding-uid-1",
+        triageId: "triage-1",
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.OPEN,
+        label: "Open",
+        hasVisibleNote: false,
+        isMuted: true,
+        canEdit: true,
+        billingHref: "https://prowler.com/pricing",
+      },
+    };
+
+    const { result } = renderHook(() =>
+      useFindingGroupResourceState({
+        group,
+        filters: {},
+        hasHistoricalData: false,
+      }),
+    );
+    const onSetResources = useFindingGroupResourcesMock.mock.calls[0][0]
+      .onSetResources as (
+      resources: FindingResourceRow[],
+      hasMore: boolean,
+    ) => void;
+
+    await act(async () => {
+      onSetResources([mutedResource], false);
+    });
+
+    // When
+    await act(async () => {
+      await result.current.updateTriageOptimistically(
+        {
+          findingId: "finding-1",
+          findingUid: "finding-uid-1",
+          triageId: "triage-1",
+          notesCount: 0,
+          status: FINDING_TRIAGE_STATUS.RISK_ACCEPTED,
+          previousStatus: FINDING_TRIAGE_STATUS.OPEN,
+          isMuted: true,
+        },
+        async () => undefined,
+      );
+    });
+
+    // Then
+    expect(result.current.resources[0]).toEqual(
+      expect.objectContaining({
+        isMuted: true,
+        mutedReason: "Existing mute rule",
       }),
     );
   });

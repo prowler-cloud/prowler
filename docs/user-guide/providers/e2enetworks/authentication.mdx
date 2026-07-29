@@ -1,0 +1,99 @@
+---
+title: "E2E Networks Authentication in Prowler"
+---
+
+import { VersionBadge } from "/snippets/version-badge.mdx"
+
+<VersionBadge version="5.34.0" />
+
+Prowler for E2E Networks authenticates against the E2E Networks MyAccount API using an **API key**, an **auth token**, and a numeric **project ID**. Set the API key and auth token as environment variables to avoid exposing secrets in shell history or process listings. Compatibility CLI flags are still accepted, but Prowler warns when secret values are passed directly on the command line.
+
+## Required Credentials
+
+Prowler requires read access to the E2E Networks project. The following values are needed:
+
+| Credential | Environment Variable | Description |
+|------------|----------------------|-------------|
+| API Key | `E2E_NETWORKS_API_KEY` | Identifies the MyAccount API key used for requests |
+| Auth Token | `E2E_NETWORKS_AUTH_TOKEN` | Bearer token authorizing the API key |
+| Project ID | `E2E_NETWORKS_PROJECT_ID` | Numeric ID of the project to scan |
+| Region | `E2E_NETWORKS_REGION` | Optional region to scan (defaults to all regions: Delhi, Chennai) |
+
+<Warning>
+The project ID must be an integer. A missing or non-numeric project ID stops the scan before any resource is read.
+</Warning>
+
+---
+
+## API Credentials
+
+### Step 1: Create the API Key and Auth Token
+
+1. Log into the [E2E Networks MyAccount portal](https://myaccount.e2enetworks.com).
+2. Open the **API Tokens** section under the account settings.
+3. Create a new API token and copy both the API key and the auth token.
+4. Copy the values immediately — the auth token is not shown again.
+
+### Step 2: Find the Project ID
+
+Select the target project in MyAccount and copy its numeric project ID from the project settings or the API context.
+
+### Step 3: Configure Authentication
+
+Export the credentials as environment variables:
+
+```bash
+export E2E_NETWORKS_API_KEY="your-api-key"
+export E2E_NETWORKS_AUTH_TOKEN="your-auth-token"
+export E2E_NETWORKS_PROJECT_ID="your-project-id"
+```
+
+Then run Prowler:
+
+```bash
+prowler e2enetworks
+```
+
+---
+
+## Verifying Authentication
+
+To confirm that Prowler can reach the E2E Networks project, run a scan against a single location:
+
+```bash
+prowler e2enetworks --region Delhi
+```
+
+A successful run reports findings for the discovered resources. A failed run displays an error message indicating the credential or connectivity issue.
+
+---
+
+## CI/CD Integration
+
+For automated pipelines, set the credentials as secret environment variables:
+
+**GitHub Actions:**
+
+```yaml
+env:
+  E2E_NETWORKS_API_KEY: ${{ secrets.E2E_NETWORKS_API_KEY }}
+  E2E_NETWORKS_AUTH_TOKEN: ${{ secrets.E2E_NETWORKS_AUTH_TOKEN }}
+  E2E_NETWORKS_PROJECT_ID: ${{ secrets.E2E_NETWORKS_PROJECT_ID }}
+
+steps:
+  - name: Run Prowler
+    run: prowler e2enetworks
+```
+
+**GitLab CI:**
+
+```yaml
+variables:
+  E2E_NETWORKS_API_KEY: $E2E_NETWORKS_API_KEY
+  E2E_NETWORKS_AUTH_TOKEN: $E2E_NETWORKS_AUTH_TOKEN
+  E2E_NETWORKS_PROJECT_ID: $E2E_NETWORKS_PROJECT_ID
+
+prowler_scan:
+  script:
+    - prowler e2enetworks
+```

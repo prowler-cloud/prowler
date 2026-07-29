@@ -261,6 +261,19 @@ const ALIBABACLOUD_COORDINATES: Record<string, { lat: number; lng: number }> = {
   global: { lat: 30.3, lng: 120.2 }, // Global fallback (Hangzhou HQ)
 };
 
+// Okta is a SaaS identity platform without user-facing regions
+const OKTA_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  global: { lat: 37.8, lng: -122.4 }, // Global fallback (San Francisco HQ)
+};
+
+// Google Workspace is a SaaS suite without user-facing regions
+const GOOGLEWORKSPACE_COORDINATES: Record<
+  string,
+  { lat: number; lng: number }
+> = {
+  global: { lat: 37.4, lng: -122.1 }, // Global fallback (Mountain View HQ)
+};
+
 const PROVIDER_COORDINATES: Record<
   string,
   Record<string, { lat: number; lng: number }>
@@ -277,6 +290,8 @@ const PROVIDER_COORDINATES: Record<
   oraclecloud: ORACLECLOUD_COORDINATES,
   mongodbatlas: MONGODBATLAS_COORDINATES,
   alibabacloud: ALIBABACLOUD_COORDINATES,
+  okta: OKTA_COORDINATES,
+  googleworkspace: GOOGLEWORKSPACE_COORDINATES,
 };
 
 // Returns [lng, lat] format for D3/GeoJSON compatibility

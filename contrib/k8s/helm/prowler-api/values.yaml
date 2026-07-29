@@ -28,7 +28,7 @@ containers:
     image:
       repository: prowlercloud/prowler-api
       pullPolicy: IfNotPresent
-    command: ["../docker-entrypoint.sh", "beat"]
+    command: ["/home/prowler/docker-entrypoint.sh", "beat"]
 
 secrets:
   POSTGRES_HOST:
@@ -438,6 +438,34 @@ mainConfig:
     # Minimum number of Availability Zones that an ELBv2 must be in
     elbv2_min_azs: 2
 
+    # AWS Post-Quantum TLS Configuration
+    # aws.acmpca_certificate_authority_pqc_key_algorithm
+    acmpca_pqc_key_algorithms:
+      - "ML_DSA_44"
+      - "ML_DSA_65"
+      - "ML_DSA_87"
+    # aws.cloudfront_distributions_pqc_tls_enabled
+    cloudfront_pqc_min_protocol_versions:
+      - "TLSv1.3_2025"
+    # aws.apigateway_domain_name_pqc_tls_enabled
+    apigateway_pqc_tls_allowed_policies:
+      - "SecurityPolicy_TLS13_1_2_FIPS_PFS_PQ_2025_09"
+      - "SecurityPolicy_TLS13_1_2_PFS_PQ_2025_09"
+      - "SecurityPolicy_TLS13_1_2_PQ_2025_09"
+
+    # AWS Post-Quantum SSH Key Exchange Configuration
+    # aws.transfer_server_pqc_ssh_kex_enabled
+    transfer_pqc_ssh_allowed_policies:
+      - "TransferSecurityPolicy-2025-03"
+      - "TransferSecurityPolicy-FIPS-2025-03"
+      - "TransferSecurityPolicy-AS2Restricted-2025-07"
+
+
+    # aws.rolesanywhere_trust_anchor_pqc_pki
+    rolesanywhere_pqc_pca_key_algorithms:
+      - "ML_DSA_44"
+      - "ML_DSA_65"
+      - "ML_DSA_87"
 
     # AWS Secrets Configuration
     # Patterns to ignore in the secrets checks

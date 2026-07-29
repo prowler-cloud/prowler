@@ -34,3 +34,12 @@ DRF_API_KEY = {
 # JWT
 
 SIMPLE_JWT["ALGORITHM"] = "HS256"  # noqa: F405
+# pyjwt >= 2.13.0 rejects an empty HMAC signing key, so HS256 tests need a real
+# key (>= 32 bytes also avoids the InsecureKeyLengthWarning). Production uses RS256.
+SIMPLE_JWT["SIGNING_KEY"] = env.str(  # noqa: F405
+    "DJANGO_TOKEN_SIGNING_KEY", "insecure-testing-jwt-signing-key-do-not-use-in-prod"
+)
+
+# Tests don't need secure password hashing; PBKDF2 (~hundreds of ms per call)
+# dominates fixture setup time across every create_user()/check_password().
+PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]

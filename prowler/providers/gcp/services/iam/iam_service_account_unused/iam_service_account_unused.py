@@ -19,7 +19,12 @@ class iam_service_account_unused(Check):
                 resource_id=account.email,
                 location=iam_client.region,
             )
-            if account.uniqueId in sa_ids_used:
+            if account.disabled:
+                report.status = "PASS"
+                report.status_extended = (
+                    f"Service Account {account.email} is disabled and cannot be used."
+                )
+            elif account.uniqueId in sa_ids_used:
                 report.status = "PASS"
                 report.status_extended = f"Service Account {account.email} was used over the last {max_unused_days} days."
             else:

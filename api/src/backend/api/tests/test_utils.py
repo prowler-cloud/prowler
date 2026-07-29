@@ -1,9 +1,7 @@
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import MagicMock, patch
 
 import pytest
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.exceptions import InvitationTokenExpiredException
 from api.models import Integration, Invitation, Provider
@@ -35,6 +33,7 @@ from prowler.providers.okta.okta_provider import OktaProvider
 from prowler.providers.openstack.openstack_provider import OpenstackProvider
 from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
 from prowler.providers.vercel.vercel_provider import VercelProvider
+from rest_framework.exceptions import NotFound, ValidationError
 
 
 class TestMergeDicts:
@@ -172,6 +171,53 @@ class TestInitializeProwlerProvider:
             key="value", mutelist_content={"key": "value"}
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_removes_region_string(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "us-ashburn-1",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
+    @patch("api.utils.return_prowler_provider")
+    def test_initialize_oraclecloud_provider_without_region_omits_scan_filter(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        initialize_prowler_provider(provider)
+
+        mock_return_prowler_provider.return_value.assert_called_once_with(
+            user="ocid1.user.oc1..fake",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..fake",
+        )
+
 
 class TestProwlerProviderConnectionTest:
     @patch("api.utils.return_prowler_provider")
@@ -186,13 +232,44 @@ class TestProwlerProviderConnectionTest:
             key="value", provider_id="1234567890", raise_on_exception=False
         )
 
+    @patch("api.utils.return_prowler_provider")
+    def test_oraclecloud_connection_test_uses_direct_credentials_without_region(
+        self, mock_return_prowler_provider
+    ):
+        provider = MagicMock()
+        provider.uid = "ocid1.tenancy.oc1..aaaaaaaexample"
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret.secret = {
+            "user": "ocid1.user.oc1..aaaaaaaexample",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "fake-base64-key-content",
+            "tenancy": "ocid1.tenancy.oc1..aaaaaaaexample",
+        }
+        mock_return_prowler_provider.return_value = MagicMock()
+
+        prowler_provider_connection_test(provider)
+
+        mock_return_prowler_provider.return_value.test_connection.assert_called_once_with(
+            user="ocid1.user.oc1..aaaaaaaexample",
+            fingerprint="00:11:22:33:44:55:66:77",
+            key_content="fake-base64-key-content",
+            tenancy="ocid1.tenancy.oc1..aaaaaaaexample",
+            region=getattr(
+                OraclecloudProvider,
+                "_bootstrap_region",
+                OraclecloudProvider._home_region,
+            ),
+            provider_id="ocid1.tenancy.oc1..aaaaaaaexample",
+            raise_on_exception=False,
+        )
+
     @pytest.mark.django_db
     @patch("api.utils.return_prowler_provider")
     def test_prowler_provider_connection_test_without_secret(
-        self, mock_return_prowler_provider, providers_fixture
+        self, mock_return_prowler_provider, aws_provider
     ):
         mock_return_prowler_provider.return_value = MagicMock()
-        connection = prowler_provider_connection_test(providers_fixture[0])
+        connection = prowler_provider_connection_test(aws_provider)
 
         assert connection.is_connected is False
         assert isinstance(connection.error, Provider.secret.RelatedObjectDoesNotExist)
@@ -356,6 +433,35 @@ class TestGetProwlerProviderKwargs:
 
         expected_result = {**secret_dict, **expected_extra_kwargs}
         assert result == expected_result
+
+    def test_get_prowler_provider_kwargs_oraclecloud_removes_region(
+        self,
+    ):
+        secret_dict = {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "region": "us-ashburn-1",
+            "pass_phrase": "fake-passphrase",
+        }
+        secret_mock = MagicMock()
+        secret_mock.secret = secret_dict
+
+        provider = MagicMock()
+        provider.provider = Provider.ProviderChoices.ORACLECLOUD.value
+        provider.secret = secret_mock
+        provider.uid = "ocid1.tenancy.oc1..fake"
+
+        result = get_prowler_provider_kwargs(provider)
+
+        assert result == {
+            "user": "ocid1.user.oc1..fake",
+            "fingerprint": "00:11:22:33:44:55:66:77",
+            "key_content": "-----BEGIN PRIVATE KEY-----\nfake\n-----END PRIVATE KEY-----",
+            "tenancy": "ocid1.tenancy.oc1..fake",
+            "pass_phrase": "fake-passphrase",
+        }
 
     def test_get_prowler_provider_kwargs_with_mutelist(self):
         provider_uid = "provider_uid"
@@ -599,7 +705,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = "user@example.com"
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
         return invitation
@@ -647,7 +753,7 @@ class TestValidateInvitation:
             )
 
     def test_invitation_expired(self, invitation):
-        expired_time = datetime.now(timezone.utc) - timedelta(days=1)
+        expired_time = datetime.now(UTC) - timedelta(days=1)
         invitation.expires_at = expired_time
 
         with (
@@ -656,7 +762,7 @@ class TestValidateInvitation:
         ):
             mock_db = mock_using.return_value
             mock_db.get.return_value = invitation
-            mock_datetime.now.return_value = datetime.now(timezone.utc)
+            mock_datetime.now.return_value = datetime.now(UTC)
 
             with pytest.raises(InvitationTokenExpiredException):
                 validate_invitation("VALID_TOKEN", "user@example.com")
@@ -701,7 +807,7 @@ class TestValidateInvitation:
         invitation = MagicMock(spec=Invitation)
         invitation.token = "VALID_TOKEN"
         invitation.email = uppercase_email
-        invitation.expires_at = datetime.now(timezone.utc) + timedelta(days=1)
+        invitation.expires_at = datetime.now(UTC) + timedelta(days=1)
         invitation.state = Invitation.State.PENDING
         invitation.tenant = MagicMock()
 
@@ -833,7 +939,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {}
 
@@ -861,7 +967,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="test@example.com",
             api_token="test_api_token",
-            domain="example.atlassian.net",
+            domain="example",
             raise_on_exception=False,
         )
 
@@ -894,7 +1000,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "invalid@example.com",
             "api_token": "invalid_token",
-            "domain": "invalid.atlassian.net",
+            "domain": "invalid",
         }
         integration.configuration = {}
 
@@ -919,7 +1025,7 @@ class TestProwlerIntegrationConnectionTest:
         mock_jira_class.test_connection.assert_called_once_with(
             user_mail="invalid@example.com",
             api_token="invalid_token",
-            domain="invalid.atlassian.net",
+            domain="invalid",
             raise_on_exception=False,
         )
 
@@ -947,7 +1053,7 @@ class TestProwlerIntegrationConnectionTest:
         integration.credentials = {
             "user_mail": "test@example.com",
             "api_token": "test_api_token",
-            "domain": "example.atlassian.net",
+            "domain": "example",
         }
         integration.configuration = {
             "issue_types": {"OLD_PROJ": ["Task"]},  # Existing configuration

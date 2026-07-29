@@ -1,8 +1,7 @@
 from functools import partial
 
-from django.db import migrations
-
 from api.db_utils import create_index_on_partitions, drop_index_on_partitions
+from django.db import migrations
 
 
 class Migration(migrations.Migration):

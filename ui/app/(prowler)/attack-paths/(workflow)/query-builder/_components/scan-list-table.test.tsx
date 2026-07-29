@@ -37,7 +37,7 @@ vi.mock("@/components/shadcn/tooltip", () => ({
   ),
 }));
 
-vi.mock("@/components/ui/entities/entity-info", () => ({
+vi.mock("@/components/shadcn/entities/entity-info", () => ({
   EntityInfo: ({
     entityAlias,
     entityId,
@@ -47,17 +47,18 @@ vi.mock("@/components/ui/entities/entity-info", () => ({
   }) => <div>{entityAlias ?? entityId}</div>,
 }));
 
-vi.mock("@/components/ui/entities/date-with-time", () => ({
+vi.mock("@/components/shadcn/entities/date-with-time", () => ({
   DateWithTime: ({ dateTime }: { dateTime: string }) => <span>{dateTime}</span>,
 }));
 
-vi.mock("@/components/ui/table", () => ({
+vi.mock("@/components/shadcn/table", () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>,
   DataTable: ({
     columns,
     data,
     metadata,
     controlledPage,
+    getRowAttributes,
   }: {
     columns: Array<{
       id?: string;
@@ -74,6 +75,10 @@ vi.mock("@/components/ui/table", () => ({
       };
     };
     controlledPage: number;
+    getRowAttributes?: (row: {
+      index: number;
+      original: AttackPathScan;
+    }) => Record<string, string | undefined>;
   }) => (
     <div>
       <span>{metadata.pagination.count} Total Entries</span>
@@ -95,8 +100,8 @@ vi.mock("@/components/ui/table", () => ({
           </tr>
         </thead>
         <tbody>
-          {data.map((row) => (
-            <tr key={row.id}>
+          {data.map((row, index) => (
+            <tr key={row.id} {...getRowAttributes?.({ index, original: row })}>
               {columns.map((column, index) => (
                 <td key={column.id ?? index}>
                   {column.cell
@@ -174,6 +179,20 @@ describe("ScanListTable", () => {
     expect(pushMock).toHaveBeenCalledWith(
       "/attack-paths?scanPage=1&scanPageSize=5&scanId=scan-1",
     );
+  });
+
+  it("anchors the attack paths scan tour to the first visible scan row", () => {
+    render(
+      <ScanListTable scans={[createScan(1), createScan(2), createScan(3)]} />,
+    );
+
+    const firstRow = screen
+      .getAllByRole("radio", {
+        name: "Select scan",
+      })[0]
+      .closest("tr");
+
+    expect(firstRow).toHaveAttribute("data-tour-id", "attack-paths-scan-list");
   });
 
   it("enables the radio button for a failed scan when graph data is ready", async () => {

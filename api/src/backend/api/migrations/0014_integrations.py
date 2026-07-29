@@ -2,12 +2,11 @@
 
 import uuid
 
-import django.db.models.deletion
-from django.db import migrations, models
-
 import api.db_utils
 import api.rls
+import django.db.models.deletion
 from api.rls import RowLevelSecurityConstraint
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

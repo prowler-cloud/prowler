@@ -4,12 +4,11 @@ import zipfile
 
 import boto3
 import config.django.base as base
+from api.db_utils import rls_transaction
+from api.models import Scan
 from botocore.exceptions import ClientError, NoCredentialsError, ParamValidationError
 from celery.utils.log import get_task_logger
 from django.conf import settings
-
-from api.db_utils import rls_transaction
-from api.models import Scan
 from prowler.config.config import (
     csv_file_suffix,
     html_file_suffix,
@@ -18,6 +17,9 @@ from prowler.config.config import (
     set_output_timestamp,
 )
 from prowler.lib.outputs.asff.asff import ASFF
+from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
+    ASDEssentialEightAWS,
+)
 from prowler.lib.outputs.compliance.aws_well_architected.aws_well_architected import (
     AWSWellArchitected,
 )
@@ -42,9 +44,6 @@ from prowler.lib.outputs.compliance.cisa_scuba.cisa_scuba_googleworkspace import
 from prowler.lib.outputs.compliance.ens.ens_aws import AWSENS
 from prowler.lib.outputs.compliance.ens.ens_azure import AzureENS
 from prowler.lib.outputs.compliance.ens.ens_gcp import GCPENS
-from prowler.lib.outputs.compliance.asd_essential_eight.asd_essential_eight_aws import (
-    ASDEssentialEightAWS,
-)
 from prowler.lib.outputs.compliance.iso27001.iso27001_aws import AWSISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_azure import AzureISO27001
 from prowler.lib.outputs.compliance.iso27001.iso27001_gcp import GCPISO27001
@@ -58,6 +57,9 @@ from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_azure import (
     AzureMitreAttack,
 )
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack_gcp import GCPMitreAttack
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig_okta import (
+    OktaIDaaSSTIG,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore_alibaba import (
     ProwlerThreatScoreAlibaba,
 )
@@ -151,6 +153,9 @@ COMPLIANCE_CLASS_MAP = {
             lambda name: name == "prowler_threatscore_alibabacloud",
             ProwlerThreatScoreAlibaba,
         ),
+    ],
+    "okta": [
+        (lambda name: name.startswith("okta_idaas_stig"), OktaIDaaSSTIG),
     ],
 }
 

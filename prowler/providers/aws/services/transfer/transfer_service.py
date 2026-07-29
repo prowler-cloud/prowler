@@ -46,6 +46,9 @@ class Transfer(AWSService):
             )
             for protocol in server_description.get("Protocols", []):
                 server.protocols.append(Protocol(protocol))
+            server.security_policy_name = server_description.get(
+                "SecurityPolicyName", ""
+            )
             server.tags = server_description.get("Tags", [])
         except Exception as error:
             logger.error(
@@ -65,4 +68,5 @@ class Server(BaseModel):
     id: str
     region: str
     protocols: List[Protocol] = Field(default_factory=list)
+    security_policy_name: str = ""
     tags: List[Dict[str, str]] = Field(default_factory=list)

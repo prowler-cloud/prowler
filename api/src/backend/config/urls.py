@@ -1,6 +1,5 @@
-from django.urls import include, path
-
 from api.health import LivenessView, ReadinessView
+from django.urls import include, path
 
 urlpatterns = [
     path("api/v1/", include("api.v1.urls")),

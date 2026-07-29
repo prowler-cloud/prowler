@@ -1,9 +1,8 @@
 from unittest.mock import patch
 
 import pytest
+from conftest import TEST_PASSWORD, TEST_USER, get_api_tokens, get_authorization_header
 from django.urls import reverse
-
-from conftest import TEST_USER, TEST_PASSWORD, get_api_tokens, get_authorization_header
 
 
 @patch("api.v1.views.schedule_provider_scan")

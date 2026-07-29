@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_auto_upgrade_enabled",
+  "CheckTitle": "AKS cluster has automatic upgrade enabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**AKS clusters** are evaluated for an **automatic upgrade channel** other than `none`. Automatic upgrades keep the Kubernetes control plane and node pools on supported patch/minor versions and reduce version drift across clusters.",
+  "Risk": "Without automatic upgrades, AKS clusters can remain on unsupported or vulnerable Kubernetes versions. Delayed patching increases exposure to **known CVEs**, control plane/node defects, and exploit chains that can affect workload **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/auto-upgrade-cluster",
+    "https://learn.microsoft.com/en-us/azure/aks/supported-kubernetes-versions"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --auto-upgrade-channel patch",
+      "NativeIaC": "",
+      "Other": "",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Configure an AKS automatic upgrade channel so clusters receive Kubernetes version updates and security patches without relying only on manual upgrade processes. Use `patch` or `stable` for conservative production upgrades, reserve faster channels such as `rapid` for environments that can absorb quicker version changes, and avoid `none` unless a documented exception and manual patching process exists.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_auto_upgrade_enabled"
+    }
+  },
+  "Categories": [
+    "vulnerabilities",
+    "cluster-security"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Automatic upgrade channels can change cluster versions during Azure-managed upgrade windows. Select a channel that matches the workload change tolerance and use planned maintenance windows, staging validation, and documented rollback procedures for production clusters."
+}

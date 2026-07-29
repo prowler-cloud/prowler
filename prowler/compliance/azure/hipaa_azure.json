@@ -182,6 +182,7 @@
         }
       ],
       "Checks": [
+        "entra_user_with_recent_sign_in",
         "storage_key_rotation_90_days",
         "keyvault_key_rotation_enabled",
         "keyvault_rbac_key_expiration_set",
@@ -430,6 +431,7 @@
         }
       ],
       "Checks": [
+        "recovery_vault_backup_policy_retention_adequate",
         "vm_backup_enabled",
         "vm_sufficient_daily_backup_retention_period",
         "storage_blob_versioning_is_enabled",
@@ -438,7 +440,10 @@
         "storage_geo_redundant_enabled",
         "keyvault_recoverable",
         "sqlserver_auditing_retention_90_days",
-        "postgresql_flexible_server_log_retention_days_greater_3"
+        "postgresql_flexible_server_log_retention_days_greater_3",
+        "cosmosdb_account_backup_policy_continuous",
+        "mysql_flexible_server_geo_redundant_backup_enabled",
+        "postgresql_flexible_server_geo_redundant_backup_enabled"
       ]
     },
     {
@@ -762,6 +767,17 @@
         "mysql_flexible_server_minimum_tls_version_12",
         "mysql_flexible_server_ssl_connection_enabled",
         "postgresql_flexible_server_enforce_ssl_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     },
     {
@@ -814,6 +830,17 @@
         "mysql_flexible_server_ssl_connection_enabled",
         "postgresql_flexible_server_enforce_ssl_enabled",
         "databricks_workspace_cmk_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "sqlserver_recommended_minimal_tls_version",
+          "ConfigKey": "recommended_minimal_tls_versions",
+          "Operator": "subset",
+          "Value": [
+            "1.2",
+            "1.3"
+          ]
+        }
       ]
     }
   ]

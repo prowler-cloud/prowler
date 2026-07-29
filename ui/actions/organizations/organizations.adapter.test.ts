@@ -11,6 +11,7 @@ import {
   buildOrgTreeData,
   getOuIdsForSelectedAccounts,
   getSelectableAccountIds,
+  getSelectableAccountIdsForTarget,
 } from "./organizations.adapter";
 
 const discoveryFixture: DiscoveryResult = {
@@ -161,6 +162,68 @@ describe("buildAccountLookup", () => {
     expect(lookup.get("111111111111")?.name).toBe("App Account");
     expect(lookup.get("333333333333")?.name).toBe("Legacy Account");
     expect(lookup.size).toBe(3);
+  });
+});
+
+describe("getSelectableAccountIdsForTarget", () => {
+  it("scopes selection to accounts under a target OU, including nested OUs", () => {
+    // ou-parent contains ou-child (holds 111...) and the blocked 222...
+    const scoped = getSelectableAccountIdsForTarget(
+      discoveryFixture,
+      "ou-parent",
+    );
+
+    // Only the selectable descendant is returned; blocked 222... is excluded,
+    // and 333... (under the root, outside the OU) is not included.
+    expect(scoped).toEqual(["111111111111"]);
+  });
+
+  it("scopes selection to a leaf OU", () => {
+    const scoped = getSelectableAccountIdsForTarget(
+      discoveryFixture,
+      "ou-child",
+    );
+
+    expect(scoped).toEqual(["111111111111"]);
+  });
+
+  it("includes the deployment account even when it lives outside the target OU", () => {
+    // Deployment (management) account 333... sits under the root, but gets the
+    // role via DeployLocalRole, so it must be pre-selected alongside the OU.
+    const scoped = getSelectableAccountIdsForTarget(
+      discoveryFixture,
+      "ou-child",
+      "333333333333",
+    );
+
+    expect(scoped).toEqual(["111111111111", "333333333333"]);
+  });
+
+  it("does not include a deployment account that is not selectable", () => {
+    // 222... is blocked, so even as the deployment account it stays unselected.
+    const scoped = getSelectableAccountIdsForTarget(
+      discoveryFixture,
+      "ou-child",
+      "222222222222",
+    );
+
+    expect(scoped).toEqual(["111111111111"]);
+  });
+
+  it("returns every selectable account for a root target (whole organization)", () => {
+    const scoped = getSelectableAccountIdsForTarget(discoveryFixture, "r-root");
+
+    expect(scoped).toEqual(["111111111111", "333333333333"]);
+  });
+
+  it("falls back to all selectable accounts for an empty or unknown target", () => {
+    expect(getSelectableAccountIdsForTarget(discoveryFixture, "")).toEqual([
+      "111111111111",
+      "333333333333",
+    ]);
+    expect(
+      getSelectableAccountIdsForTarget(discoveryFixture, "ou-does-not-exist"),
+    ).toEqual(["111111111111", "333333333333"]);
   });
 });
 

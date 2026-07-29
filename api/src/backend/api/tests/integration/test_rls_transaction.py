@@ -1,10 +1,13 @@
 """Tests for rls_transaction retry and fallback logic."""
 
-import pytest
-from django.db import DEFAULT_DB_ALIAS
-from rest_framework_json_api.serializers import ValidationError
+from unittest.mock import patch
 
-from api.db_utils import rls_transaction
+import pytest
+from api.db_utils import POSTGRES_TENANT_VAR, rls_transaction
+from conftest import TEST_REPLICA_ALIAS
+from django.db import DEFAULT_DB_ALIAS, OperationalError, connections
+from psycopg2 import OperationalError as Psycopg2OperationalError
+from rest_framework_json_api.serializers import ValidationError
 
 
 @pytest.mark.django_db
@@ -37,3 +40,35 @@ class TestRLSTransaction:
             cursor.execute("SELECT current_setting(%s, true)", [custom_param])
             result = cursor.fetchone()
             assert result == (str(tenant.id),)
+
+    @pytest.mark.requires_test_replica_alias
+    @pytest.mark.django_db(
+        transaction=True, databases=[DEFAULT_DB_ALIAS, TEST_REPLICA_ALIAS]
+    )
+    def test_mid_query_replica_connection_loss_falls_back_to_primary(self, tenant):
+        """Real Django connection state: closed replica atomic falls back to primary."""
+        replica = connections[TEST_REPLICA_ALIAS]
+        sql = "SELECT current_setting(%s, true), %s"
+        params = [POSTGRES_TENANT_VAR, 42]
+        failed_once = {"value": False}
+
+        def close_replica_and_raise(execute, sql_arg, params_arg, many, context):
+            if not failed_once["value"] and sql_arg == sql:
+                failed_once["value"] = True
+                replica.close()
+                try:
+                    raise Psycopg2OperationalError("SSL SYSCALL error: EOF detected")
+                except Psycopg2OperationalError as psycopg_error:
+                    raise OperationalError(
+                        "SSL SYSCALL error: EOF detected"
+                    ) from psycopg_error
+            return execute(sql_arg, params_arg, many, context)
+
+        with patch("api.db_utils.READ_REPLICA_ALIAS", TEST_REPLICA_ALIAS):
+            with rls_transaction(str(tenant.id), using=TEST_REPLICA_ALIAS) as cursor:
+                with replica.execute_wrapper(close_replica_and_raise):
+                    cursor.execute(sql, params)
+                    result = cursor.fetchone()
+
+        assert failed_once["value"]
+        assert result == (str(tenant.id), 42)

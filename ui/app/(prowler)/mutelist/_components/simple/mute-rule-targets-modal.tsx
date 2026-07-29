@@ -29,9 +29,9 @@ export function MuteRuleTargetsModal({
       description="Review every finding currently muted by this rule."
       size="xl"
     >
-      <div className="flex flex-col gap-5">
-        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex items-start justify-between gap-4 rounded-xl border p-4">
-          <div className="min-w-0">
+      <div className="flex max-w-full min-w-0 flex-col gap-5">
+        <div className="border-border-neutral-secondary bg-bg-neutral-tertiary flex max-w-full min-w-0 items-start justify-between gap-4 overflow-hidden rounded-xl border p-4">
+          <div className="min-w-0 flex-1">
             <p className="text-text-neutral-tertiary text-xs font-medium tracking-[0.08em] uppercase">
               Mute rule
             </p>
@@ -48,7 +48,7 @@ export function MuteRuleTargetsModal({
           </div>
         </div>
 
-        <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-tertiary max-h-[60vh] overflow-y-auto rounded-xl border">
+        <div className="minimal-scrollbar border-border-neutral-secondary bg-bg-neutral-tertiary max-h-[60vh] max-w-full min-w-0 overflow-hidden overflow-y-auto rounded-xl border">
           <ul className="divide-border-neutral-secondary divide-y">
             {muteRule.targetLabels.map((label, index) => {
               const [title, ...metaParts] = label.split(" • ");
@@ -57,7 +57,7 @@ export function MuteRuleTargetsModal({
               return (
                 <li
                   key={`${muteRule.id}-${label}-${index}`}
-                  className="min-w-0 px-4 py-3"
+                  className="max-w-full min-w-0 px-4 py-3"
                 >
                   <p className="text-text-neutral-primary text-sm font-medium break-all">
                     {title}

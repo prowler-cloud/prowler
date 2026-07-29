@@ -1,0 +1,38 @@
+{
+  "Provider": "linode",
+  "CheckID": "networking_firewall_default_outbound_policy_drop",
+  "CheckTitle": "Linode Cloud Firewall default outbound policy is DROP",
+  "CheckType": [],
+  "ServiceName": "networking",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "network",
+  "Description": "**Linode Cloud Firewalls** apply a **default outbound policy** to egress traffic that matches no explicit rule. This check verifies the default is set to `DROP`, enforcing **default-deny egress** so that only approved outbound connections are allowed to leave the instance.",
+  "Risk": "An outbound default of `ACCEPT` permits unrestricted egress from the instance. If a host is compromised, this eases **data exfiltration** and **command-and-control (C2)** communication and lets malware reach arbitrary external endpoints, harming **confidentiality** and enabling lateral movement.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://techdocs.akamai.com/cloud-computing/docs/manage-firewall-rules"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Log in to the Linode Cloud Manager\n2. Navigate to Firewalls\n3. Select the associated firewall\n4. In the Rules tab, set the default outbound policy to DROP",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Set the default outbound policy to `DROP` and allow only explicit outbound destinations and services.",
+      "Url": "https://hub.prowler.com/check/networking_firewall_default_outbound_policy_drop"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "networking_firewall_outbound_rules_configured"
+  ],
+  "Notes": ""
+}

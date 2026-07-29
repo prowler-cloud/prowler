@@ -5,6 +5,8 @@ import { ComponentProps, ReactNode, useEffect, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
+import { Tooltip, TooltipContent, TooltipTrigger } from "../tooltip";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,10 +46,21 @@ export function ActionDropdown({
 }: ActionDropdownProps) {
   const [open, setOpen] = useState(false);
 
-  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events)
+  // Close dropdown when any ancestor scrolls (capture phase catches all scroll events),
+  // but ignore scrolls originating inside a nested dialog (e.g. pasting into a modal
+  // textarea) so they don't unmount a modal rendered within this menu.
   useEffect(() => {
     if (!open) return;
-    const handleScroll = () => setOpen(false);
+    const handleScroll = (event: Event) => {
+      const target = event.target;
+      if (
+        target instanceof Element &&
+        target.closest('[data-slot="dialog-content"]')
+      ) {
+        return;
+      }
+      setOpen(false);
+    };
     window.addEventListener("scroll", handleScroll, true);
     return () => window.removeEventListener("scroll", handleScroll, true);
   }, [open]);
@@ -93,6 +106,10 @@ interface ActionDropdownItemProps
   description?: string;
   /** Whether the item is destructive (danger styling) */
   destructive?: boolean;
+  /** Tooltip shown while the item remains interactive. */
+  tooltip?: string;
+  /** Tooltip shown when the item is disabled. */
+  disabledTooltip?: string;
 }
 
 export function ActionDropdownItem({
@@ -101,9 +118,13 @@ export function ActionDropdownItem({
   description,
   destructive = false,
   className,
+  tooltip,
+  disabledTooltip,
+  disabled,
+  onSelect,
   ...props
 }: ActionDropdownItemProps) {
-  return (
+  const item = (
     <DropdownMenuItem
       className={cn(
         "hover:bg-bg-neutral-tertiary flex cursor-pointer items-start gap-2 rounded-md transition-colors",
@@ -111,6 +132,16 @@ export function ActionDropdownItem({
           "text-text-error-primary focus:text-text-error-primary hover:bg-destructive/10",
         className,
       )}
+      aria-disabled={disabled || undefined}
+      disabled={disabled && !disabledTooltip}
+      onSelect={(event) => {
+        if (disabled) {
+          event.preventDefault();
+          return;
+        }
+
+        onSelect?.(event);
+      }}
       {...props}
     >
       {icon && (
@@ -138,6 +169,19 @@ export function ActionDropdownItem({
       </div>
     </DropdownMenuItem>
   );
+
+  const tooltipContent = tooltip ?? (disabled ? disabledTooltip : undefined);
+
+  if (tooltipContent) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>{item}</TooltipTrigger>
+        <TooltipContent>{tooltipContent}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return item;
 }
 
 export function ActionDropdownDangerZone({

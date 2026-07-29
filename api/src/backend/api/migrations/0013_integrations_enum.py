@@ -2,10 +2,9 @@
 
 from functools import partial
 
-from django.db import migrations
-
 from api.db_utils import IntegrationTypeEnum, PostgresEnumMigration, register_enum
 from api.models import Integration
+from django.db import migrations
 
 IntegrationTypeEnumMigration = PostgresEnumMigration(
     enum_name="integration_type",

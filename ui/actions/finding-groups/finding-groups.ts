@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 
+import type { FindingsFilterParam } from "@/actions/findings/findings-filters";
 import {
   apiBaseUrl,
   composeSort,
@@ -15,7 +16,6 @@ import {
 } from "@/lib";
 import { appendSanitizedProviderFilters } from "@/lib/provider-filters";
 import { handleApiResponse } from "@/lib/server-actions-helper";
-import { FilterParam } from "@/types/filters";
 
 /**
  * Maps filter[search] to filter[check_title__icontains] for finding-groups.
@@ -39,7 +39,7 @@ function mapSearchFilter(
  * finding-group resources sub-endpoint. These must be stripped before
  * calling the resources API to avoid empty results.
  */
-const FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS: FilterParam[] = [
+const FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS: FindingsFilterParam[] = [
   "filter[service__in]",
   "filter[scan__in]",
   "filter[scan_id]",
@@ -53,7 +53,7 @@ function normalizeFindingGroupResourceFilters(
     Object.entries(filters).filter(
       ([key]) =>
         !FINDING_GROUP_RESOURCE_UNSUPPORTED_FILTERS.includes(
-          key as FilterParam,
+          key as FindingsFilterParam,
         ),
     ),
   );

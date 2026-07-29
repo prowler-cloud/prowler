@@ -254,6 +254,20 @@
         "iam_user_accesskey_unused",
         "iam_user_console_access_unused"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "iam_user_accesskey_unused",
+          "ConfigKey": "max_unused_access_keys_days",
+          "Operator": "lte",
+          "Value": 45
+        },
+        {
+          "Check": "iam_user_console_access_unused",
+          "ConfigKey": "max_console_access_days",
+          "Operator": "lte",
+          "Value": 45
+        }
+      ],
       "Attributes": [
         {
           "Section": "1 Identity and Access Management",
@@ -430,6 +444,14 @@
       "Description": "Ensure that IAM Access Analyzer is enabled for all regions",
       "Checks": [
         "accessanalyzer_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -749,6 +771,14 @@
       "Description": "Ensure AWS Config is enabled in all regions",
       "Checks": [
         "config_recorder_all_regions_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1233,6 +1263,14 @@
       "Description": "Ensure AWS Security Hub is enabled",
       "Checks": [
         "securityhub_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

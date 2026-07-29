@@ -597,6 +597,14 @@
         "accessanalyzer_enabled",
         "cloudwatch_log_metric_filter_root_usage"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "3 INCIDENT HANDLING (ARTICLE 21(2), POINT (B), OF DIRECTIVE (EU) 2022/2555)",
@@ -1511,6 +1519,17 @@
       "Checks": [
         "acm_certificates_with_secure_key_algorithms"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
+      ],
       "Attributes": [
         {
           "Section": "9 CRYPTOGRAPHY (ARTICLE 21(2), POINT (H), OF DIRECTIVE (EU) 2022/2555)",
@@ -1527,6 +1546,17 @@
         "acm_certificates_transparency_logs_enabled",
         "route53_domains_privacy_protection_enabled",
         "iam_no_expired_server_certificates_stored"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -1645,6 +1675,14 @@
         "efs_access_point_enforce_user_identity",
         "efs_not_publicly_accessible"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Section": "11 ACCESS CONTROL (ARTICLE 21(2), POINTS (I) AND (J), OF DIRECTIVE (EU) 2022/2555)",
@@ -1675,6 +1713,14 @@
       "Description": "The relevant entities shall provide, modify, remove and document access rights to network and information systems in accordance with the access control policy referred to in point 11.1.",
       "Checks": [
         "accessanalyzer_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -1725,6 +1771,14 @@
       "Description": "maintain a register of access rights granted;",
       "Checks": [
         "accessanalyzer_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

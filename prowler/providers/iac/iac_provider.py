@@ -28,6 +28,7 @@ from prowler.providers.common.provider import Provider
 
 class IacProvider(Provider):
     _type: str = "iac"
+    sdk_only: bool = False
     audit_metadata: Audit_Metadata
 
     def __init__(

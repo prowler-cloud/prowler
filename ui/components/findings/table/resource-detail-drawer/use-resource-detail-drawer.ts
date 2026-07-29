@@ -8,7 +8,13 @@ import {
   getLatestFindingsByResourceUid,
   type ResourceDrawerFinding,
 } from "@/actions/findings";
+import {
+  applyOptimisticTriageSummaryUpdate,
+  getOptimisticTriageMutedReason,
+  shouldMarkFindingMutedForTriageUpdate,
+} from "@/lib/finding-triage";
 import { FindingResourceRow } from "@/types";
+import type { UpdateFindingTriageInput } from "@/types/findings-triage";
 
 // Keep fast carousel navigations in a loading state for one short beat so
 // React doesn't batch away the skeleton frame when switching resources.
@@ -67,6 +73,8 @@ interface UseResourceDetailDrawerReturn {
   navigateNext: () => void;
   /** Clear cache for current resource and re-fetch (e.g. after muting). */
   refetchCurrent: () => void;
+  /** Patch triage state locally after a successful lightweight triage update. */
+  patchTriageUpdate: (input: UpdateFindingTriageInput) => void;
 }
 
 /**
@@ -287,6 +295,62 @@ export function useResourceDetailDrawer({
     fetchFindings(resource);
   };
 
+  const patchFindingTriage = (
+    finding: ResourceDrawerFinding | null,
+    input: UpdateFindingTriageInput,
+  ): ResourceDrawerFinding | null => {
+    if (!finding?.triage || finding.triage.findingId !== input.findingId) {
+      return finding;
+    }
+
+    const shouldMarkMuted = shouldMarkFindingMutedForTriageUpdate(input);
+
+    return {
+      ...finding,
+      isMuted: shouldMarkMuted ? true : finding.isMuted,
+      mutedReason:
+        shouldMarkMuted && input.isMuted !== true && input.status
+          ? getOptimisticTriageMutedReason(input.status)
+          : finding.mutedReason,
+      triage: applyOptimisticTriageSummaryUpdate(finding.triage, input),
+    };
+  };
+
+  const patchTriageUpdate = (input: UpdateFindingTriageInput) => {
+    currentFindingCacheRef.current.forEach((finding, key) => {
+      const patchedFinding = patchFindingTriage(finding, input);
+      if (patchedFinding !== finding) {
+        currentFindingCacheRef.current.set(key, patchedFinding);
+      }
+    });
+
+    otherFindingsCacheRef.current.forEach((findings, key) => {
+      const patchedFindings = findings.map((finding) =>
+        patchFindingTriage(finding, input),
+      );
+
+      if (
+        patchedFindings.some((finding, index) => finding !== findings[index])
+      ) {
+        otherFindingsCacheRef.current.set(
+          key,
+          patchedFindings.filter(
+            (finding): finding is ResourceDrawerFinding => finding !== null,
+          ),
+        );
+      }
+    });
+
+    setCurrentFinding((finding) => patchFindingTriage(finding, input));
+    setOtherFindings((findings) =>
+      findings
+        .map((finding) => patchFindingTriage(finding, input))
+        .filter(
+          (finding): finding is ResourceDrawerFinding => finding !== null,
+        ),
+    );
+  };
+
   const navigateTo = (index: number) => {
     const resource = resources[index];
     if (!resource) return;
@@ -335,5 +399,6 @@ export function useResourceDetailDrawer({
     navigatePrev,
     navigateNext,
     refetchCurrent,
+    patchTriageUpdate,
   };
 }

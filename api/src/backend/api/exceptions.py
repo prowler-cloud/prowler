@@ -187,6 +187,32 @@ class UpstreamServiceUnavailableError(APIException):
         )
 
 
+class ComplianceWarmingError(APIException):
+    """Compliance catalog is still warming (503 Service Unavailable).
+
+    Returned by the compliance attributes endpoint while the per-process
+    catalog warm-up is in progress, so the request thread never triggers the
+    slow cold load that would trip the Gunicorn worker timeout.
+    """
+
+    status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    default_detail = (
+        "Compliance data is still loading. Please try again in a few seconds."
+    )
+    default_code = "compliance_warming"
+
+    def __init__(self, detail=None):
+        super().__init__(
+            detail=[
+                {
+                    "detail": detail or self.default_detail,
+                    "status": str(self.status_code),
+                    "code": self.default_code,
+                }
+            ]
+        )
+
+
 class UpstreamInternalError(APIException):
     """Unexpected error communicating with provider (500 Internal Server Error).
 

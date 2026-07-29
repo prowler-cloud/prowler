@@ -1,7 +1,12 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dms.dms_client import dms_client
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 from prowler.providers.aws.services.ec2.lib.security_groups import check_security_group
+
+
+def _get_ec2_client():
+    from prowler.providers.aws.services.ec2.ec2_client import ec2_client
+
+    return ec2_client
 
 
 class dms_instance_no_public_access(Check):
@@ -19,7 +24,7 @@ class dms_instance_no_public_access(Check):
                 if instance.security_groups:
                     report.status = "PASS"
                     report.status_extended = f"DMS Replication Instance {instance.id} is set as publicly accessible but filtered with security groups."
-                    for security_group in ec2_client.security_groups.values():
+                    for security_group in _get_ec2_client().security_groups.values():
                         if security_group.id in instance.security_groups:
                             for ingress_rule in security_group.ingress_rules:
                                 if check_security_group(

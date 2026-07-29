@@ -1,12 +1,12 @@
 ---
-title: 'End-2-End Tests for Prowler App'
+title: 'End-2-End Tests for Prowler Local Server'
 ---
 
-End-to-end (E2E) tests validate complete user flows in Prowler App (UI + API). These tests are implemented with [Playwright](https://playwright.dev/) under the `ui/tests` folder and are designed to run against a Prowler App environment.
+End-to-end (E2E) tests validate complete user flows in Prowler Local Server (UI + API). These tests are implemented with [Playwright](https://playwright.dev/) under the `ui/tests` folder and are designed to run against a Prowler Local Server environment.
 
 ## General Recommendations
 
-When adding or maintaining E2E tests for Prowler App, follow these guidelines:
+When adding or maintaining E2E tests for Prowler Local Server, follow these guidelines:
 
 1. **Test real user journeys**
    Focus on full workflows (for example, sign-up → login → add provider → launch scan) instead of low-level UI details already covered by unit or integration tests.
@@ -19,8 +19,8 @@ When adding or maintaining E2E tests for Prowler App, follow these guidelines:
 3. **Use a Page Model (Page Object Model)**
    - Encapsulate selectors and common actions in page classes instead of repeating them in each test.
    - Leverage and extend the existing Playwright page models in `ui/tests`—such as `ProvidersPage`, `ScansPage`, and others—which are all based on the shared `BasePage`.
-   - Page models for Prowler App pages should be placed in their respective entity folders (for example, `ui/tests/providers/providers-page.ts`).
-   - Page models for external pages (not part of Prowler App) should be grouped in the `external` folder (for example, `ui/tests/external/github-page.ts`).
+   - Page models for Prowler Local Server pages should be placed in their respective entity folders (for example, `ui/tests/providers/providers-page.ts`).
+   - Page models for external pages (not part of Prowler Local Server) should be grouped in the `external` folder (for example, `ui/tests/external/github-page.ts`).
    - This approach improves readability, reduces duplication, and makes refactors safer.
 
 4. **Reuse authentication states (StorageState)**
@@ -193,7 +193,7 @@ When adding or maintaining E2E tests for Prowler App, follow these guidelines:
 
 ## Running Prowler Tests
 
-E2E tests for Prowler App run from the `ui` project using Playwright. The Playwright configuration lives in `ui/playwright.config.ts` and defines:
+E2E tests for Prowler Local Server run from the `ui` project using Playwright. The Playwright configuration lives in `ui/playwright.config.ts` and defines:
 
 - `testDir: "./tests"` – location of E2E test files (relative to the `ui` project root, so `ui/tests`).
 - `webServer` – how to start the Next.js development server and connect to Prowler API.
@@ -221,11 +221,11 @@ Before running E2E tests:
     ```
 
 - **Ensure Prowler API is available**
-  - By default, Playwright uses `NEXT_PUBLIC_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
+  - By default, Playwright uses `UI_API_BASE_URL=http://localhost:8080/api/v1` (configured in `playwright.config.ts`).
   - Start Prowler API so it is reachable on that URL (for example, via `docker-compose-dev.yml` or the development orchestration used locally).
-  - If a different API URL is required, set `NEXT_PUBLIC_API_BASE_URL` accordingly before running the tests.
+  - If a different API URL is required, set `UI_API_BASE_URL` accordingly before running the tests.
 
-- **Ensure Prowler App UI is available**
+- **Ensure Prowler Local Server UI is available**
   - Playwright automatically starts the Next.js server through the `webServer` block in `playwright.config.ts` (`pnpm run dev` by default).
   - If the UI is already running on `http://localhost:3000`, Playwright will reuse the existing server when `reuseExistingServer` is `true`.
 
@@ -246,7 +246,7 @@ Before running E2E tests:
 
 ### Executing Tests
 
-To execute E2E tests for Prowler App:
+To execute E2E tests for Prowler Local Server:
 
 1. **Run the full E2E suite (headless)**
 

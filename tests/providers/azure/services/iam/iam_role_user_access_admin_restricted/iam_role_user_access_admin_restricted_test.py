@@ -13,6 +13,7 @@ from tests.providers.azure.azure_fixtures import (
 class Test_iam_role_user_access_admin_restricted:
     def test_iam_no_role_assignments(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         iam_client.subscriptions = {AZURE_SUBSCRIPTION_ID: AZURE_SUBSCRIPTION_NAME}
         iam_client.role_assignments = {}
         iam_client.roles = {}
@@ -37,6 +38,7 @@ class Test_iam_role_user_access_admin_restricted:
 
     def test_iam_user_access_administrator_role_assigned(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_id = str(uuid4())
         role_assignment_id = str(uuid4())
         agent_id = str(uuid4())
@@ -97,6 +99,7 @@ class Test_iam_role_user_access_admin_restricted:
 
     def test_iam_non_user_access_administrator_role_assigned(self):
         iam_client = mock.MagicMock
+        iam_client.resource_groups = {}
         role_id = str(uuid4())
         role_assignment_id = str(uuid4())
         agent_id = str(uuid4())

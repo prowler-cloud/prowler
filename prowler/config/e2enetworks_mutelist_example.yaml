@@ -1,0 +1,23 @@
+### Account, Check and/or Region can be * to apply for all the cases.
+### Account == * (E2E Networks findings are matched by resource, so use * to apply to all)
+### Region == <E2E Networks location, e.g. Delhi> or * for all locations
+### Resources and tags are lists that can have either Regex or Keywords.
+### Tags is an optional list that matches on tuples of 'key=value' and are "ANDed" together.
+### Use an alternation Regex to match one of multiple tags with "ORed" logic.
+### For each check you can except Accounts, Regions, Resources and/or Tags.
+###########################  MUTELIST EXAMPLE  ###########################
+Mutelist:
+  Accounts:
+    "*":
+      Checks:
+        "node_public_ip_not_assigned":
+          Regions:
+            - "Delhi"
+          Resources:
+            - "example-node-id"
+            - "bastion-.*"
+        "storage_bucket_public_access_disabled":
+          Regions:
+            - "*"
+          Resources:
+            - "public-assets-bucket"

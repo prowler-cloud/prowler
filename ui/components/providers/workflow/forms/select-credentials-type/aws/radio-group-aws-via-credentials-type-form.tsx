@@ -3,8 +3,8 @@
 import { Control, Controller } from "react-hook-form";
 
 import { WizardRadioCard } from "@/components/providers/workflow/forms/fields";
+import { FormMessage } from "@/components/shadcn/form";
 import { RadioGroup } from "@/components/shadcn/radio-group/radio-group";
-import { FormMessage } from "@/components/ui/form";
 
 type RadioGroupAWSViaCredentialsFormProps = {
   control: Control<any>;
@@ -33,11 +33,15 @@ export const RadioGroupAWSViaCredentialsTypeForm = ({
               onChange?.(value);
             }}
           >
-            <span className="text-default-500 text-sm">Using IAM Role</span>
+            <span className="text-text-neutral-tertiary text-sm">
+              Using IAM Role
+            </span>
             <WizardRadioCard value="role" isInvalid={isInvalid}>
               Connect assuming IAM Role
             </WizardRadioCard>
-            <span className="text-default-500 text-sm">Using Credentials</span>
+            <span className="text-text-neutral-tertiary text-sm">
+              Using Credentials
+            </span>
             <WizardRadioCard value="credentials" isInvalid={isInvalid}>
               Connect via Credentials
             </WizardRadioCard>

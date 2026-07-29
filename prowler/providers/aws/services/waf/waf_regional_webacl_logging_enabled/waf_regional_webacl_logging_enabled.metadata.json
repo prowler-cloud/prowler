@@ -1,0 +1,44 @@
+{
+  "Provider": "aws",
+  "CheckID": "waf_regional_webacl_logging_enabled",
+  "CheckTitle": "AWS WAF Classic Regional Web ACL has logging enabled",
+  "CheckType": [
+    "Software and Configuration Checks/Industry and Regulatory Standards/AWS Foundational Security Best Practices",
+    "Software and Configuration Checks/Industry and Regulatory Standards/NIST 800-53 Controls (USA)",
+    "Software and Configuration Checks/Industry and Regulatory Standards/PCI-DSS"
+  ],
+  "ServiceName": "waf",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "AwsWafRegionalWebAcl",
+  "ResourceGroup": "security",
+  "Description": "**AWS WAF Classic Regional Web ACLs** are evaluated for **logging** enabled to capture evaluated web requests and rule actions. Regional Web ACLs protect Application Load Balancers and API Gateway stages.",
+  "Risk": "Without **WAF logging**, you lose **visibility** into attacks (SQLi/XSS probes, bots, brute-force) and into allow/block decisions for ALB and API Gateway traffic. This limits detection, forensics, and incident response, weakening **confidentiality**, **integrity**, and **availability**.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://docs.aws.amazon.com/waf/latest/developerguide/classic-logging.html",
+    "https://docs.aws.amazon.com/securityhub/latest/userguide/waf-controls.html",
+    "https://docs.aws.amazon.com/cli/latest/reference/waf-regional/put-logging-configuration.html"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "aws waf-regional put-logging-configuration --logging-configuration ResourceArn=<web_acl_arn>,LogDestinationConfigs=<kinesis_firehose_delivery_stream_arn> --region <region>",
+      "NativeIaC": "",
+      "Other": "1. Create an Amazon Kinesis Data Firehose delivery stream with a name starting with \"aws-waf-logs-\" in the same region as your Web ACL\n2. Open the AWS WAF console and switch to AWS WAF Classic\n3. Select Filter: Regional (your region) and go to Web ACLs\n4. Open the target Web ACL and go to the Logging tab\n5. Click Enable logging and select the Firehose delivery stream created in step 1\n6. Click Enable/Save",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Enable **logging** on all Regional Web ACLs and send records to a centralized logging platform. Apply **least privilege** to log destinations, redact sensitive fields, and monitor for anomalies. Integrate logs with incident response for **defense in depth** and faster containment.",
+      "Url": "https://hub.prowler.com/check/waf_regional_webacl_logging_enabled"
+    }
+  },
+  "Categories": [
+    "logging"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [
+    "waf_global_webacl_logging_enabled"
+  ],
+  "Notes": ""
+}

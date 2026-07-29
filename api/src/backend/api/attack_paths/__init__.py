@@ -5,7 +5,6 @@ from api.attack_paths.queries import (
     get_query_by_id,
 )
 
-
 __all__ = [
     "AttackPathsQueryDefinition",
     "AttackPathsQueryParameterDefinition",

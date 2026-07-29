@@ -90,6 +90,7 @@ class AwsProvider(Provider):
     """
 
     _type: str = "aws"
+    sdk_only: bool = False
     _identity: AWSIdentityInfo
     _session: AWSSession
     _organizations_metadata: AWSOrganizationsInfo

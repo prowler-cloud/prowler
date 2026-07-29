@@ -4,6 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import { DOCS_URLS, getProviderHelpText } from "@/lib/external-urls";
+import { isCloud } from "@/lib/shared/env";
+import { endActiveTour } from "@/lib/tours/use-driver-tour";
+import { useOnboardingCheckpointStore } from "@/store/onboarding-checkpoint";
 import { useOrgSetupStore } from "@/store/organizations/store";
 import { useProviderWizardStore } from "@/store/provider-wizard/store";
 import {
@@ -50,9 +53,7 @@ interface UseProviderWizardControllerProps {
   onOpenChange: (open: boolean) => void;
   initialData?: ProviderWizardInitialData;
   orgInitialData?: OrgWizardInitialData;
-  // When false, the caller skips the post-close router.refresh() and relies on
-  // the provider-creation actions' revalidatePath("/providers") to refresh the
-  // data. Defaults to true so standalone callers keep refreshing.
+  // When false, skips post-close router.refresh() — caller relies on revalidatePath instead.
   refreshOnClose?: boolean;
 }
 
@@ -181,6 +182,13 @@ export function useProviderWizardController({
   const isOrgDirectEntry = Boolean(orgInitialData);
 
   const handleClose = () => {
+    // Closing the wizard at any point ends the add-provider tour; the checkpoint
+    // logic below still drives the handoff to scans. No-op off-onboarding.
+    endActiveTour();
+
+    // Read providerId before reset clears it — non-null means a provider was connected.
+    const connectedProviderId = useProviderWizardStore.getState().providerId;
+
     resetProviderWizard();
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.PROVIDER);
@@ -190,6 +198,14 @@ export function useProviderWizardController({
     setProviderTypeHint(null);
     setOrgSetupPhase(ORG_SETUP_PHASE.DETAILS);
     onOpenChange(false);
+
+    // Cloud-only; only fires if the store is armed (user started onboarding).
+    if (isCloud()) {
+      useOnboardingCheckpointStore.getState().requestOpenOnWizardClose({
+        providerConnected: connectedProviderId !== null,
+      });
+    }
+
     if (refreshOnClose) {
       router.refresh();
     }
@@ -214,6 +230,9 @@ export function useProviderWizardController({
   };
 
   const openOrganizationsFlow = () => {
+    // AWS Organizations diverges from the credentials path the tour guides toward; end
+    // it so it doesn't dangle on a step that no longer fits. No-op off-onboarding.
+    endActiveTour();
     resetOrgWizard();
     setWizardVariant(WIZARD_VARIANT.ORGANIZATIONS);
     setOrgCurrentStep(ORG_WIZARD_STEP.SETUP);

@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -15,7 +16,15 @@ class cloudwatch_log_metric_filter_and_alarm_for_aws_config_configuration_change
     Check
 ):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?config.amazonaws.com.+\$\.eventName\s*=\s*.?StopConfigurationRecorder.+\$\.eventName\s*=\s*.?DeleteDeliveryChannel.+\$\.eventName\s*=\s*.?PutDeliveryChannel.+\$\.eventName\s*=\s*.?PutConfigurationRecorder.?"
+        pattern = build_metric_filter_pattern(
+            event_source="config.amazonaws.com",
+            event_names=[
+                "StopConfigurationRecorder",
+                "DeleteDeliveryChannel",
+                "PutDeliveryChannel",
+                "PutConfigurationRecorder",
+            ],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

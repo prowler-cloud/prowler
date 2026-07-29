@@ -19,6 +19,10 @@ from py_ocsf_models.objects.product import Product
 from py_ocsf_models.objects.resource_details import ResourceDetails
 
 from prowler.config.config import prowler_version
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import ComplianceFramework
 from prowler.lib.logger import logger
 from prowler.lib.outputs.utils import unroll_dict_to_list
@@ -181,11 +185,21 @@ class OCSFComplianceOutput:
             for check_id in all_checks:
                 check_req_map.setdefault(check_id, []).append(req)
 
+        # Scope constraints to this output's provider (e.g. an Azure constraint
+        # must not affect an AWS output).
+        requirement_config_status = build_requirement_config_status(
+            framework.requirements, provider_type=self._provider
+        )
+
         for finding in findings:
             if finding.check_id in check_req_map:
                 for req in check_req_map[finding.check_id]:
                     cf = self._build_compliance_finding(
-                        finding, framework, req, compliance_name
+                        finding,
+                        framework,
+                        req,
+                        compliance_name,
+                        requirement_config_status.get(req.id, (True, "")),
                     )
                     if cf:
                         self._data.append(cf)
@@ -240,10 +254,14 @@ class OCSFComplianceOutput:
         framework: ComplianceFramework,
         requirement,
         compliance_name: str,
+        config_status: tuple = (True, ""),
     ) -> ComplianceFinding:
         try:
+            effective_status, message = apply_config_status(
+                finding.status, finding.status_extended, config_status
+            )
             compliance_status = PROWLER_TO_COMPLIANCE_STATUS.get(
-                finding.status, ComplianceStatusID.Unknown
+                effective_status, ComplianceStatusID.Unknown
             )
             check_status = PROWLER_TO_COMPLIANCE_STATUS.get(
                 finding.status, ComplianceStatusID.Unknown
@@ -272,6 +290,7 @@ class OCSFComplianceOutput:
                     requirements=[requirement.id],
                     control=requirement.description,
                     status_id=compliance_status,
+                    # Nested Check preserves the raw check result.
                     checks=[
                         Check(
                             uid=finding.check_id,
@@ -293,7 +312,7 @@ class OCSFComplianceOutput:
                         else None
                     ),
                 ),
-                message=finding.status_extended,
+                message=message,
                 metadata=Metadata(
                     event_code=finding.check_id,
                     product=Product(
@@ -339,8 +358,10 @@ class OCSFComplianceOutput:
                 severity=finding_severity.name,
                 status_id=event_status.value,
                 status=event_status.name,
-                status_code=finding.status,
-                status_detail=finding.status_extended,
+                # Effective status, so the top-level never contradicts the
+                # nested compliance status.
+                status_code=effective_status,
+                status_detail=message,
                 time=time_value,
                 time_dt=(
                     finding.timestamp

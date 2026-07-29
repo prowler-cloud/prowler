@@ -30,9 +30,24 @@ from prowler.providers.okta.exceptions.exceptions import (
     OktaSetUpSessionError,
 )
 from prowler.providers.okta.lib.mutelist.mutelist import OktaMutelist
+from prowler.providers.okta.lib.service.rate_limiter import (
+    DEFAULT_REQUESTS_PER_SECOND,
+    OktaRateLimiter,
+)
 from prowler.providers.okta.models import OktaIdentityInfo, OktaSession
 
-DEFAULT_SCOPES = ["okta.policies.read", "okta.brands.read", "okta.apps.read"]
+DEFAULT_SCOPES = [
+    "okta.policies.read",
+    "okta.brands.read",
+    "okta.apps.read",
+    "okta.authenticators.read",
+    "okta.networkZones.read",
+    "okta.apiTokens.read",
+    "okta.roles.read",
+    "okta.groups.read",
+    "okta.logStreams.read",
+    "okta.idps.read",
+]
 # Accept only Okta-managed domains. Custom (vanity) domains are rejected on
 # purpose — they're a recurring source of typos and silent misconfig and
 # Prowler's audience overwhelmingly uses Okta-managed hosts. The TLDs below
@@ -67,12 +82,14 @@ class OktaProvider(Provider):
     """
 
     _type: str = "okta"
+    sdk_only: bool = False
     _auth_method: str = None
     _session: OktaSession
     _identity: OktaIdentityInfo
     _audit_config: dict
     _fixer_config: dict
     _mutelist: Mutelist
+    _rate_limiter: Optional[OktaRateLimiter]
     audit_metadata: Audit_Metadata
 
     def __init__(
@@ -82,6 +99,8 @@ class OktaProvider(Provider):
         okta_private_key: str = "",
         okta_private_key_file: str = "",
         okta_scopes: Optional[Union[str, list[str]]] = None,
+        okta_retries_max_attempts: int = None,
+        okta_requests_per_second: float = None,
         config_path: str = None,
         config_content: dict = None,
         fixer_config: dict = {},
@@ -113,6 +132,30 @@ class OktaProvider(Provider):
             if not config_path:
                 config_path = default_config_file_path
             self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        # CLI flags take precedence over config.yaml for the Okta API rate-limit
+        # settings. Services read these from audit_config when building the SDK
+        # client, so override the loaded values here.
+        if okta_retries_max_attempts is not None:
+            self._audit_config["okta_max_retries"] = okta_retries_max_attempts
+            logger.info(f"Okta max retries set to {okta_retries_max_attempts}")
+        if okta_requests_per_second is not None:
+            self._audit_config["okta_requests_per_second"] = okta_requests_per_second
+
+        # Build the shared request limiter once, here, so every service client
+        # paces against the same token bucket. A value of 0 (or below) disables
+        # throttling.
+        requests_per_second = self._audit_config.get(
+            "okta_requests_per_second", DEFAULT_REQUESTS_PER_SECOND
+        )
+        if requests_per_second and requests_per_second > 0:
+            self._rate_limiter = OktaRateLimiter(requests_per_second)
+            logger.info(
+                f"Okta request throttling enabled at {requests_per_second} req/s"
+            )
+        else:
+            self._rate_limiter = None
+
         self._fixer_config = fixer_config
 
         if mutelist_content:
@@ -151,6 +194,10 @@ class OktaProvider(Provider):
     @property
     def mutelist(self) -> OktaMutelist:
         return self._mutelist
+
+    @property
+    def rate_limiter(self) -> Optional[OktaRateLimiter]:
+        return self._rate_limiter
 
     @staticmethod
     def validate_arguments(

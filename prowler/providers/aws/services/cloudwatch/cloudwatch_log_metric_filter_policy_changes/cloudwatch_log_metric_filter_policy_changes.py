@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,7 +14,26 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_policy_changes(Check):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*.?DeleteGroupPolicy.+\$\.eventName\s*=\s*.?DeleteRolePolicy.+\$\.eventName\s*=\s*.?DeleteUserPolicy.+\$\.eventName\s*=\s*.?PutGroupPolicy.+\$\.eventName\s*=\s*.?PutRolePolicy.+\$\.eventName\s*=\s*.?PutUserPolicy.+\$\.eventName\s*=\s*.?CreatePolicy.+\$\.eventName\s*=\s*.?DeletePolicy.+\$\.eventName\s*=\s*.?CreatePolicyVersion.+\$\.eventName\s*=\s*.?DeletePolicyVersion.+\$\.eventName\s*=\s*.?AttachRolePolicy.+\$\.eventName\s*=\s*.?DetachRolePolicy.+\$\.eventName\s*=\s*.?AttachUserPolicy.+\$\.eventName\s*=\s*.?DetachUserPolicy.+\$\.eventName\s*=\s*.?AttachGroupPolicy.+\$\.eventName\s*=\s*.?DetachGroupPolicy.?"
+        pattern = build_metric_filter_pattern(
+            event_names=[
+                "DeleteGroupPolicy",
+                "DeleteRolePolicy",
+                "DeleteUserPolicy",
+                "PutGroupPolicy",
+                "PutRolePolicy",
+                "PutUserPolicy",
+                "CreatePolicy",
+                "DeletePolicy",
+                "CreatePolicyVersion",
+                "DeletePolicyVersion",
+                "AttachRolePolicy",
+                "DetachRolePolicy",
+                "AttachUserPolicy",
+                "DetachUserPolicy",
+                "AttachGroupPolicy",
+                "DetachGroupPolicy",
+            ],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

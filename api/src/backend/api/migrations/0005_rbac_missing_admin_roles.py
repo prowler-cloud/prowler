@@ -1,6 +1,5 @@
-from django.db import migrations
-
 from api.db_router import MainRouter
+from django.db import migrations
 
 
 def create_admin_role(apps, schema_editor):

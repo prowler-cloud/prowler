@@ -131,7 +131,11 @@ class APIM(AzureService):
         for subscription, client in self.clients.items():
             try:
                 instances.update({subscription: []})
-                apim_instances = client.api_management_service.list()
+                apim_instances = self.list_with_rg_scope(
+                    subscription,
+                    client.api_management_service.list,
+                    client.api_management_service.list_by_resource_group,
+                )
 
                 for instance in apim_instances:
                     workspace_id = self._get_log_analytics_workspace_id(

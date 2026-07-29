@@ -1,0 +1,38 @@
+{
+  "Provider": "okta",
+  "CheckID": "authenticator_okta_verify_fips_compliant",
+  "CheckTitle": "Okta Verify authenticator is active and restricts enrollment to FIPS-compliant devices",
+  "CheckType": [],
+  "ServiceName": "authenticator",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "The **Okta Verify authenticator** (`okta_verify`) must be present, in the `ACTIVE` status, and configured to require FIPS-compliant devices for enrollment (`settings.compliance.fips == REQUIRED`).\n\nMissing, inactive, and active-but-non-FIPS authenticators surface as distinct FAIL findings so the operator can act on the specific gap.",
+  "Risk": "Without FIPS-required enrollment, users can authenticate with devices whose cryptographic modules are not FIPS-validated.\n\n- **Regulatory exposure** under frameworks that mandate FIPS-validated cryptography\n- **Inconsistent assurance** across the user population\n- **Weak baseline** if the authenticator is active but the FIPS flag is `OPTIONAL` or unset",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tags/authenticator",
+    "https://help.okta.com/en-us/content/topics/mobile/ov-admin-config.htm",
+    "https://help.okta.com/oie/en-us/content/topics/identity-engine/authenticators/configure-okta-verify-options.htm"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Authenticators**.\n3. Activate the **Okta Verify** authenticator if it is not already `ACTIVE`.\n4. Open the authenticator's settings and set *FIPS Compliance* to **Users enrolling in Okta Verify can use FIPS compliant devices only**.\n5. Save the authenticator.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Ensure the **Okta Verify** authenticator is:\n- Present in the org (`key = okta_verify`)\n- In the `ACTIVE` status\n- Configured so *FIPS Compliance* is **Required** (`settings.compliance.fips == REQUIRED`)\n\nIf the organization does not require FIPS-validated authenticators, mute the check rather than disabling the FIPS toggle on a partial population.",
+      "Url": "https://hub.prowler.com/check/authenticator_okta_verify_fips_compliant"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273205 / OKTA-APP-001700."
+}

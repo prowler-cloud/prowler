@@ -166,8 +166,13 @@ export const deleteSamlConfig = async (id: string) => {
   }
 };
 
-export const initiateSamlAuth = async (email: string) => {
+export const initiateSamlAuth = async (email: string, callbackUrl = "/") => {
   try {
+    const attributes = {
+      email_domain: email,
+      ...(callbackUrl !== "/" && { callback_url: callbackUrl }),
+    };
+
     const response = await fetch(`${apiBaseUrl}/auth/saml/initiate/`, {
       method: "POST",
       headers: {
@@ -176,9 +181,7 @@ export const initiateSamlAuth = async (email: string) => {
       body: JSON.stringify({
         data: {
           type: "saml-initiate",
-          attributes: {
-            email_domain: email,
-          },
+          attributes,
         },
       }),
       redirect: "manual",

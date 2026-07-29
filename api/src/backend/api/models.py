@@ -1,37 +1,11 @@
 import json
 import logging
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import defusedxml
 from allauth.socialaccount.models import SocialApp
-from config.custom_logging import BackendLogger
-from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
-from cryptography.fernet import Fernet, InvalidToken
-from defusedxml import ElementTree as ET
-from django.conf import settings
-from django.contrib.auth.models import AbstractBaseUser
-from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.indexes import GinIndex, OpClass
-from django.contrib.postgres.search import SearchVector, SearchVectorField
-from django.contrib.sites.models import Site
-from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
-from django.db import models
-from django.db.models import Q
-from django.db.models.functions import Upper
-from django.utils import timezone as django_timezone
-from django.utils.translation import gettext_lazy as _
-from django_celery_beat.models import PeriodicTask
-from django_celery_results.models import TaskResult
-from drf_simple_apikey.crypto import get_crypto
-from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
-from psqlextra.manager import PostgresManager
-from psqlextra.models import PostgresPartitionedModel
-from psqlextra.types import PostgresPartitioningMethod
-from uuid6 import uuid7
-
 from api.db_router import MainRouter
 from api.db_utils import (
     CustomUserManager,
@@ -58,7 +32,32 @@ from api.rls import (
     RowLevelSecurityProtectedModel,
     Tenant,
 )
+from config.custom_logging import BackendLogger
+from config.settings.social_login import SOCIALACCOUNT_PROVIDERS
+from cryptography.fernet import Fernet, InvalidToken
+from defusedxml import ElementTree as ET
+from django.conf import settings
+from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.postgres.fields import ArrayField
+from django.contrib.postgres.indexes import GinIndex, OpClass
+from django.contrib.postgres.search import SearchVector, SearchVectorField
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
+from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Upper
+from django.utils import timezone as django_timezone
+from django.utils.translation import gettext_lazy as _
+from django_celery_beat.models import PeriodicTask
+from django_celery_results.models import TaskResult
+from drf_simple_apikey.crypto import get_crypto
+from drf_simple_apikey.models import AbstractAPIKey, AbstractAPIKeyManager
 from prowler.lib.check.models import Severity
+from psqlextra.manager import PostgresManager
+from psqlextra.models import PostgresPartitionedModel
+from psqlextra.types import PostgresPartitioningMethod
+from uuid6 import uuid7
 
 fernet = Fernet(settings.SECRETS_ENCRYPTION_KEY.encode())
 
@@ -666,9 +665,6 @@ class Scan(RowLevelSecurityProtectedModel):
     state = StateEnumField(choices=StateChoices.choices, default=StateChoices.AVAILABLE)
     unique_resource_count = models.IntegerField(default=0)
     progress = models.IntegerField(default=0)
-    # Incremented by the scan-specific orphan-recovery path each time this scan is
-    # re-pointed to a fresh task; for observability (the retry cap is a Valkey counter).
-    recovery_count = models.IntegerField(default=0)
     scanner_args = models.JSONField(default=dict)
     duration = models.IntegerField(null=True, blank=True)
     scheduled_at = models.DateTimeField(null=True, blank=True)
@@ -761,6 +757,10 @@ class Scan(RowLevelSecurityProtectedModel):
 
 
 class AttackPathsScan(RowLevelSecurityProtectedModel):
+    class SinkBackendChoices(models.TextChoices):
+        NEO4J = "neo4j", "Neo4j"
+        NEPTUNE = "neptune", "Neptune"
+
     objects = ActiveProviderManager()
     all_objects = models.Manager()
 
@@ -808,6 +808,19 @@ class AttackPathsScan(RowLevelSecurityProtectedModel):
         null=True, blank=True, help_text="Cartography update tag (epoch)"
     )
     ingestion_exceptions = models.JSONField(default=dict, null=True, blank=True)
+
+    # True when the scan was synced with the current schema (list-typed
+    # properties materialised as child item nodes). False for pre-cutover scans
+    # still using the previous graph shape. Query catalog selection uses this
+    # flag; physical read routing uses sink_backend below.
+    # TODO: drop after Neptune cutover
+    is_migrated = models.BooleanField(default=False, db_default=False)
+    sink_backend = models.CharField(
+        choices=SinkBackendChoices.choices,
+        db_default=SinkBackendChoices.NEO4J,
+        default=SinkBackendChoices.NEO4J,
+        max_length=16,
+    )
 
     class Meta(RowLevelSecurityProtectedModel.Meta):
         db_table = "attack_paths_scans"
@@ -1430,8 +1443,8 @@ class Role(RowLevelSecurityProtectedModel):
 
     @classmethod
     def filter_by_permission_state(cls, queryset, value):
-        q_all_true = Q(**{field: True for field in cls.PERMISSION_FIELDS})
-        q_all_false = Q(**{field: False for field in cls.PERMISSION_FIELDS})
+        q_all_true = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, True))
+        q_all_false = Q(**dict.fromkeys(cls.PERMISSION_FIELDS, False))
 
         if value == PermissionChoices.UNLIMITED:
             return queryset.filter(q_all_true)
@@ -2001,35 +2014,6 @@ class IntegrationProviderRelationship(RowLevelSecurityProtectedModel):
         ]
 
 
-class JiraIssueDispatch(RowLevelSecurityProtectedModel):
-    """Tracks findings already sent to a Jira integration.
-
-    Lets the Jira task be re-run safely (e.g. by orphan recovery): findings with
-    an existing dispatch row are skipped, so no duplicate issues are created.
-    """
-
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
-    integration = models.ForeignKey(
-        Integration, on_delete=models.CASCADE, related_name="jira_dispatches"
-    )
-    finding_id = models.UUIDField()
-
-    class Meta(RowLevelSecurityProtectedModel.Meta):
-        db_table = "jira_issue_dispatches"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["tenant_id", "integration_id", "finding_id"],
-                name="unique_jira_issue_dispatch",
-            ),
-            RowLevelSecurityConstraint(
-                field="tenant_id",
-                name="rls_on_%(class)s",
-                statements=["SELECT", "INSERT", "UPDATE", "DELETE"],
-            ),
-        ]
-
-
 class SAMLToken(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     inserted_at = models.DateTimeField(auto_now_add=True, editable=False)
@@ -2043,11 +2027,11 @@ class SAMLToken(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.expires_at:
-            self.expires_at = datetime.now(timezone.utc) + timedelta(seconds=15)
+            self.expires_at = datetime.now(UTC) + timedelta(seconds=15)
         super().save(*args, **kwargs)
 
     def is_expired(self) -> bool:
-        return datetime.now(timezone.utc) >= self.expires_at
+        return datetime.now(UTC) >= self.expires_at
 
 
 class SAMLDomainIndex(models.Model):

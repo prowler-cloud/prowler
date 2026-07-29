@@ -1,10 +1,7 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 from allauth.socialaccount.models import SocialApp
-from django.core.exceptions import ValidationError
-from django.db import IntegrityError
-
 from api.db_router import MainRouter
 from api.models import (
     ProviderComplianceScore,
@@ -16,12 +13,14 @@ from api.models import (
     StatusChoices,
     TenantComplianceSummary,
 )
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
 
 
 @pytest.mark.django_db
 class TestResourceModel:
-    def test_setting_tags(self, providers_fixture):
-        provider, *_ = providers_fixture
+    def test_setting_tags(self, aws_provider):
+        provider = aws_provider
         tenant_id = provider.tenant_id
 
         resource = Resource.objects.create(
@@ -112,9 +111,9 @@ class TestResourceModel:
 # @pytest.mark.django_db
 # class TestFindingModel:
 #     def test_add_finding_with_long_uid(
-#         self, providers_fixture, scans_fixture, resources_fixture
+#         self, aws_provider, scans_fixture, resources_fixture
 #     ):
-#         provider, *_ = providers_fixture
+#         provider = aws_provider
 #         tenant_id = provider.tenant_id
 
 #         long_uid = "1" * 500
@@ -373,10 +372,10 @@ class TestSAMLConfigurationModel:
 
 @pytest.mark.django_db
 class TestProviderComplianceScoreModel:
-    def test_create_provider_compliance_score(self, providers_fixture, scans_fixture):
-        provider = providers_fixture[0]
+    def test_create_provider_compliance_score(self, aws_provider, scans_fixture):
+        provider = aws_provider
         scan = scans_fixture[0]
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         score = ProviderComplianceScore.objects.create(
@@ -394,11 +393,11 @@ class TestProviderComplianceScoreModel:
         assert score.requirement_status == StatusChoices.PASS
 
     def test_unique_constraint_per_provider_compliance_requirement(
-        self, providers_fixture, scans_fixture
+        self, aws_provider, scans_fixture
     ):
-        provider = providers_fixture[0]
+        provider = aws_provider
         scan = scans_fixture[0]
-        scan.completed_at = datetime.now(timezone.utc)
+        scan.completed_at = datetime.now(UTC)
         scan.save()
 
         ProviderComplianceScore.objects.create(
@@ -423,16 +422,16 @@ class TestProviderComplianceScoreModel:
             )
 
     def test_different_providers_same_requirement_allowed(
-        self, providers_fixture, scans_fixture
+        self, aws_provider_pair, scans_fixture
     ):
-        provider1, provider2, *_ = providers_fixture
+        provider1, provider2 = aws_provider_pair
         scan1 = scans_fixture[0]
-        scan1.completed_at = datetime.now(timezone.utc)
+        scan1.completed_at = datetime.now(UTC)
         scan1.save()
 
         scan2 = scans_fixture[2]
         scan2.state = StateChoices.COMPLETED
-        scan2.completed_at = datetime.now(timezone.utc)
+        scan2.completed_at = datetime.now(UTC)
         scan2.save()
 
         score1 = ProviderComplianceScore.objects.create(

@@ -37,7 +37,8 @@
     }
   },
   "Categories": [
-    "identity-access"
+    "identity-access",
+    "privilege-escalation"
   ],
   "DependsOn": [],
   "RelatedTo": [],

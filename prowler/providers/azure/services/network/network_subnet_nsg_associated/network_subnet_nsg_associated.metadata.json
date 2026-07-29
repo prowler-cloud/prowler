@@ -1,0 +1,37 @@
+{
+  "Provider": "azure",
+  "CheckID": "network_subnet_nsg_associated",
+  "CheckTitle": "Subnet has a network security group associated",
+  "CheckType": [],
+  "ServiceName": "network",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.network/virtualnetworks/subnets",
+  "ResourceGroup": "network",
+  "Description": "**Azure Virtual Network** subnets are evaluated for **Network Security Group (NSG)** association. Each subnet should have an NSG to enforce inbound and outbound traffic filtering rules. Subnets without NSGs allow all traffic by default.",
+  "Risk": "Subnets without NSGs have **no network-level access control**. All inbound and outbound traffic is allowed by default, enabling **lateral movement**, **unauthorized access** to resources, and **data exfiltration** across the virtual network.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/virtual-network/network-security-groups-overview",
+    "https://learn.microsoft.com/en-us/azure/virtual-network/tutorial-filter-network-traffic"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az network vnet subnet update --resource-group <rg> --vnet-name <vnet> --name <subnet> --network-security-group <nsg_name>",
+      "NativeIaC": "```bicep\nresource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' existing = {\n  name: '<example_resource_name>'\n}\n\nresource subnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' = {\n  name: '<example_resource_name>'\n  parent: vnet\n  properties: {\n    addressPrefix: '10.0.1.0/24'\n    networkSecurityGroup: {\n      id: '<example_resource_id>' // Critical: associates NSG with subnet\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to Azure portal\n2. Go to Virtual networks and select the VNet\n3. Click on Subnets\n4. Select the subnet without an NSG\n5. Under Network security group, select an existing NSG or create a new one\n6. Click Save",
+      "Terraform": "```hcl\nresource \"azurerm_subnet_network_security_group_association\" \"<example_resource_name>\" {\n  subnet_id                 = \"<example_resource_id>\"  # Critical: associates NSG with subnet\n  network_security_group_id = \"<example_resource_id>\"\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Associate a **Network Security Group** with every subnet. Create NSG rules following **least privilege** \u2014 deny all by default and allow only required traffic. Exclude Azure-managed subnets (GatewaySubnet, AzureFirewallSubnet, AzureBastionSubnet) which have their own security controls.",
+      "Url": "https://hub.prowler.com/check/network_subnet_nsg_associated"
+    }
+  },
+  "Categories": [
+    "internet-exposed"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "This check excludes Azure-managed subnets (GatewaySubnet, AzureFirewallSubnet, AzureFirewallManagementSubnet, AzureBastionSubnet, RouteServerSubnet) which should not have custom NSGs."
+}

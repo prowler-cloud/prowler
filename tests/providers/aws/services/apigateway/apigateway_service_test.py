@@ -206,3 +206,26 @@ class Test_APIGateway_Service:
         assert list(apigateway.rest_apis[0].resources[1].resource_methods.values()) == [
             "AWS_IAM"
         ]
+
+    # Test APIGateway _get_domain_names
+    @mock_aws
+    def test_get_domain_names(self):
+        apigateway_client = client("apigateway", region_name=AWS_REGION_US_EAST_1)
+
+        apigateway_client.create_domain_name(
+            domainName="api.example.com",
+            securityPolicy="SecurityPolicy_TLS13_1_3_2025_09",
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_US_EAST_1])
+        apigateway = APIGateway(aws_provider)
+
+        assert len(apigateway.domain_names) == 1
+        domain = apigateway.domain_names[0]
+        assert domain.name == "api.example.com"
+        assert domain.region == AWS_REGION_US_EAST_1
+        assert domain.security_policy == "SecurityPolicy_TLS13_1_3_2025_09"
+        assert (
+            domain.arn
+            == f"arn:aws:apigateway:{AWS_REGION_US_EAST_1}::/domainnames/api.example.com"
+        )

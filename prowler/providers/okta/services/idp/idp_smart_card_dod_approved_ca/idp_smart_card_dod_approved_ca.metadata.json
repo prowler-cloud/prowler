@@ -1,0 +1,37 @@
+{
+  "Provider": "okta",
+  "CheckID": "idp_smart_card_dod_approved_ca",
+  "CheckTitle": "Okta Smart Card (X509) Identity Provider uses a DOD-approved certificate authority",
+  "CheckType": [],
+  "ServiceName": "idp",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "medium",
+  "ResourceType": "NotDefined",
+  "ResourceGroup": "IAM",
+  "Description": "Every Okta Smart Card (X509) Identity Provider must be `ACTIVE` and its certificate chain must be issued by a DOD-approved CA. The check ships default issuer-DN patterns covering DOD PKI and ECA, and matches them against the chain's `issuer`. Override or extend via `okta_dod_approved_ca_issuer_patterns` in the audit config to recognise tenant-specific DOD CAs.",
+  "Risk": "An Okta Smart Card IdP whose certificate chain is not issued by a DOD-approved CA can be used to authenticate non-vetted identities.\n\n- **Trust on an unverified CA** allows impersonation of CAC/PIV holders\n- **Bypass of the federal PKI** required for DOD-grade identity assurance\n- **Acceptance of certificates** from a private or unaccredited issuer",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://help.okta.com/en-us/content/topics/security/idp-enable-smart-card.htm",
+    "https://developer.okta.com/docs/api/openapi/okta-management/management/tag/IdentityProvider/"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "",
+      "NativeIaC": "",
+      "Other": "1. Sign in to the **Okta Admin Console** as a *Super Admin*.\n2. Navigate to **Security** > **Identity Providers**.\n3. For each IdP whose **Type** is **Smart Card**, click **Actions** > **Configure**.\n4. Under **Certificate chain**, verify the certificate is from a DOD-approved Certificate Authority (DOD PKI, ECA, JITC, or equivalent).\n5. If the IdP is not **Active**, activate it once the chain is validated.",
+      "Terraform": ""
+    },
+    "Recommendation": {
+      "Text": "Verify each Okta Smart Card (X509) Identity Provider is ACTIVE and its certificate chain is issued by a DOD-approved Certificate Authority. Document the issuer for audit evidence.",
+      "Url": "https://hub.prowler.com/check/idp_smart_card_dod_approved_ca"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": "Aligns with DISA STIG V-273207 / OKTA-APP-001920."
+}

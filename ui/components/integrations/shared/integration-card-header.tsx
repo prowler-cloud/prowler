@@ -76,7 +76,7 @@ export const IntegrationCardHeader = ({
                 "text-xs font-normal",
                 connectionStatus.connected
                   ? "bg-bg-pass-secondary text-text-success-primary border-transparent"
-                  : "bg-bg-danger-secondary text-text-danger border-transparent",
+                  : "bg-bg-fail-secondary text-text-error-primary border-transparent",
               )}
             >
               {connectionStatus.label ||

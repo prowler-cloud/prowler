@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,7 +14,18 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_changes_to_network_route_tables_alarm_configured(Check):
     def execute(self):
-        pattern = r"\$\.eventSource\s*=\s*.?ec2.amazonaws.com.+\$\.eventName\s*=\s*.?CreateRoute.+\$\.eventName\s*=\s*.?CreateRouteTable.+\$\.eventName\s*=\s*.?ReplaceRoute.+\$\.eventName\s*=\s*.?ReplaceRouteTableAssociation.+\$\.eventName\s*=\s*.?DeleteRouteTable.+\$\.eventName\s*=\s*.?DeleteRoute.+\$\.eventName\s*=\s*.?DisassociateRouteTable.?"
+        pattern = build_metric_filter_pattern(
+            event_source="ec2.amazonaws.com",
+            event_names=[
+                "CreateRoute",
+                "CreateRouteTable",
+                "ReplaceRoute",
+                "ReplaceRouteTableAssociation",
+                "DeleteRouteTable",
+                "DeleteRoute",
+                "DisassociateRouteTable",
+            ],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

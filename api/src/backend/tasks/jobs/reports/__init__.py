@@ -98,6 +98,7 @@ from .config import (
 from .csa import CSAReportGenerator
 from .ens import ENSReportGenerator
 from .nis2 import NIS2ReportGenerator
+from .provider_metadata import build_provider_metadata
 from .threatscore import ThreatScoreReportGenerator
 
 __all__ = [
@@ -105,6 +106,7 @@ __all__ = [
     "BaseComplianceReportGenerator",
     "ComplianceData",
     "RequirementData",
+    "build_provider_metadata",
     "create_pdf_styles",
     "get_requirement_metadata",
     # Framework-specific generators

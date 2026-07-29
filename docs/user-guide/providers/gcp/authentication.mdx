@@ -55,7 +55,7 @@ This method uses the Google Cloud CLI to authenticate and is suitable for develo
 
 ### Setup Application Default Credentials
 
-1. In the [GCP Console](https://console.cloud.google.com/), click on "Activate Cloud Shell"
+1. In the [GCP Console](https://console.cloud.google.com/), click "Activate Cloud Shell"
 
     ![Activate Cloud Shell](/images/providers/access-console.png)
 
@@ -89,7 +89,7 @@ This method uses the Google Cloud CLI to authenticate and is suitable for develo
 
     ![Get the FileName](/images/providers/get-temp-file-credentials.png)
 
-8. Extract the following values for Prowler Cloud/App:
+8. Extract the following values for Prowler Cloud or Prowler Local Server:
 
     - `client_id`
     - `client_secret`
@@ -137,6 +137,10 @@ To keep permissions focused:
     ![Assign roles to the service account](/user-guide/providers/gcp/img/service-account-permissions.png)
 
 4. Continue through the wizard and finish. No principals need to be granted access in step 3 unless you want other identities to impersonate this account.
+
+<Note>
+To use this service account with `--organization-id`, additionally grant `roles/cloudasset.viewer` at the organization node and enable the Cloud Asset API in the service account's host project. See [Scanning a Specific GCP Organization](./organization). Without these, organization-wide scans silently fall back to listing only the projects accessible to the service account.
+</Note>
 
 ### Step 3: Generate a JSON Key
 

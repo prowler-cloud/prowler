@@ -1,22 +1,31 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from django.contrib.postgres.aggregates import ArrayAgg
-from django.db.models import Subquery
-from rest_framework.exceptions import NotFound, ValidationError
-
 from api.db_router import MainRouter
 from api.db_utils import rls_transaction
 from api.exceptions import InvitationTokenExpiredException
-from api.models import Integration, Invitation, Processor, Provider, Resource
+from api.models import (
+    Integration,
+    Invitation,
+    Membership,
+    Processor,
+    Provider,
+    Resource,
+    Role,
+    UserRoleRelationship,
+)
 from api.v1.serializers import FindingMetadataSerializer
+from django.contrib.postgres.aggregates import ArrayAgg
+from django.db import transaction
+from django.db.models import Subquery
 from prowler.lib.outputs.jira.jira import Jira, JiraBasicAuthError
 from prowler.providers.aws.lib.s3.s3 import S3
 from prowler.providers.aws.lib.security_hub.security_hub import SecurityHub
 from prowler.providers.common.models import Connection
+from rest_framework.exceptions import NotFound, ValidationError
 
 if TYPE_CHECKING:
     from prowler.providers.alibabacloud.alibabacloud_provider import (
@@ -273,6 +282,11 @@ def get_prowler_provider_kwargs(
                 **{k: v for k, v in prowler_provider_kwargs.items() if v},
             }
 
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        prowler_provider_kwargs = _normalize_oraclecloud_provider_kwargs(
+            prowler_provider_kwargs
+        )
+
     if mutelist_processor:
         mutelist_content = mutelist_processor.configuration.get("Mutelist", {})
         # IaC and Image providers don't support mutelist (both use Trivy's built-in logic)
@@ -281,6 +295,40 @@ def get_prowler_provider_kwargs(
             Provider.ProviderChoices.IMAGE.value,
         ):
             prowler_provider_kwargs["mutelist_content"] = mutelist_content
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_provider_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into SDK provider kwargs."""
+    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs.pop("region", None)
+
+    return prowler_provider_kwargs
+
+
+def _normalize_oraclecloud_connection_test_kwargs(secret: dict) -> dict:
+    """Normalize external OCI secret fields into test_connection kwargs."""
+    from prowler.providers.oraclecloud.oraclecloud_provider import OraclecloudProvider
+
+    prowler_provider_kwargs = secret.copy()
+    prowler_provider_kwargs.pop("region", None)
+
+    if (
+        prowler_provider_kwargs.get("user")
+        and prowler_provider_kwargs.get("fingerprint")
+        and prowler_provider_kwargs.get("tenancy")
+        and (
+            prowler_provider_kwargs.get("key_content")
+            or prowler_provider_kwargs.get("key_file")
+        )
+    ):
+        # Connection validation needs one OCI endpoint, but scans remain unfiltered.
+        prowler_provider_kwargs["region"] = getattr(
+            OraclecloudProvider,
+            "_bootstrap_region",
+            OraclecloudProvider._home_region,
+        )
 
     return prowler_provider_kwargs
 
@@ -387,6 +435,15 @@ def prowler_provider_connection_test(provider: Provider) -> Connection:
         if prowler_provider_kwargs.get("registry_token"):
             image_kwargs["registry_token"] = prowler_provider_kwargs["registry_token"]
         return prowler_provider.test_connection(**image_kwargs)
+    elif provider.provider == Provider.ProviderChoices.ORACLECLOUD.value:
+        oraclecloud_kwargs = _normalize_oraclecloud_connection_test_kwargs(
+            prowler_provider_kwargs
+        )
+        return prowler_provider.test_connection(
+            **oraclecloud_kwargs,
+            provider_id=provider.uid,
+            raise_on_exception=False,
+        )
     else:
         return prowler_provider.test_connection(
             **prowler_provider_kwargs,
@@ -436,8 +493,8 @@ def prowler_integration_connection_test(integration: Integration) -> Connection:
 
         # Only save regions if connection is successful
         if connection.is_connected:
-            regions_status = {r: True for r in connection.enabled_regions}
-            regions_status.update({r: False for r in connection.disabled_regions})
+            regions_status = dict.fromkeys(connection.enabled_regions, True)
+            regions_status.update(dict.fromkeys(connection.disabled_regions, False))
 
             # Save regions information in the integration configuration
             integration.configuration["regions"] = regions_status
@@ -519,7 +576,7 @@ def validate_invitation(
             raise ValidationError({"invitation_token": "Invalid invitation code."})
 
     # Check if the invitation has expired
-    if invitation.expires_at < datetime.now(timezone.utc):
+    if invitation.expires_at < datetime.now(UTC):
         invitation.state = Invitation.State.EXPIRED
         invitation.save(using=MainRouter.admin_db)
         raise InvitationTokenExpiredException()
@@ -531,6 +588,35 @@ def validate_invitation(
         )
 
     return invitation
+
+
+def accept_invitation_for_user(
+    *, user, invitation_token: str, raise_not_found: bool = False
+):
+    with transaction.atomic(using=MainRouter.admin_db):
+        invitation = validate_invitation(
+            invitation_token, user.email, raise_not_found=raise_not_found
+        )
+        with rls_transaction(str(invitation.tenant_id), using=MainRouter.admin_db):
+            membership, _ = Membership.objects.using(MainRouter.admin_db).get_or_create(
+                user=user,
+                tenant=invitation.tenant,
+                defaults={"role": Membership.RoleChoices.MEMBER},
+            )
+            invitation_roles = Role.objects.using(MainRouter.admin_db).filter(
+                invitations=invitation
+            )
+            for role in invitation_roles:
+                UserRoleRelationship.objects.using(MainRouter.admin_db).get_or_create(
+                    user=user,
+                    role=role,
+                    defaults={"tenant": invitation.tenant},
+                )
+
+            invitation.state = Invitation.State.ACCEPTED
+            invitation.save(using=MainRouter.admin_db)
+
+    return invitation, membership
 
 
 # ToRemove after removing the fallback mechanism in /findings/metadata
@@ -590,6 +676,6 @@ def initialize_prowler_integration(integration: Integration) -> Jira:
             with rls_transaction(str(integration.tenant_id)):
                 integration.configuration["projects"] = {}
                 integration.connected = False
-                integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+                integration.connection_last_checked_at = datetime.now(tz=UTC)
                 integration.save()
             raise jira_auth_error

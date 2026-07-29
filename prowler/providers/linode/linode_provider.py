@@ -1,0 +1,343 @@
+import logging
+import os
+
+from colorama import Fore, Style
+from linode_api4 import LinodeClient
+
+from prowler.config.config import (
+    default_config_file_path,
+    get_default_mute_file_path,
+    load_and_validate_config_file,
+)
+from prowler.lib.logger import logger
+from prowler.lib.utils.utils import print_boxes
+from prowler.providers.common.models import Audit_Metadata, Connection
+from prowler.providers.common.provider import Provider
+from prowler.providers.linode.exceptions.exceptions import (
+    LinodeAuthenticationError,
+    LinodeCredentialsError,
+    LinodeIdentityError,
+    LinodeInvalidRegionError,
+    LinodeSessionError,
+)
+from prowler.providers.linode.lib.mutelist.mutelist import LinodeMutelist
+from prowler.providers.linode.models import (
+    LinodeIdentityInfo,
+    LinodeSession,
+)
+
+
+class LinodeProvider(Provider):
+    """Linode provider."""
+
+    _type: str = "linode"
+    _session: LinodeSession
+    _identity: LinodeIdentityInfo
+    _audit_config: dict
+    _fixer_config: dict
+    _mutelist: LinodeMutelist
+    _regions: set
+    audit_metadata: Audit_Metadata
+
+    def __init__(
+        self,
+        config_path: str = None,
+        config_content: dict | None = None,
+        fixer_config: dict | None = None,
+        mutelist_path: str = None,
+        mutelist_content: dict = None,
+        token: str = None,
+        regions: list = None,
+    ):
+        """
+        Initializes the LinodeProvider instance.
+
+        Args:
+            config_path (str): Path to the configuration file.
+            config_content (dict): Audit configuration content.
+            fixer_config (dict): Fixer configuration.
+            mutelist_path (str): Path to the mutelist file.
+            mutelist_content (dict): Mutelist content.
+            token (str): Linode Personal Access Token (falls back to LINODE_TOKEN env var).
+            regions (list): Region(s) to scan regional resources in. Region-less
+                resources are always scanned. ``None`` scans all regions.
+
+        Raises:
+            LinodeCredentialsError: If no token is provided.
+            LinodeSessionError: If the Linode session cannot be established.
+            LinodeIdentityError: If user or account identity cannot be retrieved.
+        """
+        logger.info("Instantiating Linode provider...")
+
+        # Mute noisy HTTP client logs
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+
+        if config_content:
+            self._audit_config = config_content
+        else:
+            if not config_path:
+                config_path = default_config_file_path
+            self._audit_config = load_and_validate_config_file(self._type, config_path)
+
+        self._session = LinodeProvider.setup_session(token=token)
+
+        # Region filter for regional resources, validated against the live
+        # Linode regions list. None means scan all regions.
+        self._regions = LinodeProvider.validate_regions(self._session, regions)
+
+        self._identity = LinodeProvider.setup_identity(self._session)
+
+        self._fixer_config = fixer_config if fixer_config is not None else {}
+
+        if mutelist_content:
+            self._mutelist = LinodeMutelist(mutelist_content=mutelist_content)
+        else:
+            if not mutelist_path:
+                mutelist_path = get_default_mute_file_path(self.type)
+            self._mutelist = LinodeMutelist(mutelist_path=mutelist_path)
+
+        Provider.set_global_provider(self)
+
+    @property
+    def type(self):
+        return self._type
+
+    @property
+    def session(self):
+        return self._session
+
+    @property
+    def identity(self):
+        return self._identity
+
+    @property
+    def audit_config(self):
+        return self._audit_config
+
+    @property
+    def fixer_config(self):
+        return self._fixer_config
+
+    @property
+    def mutelist(self) -> LinodeMutelist:
+        return self._mutelist
+
+    @property
+    def regions(self):
+        """Set of regions to scan for regional resources, or None for all."""
+        return self._regions
+
+    def validate_arguments(self) -> None:
+        """Linode provider has no provider-specific arguments to validate."""
+        return None
+
+    @staticmethod
+    def setup_session(token: str = None) -> LinodeSession:
+        """Initialize Linode SDK client.
+
+        Credentials can be provided as argument or read from environment variable:
+        - LINODE_TOKEN (Personal Access Token)
+
+        Args:
+            token: Linode Personal Access Token (optional, falls back to env var).
+
+        Returns:
+            LinodeSession: The initialized Linode session.
+
+        Raises:
+            LinodeCredentialsError: If no credentials are provided.
+            LinodeSessionError: If session setup fails.
+        """
+        token = token or os.environ.get("LINODE_TOKEN", "")
+
+        if not token:
+            raise LinodeCredentialsError(
+                file=os.path.basename(__file__),
+                message="Linode credentials not found. Set the LINODE_TOKEN environment variable.",
+            )
+
+        try:
+            client = LinodeClient(token)
+            return LinodeSession(client=client, token=token)
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise LinodeSessionError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+
+    @staticmethod
+    def validate_regions(session: LinodeSession, regions: list = None):
+        """Validate the requested regions against the live Linode regions list.
+
+        The ``/v4/regions`` endpoint is public, so this works regardless of the
+        token's scope. Validating against the live list (instead of a static
+        file) avoids rejecting newly added Linode regions.
+
+        Args:
+            session: The Linode session.
+            regions: The region ids requested via --region (or None).
+
+        Returns:
+            The validated set of region ids, or None when no filter is given.
+
+        Raises:
+            LinodeInvalidRegionError: If any requested region id is unknown.
+        """
+        if not regions:
+            return None
+
+        requested = set(regions)
+        try:
+            available = {region.id for region in session.client.regions()}
+        except Exception as error:
+            # Do not block a scan if the regions list cannot be fetched.
+            logger.warning(
+                f"Unable to validate Linode regions: {error}. "
+                "Proceeding with the requested regions without validation."
+            )
+            return requested
+
+        invalid = requested - available
+        if invalid:
+            raise LinodeInvalidRegionError(
+                file=os.path.basename(__file__),
+                message=(
+                    f"Invalid Linode region(s): {', '.join(sorted(invalid))}. "
+                    f"Valid regions are: {', '.join(sorted(available))}."
+                ),
+            )
+        return requested
+
+    @staticmethod
+    def setup_identity(session: LinodeSession) -> LinodeIdentityInfo:
+        """Fetch user and account metadata for Linode.
+
+        The authenticated user's profile is retrieved first to validate the
+        token. Any valid token can read its own profile, so a failure here
+        (for example a ``401 Invalid Token``) means the credentials are invalid
+        and the scan is aborted instead of silently returning empty results.
+
+        Args:
+            session: The Linode session.
+
+        Returns:
+            LinodeIdentityInfo: The identity information.
+
+        Raises:
+            LinodeAuthenticationError: If the token is invalid.
+            LinodeIdentityError: If identity setup fails unexpectedly.
+        """
+        try:
+            client = session.client
+            username = None
+            email = None
+            account_id = None
+
+            # Validate the token by reading the authenticated user's profile.
+            # A failure here means the credentials are invalid, so abort.
+            try:
+                profile = client.profile()
+                username = profile.username
+                email = profile.email
+            except Exception as error:
+                logger.critical(
+                    f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+                )
+                raise LinodeAuthenticationError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+
+            # The account endpoint requires the account:read_only scope. A
+            # token without that scope is still valid, so continue without the
+            # account ID instead of failing the scan.
+            try:
+                account = client.account()
+                account_id = getattr(account, "euuid", None)
+            except Exception as error:
+                logger.warning(
+                    f"Unable to retrieve Linode account info: {error}. Continuing without account ID."
+                )
+
+            return LinodeIdentityInfo(
+                username=username,
+                email=email,
+                account_id=account_id,
+            )
+        except LinodeAuthenticationError:
+            raise
+        except Exception as error:
+            logger.critical(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}] -- {error}"
+            )
+            raise LinodeIdentityError(
+                file=os.path.basename(__file__),
+                original_exception=error,
+            )
+
+    def print_credentials(self) -> None:
+        report_title = (
+            f"{Style.BRIGHT}Using the Linode credentials below:{Style.RESET_ALL}"
+        )
+        report_lines = []
+
+        report_lines.append(
+            f"Authentication: {Fore.YELLOW}Personal Access Token{Style.RESET_ALL}"
+        )
+
+        if self.identity.username:
+            report_lines.append(
+                f"Username: {Fore.YELLOW}{self.identity.username}{Style.RESET_ALL}"
+            )
+
+        if self.identity.email:
+            report_lines.append(
+                f"Email: {Fore.YELLOW}{self.identity.email}{Style.RESET_ALL}"
+            )
+
+        if self.identity.account_id:
+            report_lines.append(
+                f"Account ID: {Fore.YELLOW}{self.identity.account_id}{Style.RESET_ALL}"
+            )
+
+        print_boxes(report_lines, report_title)
+
+    @staticmethod
+    def test_connection(
+        token: str = None,
+        raise_on_exception: bool = True,
+    ) -> Connection:
+        """Test connection to Linode.
+
+        Args:
+            token: Linode Personal Access Token.
+            raise_on_exception: Flag indicating whether to raise an exception if the connection fails.
+
+        Returns:
+            Connection: Connection object with is_connected status.
+        """
+        try:
+            session = LinodeProvider.setup_session(token=token)
+            # Validate by fetching profile
+            session.client.profile()
+            return Connection(is_connected=True)
+        except LinodeCredentialsError as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise
+            return Connection(is_connected=False, error=error)
+        except Exception as error:
+            logger.error(
+                f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            if raise_on_exception:
+                raise LinodeAuthenticationError(
+                    file=os.path.basename(__file__),
+                    original_exception=error,
+                )
+            return Connection(is_connected=False, error=error)

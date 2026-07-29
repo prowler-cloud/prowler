@@ -1,13 +1,12 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import openai
-from celery.utils.log import get_task_logger
-
 from api.models import Integration, LighthouseConfiguration, Provider
 from api.utils import (
     prowler_integration_connection_test,
     prowler_provider_connection_test,
 )
+from celery.utils.log import get_task_logger
 
 logger = get_task_logger(__name__)
 
@@ -38,7 +37,7 @@ def check_provider_connection(provider_id: str):
         raise e
 
     provider_instance.connected = connection_result.is_connected
-    provider_instance.connection_last_checked_at = datetime.now(tz=timezone.utc)
+    provider_instance.connection_last_checked_at = datetime.now(tz=UTC)
     provider_instance.save()
 
     connection_error = f"{connection_result.error}" if connection_result.error else None
@@ -111,7 +110,7 @@ def check_integration_connection(integration_id: str):
 
     # Update integration connection status
     integration.connected = result.is_connected
-    integration.connection_last_checked_at = datetime.now(tz=timezone.utc)
+    integration.connection_last_checked_at = datetime.now(tz=UTC)
     integration.save()
 
     return {

@@ -31,6 +31,10 @@ vi.mock("next/navigation", () => ({
 
 import type { ResourceDrawerFinding } from "@/actions/findings";
 import type { FindingResourceRow } from "@/types";
+import {
+  FINDING_TRIAGE_STATUS,
+  type FindingTriageSummary,
+} from "@/types/findings-triage";
 
 import { useResourceDetailDrawer } from "./use-resource-detail-drawer";
 
@@ -102,6 +106,24 @@ function makeDrawerFinding(
     },
     additionalUrls: [],
     scan: null,
+    ...overrides,
+  };
+}
+
+function makeTriageSummary(
+  overrides?: Partial<FindingTriageSummary>,
+): FindingTriageSummary {
+  return {
+    findingId: "finding-1",
+    findingUid: "uid-1",
+    triageId: "triage-1",
+    notesCount: 0,
+    status: FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    label: "Under Review",
+    hasVisibleNote: false,
+    isMuted: false,
+    canEdit: true,
+    billingHref: "https://prowler.com/pricing",
     ...overrides,
   };
 }
@@ -810,5 +832,83 @@ describe("useResourceDetailDrawer — other findings filtering", () => {
     expect(result.current.otherFindings.map((finding) => finding.id)).toEqual([
       "finding-4",
     ]);
+  });
+
+  it("should patch current and other finding triage locally without refetching", async () => {
+    const resources = [makeResource()];
+
+    // Given
+    getFindingByIdMock.mockResolvedValue({ data: ["detail"] });
+    getLatestFindingsByResourceUidMock.mockResolvedValue({
+      data: ["resource"],
+    });
+    adaptFindingsByResourceResponseMock.mockImplementation(
+      (response: { data: string[] }) =>
+        response.data[0] === "detail"
+          ? [
+              makeDrawerFinding({
+                id: "finding-1",
+                triage: makeTriageSummary(),
+              }),
+            ]
+          : [
+              makeDrawerFinding({
+                id: "finding-2",
+                uid: "uid-2",
+                triage: makeTriageSummary({
+                  findingId: "finding-2",
+                  findingUid: "uid-2",
+                  status: FINDING_TRIAGE_STATUS.OPEN,
+                  label: "Open",
+                }),
+              }),
+            ],
+    );
+
+    const { result } = renderHook(() =>
+      useResourceDetailDrawer({
+        resources,
+      }),
+    );
+
+    await act(async () => {
+      result.current.openDrawer(0);
+      await Promise.resolve();
+    });
+
+    const findingFetchCount = getFindingByIdMock.mock.calls.length;
+    const resourceFetchCount =
+      getLatestFindingsByResourceUidMock.mock.calls.length;
+
+    // When
+    act(() => {
+      result.current.patchTriageUpdate({
+        findingId: "finding-2",
+        findingUid: "uid-2",
+        triageId: "triage-2",
+        notesCount: 0,
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        previousStatus: FINDING_TRIAGE_STATUS.OPEN,
+        isMuted: false,
+        note: "Investigating",
+      });
+    });
+
+    // Then
+    expect(result.current.otherFindings[0]?.triage).toEqual(
+      expect.objectContaining({
+        status: FINDING_TRIAGE_STATUS.REMEDIATING,
+        label: "Remediating",
+        hasVisibleNote: true,
+        notesCount: 1,
+      }),
+    );
+    expect(result.current.currentFinding?.triage?.status).toBe(
+      FINDING_TRIAGE_STATUS.UNDER_REVIEW,
+    );
+    expect(getFindingByIdMock).toHaveBeenCalledTimes(findingFetchCount);
+    expect(getLatestFindingsByResourceUidMock).toHaveBeenCalledTimes(
+      resourceFetchCount,
+    );
   });
 });

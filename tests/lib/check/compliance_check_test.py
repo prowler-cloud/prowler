@@ -540,7 +540,9 @@ class TestCompliance:
     ):
         object = mock.Mock()
         object.path = "/path/to/compliance"
-        object.name = "framework1_aws"
+        # list_compliance_modules yields dotted module names; get_bulk matches
+        # the last segment exactly against the provider.
+        object.name = "prowler.compliance.aws"
         mock_list_modules.return_value = [object]
 
         mock_listdir.return_value = ["framework1_aws.json"]

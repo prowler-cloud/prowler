@@ -1,4 +1,4 @@
-"""Finding Groups tools for Prowler App MCP Server.
+"""Finding Groups tools for Prowler MCP Server.
 
 This module provides read-only tools for finding group triage and drill-downs.
 """
@@ -14,7 +14,6 @@ from prowler_mcp_server.prowler_app.models.finding_groups import (
     FindingGroupsListResponse,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
-
 
 StatusFilter = Literal["FAIL", "PASS", "MANUAL"]
 SeverityFilter = Literal["critical", "high", "medium", "low", "informational"]
@@ -234,8 +233,8 @@ class FindingGroupsTools(BaseTool):
         `date_to`, this uses `/finding-groups` with a maximum 2-day date window.
 
         Use this tool to find noisy or high-impact checks, then call
-        prowler_app_get_finding_group_details for complete counters or
-        prowler_app_list_finding_group_resources to drill into affected resources.
+        prowler_get_finding_group_details for complete counters or
+        prowler_list_finding_group_resources to drill into affected resources.
         """
         try:
             self.api_client.validate_page_size(page_size)
@@ -424,7 +423,7 @@ class FindingGroupsTools(BaseTool):
         Default behavior returns FAIL, unmuted resources so the result is
         actionable. Set `include_muted=True` to include accepted/suppressed
         resources too. Each row includes nested resource and provider data plus
-        `finding_id`. Use `prowler_app_get_finding_details(finding_id)` to
+        `finding_id`. Use `prowler_get_finding_details(finding_id)` to
         retrieve complete remediation guidance for a specific resource finding.
         """
         try:
@@ -464,9 +463,7 @@ class FindingGroupsTools(BaseTool):
 
             clean_params = self.api_client.build_filter_params(params)
             api_response = await self.api_client.get(endpoint, params=clean_params)
-            response = FindingGroupResourcesListResponse.from_api_response(
-                api_response
-            )
+            response = FindingGroupResourcesListResponse.from_api_response(api_response)
             return response.model_dump()
         except Exception as e:
             self.logger.error(f"Error listing finding group resources: {e}")

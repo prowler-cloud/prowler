@@ -631,8 +631,7 @@ class TestOpenstackProviderCloudsYaml:
     def test_clouds_yaml_explicit_file_path(self, tmp_path):
         """Test loading clouds.yaml from an explicit file path."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -644,8 +643,7 @@ clouds:
       project_domain_name: YamlProjectDomain
     region_name: RegionOne
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -681,8 +679,7 @@ clouds:
     def test_clouds_yaml_with_explicit_cloud_name(self, tmp_path):
         """Test loading clouds.yaml with an explicit cloud name."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   default-cloud:
     auth:
@@ -692,8 +689,7 @@ clouds:
       project_id: default-project-id
     region_name: RegionOne
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -719,8 +715,7 @@ clouds:
     def test_clouds_yaml_file_without_cloud_name(self, tmp_path):
         """Test error when clouds.yaml file is provided without cloud name."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -729,8 +724,7 @@ clouds:
       password: test-password
       project_id: test-project-id
     region_name: RegionOne
-"""
-        )
+""")
 
         with pytest.raises(OpenStackInvalidConfigError) as excinfo:
             OpenstackProvider(clouds_yaml_file=str(clouds_yaml))
@@ -750,8 +744,7 @@ clouds:
     def test_clouds_yaml_cloud_not_found(self, tmp_path):
         """Test error when specified cloud is not in clouds.yaml."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   existing-cloud:
     auth:
@@ -760,8 +753,7 @@ clouds:
       password: test-password
       project_id: test-project-id
     region_name: RegionOne
-"""
-        )
+""")
 
         with pytest.raises(OpenStackCloudNotFoundError) as excinfo:
             OpenstackProvider(
@@ -774,8 +766,7 @@ clouds:
     def test_clouds_yaml_missing_required_fields(self, tmp_path):
         """Test error when clouds.yaml is missing required fields."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   incomplete-cloud:
     auth:
@@ -783,8 +774,7 @@ clouds:
       username: test-user
       # Missing password and other required fields
     region_name: RegionOne
-"""
-        )
+""")
 
         with pytest.raises(OpenStackInvalidConfigError) as excinfo:
             OpenstackProvider(
@@ -798,16 +788,14 @@ clouds:
     def test_clouds_yaml_malformed_yaml(self, tmp_path):
         """Test error when clouds.yaml is malformed."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   malformed-cloud:
     auth:
       auth_url: https://openstack.example.com:5000/v3
       username: test-user
     - invalid: yaml: structure
-"""
-        )
+""")
 
         with pytest.raises(OpenStackInvalidConfigError):
             OpenstackProvider(
@@ -818,8 +806,7 @@ clouds:
     def test_clouds_yaml_with_project_name(self, tmp_path):
         """Test clouds.yaml using project_name instead of project_id."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -831,8 +818,7 @@ clouds:
       project_domain_name: Default
     region_name: RegionOne
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -863,8 +849,7 @@ clouds:
         monkeypatch.setenv("OS_REGION_NAME", "EnvRegion")
 
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -874,8 +859,7 @@ clouds:
       project_id: yaml-project-id
     region_name: YamlRegion
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -902,8 +886,7 @@ clouds:
     def test_test_connection_with_clouds_yaml(self, tmp_path):
         """Test static test_connection method with clouds.yaml."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -913,8 +896,7 @@ clouds:
       project_id: test-project-id
     region_name: RegionOne
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -950,8 +932,7 @@ clouds:
     def test_test_connection_clouds_yaml_cloud_not_found(self, tmp_path):
         """Test test_connection error when cloud is not in clouds.yaml."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   existing-cloud:
     auth:
@@ -960,8 +941,7 @@ clouds:
       password: test-password
       project_id: test-project-id
     region_name: RegionOne
-"""
-        )
+""")
 
         connection_result = OpenstackProvider.test_connection(
             clouds_yaml_file=str(clouds_yaml),
@@ -1139,8 +1119,7 @@ clouds:
     def test_clouds_yaml_file_with_regions_list(self, tmp_path):
         """Test loading clouds.yaml file with regions list."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -1152,8 +1131,7 @@ clouds:
       - RegionOne
       - RegionTwo
     identity_api_version: 3
-"""
-        )
+""")
 
         mock_connection = MagicMock()
         mock_connection.authorize.return_value = None
@@ -1177,8 +1155,7 @@ clouds:
     def test_clouds_yaml_file_with_both_regions_raises_error(self, tmp_path):
         """Test that clouds.yaml file with both region_name and regions raises error."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -1191,8 +1168,7 @@ clouds:
       - RegionOne
       - RegionTwo
     identity_api_version: 3
-"""
-        )
+""")
 
         with pytest.raises(OpenStackAmbiguousRegionError):
             OpenstackProvider(
@@ -1203,8 +1179,7 @@ clouds:
     def test_clouds_yaml_file_with_no_region_raises_error(self, tmp_path):
         """Test that clouds.yaml file with neither region_name nor regions raises error."""
         clouds_yaml = tmp_path / "clouds.yaml"
-        clouds_yaml.write_text(
-            """
+        clouds_yaml.write_text("""
 clouds:
   test-cloud:
     auth:
@@ -1213,8 +1188,7 @@ clouds:
       password: test-password
       project_id: test-project-id
     identity_api_version: 3
-"""
-        )
+""")
 
         with pytest.raises(OpenStackNoRegionError):
             OpenstackProvider(

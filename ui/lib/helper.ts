@@ -6,15 +6,19 @@ import {
 } from "@/actions/scans";
 import { getTask } from "@/actions/task";
 import { auth } from "@/auth.config";
-import { useToast } from "@/components/ui";
+import { useToast } from "@/components/shadcn";
 import {
   COMPLIANCE_REPORT_DISPLAY_NAMES,
   type ComplianceReportType,
 } from "@/lib/compliance/compliance-report-types";
+import { readEnv } from "@/lib/runtime-env";
 import { AuthSocialProvider, MetaDataProps, PermissionInfo } from "@/types";
 
-export const baseUrl = process.env.AUTH_URL || "http://localhost:3000";
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+export const baseUrl = process.env.AUTH_URL;
+export const apiBaseUrl = readEnv(
+  "UI_API_BASE_URL",
+  "NEXT_PUBLIC_API_BASE_URL",
+);
 
 /**
  * Extracts a form value from a FormData object
@@ -105,6 +109,25 @@ export const getAuthUrl = (provider: AuthSocialProvider) => {
 const REPORT_PREPARATION_ERROR =
   "Unable to prepare the scan report. Please try again in a few minutes.";
 
+export const GENERIC_SERVER_ERROR_MESSAGE =
+  "Server is temporarily unavailable. Please try again in a few minutes.";
+
+const HTML_ERROR_PATTERN =
+  /(?:<!doctype\s+html|<html\b|<\/?(?:head|title|body|center|h1|h2|pre)\b)/i;
+
+export const sanitizeErrorMessage = (
+  message: string,
+  fallback = GENERIC_SERVER_ERROR_MESSAGE,
+): string => {
+  const trimmedMessage = message.trim();
+
+  if (!trimmedMessage) {
+    return fallback;
+  }
+
+  return HTML_ERROR_PATTERN.test(trimmedMessage) ? fallback : trimmedMessage;
+};
+
 const getPreflightErrorMessage = async (response: Response) => {
   const contentType = response.headers.get("content-type")?.toLowerCase() || "";
 
@@ -165,9 +188,14 @@ export const downloadScanZip = async (
 };
 
 /**
- * Generic function to download a file from base64 data
+ * Generic function to download a file from base64 data.
+ *
+ * Exported so feature-local wrappers (e.g. the cross-provider PDF download in
+ * app/(prowler)/compliance/_lib) reuse the base64→blob handling instead of
+ * duplicating it; those wrappers cannot live here because their server
+ * actions import the @/lib barrel, which would create a cycle.
  */
-const downloadFile = async (
+export const downloadFile = async (
   result: ScanBinaryResult,
   outputType: string,
   successMessage: string,
@@ -360,21 +388,6 @@ export const checkTaskStatus = async (
 export const wait = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// Helper function to create dictionaries by type
-export function createDict(type: string, data: any) {
-  const includedField = data?.included?.filter(
-    (item: { type: string }) => item.type === type,
-  );
-
-  if (!includedField || includedField.length === 0) {
-    return {};
-  }
-
-  return Object.fromEntries(
-    includedField.map((item: { id: string }) => [item.id, item]),
-  );
-}
-
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
 export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
@@ -400,11 +413,11 @@ export function decryptKey(passkey: string) {
 
 export const getErrorMessage = (error: unknown): string => {
   if (error instanceof Error) {
-    return error.message;
+    return sanitizeErrorMessage(error.message);
   } else if (error && typeof error === "object" && "message" in error) {
-    return String(error.message);
+    return sanitizeErrorMessage(String(error.message));
   } else if (typeof error === "string") {
-    return error;
+    return sanitizeErrorMessage(error);
   } else {
     return "Oops! Something went wrong.";
   }
@@ -425,7 +438,7 @@ export const permissionFormFields: PermissionInfo[] = [
     field: "unlimited_visibility",
     label: "Unlimited Visibility",
     description:
-      "Provides complete visibility across all the providers and its related resources",
+      "Grants organization-wide visibility across all providers, resources, findings, scans, and compliance results without granting admin actions.",
   },
   {
     field: "manage_providers",

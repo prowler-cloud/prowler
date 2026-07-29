@@ -1,6 +1,5 @@
 from prowler.lib.check.models import Check, Check_Report_AWS
 from prowler.providers.aws.services.dlm.dlm_client import dlm_client
-from prowler.providers.aws.services.ec2.ec2_client import ec2_client
 
 
 class dlm_ebs_snapshot_lifecycle_policy_exists(Check):
@@ -8,8 +7,8 @@ class dlm_ebs_snapshot_lifecycle_policy_exists(Check):
         findings = []
         for region in dlm_client.lifecycle_policies:
             if (
-                region in ec2_client.regions_with_snapshots
-                and ec2_client.regions_with_snapshots[region]
+                region in dlm_client.regions_with_snapshots
+                and dlm_client.regions_with_snapshots[region]
             ):
                 report = Check_Report_AWS(
                     metadata=self.metadata(),

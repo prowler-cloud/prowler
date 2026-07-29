@@ -1,19 +1,19 @@
 "use client";
 
-import { cn } from "@heroui/theme";
 import { useControlledState } from "@react-stately/utils";
 import { domAnimation, LazyMotion, m } from "framer-motion";
-import type { ComponentProps } from "react";
-import React from "react";
+import { forwardRef, useMemo } from "react";
+import type { ComponentProps, HTMLAttributes, ReactNode } from "react";
+
+import { cn } from "@/lib/utils";
 
 export type VerticalStepProps = {
   className?: string;
-  description?: React.ReactNode;
-  title?: React.ReactNode;
+  description?: ReactNode;
+  title?: ReactNode;
 };
 
-export interface VerticalStepsProps
-  extends React.HTMLAttributes<HTMLButtonElement> {
+export interface VerticalStepsProps extends HTMLAttributes<HTMLButtonElement> {
   /**
    * An array of steps.
    *
@@ -88,10 +88,7 @@ function CheckIcon(props: ComponentProps<"svg">) {
   );
 }
 
-export const VerticalSteps = React.forwardRef<
-  HTMLButtonElement,
-  VerticalStepsProps
->(
+export const VerticalSteps = forwardRef<HTMLButtonElement, VerticalStepsProps>(
   (
     {
       color = "primary",
@@ -112,7 +109,7 @@ export const VerticalSteps = React.forwardRef<
       onStepChange,
     );
 
-    const colors = React.useMemo(() => {
+    const colors = useMemo(() => {
       let userColor;
       let fgColor;
 
@@ -122,38 +119,37 @@ export const VerticalSteps = React.forwardRef<
         "[--active-color:var(--step-color)]",
         "[--complete-background-color:var(--step-color)]",
         "[--complete-border-color:var(--step-color)]",
-        "[--inactive-border-color:hsl(var(--heroui-default-300))]",
-        "[--inactive-color:hsl(var(--heroui-default-300))]",
+        "[--inactive-border-color:var(--border-neutral-tertiary)]",
+        "[--inactive-color:var(--border-neutral-tertiary)]",
       ];
 
       switch (color) {
-        case "primary":
-          userColor = "[--step-color:var(--bg-button-primary)]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
-          break;
         case "secondary":
-          userColor = "[--step-color:hsl(var(--heroui-secondary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-secondary-foreground))]";
+          userColor =
+            "[--step-color:var(--color-violet-600)] dark:[--step-color:var(--color-violet-400)]";
+          fgColor = "[--step-fg-color:var(--color-white)]";
           break;
         case "success":
-          userColor = "[--step-color:hsl(var(--heroui-success))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-success-foreground))]";
+          userColor = "[--step-color:var(--bg-pass-primary)]";
+          fgColor = "[--step-fg-color:var(--color-black)]";
           break;
         case "warning":
-          userColor = "[--step-color:hsl(var(--heroui-warning))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-warning-foreground))]";
+          userColor = "[--step-color:var(--bg-warning-primary)]";
+          fgColor = "[--step-fg-color:var(--color-black)]";
           break;
         case "danger":
-          userColor = "[--step-color:hsl(var(--heroui-error))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-error-foreground))]";
+          userColor = "[--step-color:var(--bg-fail-primary)]";
+          fgColor = "[--step-fg-color:var(--color-white)]";
           break;
         case "default":
-          userColor = "[--step-color:hsl(var(--heroui-default))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-default-foreground))]";
+          userColor =
+            "[--step-color:var(--color-zinc-300)] dark:[--step-color:var(--color-zinc-600)]";
+          fgColor = "[--step-fg-color:var(--text-neutral-primary)]";
           break;
+        case "primary":
         default:
-          userColor = "[--step-color:hsl(var(--heroui-primary))]";
-          fgColor = "[--step-fg-color:hsl(var(--heroui-primary-foreground))]";
+          userColor = "[--step-color:var(--bg-button-primary)]";
+          fgColor = "[--step-fg-color:var(--color-black)]";
           break;
       }
 
@@ -161,7 +157,7 @@ export const VerticalSteps = React.forwardRef<
       if (!className?.includes("--step-color")) colorsVars.unshift(userColor);
       if (!className?.includes("--inactive-bar-color"))
         colorsVars.push(
-          "[--inactive-bar-color:hsl(var(--heroui-default-300))]",
+          "[--inactive-bar-color:var(--border-neutral-tertiary)]",
         );
 
       return colorsVars;
@@ -186,7 +182,7 @@ export const VerticalSteps = React.forwardRef<
                     ref={ref}
                     aria-current={status === "active" ? "step" : undefined}
                     className={cn(
-                      "group rounded-large flex w-full cursor-pointer items-center justify-center gap-4 px-3 py-2.5",
+                      "group flex w-full cursor-pointer items-center justify-center gap-4 rounded-[14px] px-3 py-2.5",
                       stepClassName,
                     )}
                     onClick={() => setCurrentStep(stepIdx)}
@@ -197,12 +193,9 @@ export const VerticalSteps = React.forwardRef<
                         <div className="relative">
                           <m.div
                             animate={status}
-                            className={cn(
-                              "border-medium text-large text-default-foreground relative flex h-[34px] w-[34px] items-center justify-center rounded-full font-semibold",
-                              {
-                                "shadow-lg": status === "complete",
-                              },
-                            )}
+                            className={`text-text-neutral-primary relative flex h-[34px] w-[34px] items-center justify-center rounded-full border-2 text-lg font-semibold ${
+                              status === "complete" ? "shadow-lg" : ""
+                            }`}
                             data-status={status}
                             initial={false}
                             transition={{ duration: 0.25 }}
@@ -238,22 +231,20 @@ export const VerticalSteps = React.forwardRef<
                     <div className="flex-1 text-left">
                       <div>
                         <div
-                          className={cn(
-                            "text-medium text-default-foreground font-medium transition-[color,opacity] duration-300 group-active:opacity-70",
-                            {
-                              "text-default-500": status === "inactive",
-                            },
-                          )}
+                          className={`text-base font-medium transition-[color,opacity] duration-300 group-active:opacity-70 ${
+                            status === "inactive"
+                              ? "text-text-neutral-tertiary"
+                              : "text-text-neutral-primary"
+                          }`}
                         >
                           {step.title}
                         </div>
                         <div
-                          className={cn(
-                            "text-tiny text-default-600 lg:text-small transition-[color,opacity] duration-300 group-active:opacity-70",
-                            {
-                              "text-default-500": status === "inactive",
-                            },
-                          )}
+                          className={`text-xs transition-[color,opacity] duration-300 group-active:opacity-70 lg:text-sm ${
+                            status === "inactive"
+                              ? "text-text-neutral-tertiary"
+                              : "text-text-neutral-secondary"
+                          }`}
                         >
                           {step.description}
                         </div>

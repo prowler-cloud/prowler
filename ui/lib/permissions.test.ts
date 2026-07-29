@@ -22,7 +22,7 @@ describe("getRolePermissions", () => {
 
   it("includes Manage Alerts in Prowler Cloud when role attributes provide it", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "true");
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
 
     // When
     const permissions = getRolePermissions(attributes);
@@ -37,7 +37,7 @@ describe("getRolePermissions", () => {
 
   it("hides Manage Alerts outside Prowler Cloud", () => {
     // Given
-    vi.stubEnv("NEXT_PUBLIC_IS_CLOUD_ENV", "false");
+    vi.stubEnv("UI_CLOUD_ENABLED", "false");
 
     // When
     const permissions = getRolePermissions(attributes);

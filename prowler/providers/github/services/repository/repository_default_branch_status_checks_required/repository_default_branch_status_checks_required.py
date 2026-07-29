@@ -28,6 +28,8 @@ class repository_default_branch_status_checks_required(Check):
                 report.status_extended = (
                     f"Repository {repo.name} does not enforce status checks."
                 )
+                if repo.default_branch.status_checks_source == "ruleset_not_active":
+                    report.status_extended = f"Repository {repo.name} has status checks configured in a ruleset, but the ruleset is not active."
 
                 if repo.default_branch.status_checks:
                     report.status = "PASS"

@@ -2,12 +2,12 @@ import uuid
 from unittest.mock import call, patch
 
 import pytest
-from django.core.exceptions import ObjectDoesNotExist
-from django.db import DatabaseError, IntegrityError
-
+from api.attack_paths.database import GraphDatabaseQueryException
 from api.db_utils import POSTGRES_TENANT_VAR, SET_CONFIG_QUERY
 from api.decorators import handle_provider_deletion, set_tenant
 from api.exceptions import ProviderDeletedException
+from django.core.exceptions import ObjectDoesNotExist
+from django.db import DEFAULT_DB_ALIAS, DatabaseError, IntegrityError
 
 
 @pytest.mark.django_db
@@ -41,10 +41,10 @@ class TestSetTenantDecorator:
 
 @pytest.mark.django_db
 class TestHandleProviderDeletionDecorator:
-    def test_success_no_exception(self, tenants_fixture, providers_fixture):
+    def test_success_no_exception(self, tenants_fixture, aws_provider):
         """Decorated function runs normally when no exception is raised."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         @handle_provider_deletion
         def task_func(**kwargs):
@@ -128,11 +128,11 @@ class TestHandleProviderDeletionDecorator:
     @patch("api.decorators.rls_transaction")
     @patch("api.decorators.Provider.objects.filter")
     def test_provider_exists_reraises_original(
-        self, mock_filter, mock_rls, tenants_fixture, providers_fixture
+        self, mock_filter, mock_rls, tenants_fixture, aws_provider
     ):
         """Re-raises original exception when provider still exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         mock_rls.return_value.__enter__ = lambda s: None
         mock_rls.return_value.__exit__ = lambda s, *args: None
@@ -188,11 +188,11 @@ class TestHandleProviderDeletionDecorator:
     @patch("api.decorators.rls_transaction")
     @patch("api.decorators.Provider.objects.filter")
     def test_database_error_provider_exists_reraises(
-        self, mock_filter, mock_rls, tenants_fixture, providers_fixture
+        self, mock_filter, mock_rls, tenants_fixture, aws_provider
     ):
         """Re-raises original DatabaseError when provider still exists."""
         tenant = tenants_fixture[0]
-        provider = providers_fixture[0]
+        provider = aws_provider
 
         mock_rls.return_value.__enter__ = lambda s: None
         mock_rls.return_value.__exit__ = lambda s, *args: None
@@ -204,6 +204,106 @@ class TestHandleProviderDeletionDecorator:
 
         with pytest.raises(DatabaseError):
             task_func(tenant_id=str(tenant.id), provider_id=str(provider.id))
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_graph_database_error_provider_missing_or_soft_deleted(
+        self, mock_provider_filter, mock_rls, tenants_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider_id = str(uuid.uuid4())
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_provider_filter.return_value.exists.return_value = False
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise GraphDatabaseQueryException("Temporary database not found")
+
+        with pytest.raises(ProviderDeletedException):
+            task_func(tenant_id=str(tenant.id), provider_id=provider_id)
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Tenant.objects.filter")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_graph_database_error_tenant_missing(
+        self, mock_provider_filter, mock_tenant_filter, mock_rls, tenants_fixture
+    ):
+        tenant = tenants_fixture[0]
+        provider_id = str(uuid.uuid4())
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_provider_filter.return_value.exists.return_value = True
+        mock_tenant_filter.return_value.exists.return_value = False
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise GraphDatabaseQueryException("Temporary database not found")
+
+        with pytest.raises(ProviderDeletedException):
+            task_func(tenant_id=str(tenant.id), provider_id=provider_id)
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Membership.objects.filter")
+    @patch("api.decorators.Tenant.objects.filter")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_graph_database_error_tenant_without_memberships(
+        self,
+        mock_provider_filter,
+        mock_tenant_filter,
+        mock_membership_filter,
+        mock_rls,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider_id = str(uuid.uuid4())
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_provider_filter.return_value.exists.return_value = True
+        mock_tenant_filter.return_value.exists.return_value = True
+        mock_membership_filter.return_value.exists.return_value = False
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise GraphDatabaseQueryException("Temporary database not found")
+
+        with pytest.raises(ProviderDeletedException):
+            task_func(tenant_id=str(tenant.id), provider_id=provider_id)
+
+    @patch("api.decorators.rls_transaction")
+    @patch("api.decorators.Membership.objects.filter")
+    @patch("api.decorators.Tenant.objects.filter")
+    @patch("api.decorators.Provider.objects.filter")
+    def test_graph_database_error_active_provider_and_tenant_reraises(
+        self,
+        mock_provider_filter,
+        mock_tenant_filter,
+        mock_membership_filter,
+        mock_rls,
+        tenants_fixture,
+    ):
+        tenant = tenants_fixture[0]
+        provider_id = str(uuid.uuid4())
+        graph_error = GraphDatabaseQueryException("Temporary database not found")
+
+        mock_rls.return_value.__enter__ = lambda s: None
+        mock_rls.return_value.__exit__ = lambda s, *args: None
+        mock_provider_filter.return_value.exists.return_value = True
+        mock_tenant_filter.return_value.exists.return_value = True
+        mock_membership_filter.return_value.exists.return_value = True
+
+        @handle_provider_deletion
+        def task_func(**kwargs):
+            raise graph_error
+
+        with pytest.raises(GraphDatabaseQueryException) as exc_info:
+            task_func(tenant_id=str(tenant.id), provider_id=provider_id)
+
+        assert exc_info.value is graph_error
+        mock_rls.assert_called_once_with(str(tenant.id), using=DEFAULT_DB_ALIAS)
 
     def test_missing_provider_and_scan_raises_assertion(self, tenants_fixture):
         """Raises AssertionError when neither provider_id nor scan_id in kwargs."""

@@ -1,0 +1,38 @@
+{
+  "Provider": "azure",
+  "CheckID": "aks_cluster_local_accounts_disabled",
+  "CheckTitle": "AKS cluster has local accounts disabled",
+  "CheckType": [],
+  "ServiceName": "aks",
+  "SubServiceName": "",
+  "ResourceIdTemplate": "",
+  "Severity": "high",
+  "ResourceType": "microsoft.containerservice/managedclusters",
+  "ResourceGroup": "container",
+  "Description": "**Azure Kubernetes Service** clusters are evaluated for **local account** status. Disabling local accounts forces all cluster authentication through Microsoft Entra ID, ensuring centralized identity management, MFA, and conditional access.",
+  "Risk": "Local accounts bypass **Entra ID** authentication, MFA, and conditional access policies. Compromised local credentials (such as the static cluster-admin certificate) provide persistent cluster access without an identity-based audit trail or governance.",
+  "RelatedUrl": "",
+  "AdditionalURLs": [
+    "https://learn.microsoft.com/en-us/azure/aks/manage-local-accounts-managed-azure-ad",
+    "https://learn.microsoft.com/en-us/cli/azure/aks?view=azure-cli-latest#az-aks-update",
+    "https://learn.microsoft.com/en-us/azure/templates/microsoft.containerservice/managedclusters"
+  ],
+  "Remediation": {
+    "Code": {
+      "CLI": "az aks update --resource-group <RESOURCE_GROUP> --name <CLUSTER_NAME> --disable-local-accounts",
+      "NativeIaC": "```bicep\n// Bicep: AKS cluster with local accounts disabled\nresource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {\n  name: '<example_resource_name>'\n  location: resourceGroup().location\n  properties: {\n    disableLocalAccounts: true // CRITICAL: forces authentication through Entra ID\n    aadProfile: {\n      managed: true\n      enableAzureRbac: true\n    }\n  }\n}\n```",
+      "Other": "1. Sign in to the Azure portal and open your AKS cluster\n2. Ensure Microsoft Entra ID (AAD) authentication is configured for the cluster\n3. Under Settings, select Cluster configuration (or Authentication and Authorization)\n4. Set Local accounts to Disabled\n5. Save the configuration",
+      "Terraform": "```hcl\n# Terraform: AKS cluster with local accounts disabled\nresource \"azurerm_kubernetes_cluster\" \"<example_resource_name>\" {\n  name                  = \"<example_resource_name>\"\n  location              = \"<region>\"\n  resource_group_name   = \"<example_resource_name>\"\n  dns_prefix            = \"<example_resource_name>\"\n  local_account_disabled = true # CRITICAL: forces authentication through Entra ID\n\n  azure_active_directory_role_based_access_control {\n    azure_rbac_enabled = true\n  }\n}\n```"
+    },
+    "Recommendation": {
+      "Text": "Disable local accounts on AKS clusters and require **Microsoft Entra ID** authentication with Azure RBAC. Before disabling, confirm Entra ID integration and break-glass access are in place so administrators retain authenticated access, then enforce MFA and conditional access on cluster identities.",
+      "Url": "https://hub.prowler.com/check/aks_cluster_local_accounts_disabled"
+    }
+  },
+  "Categories": [
+    "identity-access"
+  ],
+  "DependsOn": [],
+  "RelatedTo": [],
+  "Notes": ""
+}

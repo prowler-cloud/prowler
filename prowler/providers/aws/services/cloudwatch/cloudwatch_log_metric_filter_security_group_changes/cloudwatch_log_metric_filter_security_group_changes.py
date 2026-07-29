@@ -6,6 +6,7 @@ from prowler.providers.aws.services.cloudwatch.cloudwatch_client import (
     cloudwatch_client,
 )
 from prowler.providers.aws.services.cloudwatch.lib.metric_filters import (
+    build_metric_filter_pattern,
     check_cloudwatch_log_metric_filter,
 )
 from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
@@ -13,7 +14,16 @@ from prowler.providers.aws.services.cloudwatch.logs_client import logs_client
 
 class cloudwatch_log_metric_filter_security_group_changes(Check):
     def execute(self):
-        pattern = r"\$\.eventName\s*=\s*.?AuthorizeSecurityGroupIngress.+\$\.eventName\s*=\s*.?AuthorizeSecurityGroupEgress.+\$\.eventName\s*=\s*.?RevokeSecurityGroupIngress.+\$\.eventName\s*=\s*.?RevokeSecurityGroupEgress.+\$\.eventName\s*=\s*.?CreateSecurityGroup.+\$\.eventName\s*=\s*.?DeleteSecurityGroup.?"
+        pattern = build_metric_filter_pattern(
+            event_names=[
+                "AuthorizeSecurityGroupIngress",
+                "AuthorizeSecurityGroupEgress",
+                "RevokeSecurityGroupIngress",
+                "RevokeSecurityGroupEgress",
+                "CreateSecurityGroup",
+                "DeleteSecurityGroup",
+            ],
+        )
         findings = []
 
         report = check_cloudwatch_log_metric_filter(

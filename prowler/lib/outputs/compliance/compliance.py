@@ -18,6 +18,9 @@ from prowler.lib.outputs.compliance.kisa_ismsp.kisa_ismsp import get_kisa_ismsp_
 from prowler.lib.outputs.compliance.mitre_attack.mitre_attack import (
     get_mitre_attack_table,
 )
+from prowler.lib.outputs.compliance.okta_idaas_stig.okta_idaas_stig import (
+    get_okta_idaas_stig_table,
+)
 from prowler.lib.outputs.compliance.prowler_threatscore.prowler_threatscore import (
     get_prowler_threatscore_table,
 )
@@ -252,8 +255,8 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
-        else:
-            get_generic_compliance_table(
+        elif compliance_framework.startswith("okta_idaas_stig"):
+            get_okta_idaas_stig_table(
                 findings,
                 bulk_checks_metadata,
                 compliance_framework,
@@ -261,6 +264,33 @@ def display_compliance_table(
                 output_directory,
                 compliance_overview,
             )
+        else:
+            # Try provider-specific table first, fall back to generic
+            from prowler.providers.common.provider import Provider
+
+            provider = Provider.get_global_provider()
+            handled = False
+            if provider is not None:
+                try:
+                    handled = provider.display_compliance_table(
+                        findings,
+                        bulk_checks_metadata,
+                        compliance_framework,
+                        output_filename,
+                        output_directory,
+                        compliance_overview,
+                    )
+                except NotImplementedError:
+                    handled = False
+            if not handled:
+                get_generic_compliance_table(
+                    findings,
+                    bulk_checks_metadata,
+                    compliance_framework,
+                    output_filename,
+                    output_directory,
+                    compliance_overview,
+                )
     except Exception as error:
         logger.critical(
             f"{error.__class__.__name__}:{error.__traceback__.tb_lineno} -- {error}"

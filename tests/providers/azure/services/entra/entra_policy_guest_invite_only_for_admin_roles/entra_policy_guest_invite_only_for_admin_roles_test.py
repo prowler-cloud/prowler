@@ -7,7 +7,7 @@ from tests.providers.azure.azure_fixtures import DOMAIN, set_mocked_azure_provid
 class Test_entra_policy_guest_invite_only_for_admin_roles:
     def test_entra_no_tenants(self):
         entra_client = mock.MagicMock
-
+        entra_client.resource_groups = {}
         with (
             mock.patch(
                 "prowler.providers.common.provider.Provider.get_global_provider",
@@ -30,6 +30,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
 
     def test_entra_empty_tenant(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -76,6 +77,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
 
     def test_entra_tenant_policy_allow_invites_from_everyone(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -120,6 +122,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
 
     def test_entra_tenant_policy_allow_invites_from_admins(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (
@@ -164,6 +167,7 @@ class Test_entra_policy_guest_invite_only_for_admin_roles:
 
     def test_entra_tenant_policy_allow_invites_from_none(self):
         entra_client = mock.MagicMock
+        entra_client.resource_groups = {}
         id = str(uuid4())
 
         with (

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from random import getrandbits
 
 from dateutil.relativedelta import relativedelta
@@ -81,7 +81,7 @@ def datetime_from_uuid7(uuid7: UUID) -> datetime:
         A datetime object representing the timestamp encoded in the UUIDv7.
     """
     timestamp_ms = uuid7.time
-    return datetime.fromtimestamp(timestamp_ms / 1000, tz=timezone.utc)
+    return datetime.fromtimestamp(timestamp_ms / 1000, tz=UTC)
 
 
 def uuid7_start(uuid_obj: UUID) -> UUID:

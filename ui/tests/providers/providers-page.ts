@@ -81,6 +81,28 @@ export interface GoogleWorkspaceProviderCredential {
   delegatedUser: string;
 }
 
+// Okta provider data
+export interface OktaProviderData {
+  orgDomain: string;
+  alias?: string;
+}
+
+// Okta credential options
+export const OKTA_CREDENTIAL_OPTIONS = {
+  OKTA_PRIVATE_KEY_JWT: "private_key_jwt",
+} as const;
+
+// Okta credential type
+type OktaCredentialType =
+  (typeof OKTA_CREDENTIAL_OPTIONS)[keyof typeof OKTA_CREDENTIAL_OPTIONS];
+
+// Okta provider credential (OAuth 2.0 Private Key JWT)
+export interface OktaProviderCredential {
+  type: OktaCredentialType;
+  clientId: string;
+  privateKey: string;
+}
+
 // AWS credential options
 export const AWS_CREDENTIAL_OPTIONS = {
   AWS_ROLE_ARN: "role",
@@ -202,7 +224,6 @@ export interface OCIProviderCredential {
   userId?: string;
   fingerprint?: string;
   keyContent?: string;
-  region?: string;
 }
 
 // AlibabaCloud credential options
@@ -222,6 +243,27 @@ export interface AlibabaCloudProviderCredential {
   accessKeySecret: string;
   roleArn?: string;
   roleSessionName?: string;
+}
+
+// Vercel provider data
+export interface VercelProviderData {
+  teamId: string;
+  alias?: string;
+}
+
+// Vercel credential options
+export const VERCEL_CREDENTIAL_OPTIONS = {
+  VERCEL_API_TOKEN: "api_token",
+} as const;
+
+// Vercel credential type
+type VercelCredentialType =
+  (typeof VERCEL_CREDENTIAL_OPTIONS)[keyof typeof VERCEL_CREDENTIAL_OPTIONS];
+
+// Vercel provider credential
+export interface VercelProviderCredential {
+  type: VercelCredentialType;
+  apiToken: string;
 }
 
 // Providers page
@@ -246,11 +288,22 @@ export class ProvidersPage extends BasePage {
   readonly ociProviderRadio: Locator;
   readonly alibabacloudProviderRadio: Locator;
   readonly googleworkspaceProviderRadio: Locator;
+  readonly oktaProviderRadio: Locator;
 
   // Google Workspace provider form elements
   readonly googleworkspaceCustomerIdInput: Locator;
   readonly googleworkspaceServiceAccountJsonInput: Locator;
   readonly googleworkspaceDelegatedUserInput: Locator;
+
+  // Okta provider form elements
+  readonly oktaOrgDomainInput: Locator;
+  readonly oktaClientIdInput: Locator;
+  readonly oktaPrivateKeyInput: Locator;
+
+  // Vercel provider form elements
+  readonly vercelProviderRadio: Locator;
+  readonly vercelTeamIdInput: Locator;
+  readonly vercelApiTokenInput: Locator;
 
   // AWS provider form elements
   readonly accountIdInput: Locator;
@@ -312,7 +365,6 @@ export class ProvidersPage extends BasePage {
   readonly ociUserIdInput: Locator;
   readonly ociFingerprintInput: Locator;
   readonly ociKeyContentInput: Locator;
-  readonly ociRegionInput: Locator;
 
   // AlibabaCloud provider form elements
   readonly alibabacloudAccountIdInput: Locator;
@@ -456,7 +508,6 @@ export class ProvidersPage extends BasePage {
     this.ociKeyContentInput = page.getByRole("textbox", {
       name: /Private Key Content/i,
     });
-    this.ociRegionInput = page.getByRole("textbox", { name: /Region/i });
 
     // AlibabaCloud provider form inputs
     this.alibabacloudAccountIdInput = page.getByRole("textbox", {
@@ -495,6 +546,26 @@ export class ProvidersPage extends BasePage {
     this.googleworkspaceDelegatedUserInput = page.getByRole("textbox", {
       name: /Delegated User Email/i,
     });
+
+    // Okta
+    this.oktaProviderRadio = page.getByRole("option", {
+      name: /Okta/i,
+    });
+    this.oktaOrgDomainInput = page.getByRole("textbox", {
+      name: "Org Domain",
+    });
+    this.oktaClientIdInput = page.getByRole("textbox", { name: "Client ID" });
+    this.oktaPrivateKeyInput = page.getByRole("textbox", {
+      name: "Private Key",
+    });
+
+    // Vercel
+    this.vercelProviderRadio = page.getByRole("option", {
+      name: /Vercel/i,
+    });
+    this.vercelTeamIdInput = page.getByRole("textbox", { name: "Team ID" });
+    // API Token is a type="password" field (no textbox role); target by label.
+    this.vercelApiTokenInput = page.getByLabel(/API Token/i);
 
     // Alias input
     this.aliasInput = page.getByRole("textbox", {
@@ -806,7 +877,9 @@ export class ProvidersPage extends BasePage {
         if (actionName === "Check connection") {
           await this.handleCheckConnectionCompletion();
         }
-        if (actionName === "Launch scan") {
+        // "Save" is the wizard's final action (saves the scan schedule) and
+        // "Launch scan" its legacy/manual counterpart; both close the modal.
+        if (actionName === "Launch scan" || actionName === "Save") {
           await this.handleLaunchScanCompletion();
         }
         return;
@@ -819,6 +892,12 @@ export class ProvidersPage extends BasePage {
   }
 
   private async handleCheckConnectionCompletion(): Promise<void> {
+    // A successful connection advances to the schedule step ("Save"); older
+    // flows surfaced a "Launch scan" action instead.
+    const saveScheduleButton = this.page.getByRole("button", {
+      name: "Save",
+      exact: true,
+    });
     const launchScanButton = this.page.getByRole("button", {
       name: "Launch scan",
       exact: true,
@@ -829,6 +908,7 @@ export class ProvidersPage extends BasePage {
 
     try {
       await Promise.race([
+        saveScheduleButton.waitFor({ state: "visible", timeout: 30000 }),
         launchScanButton.waitFor({ state: "visible", timeout: 30000 }),
         this.wizardModal.waitFor({ state: "hidden", timeout: 30000 }),
         connectionError.waitFor({ state: "visible", timeout: 30000 }),
@@ -844,9 +924,94 @@ export class ProvidersPage extends BasePage {
       );
     }
 
-    if (await launchScanButton.isVisible().catch(() => false)) {
+    if (await saveScheduleButton.isVisible().catch(() => false)) {
+      await saveScheduleButton.click();
+      await this.handleLaunchScanCompletion();
+    } else if (await launchScanButton.isVisible().catch(() => false)) {
       await launchScanButton.click();
       await this.handleLaunchScanCompletion();
+    }
+  }
+
+  private async waitForProviderLaunchChoice(): Promise<void> {
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    try {
+      await Promise.race([
+        launchAction.waitFor({ state: "visible", timeout: 30000 }),
+        connectionError.waitFor({ state: "visible", timeout: 30000 }),
+      ]);
+    } catch {
+      // Continue and inspect visible state below.
+    }
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    await expect(launchAction).toBeVisible();
+  }
+
+  async completeProviderConnectionWithoutLaunchingScan(
+    providerUID: string,
+  ): Promise<void> {
+    await this.verifyWizardModalOpen();
+
+    const checkConnectionButton = this.page.getByRole("button", {
+      name: "Check connection",
+      exact: true,
+    });
+    const launchAction = this.page
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }));
+    const connectionError = this.page.locator(
+      "div.border-border-error p.text-text-error-primary",
+    );
+
+    // The test-connection step renders its footer action only after an async
+    // load (canSubmit gate). Wait for the footer to settle on an actionable
+    // state (or surface a connection error) instead of reading visibility on
+    // the first frame, which races the render and falls through.
+    await expect(
+      checkConnectionButton.or(launchAction).or(connectionError),
+    ).toBeVisible({ timeout: 30000 });
+
+    if (await connectionError.isVisible().catch(() => false)) {
+      const errorText = await connectionError.textContent();
+      throw new Error(
+        `Test connection failed with error: ${errorText?.trim() || "Unknown error"}`,
+      );
+    }
+
+    // Provider-add E2E validates credentials and provider persistence only.
+    // Launching one scan per provider made CI noisy and overloaded the backend;
+    // scan execution itself is covered by scans.spec.ts.
+    if (await checkConnectionButton.isVisible().catch(() => false)) {
+      await checkConnectionButton.click();
+      await this.waitForProviderLaunchChoice();
+    } else {
+      await expect(launchAction).toBeVisible();
+    }
+
+    await this.wizardModal
+      .getByRole("button", { name: "Close", exact: true })
+      .click();
+    await expect(this.wizardModal).not.toBeVisible({ timeout: 30000 });
+    await this.page.waitForURL(/\/providers/, { timeout: 30000 });
+    await this.verifyLoadProviderPageAfterNewProvider();
+
+    const providerExists =
+      await this.verifySingleRowForProviderUID(providerUID);
+    if (!providerExists) {
+      throw new Error(`Provider with UID ${providerUID} was not found.`);
     }
   }
 
@@ -855,7 +1020,7 @@ export class ProvidersPage extends BasePage {
       "div.border-border-error p.text-text-error-primary",
     );
     const launchErrorToast = this.page.getByRole("alert").filter({
-      hasText: /Unable to launch scan/i,
+      hasText: /Unable to (launch scan|save scan schedule)/i,
     });
 
     try {
@@ -1132,9 +1297,6 @@ export class ProvidersPage extends BasePage {
     if (credentials.keyContent) {
       await this.ociKeyContentInput.fill(credentials.keyContent);
     }
-    if (credentials.region) {
-      await this.ociRegionInput.fill(credentials.region);
-    }
   }
 
   async verifyOCICredentialsPageLoaded(): Promise<void> {
@@ -1145,7 +1307,6 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
-    await expect(this.ociRegionInput).toBeVisible();
   }
 
   async verifyOCIUpdateCredentialsPageLoaded(): Promise<void> {
@@ -1156,7 +1317,6 @@ export class ProvidersPage extends BasePage {
     await expect(this.ociUserIdInput).toBeVisible();
     await expect(this.ociFingerprintInput).toBeVisible();
     await expect(this.ociKeyContentInput).toBeVisible();
-    await expect(this.ociRegionInput).toBeVisible();
   }
 
   async selectAlibabaCloudProvider(): Promise<void> {
@@ -1288,6 +1448,72 @@ export class ProvidersPage extends BasePage {
     await expect(this.googleworkspaceDelegatedUserInput).toBeVisible();
   }
 
+  async selectOktaProvider(): Promise<void> {
+    await this.selectProviderRadio(this.oktaProviderRadio);
+  }
+
+  async fillOktaProviderDetails(data: OktaProviderData): Promise<void> {
+    // Fill the Okta provider details (org domain is lowercased by the form)
+
+    await this.oktaOrgDomainInput.fill(data.orgDomain);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillOktaCredentials(
+    credentials: OktaProviderCredential,
+  ): Promise<void> {
+    // Fill the Okta OAuth 2.0 Private Key JWT credentials form
+
+    if (credentials.clientId) {
+      await this.oktaClientIdInput.fill(credentials.clientId);
+    }
+    if (credentials.privateKey) {
+      await this.oktaPrivateKeyInput.fill(credentials.privateKey);
+    }
+  }
+
+  async verifyOktaCredentialsPageLoaded(): Promise<void> {
+    // Verify the Okta credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.oktaClientIdInput).toBeVisible();
+    await expect(this.oktaPrivateKeyInput).toBeVisible();
+  }
+
+  async selectVercelProvider(): Promise<void> {
+    await this.selectProviderRadio(this.vercelProviderRadio);
+  }
+
+  async fillVercelProviderDetails(data: VercelProviderData): Promise<void> {
+    // Fill the Vercel provider details (Team ID is the provider UID)
+
+    await this.vercelTeamIdInput.fill(data.teamId);
+
+    if (data.alias) {
+      await this.aliasInput.fill(data.alias);
+    }
+  }
+
+  async fillVercelCredentials(
+    credentials: VercelProviderCredential,
+  ): Promise<void> {
+    // Fill the Vercel credentials form
+
+    if (credentials.apiToken) {
+      await this.vercelApiTokenInput.fill(credentials.apiToken);
+    }
+  }
+
+  async verifyVercelCredentialsPageLoaded(): Promise<void> {
+    // Verify the Vercel credentials page is loaded
+
+    await this.verifyPageHasProwlerTitle();
+    await expect(this.vercelApiTokenInput).toBeVisible();
+  }
+
   async verifyPageLoaded(): Promise<void> {
     // Verify the providers page is loaded
 
@@ -1309,6 +1535,8 @@ export class ProvidersPage extends BasePage {
     await expect(this.githubProviderRadio).toBeVisible();
     await expect(this.alibabacloudProviderRadio).toBeVisible();
     await expect(this.googleworkspaceProviderRadio).toBeVisible();
+    await expect(this.oktaProviderRadio).toBeVisible();
+    await expect(this.vercelProviderRadio).toBeVisible();
   }
 
   async verifyCredentialsPageLoaded(): Promise<void> {
@@ -1383,9 +1611,11 @@ export class ProvidersPage extends BasePage {
     await this.verifyPageHasProwlerTitle();
     await this.verifyWizardModalOpen();
 
-    // Some providers show "Check connection" before "Launch scan".
+    // The final step saves the scan schedule ("Save"); manual-only accounts
+    // show "Launch scan" and some providers show "Check connection" first.
     const launchAction = this.page
-      .getByRole("button", { name: "Launch scan", exact: true })
+      .getByRole("button", { name: "Save", exact: true })
+      .or(this.page.getByRole("button", { name: "Launch scan", exact: true }))
       .or(
         this.page.getByRole("button", {
           name: "Check connection",
@@ -1413,10 +1643,14 @@ export class ProvidersPage extends BasePage {
       hasText: providerUID,
     });
 
-    // Verify the number of matching rows is 1
-    const count = await matchingRows.count();
-    if (count !== 1) return false;
-    return true;
+    // Use an auto-retrying assertion (not an instant count()) so the check
+    // waits for the table refetch to render the newly added provider row.
+    try {
+      await expect(matchingRows).toHaveCount(1, { timeout: 15000 });
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async selectAuthenticationMethod(method: AWSCredentialType): Promise<void> {

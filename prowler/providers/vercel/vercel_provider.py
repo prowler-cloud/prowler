@@ -33,6 +33,7 @@ class VercelProvider(Provider):
     """Vercel provider."""
 
     _type: str = "vercel"
+    sdk_only: bool = False
     _session: VercelSession
     _identity: VercelIdentityInfo
     _audit_config: dict

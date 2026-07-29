@@ -4,39 +4,57 @@ import { ColumnDef, Row, RowSelectionState } from "@tanstack/react-table";
 import { CornerDownRight, VolumeOff, VolumeX } from "lucide-react";
 import { useContext, useState } from "react";
 
+import { JiraDispatchActionItem } from "@/components/findings/jira-dispatch-action-item";
 import { MuteFindingsModal } from "@/components/findings/mute-findings-modal";
-import { SendToJiraModal } from "@/components/findings/send-to-jira-modal";
-import { JiraIcon } from "@/components/icons/services/IconServices";
 import { Checkbox } from "@/components/shadcn";
 import {
   ActionDropdown,
   ActionDropdownItem,
 } from "@/components/shadcn/dropdown";
+import { DateWithTime } from "@/components/shadcn/entities";
+import { EntityInfo } from "@/components/shadcn/entities/entity-info";
 import { InfoField } from "@/components/shadcn/info-field/info-field";
 import { Spinner } from "@/components/shadcn/spinner/spinner";
-import { DateWithTime } from "@/components/ui/entities";
-import { EntityInfo } from "@/components/ui/entities/entity-info";
-import { SeverityBadge } from "@/components/ui/table";
-import { DataTableColumnHeader } from "@/components/ui/table/data-table-column-header";
-import {
-  type FindingStatus,
-  StatusFindingBadge,
-} from "@/components/ui/table/status-finding-badge";
+import { SeverityBadge } from "@/components/shadcn/table";
+import { DataTableColumnHeader } from "@/components/shadcn/table/data-table-column-header";
 import { getFailingForLabel } from "@/lib/date-utils";
+import { buildJiraActionLabel } from "@/lib/jira-dispatch-action";
+import { createJiraDispatchPayload } from "@/lib/jira-dispatch-selection";
 import { FindingResourceRow } from "@/types";
+import type {
+  FindingTriageLoadedNote,
+  FindingTriageSummary,
+} from "@/types/findings-triage";
+import { JIRA_DISPATCH_TARGET } from "@/types/integrations";
 
 import { canMuteFindingResource } from "./finding-resource-selection";
+import {
+  FindingNoteActionItem,
+  FindingTriageStatusCell,
+} from "./finding-triage-cells";
+import type { FindingTriageUpdateHandler } from "./finding-triage-status-control";
 import { FindingsSelectionContext } from "./findings-selection-context";
 import {
   type DeltaType,
   NotificationIndicator,
 } from "./notification-indicator";
 
-const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
+const ResourceRowActions = ({
+  row,
+  findingTitle,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
+}: {
+  row: Row<FindingResourceRow>;
+  findingTitle?: string;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
+}) => {
   const resource = row.original;
   const canMute = canMuteFindingResource(resource);
   const [isMuteModalOpen, setIsMuteModalOpen] = useState(false);
-  const [isJiraModalOpen, setIsJiraModalOpen] = useState(false);
   const [resolvedIds, setResolvedIds] = useState<string[]>([]);
   const [isResolving, setIsResolving] = useState(false);
 
@@ -62,6 +80,14 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
     if (ids.length > 1) return `Mute ${ids.length}`;
     return "Mute";
   };
+  const displayIds = getDisplayIds();
+  const jiraPayload = createJiraDispatchPayload({
+    targetIds: displayIds,
+    targetType: JIRA_DISPATCH_TARGET.FINDING_ID,
+    findingTitle: findingTitle || resource.checkId,
+    selectedResourceCount: displayIds.length,
+    isFindingGroupSelection: true,
+  });
 
   const handleMuteClick = async () => {
     const displayIds = getDisplayIds();
@@ -102,17 +128,22 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
           onComplete={handleMuteComplete}
         />
       )}
-      <SendToJiraModal
-        isOpen={isJiraModalOpen}
-        onOpenChange={setIsJiraModalOpen}
-        findingId={resource.findingId}
-        findingTitle={resource.checkId}
-      />
       <div
         className="flex items-center justify-end"
         onClick={(e) => e.stopPropagation()}
       >
         <ActionDropdown ariaLabel="Resource actions">
+          <FindingNoteActionItem
+            triage={resource.triage}
+            findingContext={{
+              title: findingTitle || resource.checkId,
+              resource: resource.resourceName,
+              provider: resource.providerAlias,
+              providerType: resource.providerType,
+            }}
+            onTriageUpdateAction={onTriageUpdateAction}
+            onTriageNoteLoadAction={onTriageNoteLoadAction}
+          />
           <ActionDropdownItem
             icon={
               resource.isMuted ? (
@@ -127,10 +158,11 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
             disabled={!canMute || isResolving}
             onSelect={handleMuteClick}
           />
-          <ActionDropdownItem
-            icon={<JiraIcon size={20} />}
-            label="Send to Jira"
-            onSelect={() => setIsJiraModalOpen(true)}
+          <JiraDispatchActionItem
+            label={buildJiraActionLabel({
+              findingCount: displayIds.length,
+            })}
+            payload={jiraPayload}
           />
         </ActionDropdown>
       </div>
@@ -141,11 +173,19 @@ const ResourceRowActions = ({ row }: { row: Row<FindingResourceRow> }) => {
 interface GetColumnFindingResourcesOptions {
   rowSelection: RowSelectionState;
   selectableRowCount: number;
+  findingTitle?: string;
+  onTriageUpdateAction?: FindingTriageUpdateHandler;
+  onTriageNoteLoadAction?: (
+    triage: FindingTriageSummary,
+  ) => Promise<FindingTriageLoadedNote>;
 }
 
 export function getColumnFindingResources({
   rowSelection,
   selectableRowCount,
+  findingTitle,
+  onTriageUpdateAction,
+  onTriageNoteLoadAction,
 }: GetColumnFindingResourcesOptions): ColumnDef<FindingResourceRow>[] {
   const selectedCount = Object.values(rowSelection).filter(Boolean).length;
   const isAllSelected =
@@ -203,24 +243,14 @@ export function getColumnFindingResources({
       enableSorting: false,
       enableHiding: false,
     },
-    // Status
-    {
-      id: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        return (
-          <StatusFindingBadge status={row.original.status as FindingStatus} />
-        );
-      },
-      enableSorting: false,
-    },
-    // Resource — name + uid
+    // Affected failing resource — name + uid
     {
       id: "resource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Resource" />
+        <DataTableColumnHeader
+          column={column}
+          title="Affected failing resource"
+        />
       ),
       cell: ({ row }) => (
         <div className="max-w-[240px]">
@@ -278,7 +308,9 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Region" variant="compact">
-          {row.original.region || "-"}
+          <span className="block truncate whitespace-nowrap">
+            {row.original.region || "-"}
+          </span>
         </InfoField>
       ),
       enableSorting: false,
@@ -291,7 +323,7 @@ export function getColumnFindingResources({
       ),
       cell: ({ row }) => (
         <InfoField label="Last seen" variant="compact">
-          <DateWithTime dateTime={row.original.lastSeenAt} inline />
+          <DateWithTime dateTime={row.original.lastSeenAt} />
         </InfoField>
       ),
       enableSorting: false,
@@ -312,11 +344,36 @@ export function getColumnFindingResources({
       },
       enableSorting: false,
     },
-    // Actions column — mute only
+    // Triage — keep the compact label: these cells also render inside
+    // expanded finding-group rows, which have no header row of their own.
+    {
+      id: "triage",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Triage" />
+      ),
+      cell: ({ row }) => (
+        <InfoField label="Triage" variant="compact">
+          <FindingTriageStatusCell
+            triage={row.original.triage}
+            onTriageUpdateAction={onTriageUpdateAction}
+          />
+        </InfoField>
+      ),
+      enableSorting: false,
+    },
+    // Actions column — utility actions are kept last.
     {
       id: "actions",
+      size: 56,
       header: () => <div className="w-10" />,
-      cell: ({ row }) => <ResourceRowActions row={row} />,
+      cell: ({ row }) => (
+        <ResourceRowActions
+          row={row}
+          findingTitle={findingTitle}
+          onTriageUpdateAction={onTriageUpdateAction}
+          onTriageNoteLoadAction={onTriageNoteLoadAction}
+        />
+      ),
       enableSorting: false,
     },
   ];

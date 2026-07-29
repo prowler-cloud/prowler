@@ -15,19 +15,19 @@ import {
   ALERT_TRIGGER_KINDS,
   type AlertRule,
 } from "@/app/(prowler)/alerts/_types";
-import { Button } from "@/components/shadcn";
+import { Button, useToast } from "@/components/shadcn";
 import { Modal } from "@/components/shadcn/modal";
-import { useToast } from "@/components/ui";
 import { DOCS_URLS } from "@/lib/external-urls";
-import type { MetaDataProps } from "@/types";
-import type { ScanEntity } from "@/types";
+import type { MetaDataProps, ScanEntity } from "@/types";
 import type { ProviderProps } from "@/types/providers";
 
 import { toAlertPayload } from "../_lib/alert-adapter";
+import { getAlertMutationError } from "../_lib/alert-errors";
 import type {
   AlertFormSubmitResult,
   AlertFormValues,
 } from "../_types/alert-form";
+
 import { AlertFormModal } from "./alert-form-modal";
 import { AlertsEmptyState } from "./alerts-empty-state";
 import { AlertsTable } from "./alerts-table";
@@ -108,7 +108,12 @@ export const AlertsManager = ({
     }
     const payload = toAlertPayload(values);
     const result = await updateAlert(editingAlert.id, payload);
-    if (result?.error) return { ok: false, error: result.error };
+    if (result?.error) {
+      return {
+        ok: false,
+        error: getAlertMutationError(result),
+      };
+    }
     toast({
       title: "Alert updated",
       description: result.data.attributes.name,
@@ -127,7 +132,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert update failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }
@@ -147,7 +152,7 @@ export const AlertsManager = ({
       toast({
         variant: "destructive",
         title: "Alert delete failed",
-        description: result.error,
+        description: getAlertMutationError(result),
       });
       return;
     }

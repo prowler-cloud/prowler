@@ -4,8 +4,8 @@ import { Icon } from "@iconify/react";
 import { InputHTMLAttributes, useState } from "react";
 import { Control, FieldPath, FieldValues } from "react-hook-form";
 
+import { FormControl, FormField, FormMessage } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input/input";
-import { FormControl, FormField, FormMessage } from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 interface WizardInputFieldProps<T extends FieldValues> {
@@ -142,7 +142,7 @@ export const WizardInputField = <T extends FieldValues>({
                   <button
                     type="button"
                     onClick={toggleVisibility}
-                    className="text-default-400 hover:text-default-500 absolute top-1/2 right-3 -translate-y-1/2"
+                    className="text-text-neutral-tertiary hover:text-text-neutral-secondary absolute top-1/2 right-3 -translate-y-1/2"
                     aria-label={
                       inputType === "password"
                         ? "Show password"

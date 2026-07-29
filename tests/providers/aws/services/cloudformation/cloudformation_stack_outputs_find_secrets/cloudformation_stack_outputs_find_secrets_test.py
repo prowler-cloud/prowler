@@ -38,7 +38,10 @@ class Test_cloudformation_stack_outputs_find_secrets:
             Stack(
                 arn="arn:aws:cloudformation:eu-west-1:123456789012:stack/Test-Stack/796c8d26-b390-41d7-a23c-0702c4e78b60",
                 name=stack_name,
-                outputs=["DB_PASSWORD:foobar123", "ENV:DEV"],
+                outputs=[
+                    "DB_KEY:eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.dozjgNryP4J3jVmNHl0w5N_XgL0n3I9PlFUP0THsR8U",
+                    "ENV:DEV",
+                ],
                 region=AWS_REGION,
             )
         ]
@@ -66,7 +69,7 @@ class Test_cloudformation_stack_outputs_find_secrets:
             assert result[0].status == "FAIL"
             assert (
                 result[0].status_extended
-                == f"Potential secret found in CloudFormation Stack {stack_name} Outputs -> Secret Keyword in Output 1."
+                == f"Potential secret found in CloudFormation Stack {stack_name} Outputs -> JSON Web Token (base64url-encoded) in Output 1."
             )
             assert result[0].resource_id == "Test-Stack"
             assert (

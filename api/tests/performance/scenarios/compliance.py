@@ -90,7 +90,7 @@ class APIUser(APIUserBase):
     def compliance_overviews_default(self):
         provider_type, scan_info = _get_random_scan()
         name = f"/compliance-overviews ({provider_type})"
-        endpoint = f"/compliance-overviews?" f"filter[scan_id]={scan_info['scan_id']}"
+        endpoint = f"/compliance-overviews?filter[scan_id]={scan_info['scan_id']}"
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)
 
     @task(2)
@@ -122,7 +122,6 @@ class APIUser(APIUserBase):
         compliance_id = _get_random_compliance_id(provider_type)
         name = f"/compliance-overviews/attributes ({compliance_id})"
         endpoint = (
-            f"/compliance-overviews/attributes"
-            f"?filter[compliance_id]={compliance_id}"
+            f"/compliance-overviews/attributes?filter[compliance_id]={compliance_id}"
         )
         self.client.get(endpoint, headers=get_auth_headers(self.token), name=name)

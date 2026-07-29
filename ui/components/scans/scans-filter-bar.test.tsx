@@ -9,7 +9,12 @@ vi.mock("@/components/filters/provider-account-selectors", () => ({
   ProviderAccountSelectors: () => <div>Provider account selectors</div>,
 }));
 
-vi.mock("@/components/shadcn", () => ({
+vi.mock("@/components/filters/provider-group-selector", () => ({
+  ProviderGroupSelector: () => <div>Provider group selector</div>,
+}));
+
+vi.mock("@/components/shadcn", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   Select: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),

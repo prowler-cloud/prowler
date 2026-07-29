@@ -158,17 +158,24 @@ export const createMuteRule = async (
       try {
         if (responseContentType?.includes("application/json")) {
           const errorData = await response.json();
+          const jsonApiError = (
+            errorData as {
+              errors?: Array<{
+                detail?: string;
+                title?: string;
+                source?: { pointer?: string };
+              }>;
+              message?: string;
+            }
+          )?.errors?.[0];
           errorMessage =
-            (
-              errorData as {
-                errors?: Array<{ detail?: string }>;
-                message?: string;
-              }
-            )?.errors?.[0]?.detail ||
+            jsonApiError?.detail ||
+            jsonApiError?.title ||
             (errorData as { message?: string })?.message ||
             errorMessage;
         } else {
-          await response.text();
+          const responseText = await response.text();
+          errorMessage = responseText || errorMessage;
         }
       } catch {
         // JSON parsing failed, use default error message

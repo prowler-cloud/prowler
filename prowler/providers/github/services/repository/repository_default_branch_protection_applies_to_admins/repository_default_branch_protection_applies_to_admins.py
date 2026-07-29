@@ -26,6 +26,8 @@ class repository_default_branch_protection_applies_to_admins(Check):
                 report = CheckReportGithub(metadata=self.metadata(), resource=repo)
                 report.status = "FAIL"
                 report.status_extended = f"Repository {repo.name} does not enforce administrators to be subject to the same branch protection rules as other users."
+                if repo.default_branch.enforce_admins_source == "ruleset_not_active":
+                    report.status_extended = f"Repository {repo.name} has a ruleset that would apply to administrators, but the ruleset is not active."
 
                 if repo.default_branch.enforce_admins:
                     report.status = "PASS"

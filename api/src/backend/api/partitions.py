@@ -1,21 +1,20 @@
-from datetime import datetime, timezone
-from typing import Generator, Optional
-
-from dateutil.relativedelta import relativedelta
-from django.conf import settings
-from psqlextra.partitioning import (
-    PostgresPartitioningManager,
-    PostgresRangePartition,
-    PostgresRangePartitioningStrategy,
-    PostgresTimePartitionSize,
-    PostgresPartitioningError,
-)
-from psqlextra.partitioning.config import PostgresPartitioningConfig
-from uuid6 import UUID
+from collections.abc import Generator
+from datetime import UTC, datetime
 
 from api.models import Finding, ResourceFindingMapping
 from api.rls import RowLevelSecurityConstraint
 from api.uuid_utils import datetime_to_uuid7
+from dateutil.relativedelta import relativedelta
+from django.conf import settings
+from psqlextra.partitioning import (
+    PostgresPartitioningError,
+    PostgresPartitioningManager,
+    PostgresRangePartition,
+    PostgresRangePartitioningStrategy,
+    PostgresTimePartitionSize,
+)
+from psqlextra.partitioning.config import PostgresPartitioningConfig
+from uuid6 import UUID
 
 
 class PostgresUUIDv7RangePartition(PostgresRangePartition):
@@ -24,7 +23,7 @@ class PostgresUUIDv7RangePartition(PostgresRangePartition):
         from_values: UUID,
         to_values: UUID,
         size: PostgresTimePartitionSize,
-        name_format: Optional[str] = None,
+        name_format: str | None = None,
         **kwargs,
     ) -> None:
         self.from_values = from_values
@@ -38,9 +37,7 @@ class PostgresUUIDv7RangePartition(PostgresRangePartition):
 
         start_timestamp_ms = self.from_values.time
 
-        self.start_datetime = datetime.fromtimestamp(
-            start_timestamp_ms / 1000, timezone.utc
-        )
+        self.start_datetime = datetime.fromtimestamp(start_timestamp_ms / 1000, UTC)
 
     def name(self) -> str:
         if not self.name_format:
@@ -82,8 +79,8 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         size: PostgresTimePartitionSize,
         count: int,
         start_date: datetime = None,
-        max_age: Optional[relativedelta] = None,
-        name_format: Optional[str] = None,
+        max_age: relativedelta | None = None,
+        name_format: str | None = None,
         **kwargs,
     ) -> None:
         self.start_date = start_date.replace(
@@ -151,7 +148,7 @@ class PostgresUUIDv7PartitioningStrategy(PostgresRangePartitioningStrategy):
         Returns:
             datetime: A `datetime` object representing the start of the current month in UTC.
         """
-        return datetime.now(timezone.utc).replace(
+        return datetime.now(UTC).replace(
             day=1, hour=0, minute=0, second=0, microsecond=0
         )
 
@@ -171,7 +168,7 @@ manager = PostgresPartitioningManager(
         PostgresPartitioningConfig(
             model=Finding,
             strategy=PostgresUUIDv7PartitioningStrategy(
-                start_date=datetime.now(timezone.utc),
+                start_date=datetime.now(UTC),
                 size=PostgresTimePartitionSize(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),
@@ -187,7 +184,7 @@ manager = PostgresPartitioningManager(
         PostgresPartitioningConfig(
             model=ResourceFindingMapping,
             strategy=PostgresUUIDv7PartitioningStrategy(
-                start_date=datetime.now(timezone.utc),
+                start_date=datetime.now(UTC),
                 size=PostgresTimePartitionSize(
                     months=settings.FINDINGS_TABLE_PARTITION_MONTHS
                 ),

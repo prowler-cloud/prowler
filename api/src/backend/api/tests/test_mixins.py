@@ -2,10 +2,6 @@ import json
 from uuid import uuid4
 
 import pytest
-from django_celery_results.models import TaskResult
-from rest_framework import status
-from rest_framework.response import Response
-
 from api.exceptions import (
     TaskFailedException,
     TaskInProgressException,
@@ -14,6 +10,9 @@ from api.exceptions import (
 from api.models import Task, User
 from api.rls import Tenant
 from api.v1.mixins import PaginateByPkMixin, TaskManagementMixin
+from django_celery_results.models import TaskResult
+from rest_framework import status
+from rest_framework.response import Response
 
 
 @pytest.mark.django_db

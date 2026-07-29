@@ -12,10 +12,10 @@ export const ImageCredentialsForm = ({
   return (
     <>
       <div className="flex flex-col">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Connect via Registry Credentials
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Provide registry credentials to authenticate with your container
           registry (all fields are optional).
         </div>
@@ -52,10 +52,10 @@ export const ImageCredentialsForm = ({
       />
 
       <div className="flex flex-col pt-2">
-        <div className="text-md text-default-foreground leading-9 font-bold">
+        <div className="text-md text-text-neutral-primary leading-9 font-bold">
           Scan Scope
         </div>
-        <div className="text-default-500 text-sm">
+        <div className="text-text-neutral-tertiary text-sm">
           Limit which repositories and tags are scanned using regex patterns.
         </div>
       </div>

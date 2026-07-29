@@ -15,11 +15,10 @@ class ec2_securitygroup_not_used(Check):
                 report.resource_details = security_group.name
                 report.status = "PASS"
                 report.status_extended = f"Security group {security_group.name} ({security_group.id}) it is being used."
-                sg_in_lambda = False
+                sg_in_lambda = (
+                    security_group.id in awslambda_client.security_groups_in_use
+                )
                 sg_associated = False
-                for function in awslambda_client.functions.values():
-                    if security_group.id in function.security_groups:
-                        sg_in_lambda = True
                 for sg in ec2_client.security_groups.values():
                     if security_group.id in sg.associated_sgs:
                         sg_associated = True

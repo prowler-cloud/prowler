@@ -464,7 +464,7 @@ class Test_Repository_ErrorHandling:
                 assert "Rate limit exceeded" in str(mock_logger.error.call_args)
 
 
-class Test_Repository_DismissStaleReviewsRulesets:
+class Test_Repository_BranchProtectionRulesets:
     def setup_method(self):
         self.repository_service = Repository.__new__(Repository)
         self.repository_service.provider = set_mocked_github_provider()
@@ -550,6 +550,27 @@ class Test_Repository_DismissStaleReviewsRulesets:
             ],
         }
 
+    def _build_ruleset(
+        self,
+        *,
+        enforcement,
+        include,
+        rules,
+        bypass_actors=None,
+        ruleset_id=201,
+    ):
+        return {
+            "id": ruleset_id,
+            "name": "Branch protection ruleset",
+            "target": "branch",
+            "source_type": "Repository",
+            "source": "owner1/repo1",
+            "enforcement": enforcement,
+            "bypass_actors": bypass_actors or [],
+            "conditions": {"ref_name": {"include": include, "exclude": []}},
+            "rules": rules,
+        }
+
     def test_process_repository_uses_classic_branch_protection(self):
         repo = self._build_repo(branch_protected=True, dismiss_stale_reviews=True)
         repos = {}
@@ -606,3 +627,320 @@ class Test_Repository_DismissStaleReviewsRulesets:
         assert (
             repos[1].default_branch.dismiss_stale_reviews_source == "ruleset_not_active"
         )
+
+    def test_ruleset_non_fast_forward_disallows_force_push(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is False
+        assert repos[1].default_branch.allow_force_pushes_source == "ruleset"
+
+    def test_ruleset_non_fast_forward_inactive_keeps_force_push_allowed(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is True
+        assert repos[1].default_branch.allow_force_pushes_source == "ruleset_not_active"
+
+    def test_classic_protection_takes_precedence_over_inactive_ruleset(self):
+        # Classic protection already disallows force pushes, so an inactive ruleset
+        # must not downgrade the result.
+        repo = self._build_repo(
+            branch_protected=True,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.allow_force_pushes is False
+        assert repos[1].default_branch.allow_force_pushes_source == "classic"
+
+    def test_ruleset_required_signatures_requires_signed_commits(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "required_signatures"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.require_signed_commits is True
+        assert repos[1].default_branch.require_signed_commits_source == "ruleset"
+
+    def test_ruleset_required_linear_history(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "required_linear_history"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.required_linear_history is True
+        assert repos[1].default_branch.required_linear_history_source == "ruleset"
+
+    def test_ruleset_required_status_checks(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [{"context": "ci/build"}],
+                                "strict_required_status_checks_policy": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.status_checks is True
+        assert repos[1].default_branch.status_checks_source == "ruleset"
+
+    def test_ruleset_required_status_checks_without_configured_checks(self):
+        # A required_status_checks rule with an empty list enforces nothing, so it
+        # must not be treated as a passing status-checks requirement.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "required_status_checks",
+                            "parameters": {
+                                "required_status_checks": [],
+                                "strict_required_status_checks_policy": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.status_checks is False
+        assert repos[1].default_branch.status_checks_source is None
+
+    def test_ruleset_deletion_disables_branch_deletion(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "deletion"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.branch_deletion is False
+        assert repos[1].default_branch.branch_deletion_source == "ruleset"
+
+    def test_active_ruleset_marks_default_branch_protected(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.protected is True
+        assert repos[1].default_branch.protected_source == "ruleset"
+
+    def test_ruleset_pull_request_parameters_map_to_attributes(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "dismiss_stale_reviews_on_push": False,
+                                "require_code_owner_review": True,
+                                "require_last_push_approval": False,
+                                "required_approving_review_count": 2,
+                                "required_review_thread_resolution": True,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        branch = repos[1].default_branch
+        assert branch.require_pull_request is True
+        assert branch.require_pull_request_source == "ruleset"
+        assert branch.require_code_owner_reviews is True
+        assert branch.require_code_owner_reviews_source == "ruleset"
+        assert branch.conversation_resolution is True
+        assert branch.conversation_resolution_source == "ruleset"
+        assert branch.approval_count == 2
+        assert branch.approval_count_source == "ruleset"
+
+    def test_inactive_ruleset_approval_count_is_fail_signal(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[
+                        {
+                            "type": "pull_request",
+                            "parameters": {
+                                "required_approving_review_count": 2,
+                            },
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.approval_count == 0
+        assert repos[1].default_branch.approval_count_source == "ruleset_not_active"
+
+    def test_active_ruleset_without_bypass_actors_applies_to_admins(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is True
+        assert repos[1].default_branch.enforce_admins_source == "ruleset"
+
+    def test_active_ruleset_with_bypass_actors_does_not_apply_to_admins(self):
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="active",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 1,
+                            "actor_type": "RepositoryRole",
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        # Admins can bypass, so the rulesets do not enforce protection for them.
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+
+    def test_inactive_ruleset_with_bypass_actors_is_not_admin_fail_signal(self):
+        # A disabled ruleset that has bypass actors would not apply to admins even if
+        # activated, so it must not raise the enforce-admins ruleset_not_active signal.
+        repo = self._build_repo(
+            branch_protected=False,
+            ruleset_details=[
+                self._build_ruleset(
+                    enforcement="disabled",
+                    include=["~DEFAULT_BRANCH"],
+                    rules=[{"type": "non_fast_forward"}],
+                    bypass_actors=[
+                        {
+                            "actor_id": 1,
+                            "actor_type": "RepositoryRole",
+                            "bypass_mode": "always",
+                        }
+                    ],
+                )
+            ],
+        )
+        repos = {}
+
+        self.repository_service._process_repository(repo, repos)
+
+        assert repos[1].default_branch.enforce_admins is False
+        assert repos[1].default_branch.enforce_admins_source is None
+        # The branch is still reported as protected-but-inactive regardless of bypass.
+        assert repos[1].default_branch.protected_source == "ruleset_not_active"

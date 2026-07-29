@@ -38,7 +38,7 @@ export const WorkflowAttackPaths = () => {
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
-        <h3 className="dark:text-prowler-theme-pale/90 text-sm font-semibold">
+        <h3 className="dark:text-text-neutral-primary/90 text-sm font-semibold">
           Step {currentStep + 1} of {steps.length}
         </h3>
       </div>

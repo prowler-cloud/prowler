@@ -1,6 +1,7 @@
 import httpx
-from prowler_mcp_server import __version__
 from pydantic import BaseModel, Field
+
+from prowler_mcp_server import __version__
 
 
 class SearchResult(BaseModel):

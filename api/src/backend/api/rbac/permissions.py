@@ -1,11 +1,10 @@
 from enum import Enum
 
-from django.db.models import QuerySet
+from api.db_router import MainRouter
+from api.models import Integration, Provider, Role, User
+from django.db.models import Q, QuerySet
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import BasePermission
-
-from api.db_router import MainRouter
-from api.models import Provider, Role, User
 
 
 class Permissions(Enum):
@@ -35,7 +34,7 @@ class HasPermissions(BasePermission):
         if not tenant_id:
             return False
 
-        user_roles = (
+        user_roles = list(
             User.objects.using(MainRouter.admin_db)
             .get(id=request.user.id)
             .roles.using(MainRouter.admin_db)
@@ -44,11 +43,10 @@ class HasPermissions(BasePermission):
         if not user_roles:
             return False
 
-        for perm in required_permissions:
-            if not getattr(user_roles[0], perm.value, False):
-                return False
-
-        return True
+        return all(
+            any(getattr(role, permission.value, False) for role in user_roles)
+            for permission in required_permissions
+        )
 
 
 def get_role(user: User, tenant_id: str) -> Role:
@@ -84,4 +82,33 @@ def get_providers(role: Role) -> QuerySet[Provider]:
 
     return Provider.objects.filter(
         tenant_id=tenant_id, provider_groups__in=provider_groups
+    ).distinct()
+
+
+def get_integrations(
+    role: Role, providers: QuerySet[Provider] | None = None
+) -> QuerySet[Integration]:
+    """
+    Return a distinct queryset of Integrations visible to the given role.
+
+    Integrations with no providers attached are tenant-wide, as is always the case for
+    Jira, and stay visible regardless of the provider visibility of the role. Integrations
+    attached to providers are only visible when the role can access at least one of them.
+
+    Args:
+        role: A Role instance.
+        providers: Optional queryset of the providers accessible by the role, to reuse
+            an already resolved `get_providers(role)` result within the same request.
+
+    Returns:
+        A QuerySet of Integration objects visible to the role.
+    """
+    queryset = Integration.objects.filter(tenant_id=role.tenant_id)
+    if role.unlimited_visibility:
+        return queryset
+
+    if providers is None:
+        providers = get_providers(role)
+    return queryset.filter(
+        Q(providers__isnull=True) | Q(providers__in=providers)
     ).distinct()

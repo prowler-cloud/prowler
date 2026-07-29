@@ -1211,6 +1211,14 @@
         "rds_instance_default_admin",
         "redshift_cluster_non_default_database_name"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1416,6 +1424,14 @@
         "iam_user_administrator_access_policy",
         "organizations_delegated_administrators"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -1485,6 +1501,14 @@
         "sqs_queues_not_publicly_accessible",
         "ssm_documents_set_as_public",
         "vpc_endpoint_services_allowed_principals_trust_boundaries"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {
@@ -2040,6 +2064,10 @@
         "elb_ssl_listeners",
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_nlb_tls_termination_enabled",
         "elbv2_ssl_listeners",
         "glue_data_catalogs_connection_passwords_encryption_enabled",
@@ -2078,6 +2106,17 @@
         "ssm_document_secrets",
         "transfer_server_in_transit_encryption_enabled",
         "workspaces_volume_encryption_enabled"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -2816,6 +2855,20 @@
         "wafv2_webacl_rule_logging_enabled",
         "wafv2_webacl_with_rules"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -3090,6 +3143,10 @@
         "elb_ssl_listeners_use_acm_certificate",
         "elbv2_desync_mitigation_mode",
         "elbv2_insecure_ssl_ciphers",
+        "elbv2_listener_pqc_tls_enabled",
+        "cloudfront_distributions_pqc_tls_enabled",
+        "apigateway_domain_name_pqc_tls_enabled",
+        "transfer_server_pqc_ssh_kex_enabled",
         "elbv2_internet_facing",
         "elbv2_listeners_underneath",
         "elbv2_logging_enabled",
@@ -3312,6 +3369,47 @@
         "wellarchitected_workload_no_high_or_medium_risks",
         "workspaces_volume_encryption_enabled",
         "workspaces_vpc_2private_1public_subnets_nat"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "accessanalyzer_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "guardduty_is_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "securityhub_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        },
+        {
+          "Check": "acm_certificates_with_secure_key_algorithms",
+          "ConfigKey": "insecure_key_algorithms",
+          "Operator": "superset",
+          "Value": [
+            "RSA-1024",
+            "P-192"
+          ]
+        }
       ],
       "Attributes": [
         {
@@ -3705,6 +3803,14 @@
         "s3_bucket_event_notifications_enabled",
         "trustedadvisor_errors_and_warnings"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "config_recorder_all_regions_enabled",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -3823,6 +3929,14 @@
         "s3_bucket_object_lock",
         "s3_bucket_object_versioning"
       ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
+      ],
       "Attributes": [
         {
           "Domain": "2. Control Measures Requirements",
@@ -3859,6 +3973,14 @@
       "Description": "Regularly test the adequacy of the disaster recovery strategies and plans, and supplement the recovery strategies and plans based on test results, changes in the information system environment, and legal requirements.",
       "Checks": [
         "drs_job_exist"
+      ],
+      "ConfigRequirements": [
+        {
+          "Check": "drs_job_exist",
+          "ConfigKey": "mute_non_default_regions",
+          "Operator": "eq",
+          "Value": false
+        }
       ],
       "Attributes": [
         {

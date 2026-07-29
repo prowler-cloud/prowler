@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 
-import { Form } from "@/components/ui/form";
+import { Form } from "@/components/shadcn/form";
 
 import { RadioGroupCloudflareViaCredentialsTypeForm } from "./radio-group-cloudflare-via-credentials-type-form";
 

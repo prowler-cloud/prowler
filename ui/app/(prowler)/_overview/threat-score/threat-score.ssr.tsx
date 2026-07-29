@@ -1,7 +1,10 @@
 import { getThreatScore } from "@/actions/overview";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 
 import { pickFilterParams } from "../_lib/filter-params";
 import { SSRComponentProps } from "../_types";
+
 import { ThreatScore } from "./_components/threat-score";
 
 export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
@@ -24,11 +27,23 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
     : null;
 
   return (
-    <ThreatScore
-      score={score}
-      scoreDelta={scoreDelta}
-      sectionScores={attributes.section_scores}
-      criticalRequirements={attributes.critical_requirements}
-    />
+    <>
+      <LighthouseContextContributor
+        key={`overview-threat-score-${score}`}
+        contributorId="overview-threat-score"
+        item={buildComplianceContext({
+          pathname: "/",
+          id: "prowler-threat-score",
+          framework: "Prowler ThreatScore",
+          score,
+        })}
+      />
+      <ThreatScore
+        score={score}
+        scoreDelta={scoreDelta}
+        sectionScores={attributes.section_scores}
+        criticalRequirements={attributes.critical_requirements}
+      />
+    </>
   );
 };

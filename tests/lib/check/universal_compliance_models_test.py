@@ -1,5 +1,7 @@
 import json
 import os
+import tempfile
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic.v1 import ValidationError
@@ -23,6 +25,7 @@ from prowler.lib.check.compliance_models import (
     TableLabels,
     UniversalComplianceRequirement,
     adapt_legacy_to_universal,
+    get_bulk_compliance_frameworks_universal,
     load_compliance_framework_universal,
 )
 from tests.lib.outputs.compliance.fixtures import (
@@ -1116,3 +1119,121 @@ class TestAttributesMetadataValidation:
                 ],
                 attributes_metadata=self._metadata(enum=["high", "low"]),
             )
+
+
+class TestGetBulkUniversalEntryPoints:
+    """Entry-point discovery for universal (multi-provider) compliance frameworks."""
+
+    @staticmethod
+    def _write_universal_json(directory, filename, framework, display_name):
+        data = {
+            "framework": framework,
+            "name": display_name,
+            "version": "1.0",
+            "description": "External multi-provider framework",
+            "requirements": [
+                {
+                    "id": "1",
+                    "name": "Requirement 1",
+                    "description": "desc",
+                    "checks": {"fakeexternal": ["check_a"]},
+                }
+            ],
+        }
+        with open(os.path.join(directory, filename), "w") as f:
+            json.dump(data, f)
+
+    @staticmethod
+    def _entry_point(path):
+        module = MagicMock()
+        module.__path__ = [path]
+        ep = MagicMock()
+        ep.name = "fakeexternal"
+        ep.group = "prowler.compliance.universal"
+        ep.load.return_value = module
+        return ep
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_includes_external_universal_framework(self, mock_list_modules, mock_ep):
+        mock_list_modules.return_value = []
+        with tempfile.TemporaryDirectory() as ep_dir:
+            self._write_universal_json(
+                ep_dir, "customuniversal_1.0.json", "CustomUniversal", "Custom"
+            )
+            mock_ep.return_value = [self._entry_point(ep_dir)]
+
+            bulk = get_bulk_compliance_frameworks_universal("fakeexternal")
+
+        mock_ep.assert_called_with(group="prowler.compliance.universal")
+        assert "customuniversal_1.0" in bulk
+        assert bulk["customuniversal_1.0"].framework == "CustomUniversal"
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_builtin_wins_over_external_on_name_collision(
+        self, mock_list_modules, mock_ep
+    ):
+        with (
+            tempfile.TemporaryDirectory() as root,
+            tempfile.TemporaryDirectory() as ep_dir,
+        ):
+            builtin_sub = os.path.join(root, "builtinprov")
+            os.makedirs(builtin_sub)
+            self._write_universal_json(
+                builtin_sub, "shared_1.0.json", "SharedFramework", "Built-in"
+            )
+            builtin_module = MagicMock()
+            builtin_module.module_finder.path = root
+            builtin_module.name = "prowler.compliance.builtinprov"
+            mock_list_modules.return_value = [builtin_module]
+
+            self._write_universal_json(
+                ep_dir, "shared_1.0.json", "SharedFramework", "External"
+            )
+            mock_ep.return_value = [self._entry_point(ep_dir)]
+
+            bulk = get_bulk_compliance_frameworks_universal("fakeexternal")
+
+        assert "shared_1.0" in bulk
+        assert bulk["shared_1.0"].name == "Built-in"
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_loads_all_frameworks_in_a_single_entry_point_path(
+        self, mock_list_modules, mock_ep
+    ):
+        """All JSONs in one entry-point directory are added, not collapsed to one."""
+        mock_list_modules.return_value = []
+        with tempfile.TemporaryDirectory() as ep_dir:
+            self._write_universal_json(ep_dir, "fw_a_1.0.json", "FwA", "Framework A")
+            self._write_universal_json(ep_dir, "fw_b_1.0.json", "FwB", "Framework B")
+            mock_ep.return_value = [self._entry_point(ep_dir)]
+
+            bulk = get_bulk_compliance_frameworks_universal("fakeexternal")
+
+        assert "fw_a_1.0" in bulk
+        assert "fw_b_1.0" in bulk
+
+    @patch("prowler.lib.check.compliance_models.importlib.metadata.entry_points")
+    @patch("prowler.lib.check.compliance_models.list_compliance_modules")
+    def test_merges_frameworks_from_multiple_packages_same_provider(
+        self, mock_list_modules, mock_ep
+    ):
+        """Two packages under the same provider name are both discovered."""
+        mock_list_modules.return_value = []
+        with (
+            tempfile.TemporaryDirectory() as dir_a,
+            tempfile.TemporaryDirectory() as dir_b,
+        ):
+            self._write_universal_json(dir_a, "pkg_a_1.0.json", "PkgA", "Package A")
+            self._write_universal_json(dir_b, "pkg_b_1.0.json", "PkgB", "Package B")
+            mock_ep.return_value = [
+                self._entry_point(dir_a),
+                self._entry_point(dir_b),
+            ]
+
+            bulk = get_bulk_compliance_frameworks_universal("fakeexternal")
+
+        assert "pkg_a_1.0" in bulk
+        assert "pkg_b_1.0" in bulk

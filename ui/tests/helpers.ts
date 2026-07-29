@@ -5,7 +5,6 @@ import {
   AWS_CREDENTIAL_OPTIONS,
   ProvidersPage,
 } from "./providers/providers-page";
-import { ScansPage } from "./scans/scans-page";
 
 export const ERROR_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password",
@@ -123,13 +122,10 @@ export async function addAWSProvider(
   await providersPage.fillStaticCredentials(staticCredentials);
   await providersPage.clickNext();
 
-  // Launch scan
-  await providersPage.verifyLaunchScanPageLoaded();
-  await providersPage.clickNext();
-
-  // Wait for redirect to provider page
-  const scansPage = new ScansPage(page);
-  await scansPage.verifyPageLoaded();
+  // Scans specs launch their own scan. The setup helper should only leave a
+  // connected provider behind so the suite does not spend CI capacity on a
+  // duplicate preparatory scan.
+  await providersPage.completeProviderConnectionWithoutLaunchingScan(accountId);
 }
 
 /**
@@ -223,9 +219,13 @@ export async function deleteProviderIfExists(
   await expect(deleteMenuItem).toBeVisible({ timeout: 5000 });
   await deleteMenuItem.click();
 
-  // Wait for confirmation modal to appear
+  // Wait for confirmation modal to appear. Exclude the Next.js dev error
+  // overlay, which is also role="dialog" and would otherwise be matched first,
+  // making the assertion wait on the wrong (hidden) element.
   const modal = page.page
-    .locator('[role="dialog"], .modal, [data-testid*="modal"]')
+    .locator(
+      '[role="dialog"]:not([data-nextjs-dialog="true"]), .modal, [data-testid*="modal"]',
+    )
     .first();
 
   await expect(modal).toBeVisible({ timeout: 10000 });

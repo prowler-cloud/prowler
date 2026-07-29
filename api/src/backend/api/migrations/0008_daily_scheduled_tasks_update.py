@@ -1,12 +1,11 @@
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import django.db.models.deletion
-from django.db import migrations, models
-from django_celery_beat.models import PeriodicTask
-
 from api.db_utils import rls_transaction
 from api.models import Scan, StateChoices
+from django.db import migrations, models
+from django_celery_beat.models import PeriodicTask
 
 
 def migrate_daily_scheduled_scan_tasks(apps, schema_editor):
@@ -17,11 +16,11 @@ def migrate_daily_scheduled_scan_tasks(apps, schema_editor):
         tenant_id = task_kwargs["tenant_id"]
         provider_id = task_kwargs["provider_id"]
 
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.now(UTC)
         scheduled_time_today = datetime.combine(
             current_time.date(),
             daily_scheduled_scan_task.start_time.time(),
-            tzinfo=timezone.utc,
+            tzinfo=UTC,
         )
 
         if current_time < scheduled_time_today:

@@ -196,6 +196,42 @@ python -m celery -A config.celery worker -l info -E
 
 The Celery worker does not detect and reload changes in the code, so you need to restart it manually when you make changes.
 
+### Makefile-Assisted Local Deployment
+
+This method is an additional local development workflow. It does not replace the manual local deployment or the Docker deployment described in this guide.
+
+PostgreSQL, Valkey, and Neo4j run with Docker Compose, while Django and the Celery worker run natively through `uv`. Additionally, this workflow creates a `tmux` session with panes for the API, worker, and PostgreSQL logs.
+
+Before using this method, ensure `docker compose`, `tmux`, and `uv` are installed.
+
+This workflow is designed for macOS and should also work on Linux when Docker, `tmux`, and `uv` are available. Windows requires script changes before it can be supported.
+
+From the repository root, run:
+
+```console
+make dev
+```
+
+The API will be available at:
+
+```console
+http://localhost:8080/api/v1
+```
+
+Use these commands to manage the local stack:
+
+```console
+make dev-setup   # Bootstrap dependencies, migrations, and fixtures
+make dev-attach  # Attach to the tmux session
+make dev-launch  # Start the stack on fixed ports and attach
+make dev-stop    # Stop the tmux session and containers
+make dev-clean   # Remove stopped development containers
+make dev-wipe    # Stop everything and delete local development data
+make dev-status  # Show development container status
+```
+
+This workflow does not start the UI. Start it separately from the `ui/` directory when needed.
+
 ### Docker deployment
 
 This method requires `docker` and `docker compose`.

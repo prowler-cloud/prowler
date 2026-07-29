@@ -215,6 +215,58 @@ else:
     )
 
 
+def _ensure_scope_columns(data):
+    """Guarantee ACCOUNTID and REGION exist.
+
+    Scope columns always sit between DESCRIPTION and ASSESSMENTDATE, so derive
+    them positionally for any provider (e.g. Okta's ORGANIZATIONDOMAIN) and
+    fall back to "-" to avoid a KeyError.
+    """
+    cols = list(data.columns)
+    scope = []
+    if "DESCRIPTION" in cols and "ASSESSMENTDATE" in cols:
+        start, end = cols.index("DESCRIPTION") + 1, cols.index("ASSESSMENTDATE")
+        scope = [c for c in cols[start:end] if c not in ("ACCOUNTID", "REGION")]
+
+    if "ACCOUNTID" not in data.columns:
+        if scope:
+            data.rename(columns={scope.pop(0): "ACCOUNTID"}, inplace=True)
+        else:
+            data["ACCOUNTID"] = "-"
+    if "REGION" not in data.columns:
+        if scope:
+            data.rename(columns={scope.pop(0): "REGION"}, inplace=True)
+        else:
+            data["REGION"] = "-"
+    return data
+
+
+def _dispatch_compliance_renderer(data, analytics_input):
+    """Resolve the compliance renderer module and return (table, deduped_data).
+
+    Tries to import the framework-specific builtin module.  On
+    ModuleNotFoundError (dynamic/external provider with no dedicated module),
+    falls back to the generic renderer.  Any other ImportError is re-raised.
+    get_table() is called OUTSIDE the try block so errors inside the renderer
+    surface as real exceptions rather than being swallowed.
+    """
+    current = analytics_input.replace(".", "_")
+    target = f"dashboard.compliance.{current}"
+    try:
+        module = importlib.import_module(target)
+    except ModuleNotFoundError as exc:
+        if exc.name != target:
+            raise
+        from dashboard.compliance import generic as module
+    dedup_columns = ["CHECKID", "STATUS", "RESOURCEID", "STATUSEXTENDED"]
+    if "MUTED" in data.columns:
+        dedup_columns.insert(2, "MUTED")
+    data = data.drop_duplicates(subset=dedup_columns)
+    if "threatscore" in analytics_input:
+        data = get_threatscore_mean_by_pillar(data)
+    return module.get_table(data), data
+
+
 @callback(
     [
         Output("output", "children"),
@@ -292,7 +344,7 @@ def display_data(
         data.rename(columns={"TENANCYID": "ACCOUNTID"}, inplace=True)
 
     # Filter the chosen level of the CIS
-    if is_level_1:
+    if is_level_1 and "REQUIREMENTS_ATTRIBUTES_PROFILE" in data.columns:
         data = data[data["REQUIREMENTS_ATTRIBUTES_PROFILE"].str.contains("Level 1")]
 
     # Rename the column PROJECTID to ACCOUNTID for GCP
@@ -313,6 +365,9 @@ def display_data(
     ):
         data.rename(columns={"SUBSCRIPTION": "ACCOUNTID"}, inplace=True)
         data["REGION"] = "-"
+
+    # Normalize scope columns for any remaining (e.g. dynamic) provider.
+    data = _ensure_scope_columns(data)
 
     # Filter ACCOUNT
     if account_filter == ["All"]:
@@ -409,36 +464,7 @@ def display_data(
         # Check cases where the compliance start with AWS_
         if "aws_" in analytics_input:
             analytics_input = analytics_input + "_aws"
-        try:
-            current = analytics_input.replace(".", "_")
-            compliance_module = importlib.import_module(
-                f"dashboard.compliance.{current}"
-            )
-            # Build subset list based on available columns
-            dedup_columns = ["CHECKID", "STATUS", "RESOURCEID", "STATUSEXTENDED"]
-            if "MUTED" in data.columns:
-                dedup_columns.insert(2, "MUTED")
-            data = data.drop_duplicates(subset=dedup_columns)
-
-            if "threatscore" in analytics_input:
-                data = get_threatscore_mean_by_pillar(data)
-
-            table = compliance_module.get_table(data)
-        except ModuleNotFoundError:
-            table = html.Div(
-                [
-                    html.H5(
-                        "No data found for this compliance",
-                        className="card-title",
-                        style={"text-align": "left", "color": "black"},
-                    )
-                ],
-                style={
-                    "width": "99%",
-                    "margin-right": "0.8%",
-                    "margin-bottom": "10px",
-                },
-            )
+        table, data = _dispatch_compliance_renderer(data, analytics_input)
 
         df = data.copy()
         # Remove Muted rows

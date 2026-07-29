@@ -2,14 +2,13 @@
 
 import uuid
 
+import api.db_utils
+import api.rls
 import django.core.validators
 import django.db.models.deletion
 import drf_simple_apikey.models
 from django.conf import settings
 from django.db import migrations, models
-
-import api.db_utils
-import api.rls
 
 
 class Migration(migrations.Migration):

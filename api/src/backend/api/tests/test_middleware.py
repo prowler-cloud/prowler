@@ -1,10 +1,9 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
+from api.middleware import APILoggingMiddleware
 from django.http import HttpResponse
 from django.test import RequestFactory
-
-from api.middleware import APILoggingMiddleware
 
 
 @pytest.mark.django_db

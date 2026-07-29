@@ -1,4 +1,8 @@
 from prowler.config.config import timestamp
+from prowler.lib.check.compliance_config_eval import (
+    apply_config_status,
+    build_requirement_config_status,
+)
 from prowler.lib.check.compliance_models import Compliance
 from prowler.lib.outputs.compliance.compliance_output import ComplianceOutput
 from prowler.lib.outputs.compliance.iso27001.models import KubernetesISO27001Model
@@ -34,10 +38,18 @@ class KubernetesISO27001(ComplianceOutput):
         Returns:
             - None
         """
+        requirement_config_status = build_requirement_config_status(
+            compliance.Requirements
+        )
         for finding in findings:
             for requirement in compliance.Requirements:
                 # Source of truth: framework JSON, not finding.compliance snapshot (avoids CSV/UI count drift).
                 if finding.check_id in requirement.Checks:
+                    row_status, row_status_extended = apply_config_status(
+                        finding.status,
+                        finding.status_extended,
+                        requirement_config_status.get(requirement.Id),
+                    )
                     for attribute in requirement.Attributes:
                         compliance_row = KubernetesISO27001Model(
                             Provider=finding.provider,
@@ -52,8 +64,8 @@ class KubernetesISO27001(ComplianceOutput):
                             Requirements_Attributes_Objetive_ID=attribute.Objetive_ID,
                             Requirements_Attributes_Objetive_Name=attribute.Objetive_Name,
                             Requirements_Attributes_Check_Summary=attribute.Check_Summary,
-                            Status=finding.status,
-                            StatusExtended=finding.status_extended,
+                            Status=row_status,
+                            StatusExtended=row_status_extended,
                             ResourceId=finding.resource_uid,
                             CheckId=finding.check_id,
                             Muted=finding.muted,
