@@ -8,8 +8,10 @@ from api.models import (
     Membership,
     ProviderGroup,
     ProviderGroupMembership,
+    ProviderSecret,
     Role,
     RoleProviderGroupRelationship,
+    Scan,
     User,
     UserRoleRelationship,
 )
@@ -665,6 +667,451 @@ class TestLimitedVisibility:
         return authenticated_client_for_tenant_factory(
             limited_admin_user, tenants_fixture[0]
         )
+
+    @pytest.fixture
+    def hidden_provider_secret(self, aws_provider_pair):
+        hidden_provider = aws_provider_pair[1]
+        return ProviderSecret.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            provider=hidden_provider,
+            secret_type=ProviderSecret.TypeChoices.STATIC,
+            secret={
+                "aws_access_key_id": "hidden-key",
+                "aws_secret_access_key": "hidden-secret",
+            },
+            name="Hidden provider secret",
+        )
+
+    @pytest.fixture
+    def limited_provider_group(self, limited_admin_user):
+        return ProviderGroup.objects.get(name="limited_visibility_group")
+
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scan_create_out_of_scope_provider_is_rejected(
+        self,
+        mock_enqueue_scan,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("scan-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "Out of scope scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(hidden_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not Scan.objects.filter(
+            provider=hidden_provider, name="Out of scope scan"
+        ).exists()
+        mock_enqueue_scan.assert_not_called()
+
+    @patch("api.v1.views.enqueue_scan_execution_on_commit")
+    def test_scan_create_in_scope_provider_is_accepted(
+        self,
+        mock_enqueue_scan,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("scan-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "scans",
+                        "attributes": {"name": "In scope scan"},
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(aws_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        assert Scan.objects.filter(provider=aws_provider, name="In scope scan").exists()
+        mock_enqueue_scan.assert_called_once()
+
+    def test_provider_secret_retrieve_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.get(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    def test_provider_secret_list_excludes_out_of_scope_provider(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.get(reverse("providersecret-list"))
+
+        assert response.status_code == status.HTTP_200_OK
+        assert str(hidden_provider_secret.id) not in {
+            item["id"] for item in response.json()["data"]
+        }
+
+    def test_provider_secret_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "Out of scope secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "aws_access_key_id": "hidden-key",
+                                "aws_secret_access_key": "hidden-secret",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(hidden_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderSecret.objects.filter(provider=hidden_provider).exists()
+
+    def test_provider_secret_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("providersecret-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "attributes": {
+                            "name": "In scope secret",
+                            "secret_type": ProviderSecret.TypeChoices.STATIC,
+                            "secret": {
+                                "aws_access_key_id": "visible-key",
+                                "aws_secret_access_key": "visible-secret",
+                            },
+                        },
+                        "relationships": {
+                            "provider": {
+                                "data": {
+                                    "type": "providers",
+                                    "id": str(aws_provider.id),
+                                }
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert ProviderSecret.objects.filter(provider=aws_provider).exists()
+
+    def test_provider_secret_update_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            ),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-secrets",
+                        "id": str(hidden_provider_secret.id),
+                        "attributes": {"name": "Updated hidden secret"},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        hidden_provider_secret.refresh_from_db()
+        assert hidden_provider_secret.name == "Hidden provider secret"
+
+    def test_provider_secret_delete_out_of_scope_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        hidden_provider_secret,
+    ):
+        response = authenticated_client_rbac_limited.delete(
+            reverse(
+                "providersecret-detail",
+                kwargs={"pk": hidden_provider_secret.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert ProviderSecret.objects.filter(id=hidden_provider_secret.id).exists()
+
+    def test_provider_group_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse("providergroup-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "attributes": {"name": "Out of scope group"},
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(hidden_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderGroup.objects.filter(name="Out of scope group").exists()
+
+    def test_provider_group_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider,
+    ):
+        response = authenticated_client_rbac_limited.post(
+            reverse("providergroup-list"),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "attributes": {"name": "In scope group"},
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(aws_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        provider_group = ProviderGroup.objects.get(name="In scope group")
+        assert set(provider_group.providers.all()) == {aws_provider}
+
+    def test_provider_group_update_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        visible_provider, hidden_provider = aws_provider_pair
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "providergroup-detail",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "provider-groups",
+                        "id": str(limited_provider_group.id),
+                        "relationships": {
+                            "providers": {
+                                "data": [
+                                    {
+                                        "type": "providers",
+                                        "id": str(hidden_provider.id),
+                                    }
+                                ]
+                            }
+                        },
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert set(limited_provider_group.providers.all()) == {visible_provider}
+
+    def test_provider_group_relationship_create_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(hidden_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert not ProviderGroupMembership.objects.filter(
+            provider_group=limited_provider_group,
+            provider=hidden_provider,
+        ).exists()
+
+    def test_provider_group_relationship_update_out_of_scope_provider_is_rejected(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        visible_provider, hidden_provider = aws_provider_pair
+        response = authenticated_client_rbac_limited.patch(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(hidden_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert set(limited_provider_group.providers.all()) == {visible_provider}
+
+    def test_provider_group_relationship_create_in_scope_provider_is_accepted(
+        self,
+        authenticated_client_rbac_limited,
+        limited_provider_group,
+        aws_provider_pair,
+    ):
+        additional_provider = aws_provider_pair[1]
+        additional_group = ProviderGroup.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            name="Additional visible group",
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            provider_group=additional_group,
+            provider=additional_provider,
+        )
+        RoleProviderGroupRelationship.objects.create(
+            tenant_id=additional_provider.tenant_id,
+            role=limited_provider_group.roles.get(),
+            provider_group=additional_group,
+        )
+
+        response = authenticated_client_rbac_limited.post(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": limited_provider_group.id},
+            ),
+            data={
+                "data": [
+                    {"type": "providers", "id": str(additional_provider.id)},
+                ]
+            },
+            content_type="application/vnd.api+json",
+        )
+
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        assert ProviderGroupMembership.objects.filter(
+            provider_group=limited_provider_group,
+            provider=additional_provider,
+        ).exists()
+
+    def test_provider_group_relationship_delete_out_of_scope_group_returns_404(
+        self,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        hidden_group = ProviderGroup.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            name="Unassigned provider group",
+        )
+        ProviderGroupMembership.objects.create(
+            tenant_id=hidden_provider.tenant_id,
+            provider_group=hidden_group,
+            provider=hidden_provider,
+        )
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse(
+                "provider_group-providers-relationship",
+                kwargs={"pk": hidden_group.id},
+            )
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert ProviderGroupMembership.objects.filter(
+            provider_group=hidden_group,
+            provider=hidden_provider,
+        ).exists()
 
     @patch("api.v1.views.Task.objects.get")
     @patch("api.v1.views.delete_provider_task.delay")

@@ -701,6 +701,12 @@ class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
         queryset=Role.objects.all(), many=True, required=False
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is not None:
+            self.fields["providers"].child_relation.queryset = provider_queryset
+
     def validate(self, attrs):
         if ProviderGroup.objects.filter(name=attrs.get("name")).exists():
             raise serializers.ValidationError(
@@ -851,9 +857,27 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         help_text="List of resource identifier objects representing providers.",
     )
 
+    def get_providers(self, validated_data):
+        provider_ids = {item["id"] for item in validated_data["providers"]}
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is None:
+            provider_queryset = Provider.objects.filter(
+                tenant_id=self.context.get("tenant_id")
+            )
+
+        providers = list(provider_queryset.filter(id__in=provider_ids))
+        if {provider.id for provider in providers} != provider_ids:
+            raise serializers.ValidationError(
+                {
+                    "providers": (
+                        "One or more providers do not exist or are not accessible."
+                    )
+                }
+            )
+        return providers
+
     def create(self, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         new_relationships = [
@@ -869,8 +893,7 @@ class ProviderGroupMembershipSerializer(RLSSerializer, BaseWriteSerializer):
         return self.context.get("provider_group")
 
     def update(self, instance, validated_data):
-        provider_ids = [item["id"] for item in validated_data["providers"]]
-        providers = Provider.objects.filter(id__in=provider_ids)
+        providers = self.get_providers(validated_data)
         tenant_id = self.context.get("tenant_id")
 
         instance.providers.clear()
@@ -1110,6 +1133,12 @@ class ScanIncludeSerializer(RLSSerializer):
 
 
 class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is not None:
+            self.fields["provider"].queryset = provider_queryset
+
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
@@ -1976,6 +2005,12 @@ class ProviderSecretSerializer(RLSSerializer):
 
 class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
     secret = ProviderSecretField(write_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        if provider_queryset is not None:
+            self.fields["provider"].queryset = provider_queryset
 
     class Meta:
         model = ProviderSecret
