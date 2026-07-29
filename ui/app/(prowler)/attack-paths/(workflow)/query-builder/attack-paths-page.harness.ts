@@ -237,7 +237,7 @@ export class AttackPathPageHarness extends BrowserHarness<PageFixture> {
   }
 
   async fillInput(name: string, value: string): Promise<void> {
-    const input = this.getInputByName(name);
+    const input = this.inputByName(name);
     if (!input) throw new Error(`fillInput: input "${name}" not found`);
     await this.user.fill(input, value);
   }
