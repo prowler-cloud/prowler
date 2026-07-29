@@ -6,7 +6,10 @@
   <b><i>Prowler</b> is the Open Cloud Security Platform trusted by thousands to automate security and compliance in any cloud environment. With thousands of ready-to-use checks and compliance frameworks, Prowler delivers real-time, customizable monitoring and seamless integrations, making cloud security simple, scalable, and cost-effective for organizations of any size.
 </p>
 <p align="center">
-<b>Secure ANY cloud at AI Speed at <a href="https://prowler.com">prowler.com</i></b>
+<b>The Agentic Cloud Defender</i></b>
+</p>
+<p align="center">
+<a href="https://cloud.prowler.com/sign-up">Try Prowler Cloud</a>
 </p>
 
 <p align="center">
@@ -56,7 +59,7 @@ Prowler includes hundreds of built-in controls to ensure compliance with standar
 
 ## Prowler Cloud & Prowler Local Server
 
-[Prowler Cloud](https://cloud.prowler.com/) and Prowler Local Server, its self-hosted open-source version, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
+[Prowler Cloud](https://cloud.prowler.com/sign-up) and Prowler Local Server, its self-hosted open-source version, are web applications that simplify running Prowler across your cloud provider accounts. They provide a user-friendly interface to visualize the results and streamline your security assessments.
 
 ![Prowler Cloud](docs/images/products/overview.png)
 ![Risk Pipeline](docs/images/products/risk-pipeline.png)

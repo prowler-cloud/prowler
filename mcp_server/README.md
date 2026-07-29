@@ -17,6 +17,7 @@ Full access to your Prowler data (Prowler Cloud, Prowler Private Cloud, or Prowl
 - **Muting Management**: Create and manage muting rules to suppress non-critical findings
 - **Compliance Reporting**: View compliance status across frameworks and drill into requirement-level details
 - **Integrations Management**: Set up and troubleshoot where Prowler sends its results (Amazon S3, AWS Security Hub, Jira), and turn findings into Jira work items
+- **User & Role Management**: List the users in your tenant, identify the authenticated user, browse RBAC roles, and set the role a user holds
 
 ### Prowler Hub
 
