@@ -3,12 +3,26 @@ import {
   type LighthouseV2Message,
   type LighthouseV2MessageRole,
 } from "@/app/(prowler)/lighthouse/_types";
+import {
+  buildAgentText,
+  fromApiLighthouseContext,
+  toApiLighthouseContext,
+} from "@/lib/lighthouse/context/transport";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 // Message parts can arrive as a raw string or as a `{ text }` object; this
 // normalizes both to a plain string and ignores anything else.
 export function getTextContent(content: unknown): string {
   if (typeof content === "string") {
     return content;
+  }
+  if (
+    typeof content === "object" &&
+    content !== null &&
+    "display_text" in content &&
+    typeof content.display_text === "string"
+  ) {
+    return content.display_text;
   }
   if (
     typeof content === "object" &&
@@ -21,6 +35,19 @@ export function getTextContent(content: unknown): string {
   return "";
 }
 
+export function getLighthouseContext(
+  content: unknown,
+): LighthouseContextEnvelope | undefined {
+  if (
+    typeof content !== "object" ||
+    content === null ||
+    !("ui_context" in content)
+  ) {
+    return undefined;
+  }
+  return fromApiLighthouseContext(content.ui_context);
+}
+
 // Monotonic counter guaranteeing unique optimistic ids even when two messages
 // are built within the same millisecond (toISOString alone is ms-granular).
 let optimisticMessageCounter = 0;
@@ -29,7 +56,8 @@ let optimisticMessageCounter = 0;
 // backend echoes the persisted message back through the stream/refresh.
 export function buildOptimisticMessage(
   role: LighthouseV2MessageRole,
-  text: string,
+  displayText: string,
+  context?: LighthouseContextEnvelope,
 ): LighthouseV2Message {
   const now = new Date().toISOString();
   optimisticMessageCounter += 1;
@@ -44,13 +72,27 @@ export function buildOptimisticMessage(
       {
         id: `${id}-part`,
         type: LIGHTHOUSE_V2_PART_TYPE.TEXT,
-        content: { text },
+        content: buildOptimisticContent(displayText, context),
         toolCallOutcome: null,
         insertedAt: now,
         updatedAt: now,
       },
     ],
   };
+}
+
+function buildOptimisticContent(
+  displayText: string,
+  context?: LighthouseContextEnvelope,
+) {
+  const apiContext = context ? toApiLighthouseContext(context) : undefined;
+  return context && apiContext
+    ? {
+        text: buildAgentText(displayText, apiContext),
+        display_text: displayText,
+        ui_context: apiContext,
+      }
+    : { text: displayText };
 }
 
 // Derives a session title from the first user message (collapsed + truncated).

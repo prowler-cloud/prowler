@@ -194,20 +194,13 @@ To complete the Prowler Cloud configuration:
 
 #### Step 5: Save and Verify Configuration
 
-Click the "Save" button to complete the setup. The "SAML Integration" card will now display an "Active" status, indicating the configuration is complete and enabled.
+Click the "Save" button to complete the setup. The "SAML SSO Integration" card will now display an "Enabled" status, indicating the configuration is complete and enabled.
 
-![Verify Integration Status](/images/prowler-app/saml/saml-step-4.png)
-
-<Info>
-**IdP Configuration**
-
-The exact steps for configuring an IdP vary depending on the provider (Okta, Azure AD, etc.). Please refer to the IdP's documentation for instructions on creating a SAML application.
-
-</Info>
+![Verify Integration Status](/images/prowler-app/saml/saml-sso-enabled.png)
 
 ### Remove SAML Configuration
 SAML SSO can be disabled by removing the existing configuration from the integration panel.
-![Remove SAML configuration](/images/prowler-app/saml/saml-step-remove.png)
+![Remove SAML configuration](/images/prowler-app/saml/saml-sso-remove.png)
 
 ### IdP-Initiated SSO
 
@@ -225,9 +218,9 @@ Users can also initiate the login process directly from Prowler's login page:
 
 1. Navigate to the Prowler login page
 2. Click "Continue with SAML SSO"
-    ![](/images/prowler-app/saml/saml-signin-1.png)
+    ![Prowler Cloud login page with the "Continue with SAML SSO" button](/images/prowler-app/saml/saml-signin-1.png)
 3. Enter their email address from the configured domain
-    ![](/images/prowler-app/saml/saml-signin-2.png)
+    ![SAML SSO login form asking for the email address](/images/prowler-app/saml/saml-signin-2.png)
 4. The system redirects users to the IdP for authentication
 5. After successful authentication, users are returned to Prowler Cloud
 

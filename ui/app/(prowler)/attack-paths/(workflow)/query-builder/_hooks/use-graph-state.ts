@@ -4,6 +4,7 @@ import { create } from "zustand";
 
 import type {
   AttackPathGraphData,
+  AttackPathQueryExecution,
   GraphNode,
   GraphState,
 } from "@/types/attack-paths";
@@ -22,7 +23,10 @@ interface FilteredViewState {
 }
 
 interface GraphStore extends GraphState, FilteredViewState {
-  setGraphData: (data: AttackPathGraphData) => void;
+  setGraphData: (
+    data: AttackPathGraphData,
+    execution: AttackPathQueryExecution | null,
+  ) => void;
   setSelectedNodeId: (nodeId: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -38,6 +42,7 @@ interface GraphStore extends GraphState, FilteredViewState {
 
 const initialState: GraphState & FilteredViewState = {
   data: null,
+  execution: null,
   selectedNodeId: null,
   loading: false,
   error: null,
@@ -49,9 +54,10 @@ const initialState: GraphState & FilteredViewState = {
 
 export const useGraphStore = create<GraphStore>((set) => ({
   ...initialState,
-  setGraphData: (data) =>
+  setGraphData: (data, execution) =>
     set({
       data,
+      execution,
       fullData: null,
       error: null,
       isFilteredView: false,
@@ -88,8 +94,11 @@ export const useGraphState = () => {
   const store = useGraphStore();
 
   // Zustand store methods are stable, no need to memoize
-  const updateGraphData = (data: AttackPathGraphData) => {
-    store.setGraphData(data);
+  const updateGraphData = (
+    data: AttackPathGraphData,
+    execution: AttackPathQueryExecution,
+  ) => {
+    store.setGraphData(data, execution);
   };
 
   const selectNode = (nodeId: string | null) => {
@@ -120,7 +129,7 @@ export const useGraphState = () => {
   };
 
   const clearGraph = () => {
-    store.setGraphData({ nodes: [], edges: [] });
+    store.setGraphData({ nodes: [], edges: [] }, null);
     store.setSelectedNodeId(null);
     store.setFilteredView(false, null, null, null);
   };
@@ -161,6 +170,7 @@ export const useGraphState = () => {
 
   return {
     data: store.data,
+    execution: store.execution,
     fullData: store.fullData,
     selectedNodeId: store.selectedNodeId,
     selectedNode: getSelectedNode(),

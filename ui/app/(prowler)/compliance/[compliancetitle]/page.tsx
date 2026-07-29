@@ -26,6 +26,7 @@ import {
   TopFailedSectionsCardSkeleton,
 } from "@/components/compliance";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Button } from "@/components/shadcn/button/button";
 import { Card } from "@/components/shadcn/card/card";
 import { ContentLayout } from "@/components/shadcn/content-layout";
@@ -34,6 +35,8 @@ import {
   getReportTypeForCompliance,
   pickLatestCisPerProvider,
 } from "@/lib/compliance/compliance-report-types";
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 import { isCloud } from "@/lib/shared/env";
 import { cn } from "@/lib/utils";
 import type { SearchParamsProps } from "@/types";
@@ -42,8 +45,10 @@ import {
   Framework,
   RequirementsTotals,
 } from "@/types/compliance";
+import { isKnownProviderType } from "@/types/providers";
 import { ScanEntity } from "@/types/scans";
 
+import { CrossAccountDetail } from "../_components/cross-account-detail";
 import { CrossProviderDetail } from "../_components/cross-provider-detail";
 import { resolveCrossProviderFramework } from "../_lib/cross-provider-frameworks";
 import { buildSearchParamsKey } from "../_lib/search-params-key";
@@ -75,7 +80,7 @@ export default async function ComplianceDetail({
   // Cross-provider mode replaces the per-scan pipeline with the universal
   // roll-up view. Prowler Cloud-only: the OSS API has no such endpoint, so
   // the route is blocked in OSS the same way the compliance tab is.
-  if (mode === "cross-provider") {
+  if (mode === LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER) {
     if (!isCloud()) {
       redirect("/compliance");
     }
@@ -113,6 +118,51 @@ export default async function ComplianceDetail({
       </ContentLayout>
     );
   }
+  // Cross-account mode: one regular framework aggregated across every
+  // account of one provider type. Cloud-only, like cross-provider.
+  if (mode === LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_ACCOUNT) {
+    if (!isCloud()) {
+      redirect("/compliance");
+    }
+
+    const providerType = getSingleSearchParam(
+      resolvedSearchParams.providerType,
+    );
+    if (!providerType || !isKnownProviderType(providerType)) {
+      notFound();
+    }
+
+    const crossAccountTitle = compliancetitle.split("-").join(" ");
+    return (
+      <ContentLayout
+        title={
+          version ? `${crossAccountTitle} - ${version}` : crossAccountTitle
+        }
+      >
+        <Suspense
+          key={buildSearchParamsKey(resolvedSearchParams)}
+          fallback={
+            <div className="flex flex-col gap-8">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-[minmax(280px,400px)_1fr]">
+                <RequirementsStatusCardSkeleton />
+                <TopFailedSectionsCardSkeleton />
+              </div>
+              <SkeletonAccordion />
+            </div>
+          }
+        >
+          <CrossAccountDetail
+            compliancetitle={compliancetitle}
+            complianceId={complianceId}
+            providerType={providerType}
+            searchParams={resolvedSearchParams}
+            targetSection={section}
+          />
+        </Suspense>
+      </ContentLayout>
+    );
+  }
+
   const regionFilter = getSingleSearchParam(
     resolvedSearchParams["filter[region__in]"],
   );
@@ -295,7 +345,10 @@ export default async function ComplianceDetail({
       >
         <SSRComplianceContent
           complianceId={complianceId}
+          pathname={`/compliance/${compliancetitle}`}
           scanId={selectedScanId || ""}
+          providerUid={selectedScan?.providerInfo.uid}
+          mode={LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN}
           region={regionFilter}
           filter={cisProfileFilter}
           attributesData={attributesData}
@@ -309,7 +362,10 @@ export default async function ComplianceDetail({
 
 const SSRComplianceContent = async ({
   complianceId,
+  pathname,
   scanId,
+  providerUid,
+  mode,
   region,
   filter,
   attributesData,
@@ -317,7 +373,10 @@ const SSRComplianceContent = async ({
   targetSection,
 }: {
   complianceId: string;
+  pathname: string;
   scanId: string;
+  providerUid?: string;
+  mode: typeof LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.PER_SCAN;
   region?: string;
   filter?: string;
   attributesData: AttributesData;
@@ -365,6 +424,7 @@ const SSRComplianceContent = async ({
   );
   const accordionItems = mapper.toAccordionItems(data, scanId);
   const topFailedResult = mapper.getTopFailedSections(data);
+  const frameworkAttributes = attributesData?.data?.[0]?.attributes;
 
   // Resolve which accordion key matches the requested ?section= so we can
   // auto-expand it on first render. Each mapper builds keys as
@@ -383,6 +443,31 @@ const SSRComplianceContent = async ({
 
   return (
     <div className="flex flex-col gap-8">
+      <LighthouseContextContributor
+        key={`compliance-detail-${complianceId}-${totalRequirements.pass}-${totalRequirements.fail}`}
+        contributorId="compliance-detail"
+        item={buildComplianceContext({
+          pathname,
+          id: complianceId,
+          framework:
+            frameworkAttributes?.name ||
+            frameworkAttributes?.framework ||
+            complianceId,
+          version: frameworkAttributes?.version,
+          scanId,
+          providerUid,
+          mode,
+          section: targetSection,
+          region,
+          score: threatScoreData?.overallScore,
+          passed: totalRequirements.pass,
+          failed: totalRequirements.fail,
+          total:
+            totalRequirements.pass +
+            totalRequirements.fail +
+            totalRequirements.manual,
+        })}
+      />
       {/* Charts section */}
       {/* Mobile: each card on own row | Tablet: ThreatScore full row, others share row | Desktop: all 3 in one row */}
       <div
