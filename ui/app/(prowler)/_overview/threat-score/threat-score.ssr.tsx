@@ -1,4 +1,4 @@
-import { getThreatScore } from "@/actions/overview";
+import { getThreatScore, type SectionScores } from "@/actions/overview";
 import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 
@@ -26,6 +26,11 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
     ? parseFloat(attributes.score_delta)
     : null;
 
+  const sectionScores: SectionScores = attributes.section_scores ?? {};
+  const worstSectionEntry = Object.entries(sectionScores).sort(
+    ([, left], [, right]) => left - right,
+  )[0];
+
   return (
     <>
       <LighthouseContextContributor
@@ -36,6 +41,13 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
           id: "prowler-threat-score",
           framework: "Prowler ThreatScore",
           score,
+          scoreDelta: scoreDelta ?? undefined,
+          criticalRequirementsCount: attributes.critical_requirements.length,
+          worstSection: worstSectionEntry?.[0],
+          worstSectionScore: worstSectionEntry?.[1],
+          passed: attributes.passed_requirements,
+          failed: attributes.failed_requirements,
+          total: attributes.total_requirements,
         })}
       />
       <ThreatScore

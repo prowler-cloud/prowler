@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { getThreatScore } from "@/actions/overview";
+
 import { ThreatScoreSSR } from "./threat-score.ssr";
 
 vi.mock("@/actions/overview", () => ({
@@ -36,5 +38,47 @@ describe("ThreatScoreSSR", () => {
       '"score":72',
     );
     expect(screen.getByText("Score 72")).toBeInTheDocument();
+  });
+
+  it("publishes delta, weakest section, critical count, and totals", async () => {
+    vi.mocked(getThreatScore).mockResolvedValueOnce({
+      data: [
+        {
+          attributes: {
+            overall_score: "62.4",
+            score_delta: "-3.21",
+            section_scores: { "Attack Surface": 38.6, IAM: 71.5 },
+            critical_requirements: [
+              {
+                requirement_id: "1.1",
+                risk_level: 5,
+                weight: 100,
+                title: "Root MFA",
+              },
+              {
+                requirement_id: "1.2",
+                risk_level: 4,
+                weight: 90,
+                title: "Public buckets",
+              },
+            ],
+            passed_requirements: 120,
+            failed_requirements: 40,
+            total_requirements: 160,
+          },
+        },
+      ],
+    });
+
+    render(await ThreatScoreSSR({ searchParams: {} }));
+
+    const context = screen.getByTestId("overview-context");
+    expect(context).toHaveTextContent('"scoreDelta":-3.21');
+    expect(context).toHaveTextContent('"worstSection":"Attack Surface"');
+    expect(context).toHaveTextContent('"worstSectionScore":38.6');
+    expect(context).toHaveTextContent('"criticalRequirementsCount":2');
+    expect(context).toHaveTextContent(
+      '"totals":{"passed":120,"failed":40,"total":160}',
+    );
   });
 });
