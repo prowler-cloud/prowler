@@ -19,6 +19,11 @@ from prowler.providers.common.provider import Provider
 
 class HTML(Output):
     @staticmethod
+    def escape_provider_data(value: object) -> str:
+        """Escape provider-originated data for insertion into HTML text contexts."""
+        return str(escape(str(value)))
+
+    @staticmethod
     def process_markdown(text: str) -> str:
         """
         Process markdown syntax in text and convert to HTML using the markdown library.
@@ -79,12 +84,12 @@ class HTML(Output):
                             <td>{finding_status}</td>
                             <td>{finding.metadata.Severity.value}</td>
                             <td>{finding.metadata.ServiceName}</td>
-                            <td>{finding.region.lower()}</td>
+                            <td>{HTML.escape_provider_data(finding.region.lower())}</td>
                             <td>{finding.metadata.CheckID.replace("_", "<wbr />_")}</td>
                             <td>{finding.metadata.CheckTitle}</td>
-                            <td>{finding.resource_uid.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
-                            <td>{parse_html_string(unroll_dict(finding.resource_tags))}</td>
-                            <td>{finding.status_extended.replace("<", "&lt;").replace(">", "&gt;").replace("_", "<wbr />_")}</td>
+                            <td>{HTML.escape_provider_data(finding.resource_uid).replace("_", "<wbr />_")}</td>
+                            <td>{parse_html_string(HTML.escape_provider_data(unroll_dict(finding.resource_tags)))}</td>
+                            <td>{HTML.escape_provider_data(finding.status_extended).replace("_", "<wbr />_")}</td>
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Risk)}</p></td>
                             <td><p class="show-read-more">{HTML.process_markdown(finding.metadata.Remediation.Recommendation.Text)}</p> <a class="read-more" href="{finding.metadata.Remediation.Recommendation.Url}"><i class="fas fa-external-link-alt"></i></a></td>
                             <td><p class="show-read-more">{parse_html_string(unroll_dict(finding.compliance, separator=": "))}</p></td>

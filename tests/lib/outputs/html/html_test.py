@@ -701,6 +701,27 @@ class TestHTML:
         assert isinstance(output_data, str)
         assert output_data == fail_html_finding
 
+    def test_transform_escapes_provider_originated_fields(self):
+        xss_payload = '<img src=x onerror="window.PROWLER_TAG_XSS=1">'
+        findings = [
+            generate_finding_output(
+                region="REGION&<>'\"",
+                resource_uid="resource&<>'\"_uid",
+                resource_tags={f"key&<>'\"{xss_payload}": f"value&<>'\"{xss_payload}"},
+                status_extended=f"status&<>'\"_{xss_payload}",
+                remediation_recommendation_url="https://hub.prowler.com/check/check-id",
+            )
+        ]
+
+        output_data = HTML(findings).data[0]
+
+        assert xss_payload not in output_data
+        assert "region&amp;&lt;&gt;&#39;&#34;" in output_data
+        assert "resource&amp;&lt;&gt;&#39;&#34;<wbr />_uid" in output_data
+        assert "status&amp;&lt;&gt;&#39;&#34;<wbr />_&lt;img" in output_data
+        assert "&#x2022;key&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
+        assert "=value&amp;&lt;&gt;&#39;&#34;&lt;img" in output_data
+
     def test_transform_pass_finding(self):
         findings = [
             generate_finding_output(
