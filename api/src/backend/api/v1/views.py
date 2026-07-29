@@ -892,11 +892,37 @@ class TenantFinishACSView(FinishACSView):
                 )
                 if not user_has_roles:
                     with transaction.atomic(using=MainRouter.admin_db):
-                        role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
+                        read_only_defaults = dict.fromkeys(
+                            Role.PERMISSION_FIELDS, False
+                        )
+                        read_only_defaults["unlimited_visibility"] = True
+                        role, role_created = Role.objects.using(
+                            MainRouter.admin_db
+                        ).get_or_create(
                             name="read_only",
                             tenant=tenant,
-                            defaults={"unlimited_visibility": True},
+                            defaults=read_only_defaults,
                         )
+                        role_is_read_only = (
+                            not any(
+                                getattr(role, permission)
+                                for permission in Role.PERMISSION_FIELDS
+                            )
+                            and role.unlimited_visibility
+                        )
+                        if not role_created and not role_is_read_only:
+                            suffix = 0
+                            while True:
+                                role, role_created = Role.objects.using(
+                                    MainRouter.admin_db
+                                ).get_or_create(
+                                    name=f"read_only_{suffix}",
+                                    tenant=tenant,
+                                    defaults=read_only_defaults,
+                                )
+                                if role_created:
+                                    break
+                                suffix += 1
                         UserRoleRelationship.objects.using(
                             MainRouter.admin_db
                         ).get_or_create(

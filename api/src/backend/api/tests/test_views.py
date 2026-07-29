@@ -14794,9 +14794,29 @@ class TestTenantFinishACSView:
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
     @pytest.mark.parametrize(
-        "preexisting_read_only_role",
-        [False, True],
-        ids=["creates-role", "reuses-role"],
+        (
+            "existing_role_attributes",
+            "occupied_suffixes",
+            "expected_role_name",
+            "expected_role_created",
+        ),
+        [
+            (None, (), "read_only", True),
+            ({"unlimited_visibility": True}, (), "read_only", False),
+            (
+                {"manage_users": True, "unlimited_visibility": True},
+                ("read_only_0", "read_only_1"),
+                "read_only_2",
+                True,
+            ),
+            ({"unlimited_visibility": False}, (), "read_only_0", True),
+        ],
+        ids=[
+            "creates-role",
+            "reuses-safe-role",
+            "avoids-management-permissions",
+            "avoids-restricted-visibility",
+        ],
     )
     def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
@@ -14805,16 +14825,40 @@ class TestTenantFinishACSView:
         saml_setup,
         settings,
         monkeypatch,
-        preexisting_read_only_role,
+        existing_role_attributes,
+        occupied_suffixes,
+        expected_role_name,
+        expected_role_created,
     ):
-        """Test that a user without roles gets read_only when userType is missing"""
+        """Test safe fallback role assignment when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
+        other_tenant = tenants_fixture[1]
+
+        other_tenant_role = Role.objects.using(MainRouter.admin_db).create(
+            name="read_only",
+            tenant=other_tenant,
+            unlimited_visibility=True,
+        )
+        other_tenant_relationship = UserRoleRelationship.objects.using(
+            MainRouter.admin_db
+        ).create(
+            user=user,
+            role=other_tenant_role,
+            tenant=other_tenant,
+        )
+
         existing_role = None
-        if preexisting_read_only_role:
+        if existing_role_attributes is not None:
             existing_role = Role.objects.using(MainRouter.admin_db).create(
                 name="read_only",
+                tenant=tenant,
+                **existing_role_attributes,
+            )
+        for role_name in occupied_suffixes:
+            Role.objects.using(MainRouter.admin_db).create(
+                name=role_name,
                 tenant=tenant,
                 unlimited_visibility=True,
             )
@@ -14872,12 +14916,12 @@ class TestTenantFinishACSView:
         assert response.status_code == 302
 
         # Verify the fallback role was created or reused with read-only access
-        expected_role_count = roles_before + (not preexisting_read_only_role)
+        expected_role_count = roles_before + expected_role_created
         assert Role.objects.using(MainRouter.admin_db).count() == expected_role_count
         role = Role.objects.using(MainRouter.admin_db).get(
-            name="read_only", tenant=tenant
+            name=expected_role_name, tenant=tenant
         )
-        if existing_role:
+        if existing_role is not None and expected_role_name == "read_only":
             assert role == existing_role
         assert not role.manage_users
         assert not role.manage_account
@@ -14890,6 +14934,22 @@ class TestTenantFinishACSView:
             UserRoleRelationship.objects.using(MainRouter.admin_db)
             .filter(user=user, role=role, tenant_id=tenant.id)
             .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(
+                id=other_tenant_relationship.id,
+                user=user,
+                role=other_tenant_role,
+                tenant_id=other_tenant.id,
+            )
+            .exists()
+        )
+        assert (
+            UserRoleRelationship.objects.using(MainRouter.admin_db)
+            .filter(user=user, tenant_id=tenant.id)
+            .count()
+            == 1
         )
 
         # Membership is still created so the user belongs to the tenant
