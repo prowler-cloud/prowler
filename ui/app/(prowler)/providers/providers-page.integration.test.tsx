@@ -14,6 +14,8 @@ const AWS_ROLE_ARN = "arn:aws:iam::111111111111:role/ProwlerScan";
 /** The organization id seeded by `awsHierarchyFixture`. */
 const AWS_HIERARCHY_ORG_ID = "org-aws-1";
 const AWS_ORG_NAME = "My AWS Organization";
+/** Providers `awsOnboardingFixture`'s apply creates (one per ready account). */
+const CREATED_PROVIDER_COUNT = 2;
 
 /** A world where one of the two ready accounts fails its connection test. */
 const partialConnectionFixture = (): OrgFixture =>
@@ -28,7 +30,7 @@ const partialConnectionFixture = (): OrgFixture =>
 async function onboardToSelection(
   harness: ProvidersPageHarness,
 ): Promise<void> {
-  harness.mount();
+  await harness.mount();
   await harness.chooseAwsOrganizations();
   await harness.fillAwsOrgDetails(AWS_ORG_ID, "My AWS Org");
   await harness.submitOrganizationDetails();
@@ -47,7 +49,16 @@ describe("AWS Organizations onboarding (baseline)", () => {
     await harness.waitForAccountsConnected();
 
     expect(harness.applyCallCount).toBe(1);
-  }, 40000);
+
+    // Drive the final action: save the schedules for both created providers and
+    // launch an initial scan for each.
+    await harness.enableInitialScan();
+    await harness.saveScheduleAndLaunch();
+    await harness.waitForLaunchComplete();
+
+    expect(harness.scheduleBulkCallCount).toBe(1);
+    expect(harness.scanLaunchCount).toBe(CREATED_PROVIDER_COUNT);
+  }, 60000);
 
   it("disables blocked accounts and excludes them from the selectable count", async () => {
     const harness = new ProvidersPageHarness(awsOnboardingFixture());
@@ -102,7 +113,7 @@ describe("AWS Organizations onboarding (baseline)", () => {
 describe("AWS Organizations providers page (baseline)", () => {
   it("groups providers under their organization and OUs with kind-driven labels", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
 
     // Organization group row + its OU sub-groups (expanded by default in cloud).
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
@@ -118,11 +129,17 @@ describe("AWS Organizations providers page (baseline)", () => {
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasProviderRow("prod-api")).toBe(true);
     expect(harness.hasProviderRow("sandbox-1")).toBe(true);
+
+    // Tripwire: the rows above came from real requests, so a loader that stops
+    // fetching the hierarchy (either route) fails here instead of staying green
+    // on harness-supplied data.
+    expect(harness.organizationFetchCount).toBeGreaterThan(0);
+    expect(harness.hierarchyFetchCount).toBeGreaterThan(0);
   }, 30000);
 
   it("edits the organization name via the inline modal (PATCH)", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
     await harness.openEditNameFor(AWS_ORG_NAME);
@@ -137,7 +154,7 @@ describe("AWS Organizations providers page (baseline)", () => {
 
   it("re-enters the wizard at the authentication step to update credentials", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
     await harness.openUpdateCredentialsFor(AWS_ORG_NAME);
@@ -151,7 +168,7 @@ describe("AWS Organizations providers page (baseline)", () => {
 
   it("deletes an organization as a fire-and-forget request (no task polling)", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
     await harness.openDeleteFor(AWS_ORG_NAME);
@@ -172,7 +189,7 @@ describe("AWS Organizations providers page (baseline)", () => {
   }) => {
     seedRuntimeConfig({ cloudEnabled: false });
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
 
     // Providers still render, but ungrouped: no organization row, no OU labels.
     await harness.waitForProviderRow("prod-web");
@@ -180,5 +197,7 @@ describe("AWS Organizations providers page (baseline)", () => {
     expect(harness.hasProviderRow("sandbox-1")).toBe(true);
     expect(harness.hasOrganizationRow(AWS_ORG_NAME)).toBe(false);
     expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
+    // On-prem never asks for the organization hierarchy at all.
+    expect(harness.hierarchyFetchCount).toBe(0);
   }, 30000);
 });

@@ -17,6 +17,7 @@ import { http, HttpResponse } from "msw";
 import type {
   FixtureNode,
   FixtureOrganization,
+  FixtureProvider,
   OrgFixture,
 } from "./organizations.fixtures";
 
@@ -110,6 +111,47 @@ const organizationalUnitResource = (node: FixtureNode) => ({
       data: { type: "organizations", id: node.organizationId },
     },
     providers: { data: providerRefs(node.providerIds) },
+  },
+});
+
+/** Single-page collection meta, enough for the paginating list actions to stop. */
+const collectionMeta = (count: number) => ({
+  pagination: { page: 1, pages: 1, count },
+  version: "v1",
+});
+
+/**
+ * Full `providers` list resource, as the providers-page loader consumes it.
+ * Deliberately carries no `scan_*` attributes: the API omits them unless a
+ * schedule is configured, and their absence is what makes the loader fall back
+ * to `/schedules`.
+ */
+const providerResource = (provider: FixtureProvider) => ({
+  id: provider.id,
+  type: "providers",
+  attributes: {
+    provider: provider.provider,
+    is_dynamic: false,
+    uid: provider.uid,
+    alias: provider.alias,
+    status: "completed",
+    resources: 0,
+    connection: {
+      connected: provider.connected ?? false,
+      last_checked_at: TS,
+    },
+    scanner_args: {
+      only_logs: false,
+      excluded_checks: [],
+      aws_retries_max_attempts: 3,
+    },
+    inserted_at: TS,
+    updated_at: TS,
+    created_by: { object: "user", id: "user-1" },
+  },
+  relationships: {
+    secret: { data: { type: "secrets", id: `secret-${provider.id}` } },
+    provider_groups: { meta: { count: 0 }, data: [] },
   },
 });
 
@@ -383,6 +425,25 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
       },
     ),
 
+    // --- providers-page loader (providers list, groups, schedules) --------
+    http.get(`${API}/providers`, () =>
+      HttpResponse.json({
+        data: fx.providers.map(providerResource),
+        included: [],
+        meta: collectionMeta(fx.providers.length),
+      }),
+    ),
+
+    http.get(`${API}/provider-groups`, () =>
+      HttpResponse.json({ data: [], meta: collectionMeta(0) }),
+    ),
+
+    // Schedules are a best-effort fallback for providers without `scan_*`
+    // attributes; none of the fixtures seed one.
+    http.get(`${API}/schedules`, () =>
+      HttpResponse.json({ data: [], meta: collectionMeta(0) }),
+    ),
+
     // --- providers (uid resolution) + connection testing -----------------
     http.get<{ id: string }>(`${API}/providers/:id`, ({ params }) => {
       const provider = fx.providers.find((p) => p.id === params.id);
@@ -453,7 +514,22 @@ export const handlersForOrganizations = (fx: OrgFixture) => {
         { status: 202 },
       ),
     ),
-    http.post(`${API}/schedules/bulk`, () => HttpResponse.json({ data: [] })),
+    http.post(`${API}/schedules/bulk`, async ({ request }) => {
+      const body = (await request.json()) as {
+        data?: { attributes?: { provider_ids?: string[] } };
+      };
+      // Echo the requested ids back as `updated`: the launch step reads that
+      // list to decide the flow succeeded, and treats an empty one as a
+      // total failure.
+      const updated = body?.data?.attributes?.provider_ids ?? [];
+      return HttpResponse.json({
+        data: {
+          id: "schedules-bulk-1",
+          type: "schedules-bulk",
+          attributes: { updated, failed: [] },
+        },
+      });
+    }),
   ];
 
   // Deprecated AWS-only routes, served alongside the canonical ones unless

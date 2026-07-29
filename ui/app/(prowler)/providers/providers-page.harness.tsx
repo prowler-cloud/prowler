@@ -12,41 +12,22 @@
  * on the resulting UI.
  */
 
-import { SessionProvider } from "next-auth/react";
-import { render } from "vitest-browser-react";
-
 import { BrowserHarness } from "@/__tests__/browser-harness";
 import { handlersForOrganizations } from "@/__tests__/msw/handlers/organizations";
-import { NODE_KIND } from "@/__tests__/msw/handlers/organizations.fixtures";
-import type {
-  FixtureNode,
-  FixtureOrganization,
-  FixtureProvider,
-  OrgFixture,
-} from "@/__tests__/msw/handlers/organizations.fixtures";
+import type { OrgFixture } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { worker } from "@/__tests__/msw/worker";
+import { render } from "@/__tests__/render-browser";
 import { ProvidersAccountsView } from "@/components/providers/providers-accounts-view";
 import {
   ADD_PROVIDER_SEARCH_PARAM,
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
 import { isCloud } from "@/lib/shared/env";
-import type { ProviderProps } from "@/types";
-import type {
-  OrganizationResource,
-  OrganizationType,
-  OrganizationUnitResource,
-} from "@/types/organizations";
-import {
-  PROVIDERS_ROW_TYPE,
-  type ProvidersProviderRow,
-  type ProvidersTableRow,
-} from "@/types/providers-table";
+import type { SearchParamsProps } from "@/types";
 
-import { buildProvidersTableRows } from "./providers-page.utils";
+import { loadProvidersAccountsViewData } from "./providers-page.utils";
 
-const TENANT_ID = "11111111-2222-4333-8444-555555555555";
-const TS = "2026-07-01T10:00:00Z";
+const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
 
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
@@ -60,6 +41,33 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   get connectionCallCount(): number {
     return this.countRequests("POST", "/connection");
+  }
+
+  /** How many times the page fetched the organization list over HTTP. */
+  get organizationFetchCount(): number {
+    return this.countRequests("GET", "/organizations");
+  }
+
+  /**
+   * How many times the page fetched the organization hierarchy over HTTP —
+   * either route, so this stays a tripwire for "the hierarchy is still
+   * requested" across the deprecated → canonical migration.
+   */
+  get hierarchyFetchCount(): number {
+    return (
+      this.countRequests("GET", "/organizational-units") +
+      this.countRequests("GET", "/organization-nodes")
+    );
+  }
+
+  /** How many bulk schedule saves the launch step issued. */
+  get scheduleBulkCallCount(): number {
+    return this.countRequests("POST", "/schedules/bulk");
+  }
+
+  /** How many scans were launched (one per provider whose schedule saved). */
+  get scanLaunchCount(): number {
+    return this.countRequests("POST", "/scans");
   }
 
   // --- Mount + environment ------------------------------------------------
@@ -77,149 +85,43 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     );
   }
 
-  mount({ openWizard = true }: MountOptions = {}): void {
+  private searchParams(): SearchParamsProps {
+    return Object.fromEntries(new URLSearchParams(window.location.search));
+  }
+
+  /**
+   * Mount the page the way production assembles it: the real page-data loader
+   * fetches providers, groups, schedules and the organization hierarchy over
+   * MSW, and its output is spread into the view exactly as `providers/page.tsx`
+   * does. So the rendered rows are the ones the production loader produces —
+   * and a loader that stops requesting the hierarchy fails these tests instead
+   * of being papered over by fixture data. The shared `render` wraps it in the
+   * app shell (session, theme, Toaster) the production layout provides.
+   */
+  async mount({ openWizard = true }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
     worker.use(...handlersForOrganizations(this.fixture));
     this.trackRequests(worker);
-
-    const session = {
-      tenantId: TENANT_ID,
-      accessToken: "test-access-token",
-      expires: "2999-01-01T00:00:00Z",
-    };
 
     // Single source of truth: the runtime-config island (seeded by the
     // `seedRuntimeConfig` fixture) drives both `isCloud()` deep in the tree and
     // the top-level prop, exactly as `providers/page.tsx` derives it in prod.
     const cloud = isCloud();
-    const providers = this.buildProviderProps();
-    const rows = this.buildTableRows(cloud);
+    const viewData = await loadProvidersAccountsViewData({
+      isCloud: cloud,
+      searchParams: this.searchParams(),
+    });
 
     render(
-      <SessionProvider session={session as never}>
-        <ProvidersAccountsView
-          isCloud={cloud}
-          filters={[]}
-          providers={providers}
-          rows={rows}
-          providerGroups={[]}
-        />
-      </SessionProvider>,
+      <ProvidersAccountsView
+        isCloud={cloud}
+        filters={viewData.filters}
+        providers={viewData.providers}
+        providerGroups={viewData.providerGroups}
+        metadata={viewData.metadata}
+        rows={viewData.rows}
+      />,
     );
-  }
-
-  // --- Providers-page data (fixture → table props) ------------------------
-  //
-  // The providers page computes its grouped rows server-side in
-  // `loadProvidersAccountsViewData` (which browser mode cannot mount). We
-  // reproduce that here: convert the fixture's seeded world into the wire
-  // shapes and run the real `buildProvidersTableRows` transform, so the
-  // mounted client table renders exactly the rows production would. Onboarding
-  // fixtures seed no providers, so this yields `[]` (empty state + wizard),
-  // preserving the flow tests' behaviour.
-
-  private toProviderRow(provider: FixtureProvider): ProvidersProviderRow {
-    return {
-      id: provider.id,
-      type: "providers",
-      rowType: PROVIDERS_ROW_TYPE.PROVIDER,
-      attributes: {
-        provider: provider.provider,
-        is_dynamic: false,
-        uid: provider.uid,
-        alias: provider.alias,
-        status: "completed",
-        resources: 0,
-        connection: {
-          connected: provider.connected ?? false,
-          last_checked_at: TS,
-        },
-        scanner_args: {
-          only_logs: false,
-          excluded_checks: [],
-          aws_retries_max_attempts: 3,
-        },
-        inserted_at: TS,
-        updated_at: TS,
-        created_by: { object: "user", id: "user-1" },
-      },
-      relationships: {
-        secret: { data: { type: "secrets", id: `secret-${provider.id}` } },
-        provider_groups: { meta: { count: 0 }, data: [] },
-      },
-      groupNames: [],
-      hasSchedule: false,
-    };
-  }
-
-  private toOrganizationResource(
-    org: FixtureOrganization,
-  ): OrganizationResource {
-    return {
-      id: org.id,
-      type: "organizations",
-      attributes: {
-        name: org.name,
-        org_type: org.orgType as OrganizationType,
-        external_id: org.externalId,
-        metadata: {},
-        root_external_id: org.rootExternalId,
-      },
-      relationships: {
-        providers: {
-          data: org.providerIds.map((id) => ({ id, type: "providers" })),
-        },
-        organizational_units: {
-          data: org.nodeIds.map((id) => ({ id, type: "organizational-units" })),
-        },
-      },
-    };
-  }
-
-  private toOrganizationUnitResource(
-    node: FixtureNode,
-  ): OrganizationUnitResource {
-    return {
-      id: node.id,
-      type: "organizational-units",
-      attributes: {
-        name: node.name,
-        external_id: node.externalId,
-        parent_external_id: node.parentExternalId,
-        metadata: {},
-      },
-      relationships: {
-        organization: {
-          data: { id: node.organizationId, type: "organizations" },
-        },
-        providers: {
-          data: node.providerIds.map((id) => ({ id, type: "providers" })),
-        },
-      },
-    };
-  }
-
-  private buildProviderProps(): ProviderProps[] {
-    return this.fixture.providers.map((provider) =>
-      this.toProviderRow(provider),
-    );
-  }
-
-  private buildTableRows(cloud: boolean): ProvidersTableRow[] {
-    // The current (AWS-only) grouping transform consumes `/organizational-units`;
-    // GCP folders are ignored here exactly as production ignores them today.
-    return buildProvidersTableRows({
-      isCloud: cloud,
-      organizations: this.fixture.organizations.map((org) =>
-        this.toOrganizationResource(org),
-      ),
-      organizationUnits: this.fixture.nodes
-        .filter((node) => node.kind === NODE_KIND.ORGANIZATIONAL_UNIT)
-        .map((node) => this.toOrganizationUnitResource(node)),
-      providers: this.fixture.providers.map((provider) =>
-        this.toProviderRow(provider),
-      ),
-    });
   }
 
   // --- Wizard: connect step ----------------------------------------------
@@ -397,6 +299,29 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Wait until the app has issued at least `n` apply requests. */
   async waitForApplyCount(n: number, timeoutMs = 20000): Promise<void> {
     await this.waitFor(() => this.applyCallCount >= n, timeoutMs);
+  }
+
+  // --- Wizard: launch step ------------------------------------------------
+
+  /** Tick "launch an initial scan now" on the launch step's schedule form. */
+  async enableInitialScan(): Promise<void> {
+    const checkbox = await this.waitFor(() =>
+      this.q(`[role="checkbox"][aria-label="${INITIAL_SCAN_LABEL}"]`),
+    );
+    await this.clickElement(checkbox);
+  }
+
+  /** Save the scan schedules and launch the initial scans (footer action). */
+  async saveScheduleAndLaunch(): Promise<void> {
+    await this.clickPrimary(/Save and launch scan/);
+  }
+
+  /** Wait until the schedules saved and the initial scans were launched. */
+  async waitForLaunchComplete(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(
+      /Scan schedules saved and initial scans launched/,
+      timeoutMs,
+    );
   }
 
   // --- Table: grouping + row actions --------------------------------------

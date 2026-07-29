@@ -9,13 +9,20 @@
  * (harness tests spy on it) and the request-tracking assertion helpers
  * (`requestLog`, `countRequests`) that page harnesses expose as domain vocab.
  *
- * Mount-agnostic on purpose — some harnesses mount the page themselves, others
- * are mounted by the test — so there is no `render` here. Request tracking is
- * opt-in via `trackRequests(worker)`.
+ * Mount-agnostic on purpose: some pages are mounted by their harness, others
+ * (attack-paths) are rendered by the test directly, so a `render` here would
+ * only serve half the call sites. Mounting lives in `render-browser.tsx`, which
+ * wraps every render in the shared app shell (`app-shell.tsx`) — both kinds of
+ * call site reach it.
+ *
+ * Request tracking is opt-in via `trackRequests(worker)`, and unregisters
+ * itself when the test ends.
  */
 import type { SetupWorker } from "msw/browser";
-import { vi } from "vitest";
+import { onTestFinished, vi } from "vitest";
 import { userEvent } from "vitest/browser";
+
+type RequestStartListener = (event: { request: Request }) => void;
 
 export abstract class BrowserHarness<TFixture> {
   readonly user = userEvent;
@@ -23,18 +30,36 @@ export abstract class BrowserHarness<TFixture> {
   /** Every request MSW saw since `trackRequests` was wired, for assertions. */
   readonly requestLog: Array<{ method: string; url: string }> = [];
 
+  private trackedWorker: SetupWorker | null = null;
+  private requestListener: RequestStartListener | null = null;
+
   constructor(readonly fixture: TFixture) {}
 
   // --- Request tracking (opt-in) ------------------------------------------
 
   /** Start recording MSW requests into `requestLog`. Call once, after mounting. */
   protected trackRequests(worker: SetupWorker): void {
-    // Clear only our own `request:start` listeners from a prior harness on the
-    // shared worker — not every listener on the public event emitter.
-    worker.events.removeAllListeners("request:start");
-    worker.events.on("request:start", ({ request }) => {
+    const listener: RequestStartListener = ({ request }) => {
       this.requestLog.push({ method: request.method, url: request.url });
-    });
+    };
+    this.trackedWorker = worker;
+    this.requestListener = listener;
+    worker.events.on("request:start", listener);
+    // The worker is module-level and shared across harnesses, so listeners
+    // would otherwise accumulate run over run. Drop only this harness's
+    // listener when the test ends — clearing the emitter would also silence
+    // listeners another harness or diagnostic owns.
+    onTestFinished(() => this.untrackRequests());
+  }
+
+  private untrackRequests(): void {
+    const worker = this.trackedWorker;
+    const listener = this.requestListener;
+    if (!worker || !listener) return;
+
+    worker.events.removeListener("request:start", listener);
+    this.trackedWorker = null;
+    this.requestListener = null;
   }
 
   countRequests(method: string, pathIncludes: string): number {

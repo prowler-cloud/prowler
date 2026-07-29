@@ -310,6 +310,20 @@ const buildGcpDiscoveryResult = () => {
 
 // --- Fixture builders ------------------------------------------------------
 
+/**
+ * Ids of the providers an apply creates. They must be UUIDs: the launch step's
+ * `updateSchedulesBulk` validates every id with `z.uuid()` (SSRF guard) and
+ * bails before issuing `POST /schedules/bulk` if one doesn't parse.
+ */
+const AWS_CREATED_PROVIDER_IDS = [
+  "aaaaaaa1-1111-4111-8111-111111111111",
+  "aaaaaaa2-2222-4222-8222-222222222222",
+];
+const GCP_CREATED_PROVIDER_IDS = [
+  "bbbbbbb1-1111-4111-8111-111111111111",
+  "bbbbbbb2-2222-4222-8222-222222222222",
+];
+
 const emptyApply = (): FixtureApplyOutcome => ({
   createdProviderIds: [],
   providersCreatedCount: 0,
@@ -340,7 +354,7 @@ const baseFixture = (): OrgFixture => ({
 export const awsOnboardingFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
-  const createdProviderIds = ["provider-aws-1", "provider-aws-2"];
+  const createdProviderIds = AWS_CREATED_PROVIDER_IDS;
   return {
     ...baseFixture(),
     discovery: {
@@ -355,8 +369,8 @@ export const awsOnboardingFixture = (
       providersCreatedCount: 2,
       nodesCreatedCount: 2,
       accountProviderMappings: [
-        { account_id: "111111111111", provider_id: "provider-aws-1" },
-        { account_id: "222222222222", provider_id: "provider-aws-2" },
+        { account_id: "111111111111", provider_id: createdProviderIds[0] },
+        { account_id: "222222222222", provider_id: createdProviderIds[1] },
       ],
     },
     connectionByUid: {
@@ -371,7 +385,7 @@ export const awsOnboardingFixture = (
 export const gcpOnboardingFixture = (
   overrides: Partial<OrgFixture> = {},
 ): OrgFixture => {
-  const createdProviderIds = ["provider-gcp-1", "provider-gcp-2"];
+  const createdProviderIds = GCP_CREATED_PROVIDER_IDS;
   return {
     ...baseFixture(),
     discovery: {
@@ -386,8 +400,8 @@ export const gcpOnboardingFixture = (
       providersCreatedCount: 2,
       nodesCreatedCount: 2,
       accountProviderMappings: [
-        { account_id: "prod-analytics", provider_id: "provider-gcp-1" },
-        { account_id: "prod-platform", provider_id: "provider-gcp-2" },
+        { account_id: "prod-analytics", provider_id: createdProviderIds[0] },
+        { account_id: "prod-platform", provider_id: createdProviderIds[1] },
       ],
     },
     connectionByUid: {
