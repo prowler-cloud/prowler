@@ -27,9 +27,10 @@ export const ThreatScoreSSR = async ({ searchParams }: SSRComponentProps) => {
     : null;
 
   const sectionScores: SectionScores = attributes.section_scores ?? {};
-  const worstSectionEntry = Object.entries(sectionScores).sort(
-    ([, left], [, right]) => left - right,
-  )[0];
+  const worstSectionEntry = Object.entries(sectionScores)
+    .map(([name, value]) => [name, Number(value)] as const)
+    .filter(([, value]) => Number.isFinite(value))
+    .sort(([, left], [, right]) => left - right)[0];
 
   return (
     <>

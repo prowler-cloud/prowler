@@ -40,6 +40,29 @@ describe("ThreatScoreSSR", () => {
     expect(screen.getByText("Score 72")).toBeInTheDocument();
   });
 
+  it("coerces aggregated string section scores into numeric context", async () => {
+    // The multi-provider aggregation branch of /overviews/threatscore
+    // serializes section score values as strings.
+    vi.mocked(getThreatScore).mockResolvedValueOnce({
+      data: [
+        {
+          attributes: {
+            overall_score: "55.20",
+            score_delta: null,
+            section_scores: { "Attack Surface": "38.60", IAM: "71.50" },
+            critical_requirements: [],
+          },
+        },
+      ],
+    });
+
+    render(await ThreatScoreSSR({ searchParams: {} }));
+
+    const context = screen.getByTestId("overview-context");
+    expect(context).toHaveTextContent('"worstSection":"Attack Surface"');
+    expect(context).toHaveTextContent('"worstSectionScore":38.6');
+  });
+
   it("publishes delta, weakest section, critical count, and totals", async () => {
     vi.mocked(getThreatScore).mockResolvedValueOnce({
       data: [
