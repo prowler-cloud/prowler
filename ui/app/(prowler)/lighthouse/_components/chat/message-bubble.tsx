@@ -76,7 +76,7 @@ export function MessageBubble({ message }: { message: LighthouseV2Message }) {
           {/* User text stays plain to preserve HTML-like tags; assistant
               renders parts in order so tool calls sit between text blocks. */}
           {isUser ? (
-            <p className="whitespace-pre-wrap">{messageText}</p>
+            <p className="break-words whitespace-pre-wrap">{messageText}</p>
           ) : (
             <AssistantParts parts={message.parts} />
           )}
