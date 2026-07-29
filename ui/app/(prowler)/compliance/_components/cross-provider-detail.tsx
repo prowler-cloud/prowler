@@ -3,8 +3,11 @@ import { Info } from "lucide-react";
 import { getAllProviderGroups } from "@/actions/manage-groups/manage-groups";
 import { getAllProviders } from "@/actions/providers";
 import { getComplianceIcon } from "@/components/icons/compliance/IconCompliance";
+import { LighthouseContextContributor } from "@/components/lighthouse/context-contributor";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
 import { getComplianceMapper } from "@/lib/compliance/compliance-mapper";
+import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "@/lib/lighthouse/context/constants";
+import { buildComplianceContext } from "@/lib/lighthouse/context/contributions";
 
 import {
   getCrossProviderComplianceOverview,
@@ -152,45 +155,62 @@ export const CrossProviderDetail = async ({
   ).map((group) => ({ id: group.id, name: group.attributes.name }));
 
   return (
-    <AggregatedComplianceDetail
-      compliancetitle={compliancetitle}
-      logoPath={logoPath}
-      title={
-        <span className="truncate text-sm font-medium">
-          {attrs.name || compliancetitle.split("-").join(" ")}
-        </span>
-      }
-      description={
-        <p className="text-text-neutral-tertiary text-xs">
-          {attrs.providers.length} of {compatibleTypes.length} compatible
-          providers scanned · {attrs.scan_ids.length}{" "}
-          {attrs.scan_ids.length === 1 ? "scan" : "scans"} aggregated
-        </p>
-      }
-      headerLink={<CrossProviderHubLink complianceId={complianceId} />}
-      reportAction={
-        <CrossProviderPdfButton
-          complianceId={complianceId}
-          filters={{ ...filters, scanIds: attrs.scan_ids }}
-          latestPdf={latestPdf}
-        />
-      }
-      filters={
-        <CrossProviderFilters
-          providerTypes={compatibleTypes}
-          providerAccounts={providerAccounts}
-          providerGroups={providerGroups}
-        />
-      }
-      totals={totals}
-      coverage={<ProviderCoverageCard breakdown={providerBreakdown} />}
-      topFailed={{
-        sections: topFailedResult.items,
-        dataType: topFailedResult.type,
-        prepopulated: topFailedResult.prepopulated,
-      }}
-      accordionItems={accordionItems}
-      initialExpandedKeys={initialExpandedKeys}
-    />
+    <>
+      <LighthouseContextContributor
+        key={`cross-provider-detail-${complianceId}-${totals.pass}-${totals.fail}`}
+        contributorId="compliance-detail"
+        item={buildComplianceContext({
+          pathname: `/compliance/${compliancetitle}`,
+          id: complianceId,
+          framework: attrs.name || attrs.framework,
+          version: attrs.version,
+          mode: LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE.CROSS_PROVIDER,
+          section: targetSection,
+          passed: totals.pass,
+          failed: totals.fail,
+          total: totals.pass + totals.fail + totals.manual,
+        })}
+      />
+      <AggregatedComplianceDetail
+        compliancetitle={compliancetitle}
+        logoPath={logoPath}
+        title={
+          <span className="truncate text-sm font-medium">
+            {attrs.name || compliancetitle.split("-").join(" ")}
+          </span>
+        }
+        description={
+          <p className="text-text-neutral-tertiary text-xs">
+            {attrs.providers.length} of {compatibleTypes.length} compatible
+            providers scanned · {attrs.scan_ids.length}{" "}
+            {attrs.scan_ids.length === 1 ? "scan" : "scans"} aggregated
+          </p>
+        }
+        headerLink={<CrossProviderHubLink complianceId={complianceId} />}
+        reportAction={
+          <CrossProviderPdfButton
+            complianceId={complianceId}
+            filters={{ ...filters, scanIds: attrs.scan_ids }}
+            latestPdf={latestPdf}
+          />
+        }
+        filters={
+          <CrossProviderFilters
+            providerTypes={compatibleTypes}
+            providerAccounts={providerAccounts}
+            providerGroups={providerGroups}
+          />
+        }
+        totals={totals}
+        coverage={<ProviderCoverageCard breakdown={providerBreakdown} />}
+        topFailed={{
+          sections: topFailedResult.items,
+          dataType: topFailedResult.type,
+          prepopulated: topFailedResult.prepopulated,
+        }}
+        accordionItems={accordionItems}
+        initialExpandedKeys={initialExpandedKeys}
+      />
+    </>
   );
 };

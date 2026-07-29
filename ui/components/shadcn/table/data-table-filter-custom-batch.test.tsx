@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { FilterOption } from "@/types/filters";
+import type { FilterOption } from "@/types/filters";
 
 // ── next/navigation mock ────────────────────────────────────────────────────
 const mockPush = vi.fn();
@@ -94,6 +94,37 @@ vi.mock("@/components/shadcn/select/multiselect", () => ({
   }) => <option value={value}>{children}</option>,
 }));
 
+vi.mock("@/components/shadcn/select/select", () => ({
+  Select: ({
+    children,
+    value,
+    onValueChange,
+  }: {
+    children: React.ReactNode;
+    value?: string;
+    onValueChange?: (value: string) => void;
+  }) => (
+    <select
+      data-testid="single-select"
+      value={value}
+      onChange={(event) => onValueChange?.(event.target.value)}
+    >
+      <option value="">All</option>
+      {children}
+    </select>
+  ),
+  SelectTrigger: () => null,
+  SelectValue: () => null,
+  SelectContent: ({ children }: { children: React.ReactNode }) => children,
+  SelectItem: ({
+    children,
+    value,
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => <option value={value}>{children}</option>,
+}));
+
 // ── ClearFiltersButton stub ─────────────────────────────────────────────────
 vi.mock("@/components/filters/clear-filters-button", () => ({
   ClearFiltersButton: () => <button type="button">Clear</button>,
@@ -136,6 +167,13 @@ const scanFilter: FilterOption = {
   values: ["scan-1"],
   width: "wide",
 };
+
+const deltaFilter = {
+  key: "filter[delta]",
+  labelCheckboxGroup: "Delta",
+  values: ["new", "changed"],
+  selectionMode: "single",
+} as const satisfies FilterOption;
 
 describe("DataTableFilterCustom — batch vs instant mode", () => {
   beforeEach(() => {
@@ -269,6 +307,26 @@ describe("DataTableFilterCustom — batch vs instant mode", () => {
       // Then — multiselect gets empty values
       const multiselect = screen.getByTestId("multiselect");
       expect(multiselect).toHaveAttribute("data-values", JSON.stringify([]));
+    });
+
+    it("should replace the delta value through a single-select control", async () => {
+      const user = userEvent.setup();
+      const onBatchChange = vi.fn();
+
+      render(
+        <DataTableFilterCustom
+          filters={[deltaFilter]}
+          mode="batch"
+          onBatchChange={onBatchChange}
+          getFilterValue={() => ["new"]}
+        />,
+      );
+
+      expect(screen.queryByTestId("multiselect")).not.toBeInTheDocument();
+
+      await user.selectOptions(screen.getByTestId("single-select"), "changed");
+
+      expect(onBatchChange).toHaveBeenCalledWith("filter[delta]", ["changed"]);
     });
   });
 

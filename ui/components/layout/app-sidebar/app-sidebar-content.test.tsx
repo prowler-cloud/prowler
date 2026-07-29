@@ -107,6 +107,34 @@ describe("AppSidebarContent", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("preserves the current full-page Lighthouse session when Chat is selected again", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    pathnameValue.current = "/lighthouse";
+    useAppSidebarMode.setState({ mode: APP_SIDEBAR_MODE.CHAT });
+    const user = userEvent.setup();
+    render(<AppSidebarContent />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+
+    // Then
+    expect(pushMock).not.toHaveBeenCalled();
+  });
+
+  it("navigates to Lighthouse when Chat is selected from another page", async () => {
+    // Given
+    vi.stubEnv("UI_CLOUD_ENABLED", "true");
+    const user = userEvent.setup();
+    render(<AppSidebarContent />);
+
+    // When
+    await user.click(screen.getByRole("button", { name: "Chat" }));
+
+    // Then
+    expect(pushMock).toHaveBeenCalledWith("/lighthouse");
+  });
+
   it("opens the current scan modal instead of navigating from the scans route", async () => {
     // Given
     vi.stubEnv("UI_CLOUD_ENABLED", "true");
