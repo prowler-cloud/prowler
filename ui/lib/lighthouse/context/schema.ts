@@ -99,6 +99,10 @@ export const lighthouseComplianceContextItemSchema =
     section: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     score: z.number().min(0).max(100).optional(),
+    scoreDelta: z.number().min(-100).max(100).optional(),
+    criticalRequirementsCount: boundedCountSchema.optional(),
+    worstSection: boundedStringSchema.optional(),
+    worstSectionScore: z.number().min(0).max(100).optional(),
     totals: lighthouseComplianceTotalsSchema.optional(),
   });
 

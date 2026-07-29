@@ -208,6 +208,37 @@ describe("Lighthouse page contributions", () => {
     });
   });
 
+  it("builds an enriched ThreatScore snapshot with delta and weakest section", () => {
+    expect(
+      buildComplianceContext({
+        pathname: "/",
+        id: "prowler-threat-score",
+        framework: "Prowler ThreatScore",
+        score: 62.4,
+        scoreDelta: -3.21,
+        criticalRequirementsCount: 5,
+        worstSection: "1.2 Attack Surface",
+        worstSectionScore: 38.6,
+        passed: 120,
+        failed: 40,
+        total: 160,
+      }),
+    ).toEqual({
+      kind: "compliance",
+      id: "prowler-threat-score",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Prowler ThreatScore",
+      framework: "Prowler ThreatScore",
+      score: 62.4,
+      scoreDelta: -3.21,
+      criticalRequirementsCount: 5,
+      worstSection: "1.2 Attack Surface",
+      worstSectionScore: 38.6,
+      totals: { passed: 120, failed: 40, total: 160 },
+    });
+  });
+
   it("defines every supported compliance context mode", () => {
     expect(Object.values(LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE)).toEqual([
       "per-scan",

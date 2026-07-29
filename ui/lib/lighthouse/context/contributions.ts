@@ -79,6 +79,10 @@ interface ComplianceContextInput {
   section?: string;
   region?: string;
   score?: number;
+  scoreDelta?: number;
+  criticalRequirementsCount?: number;
+  worstSection?: string;
+  worstSectionScore?: number;
   passed?: number;
   failed?: number;
   total?: number;
@@ -267,6 +271,15 @@ export function buildComplianceContext(
     section: optionalBoundedString(input.section),
     region: optionalBoundedString(input.region),
     score,
+    scoreDelta: optionalSafeScoreDelta(input.scoreDelta),
+    criticalRequirementsCount: optionalSafeCount(
+      input.criticalRequirementsCount,
+    ),
+    worstSection: optionalBoundedString(input.worstSection),
+    worstSectionScore:
+      input.worstSectionScore === undefined
+        ? undefined
+        : toSafeScore(input.worstSectionScore),
     totals: hasTotals ? { passed, failed, total } : undefined,
   };
 }
@@ -391,6 +404,11 @@ function optionalSafeCount(value: number | undefined): number | undefined {
 function toSafeScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(100, Math.max(0, Math.round(value * 100) / 100));
+}
+
+function optionalSafeScoreDelta(value: number | undefined): number | undefined {
+  if (value === undefined || !Number.isFinite(value)) return undefined;
+  return Math.min(100, Math.max(-100, Math.round(value * 100) / 100));
 }
 
 function sanitizeAttackPathParameters(

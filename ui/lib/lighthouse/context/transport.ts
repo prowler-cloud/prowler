@@ -129,6 +129,10 @@ function toApiContextItem(
         section: item.section,
         region: item.region,
         score: item.score,
+        score_delta: item.scoreDelta,
+        critical_requirements_count: item.criticalRequirementsCount,
+        worst_section: item.worstSection,
+        worst_section_score: item.worstSectionScore,
         totals: item.totals,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH:
@@ -220,6 +224,10 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         section: value.section,
         region: value.region,
         score: value.score,
+        scoreDelta: value.score_delta,
+        criticalRequirementsCount: value.critical_requirements_count,
+        worstSection: value.worst_section,
+        worstSectionScore: value.worst_section_score,
         totals: value.totals,
       });
     case LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH:
