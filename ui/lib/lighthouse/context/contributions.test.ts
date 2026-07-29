@@ -9,6 +9,8 @@ import {
   buildFilteredProviderContext,
   buildFindingGroupContext,
   buildFindingResourceContext,
+  buildFindingSeveritySummaryContext,
+  buildFindingStatusSummaryContext,
   buildFindingSummaryContext,
   buildFocusedFindingContext,
   buildFocusedResourceContext,
@@ -238,6 +240,58 @@ describe("Lighthouse page contributions", () => {
       worstSection: "1.2 Attack Surface",
       worstSectionScore: 38.6,
       totals: { passed: 120, failed: 40, total: 160 },
+    });
+  });
+
+  it("builds an overview findings status summary", () => {
+    expect(
+      buildFindingStatusSummaryContext({
+        pathname: "/",
+        passed: 320,
+        failed: 80,
+        newPassed: 12,
+        newFailed: 7,
+      }),
+    ).toEqual({
+      kind: "finding",
+      id: "status-summary",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "80 failed / 320 passed findings",
+      findingId: "status-summary",
+      passed: 320,
+      failed: 80,
+      newPassed: 12,
+      newFailed: 7,
+    });
+  });
+
+  it("builds an overview severity summary for failing findings", () => {
+    expect(
+      buildFindingSeveritySummaryContext({
+        pathname: "/",
+        severityCounts: {
+          critical: 4,
+          high: 18,
+          medium: 40,
+          low: 15,
+          informational: 3,
+        },
+      }),
+    ).toEqual({
+      kind: "finding",
+      id: "severity-summary",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Failing findings by severity",
+      findingId: "severity-summary",
+      severityCounts: {
+        critical: 4,
+        high: 18,
+        medium: 40,
+        low: 15,
+        informational: 3,
+      },
     });
   });
 

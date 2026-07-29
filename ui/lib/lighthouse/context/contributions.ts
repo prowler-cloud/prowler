@@ -36,6 +36,19 @@ interface FindingGroupContextInput {
   status: string;
 }
 
+interface FindingStatusSummaryContextInput {
+  pathname: string;
+  passed: number;
+  failed: number;
+  newPassed?: number;
+  newFailed?: number;
+}
+
+interface FindingSeveritySummaryContextInput {
+  pathname: string;
+  severityCounts: Record<string, number>;
+}
+
 interface FindingResourceContextInput {
   findingId: string;
   checkId?: string;
@@ -144,6 +157,47 @@ export function buildFindingSummaryContext(
     label: `${safeTotal} findings`,
     findingId: "summary",
     total: safeTotal,
+  };
+}
+
+export function buildFindingStatusSummaryContext(
+  input: FindingStatusSummaryContextInput,
+): LighthouseFindingContextItem {
+  const passed = toSafeCount(input.passed);
+  const failed = toSafeCount(input.failed);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.FINDING,
+    id: "status-summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: `${failed} failed / ${passed} passed findings`,
+    findingId: "status-summary",
+    passed,
+    failed,
+    newPassed: optionalSafeCount(input.newPassed),
+    newFailed: optionalSafeCount(input.newFailed),
+  };
+}
+
+export function buildFindingSeveritySummaryContext(
+  input: FindingSeveritySummaryContextInput,
+): LighthouseFindingContextItem {
+  const severityCounts = Object.fromEntries(
+    Object.entries(input.severityCounts)
+      .slice(0, LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS)
+      .map(([severity, count]) => [
+        toBoundedString(severity),
+        toSafeCount(count),
+      ]),
+  );
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.FINDING,
+    id: "severity-summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: "Failing findings by severity",
+    findingId: "severity-summary",
+    severityCounts,
   };
 }
 

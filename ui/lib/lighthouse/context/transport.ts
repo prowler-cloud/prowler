@@ -105,6 +105,11 @@ function toApiContextItem(
         resource_uid: item.resourceUid,
         region: item.region,
         total: item.total,
+        passed: item.passed,
+        failed: item.failed,
+        new_passed: item.newPassed,
+        new_failed: item.newFailed,
+        severity_counts: item.severityCounts,
       });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({
@@ -200,6 +205,11 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         resourceUid: value.resource_uid,
         region: value.region,
         total: value.total,
+        passed: value.passed,
+        failed: value.failed,
+        newPassed: value.new_passed,
+        newFailed: value.new_failed,
+        severityCounts: value.severity_counts,
       });
     case LIGHTHOUSE_CONTEXT_KIND.RESOURCE:
       return compact({

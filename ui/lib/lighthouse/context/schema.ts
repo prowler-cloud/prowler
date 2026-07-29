@@ -42,6 +42,16 @@ export const lighthouseAttackPathTypeCountsSchema = z
     },
   );
 
+export const lighthouseFindingSeverityCountsSchema = z
+  .record(boundedStringSchema, boundedCountSchema)
+  .refine(
+    (counts) =>
+      Object.keys(counts).length <= LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS,
+    {
+      error: `Severity counts may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.SEVERITY_COUNTS} entries.`,
+    },
+  );
+
 export const lighthouseContextItemBaseSchema = z.object({
   id: boundedStringSchema,
   source: lighthouseContextSourceSchema,
@@ -67,6 +77,11 @@ export const lighthouseFindingContextItemSchema =
     resourceUid: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     total: boundedCountSchema.optional(),
+    passed: boundedCountSchema.optional(),
+    failed: boundedCountSchema.optional(),
+    newPassed: boundedCountSchema.optional(),
+    newFailed: boundedCountSchema.optional(),
+    severityCounts: lighthouseFindingSeverityCountsSchema.optional(),
   });
 
 export const lighthouseResourceContextItemSchema =
