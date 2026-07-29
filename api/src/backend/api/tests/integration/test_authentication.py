@@ -646,6 +646,16 @@ class TestAPIKeyErrors:
             "No entity matching this api key." in response.json()["errors"][0]["detail"]
         )
 
+        # The orphaned key is revoked on use; retries fail the regular revoked check
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+        retry_response = client.get(reverse("provider-list"), headers=api_key_headers)
+        assert retry_response.status_code == 401
+        assert (
+            "API Key has been revoked." in retry_response.json()["errors"][0]["detail"]
+        )
+
     def test_non_existent_api_key(self, create_test_user, tenants_fixture):
         """Key UUID doesn't exist in database."""
         client = APIClient()

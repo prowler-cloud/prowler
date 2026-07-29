@@ -66,9 +66,13 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         # owner is deleted, so a key can outlive its user. Reject it here: further down
         # the authentication would return `None` as the authenticated user, which blows
         # up while building the auth dict and surfaces as a 500 instead of a 401.
+        # Revoke it as well, so it stops showing up as active and later attempts fail
+        # the `revoked` check above like any other revoked key.
         if api_key.entity_id is None:
+            api_key.revoked = True
+            api_key.save(update_fields=["revoked"], using=MainRouter.admin_db)
             logger.warning(
-                "Rejected orphaned API key: prefix=%s tenant=%s",
+                "Revoked orphaned API key: prefix=%s tenant=%s",
                 api_key.prefix,
                 api_key.tenant_id,
             )

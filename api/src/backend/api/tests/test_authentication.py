@@ -248,6 +248,10 @@ class TestTenantAPIKeyAuthentication:
 
         assert str(exc_info.value.detail) == "No entity matching this api key."
 
+        # The orphaned key is revoked on use, so it stops showing up as active
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
     def test_authenticate_orphaned_api_key(
         self, auth_backend, api_keys_fixture, request_factory
     ):
@@ -269,6 +273,15 @@ class TestTenantAPIKeyAuthentication:
             auth_backend.authenticate(request)
 
         assert str(exc_info.value.detail) == "No entity matching this api key."
+
+        # The orphaned key is revoked on use; retries fail the regular revoked check
+        api_key.refresh_from_db()
+        assert api_key.revoked is True
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "This API Key has been revoked."
 
     def test_authenticate_expired_api_key(
         self, auth_backend, create_test_user, tenants_fixture, request_factory
