@@ -24,6 +24,16 @@ describe("resolveLighthousePage", () => {
     // Then
     expect(page.id).toBe(expectedPageId);
     expect(page.suggestions).toHaveLength(4);
+    for (const suggestion of page.suggestions) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          label: expect.any(String),
+          prompt: expect.any(String),
+        }),
+      );
+      expect(suggestion.label).not.toBe("");
+      expect(suggestion.prompt).not.toBe("");
+    }
   });
 
   it("should create a labeled fallback for other application pages", () => {
@@ -34,6 +44,16 @@ describe("resolveLighthousePage", () => {
     expect(page.id).toBe("other");
     expect(page.label).toBe("Alerts");
     expect(page.suggestions).toHaveLength(4);
+    for (const suggestion of page.suggestions) {
+      expect(suggestion).toEqual(
+        expect.objectContaining({
+          label: expect.any(String),
+          prompt: expect.any(String),
+        }),
+      );
+      expect(suggestion.label).not.toBe("");
+      expect(suggestion.prompt).not.toBe("");
+    }
   });
 
   it("should resolve encoded and decoded dynamic paths to the same scope", () => {

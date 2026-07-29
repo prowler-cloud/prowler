@@ -44,6 +44,26 @@ export type LighthouseContextTransport = z.infer<
 export type LighthousePageId =
   (typeof LIGHTHOUSE_PAGE_ID)[keyof typeof LIGHTHOUSE_PAGE_ID];
 
+export interface LighthousePageSuggestion {
+  label: string;
+  prompt: string;
+}
+
+export type LighthousePageSuggestions = readonly [
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+  LighthousePageSuggestion,
+];
+
+export interface LighthousePageDefinitionInput {
+  id: LighthousePageId;
+  label: string;
+  match: (pathname: string) => boolean;
+  allowedSearchParams: readonly string[];
+  suggestions: LighthousePageSuggestions;
+}
+
 export type LighthouseContextFilters = z.infer<
   typeof lighthouseContextFiltersSchema
 >;
