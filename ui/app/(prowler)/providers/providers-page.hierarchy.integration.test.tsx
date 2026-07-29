@@ -3,12 +3,12 @@ import { describe, expect } from "vitest";
 // The extended `it` carries the auto `seedRuntimeConfig` fixture — grouping is
 // cloud-only, so the runtime-config island must exist before mounting.
 import { it } from "@/__tests__/fixtures";
+import { HIERARCHY_READ_FAILURE } from "@/__tests__/msw/handlers/organizations";
 import {
   awsHierarchyFixture,
   displayOnlyOrgHierarchyFixture,
   mixedHierarchyFixture,
 } from "@/__tests__/msw/handlers/organizations.fixtures";
-import { HIERARCHY_STATUS } from "@/types/providers-table";
 
 import { ProvidersPageHarness } from "./providers-page.harness";
 
@@ -77,7 +77,7 @@ describe("Providers page — degraded hierarchy view", () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     await harness.mount({
       openWizard: false,
-      hierarchyStatus: HIERARCHY_STATUS.UNAVAILABLE,
+      hierarchyFailure: HIERARCHY_READ_FAILURE.ALL,
     });
 
     await harness.waitForDegradedHierarchyNotice();
@@ -87,6 +87,24 @@ describe("Providers page — degraded hierarchy view", () => {
     // organization group row survives the failed hierarchy fetch.
     expect(harness.hasProviderRow("prod-web")).toBe(true);
     expect(harness.hasOrganizationRow("My AWS Organization")).toBe(false);
+  }, 30000);
+
+  it("degrades the same way when only the node read fails", async () => {
+    // AWS accounts hang off the OUs, so the organization's own `providers`
+    // relationship is empty and its row drops out along with the nodes.
+    const harness = new ProvidersPageHarness(awsHierarchyFixture());
+    await harness.mount({
+      openWizard: false,
+      hierarchyFailure: HIERARCHY_READ_FAILURE.NODES,
+    });
+
+    await harness.waitForDegradedHierarchyNotice();
+    expect(harness.hasUngroupedProvidersNotice()).toBe(true);
+
+    await harness.waitForProviderRow("prod-web");
+    expect(harness.hasProviderRow("sandbox-1")).toBe(true);
+    expect(harness.hasOrganizationRow("My AWS Organization")).toBe(false);
+    expect(harness.hasNodeKindLabel("Organizational Unit")).toBe(false);
   }, 30000);
 
   it("shows no notice when the hierarchy is available", async () => {

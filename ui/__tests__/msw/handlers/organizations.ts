@@ -237,18 +237,30 @@ const DELETION_TASK_PREFIX = "del-task-";
 
 interface HandlerOptions {
   /**
-   * Fail both hierarchy reads (`/organizations`, `/organization-nodes`) with a
-   * 500. The `…Safe` list actions turn that into their degraded-fetch flag,
-   * which is how the providers page resolves `hierarchyStatus: unavailable` —
-   * so the notice is exercised through the real path, not an injected prop.
+   * Which hierarchy read 500s. The `…Safe` actions turn that into their
+   * degraded flag and the page derives `hierarchyStatus` — never an injected
+   * prop.
    */
-  hierarchyUnavailable?: boolean;
+  hierarchyFailure?: HierarchyReadFailure;
 }
+
+export const HIERARCHY_READ_FAILURE = {
+  NONE: "none",
+  /** Both `/organizations` and `/organization-nodes` fail. */
+  ALL: "all",
+  /** Only `/organization-nodes` fails. */
+  NODES: "nodes",
+} as const;
+
+export type HierarchyReadFailure =
+  (typeof HIERARCHY_READ_FAILURE)[keyof typeof HIERARCHY_READ_FAILURE];
 
 export const handlersForOrganizations = (
   fx: OrgFixture,
-  { hierarchyUnavailable = false }: HandlerOptions = {},
+  { hierarchyFailure = HIERARCHY_READ_FAILURE.NONE }: HandlerOptions = {},
 ) => {
+  const organizationReadFails = hierarchyFailure === HIERARCHY_READ_FAILURE.ALL;
+  const nodeReadFails = hierarchyFailure !== HIERARCHY_READ_FAILURE.NONE;
   // Mutable working copy for resources created during the test lifecycle.
   const organizations = [...fx.organizations];
   const createdSecretIds = new Set(
@@ -270,7 +282,7 @@ export const handlersForOrganizations = (
   const handlers = [
     // --- organizations CRUD + filters ------------------------------------
     http.get(`${API}/organizations`, ({ request }) => {
-      if (hierarchyUnavailable) {
+      if (organizationReadFails) {
         return HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
           status: 500,
         });
@@ -391,7 +403,7 @@ export const handlersForOrganizations = (
 
     // --- canonical organization-nodes ------------------------------------
     http.get(`${API}/organization-nodes`, ({ request }) =>
-      hierarchyUnavailable
+      nodeReadFails
         ? HttpResponse.json(errorBody("Hierarchy unavailable", 500), {
             status: 500,
           })

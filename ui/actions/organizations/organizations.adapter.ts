@@ -221,10 +221,8 @@ export function getNodeIdsForSelectedCandidates(
       continue;
     }
 
-    // The walk stops on an already-seen ancestor, not just on leaving the node
-    // set: parent ids come straight off the wire, and a cycle (mutual or
-    // self-parenting nodes) would otherwise spin forever — `nodeIds` is a Set,
-    // so re-adding never terminates the loop, it just hangs the tab.
+    // Stops on an already-seen ancestor too: parent ids are wire data, and a
+    // cycle would spin forever since re-adding to a Set never terminates.
     let currentParentId = candidate.parentId;
     const visitedParentIds = new Set<string>();
     while (

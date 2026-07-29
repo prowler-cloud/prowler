@@ -65,10 +65,13 @@ const HIERARCHY_MAX_PAGES = 50;
 async function fetchOptionalCollection<T>(
   url: URL,
 ): Promise<CollectionFetch<T>> {
-  const headers = await getAuthHeaders({ contentType: false });
   const collected: T[] = [];
 
+  // Headers inside the try: an expired session throws, and these are awaited in
+  // the providers page's `Promise.all`, which has no catch.
   try {
+    const headers = await getAuthHeaders({ contentType: false });
+
     for (let page = 1; page <= HIERARCHY_MAX_PAGES; page += 1) {
       const pageUrl = new URL(url);
       pageUrl.searchParams.set("page[number]", String(page));
@@ -76,11 +79,8 @@ async function fetchOptionalCollection<T>(
 
       const response = await fetch(pageUrl.toString(), { headers });
 
-      // Every response — including a failed one — goes through
-      // `handleApiResponse` first. It is the reporting point the rest of the
-      // organization actions share, so a degraded hierarchy leaves a trace:
-      // 5xx captures and rethrows into the catch below, 4xx captures and
-      // returns. Short-circuiting on `!response.ok` skipped it entirely.
+      // Failures go through `handleApiResponse` too — it is the shared
+      // reporting point, and short-circuiting on `!response.ok` skipped it.
       const body = (await handleApiResponse(response)) as CollectionPage<T>;
 
       if (!response.ok) {
@@ -97,7 +97,9 @@ async function fetchOptionalCollection<T>(
     }
 
     return { data: [], error: true };
-  } catch {
+  } catch (error) {
+    handleApiError(error);
+
     return { data: [], error: true };
   }
 }
@@ -113,9 +115,8 @@ export const createOrganization = async (formData: FormData) => {
   const name = formData.get("name") as string;
   const externalId = formData.get("externalId") as string;
 
-  // Untrusted form value. Absent means AWS (the flow that predates the field),
-  // but an unrecognized one is rejected rather than coerced: creating an AWS
-  // organization for a type the caller named otherwise onboards the wrong thing.
+  // Absent means AWS (the flow predates the field); unrecognized is rejected,
+  // not coerced to AWS.
   const rawOrgType = formData.get("orgType");
   const orgType =
     rawOrgType === null ? ORGANIZATION_TYPE.AWS : toOrgFlowType(rawOrgType);

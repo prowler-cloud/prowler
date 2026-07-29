@@ -13,7 +13,11 @@
  */
 
 import { BrowserHarness } from "@/__tests__/browser-harness";
-import { handlersForOrganizations } from "@/__tests__/msw/handlers/organizations";
+import {
+  handlersForOrganizations,
+  HIERARCHY_READ_FAILURE,
+  type HierarchyReadFailure,
+} from "@/__tests__/msw/handlers/organizations";
 import type { OrgFixture } from "@/__tests__/msw/handlers/organizations.fixtures";
 import { worker } from "@/__tests__/msw/worker";
 import { render } from "@/__tests__/render-browser";
@@ -22,10 +26,6 @@ import {
   ADD_PROVIDER_SEARCH_VALUE,
 } from "@/lib/providers-navigation";
 import type { SearchParamsProps } from "@/types";
-import {
-  HIERARCHY_STATUS,
-  type HierarchyStatus,
-} from "@/types/providers-table";
 
 import { ProvidersTabContent } from "./providers-tab-content";
 
@@ -34,12 +34,8 @@ const INITIAL_SCAN_LABEL = "Launch an initial scan now for immediate findings";
 interface MountOptions {
   /** Seed `?addProvider=true` so the wizard opens on mount. Default true. */
   openWizard?: boolean;
-  /**
-   * `unavailable` fails both hierarchy reads (`/organizations`,
-   * `/organization-nodes`) so the loader derives the degraded status itself —
-   * it is never injected as a prop. Default available.
-   */
-  hierarchyStatus?: HierarchyStatus;
+  /** Which hierarchy read fails, so the loader derives the status. Default none. */
+  hierarchyFailure?: HierarchyReadFailure;
 }
 
 export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
@@ -113,14 +109,10 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
    */
   async mount({
     openWizard = true,
-    hierarchyStatus = HIERARCHY_STATUS.AVAILABLE,
+    hierarchyFailure = HIERARCHY_READ_FAILURE.NONE,
   }: MountOptions = {}): Promise<void> {
     this.seedWizardUrl(openWizard);
-    worker.use(
-      ...handlersForOrganizations(this.fixture, {
-        hierarchyUnavailable: hierarchyStatus === HIERARCHY_STATUS.UNAVAILABLE,
-      }),
-    );
+    worker.use(...handlersForOrganizations(this.fixture, { hierarchyFailure }));
     this.trackRequests(worker);
 
     render(await ProvidersTabContent({ searchParams: this.searchParams() }));
@@ -391,11 +383,7 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.containsText(/Organization grouping is incomplete/);
   }
 
-  /**
-   * Whether the notice warns that providers may be ungrouped. Deliberately not
-   * "shown as a flat list": that only holds when the organizations call itself
-   * failed, not when just the nodes call did.
-   */
+  /** Whether the notice warns that providers may be ungrouped. */
   hasUngroupedProvidersNotice(): boolean {
     return this.containsText(/Some providers may appear ungrouped/);
   }

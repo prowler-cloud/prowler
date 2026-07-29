@@ -103,17 +103,21 @@ describe("organizations actions", () => {
   });
 
   it("rejects an unrecognized organization type value", async () => {
-    // Given
-    const formData = new FormData();
-    formData.set("name", "Rogue");
-    formData.set("externalId", "o-abc123def4");
-    formData.set("orgType", "not-a-provider");
+    // Given a garbage value, and an empty one: present-but-empty is a different
+    // case from absent, and only absent may fall back to AWS.
+    for (const orgType of ["not-a-provider", ""]) {
+      const formData = new FormData();
+      formData.set("name", "Rogue");
+      formData.set("externalId", "o-abc123def4");
+      formData.set("orgType", orgType);
 
-    // When
-    const result = await createOrganization(formData);
+      // When
+      const result = await createOrganization(formData);
 
-    // Then
-    expect(result).toEqual({ error: "Invalid organization type" });
+      // Then
+      expect(result).toEqual({ error: "Invalid organization type" });
+    }
+
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -319,7 +323,7 @@ describe("organizations actions", () => {
     // degraded-hierarchy notice is traceable instead of only a boolean.
     expect(result).toEqual({ data: [], error: true });
     expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
-    expect(handleApiErrorMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
   });
 
   it("flags an empty organization nodes payload as degraded when the safe request fails", async () => {
@@ -337,7 +341,33 @@ describe("organizations actions", () => {
     // Then — same contract as the organizations read above.
     expect(result).toEqual({ data: [], error: true });
     expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
-    expect(handleApiErrorMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports a rejected request instead of degrading silently", async () => {
+    // A transport failure never reaches `handleApiResponse`, so the catch is the
+    // only place it can be reported.
+    fetchMock.mockRejectedValue(new TypeError("fetch failed"));
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiResponseMock).not.toHaveBeenCalled();
+    expect(handleApiErrorMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("degrades instead of escaping when the session lookup throws", async () => {
+    // An escape here would take down the providers page's whole `Promise.all`.
+    getAuthHeadersMock.mockRejectedValue(new Error("No session"));
+
+    // When
+    const result = await listOrganizationsSafe();
+
+    // Then
+    expect(result).toEqual({ data: [], error: true });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("reports a 4xx page through the shared helper before degrading", async () => {
