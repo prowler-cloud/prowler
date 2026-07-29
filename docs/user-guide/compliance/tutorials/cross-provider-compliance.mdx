@@ -38,6 +38,8 @@ For a chosen framework and provider type, Prowler Cloud:
   </Step>
 </Steps>
 
+<img src="/images/compliance/prowler-app-compliance-multiple-scans.png" alt="Multiple Scans tab showing the Across provider types cards and the Across providers section, with the AWS group collapsed and its framework and provider counts" width="900" />
+
 <Note>
 A provider type appears only when it has two or more providers registered **and** at least one of them has a completed scan: that scan is where the framework catalog of the provider type is read from. With a single provider the aggregation is identical to the standard per-scan [Compliance](/user-guide/compliance/tutorials/compliance) view.
 </Note>
@@ -46,6 +48,8 @@ Framework cards in this section carry no score: they enumerate which frameworks 
 
 * **Universal frameworks:** Aggregated in the **Across provider types** section above. See [Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance).
 * **Prowler ThreatScore:** Reviewed per scan in the **Single Scan** tab. See [Prowler ThreatScore](/user-guide/compliance/tutorials/threatscore).
+
+<img src="/images/compliance/prowler-app-across-providers-expanded.png" alt="Across providers section with the AWS group expanded, showing one card per single-provider framework with its View across providers link and provider count" width="900" />
 
 ## Which Providers Are Listed and Which Contribute
 
@@ -62,21 +66,23 @@ What decides whether a provider contributes is **having a completed scan**, not 
 * **Disconnected providers still count:** A provider whose credentials stopped working contributes its last completed scan. The posture it shows is as old as that scan.
 * **Newly connected providers do not:** A provider contributes nothing until its first scan completes.
 
-To confirm which providers made it into an aggregation, read the coverage summary in the detail page header and the coverage card, which lists one row per contributing provider.
+To confirm which providers made it into an aggregation, read the coverage summary in the detail page header and the **Account Coverage** card, which lists one row per contributing provider.
 
 <Warning>
-The **Providers** filter on the detail page lists every provider of the type, including ones that have never been scanned. Narrowing to providers with no completed scan leaves the view with no evidence to aggregate: the coverage card reports nothing scanned, requirements show no per-provider status, and any report generated for that selection is empty. Clear the filter or select providers that have already been scanned.
+The **Providers** filter on the detail page lists every provider of the type, including ones that have never been scanned. Narrowing to providers with no completed scan leaves the view with no evidence to aggregate: the **Account Coverage** card reports nothing scanned, requirements show no per-provider status, and any report generated for that selection is empty. Clear the filter or select providers that have already been scanned.
 </Warning>
 
 ## Working With the Framework Detail Page
 
 Selecting a card opens a detail page with the same layout as the cross-provider-type detail, with the column axis swapped from provider type to provider:
 
-* **Header:** States the framework, the provider type, and the real coverage behind the numbers, as a count of aggregated providers and scans. The **Report** button generates the combined PDF.
+* **Header:** States the framework, the provider type, and the real coverage behind the numbers, as a count of aggregated accounts and scans. The **Report** button generates the combined PDF.
 * **Requirements Status:** Donut chart with the consolidated `Pass`, `Fail`, and `Manual` counts.
-* **Coverage card:** Ranks each contributing provider's individual posture, so the weakest one is visible at a glance.
+* **Account Coverage:** Ranks each contributing provider's individual posture, so the weakest one is visible at a glance. Every row is one provider of the type, labeled with its alias and unique identifier (UID).
 * **Top Failed Sections:** Ranks the framework sections with the most failing requirements, with deep links into the requirements accordion.
 * **Requirements accordion:** Each requirement shows its roll-up badge plus the status of every contributing provider, labeled with the provider alias and unique identifier (UID). With one or two providers the statuses appear as inline chips; from three onwards the row condenses into per-status counts (for example, `Fail ×3 Pass ×6`), and selecting the counts opens the full provider-by-provider breakdown. Expanding a requirement queries the findings of every contributing scan and merges them into a single table.
+
+<img src="/images/compliance/prowler-app-across-providers-detail.png" alt="Cross-Provider Compliance detail page for CIS AWS 7.0 showing the header with aggregated accounts and scans, the Report button, the Providers and Provider group filters, and the Requirements Status, Account Coverage, and Top Failed Sections cards above the requirements accordion" width="900" />
 
 <Note>
 Checks are not labeled per provider type as in the cross-provider-type view. Every provider of the same type shares one check set, so a single list of checks covers the whole aggregation.
@@ -116,6 +122,8 @@ Scan selection and permission scoping match the cross-provider-type view: the ag
 ## Downloading the Combined PDF Report
 
 The **Report** button produces a single PDF across every contributing provider of the type: a cover page listing the providers, an executive summary with the consolidated roll-up, charts, a requirements index, and detailed findings grouped by requirement and provider.
+
+<img src="/images/compliance/prowler-app-across-providers-report.png" alt="Report dropdown on the Cross-Provider Compliance detail page showing the Generate new report option" width="420" />
 
 Generation is asynchronous and behaves exactly like the cross-provider-type report — background job, toast notification when ready, and **Report → Download latest** to reuse a report already generated for the current filters. See [Downloading the Combined PDF Report](/user-guide/compliance/tutorials/cross-provider-type-compliance#downloading-the-combined-pdf-report) for the full flow, including report reuse and the findings cap.
 

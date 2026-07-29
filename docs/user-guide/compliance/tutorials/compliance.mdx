@@ -4,6 +4,8 @@ sidebarTitle: 'Overview'
 description: 'Run security checks against compliance frameworks, review posture across providers, and download CSV or PDF reports from Prowler Cloud and Prowler Local Server, or CSV reports from Prowler CLI.'
 ---
 
+import { SubscriptionBanner } from "/snippets/subscription-banner.mdx"
+
 Prowler maps every security check to one or more industry-standard compliance frameworks, so a single scan produces both technical findings and framework-aligned evidence. The same evaluation runs identically whether scans are launched from Prowler Cloud, Prowler Local Server, or Prowler CLI.
 
 Out of the box, Prowler covers frameworks such as CIS Benchmarks, NIST 800-53, NIST CSF, NIS2, ENS RD2022, ISO 27001, PCI-DSS, SOC 2, GDPR, HIPAA, AWS Well-Architected, BSI C5, CSA CCM, MITRE ATT&CK, KISA ISMS-P, FedRAMP, and Prowler ThreatScore. The full catalog is available at [Prowler Hub](https://hub.prowler.com/compliance).
@@ -35,7 +37,9 @@ To open the compliance overview, follow these steps:
 The Compliance page is organized into two tabs:
 
 * **Single Scan:** Lists every framework evaluated by one completed scan of one provider. This is the experience described in the rest of this guide, and the default view in Prowler Local Server.
-* **Multiple Scans:** Aggregates one framework across several scans at once, either across provider types ([Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance)) or across every provider of the same type ([Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)). It is the landing tab in Prowler Cloud; in Prowler Local Server it carries a **Cloud** badge, since it requires a subscription.
+* **Multiple Scans:** Aggregates one framework across several scans at once, either across provider types ([Cross-Provider Type Compliance](/user-guide/compliance/tutorials/cross-provider-type-compliance)) or across every provider of the same type ([Cross-Provider Compliance](/user-guide/compliance/tutorials/cross-provider-compliance)).
+
+<SubscriptionBanner label="Multiple Scans tab" />
 
 <img src="/images/compliance/prowler-app-compliance-overview.png" alt="Compliance overview page in Prowler Cloud and Prowler Local Server showing filters, the Prowler ThreatScore card, and the framework grid" width="900" />
 
