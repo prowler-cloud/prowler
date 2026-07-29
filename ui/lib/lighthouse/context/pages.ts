@@ -68,8 +68,8 @@ const PAGE_DEFINITIONS: readonly LighthousePageDefinition[] = [
     allowedSearchParams: PROVIDER_SCOPE_PARAMS,
     suggestions: [
       "What should I prioritize from this overview?",
-      "Explain the visible threat score and its main drivers.",
-      "Which accounts or services appear to carry the most risk?",
+      "Explain my threat score, its trend, and weakest section.",
+      "Which providers, services, or frameworks carry the most risk?",
       "Build a practical security plan for today.",
     ],
   }),
