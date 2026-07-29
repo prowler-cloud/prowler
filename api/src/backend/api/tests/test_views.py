@@ -14793,7 +14793,7 @@ class TestTenantFinishACSView:
         # Verify no new role was created
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
-    def test_dispatch_assigns_no_role_to_new_user_when_usertype_missing(
+    def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
         create_test_user,
         tenants_fixture,
@@ -14801,7 +14801,7 @@ class TestTenantFinishACSView:
         settings,
         monkeypatch,
     ):
-        """Test that a user without roles gets none assigned when userType is missing"""
+        """Test that a user without roles gets read_only when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
@@ -14858,11 +14858,21 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify no role was created or assigned
-        assert Role.objects.using(MainRouter.admin_db).count() == roles_before
-        assert not (
+        # Verify the fallback role was created with read-only access and assigned
+        assert Role.objects.using(MainRouter.admin_db).count() == roles_before + 1
+        role = Role.objects.using(MainRouter.admin_db).get(
+            name="read_only", tenant=tenant
+        )
+        assert not role.manage_users
+        assert not role.manage_account
+        assert not role.manage_billing
+        assert not role.manage_providers
+        assert not role.manage_integrations
+        assert not role.manage_scans
+        assert role.unlimited_visibility
+        assert (
             UserRoleRelationship.objects.using(MainRouter.admin_db)
-            .filter(user=user, tenant_id=tenant.id)
+            .filter(user=user, role=role, tenant_id=tenant.id)
             .exists()
         )
 

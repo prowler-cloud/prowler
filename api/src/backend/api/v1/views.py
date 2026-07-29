@@ -878,11 +878,31 @@ class TenantFinishACSView(FinishACSView):
             user.name = "N/A"
         user.save()
 
-        # Only remap roles when the IdP provides a userType attribute.
-        # Without it, the user's current roles are left untouched.
+        # Only remap existing roles when the IdP provides a userType attribute.
+        # Without it, preserve current roles or assign a read-only fallback.
         role_name = (
             extra.get("userType", [""])[0].strip() if extra.get("userType") else ""
         )
+        if not role_name:
+            user_has_roles = (
+                UserRoleRelationship.objects.using(MainRouter.admin_db)
+                .filter(user_id=user_id, tenant_id=tenant.id)
+                .exists()
+            )
+            if not user_has_roles:
+                with transaction.atomic(using=MainRouter.admin_db):
+                    role, _ = Role.objects.using(MainRouter.admin_db).get_or_create(
+                        name="read_only",
+                        tenant=tenant,
+                        defaults={"unlimited_visibility": True},
+                    )
+                    UserRoleRelationship.objects.using(
+                        MainRouter.admin_db
+                    ).get_or_create(
+                        user=user,
+                        role=role,
+                        defaults={"tenant": tenant},
+                    )
         if role_name:
             with transaction.atomic(using=MainRouter.admin_db):
                 role = (
