@@ -3726,274 +3726,98 @@ AWS_STS_PRIVESC_ASSUME_ROLE = AttackPathsQueryDefinition(
     parameters=[],
 )
 
-# Cross-Account Trust Abuse Queries (based on pathfinding.cloud research)
-# https://github.com/DataDog/pathfinding.cloud
-# -------------------------------------------------------------------
-
-# STS-001 (Cross-Account)
-AWS_IAM_PRIVESC_CROSS_ACCOUNT_NO_EXTERNAL_ID = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-cross-account-no-external-id",
-    name="Cross-Account Role Without ExternalId (STS-001)",
-    short_description="Roles allowing cross-account access without ExternalId are vulnerable to confused deputy attacks.",
-    description="Identifies IAM roles with trust policies that allow principals from external AWS accounts to assume them without requiring an ExternalId condition. Any principal in the trusted account can assume these roles, enabling confused deputy attacks if the trusted account is compromised or has overly permissive IAM policies.",
-    attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - STS-001 - sts:AssumeRole",
-        link="https://pathfinding.cloud/paths/sts-001",
-    ),
-    provider="aws",
-    cypher=f"""
-        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})
-            --(target_role:AWSRole)
-            -[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
-        WHERE trusted.arn CONTAINS ':root'
-            AND NOT trusted.arn CONTAINS aws.id
-
-        MATCH (target_role)--(policy:AWSPolicy)--(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                action = '*' OR toLower(action) = 'iam:*'
-            )
-
-        UNWIND nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
-    """,
-    parameters=[],
-)
-
 # STS-002
-AWS_IAM_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-wildcard-trust",
-    name="Wildcard Trust Principal (STS-002)",
-    short_description="Roles with wildcard trust policies can be assumed by any AWS principal worldwide.",
-    description="Identifies IAM roles whose trust policy contains Principal: '*', allowing any AWS principal in any account to assume the role. This is the most severe trust policy misconfiguration possible and grants universal access to the role's permissions.",
+AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST = AttackPathsQueryDefinition(
+    id="aws-sts-privesc-cross-account-trust",
+    name="Cross-Account Role Trust for Privilege Escalation (STS-002)",
+    short_description="Roles that trust an external account's root principal can be assumed by any principal in that account, enabling confused-deputy escalation.",
+    description="Detect IAM roles whose trust policy allows an external AWS account root principal (arn:aws:iam::<account-id>:root) to assume them. Any principal in the trusted external account that holds sts:AssumeRole can assume the role and gain its permissions, which is the confused-deputy escalation surface. The ingested graph does not record trust-policy conditions, so roles protected by an sts:ExternalId condition cannot be filtered out automatically and are surfaced here for manual review.",
     attribution=AttackPathsQueryAttribution(
         text="pathfinding.cloud - STS-002 - sts:AssumeRole",
         link="https://pathfinding.cloud/paths/sts-002",
     ),
     provider="aws",
     cypher=f"""
-        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})
-            --(target_role:AWSRole)
-            -[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
-        WHERE trusted.arn = '*'
+        // Find roles that trust an external account's root principal (cross-account trust)
+        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSRootPrincipal)
+        WHERE trusted.arn CONTAINS ':root'
+            AND NOT trusted.arn CONTAINS aws.id
 
-        UNWIND nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        WITH DISTINCT path_target
+        WITH collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
 
 # STS-003
-AWS_IAM_PRIVESC_UPDATE_TRUST_SELF_ASSUME = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-update-trust-self-assume",
-    name="Trust Policy Rewrite via UpdateAssumeRolePolicy (STS-003)",
-    short_description="Principals that can modify role trust policies can grant themselves access to any role.",
-    description="Identifies principals with iam:UpdateAssumeRolePolicy permission. These principals can modify any target role's trust policy to allow themselves to assume it, effectively gaining the target role's permissions regardless of the original trust configuration.",
+AWS_STS_PRIVESC_WILDCARD_TRUST = AttackPathsQueryDefinition(
+    id="aws-sts-privesc-wildcard-trust",
+    name="Wildcard Role Trust for Privilege Escalation (STS-003)",
+    short_description="Roles whose trust policy principal is a wildcard can be assumed by any AWS principal in any account.",
+    description='Detect IAM roles whose trust policy uses a wildcard principal ("AWS": "*"), allowing any principal in any AWS account that holds sts:AssumeRole to assume the role and gain its permissions. This is the most permissive trust misconfiguration and exposes the role\'s privileges to every AWS account.',
     attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - STS-003 - iam:UpdateAssumeRolePolicy",
+        text="pathfinding.cloud - STS-003 - sts:AssumeRole",
         link="https://pathfinding.cloud/paths/sts-003",
     ),
     provider="aws",
     cypher=f"""
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'iam:updateassumerolepolicy'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            )
-            AND any(resource IN stmt.resource WHERE resource = '*')
+        // Find roles whose trust policy allows a wildcard principal (any account)
+        MATCH path_target = (aws:AWSAccount {{id: $provider_uid}})--(target_role:AWSRole)-[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
+        WHERE trusted.arn = '*'
 
-        MATCH path_target = (aws)--(target_role:AWSRole)
-            --(rpolicy:AWSPolicy)--(rstmt:AWSPolicyStatement)
-        WHERE rstmt.effect = 'Allow'
-            AND any(action IN rstmt.action WHERE
-                action = '*' OR toLower(action) = 'iam:*'
-            )
+        WITH DISTINCT path_target
+        WITH collect(path_target) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
 
-        UNWIND nodes(path_principal) + nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal, path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
-    """,
-    parameters=[],
-)
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
 
-# LAMBDA-001
-AWS_IAM_PRIVESC_PASSROLE_LAMBDA = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-passrole-lambda",
-    name="PassRole to Lambda Privilege Escalation (LAMBDA-001)",
-    short_description="Principals that can pass roles to Lambda functions and invoke them can escalate to those roles' permissions.",
-    description="Identifies principals with iam:PassRole, lambda:CreateFunction, and lambda:InvokeFunction. These principals can create a Lambda function with a privileged execution role, then invoke it to execute arbitrary code as that role — effectively gaining the role's full permissions.",
-    attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - LAMBDA-001 - iam:PassRole + lambda:CreateFunction + lambda:InvokeFunction",
-        link="https://pathfinding.cloud/paths/lambda-001",
-    ),
-    provider="aws",
-    cypher=f"""
-        // Principal has iam:PassRole
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            )
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
 
-        // Target role trusts Lambda service
-        MATCH path_target = (aws)--(target_role:AWSRole)
-            -[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
-        WHERE trusted.arn = 'lambda.amazonaws.com'
-
-        // PassRole resource allows target role
-        WHERE any(resource IN stmt.resource WHERE
-            resource = '*' OR target_role.arn =~ resource
-        )
-
-        // Principal also has lambda:CreateFunction
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND any(action IN stmt2.action WHERE
-                toLower(action) = 'lambda:createfunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            )
-
-        // Principal also has lambda:InvokeFunction
-        MATCH (principal)--(policy3:AWSPolicy)--(stmt3:AWSPolicyStatement)
-        WHERE stmt3.effect = 'Allow'
-            AND any(action IN stmt3.action WHERE
-                toLower(action) = 'lambda:invokefunction'
-                OR toLower(action) = 'lambda:*'
-                OR action = '*'
-            )
-
-        UNWIND nodes(path_principal) + nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal, path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
-    """,
-    parameters=[],
-)
-
-# EC2-001
-AWS_IAM_PRIVESC_PASSROLE_EC2 = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-passrole-ec2",
-    name="PassRole to EC2 Privilege Escalation (EC2-001)",
-    short_description="Principals that can pass roles to EC2 instances can steal credentials via IMDS.",
-    description="Identifies principals with iam:PassRole and ec2:RunInstances. These principals can launch an EC2 instance with a privileged instance profile, then access the instance metadata service (IMDS) to retrieve temporary credentials for the attached role.",
-    attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - EC2-001 - iam:PassRole + ec2:RunInstances",
-        link="https://pathfinding.cloud/paths/ec2-001",
-    ),
-    provider="aws",
-    cypher=f"""
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'iam:passrole'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            )
-
-        MATCH path_target = (aws)--(target_role:AWSRole)
-            -[:TRUSTS_AWS_PRINCIPAL]->(trusted:AWSPrincipal)
-        WHERE trusted.arn = 'ec2.amazonaws.com'
-
-        WHERE any(resource IN stmt.resource WHERE
-            resource = '*' OR target_role.arn =~ resource
-        )
-
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND any(action IN stmt2.action WHERE
-                toLower(action) = 'ec2:runinstances'
-                OR toLower(action) = 'ec2:*'
-                OR action = '*'
-            )
-
-        UNWIND nodes(path_principal) + nodes(path_target) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal, path_target,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
-    """,
-    parameters=[],
-)
-
-# IAM-001 (CreatePolicyVersion — wildcard resource variant)
-AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_SELF_ESCALATION = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-create-policy-version-self-escalation",
-    name="CreatePolicyVersion Self-Escalation (IAM-001)",
-    short_description="Principals that can create new policy versions can grant themselves admin access.",
-    description="Identifies principals with iam:CreatePolicyVersion permission. A principal can create a new version of a managed policy attached to them with Action:* Resource:*, then set it as the default version — achieving immediate full admin access in a single API call.",
-    attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - IAM-001 - iam:CreatePolicyVersion",
-        link="https://pathfinding.cloud/paths/iam-001",
-    ),
-    provider="aws",
-    cypher=f"""
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'iam:createpolicyversion'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            )
-            AND any(resource IN stmt.resource WHERE resource = '*')
-
-        UNWIND nodes(path_principal) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
 
 # IAM-022
-AWS_IAM_PRIVESC_BOUNDARY_REMOVAL = AttackPathsQueryDefinition(
-    id="aws-iam-privesc-boundary-removal",
-    name="Permissions Boundary Removal (IAM-022)",
-    short_description="Principals that can delete permissions boundaries can unlock full unconstrained access on target principals.",
-    description="Identifies principals with iam:DeleteUserPermissionsBoundary or iam:DeleteRolePermissionsBoundary. Removing a permissions boundary from a principal that has broad Allow policies expands their effective permissions to the full unconstrained set — potentially escalating from limited access to admin.",
+AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY = AttackPathsQueryDefinition(
+    id="aws-iam-privesc-delete-user-permissions-boundary",
+    name="Permissions Boundary Removal for Self-Escalation (IAM-022)",
+    short_description="Delete a user's permissions boundary to unlock the broader permissions its attached policies already grant.",
+    description="Detect principals who can call iam:DeleteUserPermissionsBoundary. A permissions boundary caps a user's effective permissions; removing it restores the full set granted by the user's attached policies. A principal that can delete the boundary constraining it can escalate to the unconstrained permissions the boundary was hiding.",
     attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - IAM-022 - iam:DeleteRolePermissionsBoundary",
+        text="pathfinding.cloud - IAM-022 - iam:DeleteUserPermissionsBoundary",
         link="https://pathfinding.cloud/paths/iam-022",
     ),
     provider="aws",
     cypher=f"""
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'iam:deleteuserpermissionsboundary'
-                OR toLower(action) = 'iam:deleterolepermissionsboundary'
-                OR toLower(action) = 'iam:*'
-                OR action = '*'
-            )
-            AND any(resource IN stmt.resource WHERE resource = '*')
+        // Find principals with iam:DeleteUserPermissionsBoundary permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['iam:*', 'iam:deleteuserpermissionsboundary']
+            OR act.value = '*'
 
-        UNWIND nodes(path_principal) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
@@ -4002,39 +3826,43 @@ AWS_IAM_PRIVESC_BOUNDARY_REMOVAL = AttackPathsQueryDefinition(
 AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION = AttackPathsQueryDefinition(
     id="aws-sso-privesc-permission-set-escalation",
     name="Identity Center Permission Set Escalation (SSO-001)",
-    short_description="Principals with SSO management permissions can create admin permission sets and assign them to gain org-wide access.",
-    description="Identifies principals with sso:CreatePermissionSet, sso:CreateAccountAssignment, and sso:AttachManagedPolicyToPermissionSet. These principals can create a new permission set with AdministratorAccess, then assign it to their own identity for any account in the organization — gaining admin access across the entire AWS Organization via the SSO portal.",
+    short_description="Create an administrative Identity Center permission set and assign it to gain organization-wide admin access.",
+    description="Detect principals that hold sso:CreatePermissionSet, sso:AttachManagedPolicyToPermissionSet, and sso:CreateAccountAssignment together. With all three, a principal can create a new IAM Identity Center permission set, attach the AdministratorAccess managed policy to it, and assign it to their own user or group for any account in the organization, gaining administrative access across the organization through the Identity Center portal.",
     attribution=AttackPathsQueryAttribution(
-        text="pathfinding.cloud - SSO-001 - sso:CreatePermissionSet + sso:CreateAccountAssignment",
+        text="pathfinding.cloud - SSO-001 - sso:CreatePermissionSet + sso:AttachManagedPolicyToPermissionSet + sso:CreateAccountAssignment",
         link="https://pathfinding.cloud/paths/sso-001",
     ),
     provider="aws",
     cypher=f"""
-        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})
-            --(principal:AWSPrincipal)
-            --(policy:AWSPolicy)
-            --(stmt:AWSPolicyStatement)
-        WHERE stmt.effect = 'Allow'
-            AND any(action IN stmt.action WHERE
-                toLower(action) = 'sso:createpermissionset'
-                OR toLower(action) = 'sso-admin:*'
-                OR toLower(action) = 'sso:*'
-                OR action = '*'
-            )
+        // Find principals with sso:CreatePermissionSet permission
+        MATCH path_principal = (aws:AWSAccount {{id: $provider_uid}})--(principal:AWSPrincipal)-[:POLICY]->(policy:AWSPolicy)-[:STATEMENT]->(stmt:AWSPolicyStatement {{effect: 'Allow'}})
+        MATCH (stmt)-[:HAS_ACTION]->(act:AWSPolicyStatementActionItem)
+        WHERE toLower(act.value) IN ['sso:*', 'sso:createpermissionset']
+            OR act.value = '*'
+        WITH DISTINCT aws, principal, path_principal
 
-        MATCH (principal)--(policy2:AWSPolicy)--(stmt2:AWSPolicyStatement)
-        WHERE stmt2.effect = 'Allow'
-            AND any(action IN stmt2.action WHERE
-                toLower(action) = 'sso:createaccountassignment'
-                OR toLower(action) = 'sso-admin:*'
-                OR toLower(action) = 'sso:*'
-                OR action = '*'
-            )
+        // Find sso:AttachManagedPolicyToPermissionSet permission on the same principal
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act2:AWSPolicyStatementActionItem)
+        WHERE toLower(act2.value) IN ['sso:*', 'sso:attachmanagedpolicytopermissionset']
+            OR act2.value = '*'
+        WITH DISTINCT aws, principal, path_principal
 
-        UNWIND nodes(path_principal) as n
-        OPTIONAL MATCH (n)-[pfr]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL', provider_uid: $provider_uid}})
-        RETURN path_principal,
-            collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
+        // Find sso:CreateAccountAssignment permission on the same principal
+        MATCH (principal)-[:POLICY]->(:AWSPolicy)-[:STATEMENT]->(:AWSPolicyStatement {{effect: 'Allow'}})-[:HAS_ACTION]->(act3:AWSPolicyStatementActionItem)
+        WHERE toLower(act3.value) IN ['sso:*', 'sso:createaccountassignment']
+            OR act3.value = '*'
+
+        WITH DISTINCT path_principal
+        WITH collect(path_principal) AS paths
+        UNWIND paths AS p
+        UNWIND nodes(p) AS n
+
+        WITH paths, collect(DISTINCT n) AS unique_nodes
+        UNWIND unique_nodes AS n
+
+        OPTIONAL MATCH (n)-[pfr:HAS_FINDING]-(pf:{PROWLER_FINDING_LABEL} {{status: 'FAIL'}})
+
+        RETURN paths, collect(DISTINCT pf) as dpf, collect(DISTINCT pfr) as dpfr
     """,
     parameters=[],
 )
@@ -4121,12 +3949,8 @@ AWS_QUERIES: list[AttackPathsQueryDefinition] = [
     AWS_SSM_PRIVESC_START_SESSION,
     AWS_SSM_PRIVESC_SEND_COMMAND,
     AWS_STS_PRIVESC_ASSUME_ROLE,
-    AWS_IAM_PRIVESC_CROSS_ACCOUNT_NO_EXTERNAL_ID,
-    AWS_IAM_PRIVESC_WILDCARD_TRUST,
-    AWS_IAM_PRIVESC_UPDATE_TRUST_SELF_ASSUME,
-    AWS_IAM_PRIVESC_PASSROLE_LAMBDA,
-    AWS_IAM_PRIVESC_PASSROLE_EC2,
-    AWS_IAM_PRIVESC_CREATE_POLICY_VERSION_SELF_ESCALATION,
-    AWS_IAM_PRIVESC_BOUNDARY_REMOVAL,
+    AWS_STS_PRIVESC_CROSS_ACCOUNT_TRUST,
+    AWS_STS_PRIVESC_WILDCARD_TRUST,
+    AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY,
     AWS_SSO_PRIVESC_PERMISSION_SET_ESCALATION,
 ]
