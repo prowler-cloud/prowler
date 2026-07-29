@@ -1,19 +1,30 @@
 import importlib
 from unittest import mock
 
-from prowler.providers.kubernetes.services.core.core_service import Container, Pod
+from prowler.providers.kubernetes.services.core.core_service import (
+    ConfigMap,
+    Container,
+    Pod,
+)
 from tests.providers.kubernetes.kubernetes_fixtures import (
     set_mocked_kubernetes_provider,
 )
 
-# Each control-plane service scrapes kube-system pods whose name starts with a
-# well-known prefix, then exposes them as `<service>_pods` for its checks.
-CONTROL_PLANE_SERVICES = {
+# Each of these services scrapes a subset of the resources already collected by
+# the core service, then exposes the result for its checks to iterate.
+#
+#   source     - attribute read off the mocked core client
+#   attribute  - attribute the service exposes to its checks
+#   match/miss - a resource that should and should not be collected
+GATHERERS = {
     "apiserver": {
         "module": "prowler.providers.kubernetes.services.apiserver.apiserver_service",
         "class": "APIServer",
+        "source": "pods",
+        "namespaced": True,
         "attribute": "apiserver_pods",
-        "pod_name": "kube-apiserver-control-plane",
+        "match": "kube-apiserver-control-plane",
+        "miss": "unrelated-workload",
         "check": (
             "prowler.providers.kubernetes.services.apiserver."
             "apiserver_anonymous_requests.apiserver_anonymous_requests"
@@ -27,8 +38,11 @@ CONTROL_PLANE_SERVICES = {
             "controllermanager_service"
         ),
         "class": "ControllerManager",
+        "source": "pods",
+        "namespaced": True,
         "attribute": "controllermanager_pods",
-        "pod_name": "kube-controller-manager-control-plane",
+        "match": "kube-controller-manager-control-plane",
+        "miss": "unrelated-workload",
         "check": (
             "prowler.providers.kubernetes.services.controllermanager."
             "controllermanager_disable_profiling.controllermanager_disable_profiling"
@@ -39,8 +53,11 @@ CONTROL_PLANE_SERVICES = {
     "etcd": {
         "module": "prowler.providers.kubernetes.services.etcd.etcd_service",
         "class": "Etcd",
+        "source": "pods",
+        "namespaced": True,
         "attribute": "etcd_pods",
-        "pod_name": "etcd-control-plane",
+        "match": "etcd-control-plane",
+        "miss": "unrelated-workload",
         "check": (
             "prowler.providers.kubernetes.services.etcd."
             "etcd_client_cert_auth.etcd_client_cert_auth"
@@ -51,8 +68,11 @@ CONTROL_PLANE_SERVICES = {
     "scheduler": {
         "module": "prowler.providers.kubernetes.services.scheduler.scheduler_service",
         "class": "Scheduler",
+        "source": "pods",
+        "namespaced": True,
         "attribute": "scheduler_pods",
-        "pod_name": "kube-scheduler-control-plane",
+        "match": "kube-scheduler-control-plane",
+        "miss": "unrelated-workload",
         "check": (
             "prowler.providers.kubernetes.services.scheduler."
             "scheduler_bind_address.scheduler_bind_address"
@@ -60,10 +80,25 @@ CONTROL_PLANE_SERVICES = {
         "check_class": "scheduler_bind_address",
         "client_attr": "scheduler_client",
     },
+    "kubelet": {
+        "module": "prowler.providers.kubernetes.services.kubelet.kubelet_service",
+        "class": "Kubelet",
+        "source": "config_maps",
+        "namespaced": False,
+        "attribute": "kubelet_config_maps",
+        "match": "kubelet-config",
+        "miss": "unrelated-config",
+        "check": (
+            "prowler.providers.kubernetes.services.kubelet."
+            "kubelet_disable_anonymous_auth.kubelet_disable_anonymous_auth"
+        ),
+        "check_class": "kubelet_disable_anonymous_auth",
+        "client_attr": "kubelet_client",
+    },
 }
 
 
-def make_pod(name, namespace="kube-system", command=None):
+def make_pod(name, namespace="kube-system"):
     return Pod(
         name=name,
         uid=f"{name}-uid",
@@ -83,7 +118,7 @@ def make_pod(name, namespace="kube-system", command=None):
             "container": Container(
                 name="container",
                 image="registry.k8s.io/kube-apiserver:v1.30.0",
-                command=command if command is not None else [],
+                command=[],
                 ports=None,
                 env=None,
                 security_context={},
@@ -98,8 +133,23 @@ def make_pod(name, namespace="kube-system", command=None):
     )
 
 
+def make_config_map(name, namespace="kube-system"):
+    return ConfigMap(
+        name=name,
+        uid=f"{name}-uid",
+        namespace=namespace,
+        data={"kubelet": "authentication:\n  anonymous:\n    enabled: false\n"},
+    )
+
+
+def make_resource(spec, name, namespace="kube-system"):
+    if spec["source"] == "pods":
+        return make_pod(name, namespace)
+    return make_config_map(name, namespace)
+
+
 def build_service(spec, core_client):
-    """Instantiate a control-plane service against a mocked core client."""
+    """Instantiate a service against a mocked core client."""
     with (
         mock.patch(
             "prowler.providers.common.provider.Provider.get_global_provider",
@@ -112,48 +162,64 @@ def build_service(spec, core_client):
         return service_class(set_mocked_kubernetes_provider())
 
 
-def failing_core_client():
-    """A core client whose pod collection raises, as it does on an API error."""
+def failing_core_client(spec):
+    """A core client whose resource collection raises, as on an API error."""
     core_client = mock.MagicMock()
-    type(core_client).pods = mock.PropertyMock(
-        side_effect=Exception("Kubernetes API unavailable")
+    setattr(
+        type(core_client),
+        spec["source"],
+        mock.PropertyMock(side_effect=Exception("Kubernetes API unavailable")),
     )
     return core_client
 
 
-class Test_control_plane_pod_gathering:
-    """Regression tests for control-plane pod gathering failures.
+class Test_kubernetes_resource_gathering:
+    """Regression tests for failed resource gathering in Kubernetes services.
 
-    ``_get_<service>_pods`` places its ``return`` inside the ``try`` block, so
-    when the Kubernetes API call raises, the ``except`` branch only logs and the
-    function falls through to an implicit ``return None``. That ``None`` is
-    assigned straight to ``<service>_pods``, and every check that iterates it
-    raises ``TypeError: 'NoneType' object is not iterable``.
+    ``_get_<service>_pods`` and ``_get_kubelet_config_maps`` placed their
+    ``return`` inside the ``try`` block, so when the Kubernetes API call raised,
+    the ``except`` branch only logged and the function fell through to an
+    implicit ``return None``. That ``None`` was assigned straight to the service
+    attribute, and every check that iterates it raised
+    ``TypeError: 'NoneType' object is not iterable``.
     """
 
-    def test_pods_are_gathered_and_filtered(self):
-        """Sanity check: matching kube-system pods are collected."""
-        for name, spec in CONTROL_PLANE_SERVICES.items():
+    def test_resources_are_gathered_and_filtered(self):
+        """Sanity check: only matching resources are collected.
+
+        The pod gatherers filter on both namespace and name prefix; the kubelet
+        gatherer matches on name prefix alone, so a same-named config map in
+        another namespace is expected to be collected there.
+        """
+        for name, spec in GATHERERS.items():
             core_client = mock.MagicMock()
-            core_client.pods = {
-                "match": make_pod(spec["pod_name"]),
-                # Right prefix, wrong namespace.
-                "wrong-namespace": make_pod(spec["pod_name"], namespace="default"),
-                # Right namespace, wrong prefix.
-                "wrong-prefix": make_pod("unrelated-workload"),
-            }
+            setattr(
+                core_client,
+                spec["source"],
+                {
+                    "match": make_resource(spec, spec["match"]),
+                    # Right prefix, different namespace.
+                    "other-namespace": make_resource(
+                        spec, spec["match"], namespace="default"
+                    ),
+                    # Right namespace, wrong prefix.
+                    "wrong-prefix": make_resource(spec, spec["miss"]),
+                },
+            )
 
             service = build_service(spec, core_client)
             gathered = getattr(service, spec["attribute"])
 
-            assert [pod.name for pod in gathered] == [
-                spec["pod_name"]
-            ], f"{name}: expected only the matching control-plane pod"
+            expected = [spec["match"]] * (1 if spec["namespaced"] else 2)
+            assert [item.name for item in gathered] == expected, (
+                f"{name}: expected only the matching resource(s); "
+                f"namespaced={spec['namespaced']}"
+            )
 
     def test_gather_failure_yields_empty_list_not_none(self):
         """A failed gather must not produce a non-iterable ``None``."""
-        for name, spec in CONTROL_PLANE_SERVICES.items():
-            service = build_service(spec, failing_core_client())
+        for name, spec in GATHERERS.items():
+            service = build_service(spec, failing_core_client(spec))
             gathered = getattr(service, spec["attribute"])
 
             assert gathered is not None, (
@@ -164,8 +230,8 @@ class Test_control_plane_pod_gathering:
 
     def test_checks_do_not_crash_when_gather_fails(self):
         """Checks must degrade to zero findings, not raise TypeError."""
-        for name, spec in CONTROL_PLANE_SERVICES.items():
-            service = build_service(spec, failing_core_client())
+        for name, spec in GATHERERS.items():
+            service = build_service(spec, failing_core_client(spec))
 
             with (
                 mock.patch(

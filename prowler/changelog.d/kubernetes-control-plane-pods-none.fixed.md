@@ -1,1 +1,1 @@
-Kubernetes `apiserver`, `controllermanager`, `etcd` and `scheduler` checks no longer raise `TypeError: 'NoneType' object is not iterable` when control plane pod collection fails, since the gather now returns an empty list instead of `None` and keeps any pods already collected
+Kubernetes `apiserver`, `controllermanager`, `etcd`, `scheduler` and `kubelet` checks no longer raise `TypeError: 'NoneType' object is not iterable` when the underlying resource collection fails, since those gathers now return an empty list instead of `None` and keep any resources already collected
