@@ -17,6 +17,7 @@ from prowler_mcp_server.prowler_app.models.integrations import (
     IntegrationsListResponse,
     JiraDispatchResult,
     JiraIssueTypes,
+    SimplifiedIntegration,
 )
 from prowler_mcp_server.prowler_app.tools.base import BaseTool
 
@@ -30,6 +31,9 @@ INTEGRATION_LIST_FIELDS = (
 CONNECTION_CHECK_TIMEOUT = 120
 # One Jira work item is created per finding, sequentially, so this needs to be generous
 JIRA_DISPATCH_TIMEOUT = 300
+
+# The API replaces the whole credentials object, so a partial one destroys the rest
+JIRA_REQUIRED_CREDENTIALS = ("domain", "user_mail", "api_token")
 
 
 class IntegrationsTools(BaseTool):
@@ -229,26 +233,30 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Creating Amazon S3 integration for bucket {bucket_name}...")
 
-        credentials = self._build_aws_credentials(
-            role_arn=role_arn,
-            external_id=external_id,
-            role_session_name=role_session_name,
-            session_duration=session_duration,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-        )
+        try:
+            credentials = self._build_aws_credentials(
+                role_arn=role_arn,
+                external_id=external_id,
+                role_session_name=role_session_name,
+                session_duration=session_duration,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+            )
 
-        return await self._create_integration(
-            integration_type="amazon_s3",
-            configuration={
-                "bucket_name": bucket_name,
-                "output_directory": output_directory,
-            },
-            credentials=credentials,
-            provider_ids=provider_ids,
-            enabled=enabled,
-        )
+            return await self._create_integration(
+                integration_type="amazon_s3",
+                configuration={
+                    "bucket_name": bucket_name,
+                    "output_directory": output_directory,
+                },
+                credentials=credentials,
+                provider_ids=provider_ids,
+                enabled=enabled,
+            )
+        except Exception as e:
+            self.logger.error(f"Amazon S3 integration creation failed: {e}")
+            return {"error": str(e), "status": "failed"}
 
     async def create_aws_security_hub_integration(
         self,
@@ -325,26 +333,30 @@ class IntegrationsTools(BaseTool):
             f"Creating AWS Security Hub integration for provider {provider_id}..."
         )
 
-        credentials = self._build_aws_credentials(
-            role_arn=role_arn,
-            external_id=external_id,
-            role_session_name=role_session_name,
-            session_duration=session_duration,
-            aws_access_key_id=aws_access_key_id,
-            aws_secret_access_key=aws_secret_access_key,
-            aws_session_token=aws_session_token,
-        )
+        try:
+            credentials = self._build_aws_credentials(
+                role_arn=role_arn,
+                external_id=external_id,
+                role_session_name=role_session_name,
+                session_duration=session_duration,
+                aws_access_key_id=aws_access_key_id,
+                aws_secret_access_key=aws_secret_access_key,
+                aws_session_token=aws_session_token,
+            )
 
-        return await self._create_integration(
-            integration_type="aws_security_hub",
-            configuration={
-                "send_only_fails": send_only_fails,
-                "archive_previous_findings": archive_previous_findings,
-            },
-            credentials=credentials,
-            provider_ids=[provider_id],
-            enabled=enabled,
-        )
+            return await self._create_integration(
+                integration_type="aws_security_hub",
+                configuration={
+                    "send_only_fails": send_only_fails,
+                    "archive_previous_findings": archive_previous_findings,
+                },
+                credentials=credentials,
+                provider_ids=[provider_id],
+                enabled=enabled,
+            )
+        except Exception as e:
+            self.logger.error(f"AWS Security Hub integration creation failed: {e}")
+            return {"error": str(e), "status": "failed"}
 
     async def create_jira_integration(
         self,
@@ -393,21 +405,27 @@ class IntegrationsTools(BaseTool):
         3. Use prowler_get_jira_issue_types with that project key to pick an issue type
         4. Use prowler_send_findings_to_jira to create the work items
         """
-        normalized_domain = self._normalize_atlassian_domain(domain)
-        self.logger.info(f"Creating Jira integration for domain {normalized_domain}...")
+        try:
+            normalized_domain = self._normalize_atlassian_domain(domain)
+            self.logger.info(
+                f"Creating Jira integration for domain {normalized_domain}..."
+            )
 
-        return await self._create_integration(
-            integration_type="jira",
-            # Jira rejects any configuration in the payload, the API generates it
-            configuration={},
-            credentials={
-                "domain": normalized_domain,
-                "user_mail": user_mail,
-                "api_token": api_token,
-            },
-            provider_ids=[],
-            enabled=enabled,
-        )
+            return await self._create_integration(
+                integration_type="jira",
+                # Jira rejects any configuration in the payload, the API generates it
+                configuration={},
+                credentials={
+                    "domain": normalized_domain,
+                    "user_mail": user_mail,
+                    "api_token": api_token,
+                },
+                provider_ids=[],
+                enabled=enabled,
+            )
+        except Exception as e:
+            self.logger.error(f"Jira integration creation failed: {e}")
+            return {"error": str(e), "status": "failed"}
 
     async def update_integration(
         self,
@@ -420,7 +438,7 @@ class IntegrationsTools(BaseTool):
         ),
         provider_ids: list[str] | None = Field(
             default=None,
-            description="Replace the providers this integration is attached to. Omit to keep the current ones. Passing an empty list detaches every provider. Not accepted for Jira integrations, which are tenant-wide.",
+            description="Replace the providers this integration is attached to. Omit to keep the current ones. For 'amazon_s3' an empty list detaches every provider. For 'aws_security_hub' exactly one provider ID is required, since the integration cannot exist without one. Not accepted for Jira integrations, which are tenant-wide.",
         ),
         configuration: (
             dict[str, Any] | str | None
@@ -432,7 +450,7 @@ class IntegrationsTools(BaseTool):
             dict[str, Any] | str | None
         ) = Field(  # `str` accepted due to bad MCP Clients implementation
             default=None,
-            description="Replace the stored credentials. The whole object is replaced, so every needed key must be provided. For 'amazon_s3' and 'aws_security_hub': any of 'role_arn', 'external_id', 'role_session_name', 'session_duration', 'aws_access_key_id', 'aws_secret_access_key', 'aws_session_token'. For 'jira': 'domain', 'user_mail' and 'api_token', all required.",
+            description="Replace the stored credentials. The whole object is replaced, so every needed key must be provided. For 'amazon_s3' and 'aws_security_hub': any of 'role_arn', 'external_id', 'role_session_name', 'session_duration', 'aws_access_key_id', 'aws_secret_access_key', 'aws_session_token'; an empty object clears them so Prowler falls back to the ambient or provider credentials. For 'jira': 'domain', 'user_mail' and 'api_token', all required, an empty or partial object is refused because it would destroy the stored credentials.",
         ),
     ) -> dict[str, Any]:
         """Update an integration's credentials, configuration, providers or enabled state.
@@ -443,12 +461,18 @@ class IntegrationsTools(BaseTool):
         Default behavior:
         - Only the parameters provided are changed, everything else is preserved
         - 'configuration' is merged with the current one, so partial updates are safe
-        - When 'credentials' or 'configuration' change, the connection is re-checked and the
-          result is part of the response. Toggling only 'enabled' does not re-check it
+        - When 'credentials', 'configuration' or the attached providers change, the connection
+          is re-checked and the result is part of the response. Toggling only 'enabled' does
+          not re-check it
 
         Constraints:
         - Jira integrations reject 'configuration' and 'provider_ids'. Sending a configuration
           would wipe the discovered 'projects' and 'issue_types', so this tool refuses it
+        - Jira 'credentials' are replaced as a whole, so 'domain', 'user_mail' and 'api_token'
+          are all required. An empty or partial object is refused because it would destroy the
+          stored credentials
+        - Security Hub integrations must keep exactly one AWS provider, so 'provider_ids' has
+          to contain a single ID. Use prowler_delete_integration to stop sending findings
         - The 'enabled_regions' of a Security Hub integration are server-owned and cannot be
           set here, they are refreshed by the connection check
 
@@ -459,69 +483,84 @@ class IntegrationsTools(BaseTool):
         """
         self.logger.info(f"Updating integration {integration_id}...")
 
-        current = await self._get_integration_raw(integration_id)
-        integration_type = current["attributes"]["integration_type"]
+        try:
+            current = await self._get_integration_raw(integration_id)
+            current_attributes = current["attributes"]
+            integration_type = current_attributes["integration_type"]
 
-        attributes: dict[str, Any] = {}
-        if enabled is not None:
-            attributes["enabled"] = enabled
+            if provider_ids is not None:
+                self._validate_provider_ids(integration_type, provider_ids)
 
-        if credentials is not None:
-            attributes["credentials"] = self._as_dict(credentials, "credentials")
+            attributes: dict[str, Any] = {}
+            if enabled is not None:
+                attributes["enabled"] = enabled
 
-        if configuration is not None:
-            if integration_type == "jira":
-                raise ValueError(
-                    "Jira integrations do not accept a configuration: it is generated by Prowler. "
-                    "Update the credentials instead, or run prowler_test_integration_connection to "
-                    "refresh the available projects and issue types."
+            if credentials is not None:
+                attributes["credentials"] = self._validate_credentials(
+                    integration_type, self._as_dict(credentials, "credentials")
                 )
-            merged = dict(current["attributes"].get("configuration") or {})
-            merged.update(self._as_dict(configuration, "configuration"))
-            # Server-owned, the API repopulates it from the connection check
-            merged.pop("regions", None)
-            merged.pop("enabled_regions", None)
-            attributes["configuration"] = merged
 
-        if provider_ids is not None and integration_type == "jira":
-            raise ValueError(
-                "Jira integrations are tenant-wide and cannot be attached to providers."
-            )
+            if configuration is not None:
+                if integration_type == "jira":
+                    raise ValueError(
+                        "Jira integrations do not accept a configuration: it is generated by Prowler. "
+                        "Update the credentials instead, or run prowler_test_integration_connection to "
+                        "refresh the available projects and issue types."
+                    )
+                merged = dict(current_attributes.get("configuration") or {})
+                merged.update(self._as_dict(configuration, "configuration"))
+                # Server-owned, the API repopulates it from the connection check
+                merged.pop("regions", None)
+                merged.pop("enabled_regions", None)
+                attributes["configuration"] = merged
 
-        if not attributes and provider_ids is None:
-            self.logger.info("No changes provided, returning the current state")
-            return DetailedIntegration.from_api_response(current).model_dump()
+            providers_changed = provider_ids is not None and sorted(
+                provider_ids
+            ) != sorted(SimplifiedIntegration._extract_provider_ids(current))
 
-        update_body: dict[str, Any] = {
-            "data": {
-                "type": "integrations",
-                "id": integration_id,
-                "attributes": attributes,
-            }
-        }
-        if provider_ids is not None:
-            update_body["data"]["relationships"] = {
-                "providers": {
-                    "data": [
-                        {"type": "providers", "id": provider_id}
-                        for provider_id in provider_ids
-                    ]
+            if not attributes and provider_ids is None:
+                self.logger.info("No changes provided, returning the current state")
+                return DetailedIntegration.from_api_response(current).model_dump()
+
+            update_body: dict[str, Any] = {
+                "data": {
+                    "type": "integrations",
+                    "id": integration_id,
+                    "attributes": attributes,
                 }
             }
+            if provider_ids is not None:
+                update_body["data"]["relationships"] = {
+                    "providers": {
+                        "data": [
+                            {"type": "providers", "id": provider_id}
+                            for provider_id in provider_ids
+                        ]
+                    }
+                }
 
-        await self.api_client.patch(
-            f"/integrations/{integration_id}", json_data=update_body
-        )
+            await self.api_client.patch(
+                f"/integrations/{integration_id}", json_data=update_body
+            )
 
-        if credentials is not None or configuration is not None:
-            connection_status = await self._test_connection(integration_id)
+            # A different provider means different effective credentials and different
+            # discovered configuration, so the stored connection state is stale
+            if (
+                credentials is not None
+                or configuration is not None
+                or providers_changed
+            ):
+                connection_status = await self._test_connection(integration_id)
+                updated = await self._get_integration_raw(integration_id)
+                return IntegrationConnectionStatus.create(
+                    updated, connection_status
+                ).model_dump()
+
             updated = await self._get_integration_raw(integration_id)
-            return IntegrationConnectionStatus.create(
-                updated, connection_status
-            ).model_dump()
-
-        updated = await self._get_integration_raw(integration_id)
-        return DetailedIntegration.from_api_response(updated).model_dump()
+            return DetailedIntegration.from_api_response(updated).model_dump()
+        except Exception as e:
+            self.logger.error(f"Integration update failed: {e}")
+            return {"error": str(e), "status": "failed"}
 
     async def delete_integration(
         self,
@@ -653,8 +692,8 @@ class IntegrationsTools(BaseTool):
         resource, risk description and remediation steps.
 
         WARNING: This creates real work items in Jira. Prowler cannot delete or update them
-        afterwards, they have to be handled in Jira. Never call this twice for the same
-        findings, it creates duplicates.
+        afterwards, they have to be handled in Jira. Only call this again for the same findings
+        when the previous response had safe_to_retry=true, otherwise it creates duplicates.
 
         WARNING: Avoid issue types that require custom fields Prowler does not fill, such as
         Epic. Creation fails for those. Task, Bug and Story normally work.
@@ -662,14 +701,18 @@ class IntegrationsTools(BaseTool):
         Default behavior:
         - One work item per finding, created sequentially, so large batches take a while
         - The dispatch runs as a background task and this tool waits up to 5 minutes for it.
-          If it is still running by then, the response has dispatched=true, an 'error'
-          explaining it is still in progress, and the 'task_id'. Do NOT retry in that case,
-          the work items are being created
+          If it is still running by then, the response has status='in_progress', an 'error'
+          explaining it, and the 'task_id'
 
         The result includes:
-        - dispatched: whether Prowler accepted and ran the dispatch
-        - created_count: number of work items created in Jira
-        - failed_count: number of findings that could not be sent
+        - status: 'completed' when Prowler finished the dispatch, 'in_progress' when the task
+          is still running, 'unknown' when the task stopped without reporting a result
+        - safe_to_retry: whether the dispatch can be sent again. It is only true when no work
+          item was created. NEVER call this tool again for the same findings when it is false,
+          the work items already created would be duplicated. Report the outcome to the user
+          and let them check Jira instead
+        - created_count: number of work items created in Jira, absent when status='unknown'
+        - failed_count: number of findings that could not be sent, absent when status='unknown'
 
         Workflow:
         1. Use prowler_search_security_findings to select the findings to escalate
@@ -677,34 +720,46 @@ class IntegrationsTools(BaseTool):
         3. Use prowler_get_jira_issue_types to pick a valid issue type
         4. Use this tool with the finding IDs
         """
-        self.logger.info(
-            f"Sending {len(finding_ids)} finding(s) to Jira project {project_key}..."
-        )
+        try:
+            if not finding_ids:
+                raise ValueError(
+                    "At least one finding ID is required. Use prowler_search_security_findings to get them."
+                )
 
-        if not finding_ids:
-            raise ValueError(
-                "At least one finding ID is required. Use prowler_search_security_findings to get them."
+            self.logger.info(
+                f"Sending {len(finding_ids)} finding(s) to Jira project {project_key}..."
             )
 
-        dispatch_body = {
-            "data": {
-                "type": "integrations-jira-dispatches",
-                "attributes": {
-                    "project_key": project_key,
-                    "issue_type": issue_type,
-                },
+            dispatch_body = {
+                "data": {
+                    "type": "integrations-jira-dispatches",
+                    "attributes": {
+                        "project_key": project_key,
+                        "issue_type": issue_type,
+                    },
+                }
             }
-        }
-        params = self.api_client.build_filter_params(
-            {"filter[finding_id__in]": finding_ids}
-        )
+            params = self.api_client.build_filter_params(
+                {"filter[finding_id__in]": finding_ids}
+            )
 
-        task_response = await self.api_client.post(
-            f"/integrations/{integration_id}/jira/dispatches",
-            params=params,
-            json_data=dispatch_body,
-        )
+            task_response = await self.api_client.post(
+                f"/integrations/{integration_id}/jira/dispatches",
+                params=params,
+                json_data=dispatch_body,
+            )
+        except Exception as e:
+            # Nothing was dispatched yet, so this failure is safe to act on
+            self.logger.error(f"Jira dispatch could not be started: {e}")
+            return {"error": str(e), "status": "failed"}
+
         task_id = task_response.get("data", {}).get("id")
+        if not task_id:
+            self.logger.error("Jira dispatch response did not include a task ID")
+            return self._jira_dispatch_unknown(
+                task_id=None,
+                error="Prowler accepted the dispatch but did not return the ID of the background task, so its outcome cannot be checked.",
+            )
 
         try:
             completed_task = await self.api_client.poll_task_until_complete(
@@ -714,10 +769,17 @@ class IntegrationsTools(BaseTool):
             self.logger.error(f"Jira dispatch did not complete cleanly: {e}")
             return await self._jira_dispatch_fallback(task_id, str(e))
 
-        task_result = (
-            completed_task.get("data", {}).get("attributes", {}).get("result") or {}
-        )
-        return JiraDispatchResult.from_task_result(task_result).model_dump()
+        task_result = completed_task.get("data", {}).get("attributes", {}).get("result")
+
+        try:
+            if not isinstance(task_result, dict):
+                raise ValueError(
+                    "The completed dispatch task did not report a result object."
+                )
+            return JiraDispatchResult.from_task_result(task_result).model_dump()
+        except ValueError as e:
+            self.logger.error(f"Jira dispatch result could not be read: {e}")
+            return self._jira_dispatch_unknown(task_id, str(e))
 
     # Private helper methods
 
@@ -766,6 +828,52 @@ class IntegrationsTools(BaseTool):
             )
         return normalized
 
+    def _validate_provider_ids(
+        self, integration_type: str, provider_ids: list[str]
+    ) -> None:
+        """Reject provider changes an integration type cannot survive."""
+        if integration_type == "jira":
+            raise ValueError(
+                "Jira integrations are tenant-wide and cannot be attached to providers."
+            )
+
+        if integration_type == "aws_security_hub" and len(provider_ids) != 1:
+            raise ValueError(
+                "AWS Security Hub integrations must stay attached to exactly one AWS provider, "
+                f"got {len(provider_ids)}. Pass a single provider ID, or use "
+                "prowler_delete_integration to stop sending findings to Security Hub."
+            )
+
+    def _validate_credentials(
+        self, integration_type: str, credentials: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Check that replacing the credentials leaves the integration usable.
+
+        The API replaces the stored credentials with whatever is sent, so an empty or partial
+        object silently destroys them. That is only acceptable for the AWS integration types,
+        where no credentials means falling back to the ambient or provider ones.
+        """
+        if integration_type != "jira":
+            return credentials
+
+        missing = [
+            key
+            for key in JIRA_REQUIRED_CREDENTIALS
+            if not isinstance(credentials.get(key), str) or not credentials[key].strip()
+        ]
+        if missing:
+            raise ValueError(
+                "Jira credentials are replaced as a whole, so 'domain', 'user_mail' and "
+                f"'api_token' are all required. Missing or empty: {', '.join(missing)}. "
+                "Sending an incomplete object would destroy the stored credentials and break "
+                "the integration."
+            )
+
+        return {
+            **credentials,
+            "domain": self._normalize_atlassian_domain(credentials["domain"]),
+        }
+
     def _as_dict(self, value: dict[str, Any] | str, param_name: str) -> dict[str, Any]:
         """Accept a JSON object sent as a string by clients that cannot pass objects."""
         if isinstance(value, str):
@@ -779,9 +887,27 @@ class IntegrationsTools(BaseTool):
         return value
 
     async def _get_integration_raw(self, integration_id: str) -> dict[str, Any]:
-        """Fetch the raw JSON:API resource of an integration."""
+        """Fetch the raw JSON:API resource of an integration.
+
+        Raises:
+            ValueError: If the payload does not contain a usable integration resource
+        """
         response = await self.api_client.get(f"/integrations/{integration_id}")
-        return response.get("data", {})
+        integration = response.get("data")
+
+        if not isinstance(integration, dict) or not integration.get("id"):
+            raise ValueError(
+                f"Integration {integration_id} was not found. Use prowler_list_integrations "
+                "to get a valid integration ID."
+            )
+
+        if not isinstance(integration.get("attributes"), dict):
+            raise ValueError(
+                f"Prowler returned integration {integration_id} without its attributes, so "
+                "its state cannot be read."
+            )
+
+        return integration
 
     async def _create_integration(
         self,
@@ -822,8 +948,23 @@ class IntegrationsTools(BaseTool):
         )
         integration_id = api_response.get("data", {}).get("id")
 
+        if not integration_id:
+            raise ValueError(
+                "Prowler accepted the integration creation but did not return its ID, so the "
+                "connection could not be checked. Use prowler_list_integrations to see whether "
+                "the integration exists before creating it again."
+            )
+
         connection_status = await self._test_connection(integration_id)
-        integration = await self._get_integration_raw(integration_id)
+
+        try:
+            integration = await self._get_integration_raw(integration_id)
+        except Exception as e:
+            # The integration exists, so surface its ID instead of a plain read failure
+            raise ValueError(
+                f"Integration {integration_id} was created, but reading its state failed: {e} "
+                "Use prowler_get_integration with that ID to check it."
+            ) from e
 
         return IntegrationConnectionStatus.create(
             integration, connection_status
@@ -832,8 +973,13 @@ class IntegrationsTools(BaseTool):
     async def _test_connection(self, integration_id: str) -> dict[str, Any]:
         """Run the connection check of an integration and wait for its result.
 
+        A check that could not be run is reported as 'connected: None' rather than a failure:
+        a disabled integration or wrong credentials come back as a completed task with
+        'connected: False', so an exception here only means the outcome is unknown.
+
         Returns:
-            Connection status dictionary with a 'connected' boolean and an optional 'error'
+            Connection status dictionary with a 'connected' boolean or None, and an optional
+            'error'
         """
         self.logger.info(f"Testing connection for integration {integration_id}...")
         try:
@@ -842,22 +988,40 @@ class IntegrationsTools(BaseTool):
             )
             task_id = task_response.get("data", {}).get("id")
 
+            if not task_id:
+                raise ValueError(
+                    "Prowler did not return the ID of the connection check task."
+                )
+
             completed_task = await self.api_client.poll_task_until_complete(
                 task_id=task_id, timeout=CONNECTION_CHECK_TIMEOUT, poll_interval=1.0
             )
+            result = completed_task.get("data", {}).get("attributes", {}).get("result")
 
-            return (
-                completed_task.get("data", {}).get("attributes", {}).get("result") or {}
-            )
+            if not isinstance(result, dict):
+                raise ValueError(
+                    "The connection check task completed without reporting a result."
+                )
+
+            return result
         except Exception as e:
-            self.logger.error(f"Connection check failed: {e}")
-            return {"connected": False, "error": str(e)}
+            self.logger.error(f"Connection check could not be completed: {e}")
+            return {
+                "connected": None,
+                "error": (
+                    f"The connection check could not be completed: {e} This says nothing "
+                    "about the stored credentials, run prowler_test_integration_connection "
+                    "to check them again."
+                ),
+            }
 
     async def _jira_dispatch_fallback(self, task_id: str, error: str) -> dict[str, Any]:
         """Report a Jira dispatch whose polling did not end on a completed task.
 
-        The task state decides whether the caller may retry: anything other than a failed or
-        cancelled task means work items may already be landing in Jira.
+        The dispatch is never safe to retry here. Work items are created one by one, so a task
+        that failed or was cancelled halfway may already have created some of them, and a task
+        that is still running is creating them right now. The task state only decides how the
+        outcome is described.
         """
         state = None
         try:
@@ -867,10 +1031,34 @@ class IntegrationsTools(BaseTool):
             self.logger.error(f"Could not read the state of task {task_id}: {e}")
 
         if state in ("failed", "cancelled"):
-            return JiraDispatchResult(dispatched=False, error=error).model_dump()
+            return self._jira_dispatch_unknown(
+                task_id,
+                f"The dispatch task ended as '{state}' before reporting a result. "
+                f"Original error: {error}",
+            )
 
         return JiraDispatchResult(
-            dispatched=True,
-            error=f"The dispatch is still running, so some work items may already exist in Jira. Do not retry it. Original error: {error}",
+            status="in_progress",
+            safe_to_retry=False,
+            error=(
+                f"The dispatch is still running, so some work items may already exist in Jira. "
+                f"Do not send these findings again. Original error: {error}"
+            ),
+            task_id=task_id,
+        ).model_dump()
+
+    def _jira_dispatch_unknown(self, task_id: str | None, error: str) -> dict[str, Any]:
+        """Report a dispatch whose outcome Prowler cannot determine.
+
+        Work items are created one by one, so an outcome that cannot be read is never safe to
+        retry: the dispatch may have created any number of them before stopping.
+        """
+        return JiraDispatchResult(
+            status="unknown",
+            safe_to_retry=False,
+            error=(
+                f"Prowler cannot tell how many Jira work items were created: {error} "
+                "Check the Jira project before sending these findings again."
+            ),
             task_id=task_id,
         ).model_dump()

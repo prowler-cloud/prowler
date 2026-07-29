@@ -110,6 +110,9 @@ class DetailedIntegration(SimplifiedIntegration):
                 configuration["enabled_regions"] = sorted(
                     region for region, enabled in regions.items() if enabled
                 )
+            elif regions is not None:
+                # Unexpected shape, keep it as-is instead of dropping information
+                configuration["regions"] = regions
 
         return configuration
 
@@ -191,19 +194,27 @@ class IntegrationConnectionStatus(MinimalSerializerMixin, BaseModel):
         integration_data: dict[str, Any],
         connection_status: dict[str, Any],
     ) -> "IntegrationConnectionStatus":
-        """Create the connection status from the integration data and the check result."""
-        connected: bool | None = connection_status.get("connected", None)
+        """Create the connection status from the integration data and the check result.
 
-        if connected is None:
-            connected = "not_tested"
-        elif connected:
-            connected = "connected"
-        else:
-            connected = "failed"
+        Raises:
+            ValueError: If the check result carries an unexpected 'connected' value
+        """
+        match connection_status.get("connected"):
+            case True:
+                outcome = "connected"
+            case False:
+                outcome = "failed"
+            case None:
+                outcome = "not_tested"
+            case unexpected:
+                raise ValueError(
+                    "Prowler returned an unexpected connection check result: 'connected' "
+                    f"must be a boolean or null, got {unexpected!r}."
+                )
 
         return cls(
             integration=DetailedIntegration.from_api_response(integration_data),
-            connected=connected,
+            connected=outcome,
             error=connection_status.get("error", None),
         )
 
@@ -222,14 +233,27 @@ class JiraIssueTypes(MinimalSerializerMixin, BaseModel):
 
     @classmethod
     def from_api_response(cls, data: dict[str, Any]) -> "JiraIssueTypes":
-        """Transform JSON:API issue types response to simplified format."""
-        # This endpoint returns a non-model resource, so tolerate an unwrapped payload
-        attributes = data.get("attributes") or data
+        """Transform JSON:API issue types response to simplified format.
 
-        return cls(
-            project_key=attributes["project_key"],
-            issue_types=attributes.get("issue_types", []),
-        )
+        Raises:
+            ValueError: If the payload does not carry the project key and its issue types
+        """
+        # This endpoint returns a non-model resource, so the unwrapped payload is accepted too
+        attributes = data.get("attributes")
+        if not isinstance(attributes, dict):
+            attributes = data
+
+        project_key = attributes.get("project_key")
+        issue_types = attributes.get("issue_types")
+
+        if not isinstance(project_key, str) or not isinstance(issue_types, list):
+            raise ValueError(
+                "Prowler returned an unexpected Jira issue types payload: expected a "
+                "'project_key' string and an 'issue_types' list, got the keys "
+                f"{sorted(attributes)}."
+            )
+
+        return cls(project_key=project_key, issue_types=issue_types)
 
 
 class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
@@ -237,14 +261,21 @@ class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
 
     model_config = ConfigDict(frozen=True)
 
-    dispatched: bool = Field(
-        description="True if Prowler accepted and ran the dispatch. When this is True the work items may already exist in Jira, so the dispatch must not be retried"
+    status: Literal["completed", "in_progress", "unknown"] = Field(
+        description="Outcome of the dispatch: 'completed' when Prowler finished creating the work items, 'in_progress' when the background task is still running, 'unknown' when the task stopped before reporting a result and Prowler cannot tell how many work items it had already created"
     )
-    created_count: int = Field(
-        default=0, description="Number of Jira work items successfully created", ge=0
+    safe_to_retry: bool = Field(
+        description="True only when Prowler is certain that no Jira work item was created. When False the dispatch must NOT be sent again: some work items may already exist and retrying would duplicate them. Report the outcome to the user and let them check Jira instead"
     )
-    failed_count: int = Field(
-        default=0, description="Number of findings that could not be sent to Jira", ge=0
+    created_count: int | None = Field(
+        default=None,
+        description="Number of Jira work items successfully created, absent when the outcome is unknown",
+        ge=0,
+    )
+    failed_count: int | None = Field(
+        default=None,
+        description="Number of findings that could not be sent to Jira, absent when the outcome is unknown",
+        ge=0,
     )
     error: str | None = Field(
         default=None,
@@ -252,13 +283,13 @@ class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
     )
     task_id: str | None = Field(
         default=None,
-        description="UUIDv4 of the background task, only present when the dispatch did not finish within the polling window and is still running",
+        description="UUIDv4 of the background task, present when the dispatch did not finish within the polling window so its state can be checked later",
     )
 
     def _should_exclude(self, key: str, value: Any) -> bool:
-        """Override to always include the counters, even when zero."""
-        # A zero count is a meaningful outcome, not noise
-        if key in ("created_count", "failed_count"):
+        """Override to always include the known counters, even when zero."""
+        # A zero count is a meaningful outcome, not noise. An unknown one (None) is not
+        if key in ("created_count", "failed_count") and value is not None:
             return False
         return super()._should_exclude(key, value)
 
@@ -266,11 +297,28 @@ class JiraDispatchResult(MinimalSerializerMixin, BaseModel):
     def from_task_result(
         cls, result: dict[str, Any], task_id: str | None = None
     ) -> "JiraDispatchResult":
-        """Build the dispatch result from the completed background task result."""
+        """Build the dispatch result from the completed background task result.
+
+        Raises:
+            ValueError: If the task result does not carry both counters. Defaulting them to
+                zero would report a dispatch as retryable when it may have created work items
+        """
+        created_count = result.get("created_count")
+        failed_count = result.get("failed_count")
+
+        if not isinstance(created_count, int) or not isinstance(failed_count, int):
+            raise ValueError(
+                "The completed dispatch task did not report how many Jira work items it "
+                "created: expected 'created_count' and 'failed_count' integers, got the keys "
+                f"{sorted(result)}."
+            )
+
         return cls(
-            dispatched=True,
-            created_count=result.get("created_count", 0),
-            failed_count=result.get("failed_count", 0),
+            status="completed",
+            # Work items are created one by one, so only an empty run can be repeated
+            safe_to_retry=created_count == 0,
+            created_count=created_count,
+            failed_count=failed_count,
             error=result.get("error"),
             task_id=task_id,
         )

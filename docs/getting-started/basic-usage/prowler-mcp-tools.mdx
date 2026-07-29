@@ -97,7 +97,7 @@ Tools for managing where Prowler sends its results: Amazon S3 buckets, AWS Secur
 
 - **`prowler_list_integrations`** - List the configured integrations with their enabled and connection state, optionally filtered by integration type
 - **`prowler_get_integration`** - Get an integration with its complete, type-specific configuration (bucket and output directory, Security Hub settings and enabled regions, or Jira projects and issue types)
-- **`prowler_update_integration`** - Update credentials, configuration, attached providers, or enabled state. Configuration changes are merged with the current one, and the connection is re-checked automatically
+- **`prowler_update_integration`** - Update credentials, configuration, attached providers, or enabled state. Configuration changes are merged with the current one, and the connection is re-checked automatically whenever credentials, configuration, or attached providers change
 - **`prowler_delete_integration`** - Permanently remove an integration and its stored credentials
 - **`prowler_test_integration_connection`** - Check an integration connection and refresh the configuration Prowler discovers from the remote system (Jira projects, Security Hub regions)
 
