@@ -15,7 +15,6 @@ shape preserves the `paths, dpf, dpfr` contract.
 import re
 
 import pytest
-
 from api.attack_paths.queries.aws import (
     AWS_IAM_PRIVESC_DELETE_USER_PERMISSIONS_BOUNDARY,
     AWS_QUERIES,
@@ -138,7 +137,7 @@ class TestNewPathfindingQueriesCypher:
             r"-\[pfr:HAS_FINDING\]-\(pf:ProwlerFinding \{status: 'FAIL'\}\)",
             query.cypher,
         ), f"Query {query.id} does not use the typed, status-scoped finding probe"
-        assert "provider_uid: $provider_uid}" not in query.cypher.replace(" ", ""), (
+        assert "provider_uid:$provider_uid}" not in query.cypher.replace(" ", ""), (
             f"Query {query.id} filters the finding node on a non-existent "
             "provider_uid property"
         )
