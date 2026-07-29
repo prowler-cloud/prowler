@@ -239,19 +239,76 @@ class TestOCSF:
             ocsf = OCSF([finding])
         assert ocsf.data[0].finding_info.attacks is None
 
-    def test_load_mitre_technique_map_logs_failure(self):
+    def test_transform_without_mitre_ids_does_not_load_catalog(self):
+        finding = generate_finding_output(provider="kubernetes")
+
+        with patch(
+            "prowler.lib.outputs.ocsf.ocsf._load_mitre_technique_map"
+        ) as mock_load_catalog:
+            ocsf = OCSF([finding])
+
+        assert ocsf.data[0].finding_info.attacks is None
+        mock_load_catalog.assert_not_called()
+
+    def test_load_mitre_technique_map_missing_catalog_is_expected(self):
         from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
 
         _load_mitre_technique_map.cache_clear()
         try:
             with (
-                patch("builtins.open", side_effect=OSError("catalog unavailable")),
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.debug") as mock_debug,
+                patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
+            ):
+                assert _load_mitre_technique_map("unsupported") == {}
+
+            mock_debug.assert_called_once_with(
+                "MITRE ATT&CK catalog is not available for provider unsupported"
+            )
+            mock_error.assert_not_called()
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_existing_catalog(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            technique_map = _load_mitre_technique_map("aws")
+
+            assert technique_map
+            assert all(
+                technique_id == requirement["Id"]
+                for technique_id, requirement in technique_map.items()
+            )
+        finally:
+            _load_mitre_technique_map.cache_clear()
+
+    def test_load_mitre_technique_map_logs_failure(self):
+        from prowler.lib.outputs.ocsf.ocsf import _load_mitre_technique_map
+
+        mitre_file = MagicMock()
+        mitre_file.is_file.return_value = True
+        mitre_file.open.side_effect = OSError("catalog unavailable")
+        provider_directory = MagicMock()
+        provider_directory.joinpath.return_value = mitre_file
+        compliance_package = MagicMock()
+        compliance_package.joinpath.return_value = provider_directory
+
+        _load_mitre_technique_map.cache_clear()
+        try:
+            with (
+                patch(
+                    "prowler.lib.outputs.ocsf.ocsf.resources.files",
+                    return_value=compliance_package,
+                ),
                 patch("prowler.lib.outputs.ocsf.ocsf.logger.error") as mock_error,
             ):
                 assert _load_mitre_technique_map("aws") == {}
 
             message = mock_error.call_args.args[0]
             assert re.fullmatch(r"OSError\[\d+\]: catalog unavailable", message)
+            compliance_package.joinpath.assert_called_once_with("aws")
+            provider_directory.joinpath.assert_called_once_with("mitre_attack_aws.json")
         finally:
             _load_mitre_technique_map.cache_clear()
 

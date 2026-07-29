@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime, timezone
 from functools import lru_cache
+from importlib import resources
 from random import getrandbits
 from typing import Dict, List, Optional
 
@@ -350,16 +351,18 @@ def _build_analytic(finding: Finding) -> Analytic:
 def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
     """Load and cache MITRE ATT&CK techniques for a provider."""
     try:
-        mitre_file = os.path.join(
-            os.path.dirname(__file__),
-            "..",
-            "..",
-            "..",
-            "compliance",
-            provider,
-            f"mitre_attack_{provider}.json",
+        mitre_file = (
+            resources.files("prowler.compliance")
+            .joinpath(provider)
+            .joinpath(f"mitre_attack_{provider}.json")
         )
-        with open(mitre_file) as file:
+        if not mitre_file.is_file():
+            logger.debug(
+                f"MITRE ATT&CK catalog is not available for provider {provider}"
+            )
+            return {}
+
+        with mitre_file.open(encoding="utf-8") as file:
             data = json.load(file)
         return {
             requirement["Id"]: requirement
@@ -382,9 +385,13 @@ def _build_mitre_attacks(finding: Finding) -> Optional[List[MITREAttack]]:
         Optional[List[MITREAttack]]: MITRE attacks for known provider techniques,
             or None when none can be built.
     """
+    technique_ids = finding.compliance.get("MITRE-ATTACK", [])
+    if not technique_ids:
+        return None
+
     technique_map = _load_mitre_technique_map(finding.provider)
     attacks = []
-    for technique_id in finding.compliance.get("MITRE-ATTACK", []):
+    for technique_id in technique_ids:
         requirement = technique_map.get(technique_id)
         if not requirement:
             continue
