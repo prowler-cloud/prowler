@@ -1,0 +1,1 @@
+`AwsProvider.generate_regional_clients` now returns an empty dictionary instead of `None` when region resolution fails, preventing `AttributeError: 'NoneType' object has no attribute 'values'` in every AWS service, and matching the behaviour of the Alibaba Cloud, Huawei Cloud and Oracle Cloud providers
