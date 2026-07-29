@@ -177,6 +177,12 @@ export const listOrganizationsByExternalId = async (
 
 /**
  * Lists all organizations for the current tenant, across organization types.
+ *
+ * Capped at the first page of 100 and does NOT follow JSON:API pagination: a
+ * tenant with more organizations loses the surplus from the providers-page
+ * grouping (their providers still render, ungrouped, as orphan rows). Accepted
+ * for the initial release and tracked as a follow-up that blocks GCP production
+ * enablement — see the hierarchy-pagination risk in the change's design notes.
  * GET /api/v1/organizations
  */
 export const listOrganizationsSafe = async (): Promise<
@@ -189,7 +195,8 @@ export const listOrganizationsSafe = async (): Promise<
 };
 
 /**
- * Lists organization nodes.
+ * Lists organization nodes. Same first-page-only cap as
+ * `listOrganizationsSafe`.
  * GET /api/v1/organization-nodes
  */
 export const listOrganizationNodesSafe = async (): Promise<

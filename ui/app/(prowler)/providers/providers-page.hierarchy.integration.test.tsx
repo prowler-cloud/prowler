@@ -55,7 +55,7 @@ describe("Providers page — mixed AWS + GCP hierarchy display", () => {
 describe("Providers page — organization type without an onboarding flow", () => {
   it("groups it with its own wording and offers no wizard re-entry", async () => {
     const harness = new ProvidersPageHarness(displayOnlyOrgHierarchyFixture());
-    harness.mount({ openWizard: false });
+    await harness.mount({ openWizard: false });
 
     // Grouping is display-driven, so the organization still renders as a group.
     await harness.waitForOrganizationRow("Contoso Tenant");

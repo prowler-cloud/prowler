@@ -17,6 +17,7 @@ import { DISCOVERY_STATUS } from "@/types/organizations";
 import { extractErrorMessage } from "./error-utils";
 import {
   getOrgSetupStrategy,
+  OrgSetupStrategy,
   OrgSetupSubmissionData,
 } from "./org-setup-strategy";
 
@@ -65,14 +66,12 @@ export function useOrgSetupSubmission({
   const isMountedRef = useRef(true);
   const discoveryAbortControllerRef = useRef<AbortController | null>(null);
   const {
-    organizationType,
     setOrganization,
     setDiscoveryTriggered,
     setDiscovery,
     setSelectedCandidateIds,
     clearValidationState,
   } = useOrgSetupStore();
-  const strategy = getOrgSetupStrategy(organizationType);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -110,6 +109,7 @@ export function useOrgSetupSubmission({
     organizationId: string,
     discoveryId: string,
     signal: AbortSignal,
+    strategy: OrgSetupStrategy,
   ): Promise<unknown | null> => {
     for (let attempt = 0; attempt < DISCOVERY_MAX_RETRIES; attempt += 1) {
       if (signal.aborted || !isMountedRef.current) {
@@ -154,6 +154,9 @@ export function useOrgSetupSubmission({
   };
 
   const submitOrganizationSetup = async (data: OrgSetupSubmissionData) => {
+    // The form's own tag picks the strategy, so the collected fields and the
+    // credentials/discovery built from them always belong to the same type.
+    const strategy = getOrgSetupStrategy(data.orgType);
     discoveryAbortControllerRef.current?.abort();
     const abortController = new AbortController();
     discoveryAbortControllerRef.current = abortController;
@@ -285,6 +288,7 @@ export function useOrgSetupSubmission({
         orgId,
         discoveryId,
         abortController.signal,
+        strategy,
       );
 
       if (!resolvedDiscoveryResult || isCancelled()) {

@@ -3,7 +3,11 @@ import { createElement, type PropsWithChildren, StrictMode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useOrgSetupStore } from "@/store/organizations/store";
-import { APPLY_STATUS, DISCOVERY_STATUS } from "@/types/organizations";
+import {
+  APPLY_STATUS,
+  DISCOVERY_STATUS,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 
 import { useOrgSetupSubmission } from "./use-org-setup-submission";
 
@@ -126,6 +130,7 @@ describe("useOrgSetupSubmission", () => {
     // When
     await act(async () => {
       await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
         organizationName: "Acme",
         awsOrgId: "o-abc123def4",
         roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",
@@ -171,6 +176,7 @@ describe("useOrgSetupSubmission", () => {
     // When
     await act(async () => {
       await result.current.submitOrganizationSetup({
+        orgType: ORGANIZATION_TYPE.AWS,
         organizationName: "Acme",
         awsOrgId: "o-abc123def4",
         roleArn: "arn:aws:iam::123456789012:role/ProwlerOrgRole",

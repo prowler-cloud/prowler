@@ -11,19 +11,28 @@ import {
   OrgSecretPayload,
 } from "@/types/organizations";
 
-/**
- * Values collected by an organization setup form. AWS-shaped today; GCP fields
- * are added when the GCP flow lands (Phase 2). The active strategy reads only
- * the fields relevant to its organization type.
- */
-export interface OrgSetupSubmissionData {
+interface BaseOrgSetupData {
+  /** Optional display name; falls back to the external id. */
   organizationName?: string;
-  // AWS
-  awsOrgId?: string;
-  roleArn?: string;
+}
+
+export interface AwsOrgSetupData extends BaseOrgSetupData {
+  orgType: typeof ORGANIZATION_TYPE.AWS;
+  /** AWS organization id (`o-…`) — the external id the organization matches on. */
+  awsOrgId: string;
+  roleArn: string;
   // OU or root ID the StackSet was deployed to — scopes the default selection.
   organizationalUnitId?: string;
 }
+
+/**
+ * Values collected by an organization setup form, tagged with the organization
+ * type that produced them: each form fills its own arm, and the strategy is
+ * picked from the tag, so the fields and the credentials built from them cannot
+ * belong to different types. Phase 2 adds `| GcpOrgSetupData`, which makes every
+ * consumer that assumes AWS fields a compile error.
+ */
+export type OrgSetupSubmissionData = AwsOrgSetupData;
 
 /**
  * Per-organization-type pieces of the shared setup submission chain
@@ -61,13 +70,12 @@ const AWS_AUTH_FAILURE =
 
 const awsOrgSetupStrategy: OrgSetupStrategy = {
   orgType: ORGANIZATION_TYPE.AWS,
-  getExternalId: (data) => data.awsOrgId ?? "",
-  getResolvedName: (data) =>
-    data.organizationName?.trim() || (data.awsOrgId ?? ""),
+  getExternalId: (data) => data.awsOrgId,
+  getResolvedName: (data) => data.organizationName?.trim() || data.awsOrgId,
   buildSecretPayload: (data, externalId) => ({
     secretType: ORG_SECRET_TYPE.ROLE,
     secret: {
-      role_arn: data.roleArn ?? "",
+      role_arn: data.roleArn,
       external_id: externalId,
     },
   }),
@@ -75,7 +83,7 @@ const awsOrgSetupStrategy: OrgSetupStrategy = {
     const hierarchy = mapAwsDiscovery(rawResult as AwsDiscoveryResult);
     // The deployment (management/delegated admin) account is where the local
     // role is created; its ID is the one embedded in the Role ARN.
-    const deploymentCandidateId = data.roleArn?.match(
+    const deploymentCandidateId = data.roleArn.match(
       /^arn:aws:iam::(\d{12}):role\//,
     )?.[1];
 

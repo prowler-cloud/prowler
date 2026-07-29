@@ -191,6 +191,12 @@ export const useOrgSetupStore = create<OrgSetupState>()(
     }),
     {
       name: "org-setup-store",
+      // Deliberately migration-free: a snapshot from the previous version is
+      // discarded, resetting an onboarding session that was in flight when the
+      // release landed. The persisted shape changed (normalized hierarchy,
+      // organization type, discovery-resume fields) and this is per-tab
+      // sessionStorage holding only wizard progress, so re-entering the flow is
+      // cheaper and safer than migrating a shape we removed.
       version: 1,
       storage: createJSONStorage(() => sessionStorage),
       merge: (persistedState, currentState) => {
