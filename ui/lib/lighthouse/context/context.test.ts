@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
 
 import { compileLighthouseContext } from "./compiler";
+import {
+  buildComplianceContext,
+  buildFilteredProviderContext,
+  buildFindingSeveritySummaryContext,
+  buildFindingStatusSummaryContext,
+  buildProviderGroupContext,
+  buildServiceSummaryContext,
+} from "./contributions";
+import { buildLighthousePageContext } from "./pages";
 import { lighthouseContextEnvelopeSchema } from "./schema";
+import { getApiLighthouseContextByteLength } from "./transport";
 
 describe("lighthouseContextEnvelopeSchema", () => {
   describe("when validating an inline page context", () => {
@@ -475,6 +485,94 @@ describe("compileLighthouseContext", () => {
         "summary-2",
         "summary-3",
       ]);
+    });
+  });
+
+  describe("when the Overview publishes every contributor", () => {
+    it("should fit a fully populated Overview within transport limits", () => {
+      // Given every real Overview contributor plus the page item
+      const candidates = [
+        buildLighthousePageContext(
+          "/",
+          new URLSearchParams(
+            "filter[provider_id__in]=b81165a0-4f28-4b5c-9a41-1e2d3c4b5a69&filter[provider_type__in]=aws",
+          ),
+        ),
+        buildComplianceContext({
+          pathname: "/",
+          id: "prowler-threat-score",
+          framework: "Prowler ThreatScore",
+          score: 62.4,
+          scoreDelta: -3.21,
+          criticalRequirementsCount: 5,
+          worstSection: "1.2 Attack Surface",
+          worstSectionScore: 38.6,
+          passed: 120,
+          failed: 40,
+          total: 160,
+        }),
+        buildFindingStatusSummaryContext({
+          pathname: "/",
+          passed: 320,
+          failed: 80,
+          newPassed: 12,
+          newFailed: 7,
+        }),
+        buildFindingSeveritySummaryContext({
+          pathname: "/",
+          severityCounts: {
+            critical: 4,
+            high: 18,
+            medium: 40,
+            low: 15,
+            informational: 3,
+          },
+        }),
+        buildComplianceContext({
+          pathname: "/",
+          id: "watchlist-ens_rd2022_aws",
+          framework: "ENS RD2022",
+          score: 30,
+        }),
+        buildComplianceContext({
+          pathname: "/",
+          id: "watchlist-cis_1.5_aws",
+          framework: "CIS AWS 1.5",
+          score: 45,
+        }),
+        buildServiceSummaryContext({
+          pathname: "/",
+          service: "s3",
+          failedFindingsCount: 34,
+          total: 120,
+        }),
+        buildFilteredProviderContext({
+          pathname: "/",
+          id: "b81165a0-4f28-4b5c-9a41-1e2d3c4b5a69",
+          uid: "123456789012",
+          type: "aws",
+          alias: "Production",
+        }),
+        buildProviderGroupContext({
+          pathname: "/",
+          id: "3f2a1b0c-9d8e-7f60-5a4b-3c2d1e0f9a8b",
+          name: "Production accounts",
+        }),
+      ];
+
+      // When
+      const context = compileLighthouseContext(candidates, "overview:/");
+
+      // Then the eight-item cap trims only the last registered contributor
+      expect(context).toBeDefined();
+      expect(context?.items).toHaveLength(8);
+      expect(context?.items[0]?.kind).toBe("page");
+      expect(context?.items.some((item) => item.id.startsWith("group-"))).toBe(
+        false,
+      );
+      expect(getApiLighthouseContextByteLength(context!)).toBeLessThanOrEqual(
+        2 * 1024,
+      );
     });
   });
 

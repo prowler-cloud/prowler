@@ -21,6 +21,7 @@ import {
   buildResourceSummaryContext,
   buildScanContext,
   buildScanSummaryContext,
+  buildServiceSummaryContext,
 } from "./contributions";
 
 describe("Lighthouse page contributions", () => {
@@ -292,6 +293,27 @@ describe("Lighthouse page contributions", () => {
         low: 15,
         informational: 3,
       },
+    });
+  });
+
+  it("builds an automatic summary for the riskiest service", () => {
+    expect(
+      buildServiceSummaryContext({
+        pathname: "/",
+        service: "s3",
+        failedFindingsCount: 34,
+        total: 120,
+      }),
+    ).toEqual({
+      kind: "resource",
+      id: "service-s3",
+      source: "automatic",
+      scopeKey: "overview:/",
+      label: "Service: s3",
+      resourceId: "service-s3",
+      service: "s3",
+      failedFindingsCount: 34,
+      total: 120,
     });
   });
 

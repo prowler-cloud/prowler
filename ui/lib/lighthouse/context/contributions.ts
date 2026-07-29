@@ -145,6 +145,13 @@ interface ProviderGroupContextInput {
   name: string;
 }
 
+interface ServiceSummaryContextInput {
+  pathname: string;
+  service: string;
+  failedFindingsCount: number;
+  total?: number;
+}
+
 export function buildFindingSummaryContext(
   total: number,
 ): LighthouseFindingContextItem {
@@ -307,6 +314,24 @@ export function buildFocusedResourceContext(
     region: toBoundedString(resource.attributes.region),
     resourceType: toBoundedString(resource.attributes.type),
     failedFindingsCount: toSafeCount(resource.attributes.failed_findings_count),
+  };
+}
+
+export function buildServiceSummaryContext(
+  input: ServiceSummaryContextInput,
+): LighthouseResourceContextItem {
+  const safeService = toBoundedString(input.service);
+  const safeId = toBoundedString(`service-${safeService}`);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.RESOURCE,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: getLighthouseScopeKey(input.pathname),
+    label: toBoundedString(`Service: ${safeService}`),
+    resourceId: safeId,
+    service: safeService,
+    failedFindingsCount: toSafeCount(input.failedFindingsCount),
+    total: optionalSafeCount(input.total),
   };
 }
 
