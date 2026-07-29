@@ -289,8 +289,10 @@ class TestOCSF:
         mitre_file = MagicMock()
         mitre_file.is_file.return_value = True
         mitre_file.open.side_effect = OSError("catalog unavailable")
+        provider_directory = MagicMock()
+        provider_directory.joinpath.return_value = mitre_file
         compliance_package = MagicMock()
-        compliance_package.joinpath.return_value = mitre_file
+        compliance_package.joinpath.return_value = provider_directory
 
         _load_mitre_technique_map.cache_clear()
         try:
@@ -305,6 +307,8 @@ class TestOCSF:
 
             message = mock_error.call_args.args[0]
             assert re.fullmatch(r"OSError\[\d+\]: catalog unavailable", message)
+            compliance_package.joinpath.assert_called_once_with("aws")
+            provider_directory.joinpath.assert_called_once_with("mitre_attack_aws.json")
         finally:
             _load_mitre_technique_map.cache_clear()
 

@@ -351,9 +351,10 @@ def _build_analytic(finding: Finding) -> Analytic:
 def _load_mitre_technique_map(provider: str) -> Dict[str, dict]:
     """Load and cache MITRE ATT&CK techniques for a provider."""
     try:
-        mitre_file = resources.files("prowler.compliance").joinpath(
-            provider,
-            f"mitre_attack_{provider}.json",
+        mitre_file = (
+            resources.files("prowler.compliance")
+            .joinpath(provider)
+            .joinpath(f"mitre_attack_{provider}.json")
         )
         if not mitre_file.is_file():
             logger.debug(
