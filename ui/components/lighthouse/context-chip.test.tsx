@@ -49,29 +49,27 @@ describe("LighthouseCurrentContextBadge", () => {
     expect(tooltip).toHaveTextContent("Finding: finding-1");
   });
 
-  it("should describe automatic summaries with their human label, not ids", async () => {
-    // Given
+  it("should keep ambient automatic summaries out of the tooltip", async () => {
+    // Given the Overview publishes a bit of everything automatically
     const user = userEvent.setup();
     render(<LighthouseCurrentContextBadge context={overviewContext()} />);
 
     // When
     await user.hover(screen.getByLabelText("Overview context"));
 
-    // Then
+    // Then the tooltip names the page without enumerating page snapshots
     const tooltip = await screen.findByRole("tooltip");
-    expect(tooltip).toHaveTextContent("Prowler ThreatScore");
-    expect(tooltip).toHaveTextContent("80 failed / 320 passed findings");
-    expect(tooltip).toHaveTextContent("Failing findings by severity");
-    expect(tooltip).toHaveTextContent("Service: cloudwatch");
+    expect(tooltip).toHaveTextContent("Overview");
+    expect(tooltip).not.toHaveTextContent("Prowler ThreatScore");
+    expect(tooltip).not.toHaveTextContent("80 failed / 320 passed findings");
+    expect(tooltip).not.toHaveTextContent("Failing findings by severity");
+    expect(tooltip).not.toHaveTextContent("Service: cloudwatch");
     expect(tooltip).not.toHaveTextContent("status-summary");
-    expect(tooltip).not.toHaveTextContent("severity-summary");
-    expect(tooltip).not.toHaveTextContent("service-cloudwatch");
   });
 
   it.each([
     ["resource", resourceContext(), "Resource: resource-1 (bucket-1)"],
     ["scan", scanContext(), "Scan: scan-1"],
-    ["Attack Path", attackPathContext(), "Internet-exposed resources"],
   ])("should identify included %s context", async (_, context, expected) => {
     // Given
     const user = userEvent.setup();

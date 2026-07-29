@@ -121,11 +121,10 @@ function getContextItemDescription(
   item: LighthouseContextItem,
 ): ContextItemDescription | null {
   if (item.kind === LIGHTHOUSE_CONTEXT_KIND.PAGE) return null;
-  // Automatic items carry a human-readable label by construction (summaries,
-  // framework names, query labels); ids are only meaningful for entity items.
-  if (item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC) {
-    return { id: `${item.kind}:${item.id}`, text: item.label };
-  }
+  // Automatic items are the page's own ambient snapshot (a bit of everything
+  // on Overview); they travel to the agent but only user-chosen focused and
+  // selection items are worth enumerating in the tooltip.
+  if (item.source === LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC) return null;
 
   switch (item.kind) {
     case LIGHTHOUSE_CONTEXT_KIND.FINDING:
