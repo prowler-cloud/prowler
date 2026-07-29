@@ -1,6 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { getServicesOverview } from "@/actions/overview";
+
 import { ServiceWatchlistSSR } from "./service-watchlist.ssr";
 
 vi.mock("@/actions/overview", () => ({
@@ -39,5 +41,21 @@ describe("ServiceWatchlistSSR", () => {
     expect(context).toHaveTextContent('"scopeKey":"overview:/"');
     expect(context).toHaveTextContent('"failedFindingsCount":34');
     expect(context).toHaveTextContent('"total":120');
+  });
+
+  it("publishes no service context when no service has failing findings", async () => {
+    vi.mocked(getServicesOverview).mockResolvedValueOnce({
+      data: [
+        {
+          type: "services-overview",
+          id: "iam",
+          attributes: { total: 50, fail: 0, muted: 0, pass: 50 },
+        },
+      ],
+    } as unknown as Awaited<ReturnType<typeof getServicesOverview>>);
+
+    render(await ServiceWatchlistSSR({ searchParams: {} }));
+
+    expect(screen.queryByTestId("service-context")).not.toBeInTheDocument();
   });
 });

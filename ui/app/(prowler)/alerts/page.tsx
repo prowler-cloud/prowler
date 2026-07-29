@@ -102,10 +102,12 @@ export default async function AlertsPage({ searchParams }: AlertsPageProps) {
 
   return (
     <ContentLayout title="Alerts" icon="lucide:bell-ring">
-      <AlertsLighthouseContext
-        totalCount={apiMeta?.pagination?.count ?? alerts.length}
-        editingAlert={editingAlert}
-      />
+      {!hasError ? (
+        <AlertsLighthouseContext
+          totalCount={apiMeta?.pagination?.count ?? alerts.length}
+          editingAlert={editingAlert}
+        />
+      ) : null}
       <AlertsManager
         alerts={alerts}
         meta={meta}
