@@ -91,8 +91,14 @@ Choose a Method:
         |----------------|---------------------------------------------------------------------------------------------------------|----------|
         | `firstName`    | The user's first name.                                                                                  | Yes      |
         | `lastName`     | The user's last name.                                                                                   | Yes      |
-        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler Cloud creates a new role with that name with read-only access (visibility over all providers, no management permissions). If `userType` is not defined, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`. A Prowler administrator can then assign the appropriate role through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). | No       |
+        | `userType`     | Determines which Prowler role the user receives (e.g., `admin`, `auditor`). If a role with that name already exists, the user receives it automatically; if it does not exist, Prowler Cloud creates a new role with that name with read-only access (visibility over all providers, no management permissions). A Prowler administrator can adjust its permissions through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac). If `userType` is not defined, Prowler Cloud applies the fallback behavior described below. | No       |
         | `organization` | The user's company name.                                                                                | No       |
+
+        **Fallback Role Without `userType`**
+
+        <VersionBadge version="5.37.0" />
+
+        If `userType` is not defined, the user's existing roles are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`. A Prowler administrator can then assign the appropriate role through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
 
         <Info>
         **IdP Attribute Mapping**
@@ -159,12 +165,19 @@ Choose a Method:
             <Warning>
             **User Type and Role Assignment**
 
+            <VersionBadge version="5.37.0" />
+
             The `userType` attribute controls which Prowler role is assigned to the user:
 
             * If a role with the specified name already exists in Prowler Cloud, the user automatically receives that role.
             * If the role does not exist, Prowler Cloud creates a new role with that exact name with read-only access: the user can see all providers and their findings but cannot manage anything. A Prowler administrator (a user whose role includes the "Manage Account" permission) can adjust its permissions afterward through the [RBAC Management tab](/user-guide/tutorials/prowler-app-rbac).
-            * If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`.
             * `userType` must contain a single value. If the IdP sends multiple values, Prowler Cloud uses only the first value and does not assign multiple roles.
+
+            **Fallback Role Without `userType`**
+
+            <VersionBadge version="5.37.0" />
+
+            If `userType` is not defined in the user's Okta profile, the user's existing roles in Prowler Cloud are left unchanged. Users without an existing role in that tenant receive a least-privilege `read_only` fallback role until a Prowler administrator assigns another role. If `read_only` already belongs to a role with different permissions, Prowler Cloud creates the fallback with the next available numeric suffix, starting with `read_only_0`.
 
             **Example:** To assign the `IT` role to a user, set the `userType` value to `IT` in Okta. If a role named `IT` already exists in Prowler Cloud, the user receives it automatically upon login. If it does not exist, Prowler Cloud creates a new role called `IT` with read-only access, and a Prowler administrator can adjust its permissions as needed.
 

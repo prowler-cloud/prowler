@@ -885,13 +885,20 @@ class TenantFinishACSView(FinishACSView):
         )
         if not role_name:
             with rls_transaction(str(tenant.id), using=MainRouter.admin_db):
-                user_has_roles = (
-                    UserRoleRelationship.objects.using(MainRouter.admin_db)
-                    .filter(user_id=user_id, tenant_id=tenant.id)
-                    .exists()
-                )
-                if not user_has_roles:
-                    with transaction.atomic(using=MainRouter.admin_db):
+                with transaction.atomic(using=MainRouter.admin_db):
+                    # Serialize concurrent ACS callbacks for the same user.
+                    (
+                        User.objects.using(MainRouter.admin_db)
+                        .select_for_update()
+                        .only("id")
+                        .get(pk=user_id)
+                    )
+                    user_has_roles = (
+                        UserRoleRelationship.objects.using(MainRouter.admin_db)
+                        .filter(user_id=user_id, tenant_id=tenant.id)
+                        .exists()
+                    )
+                    if not user_has_roles:
                         read_only_defaults = dict.fromkeys(
                             Role.PERMISSION_FIELDS, False
                         )
