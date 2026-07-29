@@ -135,8 +135,11 @@ class FakeLayerResponse:
     """A minimal stand-in for a requests.Response over a layer download."""
 
     def __init__(self, data: bytes):
-        """Store the fixture bytes to serve."""
+        """Store the fixture bytes to serve (via iter_content and .raw)."""
         self._data = data
+        # Streaming gzip/tar layers read the compressed bytes straight from
+        # response.raw; the buffered config/zstd path uses iter_content.
+        self.raw = io.BytesIO(data)
 
     def raise_for_status(self):
         """No-op: fixture responses are always successful."""
@@ -146,12 +149,17 @@ class FakeLayerResponse:
         for start in range(0, len(self._data), chunk_size):
             yield self._data[start : start + chunk_size]
 
+    def close(self):
+        """Close the backing raw stream, mirroring requests.Response.close."""
+        self.raw.close()
+
     def __enter__(self):
         """Support use as a context manager."""
         return self
 
     def __exit__(self, *_):
-        """Support use as a context manager."""
+        """Close on exit, mirroring requests.Response context-manager use."""
+        self.close()
         return False
 
 
@@ -758,6 +766,34 @@ class Test_ECR_Service:
             == "sha256:43251ac64627fc331584f6c498b3aba5badc01574e2c70b2499af3af16630eed"
         )
 
+    @mock_aws
+    def test_get_image_scan_data_covers_scan_on_push_disabled_repository(self):
+        """A scan-on-push-disabled repo (empty images_details) is still scanned."""
+        ecr_client_boto = client("ecr", region_name=AWS_REGION_EU_WEST_1)
+        ecr_client_boto.create_repository(
+            repositoryName=repo_name,
+            imageScanningConfiguration={"scanOnPush": False},
+        )
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+
+        repository = ecr.registries[AWS_REGION_EU_WEST_1].repositories[0]
+        # Scan-on-push disabled: the metadata pass leaves images_details empty...
+        assert repository.scan_on_push is False
+        assert repository.images_details == []
+
+        # ...yet the secret-scan path resolves the latest image via a dedicated
+        # describe_images lookup, so the repository is not silently skipped.
+        results = list(ecr._get_image_scan_data())
+
+        assert len(results) == 1
+        fetched_repository, fetched_image, _ = results[0]
+        assert fetched_repository.name == repo_name
+        assert fetched_image.latest_tag == "test-tag4"
+        # The dedicated lookup must NOT mutate the shared images_details, or
+        # other checks would treat this repo as having a scanned image.
+        assert repository.images_details == []
+
     def test_select_child_manifest_digest_falls_back_to_non_amd64(self):
         """With no amd64/linux entry, the first non-attestation candidate is picked."""
         manifest_list = {
@@ -948,3 +984,68 @@ class Test_ECR_Service:
         assert scan_data is not None
         assert [f.path for f in scan_data.files] == ["app/config.py"]
         assert scan_data.truncated is True
+
+    def test_capped_layer_reader_allows_up_to_max(self):
+        """Reading exactly the byte budget succeeds and then reports EOF."""
+        from prowler.providers.aws.services.ecr.ecr_service import _CappedLayerReader
+
+        reader = _CappedLayerReader(io.BytesIO(b"x" * 10), max_bytes=10)
+        assert reader.read() == b"x" * 10
+        assert reader.read() == b""
+
+    def test_capped_layer_reader_raises_when_exceeding_max(self):
+        """A stream longer than the byte budget raises _LayerTooLargeError."""
+        from prowler.providers.aws.services.ecr.ecr_service import (
+            _CappedLayerReader,
+            _LayerTooLargeError,
+        )
+
+        reader = _CappedLayerReader(io.BytesIO(b"x" * 100), max_bytes=10)
+        with pytest.raises(_LayerTooLargeError):
+            reader.read()
+
+    @mock_aws
+    def test_fetch_image_scan_data_streamed_layer_over_cap_is_truncated(self):
+        """A layer streaming past MAX_LAYER_DOWNLOAD_BYTES is skipped, not buffered."""
+        undersized_manifest = {
+            "schemaVersion": 2,
+            "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+            "config": {"digest": CONFIG_DIGEST, "size": 100},
+            "layers": [
+                {
+                    "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                    "digest": LAYER_DIGEST,
+                    # Declares zero size so it passes the pre-download check;
+                    # the actual streamed bytes exceed the (patched) cap.
+                    "size": 0,
+                }
+            ],
+        }
+        _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = undersized_manifest
+        _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
+        _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
+            {"app/config.py": "TOKEN = 'x'"}
+        )
+
+        aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
+        ecr = ECR(aws_provider)
+        repository, image = self._build_repository_and_image()
+
+        with (
+            patch(
+                "prowler.providers.aws.services.ecr.ecr_service.requests.get",
+                new=mock_requests_get,
+            ),
+            patch(
+                "prowler.providers.aws.services.ecr.ecr_service.MAX_LAYER_DOWNLOAD_BYTES",
+                5,
+            ),
+        ):
+            scan_data = ecr._fetch_image_scan_data(repository, image)
+
+        # The oversized layer is skipped and disclosed via truncated; the
+        # config-derived env/history are still returned.
+        assert scan_data is not None
+        assert scan_data.files == []
+        assert scan_data.truncated is True
+        assert scan_data.env == ["PATH=/usr/bin", "TOKEN=super-secret-value"]

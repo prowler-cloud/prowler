@@ -79,11 +79,8 @@ class ecr_repository_image_no_secrets(Check):
             # themselves rather than risk a false PASS or a missing finding.
             for registry in ecr_client.registries.values():
                 for repository in registry.repositories:
-                    for image in (
-                        [repository.images_details[-1]]
-                        if repository.images_details
-                        else []
-                    ):
+                    image = ecr_client._get_scan_target_image(repository)
+                    if image is not None:
                         report = self._build_report(repository, image)
                         report.status = "MANUAL"
                         report.status_extended = (

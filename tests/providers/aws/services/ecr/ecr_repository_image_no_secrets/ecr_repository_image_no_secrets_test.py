@@ -434,6 +434,11 @@ class Test_ecr_repository_image_no_secrets:
         }
         # Not consumed on this path, but must be a real generator to iterate.
         ecr_client._get_image_scan_data = mock_image_scan_data([])
+        # The error fallback resolves each repository's scan target via
+        # _get_scan_target_image; mirror the real method's latest-image scope.
+        ecr_client._get_scan_target_image.side_effect = lambda repository: (
+            repository.images_details[-1] if repository.images_details else None
+        )
 
         with (
             mock.patch(
@@ -464,8 +469,12 @@ class Test_ecr_repository_image_no_secrets:
                 assert "Scanner failure" in report.status_extended
 
             digests_reported = {report.resource_id.split("@")[-1] for report in result}
-            latest_digest_repo1 = repo1.images_details[-1].latest_digest[-12:]
-            latest_digest_repo2 = repo2.images_details[-1].latest_digest[-12:]
+            latest_digest_repo1 = repo1.images_details[-1].latest_digest.split(":")[-1][
+                :12
+            ]
+            latest_digest_repo2 = repo2.images_details[-1].latest_digest.split(":")[-1][
+                :12
+            ]
             assert digests_reported == {latest_digest_repo1, latest_digest_repo2}
             assert "Scanner failure" in result[0].status_extended
 

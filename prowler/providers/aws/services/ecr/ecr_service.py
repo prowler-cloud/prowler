@@ -1,5 +1,6 @@
 import tarfile
-from concurrent.futures import as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import contextmanager
 from datetime import datetime
 from io import BytesIO
 from json import loads
@@ -31,6 +32,48 @@ MAX_FILES_PER_IMAGE = 5000
 # Hard cap on total decompressed bytes read per image, across all its layers.
 MAX_TOTAL_BYTES_PER_IMAGE = 500 * 1024 * 1024
 LAYER_DOWNLOAD_TIMEOUT_SECONDS = 30
+# Concurrency for the image-scan pipeline (_get_image_scan_data). Kept smaller
+# than the shared MAX_WORKERS metadata pool because each task can retain up to
+# MAX_LAYER_DOWNLOAD_BYTES compressed plus MAX_TOTAL_BYTES_PER_IMAGE decompressed
+# content, so a high worker count would multiply peak memory into several GB.
+IMAGE_SCAN_MAX_WORKERS = 4
+
+
+class _LayerTooLargeError(Exception):
+    """Raised when a streamed layer exceeds MAX_LAYER_DOWNLOAD_BYTES."""
+
+
+class _CappedLayerReader:
+    """A minimal read-only file object that caps the bytes it will yield.
+
+    Wraps a streaming HTTP body (urllib3's ``response.raw``) so ``tarfile`` can
+    read a gzip/uncompressed layer incrementally while enforcing an upper bound
+    on the compressed bytes consumed. A manifest that under-declares a layer's
+    size (the declared size is pre-checked separately) cannot make this buffer
+    an unbounded amount of untrusted data: once ``max_bytes`` is exceeded the
+    read raises ``_LayerTooLargeError`` instead of continuing.
+    """
+
+    def __init__(self, raw, max_bytes: int):
+        """Store the underlying raw stream and the remaining byte budget."""
+        self._raw = raw
+        self._remaining = max_bytes
+
+    def read(self, size: int = -1) -> bytes:
+        """Read up to ``size`` bytes, never exceeding the remaining budget.
+
+        A negative/None ``size`` (``read all``) is treated as "read what's left
+        of the budget, plus one" so a lying stream can never pull an unbounded
+        amount into memory and an over-cap layer is still detected.
+        """
+        if size is None or size < 0:
+            size = self._remaining + 1
+        to_read = min(size, self._remaining + 1)
+        chunk = self._raw.read(to_read)
+        self._remaining -= len(chunk)
+        if self._remaining < 0:
+            raise _LayerTooLargeError()
+        return chunk
 
 
 class ECR(AWSService):
@@ -188,12 +231,7 @@ class ECR(AWSService):
                                         image_scan_findings_field_name = (
                                             "imageScanFindingsSummary"
                                         )
-                                        if "docker" in artifact_media_type:
-                                            type = "Docker"
-                                        elif "oci" in artifact_media_type:
-                                            type = "OCI"
-                                        else:
-                                            type = ""
+                                        type = ECR._artifact_type(artifact_media_type)
 
                                         # If imageScanStatus is not present or imageScanFindingsSummary is missing,
                                         # we need to call DescribeImageScanFindings because AWS' new version of
@@ -350,14 +388,17 @@ class ECR(AWSService):
     def _get_image_scan_data(self):
         """Lazily fetch manifest, config, and layer file contents for the latest image.
 
-        Only the most recently pushed image in each repository is scanned
-        (images_details is sorted ascending by push date, so the latest is
-        the last element) to bound cost on repositories with many tags.
+        Only the most recently pushed scannable image in each repository is
+        scanned (resolved via _get_scan_target_image, which also covers
+        scan-on-push-disabled repositories) to bound cost on repositories
+        with many tags.
 
         Not called from __init__: this is only invoked by the
         ecr_repository_image_no_secrets check, since it downloads and
         decompresses image layers and is significantly more expensive than
-        the metadata gathered above.
+        the metadata gathered above. A dedicated, smaller thread pool bounds
+        the concurrency (and therefore the peak memory) of this heavy
+        pipeline independently of the shared metadata pool.
 
         Yields:
             Tuple of (Repository, ImageDetails, Optional[ImageScanData]). The
@@ -365,28 +406,28 @@ class ECR(AWSService):
             or retrieved, so the caller can report it rather than drop it.
         """
         logger.info("ECR - Fetching image manifests, configs, and layers...")
-        images_to_fetch = {
-            self.thread_pool.submit(self._fetch_image_scan_data, repository, image): (
-                repository,
-                image,
-            )
-            for registry in self.registries.values()
-            for repository in registry.repositories
-            for image in (
-                [repository.images_details[-1]] if repository.images_details else []
-            )
-        }
+        with ThreadPoolExecutor(max_workers=IMAGE_SCAN_MAX_WORKERS) as executor:
+            images_to_fetch = {}
+            for registry in self.registries.values():
+                for repository in registry.repositories:
+                    image = self._get_scan_target_image(repository)
+                    if image is None:
+                        continue
+                    future = executor.submit(
+                        self._fetch_image_scan_data, repository, image
+                    )
+                    images_to_fetch[future] = (repository, image)
 
-        for future in as_completed(images_to_fetch):
-            repository, image = images_to_fetch[future]
-            scan_data = None
-            try:
-                scan_data = future.result()
-            except Exception as error:
-                logger.error(
-                    f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
-                )
-            yield repository, image, scan_data
+            for future in as_completed(images_to_fetch):
+                repository, image = images_to_fetch[future]
+                scan_data = None
+                try:
+                    scan_data = future.result()
+                except Exception as error:
+                    logger.error(
+                        f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+                    )
+                yield repository, image, scan_data
 
     def _fetch_image_scan_data(self, repository, image) -> Optional["ImageScanData"]:
         """Resolve one image's manifest and return its scannable content.
@@ -409,7 +450,7 @@ class ECR(AWSService):
 
         env = []
         history = []
-        config_digest = manifest.get("config", {}).get("digest")
+        config_digest = (manifest.get("config") or {}).get("digest")
         if config_digest:
             config_bytes = self._download_layer(
                 client,
@@ -449,63 +490,55 @@ class ECR(AWSService):
                 truncated = True
                 continue
 
-            layer_bytes = self._download_layer(
-                client,
-                registry_id,
-                repository.name,
-                layer_digest,
-                max_bytes=MAX_LAYER_DOWNLOAD_BYTES,
-            )
-            if layer_bytes is None:
-                truncated = True
-                continue
-
-            tar_stream = self._open_layer_tar(
-                layer_bytes,
-                layer.get("mediaType", ""),
-                remaining_budget=MAX_TOTAL_BYTES_PER_IMAGE - total_bytes,
-            )
-            if tar_stream is None:
-                truncated = True
-                continue
-            # The compressed blob is no longer needed once decompressed into
-            # tar_stream; drop it so it can be freed during the (often
-            # longer) member-iteration below instead of lingering alongside
-            # the decompressed copy.
-            layer_bytes = None
-
-            with tar_stream:
-                for member in tar_stream:
-                    if (
-                        len(files) >= MAX_FILES_PER_IMAGE
-                        or total_bytes >= MAX_TOTAL_BYTES_PER_IMAGE
-                    ):
-                        truncated = True
-                        break
-                    if not member.isfile():
-                        continue
-                    base_name = member.name.rsplit("/", 1)[-1]
-                    if base_name.startswith(".wh."):
-                        # Whiteout marker: a deletion recorded by the union
-                        # filesystem, not real file content.
-                        continue
-                    if member.size > MAX_FILE_BYTES:
+            try:
+                with self._open_layer_tar_stream(
+                    client,
+                    registry_id,
+                    repository.name,
+                    layer_digest,
+                    layer.get("mediaType", ""),
+                    remaining_budget=MAX_TOTAL_BYTES_PER_IMAGE - total_bytes,
+                ) as tar_stream:
+                    if tar_stream is None:
                         truncated = True
                         continue
-                    try:
-                        content = (
-                            tar_stream.extractfile(member).read().decode("latin-1")
+                    for member in tar_stream:
+                        if (
+                            len(files) >= MAX_FILES_PER_IMAGE
+                            or total_bytes >= MAX_TOTAL_BYTES_PER_IMAGE
+                        ):
+                            truncated = True
+                            break
+                        if not member.isfile():
+                            continue
+                        base_name = member.name.rsplit("/", 1)[-1]
+                        if base_name.startswith(".wh."):
+                            # Whiteout marker: a deletion recorded by the union
+                            # filesystem, not real file content.
+                            continue
+                        if member.size > MAX_FILE_BYTES:
+                            truncated = True
+                            continue
+                        try:
+                            content = (
+                                tar_stream.extractfile(member).read().decode("latin-1")
+                            )
+                        except Exception:
+                            continue
+                        files.append(
+                            ImageScanFile(
+                                path=member.name,
+                                layer_digest=layer_digest,
+                                content=content,
+                            )
                         )
-                    except Exception:
-                        continue
-                    files.append(
-                        ImageScanFile(
-                            path=member.name,
-                            layer_digest=layer_digest,
-                            content=content,
-                        )
-                    )
-                    total_bytes += member.size
+                        total_bytes += member.size
+            except _LayerTooLargeError:
+                # The layer streamed more bytes than MAX_LAYER_DOWNLOAD_BYTES
+                # (a manifest under-declaring its size); skip it and disclose
+                # the partial coverage rather than buffer unbounded data.
+                truncated = True
+                continue
 
         return ImageScanData(env=env, history=history, files=files, truncated=truncated)
 
@@ -606,25 +639,40 @@ class ECR(AWSService):
         return candidates[0].get("digest") if candidates else None
 
     @staticmethod
+    def _get_layer_download_url(
+        client, registry_id, repository_name, layer_digest
+    ) -> Optional[str]:
+        """Resolve the presigned download URL for one layer or config blob.
+
+        Returns:
+            The presigned URL, or None if ECR did not return one.
+        """
+        response = client.get_download_url_for_layer(
+            registryId=registry_id,
+            repositoryName=repository_name,
+            layerDigest=layer_digest,
+        )
+        return response.get("downloadUrl")
+
+    @staticmethod
     def _download_layer(
         client, registry_id, repository_name, layer_digest, max_bytes=None
     ) -> Optional[bytes]:
         """Download one layer or config blob via its presigned URL.
 
         Streams the response, aborting once `max_bytes` is exceeded, so a
-        lying or oversized blob is never buffered in full.
+        lying or oversized blob is never buffered in full. Used for the config
+        blob and for zstd layers (which cannot be streamed into tarfile);
+        gzip/uncompressed layers are streamed by `_open_layer_tar_stream`.
 
         Returns:
             The blob's bytes, or None if it could not be downloaded or
             exceeded `max_bytes`.
         """
         try:
-            response = client.get_download_url_for_layer(
-                registryId=registry_id,
-                repositoryName=repository_name,
-                layerDigest=layer_digest,
+            download_url = ECR._get_layer_download_url(
+                client, registry_id, repository_name, layer_digest
             )
-            download_url = response.get("downloadUrl")
             if not download_url:
                 return None
 
@@ -646,6 +694,94 @@ class ECR(AWSService):
                 f"{repository_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
+
+    @contextmanager
+    def _open_layer_tar_stream(
+        self,
+        client,
+        registry_id,
+        repository_name,
+        layer_digest,
+        media_type: str,
+        remaining_budget: int,
+    ):
+        """Yield an open TarFile for one layer, streaming where possible.
+
+        gzip and uncompressed tar layers are streamed straight from the
+        download into `tarfile` (streaming mode reads a file-like object
+        sequentially), so neither the compressed blob nor a decompressed copy
+        is buffered in full; a `_CappedLayerReader` still enforces
+        `MAX_LAYER_DOWNLOAD_BYTES` against a manifest that under-declares the
+        layer size. zstd layers cannot be streamed (the `zstd` library exposes
+        no streaming API), so they fall back to the buffered path, bounded by
+        the existing frame-content-size check in `_open_layer_tar`.
+
+        Yields:
+            An open TarFile, or None for an unrecognized media type or a
+            download/decompression failure. Raises `_LayerTooLargeError` if a
+            streamed layer exceeds `MAX_LAYER_DOWNLOAD_BYTES`.
+        """
+        if media_type.endswith("zstd"):
+            layer_bytes = self._download_layer(
+                client,
+                registry_id,
+                repository_name,
+                layer_digest,
+                max_bytes=MAX_LAYER_DOWNLOAD_BYTES,
+            )
+            if layer_bytes is None:
+                yield None
+                return
+            tar_stream = self._open_layer_tar(layer_bytes, media_type, remaining_budget)
+            if tar_stream is None:
+                yield None
+                return
+            with tar_stream:
+                yield tar_stream
+            return
+
+        if media_type.endswith("gzip"):
+            mode = "r|gz"
+        elif media_type.endswith("tar"):
+            mode = "r|"
+        else:
+            yield None
+            return
+
+        # Only the setup (URL resolution, connection, tar-header parse) is
+        # guarded here; a failure yields None. The `yield tar_stream` below is
+        # kept out of this try so exceptions raised while the caller iterates
+        # members (e.g. _LayerTooLargeError) propagate instead of triggering a
+        # forbidden second yield.
+        try:
+            download_url = ECR._get_layer_download_url(
+                client, registry_id, repository_name, layer_digest
+            )
+            if not download_url:
+                yield None
+                return
+            http_response = requests.get(
+                download_url,
+                stream=True,
+                timeout=LAYER_DOWNLOAD_TIMEOUT_SECONDS,
+                allow_redirects=False,
+            )
+            try:
+                http_response.raise_for_status()
+                capped = _CappedLayerReader(http_response.raw, MAX_LAYER_DOWNLOAD_BYTES)
+                tar_stream = tarfile.open(fileobj=capped, mode=mode)
+            except Exception:
+                http_response.close()
+                raise
+        except Exception as error:
+            logger.warning(
+                f"{repository_name} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            yield None
+            return
+
+        with http_response, tar_stream:
+            yield tar_stream
 
     @staticmethod
     def _zstd_frame_content_size(data: bytes) -> Optional[int]:
@@ -720,6 +856,83 @@ class ECR(AWSService):
         except Exception as error:
             logger.warning(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
+            )
+            return None
+
+    @staticmethod
+    def _artifact_type(artifact_media_type: Optional[str]) -> str:
+        """Map an image's artifact media type to a short image type label.
+
+        Returns:
+            "Docker", "OCI", or "" for an unrecognized/absent media type.
+        """
+        if artifact_media_type:
+            if "docker" in artifact_media_type:
+                return "Docker"
+            if "oci" in artifact_media_type:
+                return "OCI"
+        return ""
+
+    def _get_scan_target_image(self, repository) -> Optional["ImageDetails"]:
+        """Resolve the latest scannable image to scan for secrets.
+
+        Secret scanning is independent of ECR's vulnerability scanning
+        configuration, but `_get_image_details` only populates
+        `images_details` for scan-on-push-enabled repositories. For a
+        repository with scan-on-push disabled (empty `images_details`), this
+        performs a dedicated `describe_images` lookup to find the most
+        recently pushed scannable image, so those repositories are not
+        silently skipped.
+
+        The synthesized ImageDetails is deliberately NOT appended to
+        `repository.images_details`: other checks (e.g.
+        ecr_repositories_scan_vulnerabilities_in_latest_image) treat any
+        entry there as a scanned image and would FAIL scan-on-push-disabled
+        repositories that currently produce no finding.
+
+        Returns:
+            The latest scannable ImageDetails, or None if the repository has
+            no scannable image or the lookup failed.
+        """
+        if repository.images_details:
+            return repository.images_details[-1]
+        try:
+            client = self.regional_clients[repository.region]
+            describe_images_paginator = client.get_paginator("describe_images")
+            latest = None
+            for page in describe_images_paginator.paginate(
+                registryId=self.registries[repository.region].id,
+                repositoryName=repository.name,
+                PaginationConfig={"PageSize": 1000},
+            ):
+                for image in page["imageDetails"]:
+                    if image is None:
+                        continue
+                    artifact_media_type = image.get("artifactMediaType", None)
+                    tags = image.get("imageTags", [])
+                    if not ECR._is_artifact_scannable(artifact_media_type, tags):
+                        continue
+                    image_pushed_at = image.get("imagePushedAt")
+                    if image_pushed_at is None:
+                        continue
+                    # Match _get_image_details' "sort ascending, take last"
+                    # selection: on equal push dates the later-listed image
+                    # wins, so `<` (not `<=`) is used to replace on ties.
+                    if latest is not None and image_pushed_at < latest.image_pushed_at:
+                        continue
+                    latest = ImageDetails(
+                        latest_tag=image.get("imageTags", ["None"])[0],
+                        image_pushed_at=image_pushed_at,
+                        latest_digest=image.get("imageDigest"),
+                        scan_findings_status=None,
+                        scan_findings_severity_count=None,
+                        artifact_media_type=artifact_media_type,
+                        type=ECR._artifact_type(artifact_media_type),
+                    )
+            return latest
+        except Exception as error:
+            logger.error(
+                f"{repository.region} -- {error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
             return None
 
