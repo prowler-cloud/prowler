@@ -59,6 +59,10 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         if api_key.revoked:
             raise AuthenticationFailed("This API Key has been revoked.")
 
+        # `entity` is SET_NULL, so a key can outlive the user that owned it
+        if api_key.entity is None:
+            raise AuthenticationFailed("No entity matching this api key.")
+
         client_ip = request.META.get(package_settings.IP_ADDRESS_HEADER)
         if api_key.blacklisted_ips and client_ip in api_key.blacklisted_ips:
             raise AuthenticationFailed("Access denied from blacklisted IP.")
@@ -104,7 +108,7 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
 
         return entity, {
             "tenant_id": str(api_key_instance.tenant_id),
-            "sub": str(api_key_instance.entity.id),
+            "sub": str(entity.id),
             "api_key_prefix": prefix,
         }
 

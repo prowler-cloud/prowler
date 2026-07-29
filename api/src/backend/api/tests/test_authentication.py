@@ -278,6 +278,34 @@ class TestTenantAPIKeyAuthentication:
 
         assert str(exc_info.value.detail) == "No entity matching this api key."
 
+    def test_authenticate_api_key_with_null_entity(
+        self, auth_backend, create_test_user, tenants_fixture, request_factory
+    ):
+        """Test authentication fails when the API key has no owning entity."""
+        tenant = tenants_fixture[0]
+        user = create_test_user
+
+        api_key, raw_key = TenantAPIKey.objects.create_api_key(
+            name="Orphaned API Key",
+            tenant_id=tenant.id,
+            entity=user,
+            expiry_date=datetime.now(UTC) + timedelta(days=30),
+        )
+
+        # Bypass the revoke signal to reproduce the orphaned rows seen in production
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+        api_key.refresh_from_db()
+        assert api_key.entity is None
+        assert not api_key.revoked
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "No entity matching this api key."
+
     def test_authenticate_updates_last_used_at(
         self, auth_backend, api_keys_fixture, request_factory
     ):
