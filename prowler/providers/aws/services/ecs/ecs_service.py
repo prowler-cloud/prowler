@@ -150,6 +150,7 @@ class ECS(AWSService):
                 ],
             )
             container_definitions = response["taskDefinition"]["containerDefinitions"]
+            task_definition.container_definitions = []
             for container in container_definitions:
                 environment = []
                 if "environment" in container:
@@ -302,7 +303,7 @@ class TaskDefinition(BaseModel):
     arn: str
     revision: str
     region: str
-    container_definitions: list[ContainerDefinition] = []
+    container_definitions: Optional[list[ContainerDefinition]] = None
     pid_mode: Optional[str]
     registered_at: Optional[datetime] = None
     tags: Optional[list] = []
