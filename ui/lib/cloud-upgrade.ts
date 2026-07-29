@@ -83,6 +83,7 @@ export const CLOUD_UPGRADE_CONTENT = {
       "Replace separate scan reports with a consolidated compliance view.",
     benefits: [
       "Compare framework posture across providers",
+      "Roll up every account in a Provider Group",
       "Find coverage gaps without switching scans",
       "Generate a consolidated compliance report",
     ],

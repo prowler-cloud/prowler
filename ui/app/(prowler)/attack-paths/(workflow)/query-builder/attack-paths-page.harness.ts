@@ -233,6 +233,12 @@ export class AttackPathPageHarness {
     );
   }
 
+  async fillInput(name: string, value: string): Promise<void> {
+    const input = this.getInputByName(name);
+    if (!input) throw new Error(`fillInput: input "${name}" not found`);
+    await this.user.fill(input, value);
+  }
+
   /**
    * Inline `transform` of the React Flow viewport element. This is the
    * pan/zoom matrix React Flow rewrites on every fit/zoom/pan, so comparing
