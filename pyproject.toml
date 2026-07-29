@@ -4,7 +4,7 @@ requires = ["hatchling"]
 
 [dependency-groups]
 dev = [
-  "bandit==1.8.3",
+  "bandit==1.9.4",
   "black==26.3.1",
   "coverage==7.6.12",
   "docker==7.1.0",
