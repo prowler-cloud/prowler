@@ -4,6 +4,7 @@ import json
 import os
 import tempfile
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import suppress
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -14998,10 +14999,8 @@ class TestTenantFinishACSView:
 
         def synchronize_role_checks(queryset):
             if queryset.model is UserRoleRelationship:
-                try:
+                with suppress(BrokenBarrierError):
                     concurrent_role_checks.wait(timeout=1)
-                except BrokenBarrierError:
-                    pass
             return original_exists(queryset)
 
         def dispatch_callback():
@@ -15050,7 +15049,7 @@ class TestTenantFinishACSView:
             mock_saml_config_get.return_value = SimpleNamespace(
                 email_domain=saml_setup["domain"], tenant=tenant
             )
-            mock_user_get.side_effect = lambda *args, **kwargs: User.objects.using(
+            mock_user_get.side_effect = lambda *_args, **_kwargs: User.objects.using(
                 MainRouter.admin_db
             ).get(pk=user.pk)
 
