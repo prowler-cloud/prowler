@@ -523,6 +523,10 @@ class ECR(AWSService):
                             content = (
                                 tar_stream.extractfile(member).read().decode("latin-1")
                             )
+                        except _LayerTooLargeError:
+                            # Over-cap while reading this member: truncate the
+                            # whole layer rather than silently skipping one file.
+                            raise
                         except Exception:
                             continue
                         files.append(

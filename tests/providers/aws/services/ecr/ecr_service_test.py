@@ -1,5 +1,6 @@
 import io
 import json
+import random
 import tarfile
 from datetime import datetime
 from unittest.mock import patch
@@ -1021,11 +1022,22 @@ class Test_ECR_Service:
                 }
             ],
         }
+        # Two-member layer: a small first file that is scanned, then a large
+        # incompressible second file. The blob must exceed tarfile's internal
+        # read buffer (~10 KB) so tarfile.open() consumes only part of it and
+        # the cap (set one byte below the full layer) is instead exceeded while
+        # the second member's content is read during archive iteration.
+        rng = random.Random(0)
+        incompressible = bytes(rng.randrange(256) for _ in range(64 * 1024)).decode(
+            "latin-1"
+        )
+        layer_blob = build_gzip_tar(
+            {"app/config.py": "TOKEN = 'x'", "app/big.bin": incompressible}
+        )
+        assert len(layer_blob) > 10 * 1024  # larger than tarfile's read buffer
         _MANIFESTS_BY_DIGEST[IMAGE_DIGEST] = undersized_manifest
         _BLOBS_BY_DIGEST[CONFIG_DIGEST] = json.dumps(CONFIG_JSON).encode()
-        _BLOBS_BY_DIGEST[LAYER_DIGEST] = build_gzip_tar(
-            {"app/config.py": "TOKEN = 'x'"}
-        )
+        _BLOBS_BY_DIGEST[LAYER_DIGEST] = layer_blob
 
         aws_provider = set_mocked_aws_provider([AWS_REGION_EU_WEST_1])
         ecr = ECR(aws_provider)
@@ -1038,14 +1050,18 @@ class Test_ECR_Service:
             ),
             patch(
                 "prowler.providers.aws.services.ecr.ecr_service.MAX_LAYER_DOWNLOAD_BYTES",
-                5,
+                len(layer_blob) - 1,
             ),
         ):
             scan_data = ecr._fetch_image_scan_data(repository, image)
 
-        # The oversized layer is skipped and disclosed via truncated; the
-        # config-derived env/history are still returned.
+        # The over-cap layer is disclosed via truncated, and the config-derived
+        # env/history (fetched independently of the layer) are still returned.
         assert scan_data is not None
-        assert scan_data.files == []
         assert scan_data.truncated is True
         assert scan_data.env == ["PATH=/usr/bin", "TOKEN=super-secret-value"]
+        assert scan_data.history == ["/bin/sh -c #(nop) ADD file", "RUN echo hi"]
+        # The first member was scanned before the cap tripped, proving the error
+        # was raised during archive iteration (not while tarfile.open parsed the
+        # header, which would have skipped the layer with no files scanned).
+        assert [f.path for f in scan_data.files] == ["app/config.py"]
