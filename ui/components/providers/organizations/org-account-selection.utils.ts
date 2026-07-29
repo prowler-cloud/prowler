@@ -6,9 +6,10 @@ import {
 const DEFAULT_CONCURRENCY_LIMIT = 5;
 const DEFAULT_POLL_DELAYS_MS = [2000, 3000, 5000] as const;
 
+/** Normalized form of the wire's `account_provider_mappings` entries. */
 interface CandidateProviderMapping {
-  account_id: string;
-  provider_id: string;
+  candidateId: string;
+  providerId: string;
 }
 
 interface BuildCandidateToProviderMapParams {
@@ -86,7 +87,7 @@ function normalizeCandidateProviderMapping(
   }
 
   const attributes = isRecord(value.attributes) ? value.attributes : null;
-  const accountId =
+  const candidateId =
     (typeof value.account_id === "string" && value.account_id) ||
     (typeof attributes?.account_id === "string" && attributes.account_id) ||
     (typeof value.id === "string" && value.id) ||
@@ -97,14 +98,11 @@ function normalizeCandidateProviderMapping(
     (typeof attributes?.provider_id === "string" && attributes.provider_id) ||
     null;
 
-  if (!accountId || !providerId) {
+  if (!candidateId || !providerId) {
     return null;
   }
 
-  return {
-    account_id: accountId,
-    provider_id: providerId,
-  };
+  return { candidateId, providerId };
 }
 
 function extractCandidateProviderMappings(applyResult: unknown) {
@@ -183,10 +181,10 @@ export async function buildCandidateToProviderMap({
     const mappedProviders = new Map<string, string>();
 
     for (const mapping of explicitMappings) {
-      if (!selectedCandidateIdSet.has(mapping.account_id)) {
+      if (!selectedCandidateIdSet.has(mapping.candidateId)) {
         continue;
       }
-      mappedProviders.set(mapping.account_id, mapping.provider_id);
+      mappedProviders.set(mapping.candidateId, mapping.providerId);
     }
 
     if (mappedProviders.size > 0) {

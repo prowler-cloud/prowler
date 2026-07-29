@@ -4,6 +4,7 @@ import {
   APPLY_STATUS,
   ApplyStatus,
   AwsDiscoveryResult,
+  AwsOrgHierarchy,
   GcpOrgHierarchy,
   NODE_KIND,
   ORGANIZATION_TYPE,
@@ -274,6 +275,47 @@ describe("getNodeIdsForSelectedCandidates", () => {
 
     expect(nodeIds).toEqual(expect.arrayContaining(["ou-parent", "ou-child"]));
     expect(nodeIds.length).toBe(2);
+  });
+
+  it("terminates on a cyclic parent chain instead of hanging", () => {
+    // Parent ids are wire data. A cycle must not spin the ancestor walk: the
+    // collected ids live in a Set, so nothing about re-adding them would ever
+    // end the loop. Each node in the cycle is still reported once.
+    const cyclicHierarchy: AwsOrgHierarchy = {
+      orgType: ORGANIZATION_TYPE.AWS,
+      organization: { uid: "o-cycle", name: "Cyclic Org" },
+      nodes: [
+        {
+          id: "ou-a",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "A",
+          parentId: "ou-b",
+        },
+        {
+          id: "ou-b",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "B",
+          parentId: "ou-a",
+        },
+        {
+          id: "ou-self",
+          kind: NODE_KIND.ORGANIZATIONAL_UNIT,
+          name: "Self",
+          parentId: "ou-self",
+        },
+      ],
+      candidates: [
+        { uid: "111111111111", label: "In cycle", parentId: "ou-a" },
+        { uid: "222222222222", label: "Self-parented", parentId: "ou-self" },
+      ],
+    };
+
+    const nodeIds = getNodeIdsForSelectedCandidates(cyclicHierarchy, [
+      "111111111111",
+      "222222222222",
+    ]);
+
+    expect([...nodeIds].sort()).toEqual(["ou-a", "ou-b", "ou-self"]);
   });
 });
 

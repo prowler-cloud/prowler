@@ -32,6 +32,7 @@ vi.mock("@/lib/server-actions-helper", () => ({
 
 import {
   applyDiscovery,
+  createOrganization,
   getDiscovery,
   listOrganizationNodesSafe,
   listOrganizationsSafe,
@@ -81,6 +82,61 @@ describe("organizations actions", () => {
     // Then
     expect(result).toEqual({ error: "Invalid organization ID" });
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an organization type with no onboarding flow instead of coercing it", async () => {
+    // Given a form asking for a type this build cannot onboard. `azure` is a
+    // real OrganizationType — display supports it, onboarding does not — so it
+    // is the exact boundary a blind cast would let through.
+    const formData = new FormData();
+    formData.set("name", "Contoso");
+    formData.set("externalId", "o-abc123def4");
+    formData.set("orgType", ORGANIZATION_TYPE.AZURE);
+
+    // When
+    const result = await createOrganization(formData);
+
+    // Then it never reaches the API: silently creating an AWS organization
+    // would onboard something the caller never asked for.
+    expect(result).toEqual({ error: "Invalid organization type" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unrecognized organization type value", async () => {
+    // Given
+    const formData = new FormData();
+    formData.set("name", "Rogue");
+    formData.set("externalId", "o-abc123def4");
+    formData.set("orgType", "not-a-provider");
+
+    // When
+    const result = await createOrganization(formData);
+
+    // Then
+    expect(result).toEqual({ error: "Invalid organization type" });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("defaults to AWS only when the organization type is absent", async () => {
+    // Given a form from before the field existed.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { id: "org-1" } }), {
+        status: 201,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({ data: { id: "org-1" } });
+
+    const formData = new FormData();
+    formData.set("name", "Legacy");
+    formData.set("externalId", "o-abc123def4");
+
+    // When
+    await createOrganization(formData);
+
+    // Then the absent value — and only the absent value — means AWS.
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+    expect(body.data.attributes.org_type).toBe(ORGANIZATION_TYPE.AWS);
   });
 
   it("revalidates providers only when apply discovery succeeds", async () => {
@@ -245,19 +301,24 @@ describe("organizations actions", () => {
   });
 
   it("flags an empty organizations payload as degraded when the safe request fails", async () => {
-    // Given
+    // Given a 5xx. The mock THROWS because that is what the real helper does
+    // (server-actions-helper captures to Sentry, then rethrows) — resolving
+    // instead would test a path production never takes.
     fetchMock.mockResolvedValue(
       new Response("Internal Server Error", {
         status: 500,
       }),
     );
+    handleApiResponseMock.mockRejectedValue(new Error("Server error (500)"));
 
     // When
     const result = await listOrganizationsSafe();
 
-    // Then
+    // Then the caller still gets the degraded result, and the failure passed
+    // through the shared reporting point on its way there — so a 5xx behind the
+    // degraded-hierarchy notice is traceable instead of only a boolean.
     expect(result).toEqual({ data: [], error: true });
-    expect(handleApiResponseMock).not.toHaveBeenCalled();
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
     expect(handleApiErrorMock).not.toHaveBeenCalled();
   });
 
@@ -268,13 +329,37 @@ describe("organizations actions", () => {
         status: 500,
       }),
     );
+    handleApiResponseMock.mockRejectedValue(new Error("Server error (500)"));
+
+    // When
+    const result = await listOrganizationNodesSafe();
+
+    // Then — same contract as the organizations read above.
+    expect(result).toEqual({ data: [], error: true });
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
+    expect(handleApiErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("reports a 4xx page through the shared helper before degrading", async () => {
+    // Given a 403. The real helper reports it and RETURNS (only 5xx throws), so
+    // the degraded result must not depend on an exception — and the report must
+    // still happen, which the pre-fix early return skipped.
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ errors: [{ detail: "Forbidden" }] }), {
+        status: 403,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    handleApiResponseMock.mockResolvedValue({
+      error: "Forbidden",
+      status: 403,
+    });
 
     // When
     const result = await listOrganizationNodesSafe();
 
     // Then
     expect(result).toEqual({ data: [], error: true });
-    expect(handleApiResponseMock).not.toHaveBeenCalled();
-    expect(handleApiErrorMock).not.toHaveBeenCalled();
+    expect(handleApiResponseMock).toHaveBeenCalledTimes(1);
   });
 });

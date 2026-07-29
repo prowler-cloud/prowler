@@ -163,8 +163,8 @@ export function ProvidersAccountsView({
             <Alert>
               <Info />
               <AlertDescription>
-                Organization grouping is temporarily unavailable. Providers are
-                shown as a flat list.
+                Organization grouping is incomplete. Some providers may appear
+                ungrouped.
               </AlertDescription>
             </Alert>
           )}

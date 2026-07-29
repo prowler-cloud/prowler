@@ -65,8 +65,18 @@ const NEUTRAL_TERMINOLOGY: OrgTypeTerminology = {
   candidateNoun: { singular: "account", plural: "accounts" },
 };
 
+const ORGANIZATION_TYPES: readonly string[] = Object.values(ORGANIZATION_TYPE);
+
+/**
+ * Membership is checked against the known values, not by indexing the lookup:
+ * both tables are object literals, so an inherited key (`constructor`,
+ * `toString`, `__proto__`) would resolve to a truthy non-string and slip past a
+ * `??` fallback — handing callers a function where they expect a label.
+ */
 function terminologyFor(orgType: OrganizationType): OrgTypeTerminology {
-  return ORGANIZATION_TERMINOLOGY[orgType] ?? NEUTRAL_TERMINOLOGY;
+  return ORGANIZATION_TYPES.includes(orgType)
+    ? ORGANIZATION_TERMINOLOGY[orgType]
+    : NEUTRAL_TERMINOLOGY;
 }
 
 /**
@@ -78,7 +88,15 @@ export function getNodeLabel(
   orgType: OrganizationType,
   kind?: NodeKind,
 ): string {
-  return kind ? NODE_KIND_LABEL[kind] : terminologyFor(orgType).containerLabel;
+  // `kind` is typed but unvalidated — node rows pass the wire attribute
+  // straight through, so a kind this build predates lands here. `toNodeKind`
+  // is the narrowing that makes an unknown value fall back instead of
+  // resolving to something the callers then call `.toLowerCase()` on.
+  const knownKind = toNodeKind(kind);
+
+  return knownKind
+    ? NODE_KIND_LABEL[knownKind]
+    : terminologyFor(orgType).containerLabel;
 }
 
 /** Provider-side source of the organization name (edit-name helper copy). */

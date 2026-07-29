@@ -221,8 +221,18 @@ export function getNodeIdsForSelectedCandidates(
       continue;
     }
 
+    // The walk stops on an already-seen ancestor, not just on leaving the node
+    // set: parent ids come straight off the wire, and a cycle (mutual or
+    // self-parenting nodes) would otherwise spin forever — `nodeIds` is a Set,
+    // so re-adding never terminates the loop, it just hangs the tab.
     let currentParentId = candidate.parentId;
-    while (currentParentId && allNodeIds.has(currentParentId)) {
+    const visitedParentIds = new Set<string>();
+    while (
+      currentParentId &&
+      allNodeIds.has(currentParentId) &&
+      !visitedParentIds.has(currentParentId)
+    ) {
+      visitedParentIds.add(currentParentId);
       nodeIds.add(currentParentId);
       currentParentId = nodeParentMap.get(currentParentId) ?? "";
     }

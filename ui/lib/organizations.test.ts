@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   NODE_KIND,
+  NodeKind,
   ORGANIZATION_TYPE,
   OrganizationType,
 } from "@/types/organizations";
@@ -43,6 +44,49 @@ describe("getNodeLabel", () => {
     expect(getNameSourceLabel("oci" as OrganizationType)).toBe(
       "the cloud provider",
     );
+  });
+
+  it("falls back to the container label for a node kind this build predates", () => {
+    // `kind` is typed but unvalidated: node rows pass the wire attribute
+    // straight through, so a backend-added kind must resolve to the
+    // organization's own container label. Returning `undefined` would crash
+    // callers that lowercase the result (the deletion dialog).
+    const unknownKind = "management-group" as NodeKind;
+
+    expect(getNodeLabel(ORGANIZATION_TYPE.AWS, unknownKind)).toBe(
+      "Organizational Unit",
+    );
+    expect(getNodeLabel(ORGANIZATION_TYPE.GCP, unknownKind)).toBe("Folder");
+    expect(getNodeLabel("oci" as OrganizationType, unknownKind)).toBe("Group");
+  });
+
+  it("falls back for wire values that collide with Object.prototype keys", () => {
+    // The lookup tables are object literals, so indexing them with an inherited
+    // key returns a truthy non-string — a function, or the prototype itself.
+    // That defeats a `??` fallback and hands the callers something they then
+    // call `.toLowerCase()` on. Every label getter must survive it.
+    for (const key of [
+      "constructor",
+      "toString",
+      "valueOf",
+      "hasOwnProperty",
+      "__proto__",
+    ]) {
+      expect(getNodeLabel(ORGANIZATION_TYPE.AWS, key as NodeKind)).toBe(
+        "Organizational Unit",
+      );
+      expect(getNodeLabel(key as OrganizationType, "folder" as NodeKind)).toBe(
+        "Folder",
+      );
+      expect(getNodeLabel(key as OrganizationType)).toBe("Group");
+      expect(getNameSourceLabel(key as OrganizationType)).toBe(
+        "the cloud provider",
+      );
+      expect(getCandidateNoun(key as OrganizationType)).toEqual({
+        singular: "account",
+        plural: "accounts",
+      });
+    }
   });
 });
 

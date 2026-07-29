@@ -925,6 +925,66 @@ describe("loadProvidersAccountsViewData", () => {
     expect(viewData.hierarchyStatus).toBe(HIERARCHY_STATUS.UNAVAILABLE);
   });
 
+  it("keeps organization grouping when only the organization-nodes fetch fails", async () => {
+    // Given organizations that read fine but a nodes fetch that did not. The
+    // provider carries its `organization` relationship, so the organization row
+    // genuinely has something to group — otherwise the row is dropped for
+    // having no providers and this test would pass either way.
+    providersActionsMock.getProviders.mockResolvedValue({
+      ...providersResponse,
+      data: providersResponse.data.map((provider) => ({
+        ...provider,
+        relationships: {
+          ...provider.relationships,
+          organization: {
+            data:
+              provider.id === "provider-1"
+                ? { type: "organizations", id: "org-1" }
+                : null,
+          },
+        },
+      })),
+    });
+    providersActionsMock.getAllProviders.mockResolvedValue(providersResponse);
+    organizationsActionsMock.listOrganizationsSafe.mockResolvedValue({
+      data: [
+        {
+          id: "org-1",
+          type: "organizations",
+          attributes: {
+            name: "Root Organization",
+            org_type: "aws",
+            external_id: "o-root",
+            metadata: {},
+            root_external_id: "r-root",
+          },
+          relationships: {},
+        },
+      ],
+    });
+    organizationsActionsMock.listOrganizationNodesSafe.mockResolvedValue({
+      data: [],
+      error: true,
+    });
+    scansActionsMock.getScans.mockResolvedValue({ data: [] });
+
+    // When
+    const viewData = await loadProvidersAccountsViewData({
+      searchParams: {} satisfies SearchParamsProps,
+      isCloud: true,
+    });
+
+    // Then the notice is raised, but the organization row survives — it is the
+    // only way to reach Edit Organization Name / Update Credentials / Delete.
+    expect(viewData.hierarchyStatus).toBe(HIERARCHY_STATUS.UNAVAILABLE);
+
+    const organizationRow = viewData.rows.find(
+      (row) => row.rowType === PROVIDERS_ROW_TYPE.ORGANIZATION,
+    );
+    expect(organizationRow).toBeDefined();
+    expect(organizationRow?.name).toBe("Root Organization");
+  });
+
   it("surfaces the real cadence (not a hardcoded label) from a configured schedule with no materialized scan yet", async () => {
     // Given — provider-1 has a WEEKLY schedule but the backend has not yet
     // created a Scan row (the gap between configuring and the first fire).

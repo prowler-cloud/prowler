@@ -383,19 +383,21 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /** Wait until the notice for a failed hierarchy fetch surfaces. */
   async waitForDegradedHierarchyNotice(): Promise<void> {
-    await this.waitForText(/Organization grouping is temporarily unavailable/);
+    await this.waitForText(/Organization grouping is incomplete/);
   }
 
   /** Whether the degraded-hierarchy notice is present. */
   hasDegradedHierarchyNotice(): boolean {
-    return this.containsText(
-      /Organization grouping is temporarily unavailable/,
-    );
+    return this.containsText(/Organization grouping is incomplete/);
   }
 
-  /** Whether the notice explains that providers fall back to a flat list. */
-  hasFlatListFallbackNotice(): boolean {
-    return this.containsText(/Providers are shown as a flat list/);
+  /**
+   * Whether the notice warns that providers may be ungrouped. Deliberately not
+   * "shown as a flat list": that only holds when the organizations call itself
+   * failed, not when just the nodes call did.
+   */
+  hasUngroupedProvidersNotice(): boolean {
+    return this.containsText(/Some providers may appear ungrouped/);
   }
 
   /** Open the row-actions dropdown for the organization named `name`. */

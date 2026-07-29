@@ -565,6 +565,11 @@ export async function loadProvidersAccountsViewData({
       ? HIERARCHY_STATUS.UNAVAILABLE
       : HIERARCHY_STATUS.AVAILABLE;
 
+  // Whatever was read is still rendered. The two failures degrade differently —
+  // no organizations means a flat list, missing nodes means organization rows
+  // without their OU/folder nesting — so the status stays single and the notice
+  // is worded for both, instead of dropping the organization rows (and with
+  // them the only entry point to renaming, re-crediting and deleting).
   const rows = buildProvidersTableRows({
     isCloud,
     organizations: orgs,

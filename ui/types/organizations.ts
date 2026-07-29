@@ -125,6 +125,16 @@ export function isOrgFlowType(
   return (ORG_FLOW_TYPES as readonly OrganizationType[]).includes(orgType);
 }
 
+/**
+ * Narrows an untrusted value (form data, wire payload) to an onboarding-capable
+ * type — `isOrgFlowType` narrows inside the type domain, this guards the
+ * boundary, the role `toNodeKind` plays for node kinds. `azure` is a real
+ * `OrganizationType` but has no onboarding flow, so it does not pass either.
+ */
+export function toOrgFlowType(orgType: unknown): OrgFlowType | undefined {
+  return ORG_FLOW_TYPES.find((flowType) => flowType === orgType);
+}
+
 // ─── Candidate Registration (shared wire shape) ───────────────────────────────
 
 export interface CandidateRegistration {
@@ -255,24 +265,57 @@ export interface GcpStaticSecret {
   refresh_token: string;
 }
 
+export interface AwsRoleSecretPayload {
+  secretType: typeof ORG_SECRET_TYPE.ROLE;
+  secret: AwsRoleSecret;
+}
+
+export interface GcpServiceAccountSecretPayload {
+  secretType: typeof ORG_SECRET_TYPE.SERVICE_ACCOUNT;
+  secret: GcpServiceAccountSecret;
+}
+
+export interface GcpStaticSecretPayload {
+  secretType: typeof ORG_SECRET_TYPE.STATIC;
+  secret: GcpStaticSecret;
+}
+
 export type OrgSecretPayload =
-  | { secretType: typeof ORG_SECRET_TYPE.ROLE; secret: AwsRoleSecret }
-  | {
-      secretType: typeof ORG_SECRET_TYPE.SERVICE_ACCOUNT;
-      secret: GcpServiceAccountSecret;
-    }
-  | { secretType: typeof ORG_SECRET_TYPE.STATIC; secret: GcpStaticSecret };
+  | AwsRoleSecretPayload
+  | GcpServiceAccountSecretPayload
+  | GcpStaticSecretPayload;
+
+/** A candidate the user chose to onboard, optionally renamed. */
+export interface ApplyAccountSelection {
+  id: string;
+  alias?: string;
+}
+
+/** A hierarchy node the AWS apply derives client-side. */
+export interface ApplyNodeSelection {
+  id: string;
+}
+
+/** GCP sends projects only; folder ancestors are derived server-side. */
+export interface ApplyProjectSelection {
+  project_id: string;
+  alias?: string;
+}
+
+export interface AwsApplyDiscoveryPayload {
+  orgType: typeof ORGANIZATION_TYPE.AWS;
+  accounts: ApplyAccountSelection[];
+  organizationalUnits: ApplyNodeSelection[];
+}
+
+export interface GcpApplyDiscoveryPayload {
+  orgType: typeof ORGANIZATION_TYPE.GCP;
+  projects: ApplyProjectSelection[];
+}
 
 export type ApplyDiscoveryPayload =
-  | {
-      orgType: typeof ORGANIZATION_TYPE.AWS;
-      accounts: Array<{ id: string; alias?: string }>;
-      organizationalUnits: Array<{ id: string }>;
-    }
-  | {
-      orgType: typeof ORGANIZATION_TYPE.GCP;
-      projects: Array<{ project_id: string; alias?: string }>;
-    };
+  | AwsApplyDiscoveryPayload
+  | GcpApplyDiscoveryPayload;
 
 // ─── JSON:API Resource Interfaces ─────────────────────────────────────────────
 
@@ -286,13 +329,62 @@ export interface OrganizationAttributes {
   updated_at?: string;
 }
 
+/** JSON:API resource identifier — the `{id, type}` every relationship points at. */
+interface OrganizationResourceRef<T extends string = string> {
+  id: string;
+  type: T;
+}
+
+/** To-many relationship envelope. */
 interface OrganizationRelationshipRef<T extends string = string> {
-  data: Array<{ id: string; type: T }>;
+  data: Array<OrganizationResourceRef<T>>;
+}
+
+/** To-many relationship the API annotates with a total. */
+interface CountedRelationshipRef<T extends string = string>
+  extends OrganizationRelationshipRef<T> {
+  meta: RelationshipCount;
+}
+
+interface RelationshipCount {
+  count: number;
+}
+
+/** To-one relationship envelope. */
+interface OrganizationToOneRef<T extends string = string> {
+  data: OrganizationResourceRef<T>;
+}
+
+/** To-one relationship that is explicitly null at the top of the hierarchy. */
+interface OrganizationNullableToOneRef<T extends string = string> {
+  data: OrganizationResourceRef<T> | null;
 }
 
 interface OrganizationRelationships {
   providers?: OrganizationRelationshipRef<"providers">;
   organization_nodes?: OrganizationRelationshipRef<"organization-nodes">;
+}
+
+interface CollectionPagination {
+  page?: number;
+  pages?: number;
+  count?: number;
+}
+
+/**
+ * Collection `meta`. One interface, not one per field: the list endpoints serve
+ * `version` and `pagination` in the same object, so splitting them would make
+ * each response type unable to describe half of its own payload.
+ */
+export interface CollectionMeta {
+  version?: string;
+  pagination?: CollectionPagination;
+}
+
+/** One page of a JSON:API collection, as the paginated read consumes it. */
+export interface CollectionPage<T> {
+  data?: T[];
+  meta?: CollectionMeta;
 }
 
 export interface OrganizationResource {
@@ -304,9 +396,7 @@ export interface OrganizationResource {
 
 export interface OrganizationListResponse {
   data: OrganizationResource[];
-  meta?: {
-    version?: string;
-  };
+  meta?: CollectionMeta;
 }
 
 export interface OrganizationNodeAttributes {
@@ -320,12 +410,8 @@ export interface OrganizationNodeAttributes {
 }
 
 export interface OrganizationNodeRelationships {
-  organization: {
-    data: { id: string; type: "organizations" };
-  };
-  parent?: {
-    data: { id: string; type: "organization-nodes" } | null;
-  };
+  organization: OrganizationToOneRef<"organizations">;
+  parent?: OrganizationNullableToOneRef<"organization-nodes">;
   providers?: OrganizationRelationshipRef<"providers">;
 }
 
@@ -338,9 +424,7 @@ export interface OrganizationNodeResource {
 
 export interface OrganizationNodeListResponse {
   data: OrganizationNodeResource[];
-  meta?: {
-    version?: string;
-  };
+  meta?: CollectionMeta;
 }
 
 /**
@@ -375,14 +459,8 @@ export interface ApplyResultAttributes {
 }
 
 export interface ApplyResultRelationships {
-  providers: {
-    data: Array<{ type: "providers"; id: string }>;
-    meta: { count: number };
-  };
-  organization_nodes: {
-    data: Array<{ type: "organization-nodes"; id: string }>;
-    meta: { count: number };
-  };
+  providers: CountedRelationshipRef<"providers">;
+  organization_nodes: CountedRelationshipRef<"organization-nodes">;
 }
 
 export interface ApplyResultResource {

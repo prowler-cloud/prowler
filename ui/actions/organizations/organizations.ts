@@ -7,11 +7,13 @@ import { handleApiError, handleApiResponse } from "@/lib/server-actions-helper";
 import {
   ApplyDiscoveryPayload,
   CollectionFetch,
+  CollectionPage,
   ORGANIZATION_TYPE,
   OrganizationNodeResource,
   OrganizationResource,
   OrganizationType,
   OrgSecretPayload,
+  toOrgFlowType,
 } from "@/types";
 
 const PATH_IDENTIFIER_PATTERN = /^[A-Za-z0-9_-]+$/;
@@ -74,14 +76,17 @@ async function fetchOptionalCollection<T>(
 
       const response = await fetch(pageUrl.toString(), { headers });
 
+      // Every response — including a failed one — goes through
+      // `handleApiResponse` first. It is the reporting point the rest of the
+      // organization actions share, so a degraded hierarchy leaves a trace:
+      // 5xx captures and rethrows into the catch below, 4xx captures and
+      // returns. Short-circuiting on `!response.ok` skipped it entirely.
+      const body = (await handleApiResponse(response)) as CollectionPage<T>;
+
       if (!response.ok) {
         return { data: [], error: true };
       }
 
-      const body = (await handleApiResponse(response)) as {
-        data?: T[];
-        meta?: { pagination?: { pages?: number } };
-      };
       collected.push(...(body.data ?? []));
 
       // A missing `pages` counts as "this was the only page"; reading it as
@@ -107,9 +112,17 @@ export const createOrganization = async (formData: FormData) => {
 
   const name = formData.get("name") as string;
   const externalId = formData.get("externalId") as string;
+
+  // Untrusted form value. Absent means AWS (the flow that predates the field),
+  // but an unrecognized one is rejected rather than coerced: creating an AWS
+  // organization for a type the caller named otherwise onboards the wrong thing.
+  const rawOrgType = formData.get("orgType");
   const orgType =
-    (formData.get("orgType") as OrganizationType | null) ??
-    ORGANIZATION_TYPE.AWS;
+    rawOrgType === null ? ORGANIZATION_TYPE.AWS : toOrgFlowType(rawOrgType);
+
+  if (!orgType) {
+    return { error: "Invalid organization type" };
+  }
 
   try {
     const response = await fetch(url.toString(), {

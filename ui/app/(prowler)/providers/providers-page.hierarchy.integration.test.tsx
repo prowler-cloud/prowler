@@ -81,7 +81,7 @@ describe("Providers page — degraded hierarchy view", () => {
     });
 
     await harness.waitForDegradedHierarchyNotice();
-    expect(harness.hasFlatListFallbackNotice()).toBe(true);
+    expect(harness.hasUngroupedProvidersNotice()).toBe(true);
 
     // Providers are still present despite grouping being unavailable, and no
     // organization group row survives the failed hierarchy fetch.
