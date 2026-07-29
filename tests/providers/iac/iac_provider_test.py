@@ -817,6 +817,24 @@ class TestIacProvider:
         assert temp_dir == "/tmp/fake-dir"
         assert branch_name == "master"
 
+    @mock.patch("prowler.providers.iac.iac_provider.porcelain.clone")
+    @mock.patch("tempfile.mkdtemp", return_value="/tmp/fake-dir")
+    def test_clone_repository_failure_exits(self, _mock_mkdtemp, mock_clone):
+        """A failed clone must exit instead of returning `None`.
+
+        `_clone_repository` is annotated `-> tuple[str, str]` and `__init__`
+        unpacks the result directly, so falling through the error handler
+        raises `TypeError: cannot unpack non-sequence NoneType` rather than the
+        clean exit the sibling handlers in this module perform.
+        """
+        mock_clone.side_effect = Exception("repository not found")
+        provider = IacProvider()
+
+        with pytest.raises(SystemExit) as exc_info:
+            provider._clone_repository("https://github.com/user/repo.git")
+
+        assert exc_info.value.code == 1
+
     def test_detect_branch_name_main(self):
         """Test detecting 'main' branch from .git/HEAD"""
         provider = IacProvider()

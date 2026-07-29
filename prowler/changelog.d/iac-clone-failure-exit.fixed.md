@@ -1,0 +1,1 @@
+IaC provider now exits cleanly when cloning the scanned repository fails, instead of returning `None` and raising `TypeError: cannot unpack non-sequence NoneType`, matching the other critical error handlers in the provider
