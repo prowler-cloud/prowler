@@ -117,15 +117,19 @@ def execute_query(
         backend = sink_module.get_backend_for_scan(scan)
 
         cypher = definition.cypher
-        # On migrated graphs every synced node carries a `_Provider_{uuid}`
-        # label, so inject it into the predefined query's node patterns. This
-        # gives the planner a selective label index to seed from instead of a
-        # global label scan (`:AWSRole` across every tenant), which on Neptune
-        # is the difference between a sub-second plan and a query that times
-        # out. The custom-query path already relies on this same injection.
-        # Deprecated (pre-cutover) graphs predate the label and isolate via the
-        # `_provider_id` property, so injecting there would match nothing - skip
-        # it and run the legacy catalog as-is.
+        # Every synced node carries a `_Provider_{uuid}` isolation label (the
+        # sync labels the whole provider subgraph). Injecting it into the
+        # predefined query's node patterns gives the planner a selective label
+        # index to seed from instead of a global label scan (`:AWSRole` across
+        # every tenant), which on Neptune is the difference between a sub-second
+        # plan and a query that times out. The custom-query path relies on this
+        # same injection.
+        #
+        # Restrict it to migrated scans: that catalog runs on the Neptune sink
+        # where the plan blowup happens, while the pre-cutover legacy catalog
+        # runs on the old sink and is dropped after the cutover, so leave it
+        # byte-for-byte unchanged. This only affects the query plan, not
+        # isolation - `_serialize_graph` already label-filters both catalogs.
         # TODO: drop the is_migrated guard after Neptune cutover
         if scan.is_migrated:
             cypher = inject_provider_label(cypher, provider_id)

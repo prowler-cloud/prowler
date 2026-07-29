@@ -202,8 +202,8 @@ def test_execute_query_does_not_inject_label_when_deprecated(
     attack_paths_query_definition_factory,
     sink_backend_stub,
 ):
-    # Deprecated (pre-cutover) graphs isolate via the `_provider_id` property,
-    # not the label, so the legacy cypher must run verbatim.
+    # The pre-cutover legacy catalog runs on the old sink and is removed after
+    # the Neptune cutover, so it must run verbatim (no injection).
     definition = attack_paths_query_definition_factory(
         id="aws-iam",
         name="IAM",
