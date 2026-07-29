@@ -185,6 +185,36 @@ describe("useProviderWizardController", () => {
     expect(state.mode).toBe(PROVIDER_WIZARD_MODE.UPDATE);
   });
 
+  it("updates the credentials docs link when AWS assume role is selected", async () => {
+    const onOpenChange = vi.fn();
+    const { result } = renderHook(() =>
+      useProviderWizardController({
+        open: true,
+        onOpenChange,
+        initialData: {
+          providerId: "provider-1",
+          providerType: "aws",
+          providerUid: "111111111111",
+          providerAlias: "production",
+          secretId: null,
+          mode: PROVIDER_WIZARD_MODE.ADD,
+        },
+      }),
+    );
+
+    await waitFor(() => {
+      expect(result.current.currentStep).toBe(PROVIDER_WIZARD_STEP.CREDENTIALS);
+    });
+
+    act(() => {
+      useProviderWizardStore.getState().setVia("role");
+    });
+
+    expect(result.current.docsLink).toBe(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
+  });
+
   it("switches into and out of organizations flow", () => {
     // Given
     const onOpenChange = vi.fn();

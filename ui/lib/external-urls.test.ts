@@ -136,6 +136,18 @@ describe("getProviderHelpText", () => {
     expect(link).toBe(AWS_AUTH_DOCS);
   });
 
+  it("points AWS assume role credentials to the exact setup section", () => {
+    const { link } = getProviderHelpText(
+      "aws",
+      PROVIDER_WIZARD_STEP.CREDENTIALS,
+      "role",
+    );
+
+    expect(link).toBe(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
+  });
+
   it("keeps the shortlink on the test connection step", () => {
     // Auth docs are only surfaced while the user is still supplying
     // credentials; after that the shortlink landing is the useful destination.

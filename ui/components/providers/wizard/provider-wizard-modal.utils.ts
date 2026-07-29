@@ -62,6 +62,9 @@ export function getProviderWizardDocsDestination(docsLink: string) {
 
   try {
     const parsed = new URL(docsLink);
+    const docsSectionLabelMap: Record<string, string> = {
+      "aws#assume-role-recommended": "AWS Assume Role",
+    };
     const pathSegments = parsed.pathname
       .split("/")
       .filter((segment) => segment.length > 0);
@@ -82,6 +85,12 @@ export function getProviderWizardDocsDestination(docsLink: string) {
       providersIndex >= 0 && providersIndex + 1 < pathSegments.length
         ? pathSegments[providersIndex + 1]
         : undefined;
+
+    if (providerSlugFromPath && parsed.hash) {
+      const sectionLabel =
+        docsSectionLabelMap[`${providerSlugFromPath}${parsed.hash}`];
+      if (sectionLabel) return sectionLabel;
+    }
 
     for (const candidate of [providerSlugFromPath, lastSegment]) {
       if (!candidate) continue;

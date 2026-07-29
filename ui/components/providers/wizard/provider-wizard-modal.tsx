@@ -113,7 +113,7 @@ export function ProviderWizardModal({
           <Button variant="link" size="link-sm" className="h-auto p-0" asChild>
             <a href={docsLink} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="size-3.5 shrink-0" />
-              <span>{`${docsDestination} documentation`}</span>
+              <span>{`${docsDestination} Documentation`}</span>
             </a>
           </Button>
         </div>

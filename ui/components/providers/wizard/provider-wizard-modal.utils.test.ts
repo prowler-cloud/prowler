@@ -74,6 +74,14 @@ describe("getProviderWizardDocsDestination", () => {
     expect(destination).toBe("AWS");
   });
 
+  it("returns a specific label for AWS assume role docs links", () => {
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+    );
+
+    expect(destination).toBe("AWS Assume Role");
+  });
+
   it("ignores a #authentication anchor when deriving the label", () => {
     // The credentials step falls back to a shortlink + anchor for providers
     // without a dedicated auth page (Kubernetes). The label shown in the

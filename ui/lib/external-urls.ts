@@ -108,6 +108,15 @@ const PROVIDER_AUTHENTICATION_DOCS_URL: Record<string, string> = {
   okta: "https://docs.prowler.com/user-guide/providers/okta/authentication",
 };
 
+const PROVIDER_CREDENTIALS_METHOD_DOCS_URL: Record<
+  string,
+  Record<string, string>
+> = {
+  aws: {
+    role: "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws#assume-role-recommended",
+  },
+};
+
 // Fallback anchor for providers without a dedicated authentication.mdx page
 // (currently only Kubernetes). The anchor is set explicitly on the provider's
 // getting-started page so it stays stable if the heading is reworded.
@@ -115,10 +124,20 @@ const CREDENTIALS_DOCS_ANCHOR = "#authentication";
 
 const PROVIDER_HELP_FALLBACK_URL = "https://goto.prowler.com/provider-help";
 
-const resolveDocsLink = (provider: string, step?: ProviderWizardStep) => {
+const resolveDocsLink = (
+  provider: string,
+  step?: ProviderWizardStep,
+  credentialsMethod?: string | null,
+) => {
   const shortlink = PROVIDER_DOCS_SHORTLINK[provider];
 
   if (step === PROVIDER_WIZARD_STEP.CREDENTIALS) {
+    if (credentialsMethod) {
+      const methodUrl =
+        PROVIDER_CREDENTIALS_METHOD_DOCS_URL[provider]?.[credentialsMethod];
+      if (methodUrl) return methodUrl;
+    }
+
     const authUrl = PROVIDER_AUTHENTICATION_DOCS_URL[provider];
     if (authUrl) return authUrl;
     // Providers without a dedicated auth page (Kubernetes today) deep-link
@@ -151,8 +170,9 @@ const PROVIDER_HELP_TEXT: Record<string, string> = {
 export const getProviderHelpText = (
   provider: string,
   step?: ProviderWizardStep,
+  credentialsMethod?: string | null,
 ) => {
-  const link = resolveDocsLink(provider, step);
+  const link = resolveDocsLink(provider, step, credentialsMethod);
 
   if (!link) {
     // Unknown provider: hand off to the generic help shortlink instead of
