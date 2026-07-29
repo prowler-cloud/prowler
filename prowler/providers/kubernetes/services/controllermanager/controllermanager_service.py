@@ -12,15 +12,15 @@ class ControllerManager(KubernetesService):
         self.controllermanager_pods = self._get_controllermanager_pods()
 
     def _get_controllermanager_pods(self):
+        controllermanager_pods = []
         try:
-            controllermanager_pods = []
             for pod in self.client.pods.values():
                 if pod.namespace == "kube-system" and pod.name.startswith(
                     "kube-controller-manager"
                 ):
                     controllermanager_pods.append(pod)
-            return controllermanager_pods
         except Exception as error:
             logger.error(
                 f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
             )
+        return controllermanager_pods
