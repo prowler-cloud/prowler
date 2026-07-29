@@ -846,8 +846,13 @@ def update_audit_metadata(
     try:
         audit_metadata.services_scanned = len(services_executed)
         audit_metadata.completed_checks = len(checks_executed)
+        # Providers that do not run checks (`iac`, `llm`, `image`,
+        # `alibabacloud` and `huaweicloud`) build their `Audit_Metadata` with
+        # `expected_checks=[]`, so guard the division.
         audit_metadata.audit_progress = (
             100 * len(checks_executed) / len(audit_metadata.expected_checks)
+            if audit_metadata.expected_checks
+            else 0
         )
 
         return audit_metadata
@@ -856,3 +861,6 @@ def update_audit_metadata(
         logger.error(
             f"{error.__class__.__name__}[{error.__traceback__.tb_lineno}]: {error}"
         )
+        # Callers assign the result to `provider.audit_metadata`, so return the
+        # metadata unchanged rather than replacing it with `None`.
+        return audit_metadata
