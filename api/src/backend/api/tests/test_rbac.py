@@ -666,6 +666,151 @@ class TestLimitedVisibility:
             limited_admin_user, tenants_fixture[0]
         )
 
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_provider_delete_out_of_scope_returns_404(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_delete_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("provider-detail", kwargs={"pk": hidden_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        hidden_provider.refresh_from_db()
+        assert hidden_provider.is_deleted is False
+        mock_delete_task.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.delete_provider_task.delay")
+    def test_provider_delete_in_scope_returns_202(
+        self,
+        mock_delete_task,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_delete_task.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.delete(
+            reverse("provider-detail", kwargs={"pk": aws_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_delete_task.assert_called_once_with(
+            provider_id=str(aws_provider.id), tenant_id=ANY
+        )
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_provider_connection_task.delay")
+    def test_provider_connection_out_of_scope_returns_404(
+        self,
+        mock_provider_connection,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_provider_connection.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("provider-connection", kwargs={"pk": hidden_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_provider_connection.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.check_provider_connection_task.delay")
+    def test_provider_connection_in_scope_returns_202(
+        self,
+        mock_provider_connection,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_provider_connection.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("provider-connection", kwargs={"pk": aws_provider.id})
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_provider_connection.assert_called_once_with(
+            provider_id=str(aws_provider.id), tenant_id=ANY
+        )
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily_out_of_scope_returns_404(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider_pair,
+        tasks_fixture,
+    ):
+        hidden_provider = aws_provider_pair[1]
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("schedule-daily"),
+            data={"provider_id": str(hidden_provider.id)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        mock_schedule_scan.assert_not_called()
+        mock_task_get.assert_not_called()
+
+    @patch("api.v1.views.Task.objects.get")
+    @patch("api.v1.views.schedule_provider_scan")
+    def test_schedule_daily_in_scope_returns_202(
+        self,
+        mock_schedule_scan,
+        mock_task_get,
+        authenticated_client_rbac_limited,
+        aws_provider,
+        tasks_fixture,
+    ):
+        prowler_task = tasks_fixture[0]
+        mock_schedule_scan.return_value.id = prowler_task.id
+        mock_task_get.return_value = prowler_task
+
+        response = authenticated_client_rbac_limited.post(
+            reverse("schedule-daily"),
+            data={"provider_id": str(aws_provider.id)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_202_ACCEPTED
+        mock_schedule_scan.assert_called_once_with(aws_provider)
+        mock_task_get.assert_called_once_with(id=prowler_task.id)
+
     def test_integrations(
         self, authenticated_client_rbac_limited, integrations_fixture
     ):

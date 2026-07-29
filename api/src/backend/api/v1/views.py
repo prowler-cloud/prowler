@@ -1864,7 +1864,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
     )
     @action(detail=True, methods=["post"], url_name="connection")
     def connection(self, request, pk=None):
-        get_object_or_404(Provider, pk=pk)
+        self.get_object()
         with transaction.atomic():
             task = check_provider_connection_task.delay(
                 provider_id=pk, tenant_id=self.request.tenant_id
@@ -1882,7 +1882,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
         )
 
     def destroy(self, request, *args, pk=None, **kwargs):
-        provider = get_object_or_404(Provider, pk=pk)
+        provider = self.get_object()
         provider.is_deleted = True
         provider.save()
         task_name = f"scan-perform-scheduled-{pk}"
@@ -6618,6 +6618,11 @@ class ScheduleViewSet(BaseRLSViewSet):
     def get_queryset(self):
         return super().get_queryset()
 
+    def get_provider_queryset(self):
+        if self.user_role.unlimited_visibility:
+            return Provider.objects.filter(tenant_id=self.request.tenant_id)
+        return get_providers(self.user_role)
+
     def get_serializer_class(self):
         if self.action == "daily":
             if hasattr(self, "response_serializer_class"):
@@ -6635,7 +6640,9 @@ class ScheduleViewSet(BaseRLSViewSet):
         serializer.is_valid(raise_exception=True)
         provider_id = serializer.validated_data["provider_id"]
 
-        provider_instance = get_object_or_404(Provider, pk=provider_id)
+        provider_instance = get_object_or_404(
+            self.get_provider_queryset(), pk=provider_id
+        )
         with transaction.atomic():
             task = schedule_provider_scan(provider_instance)
 
