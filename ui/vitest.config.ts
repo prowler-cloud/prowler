@@ -142,6 +142,7 @@ export default defineConfig(() => {
         "@radix-ui/react-toast",
         "@radix-ui/react-tooltip",
         "@radix-ui/react-slot",
+        "@radix-ui/react-use-controllable-state",
 
         // Graph
         "@xyflow/react",
@@ -153,6 +154,7 @@ export default defineConfig(() => {
         "zod",
         "zustand",
         "zustand/middleware",
+        "zustand/vanilla",
 
         // Styling helpers
         "lucide-react",
@@ -169,6 +171,7 @@ export default defineConfig(() => {
         "cmdk",
         "driver.js",
         "react-markdown",
+        "streamdown",
         "jwt-decode",
         "date-fns",
         "js-yaml",
