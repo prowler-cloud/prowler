@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { LighthousePageSuggestions } from "@/types/lighthouse-context";
+
 import { LIGHTHOUSE_CONTEXT_LIMIT } from "./constants";
 import {
   buildLighthousePageContext,
@@ -23,17 +25,7 @@ describe("resolveLighthousePage", () => {
 
     // Then
     expect(page.id).toBe(expectedPageId);
-    expect(page.suggestions).toHaveLength(4);
-    for (const suggestion of page.suggestions) {
-      expect(suggestion).toEqual(
-        expect.objectContaining({
-          label: expect.any(String),
-          prompt: expect.any(String),
-        }),
-      );
-      expect(suggestion.label).not.toBe("");
-      expect(suggestion.prompt).not.toBe("");
-    }
+    expectValidSuggestions(page.suggestions);
   });
 
   it("should create a labeled fallback for other application pages", () => {
@@ -43,17 +35,7 @@ describe("resolveLighthousePage", () => {
     // Then
     expect(page.id).toBe("other");
     expect(page.label).toBe("Alerts");
-    expect(page.suggestions).toHaveLength(4);
-    for (const suggestion of page.suggestions) {
-      expect(suggestion).toEqual(
-        expect.objectContaining({
-          label: expect.any(String),
-          prompt: expect.any(String),
-        }),
-      );
-      expect(suggestion.label).not.toBe("");
-      expect(suggestion.prompt).not.toBe("");
-    }
+    expectValidSuggestions(page.suggestions);
   });
 
   it("should resolve encoded and decoded dynamic paths to the same scope", () => {
@@ -76,6 +58,24 @@ describe("resolveLighthousePage", () => {
     );
   });
 });
+
+function expectValidSuggestions(suggestions: LighthousePageSuggestions) {
+  expect(suggestions).toHaveLength(4);
+  expect(new Set(suggestions.map(({ prompt }) => prompt)).size).toBe(
+    suggestions.length,
+  );
+
+  for (const suggestion of suggestions) {
+    expect(suggestion).toEqual(
+      expect.objectContaining({
+        label: expect.any(String),
+        prompt: expect.any(String),
+      }),
+    );
+    expect(suggestion.label.trim()).not.toBe("");
+    expect(suggestion.prompt.trim()).not.toBe("");
+  }
+}
 
 describe("buildLighthousePageContext", () => {
   it("should include only declared search parameters with semantic filter keys", () => {
