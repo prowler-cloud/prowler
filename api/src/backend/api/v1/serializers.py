@@ -124,6 +124,20 @@ class RLSSerializer(BaseModelSerializerV1):
         return super().create(validated_data)
 
 
+class ScopedProviderFieldMixin:
+    provider_field_name = "provider"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        provider_queryset = self.context.get("provider_queryset")
+        provider_field = self.fields.get(self.provider_field_name)
+        if provider_queryset is None or provider_field is None:
+            return
+
+        related_field = getattr(provider_field, "child_relation", provider_field)
+        related_field.queryset = provider_queryset
+
+
 class StateEnumSerializerField(serializers.ChoiceField):
     def __init__(self, **kwargs):
         kwargs["choices"] = StateChoices.choices
@@ -693,19 +707,16 @@ class MembershipIncludeSerializer(serializers.ModelSerializer):
 
 
 # Provider Groups
-class ProviderGroupSerializer(RLSSerializer, BaseWriteSerializer):
+class ProviderGroupSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
+    provider_field_name = "providers"
     providers = serializers.ResourceRelatedField(
         queryset=Provider.objects.all(), many=True, required=False
     )
     roles = serializers.ResourceRelatedField(
         queryset=Role.objects.all(), many=True, required=False
     )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        provider_queryset = self.context.get("provider_queryset")
-        if provider_queryset is not None:
-            self.fields["providers"].child_relation.queryset = provider_queryset
 
     def validate(self, attrs):
         if ProviderGroup.objects.filter(name=attrs.get("name")).exists():
@@ -1132,13 +1143,9 @@ class ScanIncludeSerializer(RLSSerializer):
     }
 
 
-class ScanCreateSerializer(RLSSerializer, BaseWriteSerializer):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        provider_queryset = self.context.get("provider_queryset")
-        if provider_queryset is not None:
-            self.fields["provider"].queryset = provider_queryset
-
+class ScanCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteSerializer
+):
     class Meta:
         model = Scan
         # TODO: add mutelist when implemented
@@ -2003,14 +2010,10 @@ class ProviderSecretSerializer(RLSSerializer):
         ]
 
 
-class ProviderSecretCreateSerializer(RLSSerializer, BaseWriteProviderSecretSerializer):
+class ProviderSecretCreateSerializer(
+    ScopedProviderFieldMixin, RLSSerializer, BaseWriteProviderSecretSerializer
+):
     secret = ProviderSecretField(write_only=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        provider_queryset = self.context.get("provider_queryset")
-        if provider_queryset is not None:
-            self.fields["provider"].queryset = provider_queryset
 
     class Meta:
         model = ProviderSecret

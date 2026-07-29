@@ -1226,10 +1226,18 @@ class TestLimitedVisibility:
 
         response = authenticated_client_rbac_limited.post(
             reverse("schedule-daily"),
-            data={"provider_id": str(hidden_provider.id)},
-            format="json",
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "daily-schedules",
+                        "attributes": {"provider_id": str(hidden_provider.id)},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
         )
 
+        assert response.wsgi_request.content_type == "application/vnd.api+json"
         assert response.status_code == status.HTTP_404_NOT_FOUND
         mock_schedule_scan.assert_not_called()
         mock_task_get.assert_not_called()
@@ -1250,10 +1258,18 @@ class TestLimitedVisibility:
 
         response = authenticated_client_rbac_limited.post(
             reverse("schedule-daily"),
-            data={"provider_id": str(aws_provider.id)},
-            format="json",
+            data=json.dumps(
+                {
+                    "data": {
+                        "type": "daily-schedules",
+                        "attributes": {"provider_id": str(aws_provider.id)},
+                    }
+                }
+            ),
+            content_type="application/vnd.api+json",
         )
 
+        assert response.wsgi_request.content_type == "application/vnd.api+json"
         assert response.status_code == status.HTTP_202_ACCEPTED
         mock_schedule_scan.assert_called_once_with(aws_provider)
         mock_task_get.assert_called_once_with(id=prowler_task.id)

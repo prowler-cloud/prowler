@@ -146,6 +146,7 @@ from api.v1.mixins import (
     JsonApiFilterMixin,
     PaginateByPkMixin,
     ProviderFilterParamsMixin,
+    ProviderVisibilityMixin,
     TaskManagementMixin,
 )
 from api.v1.serializers import (
@@ -1632,7 +1633,7 @@ class TenantMembersViewSet(BaseTenantViewset):
     ),
     update=extend_schema(exclude=True),
 )
-class ProviderGroupViewSet(BaseRLSViewSet):
+class ProviderGroupViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupSerializer
     filterset_class = ProviderGroupFilter
@@ -1652,11 +1653,6 @@ class ProviderGroupViewSet(BaseRLSViewSet):
             # Require permission for non-GET requests
             self.required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def get_provider_queryset(self):
-        if self.user_role.unlimited_visibility:
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-        return get_providers(self.user_role)
-
     def get_queryset(self):
         if self.user_role.unlimited_visibility:
             queryset = ProviderGroup.objects.filter(tenant_id=self.request.tenant_id)
@@ -1665,11 +1661,6 @@ class ProviderGroupViewSet(BaseRLSViewSet):
                 tenant_id=self.request.tenant_id
             )
         return queryset.prefetch_related("providers", "roles")
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["provider_queryset"] = self.get_provider_queryset()
-        return context
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -1710,7 +1701,9 @@ class ProviderGroupViewSet(BaseRLSViewSet):
         },
     ),
 )
-class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
+class ProviderGroupProvidersRelationshipView(
+    ProviderVisibilityMixin, RelationshipView, BaseRLSViewSet
+):
     queryset = ProviderGroup.objects.all()
     serializer_class = ProviderGroupMembershipSerializer
     resource_name = "providers"
@@ -1718,11 +1711,6 @@ class ProviderGroupProvidersRelationshipView(RelationshipView, BaseRLSViewSet):
     schema = RelationshipViewSchema()
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
-
-    def get_provider_queryset(self):
-        if self.user_role.unlimited_visibility:
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-        return get_providers(self.user_role)
 
     def get_queryset(self):
         if self.user_role.unlimited_visibility:
@@ -2125,7 +2113,7 @@ class ProviderViewSet(DisablePaginationMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ScanViewSet(BaseRLSViewSet):
+class ScanViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = Scan.objects.all()
     serializer_class = ScanSerializer
     http_method_names = ["get", "post", "patch"]
@@ -2153,19 +2141,9 @@ class ScanViewSet(BaseRLSViewSet):
             # Require permission for non-GET requests
             self.required_permissions = [Permissions.MANAGE_SCANS]
 
-    def get_provider_queryset(self):
-        if self.user_role.unlimited_visibility:
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-        return get_providers(self.user_role)
-
     def get_queryset(self):
         queryset = Scan.objects.filter(provider__in=self.get_provider_queryset())
         return queryset.select_related("provider", "task")
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["provider_queryset"] = self.get_provider_queryset()
-        return context
 
     def get_serializer_class(self):
         if self.action == "partial_update":
@@ -4337,7 +4315,7 @@ class FindingViewSet(PaginateByPkMixin, BaseRLSViewSet):
 )
 @method_decorator(CACHE_DECORATOR, name="list")
 @method_decorator(CACHE_DECORATOR, name="retrieve")
-class ProviderSecretViewSet(BaseRLSViewSet):
+class ProviderSecretViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     queryset = ProviderSecret.objects.all()
     serializer_class = ProviderSecretSerializer
     filterset_class = ProviderSecretFilter
@@ -4352,18 +4330,8 @@ class ProviderSecretViewSet(BaseRLSViewSet):
     # RBAC required permissions
     required_permissions = [Permissions.MANAGE_PROVIDERS]
 
-    def get_provider_queryset(self):
-        if self.user_role.unlimited_visibility:
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-        return get_providers(self.user_role)
-
     def get_queryset(self):
         return ProviderSecret.objects.filter(provider__in=self.get_provider_queryset())
-
-    def get_serializer_context(self):
-        context = super().get_serializer_context()
-        context["provider_queryset"] = self.get_provider_queryset()
-        return context
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -6644,7 +6612,7 @@ class OverviewViewSet(ProviderFilterParamsMixin, BaseRLSViewSet):
         responses={202: OpenApiResponse(response=TaskSerializer)},
     )
 )
-class ScheduleViewSet(BaseRLSViewSet):
+class ScheduleViewSet(ProviderVisibilityMixin, BaseRLSViewSet):
     # TODO: change to Schedule when implemented
     queryset = Task.objects.none()
     http_method_names = ["post"]
@@ -6653,11 +6621,6 @@ class ScheduleViewSet(BaseRLSViewSet):
 
     def get_queryset(self):
         return super().get_queryset()
-
-    def get_provider_queryset(self):
-        if self.user_role.unlimited_visibility:
-            return Provider.objects.filter(tenant_id=self.request.tenant_id)
-        return get_providers(self.user_role)
 
     def get_serializer_class(self):
         if self.action == "daily":
