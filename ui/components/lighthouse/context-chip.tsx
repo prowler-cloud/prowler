@@ -159,6 +159,11 @@ function getContextItemDescription(
         id: `${item.kind}:${item.id}`,
         text: `Provider: ${item.providerUid ?? item.providerId ?? item.id}`,
       };
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return {
+        id: `${item.kind}:${item.id}`,
+        text: `Alert rule: ${item.label}`,
+      };
     default: {
       const exhaustiveItem: never = item;
       return exhaustiveItem;

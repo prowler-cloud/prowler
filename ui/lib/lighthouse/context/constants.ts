@@ -6,6 +6,7 @@ export const LIGHTHOUSE_CONTEXT_KIND = {
   ATTACK_PATH: "attack_path",
   SCAN: "scan",
   PROVIDER: "provider",
+  ALERT: "alert",
 } as const;
 
 export const LIGHTHOUSE_CONTEXT_SOURCE = {
@@ -52,5 +53,9 @@ export const LIGHTHOUSE_PAGE_ID = {
   ATTACK_PATHS: "attack-paths",
   SCANS: "scans",
   PROVIDERS: "providers",
+  ALERTS: "alerts",
+  SERVICES: "services",
+  WORKLOADS: "workloads",
+  MUTELIST: "mutelist",
   OTHER: "other",
 } as const;

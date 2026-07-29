@@ -8,6 +8,7 @@ import {
   LIGHTHOUSE_CONTEXT_KIND,
   LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
+  type LighthouseAlertContextItem,
   type LighthouseAttackPathContextItem,
   type LighthouseAttackPathParameter,
   type LighthouseComplianceContextItem,
@@ -23,6 +24,7 @@ import {
   getLighthouseScopeKey,
 } from "./pages";
 
+const ALERTS_SCOPE_KEY = getLighthouseScopeKey("/alerts");
 const FINDINGS_SCOPE_KEY = getLighthouseScopeKey("/findings");
 const RESOURCES_SCOPE_KEY = getLighthouseScopeKey("/resources");
 const SCANS_SCOPE_KEY = getLighthouseScopeKey("/scans");
@@ -34,6 +36,13 @@ interface FindingGroupContextInput {
   checkTitle: string;
   severity: string;
   status: string;
+}
+
+interface FocusedAlertContextInput {
+  id: string;
+  name?: string;
+  trigger?: string;
+  enabled?: boolean;
 }
 
 interface FindingStatusSummaryContextInput {
@@ -150,6 +159,38 @@ interface ServiceSummaryContextInput {
   service: string;
   failedFindingsCount: number;
   total?: number;
+}
+
+export function buildAlertSummaryContext(
+  total: number,
+  enabledCount?: number,
+): LighthouseAlertContextItem {
+  const safeTotal = toSafeCount(total);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.ALERT,
+    id: "summary",
+    source: LIGHTHOUSE_CONTEXT_SOURCE.AUTOMATIC,
+    scopeKey: ALERTS_SCOPE_KEY,
+    label: `${safeTotal} alert rules`,
+    total: safeTotal,
+    enabledCount: optionalSafeCount(enabledCount),
+  };
+}
+
+export function buildFocusedAlertContext(
+  input: FocusedAlertContextInput,
+): LighthouseAlertContextItem {
+  const safeId = toBoundedString(input.id);
+  return {
+    kind: LIGHTHOUSE_CONTEXT_KIND.ALERT,
+    id: safeId,
+    source: LIGHTHOUSE_CONTEXT_SOURCE.FOCUSED,
+    scopeKey: ALERTS_SCOPE_KEY,
+    label: toBoundedString(input.name || "Edited alert rule"),
+    alertId: safeId,
+    trigger: optionalBoundedString(input.trigger),
+    enabled: input.enabled,
+  };
 }
 
 export function buildFindingSummaryContext(

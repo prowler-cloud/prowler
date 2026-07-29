@@ -173,6 +173,15 @@ function toApiContextItem(
         provider_type: item.providerType,
         total: item.total,
       });
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return compact({
+        ...base,
+        alert_id: item.alertId,
+        trigger: item.trigger,
+        enabled: item.enabled,
+        total: item.total,
+        enabled_count: item.enabledCount,
+      });
     default: {
       const exhaustiveItem: never = item;
       return exhaustiveItem;
@@ -272,6 +281,15 @@ function fromApiContextItem(value: unknown): unknown | undefined {
         providerUid: value.provider_uid,
         providerType: value.provider_type,
         total: value.total,
+      });
+    case LIGHTHOUSE_CONTEXT_KIND.ALERT:
+      return compact({
+        ...base,
+        alertId: value.alert_id,
+        trigger: value.trigger,
+        enabled: value.enabled,
+        total: value.total,
+        enabledCount: value.enabled_count,
       });
     default:
       return undefined;

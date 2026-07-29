@@ -170,6 +170,16 @@ export const lighthouseProviderContextItemSchema =
     total: boundedCountSchema.optional(),
   });
 
+export const lighthouseAlertContextItemSchema =
+  lighthouseContextItemBaseSchema.extend({
+    kind: z.literal(LIGHTHOUSE_CONTEXT_KIND.ALERT),
+    alertId: boundedStringSchema.optional(),
+    trigger: boundedStringSchema.optional(),
+    enabled: z.boolean().optional(),
+    total: boundedCountSchema.optional(),
+    enabledCount: boundedCountSchema.optional(),
+  });
+
 export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
   lighthousePageContextItemSchema,
   lighthouseFindingContextItemSchema,
@@ -178,6 +188,7 @@ export const lighthouseContextItemSchema = z.discriminatedUnion("kind", [
   lighthouseAttackPathContextItemSchema,
   lighthouseScanContextItemSchema,
   lighthouseProviderContextItemSchema,
+  lighthouseAlertContextItemSchema,
 ]);
 
 export const lighthouseContextEnvelopeSchema = z.object({

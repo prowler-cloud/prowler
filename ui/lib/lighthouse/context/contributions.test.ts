@@ -4,6 +4,7 @@ import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
 
 import { LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE } from "./constants";
 import {
+  buildAlertSummaryContext,
   buildAttackPathContext,
   buildComplianceContext,
   buildFilteredProviderContext,
@@ -12,6 +13,7 @@ import {
   buildFindingSeveritySummaryContext,
   buildFindingStatusSummaryContext,
   buildFindingSummaryContext,
+  buildFocusedAlertContext,
   buildFocusedFindingContext,
   buildFocusedResourceContext,
   buildProviderContext,
@@ -241,6 +243,38 @@ describe("Lighthouse page contributions", () => {
       worstSection: "1.2 Attack Surface",
       worstSectionScore: 38.6,
       totals: { passed: 120, failed: 40, total: 160 },
+    });
+  });
+
+  it("builds a bounded alert rules summary", () => {
+    expect(buildAlertSummaryContext(12, 9)).toEqual({
+      kind: "alert",
+      id: "summary",
+      source: "automatic",
+      scopeKey: "alerts:/alerts",
+      label: "12 alert rules",
+      total: 12,
+      enabledCount: 9,
+    });
+  });
+
+  it("builds a focused snapshot for the alert rule being edited", () => {
+    expect(
+      buildFocusedAlertContext({
+        id: "alert-1",
+        name: "Critical S3 findings",
+        trigger: "new_failing_findings",
+        enabled: true,
+      }),
+    ).toEqual({
+      kind: "alert",
+      id: "alert-1",
+      source: "focused",
+      scopeKey: "alerts:/alerts",
+      label: "Critical S3 findings",
+      alertId: "alert-1",
+      trigger: "new_failing_findings",
+      enabled: true,
     });
   });
 
