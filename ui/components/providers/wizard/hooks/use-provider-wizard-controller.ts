@@ -252,7 +252,8 @@ export function useProviderWizardController({
 
   const isProviderFlow = wizardVariant === WIZARD_VARIANT.PROVIDER;
   const docsLink = isProviderFlow
-    ? getProviderHelpText(providerTypeHint ?? providerType ?? "").link
+    ? getProviderHelpText(providerTypeHint ?? providerType ?? "", currentStep)
+        .link
     : DOCS_URLS.AWS_ORGANIZATIONS;
   const resolvedFooterConfig: WizardFooterConfig = footerConfig;
   const modalTitle = getProviderWizardModalTitle(mode);

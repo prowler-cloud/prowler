@@ -61,6 +61,58 @@ describe("getProviderWizardDocsDestination", () => {
     expect(destination).toBe("AWS");
   });
 
+  it("returns a compact provider label for deep-linked getting-started URLs", () => {
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/providers/aws/getting-started-aws",
+    );
+
+    expect(destination).toBe("AWS");
+  });
+
+  it("ignores a #authentication anchor when deriving the label", () => {
+    // The credentials step falls back to a shortlink + anchor for providers
+    // without a dedicated auth page (Kubernetes). The label shown in the
+    // modal header must stay the provider name, not shift with the anchor.
+    const destination = getProviderWizardDocsDestination(
+      "https://goto.prowler.com/provider-k8s#authentication",
+    );
+
+    expect(destination).toBe("Kubernetes");
+  });
+
+  it("derives the provider label from the dedicated authentication docs URL", () => {
+    // On the credentials step providers with a standalone authentication.mdx
+    // (all except Kubernetes) point to `/providers/<slug>/authentication`.
+    // The label must come from the `<slug>` segment, not from the trailing
+    // "authentication" page name.
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/providers/aws/authentication",
+    );
+
+    expect(destination).toBe("AWS");
+  });
+
+  it("maps the OCI docs slug to the Oracle Cloud label", () => {
+    // The provider is called `oraclecloud` in the wizard but the docs path
+    // uses the `oci` slug, so the parser must know both refer to the same
+    // provider.
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/providers/oci/authentication",
+    );
+
+    expect(destination).toBe("Oracle Cloud");
+  });
+
+  it("maps the microsoft365 docs slug to the Microsoft 365 label", () => {
+    // Same shape: the wizard's `m365` maps to the `microsoft365` folder in
+    // docs, so the parser must recognise the folder slug as the provider.
+    const destination = getProviderWizardDocsDestination(
+      "https://docs.prowler.com/user-guide/providers/microsoft365/authentication",
+    );
+
+    expect(destination).toBe("Microsoft 365");
+  });
+
   it("returns a compact destination label for long docs links", () => {
     const destination = getProviderWizardDocsDestination(
       "https://docs.prowler.com/user-guide/tutorials/prowler-cloud-aws-organizations",
