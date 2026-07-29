@@ -26,7 +26,9 @@ import { useOrgSetupStore } from "@/store/organizations/store";
 import type { OrgSetupPhase } from "@/types/organizations";
 import { ORG_SETUP_PHASE, ORGANIZATION_TYPE } from "@/types/organizations";
 
+import { DiscoveryTimeoutNotice } from "./discovery-timeout-notice";
 import { useOrgSetupSubmission } from "./hooks/use-org-setup-submission";
+import { SecretReplaceWarningModal } from "./secret-replace-warning-modal";
 
 const orgSetupSchema = z.object({
   organizationName: z.string().trim().optional(),
@@ -159,14 +161,24 @@ export function OrgSetupForm({
         })
       : null;
 
-  const { apiError, setApiError, submitOrganizationSetup } =
-    useOrgSetupSubmission({
-      stackSetExternalId,
-      onNext,
-      setFieldError: (field, message) => {
-        setError(field, { message });
-      },
-    });
+  const {
+    apiError,
+    setApiError,
+    submitOrganizationSetup,
+    replaceSecretWarning,
+    confirmSecretReplace,
+    cancelSecretReplace,
+    discoveryTimedOut,
+    discoveryFailed,
+    keepWaitingForDiscovery,
+    retryDiscovery,
+  } = useOrgSetupSubmission({
+    stackSetExternalId,
+    onNext,
+    setFieldError: (field, message) => {
+      setError(field as keyof OrgSetupFormData, { message });
+    },
+  });
 
   useEffect(() => {
     onPhaseChange(setupPhase);
@@ -282,6 +294,11 @@ export function OrgSetupForm({
 
   return (
     <Form {...form}>
+      <SecretReplaceWarningModal
+        warning={replaceSecretWarning}
+        onConfirm={confirmSecretReplace}
+        onCancel={cancelSecretReplace}
+      />
       <form
         id={formId}
         onSubmit={handleFormSubmit}
@@ -330,6 +347,29 @@ export function OrgSetupForm({
             </AlertDescription>
           </Alert>
         )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryTimedOut &&
+          !isSubmitting && (
+            <DiscoveryTimeoutNotice
+              onKeepWaiting={() => void keepWaitingForDiscovery()}
+              onRetry={() => void retryDiscovery()}
+            />
+          )}
+
+        {setupPhase === ORG_SETUP_PHASE.ACCESS &&
+          discoveryFailed &&
+          !isSubmitting && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => void retryDiscovery()}
+            >
+              Retry discovery
+            </Button>
+          )}
 
         {setupPhase === ORG_SETUP_PHASE.DETAILS && (
           <div className="flex flex-col gap-4">

@@ -2,6 +2,7 @@
 
 import { ExternalLink, Info } from "lucide-react";
 
+import { GcpOrgSetupForm } from "@/components/providers/organizations/gcp-org-setup-form";
 import { OrgAccountSelection } from "@/components/providers/organizations/org-account-selection";
 import { OrgLaunchScan } from "@/components/providers/organizations/org-launch-scan";
 import { OrgSetupForm } from "@/components/providers/organizations/org-setup-form";
@@ -11,7 +12,11 @@ import { Modal } from "@/components/shadcn/modal";
 import { useScanScheduleCapability } from "@/hooks/use-scan-schedule-capability";
 import { useScrollHint } from "@/hooks/use-scroll-hint";
 import { advanceActiveTour, endActiveTour } from "@/lib/tours/use-driver-tour";
-import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
+import {
+  ORG_SETUP_PHASE,
+  ORG_WIZARD_STEP,
+  ORGANIZATION_TYPE,
+} from "@/types/organizations";
 import {
   PROVIDER_WIZARD_MODE,
   PROVIDER_WIZARD_STEP,
@@ -69,6 +74,7 @@ export function ProviderWizardModal({
     mode,
     modalTitle,
     openOrganizationsFlow,
+    organizationType,
     orgCurrentStep,
     orgSetupPhase,
     resolvedFooterConfig,
@@ -212,7 +218,34 @@ export function ProviderWizardModal({
                   )}
 
                 {!isProviderFlow &&
-                  orgCurrentStep === ORG_WIZARD_STEP.SETUP && (
+                  orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
+                  organizationType === ORGANIZATION_TYPE.GCP && (
+                    <GcpOrgSetupForm
+                      onBack={
+                        isOrgDirectEntry ? handleClose : backToProviderFlow
+                      }
+                      onClose={handleClose}
+                      onNext={() => {
+                        setOrgCurrentStep(ORG_WIZARD_STEP.VALIDATE);
+                      }}
+                      onFooterChange={setFooterConfig}
+                      onPhaseChange={setOrgSetupPhase}
+                      initialPhase={orgSetupPhase}
+                      initialValues={
+                        orgInitialData
+                          ? {
+                              organizationName: orgInitialData.organizationName,
+                              gcpOrgId: orgInitialData.externalId,
+                            }
+                          : undefined
+                      }
+                      intent={orgInitialData?.intent}
+                    />
+                  )}
+
+                {!isProviderFlow &&
+                  orgCurrentStep === ORG_WIZARD_STEP.SETUP &&
+                  organizationType !== ORGANIZATION_TYPE.GCP && (
                     <OrgSetupForm
                       onBack={
                         isOrgDirectEntry ? handleClose : backToProviderFlow

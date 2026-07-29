@@ -16,7 +16,6 @@ import { useState } from "react";
 import { updateOrganizationName } from "@/actions/organizations/organizations";
 import { updateProvider } from "@/actions/providers";
 import { getSchedule } from "@/actions/schedules";
-import { hasOrgSetupStrategy } from "@/components/providers/organizations/hooks/org-setup-strategy";
 import {
   ORG_WIZARD_INTENT,
   OrgWizardInitialData,
@@ -40,6 +39,7 @@ import { testProviderConnection } from "@/lib/provider-helpers";
 import { getScanScheduleCapability } from "@/lib/schedules";
 import { isCloud } from "@/lib/shared/env";
 import {
+  isOrgFlowType,
   ORG_SETUP_PHASE,
   ORG_WIZARD_STEP,
   OrgFlowType,
@@ -176,9 +176,9 @@ function OrgGroupDropdownActions({
   const nodeLabel = getNodeLabel(rowData.orgType, rowData.kind);
   const entityLabel = isOrgKind ? "organization" : nodeLabel.toLowerCase();
   const nameSourceLabel = getNameSourceLabel(rowData.orgType);
-  // Credential updates re-enter the organization wizard, so this needs a
-  // *registered* setup strategy.
-  const orgFlowType: OrgFlowType | null = hasOrgSetupStrategy(rowData.orgType)
+  // Credential updates re-enter the organization wizard, so this needs an
+  // organization type with an onboarding flow.
+  const orgFlowType: OrgFlowType | null = isOrgFlowType(rowData.orgType)
     ? rowData.orgType
     : null;
 
@@ -221,7 +221,13 @@ function OrgGroupDropdownActions({
         open={isDeleteOrgOpen}
         onOpenChange={setIsDeleteOrgOpen}
         title="Are you absolutely sure?"
-        description={`This action cannot be undone. This will permanently delete this ${entityLabel} and all associated data.`}
+        description={`This action cannot be undone. This will permanently delete this ${entityLabel}${
+          rowData.providerCount > 0
+            ? ` and cascade to its ${rowData.providerCount} ${
+                rowData.providerCount === 1 ? "provider" : "providers"
+              }`
+            : ""
+        }.`}
       >
         <DeleteOrganizationForm
           id={rowData.id}
@@ -229,6 +235,7 @@ function OrgGroupDropdownActions({
           variant={rowData.groupKind}
           orgType={rowData.orgType}
           kind={rowData.kind}
+          providerCount={rowData.providerCount}
           setIsOpen={setIsDeleteOrgOpen}
         />
       </Modal>

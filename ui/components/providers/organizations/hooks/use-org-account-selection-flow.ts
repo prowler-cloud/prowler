@@ -16,6 +16,7 @@ import { useOrgSetupStore } from "@/store/organizations/store";
 import {
   CONNECTION_TEST_STATUS,
   ConnectionTestStatus,
+  PROVIDER_SECRET_STATE,
 } from "@/types/organizations";
 import { TREE_ITEM_STATUS, TreeDataItem } from "@/types/tree";
 
@@ -201,6 +202,12 @@ export function useOrgAccountSelectionFlow({
   const [isApplying, setIsApplying] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
   const [applyError, setApplyError] = useState<string | null>(null);
+  // Pre-apply credential-replacement warning: apply overwrites the credentials
+  // of already-onboarded providers whose registration is `will_replace`.
+  const [replaceWarning, setReplaceWarning] = useState<{
+    names: string[];
+  } | null>(null);
+  const replaceConfirmedRef = useRef(false);
   const [candidateToProviderMap, setCandidateToProviderMap] = useState<
     Map<string, string>
   >(new Map());
@@ -225,6 +232,17 @@ export function useOrgAccountSelectionFlow({
   const hasConnectionErrors = Object.values(connectionResults).some(
     (status) => status === CONNECTION_TEST_STATUS.ERROR,
   );
+  // Selected candidates whose apply would overwrite an existing provider's
+  // credential (registration `will_replace`).
+  const willReplaceSelectedNames = sanitizedSelectedCandidateIds
+    .map((id) => candidateLookup.get(id))
+    .filter(
+      (candidate) =>
+        candidate?.registration?.provider_secret_state ===
+        PROVIDER_SECRET_STATE.WILL_REPLACE,
+    )
+    .map((candidate) => candidate?.label || candidate?.uid || "")
+    .filter((name) => name.length > 0);
   const launchableProviderIds = getLaunchableProviderIds(
     createdProviderIds,
     connectionResults,
@@ -435,6 +453,12 @@ export function useOrgAccountSelectionFlow({
       lastAppliedSelectionKeyRef.current !== selectedCandidateKey;
 
     if (shouldApplySelection) {
+      // Warn before an apply that would overwrite existing provider
+      // credentials, unless the user already confirmed this selection.
+      if (willReplaceSelectedNames.length > 0 && !replaceConfirmedRef.current) {
+        setReplaceWarning({ names: willReplaceSelectedNames });
+        return;
+      }
       hasAppliedRef.current = true;
       void handleApplyAndTest();
       return;
@@ -520,12 +544,24 @@ export function useOrgAccountSelectionFlow({
     if (nextSelectedCandidateKey !== selectedCandidateKey) {
       hasAppliedRef.current = false;
       lastAppliedSelectionKeyRef.current = "";
+      replaceConfirmedRef.current = false;
       setApplyError(null);
       setCandidateToProviderMap(new Map());
       clearValidationState();
     }
 
     setSelectedCandidateIds(filteredIds);
+  };
+
+  const confirmReplaceAndApply = () => {
+    replaceConfirmedRef.current = true;
+    setReplaceWarning(null);
+    startTestingActionRef.current();
+  };
+
+  const cancelReplace = () => {
+    setReplaceWarning(null);
+    setIsTestingView(false);
   };
 
   return {
@@ -546,5 +582,8 @@ export function useOrgAccountSelectionFlow({
     showHeaderHelperText,
     totalCandidates,
     treeDataWithConnectionState,
+    replaceWarning,
+    confirmReplaceAndApply,
+    cancelReplace,
   };
 }

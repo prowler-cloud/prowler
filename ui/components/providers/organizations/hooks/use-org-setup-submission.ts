@@ -16,8 +16,8 @@ import { DISCOVERY_STATUS } from "@/types/organizations";
 
 import { extractErrorMessage } from "./error-utils";
 import {
-  getOrgSetupStrategy,
-  OrgSetupStrategy,
+  bindOrgSetupStrategy,
+  BoundOrgSetupStrategy,
   OrgSetupSubmissionData,
 } from "./org-setup-strategy";
 
@@ -54,15 +54,34 @@ function sleepWithAbort(ms: number, signal: AbortSignal): Promise<void> {
 interface UseOrgSetupSubmissionProps {
   stackSetExternalId: string;
   onNext: () => void;
-  setFieldError: (
-    field: "awsOrgId" | "organizationName",
-    message: string,
-  ) => void;
+  // Field key is org-type-specific (`awsOrgId`/`gcpOrgId`, secret fields for
+  // GCP), resolved by the active strategy; the form casts to its own field path.
+  setFieldError: (field: string, message: string) => void;
 }
 
 interface ServerErrorResult {
   error?: string;
   errors?: Array<{ detail: string; source?: { pointer: string } }>;
+}
+
+type PollOutcome =
+  | { kind: "resolved"; result: unknown }
+  | { kind: "failed" } // apiError already set
+  | { kind: "cancelled" }
+  | { kind: "timeout" };
+
+interface SubmitOptions {
+  /** Skip the existing-secret replacement confirmation (user already agreed). */
+  confirmReplace?: boolean;
+}
+
+function getOrganizationProviderCount(organization: unknown): number {
+  const providers = (
+    organization as {
+      relationships?: { providers?: { data?: unknown[] } };
+    } | null
+  )?.relationships?.providers?.data;
+  return Array.isArray(providers) ? providers.length : 0;
 }
 
 export function useOrgSetupSubmission({
@@ -71,7 +90,27 @@ export function useOrgSetupSubmission({
   setFieldError,
 }: UseOrgSetupSubmissionProps) {
   const [apiError, setApiError] = useState<string | null>(null);
+  // Set when submission finds an existing organization secret that a
+  // replacement would overwrite; the form confirms before proceeding.
+  const [replaceSecretWarning, setReplaceSecretWarning] = useState<{
+    providerCount: number;
+  } | null>(null);
+  // Set when discovery polling exhausts its client-side budget while the worker
+  // is still running; the form offers *keep waiting* (resume) vs *retry* (new).
+  const [discoveryTimedOut, setDiscoveryTimedOut] = useState(false);
+  // Set when discovery completes with a failed status; the sanitized error is in
+  // apiError and the form offers a retry (a fresh discovery).
+  const [discoveryFailed, setDiscoveryFailed] = useState(false);
   const isMountedRef = useRef(true);
+  const pendingSubmitDataRef = useRef<OrgSetupSubmissionData | null>(null);
+  // Enough context to resume polling the same discovery (keep waiting) or
+  // trigger a fresh one (retry) after a client-side timeout. The strategy
+  // carries its submission data, so resuming cannot re-pair the two.
+  const resumeContextRef = useRef<{
+    orgId: string;
+    discoveryId: string;
+    strategy: BoundOrgSetupStrategy;
+  } | null>(null);
   const discoveryAbortControllerRef = useRef<AbortController | null>(null);
   const {
     setOrganization,
@@ -90,7 +129,11 @@ export function useOrgSetupSubmission({
     };
   }, []);
 
-  const handleServerError = (result: ServerErrorResult, context: string) => {
+  const handleServerError = (
+    result: ServerErrorResult,
+    context: string,
+    strategy: BoundOrgSetupStrategy,
+  ) => {
     if (!isMountedRef.current) {
       return;
     }
@@ -100,12 +143,20 @@ export function useOrgSetupSubmission({
         const pointer = err.source?.pointer ?? "";
 
         if (pointer.includes("external_id") && context === "Organization") {
-          setFieldError("awsOrgId", err.detail);
+          setFieldError(strategy.externalIdField, err.detail);
           setApiError(err.detail);
         } else if (pointer.includes("name")) {
           setFieldError("organizationName", err.detail);
         } else {
-          setApiError(err.detail);
+          const secretField =
+            context === "Secret"
+              ? strategy.mapSecretErrorPointer(pointer)
+              : null;
+          if (secretField) {
+            setFieldError(secretField, err.detail);
+          } else {
+            setApiError(err.detail);
+          }
         }
       }
     } else {
@@ -113,25 +164,27 @@ export function useOrgSetupSubmission({
     }
   };
 
+  // Timeout no longer sets apiError itself — the caller surfaces the two-action
+  // timeout state (keep waiting / retry). Failure/cancellation are terminal.
   const pollDiscoveryResult = async (
     organizationId: string,
     discoveryId: string,
     signal: AbortSignal,
-    strategy: OrgSetupStrategy,
-  ): Promise<unknown | null> => {
+    strategy: BoundOrgSetupStrategy,
+  ): Promise<PollOutcome> => {
     for (let attempt = 0; attempt < DISCOVERY_MAX_RETRIES; attempt += 1) {
       if (signal.aborted || !isMountedRef.current) {
-        return null;
+        return { kind: "cancelled" };
       }
 
       const result = await getDiscovery(organizationId, discoveryId);
       if (signal.aborted || !isMountedRef.current) {
-        return null;
+        return { kind: "cancelled" };
       }
 
       if (result?.error) {
         setApiError(strategy.authFailureMessage(result.error));
-        return null;
+        return { kind: "failed" };
       }
 
       const status = result?.data?.attributes?.status;
@@ -142,7 +195,7 @@ export function useOrgSetupSubmission({
       }
 
       if (status === DISCOVERY_STATUS.SUCCEEDED) {
-        return result.data.attributes.result;
+        return { kind: "resolved", result: result.data.attributes.result };
       }
 
       if (status === DISCOVERY_STATUS.FAILED) {
@@ -152,24 +205,63 @@ export function useOrgSetupSubmission({
             ? strategy.authFailureMessage(backendError)
             : strategy.authFailureMessage(),
         );
-        return null;
+        return { kind: "failed" };
       }
 
       await sleepWithAbort(DISCOVERY_POLL_INTERVAL_MS, signal);
     }
 
     if (signal.aborted || !isMountedRef.current) {
-      return null;
+      return { kind: "cancelled" };
     }
 
-    setApiError(strategy.timeoutMessage);
-    return null;
+    return { kind: "timeout" };
   };
 
-  const submitOrganizationSetup = async (data: OrgSetupSubmissionData) => {
+  // Maps a resolved discovery into the store, seeds the default selection, and
+  // advances to the selection step. Shared by initial submit, resume, and retry.
+  const applyResolvedDiscovery = (
+    discoveryId: string,
+    result: unknown,
+    strategy: BoundOrgSetupStrategy,
+  ) => {
+    const { hierarchy, defaultSelection } = strategy.ingestDiscovery(result);
+    setDiscovery(discoveryId, hierarchy);
+    setSelectedCandidateIds(defaultSelection);
+    onNext();
+  };
+
+  // Handles a poll outcome uniformly: resolved → advance; timeout → offer
+  // keep-waiting/retry; failed/cancelled → nothing more (apiError already set).
+  const handlePollOutcome = (
+    outcome: PollOutcome,
+    discoveryId: string,
+    strategy: BoundOrgSetupStrategy,
+    signal: AbortSignal,
+  ) => {
+    if (signal.aborted || !isMountedRef.current) {
+      return;
+    }
+    if (outcome.kind === "resolved") {
+      applyResolvedDiscovery(discoveryId, outcome.result, strategy);
+      return;
+    }
+    if (outcome.kind === "timeout") {
+      setDiscoveryTimedOut(true);
+      return;
+    }
+    if (outcome.kind === "failed") {
+      setDiscoveryFailed(true);
+    }
+  };
+
+  const submitOrganizationSetup = async (
+    data: OrgSetupSubmissionData,
+    options?: SubmitOptions,
+  ) => {
     // The form's own tag picks the strategy, so the collected fields and the
     // credentials/discovery built from them always belong to the same type.
-    const strategy = getOrgSetupStrategy(data.orgType);
+    const strategy = bindOrgSetupStrategy(data);
     discoveryAbortControllerRef.current?.abort();
     const abortController = new AbortController();
     discoveryAbortControllerRef.current = abortController;
@@ -186,11 +278,12 @@ export function useOrgSetupSubmission({
     try {
       if (!isCancelled()) {
         setApiError(null);
+        setDiscoveryTimedOut(false);
+        setDiscoveryFailed(false);
       }
       clearValidationState();
 
-      const externalId = strategy.getExternalId(data);
-      const resolvedOrganizationName = strategy.getResolvedName(data);
+      const { externalId, resolvedName } = strategy;
 
       const existingOrganizationsResult = await listOrganizationsByExternalId(
         externalId,
@@ -222,7 +315,7 @@ export function useOrgSetupSubmission({
 
       if (!orgId) {
         const orgFormData = new FormData();
-        orgFormData.set("name", resolvedOrganizationName);
+        orgFormData.set("name", resolvedName);
         orgFormData.set("externalId", externalId);
         orgFormData.set("orgType", strategy.orgType);
 
@@ -232,7 +325,7 @@ export function useOrgSetupSubmission({
         }
 
         if (orgResult?.error || orgResult?.errors?.length) {
-          handleServerError(orgResult, "Organization");
+          handleServerError(orgResult, "Organization", strategy);
           return;
         }
 
@@ -247,7 +340,7 @@ export function useOrgSetupSubmission({
       }
 
       const organizationNameForStore =
-        existingOrganization?.attributes?.name ?? resolvedOrganizationName;
+        existingOrganization?.attributes?.name ?? resolvedName;
       setOrganization(orgId, organizationNameForStore, externalId);
 
       const existingSecretsResult =
@@ -267,10 +360,19 @@ export function useOrgSetupSubmission({
           ? (existingSecretsResult.data[0]?.id as string | undefined)
           : undefined;
 
-      const secretPayload = strategy.buildSecretPayload(
-        data,
-        stackSetExternalId,
-      );
+      // Warn before overwriting an existing credential: replacing it
+      // re-authenticates every provider already onboarded under the org.
+      if (existingSecretId && !options?.confirmReplace) {
+        pendingSubmitDataRef.current = data;
+        if (!isCancelled()) {
+          setReplaceSecretWarning({
+            providerCount: getOrganizationProviderCount(existingOrganization),
+          });
+        }
+        return;
+      }
+
+      const secretPayload = strategy.buildSecretPayload(stackSetExternalId);
 
       const secretResult = existingSecretId
         ? await updateOrganizationSecret(existingSecretId, secretPayload)
@@ -280,7 +382,7 @@ export function useOrgSetupSubmission({
       }
 
       if (secretResult?.error) {
-        handleServerError(secretResult, "Secret");
+        handleServerError(secretResult, "Secret", strategy);
         return;
       }
 
@@ -298,27 +400,19 @@ export function useOrgSetupSubmission({
       // Persist the discovery id at trigger time so an interrupted discovery
       // can be resumed on wizard re-entry.
       setDiscoveryTriggered(discoveryId);
+      resumeContextRef.current = { orgId, discoveryId, strategy };
 
-      const resolvedDiscoveryResult = await pollDiscoveryResult(
+      const outcome = await pollDiscoveryResult(
         orgId,
         discoveryId,
         abortController.signal,
         strategy,
       );
-
-      if (!resolvedDiscoveryResult || isCancelled()) {
-        return;
+      // Discovery came back: from here on, credentials are proven good.
+      if (outcome.kind === "resolved") {
+        hasDiscovered = true;
       }
-
-      hasDiscovered = true;
-
-      const { hierarchy, defaultSelection } = strategy.ingestDiscovery(
-        resolvedDiscoveryResult,
-        data,
-      );
-      setDiscovery(discoveryId, hierarchy);
-      setSelectedCandidateIds(defaultSelection);
-      onNext();
+      handlePollOutcome(outcome, discoveryId, strategy, abortController.signal);
     } catch {
       if (!isCancelled()) {
         // Ingesting the result is the only work left once `hasDiscovered` is set,
@@ -336,9 +430,118 @@ export function useOrgSetupSubmission({
     }
   };
 
+  const confirmSecretReplace = () => {
+    const data = pendingSubmitDataRef.current;
+    setReplaceSecretWarning(null);
+    if (data) {
+      void submitOrganizationSetup(data, { confirmReplace: true });
+    }
+  };
+
+  const cancelSecretReplace = () => {
+    setReplaceSecretWarning(null);
+  };
+
+  // *Keep waiting*: resume polling the SAME discovery with a fresh attempt
+  // budget — free, because the worker kept running past the client timeout.
+  const keepWaitingForDiscovery = async () => {
+    const ctx = resumeContextRef.current;
+    if (!ctx) {
+      return;
+    }
+    discoveryAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    discoveryAbortControllerRef.current = abortController;
+    setDiscoveryTimedOut(false);
+    setDiscoveryFailed(false);
+
+    try {
+      const outcome = await pollDiscoveryResult(
+        ctx.orgId,
+        ctx.discoveryId,
+        abortController.signal,
+        ctx.strategy,
+      );
+      handlePollOutcome(
+        outcome,
+        ctx.discoveryId,
+        ctx.strategy,
+        abortController.signal,
+      );
+    } catch {
+      if (isMountedRef.current && !abortController.signal.aborted) {
+        setApiError(ctx.strategy.authFailureMessage());
+      }
+    } finally {
+      if (discoveryAbortControllerRef.current === abortController) {
+        discoveryAbortControllerRef.current = null;
+      }
+    }
+  };
+
+  // *Retry*: trigger a NEW discovery on the same organization (a fresh snapshot
+  // that re-hits Cloud Resource Manager), then poll it.
+  const retryDiscovery = async () => {
+    const ctx = resumeContextRef.current;
+    if (!ctx) {
+      return;
+    }
+    discoveryAbortControllerRef.current?.abort();
+    const abortController = new AbortController();
+    discoveryAbortControllerRef.current = abortController;
+    setDiscoveryTimedOut(false);
+    setDiscoveryFailed(false);
+    if (!abortController.signal.aborted) {
+      setApiError(null);
+    }
+
+    try {
+      const discoveryResult = await triggerDiscovery(ctx.orgId);
+      if (abortController.signal.aborted || !isMountedRef.current) {
+        return;
+      }
+      if (discoveryResult?.error) {
+        setApiError(discoveryResult.error);
+        return;
+      }
+
+      const discoveryId = discoveryResult.data.id;
+      setDiscoveryTriggered(discoveryId);
+      resumeContextRef.current = { ...ctx, discoveryId };
+
+      const outcome = await pollDiscoveryResult(
+        ctx.orgId,
+        discoveryId,
+        abortController.signal,
+        ctx.strategy,
+      );
+      handlePollOutcome(
+        outcome,
+        discoveryId,
+        ctx.strategy,
+        abortController.signal,
+      );
+    } catch {
+      if (isMountedRef.current && !abortController.signal.aborted) {
+        setApiError(ctx.strategy.authFailureMessage());
+      }
+    } finally {
+      if (discoveryAbortControllerRef.current === abortController) {
+        discoveryAbortControllerRef.current = null;
+      }
+    }
+  };
+
   return {
     apiError,
     setApiError,
     submitOrganizationSetup,
+    replaceSecretWarning,
+    confirmSecretReplace,
+    cancelSecretReplace,
+    discoveryTimedOut,
+    discoveryFailed,
+    keepWaitingForDiscovery,
+    retryDiscovery,
   };
 }

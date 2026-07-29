@@ -5,6 +5,8 @@ import {
   ApplyDiscoveryPayload,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
+  GcpDiscoveryResult,
+  GcpOrgHierarchy,
   NODE_KIND,
   OrgCandidate,
   OrgHierarchy,
@@ -41,6 +43,39 @@ export function mapAwsDiscovery(result: AwsDiscoveryResult): AwsOrgHierarchy {
       label: account.name,
       parentId: account.parent_id,
       registration: account.registration,
+    })),
+  };
+}
+
+/**
+ * Ingestion mapper: GCP discovery wire result → normalized hierarchy model.
+ *
+ * Folders and projects link by canonical `parent` name-refs
+ * (`organizations/{id}` or `folders/{id}`). The folder id is itself the
+ * canonical `folders/{id}` ref, so folder→folder nesting matches by that ref.
+ * Parents pointing at the organization (`organizations/{id}`) are absent from
+ * the node set, so tree rebuild treats those folders/projects as top-level.
+ * Empty folders are confirmed not to occur in discovery results (product
+ * confirmation, 2026-07-23), so no pruning is applied.
+ */
+export function mapGcpDiscovery(result: GcpDiscoveryResult): GcpOrgHierarchy {
+  return {
+    orgType: ORGANIZATION_TYPE.GCP,
+    organization: {
+      uid: result.organization.uid,
+      name: result.organization.display_name,
+    },
+    nodes: result.folders.map((folder) => ({
+      id: folder.id,
+      kind: NODE_KIND.FOLDER,
+      name: folder.display_name,
+      parentId: folder.parent,
+    })),
+    candidates: result.projects.map((project) => ({
+      uid: project.project_id,
+      label: project.name,
+      parentId: project.parent,
+      registration: project.registration,
     })),
   };
 }

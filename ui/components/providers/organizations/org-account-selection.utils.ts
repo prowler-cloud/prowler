@@ -296,6 +296,83 @@ export async function pollConnectionTask(
   return { success: false, error: "Connection test timed out." };
 }
 
+/**
+ * Polls a generic async task until it settles, reporting success only when the
+ * task completes. Unlike {@link pollConnectionTask} it does not interpret a
+ * connection result — it is used for organization/node deletion, which the API
+ * returns as a `202` + task. Injectable for tests (getTaskById/sleep/signal).
+ */
+export async function pollTaskCompletion(
+  taskId: string,
+  {
+    getTaskById,
+    sleep = async (ms: number) =>
+      new Promise((resolve) => setTimeout(resolve, ms)),
+    maxRetries = 20,
+    delaysMs = [...DEFAULT_POLL_DELAYS_MS],
+    signal,
+  }: PollConnectionTaskOptions = {},
+): Promise<PollConnectionTaskResult> {
+  const inProgressStates = new Set([
+    "available",
+    "scheduled",
+    "executing",
+    "pending",
+    "running",
+  ]);
+  const taskFetcher =
+    getTaskById ??
+    (async (currentTaskId: string) => {
+      const { getTask } = await import("@/actions/task/tasks");
+      return getTask(currentTaskId);
+    });
+
+  for (let attempt = 0; attempt < maxRetries; attempt += 1) {
+    if (signal?.aborted) {
+      return { success: false, error: "Deletion cancelled." };
+    }
+
+    const taskResponse = await taskFetcher(taskId);
+    if (signal?.aborted) {
+      return { success: false, error: "Deletion cancelled." };
+    }
+
+    if (isRecord(taskResponse) && typeof taskResponse.error === "string") {
+      return { success: false, error: taskResponse.error };
+    }
+
+    const data =
+      isRecord(taskResponse) && isRecord(taskResponse.data)
+        ? taskResponse.data
+        : null;
+    const attributes = isRecord(data?.attributes) ? data.attributes : null;
+    const state =
+      typeof attributes?.state === "string" ? attributes.state : null;
+    const result = isRecord(attributes?.result) ? attributes.result : null;
+
+    if (state === "completed") {
+      return { success: true };
+    }
+
+    if (state === "failed") {
+      return {
+        success: false,
+        error:
+          (typeof result?.error === "string" && result.error) ||
+          "The deletion task failed.",
+      };
+    }
+
+    if (!state || !inProgressStates.has(state)) {
+      return { success: false, error: "Unexpected task state." };
+    }
+
+    await sleepWithAbort(getPollingDelay(attempt, delaysMs), sleep, signal);
+  }
+
+  return { success: false, error: "Deletion timed out." };
+}
+
 export function getLaunchableProviderIds(
   providerIds: string[],
   connectionResults: Record<string, ConnectionTestStatus>,

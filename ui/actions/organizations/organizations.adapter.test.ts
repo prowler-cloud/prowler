@@ -5,6 +5,7 @@ import {
   ApplyStatus,
   AwsDiscoveryResult,
   AwsOrgHierarchy,
+  GcpDiscoveryResult,
   GcpOrgHierarchy,
   NODE_KIND,
   ORGANIZATION_TYPE,
@@ -18,7 +19,58 @@ import {
   getSelectableCandidateIds,
   getSelectableCandidateIdsForTarget,
   mapAwsDiscovery,
+  mapGcpDiscovery,
 } from "./organizations.adapter";
+
+const gcpDiscoveryFixture: GcpDiscoveryResult = {
+  organization: {
+    id: "organizations/456123789012",
+    uid: "456123789012",
+    display_name: "example.com",
+  },
+  folders: [
+    {
+      id: "folders/1000000001",
+      display_name: "Engineering",
+      parent: "organizations/456123789012",
+    },
+    {
+      id: "folders/1000000002",
+      display_name: "Platform",
+      parent: "folders/1000000001",
+    },
+  ],
+  projects: [
+    {
+      project_id: "prod-analytics",
+      name: "Prod Analytics",
+      parent: "folders/1000000001",
+      registration: {
+        provider_exists: false,
+        provider_id: null,
+        organization_relation: "link_required",
+        organization_node_relation: "link_required",
+        provider_secret_state: "will_create",
+        apply_status: APPLY_STATUS.READY,
+        blocked_reasons: [],
+      },
+    },
+    {
+      project_id: "legacy-sandbox",
+      name: "Legacy Sandbox",
+      parent: "organizations/456123789012",
+      registration: {
+        provider_exists: false,
+        provider_id: null,
+        organization_relation: "link_required",
+        organization_node_relation: "link_required",
+        provider_secret_state: "will_create",
+        apply_status: APPLY_STATUS.BLOCKED,
+        blocked_reasons: ["Project is pending deletion"],
+      },
+    },
+  ],
+};
 
 const awsDiscoveryFixture: AwsDiscoveryResult = {
   roots: [
@@ -131,6 +183,81 @@ describe("mapAwsDiscovery", () => {
       label: "App Account",
       parentId: "ou-child",
     });
+  });
+});
+
+describe("mapGcpDiscovery", () => {
+  it("normalizes the GCP wire result into the common hierarchy model", () => {
+    // Given / When
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // Then
+    expect(gcpHierarchy.orgType).toBe(ORGANIZATION_TYPE.GCP);
+    expect(gcpHierarchy.organization).toEqual({
+      uid: "456123789012",
+      name: "example.com",
+    });
+
+    // Folders become nodes keyed by their canonical `folders/{id}` ref, keeping
+    // the parent name-ref so org-level folders read as top-level and nested
+    // folders match their parent folder ref.
+    expect(gcpHierarchy.nodes).toEqual([
+      {
+        id: "folders/1000000001",
+        kind: NODE_KIND.FOLDER,
+        name: "Engineering",
+        parentId: "organizations/456123789012",
+      },
+      {
+        id: "folders/1000000002",
+        kind: NODE_KIND.FOLDER,
+        name: "Platform",
+        parentId: "folders/1000000001",
+      },
+    ]);
+
+    // Projects become candidates keyed by their provider uid (project_id).
+    expect(gcpHierarchy.candidates.map((candidate) => candidate.uid)).toEqual([
+      "prod-analytics",
+      "legacy-sandbox",
+    ]);
+    expect(gcpHierarchy.candidates[0]).toMatchObject({
+      uid: "prod-analytics",
+      label: "Prod Analytics",
+      parentId: "folders/1000000001",
+    });
+  });
+
+  it("builds a folder/project tree with org-level projects at the top level", () => {
+    // Given
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // When
+    const treeData = buildOrgTreeData(gcpHierarchy);
+
+    // Then — the org-level folder and the org-level blocked project are both
+    // top-level; the nested folder sits under Engineering.
+    expect(treeData.map((node) => node.id)).toEqual(
+      expect.arrayContaining(["folders/1000000001", "legacy-sandbox"]),
+    );
+    const engineering = treeData.find(
+      (node) => node.id === "folders/1000000001",
+    );
+    expect(engineering?.children?.map((node) => node.id)).toEqual(
+      expect.arrayContaining(["folders/1000000002", "prod-analytics"]),
+    );
+    const blockedProject = treeData.find(
+      (node) => node.id === "legacy-sandbox",
+    );
+    expect(blockedProject?.disabled).toBe(true);
+  });
+
+  it("treats only ready projects as selectable", () => {
+    // Given
+    const gcpHierarchy = mapGcpDiscovery(gcpDiscoveryFixture);
+
+    // When / Then
+    expect(getSelectableCandidateIds(gcpHierarchy)).toEqual(["prod-analytics"]);
   });
 });
 

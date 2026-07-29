@@ -250,11 +250,18 @@ const buildAwsDiscoveryResult = ({
 
 // --- GCP discovery result --------------------------------------------------
 
-const GCP_ORG_ID = "456123789012";
+export const GCP_ORG_ID = "456123789012";
 const GCP_FOLDER_A = "folders/1000000001";
 const GCP_FOLDER_B = "folders/1000000002";
 
-const buildGcpDiscoveryResult = () => {
+interface GcpResultOverrides {
+  /** Project ids whose registration reports `will_replace` (existing provider). */
+  replaceProjectIds?: string[];
+}
+
+export const buildGcpDiscoveryResult = ({
+  replaceProjectIds = [],
+}: GcpResultOverrides = {}) => {
   const project = (
     projectId: string,
     name: string,
@@ -266,6 +273,15 @@ const buildGcpDiscoveryResult = () => {
     parent,
     registration,
   });
+
+  const readyRegFor = (projectId: string): FixtureRegistration =>
+    replaceProjectIds.includes(projectId)
+      ? readyRegistration({
+          provider_exists: true,
+          provider_id: `provider-existing-${projectId}`,
+          provider_secret_state: PROVIDER_SECRET_STATE.WILL_REPLACE,
+        })
+      : readyRegistration();
 
   return {
     organization: {
@@ -290,13 +306,13 @@ const buildGcpDiscoveryResult = () => {
         "prod-analytics",
         "Prod Analytics",
         GCP_FOLDER_A,
-        readyRegistration(),
+        readyRegFor("prod-analytics"),
       ),
       project(
         "prod-platform",
         "Prod Platform",
         GCP_FOLDER_B,
-        readyRegistration(),
+        readyRegFor("prod-platform"),
       ),
       project(
         "legacy-sandbox",

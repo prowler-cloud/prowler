@@ -8,7 +8,6 @@ import { useForm, useWatch } from "react-hook-form";
 
 import { launchOrganizationScans } from "@/actions/scans/scans";
 import { updateSchedulesBulk } from "@/actions/schedules/schedules";
-import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import {
   WIZARD_FOOTER_ACTION_TYPE,
   WizardFooterConfig,
@@ -42,6 +41,12 @@ import {
   type SchedulesBulkResponse,
 } from "@/types";
 import { TREE_ITEM_STATUS } from "@/types/tree";
+
+import {
+  getOrgCandidateNoun,
+  getOrgProviderBadge,
+  OrgCandidateNoun,
+} from "./org-terminology";
 
 interface OrgLaunchScanProps {
   onClose: () => void;
@@ -88,8 +93,8 @@ function getFailedCount(result: SchedulesBulkResponse): number {
   return Array.isArray(failed) ? failed.length : 0;
 }
 
-function formatAccountCount(count: number): string {
-  return `${count} account${count === 1 ? "" : "s"}`;
+function formatCandidateCount(count: number, noun: OrgCandidateNoun): string {
+  return `${count} ${count === 1 ? noun.singular : noun.plural}`;
 }
 
 function getScansHref(tab: (typeof SCAN_JOBS_TAB)[keyof typeof SCAN_JOBS_TAB]) {
@@ -106,8 +111,14 @@ export function OrgLaunchScan({
 }: OrgLaunchScanProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { organizationExternalId, createdProviderIds, reset } =
-    useOrgSetupStore();
+  const {
+    organizationExternalId,
+    organizationType,
+    createdProviderIds,
+    reset,
+  } = useOrgSetupStore();
+  const noun = getOrgCandidateNoun(organizationType);
+  const OrgBadge = getOrgProviderBadge(organizationType);
 
   const resolvedCapability = capability ?? getScanScheduleCapability(isCloud());
   const isAdvanced = resolvedCapability === SCAN_SCHEDULE_CAPABILITY.ADVANCED;
@@ -194,8 +205,8 @@ export function OrgLaunchScan({
         title: "Unable to save scan schedules",
         description:
           failedCount > 0
-            ? `The scan schedule could not be saved for ${formatAccountCount(failedCount)}.`
-            : "The scan schedule could not be saved for any account.",
+            ? `The scan schedule could not be saved for ${formatCandidateCount(failedCount, noun)}.`
+            : `The scan schedule could not be saved for any ${noun.singular}.`,
       });
       return;
     }
@@ -218,8 +229,8 @@ export function OrgLaunchScan({
     const updatedCount = updatedProviderIds.length;
     const description =
       failedCount > 0
-        ? `The schedule was saved for ${formatAccountCount(updatedCount)}, but ${formatAccountCount(failedCount)} could not be updated.`
-        : `The scan schedule was saved for ${formatAccountCount(updatedCount)}.`;
+        ? `The schedule was saved for ${formatCandidateCount(updatedCount, noun)}, but ${formatCandidateCount(failedCount, noun)} could not be updated.`
+        : `The scan schedule was saved for ${formatCandidateCount(updatedCount, noun)}.`;
     const targetTab =
       initialScanSuccessCount > 0
         ? SCAN_JOBS_TAB.ACTIVE
@@ -232,7 +243,7 @@ export function OrgLaunchScan({
           : "Scan schedules saved",
       description:
         initialScanFailureCount > 0
-          ? `${description} Initial scans failed for ${formatAccountCount(initialScanFailureCount)}.`
+          ? `${description} Initial scans failed for ${formatCandidateCount(initialScanFailureCount, noun)}.`
           : description,
       action: (
         <ToastAction altText="Go to scans" asChild>
@@ -266,8 +277,8 @@ export function OrgLaunchScan({
       title: "Scan Launched",
       description:
         effectiveScheduleOption === SCAN_SCHEDULE.DAILY
-          ? `Daily scan scheduled for ${formatAccountCount(successCount)}.`
-          : `Single scan launched for ${formatAccountCount(successCount)}.`,
+          ? `Daily scan scheduled for ${formatCandidateCount(successCount, noun)}.`
+          : `Single scan launched for ${formatCandidateCount(successCount, noun)}.`,
       action: (
         <ToastAction altText="Go to scans" asChild>
           <Link href={getScansHref(targetTab)}>Go to scans</Link>
@@ -314,7 +325,7 @@ export function OrgLaunchScan({
     <div className="flex min-h-0 flex-1 flex-col gap-8">
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-4">
-          <AWSProviderBadge size={32} />
+          <OrgBadge size={32} />
           <h3 className="text-base font-semibold">My Organization</h3>
         </div>
 
@@ -348,17 +359,17 @@ export function OrgLaunchScan({
               status={TREE_ITEM_STATUS.SUCCESS}
               className="size-6"
             />
-            <h3 className="text-sm font-semibold">Accounts Connected!</h3>
+            <h3 className="text-sm font-semibold">{noun.Plural} Connected!</h3>
           </div>
 
           <p className="text-text-neutral-secondary text-sm">
-            Your accounts are connected to Prowler and ready to Scan!
+            Your {noun.plural} are connected to Prowler and ready to Scan!
           </p>
 
           {createdProviderIds.length === 0 && (
             <p className="text-text-error-primary text-sm">
-              No successfully connected accounts are available to launch scans.
-              Go back and retry connection tests.
+              No successfully connected {noun.plural} are available to launch
+              scans. Go back and retry connection tests.
             </p>
           )}
 
@@ -374,14 +385,14 @@ export function OrgLaunchScan({
           ) : isManualOnly ? (
             <div className="flex flex-col gap-3">
               <p className="text-text-neutral-secondary text-sm">
-                Scheduled scans are not available for trial accounts. These
-                accounts will run a one-time manual scan now.
+                Scheduled scans are not available for trial accounts. These{" "}
+                {noun.plural} will run a one-time manual scan now.
               </p>
             </div>
           ) : isDailyLegacy ? (
             <div className="flex flex-col gap-4">
               <p className="text-text-neutral-secondary text-sm">
-                Select a Prowler scan schedule for these accounts.
+                Select a Prowler scan schedule for these {noun.plural}.
               </p>
               <Select
                 value={scheduleOption}

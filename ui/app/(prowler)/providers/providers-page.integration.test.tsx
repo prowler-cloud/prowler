@@ -166,22 +166,24 @@ describe("AWS Organizations providers page (baseline)", () => {
     expect(harness.hasBackButton()).toBe(false);
   }, 30000);
 
-  it("deletes an organization as a fire-and-forget request (no task polling)", async () => {
+  it("deletes an organization with a cascade warning and deletion-task polling", async () => {
     const harness = new ProvidersPageHarness(awsHierarchyFixture());
     await harness.mount({ openWizard: false });
     await harness.waitForOrganizationRow(AWS_ORG_NAME);
 
     await harness.openDeleteFor(AWS_ORG_NAME);
 
-    // Cascade confirmation dialog.
+    // Cascade confirmation dialog, stating the affected provider count.
     await harness.waitForDeleteConfirmation();
     expect(harness.hasDeleteWarning()).toBe(true);
+    expect(harness.hasCascadeWarning(3)).toBe(true);
 
     await harness.confirmDelete();
 
     await harness.waitForOrganizationDelete(AWS_HIERARCHY_ORG_ID);
-    // Current behaviour: single DELETE, no deletion-task polling (Phase 2 adds it).
-    expect(harness.taskPollCount).toBe(0);
+    // The API answers deletion with 202 + a task; success is reported only once
+    // the UI has polled it to completion (AWS inherits this from Phase 2).
+    await harness.waitForTaskPoll();
   }, 30000);
 
   it("renders a flat provider list (no org/OU grouping) on-prem", async ({

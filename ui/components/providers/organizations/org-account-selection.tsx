@@ -2,13 +2,15 @@
 
 import { AlertTriangle } from "lucide-react";
 
-import { AWSProviderBadge } from "@/components/icons/providers-badge";
 import { WizardFooterConfig } from "@/components/providers/wizard/steps/footer-controls";
 import { Alert, AlertDescription } from "@/components/shadcn/alert";
+import { Button } from "@/components/shadcn/button/button";
+import { Modal } from "@/components/shadcn/modal";
 import { TreeView } from "@/components/shadcn/tree-view";
 
 import { useOrgAccountSelectionFlow } from "./hooks/use-org-account-selection-flow";
 import { OrgAccountTreeItem, TREE_ITEM_MODE } from "./org-account-tree-item";
+import { getOrgCandidateNoun, getOrgProviderBadge } from "./org-terminology";
 
 interface OrgAccountSelectionProps {
   onBack: () => void;
@@ -41,6 +43,9 @@ export function OrgAccountSelection({
     showHeaderHelperText,
     totalCandidates,
     treeDataWithConnectionState,
+    replaceWarning,
+    confirmReplaceAndApply,
+    cancelReplace,
   } = useOrgAccountSelectionFlow({
     onBack,
     onNext,
@@ -56,11 +61,56 @@ export function OrgAccountSelection({
     );
   }
 
+  const OrgBadge = getOrgProviderBadge(hierarchy.orgType);
+  const noun = getOrgCandidateNoun(hierarchy.orgType);
+
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-5">
+      <Modal
+        open={replaceWarning !== null}
+        onOpenChange={(open) => {
+          if (!open) cancelReplace();
+        }}
+        title="Replace existing credentials?"
+        description={`Applying this selection will overwrite the credentials of ${
+          replaceWarning?.names.length ?? 0
+        } already-onboarded ${
+          (replaceWarning?.names.length ?? 0) === 1
+            ? noun.singular
+            : noun.plural
+        }.`}
+      >
+        {replaceWarning && (
+          <div className="flex flex-col gap-4">
+            <p className="text-text-neutral-secondary text-sm">
+              The following {noun.plural} will have their credentials replaced:{" "}
+              <strong>{replaceWarning.names.join(", ")}</strong>.
+            </p>
+            <div className="flex w-full justify-end gap-4">
+              <Button
+                type="button"
+                variant="ghost"
+                size="lg"
+                onClick={cancelReplace}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                size="lg"
+                onClick={confirmReplaceAndApply}
+              >
+                Replace and continue
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
       <div className="flex flex-col gap-3">
         <div className="flex items-center gap-4">
-          <AWSProviderBadge size={32} />
+          <OrgBadge size={32} />
           <h3 className="text-base font-semibold">My Organization</h3>
         </div>
 
@@ -76,10 +126,10 @@ export function OrgAccountSelection({
         {showHeaderHelperText && (
           <p className="text-muted-foreground text-sm">
             {isTestingView
-              ? "Testing account connections..."
-              : "Confirm all accounts under this Organization you want to add to Prowler."}{" "}
+              ? `Testing ${noun.singular} connections...`
+              : `Confirm all ${noun.plural} under this Organization you want to add to Prowler.`}{" "}
             {!isTestingView &&
-              `${selectedCount} of ${totalCandidates} accounts selected.`}
+              `${selectedCount} of ${totalCandidates} ${noun.plural} selected.`}
           </p>
         )}
       </div>
@@ -98,8 +148,8 @@ export function OrgAccountSelection({
           <AlertTriangle />
           <AlertDescription className="text-text-error-primary">
             {canAdvanceToLaunch
-              ? "There was a problem connecting to some accounts. Hover each account to check the error."
-              : "No accounts connected successfully. Fix the connection errors and retry before launching scans."}
+              ? `There was a problem connecting to some ${noun.plural}. Hover each ${noun.singular} to check the error.`
+              : `No ${noun.plural} connected successfully. Fix the connection errors and retry before launching scans.`}
           </AlertDescription>
         </Alert>
       )}

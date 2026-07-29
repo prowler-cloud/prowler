@@ -141,6 +141,55 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForText(/Organization Details/);
   }
 
+  /** Select GCP and open the GCP Organization method card (no advance wait). */
+  async chooseGcpOrganizationsMethod(): Promise<void> {
+    await this.selectProviderType(/Google Cloud Platform/);
+    await this.chooseMethod(/Add Multiple Projects With GCP Organization/);
+  }
+
+  /** Enter the GCP Organization onboarding flow from a fresh wizard. */
+  async chooseGcpOrganizations(): Promise<void> {
+    await this.chooseGcpOrganizationsMethod();
+    await this.waitForText(/Organization Details/);
+  }
+
+  /** Wait until the wizard shows the selected provider's method fork. */
+  async waitForMethodStep(): Promise<void> {
+    await this.waitForText(/Select a method to add your/);
+  }
+
+  /** Whether the organization setup step is showing (the flow actually started). */
+  hasOrganizationSetupStep(): boolean {
+    return this.containsText(/Organization Details/);
+  }
+
+  /** Whether the step links out to the given documentation URL fragment. */
+  hasDocsLinkTo(urlFragment: string): boolean {
+    return this.q(`a[href*="${urlFragment}"]`) !== null;
+  }
+
+  // --- Wizard: GCP setup step --------------------------------------------
+
+  async fillGcpOrgDetails(orgId: string, name?: string): Promise<void> {
+    const orgIdInput = await this.waitFor(() => this.inputByName("gcpOrgId"));
+    await this.user.fill(orgIdInput, orgId);
+    if (name !== undefined) {
+      const nameInput = this.inputByName("organizationName");
+      if (nameInput) await this.user.fill(nameInput, name);
+    }
+  }
+
+  /** Paste a service-account key JSON into the GCP authentication step. */
+  async fillGcpServiceAccountKey(json: string): Promise<void> {
+    const textarea = await this.waitFor(
+      () =>
+        this.q(
+          'textarea[name="serviceAccountKey"]',
+        ) as HTMLTextAreaElement | null,
+    );
+    await this.user.fill(textarea, json);
+  }
+
   // --- Wizard: AWS setup step --------------------------------------------
 
   async fillAwsOrgDetails(orgId: string, name?: string): Promise<void> {
@@ -188,6 +237,66 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.clickPrimary(/Authenticate/);
   }
 
+  // --- Wizard: credential replacement + discovery recovery -----------------
+
+  /** Wait until the confirm-before-replace credential warning is showing. */
+  async waitForCredentialReplaceWarning(): Promise<void> {
+    await this.waitForText(/Replace existing credentials\?/);
+  }
+
+  /** Whether the warning states how many providers a replacement re-authenticates. */
+  hasCredentialReplaceProviderCount(providerCount: number): boolean {
+    return this.containsText(
+      new RegExp(`re-authenticates its ${providerCount} providers?`),
+    );
+  }
+
+  /** Confirm the credential replacement and continue the setup chain. */
+  async confirmCredentialReplace(): Promise<void> {
+    await this.clickButton(/Replace credentials/);
+  }
+
+  /** Wait until the app replaced (PATCHed) the organization secret. */
+  async waitForSecretReplace(): Promise<void> {
+    await this.waitForRequest("PATCH", "/organization-secrets/");
+  }
+
+  /**
+   * Whether the pre-apply warning states how many already-onboarded candidates
+   * the apply would overwrite, naming them.
+   */
+  hasApplyOverwriteWarning(
+    projectCount: number,
+    names: string[] = [],
+  ): boolean {
+    const states = this.containsText(
+      new RegExp(
+        `overwrite the credentials of ${projectCount} already-onboarded project`,
+      ),
+    );
+    return states && names.every((name) => this.containsText(new RegExp(name)));
+  }
+
+  /** Confirm the pre-apply credential overwrite and continue into apply. */
+  async confirmApplyOverwrite(): Promise<void> {
+    await this.clickButton(/Replace and continue/);
+  }
+
+  /** Wait until a failed discovery surfaces its authentication error. */
+  async waitForDiscoveryFailure(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/Authentication failed/, timeoutMs);
+  }
+
+  /** Retry a failed/timed-out discovery with a fresh one. */
+  async retryDiscovery(): Promise<void> {
+    await this.clickButton(/Retry discovery/);
+  }
+
+  /** Wait until the app has triggered at least `n` discoveries. */
+  async waitForDiscoveryCount(n: number, timeoutMs = 15000): Promise<void> {
+    await this.waitForRequest("POST", "/discover", n, timeoutMs);
+  }
+
   // --- Wizard: selection step --------------------------------------------
 
   private get tree(): HTMLElement | null {
@@ -204,10 +313,23 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     return this.treeItems.find((el) => text.test(el.textContent ?? "")) ?? null;
   }
 
+  // Candidate-noun-agnostic on purpose: the selection copy says "accounts" for
+  // AWS and "projects" for GCP (see the ui-terminology spec).
   private selectedCountText(): string {
     return (
-      this.container.textContent?.match(/\d+ of \d+ accounts selected/)?.[0] ??
-      ""
+      this.container.textContent?.match(
+        /\d+ of \d+ (?:accounts|projects) selected/,
+      )?.[0] ?? ""
+    );
+  }
+
+  private hasSelectionSummary(
+    selected: number,
+    total: number,
+    noun: string,
+  ): boolean {
+    return new RegExp(`${selected} of ${total} ${noun} selected`).test(
+      this.selectedCountText(),
     );
   }
 
@@ -234,23 +356,78 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /** Whether the selection summary currently reads "<selected> of <total>". */
   hasSelectedCount(selected: number, total: number): boolean {
-    return new RegExp(`${selected} of ${total} accounts selected`).test(
-      this.selectedCountText(),
+    return this.hasSelectionSummary(selected, total, "accounts");
+  }
+
+  /** Wait until project discovery finishes and the selection summary renders. */
+  async waitForProjectSelection(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/of \d+ projects selected/, timeoutMs);
+  }
+
+  /** Wait until the summary reads "<selected> of <total> projects selected". */
+  async waitForSelectedProjectCount(
+    selected: number,
+    total: number,
+    timeoutMs = 15000,
+  ): Promise<void> {
+    await this.waitForText(
+      new RegExp(`${selected} of ${total} projects selected`),
+      timeoutMs,
     );
   }
 
-  /** Toggle a discovered account's selection by its UID. */
-  async toggleAccount(uid: string): Promise<void> {
-    const item = await this.waitFor(() => this.treeItemByText(new RegExp(uid)));
+  /** Whether the summary reads "<selected> of <total> projects selected". */
+  hasSelectedProjectCount(selected: number, total: number): boolean {
+    return this.hasSelectionSummary(selected, total, "projects");
+  }
+
+  /**
+   * Whether any visible copy uses the AWS candidate noun. A GCP flow must never
+   * say "accounts", so this is the negative half of the terminology assertions.
+   */
+  usesAccountWording(): boolean {
+    return this.containsText(/accounts selected|Accounts Connected!/);
+  }
+
+  /** Toggle a discovered candidate's selection by the text of its tree row. */
+  async toggleCandidate(idText: RegExp): Promise<void> {
+    const item = await this.waitFor(() => this.treeItemByText(idText));
     const checkbox =
       item.querySelector<HTMLElement>('[role="checkbox"]') ?? item;
     await this.user.click(checkbox);
   }
 
+  /** Toggle a discovered account's selection by its UID. */
+  async toggleAccount(uid: string): Promise<void> {
+    await this.toggleCandidate(new RegExp(uid));
+  }
+
+  /** Whether a discovered candidate is blocked (disabled, not selectable). */
+  async isCandidateBlocked(idText: RegExp): Promise<boolean> {
+    const item = await this.waitFor(() => this.treeItemByText(idText));
+    return item.getAttribute("aria-disabled") === "true";
+  }
+
   /** Whether a discovered account is blocked (disabled, not selectable). */
   async isAccountBlocked(uid: string): Promise<boolean> {
-    const item = await this.waitFor(() => this.treeItemByText(new RegExp(uid)));
-    return item.getAttribute("aria-disabled") === "true";
+    return this.isCandidateBlocked(new RegExp(uid));
+  }
+
+  /** Type an alias into a candidate's tree-row alias input. */
+  async setCandidateAlias(idText: RegExp, alias: string): Promise<void> {
+    const item = await this.waitFor(() => this.treeItemByText(idText));
+    const input = item.querySelector<HTMLInputElement>(
+      "input:not([type='checkbox'])",
+    );
+    if (!input) throw new Error("no alias input for candidate");
+    await this.user.fill(input, alias);
+  }
+
+  /** The `aria-checked` state of a tree row's checkbox (e.g. "mixed"). */
+  candidateCheckboxState(idText: RegExp): string | null {
+    const item = this.treeItemByText(idText);
+    const checkbox = item?.querySelector<HTMLElement>('[role="checkbox"]');
+    return checkbox?.getAttribute("aria-checked") ?? null;
   }
 
   async testConnections(): Promise<void> {
@@ -270,6 +447,11 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
   /** Wait until every selected account has connected successfully. */
   async waitForAccountsConnected(timeoutMs = 20000): Promise<void> {
     await this.waitForText(/Accounts Connected!/, timeoutMs);
+  }
+
+  /** Wait until every selected project has connected successfully. */
+  async waitForProjectsConnected(timeoutMs = 20000): Promise<void> {
+    await this.waitForText(/Projects Connected!/, timeoutMs);
   }
 
   /** Wait until the flow reaches the connected / ready-to-scan state. */
@@ -429,6 +611,15 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.clickMenuItem(/Delete Organization/);
   }
 
+  /**
+   * Open the delete flow for a hierarchy node whose kind labels it a folder —
+   * the GCP counterpart of `openDeleteFor` (AWS says "Organizational Unit").
+   */
+  async openDeleteFolderFor(name: string): Promise<void> {
+    await this.openActionsFor(name);
+    await this.clickMenuItem(/Delete Folder/);
+  }
+
   /** Wait until the wizard re-opens on the AWS authentication step. */
   async waitForAuthenticationStep(): Promise<void> {
     await this.waitForText(
@@ -453,7 +644,24 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
 
   /** Whether the delete dialog shows its permanent-deletion warning. */
   hasDeleteWarning(): boolean {
-    return this.containsText(/permanently delete this organization/);
+    return this.hasDeleteWarningFor("organization");
+  }
+
+  /**
+   * Whether the dialog warns about permanently deleting the given entity — the
+   * label follows the node kind ("folder" for GCP, "organizational unit" for AWS).
+   */
+  hasDeleteWarningFor(entityLabel: string): boolean {
+    return this.containsText(
+      new RegExp(`permanently delete this ${entityLabel}`),
+    );
+  }
+
+  /** Whether the dialog states how many providers the deletion cascades to. */
+  hasCascadeWarning(providerCount: number): boolean {
+    return this.containsText(
+      new RegExp(`cascade to its ${providerCount} providers?`),
+    );
   }
 
   /** Confirm the delete-organization dialog. */
@@ -484,9 +692,29 @@ export class ProvidersPageHarness extends BrowserHarness<OrgFixture> {
     await this.waitForRequest("DELETE", `/organizations/${orgId}`);
   }
 
+  /** Wait until the app has issued the DELETE for the given hierarchy node. */
+  async waitForNodeDelete(nodeId: string): Promise<void> {
+    await this.waitForRequest("DELETE", `/organization-nodes/${nodeId}`);
+  }
+
   /** How many times the app polled a task (`GET /tasks/:id`). */
   get taskPollCount(): number {
     return this.countRequests("GET", "/tasks/");
+  }
+
+  /** Wait until the app polled the deletion task the API answered 202 with. */
+  async waitForTaskPoll(taskIdPrefix = ""): Promise<void> {
+    await this.waitForRequest("GET", `/tasks/${taskIdPrefix}`);
+  }
+
+  /** Wait until the deletion is reported as completed (success toast). */
+  async waitForDeletionSuccess(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/removed successfully/, timeoutMs);
+  }
+
+  /** Wait until a failed deletion task is reported instead of a false success. */
+  async waitForDeletionFailure(timeoutMs = 15000): Promise<void> {
+    await this.waitForText(/Deletion did not complete/, timeoutMs);
   }
 
   // --- Table: edit-name modal ---------------------------------------------
