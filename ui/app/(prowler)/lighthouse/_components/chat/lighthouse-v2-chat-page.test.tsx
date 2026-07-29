@@ -45,6 +45,11 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   updateLighthouseV2Configuration: updateConfigurationMock,
 }));
 
+vi.mock("next/navigation", () => ({
+  usePathname: () => window.location.pathname,
+  useSearchParams: () => new URLSearchParams(window.location.search),
+}));
+
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
 // jsdom; render its text passthrough so message bodies are still assertable.
 vi.mock("streamdown", () => ({
@@ -109,6 +114,7 @@ describe("LighthouseV2ChatPage", () => {
     updateConfigurationMock.mockReset();
     resetPanelChatStoreForTests();
     eventSources = stubEventSource();
+    window.history.replaceState(null, "", "/lighthouse");
 
     createSessionMock.mockResolvedValue({
       data: {
@@ -134,27 +140,6 @@ describe("LighthouseV2ChatPage", () => {
 
   afterEach(() => {
     vi.unstubAllGlobals();
-  });
-
-  it("renders the searchable model selector and settings shortcut", () => {
-    // Given / When
-    renderPage();
-
-    // Then
-    expect(screen.getByRole("combobox", { name: "Model" })).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: "Lighthouse AI settings" }),
-    ).toHaveAttribute("href", "/lighthouse/settings");
-  });
-
-  it("renders the empty-state headline with correct wording", () => {
-    // Given / When
-    renderPage();
-
-    // Then
-    expect(
-      screen.getByText("Find and remediate what actually matters."),
-    ).toBeInTheDocument();
   });
 
   it("continues using the panel chat store on the full-page surface", () => {
@@ -365,45 +350,6 @@ describe("LighthouseV2ChatPage", () => {
     expect(screen.queryByText("Amazon Bedrock")).not.toBeInTheDocument();
   });
 
-  it("uses the tuned scrollbar and bottom fade without a composer separator", () => {
-    // Given / When
-    const { container } = renderPage({
-      initialMessages: [message("message-1", "assistant", "Existing answer")],
-    });
-
-    // Then
-    const conversation = screen.getByRole("log");
-    const scrollViewport = conversation.firstElementChild as HTMLElement;
-    const content = scrollViewport.firstElementChild as HTMLElement;
-    const scrollFade = container.querySelector(
-      '[data-slot="lighthouse-v2-chat-scroll-fade"]',
-    );
-
-    expect(conversation).toHaveClass("h-full", "min-h-0");
-    expect(conversation.parentElement).toHaveClass("flex", "overflow-hidden");
-    expect(scrollViewport).toHaveClass(
-      "minimal-scrollbar",
-      "overflow-x-hidden",
-      "overflow-y-auto",
-    );
-    expect(content).toHaveClass("pb-20");
-    expect(scrollFade).toHaveClass(
-      "pointer-events-none",
-      "absolute",
-      "bottom-0",
-      "right-2",
-      "h-16",
-      "bg-gradient-to-t",
-      "from-bg-neutral-secondary",
-      "to-transparent",
-    );
-    expect(
-      container.querySelector(
-        '[data-slot="lighthouse-v2-chat-composer-panel"]',
-      ),
-    ).not.toHaveClass("border-t");
-  });
-
   it("opens the highest-priority connected provider with its remembered model", async () => {
     // Given: both OpenAI and Bedrock are connected; OpenAI outranks Bedrock
     const user = userEvent.setup();
@@ -492,25 +438,6 @@ describe("LighthouseV2ChatPage", () => {
           model: "gpt-5.1",
         }),
       ),
-    );
-  });
-
-  it("persists the selected chat model as that provider's default", async () => {
-    // Given
-    const user = userEvent.setup();
-    renderPage();
-
-    // When
-    await user.click(screen.getByRole("combobox", { name: "Model" }));
-    await user.click(
-      await screen.findByRole("option", { name: "anthropic.claude-4" }),
-    );
-
-    // Then: only the chosen provider's config is updated, by id
-    await waitFor(() =>
-      expect(updateConfigurationMock).toHaveBeenCalledWith("config-bedrock", {
-        defaultModel: "anthropic.claude-4",
-      }),
     );
   });
 

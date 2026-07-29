@@ -1,6 +1,9 @@
 import { z } from "zod";
 
+import { ATTACK_PATH_QUERY_KIND } from "@/types/attack-paths";
+
 import {
+  LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE,
   LIGHTHOUSE_CONTEXT_KIND,
   LIGHTHOUSE_CONTEXT_LIMIT,
   LIGHTHOUSE_CONTEXT_SOURCE,
@@ -11,6 +14,7 @@ const boundedStringSchema = z
   .string()
   .max(LIGHTHOUSE_CONTEXT_LIMIT.STRING_LENGTH);
 const boundedCountSchema = z.number().int().nonnegative();
+
 export const lighthouseContextSourceSchema = z.enum(LIGHTHOUSE_CONTEXT_SOURCE);
 export const lighthouseContextTransportSchema = z.literal(
   LIGHTHOUSE_CONTEXT_TRANSPORT.INLINE,
@@ -25,6 +29,16 @@ export const lighthouseContextFiltersSchema = z
       ) <= LIGHTHOUSE_CONTEXT_LIMIT.FILTER_VALUES,
     {
       error: `Filters may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.FILTER_VALUES} values.`,
+    },
+  );
+export const lighthouseAttackPathTypeCountsSchema = z
+  .record(boundedStringSchema, boundedCountSchema)
+  .refine(
+    (counts) =>
+      Object.keys(counts).length <=
+      LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_TYPE_COUNTS,
+    {
+      error: `Attack Path type counts may contain at most ${LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_TYPE_COUNTS} entries.`,
     },
   );
 
@@ -81,7 +95,7 @@ export const lighthouseComplianceContextItemSchema =
     version: boundedStringSchema.optional(),
     scanId: boundedStringSchema.optional(),
     providerUid: boundedStringSchema.optional(),
-    mode: boundedStringSchema.optional(),
+    mode: z.enum(LIGHTHOUSE_COMPLIANCE_CONTEXT_MODE).optional(),
     section: boundedStringSchema.optional(),
     region: boundedStringSchema.optional(),
     score: z.number().min(0).max(100).optional(),
@@ -103,9 +117,18 @@ export const lighthouseAttackPathContextItemSchema =
     kind: z.literal(LIGHTHOUSE_CONTEXT_KIND.ATTACK_PATH),
     scanId: boundedStringSchema.optional(),
     queryId: boundedStringSchema.optional(),
+    queryKind: z.enum(ATTACK_PATH_QUERY_KIND).optional(),
+    canReplayQuery: z.boolean().optional(),
     parameters: lighthouseAttackPathParametersSchema.optional(),
+    redactedParameters: z
+      .array(boundedStringSchema)
+      .max(LIGHTHOUSE_CONTEXT_LIMIT.ATTACK_PATH_REDACTED_PARAMETERS)
+      .optional(),
     nodeCount: boundedCountSchema.optional(),
     edgeCount: boundedCountSchema.optional(),
+    connectedComponentCount: boundedCountSchema.optional(),
+    nodeTypeCounts: lighthouseAttackPathTypeCountsSchema.optional(),
+    relationshipTypeCounts: lighthouseAttackPathTypeCountsSchema.optional(),
     selectedNodeId: boundedStringSchema.optional(),
     selectedNodeType: boundedStringSchema.optional(),
   });

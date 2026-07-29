@@ -45,6 +45,29 @@ describe("getRuntimeConfigClient", () => {
     // Keys not present in the island fall back to null.
     expect(config.googleTagManagerId).toBeNull();
     expect(config.posthogKey).toBeNull();
+    // Booleans fall back to false, not undefined.
+    expect(config.posthogEnabled).toBe(false);
+  });
+
+  it("carries the PostHog enable flag through the island", async () => {
+    // Given
+    writeIsland(
+      JSON.stringify({
+        posthogEnabled: true,
+        posthogKey: "phc_key",
+        posthogHost: "https://eu.i.posthog.com",
+      }),
+    );
+    const { getRuntimeConfigClient } = await import(
+      "./get-runtime-config.client"
+    );
+
+    // When
+    const config = getRuntimeConfigClient();
+
+    // Then
+    expect(config.posthogEnabled).toBe(true);
+    expect(config.posthogKey).toBe("phc_key");
   });
 
   it("falls back to an all-null config when the island is absent", async () => {
@@ -115,6 +138,7 @@ describe("getRuntimeConfigClient", () => {
         "cloudBillingEnabled",
         "cloudEnabled",
         "googleTagManagerId",
+        "posthogEnabled",
         "posthogHost",
         "posthogKey",
         "reoDevClientId",
