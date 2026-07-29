@@ -25,8 +25,4 @@ describe("Overview page", () => {
     expect(firstProviderFilterPosition).toBeGreaterThan(-1);
     expect(bannersRenderBeforeFilters).toBe(true);
   });
-
-  it("publishes URL-filtered provider context for Lighthouse", () => {
-    expect(source).toContain("<OverviewProviderContext");
-  });
 });

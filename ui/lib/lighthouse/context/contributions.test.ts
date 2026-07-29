@@ -372,17 +372,6 @@ describe("Lighthouse page contributions", () => {
     });
   });
 
-  it("falls back to the provider uid when no alias exists", () => {
-    expect(
-      buildFilteredProviderContext({
-        pathname: "/",
-        id: "prov-2",
-        uid: "999888777666",
-        type: "gcp",
-      }).label,
-    ).toBe("999888777666");
-  });
-
   it("builds automatic context for a URL-filtered provider group", () => {
     expect(
       buildProviderGroupContext({

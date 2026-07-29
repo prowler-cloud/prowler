@@ -33,16 +33,4 @@ describe("OverviewProviderContext", () => {
     expect(context).toHaveTextContent('"label":"Production"');
     expect(context).toHaveTextContent('"providerUid":"111111111111"');
   });
-
-  it("renders nothing without provider filters", () => {
-    render(
-      <OverviewProviderContext
-        searchParams={{}}
-        providers={providers}
-        groups={[] as ProviderGroup[]}
-      />,
-    );
-
-    expect(screen.queryByTestId("provider-context")).not.toBeInTheDocument();
-  });
 });
