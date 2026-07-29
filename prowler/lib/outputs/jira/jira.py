@@ -203,7 +203,9 @@ class MarkdownToADFConverter:
             if token_type == "text":
                 result.extend(self._text_to_nodes(token.content, marks_stack))
             elif token_type == "code_inline":
-                marks = self._clone_marks(marks_stack)
+                marks = self._clone_marks(
+                    [mark for mark in marks_stack if mark["type"] == "link"]
+                )
                 marks.append({"type": "code"})
                 result.append(self._create_text_node(token.content, marks))
             elif token_type in {"softbreak", "hardbreak"}:
