@@ -11,7 +11,7 @@ import { parseFilterIds } from "./provider-scope";
 
 const OVERVIEW_PATHNAME = "/";
 // Bounded so provider items cannot crowd out the page, ThreatScore, and
-// upcoming posture summaries within the eight-item context budget.
+// posture summaries within the shared context item budget.
 const MAX_PROVIDER_ITEMS = 2;
 const MAX_TOTAL_ITEMS = 3;
 

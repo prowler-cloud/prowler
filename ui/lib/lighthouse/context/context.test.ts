@@ -143,7 +143,7 @@ describe("lighthouseContextEnvelopeSchema", () => {
       expect(result.success).toBe(false);
     });
 
-    it("should reject more than eight context items", () => {
+    it("should reject more than twelve context items", () => {
       // Given
       const item = {
         kind: "page",
@@ -158,7 +158,7 @@ describe("lighthouseContextEnvelopeSchema", () => {
       const result = lighthouseContextEnvelopeSchema.safeParse({
         schemaVersion: 1,
         transport: "inline",
-        items: Array.from({ length: 9 }, (_, index) => ({
+        items: Array.from({ length: 13 }, (_, index) => ({
           ...item,
           id: `page-${index}`,
         })),
@@ -350,7 +350,7 @@ describe("compileLighthouseContext", () => {
     });
   });
 
-  describe("when serialized context exceeds 2 KiB", () => {
+  describe("when serialized context exceeds the byte limit", () => {
     it("should drop lowest-priority items until the context fits", () => {
       // Given
       const scopeKey = "findings:/findings";
@@ -393,10 +393,13 @@ describe("compileLighthouseContext", () => {
         "findings",
         "finding-1",
         "summary-0",
+        "summary-1",
+        "summary-2",
+        "summary-3",
       ]);
     });
 
-    it("should preserve only the page when selection data is still too large", () => {
+    it("should drop oversized selections while keeping the page", () => {
       // Given
       const scopeKey = "findings:/findings";
       const page = {
@@ -407,9 +410,9 @@ describe("compileLighthouseContext", () => {
         label: "Findings",
         path: "/findings",
       };
-      const selection = {
+      const selections = Array.from({ length: 2 }, (_, index) => ({
         kind: "finding",
-        id: "finding-1",
+        id: `finding-${index}`,
         source: "selection",
         scopeKey,
         label: "x".repeat(256),
@@ -420,17 +423,20 @@ describe("compileLighthouseContext", () => {
         providerUid: "p".repeat(256),
         resourceUid: "r".repeat(256),
         region: "g".repeat(256),
-      };
+      }));
 
       // When
-      const context = compileLighthouseContext([selection, page], scopeKey);
+      const context = compileLighthouseContext([...selections, page], scopeKey);
 
       // Then
-      expect(context?.items.map((item) => item.id)).toEqual(["findings"]);
+      expect(context?.items.map((item) => item.id)).toEqual([
+        "findings",
+        "finding-0",
+      ]);
     });
   });
 
-  describe("when context exceeds the eight-item limit", () => {
+  describe("when context exceeds the item limit", () => {
     it("should progressively drop only the lowest-priority items", () => {
       // Given
       const scopeKey = "findings:/findings";
@@ -458,7 +464,7 @@ describe("compileLighthouseContext", () => {
         label: `Selected finding ${index}`,
         findingId: `selection-${index}`,
       }));
-      const summaries = Array.from({ length: 6 }, (_, index) => ({
+      const summaries = Array.from({ length: 12 }, (_, index) => ({
         kind: "finding",
         id: `summary-${index}`,
         source: "automatic",
@@ -484,6 +490,10 @@ describe("compileLighthouseContext", () => {
         "summary-1",
         "summary-2",
         "summary-3",
+        "summary-4",
+        "summary-5",
+        "summary-6",
+        "summary-7",
       ]);
     });
   });
@@ -563,15 +573,15 @@ describe("compileLighthouseContext", () => {
       // When
       const context = compileLighthouseContext(candidates, "overview:/");
 
-      // Then the eight-item cap trims only the last registered contributor
+      // Then every real Overview contributor fits within the budget
       expect(context).toBeDefined();
-      expect(context?.items).toHaveLength(8);
+      expect(context?.items).toHaveLength(candidates.length);
       expect(context?.items[0]?.kind).toBe("page");
       expect(context?.items.some((item) => item.id.startsWith("group-"))).toBe(
-        false,
+        true,
       );
       expect(getApiLighthouseContextByteLength(context!)).toBeLessThanOrEqual(
-        2 * 1024,
+        4 * 1024,
       );
     });
   });

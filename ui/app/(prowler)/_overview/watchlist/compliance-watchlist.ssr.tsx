@@ -10,7 +10,7 @@ import { SSRComponentProps } from "../_types";
 
 import { ComplianceWatchlist } from "./_components/compliance-watchlist";
 
-// Bounded so watchlist items stay within the eight-item context budget.
+// Bounded so watchlist items stay within the shared context item budget.
 const MAX_WATCHLIST_CONTEXT_ITEMS = 2;
 
 export const ComplianceWatchlistSSR = async ({
