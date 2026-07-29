@@ -11,6 +11,7 @@ import type {
   lighthouseAttackPathContextItemSchema,
   lighthouseAttackPathParameterSchema,
   lighthouseAttackPathParametersSchema,
+  lighthouseAttackPathTypeCountsSchema,
   lighthouseComplianceContextItemSchema,
   lighthouseComplianceTotalsSchema,
   lighthouseContextEnvelopeSchema,
@@ -69,6 +70,9 @@ export type LighthouseAttackPathParameter = z.infer<
 >;
 export type LighthouseAttackPathParameters = z.infer<
   typeof lighthouseAttackPathParametersSchema
+>;
+export type LighthouseAttackPathTypeCounts = z.infer<
+  typeof lighthouseAttackPathTypeCountsSchema
 >;
 export type LighthouseAttackPathContextItem = z.infer<
   typeof lighthouseAttackPathContextItemSchema

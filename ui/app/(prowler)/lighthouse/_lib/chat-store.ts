@@ -62,10 +62,7 @@ export interface LighthouseChatState {
   blockedByConflict: boolean;
   isSubmitting: boolean;
   isLoadingSession: boolean;
-  /** @deprecated Use lastSubmission so retries can preserve their context snapshot. */
-  lastSubmittedText: string | null;
   lastSubmission: LighthouseChatSubmission | null;
-  isContextEnabled: boolean;
   selectedModelSelection: LighthouseV2ModelSelection | null;
   modelPreferenceSaving: boolean;
   setSessionUrlSyncEnabled: (enabled: boolean) => void;
@@ -77,8 +74,6 @@ export interface LighthouseChatState {
     context?: LighthouseContextEnvelope,
   ) => Promise<void>;
   retryLastMessage: () => Promise<void>;
-  disableContext: () => void;
-  enableContext: () => void;
   openSession: (sessionId: string) => Promise<void>;
   resetToNewChat: () => void;
   handleSessionArchived: (sessionId: string) => void;
@@ -88,10 +83,6 @@ export interface LighthouseChatState {
 export interface LighthouseChatSubmission {
   displayText: string;
   context?: LighthouseContextEnvelope;
-}
-
-interface LighthouseChatSubmitOptions {
-  bypassContextGate?: boolean;
 }
 
 export type LighthouseChatStore = StoreApi<LighthouseChatState>;
@@ -273,7 +264,6 @@ export function createLighthouseChatStore(
     const submitMessageInternal = async (
       displayText: string,
       context?: LighthouseContextEnvelope,
-      submitOptions: LighthouseChatSubmitOptions = {},
     ): Promise<void> => {
       if (!displayText.trim()) return;
       const selection = get().selectedModelSelection;
@@ -284,11 +274,7 @@ export function createLighthouseChatStore(
       if (!selectLighthouseChatCanSend(get())) return;
 
       const submissionVersion = ++submissionIntentVersion;
-      const shouldUseContext =
-        submitOptions.bypassContextGate === true || get().isContextEnabled;
-      const contextSnapshot = shouldUseContext
-        ? prepareLighthouseContext(context)
-        : undefined;
+      const contextSnapshot = prepareLighthouseContext(context);
 
       set({ isSubmitting: true });
       try {
@@ -308,7 +294,6 @@ export function createLighthouseChatStore(
         set((current) => ({
           feedback: null,
           blockedByConflict: false,
-          lastSubmittedText: displayText,
           lastSubmission,
           input: "",
           messages: [
@@ -376,9 +361,7 @@ export function createLighthouseChatStore(
       blockedByConflict: false,
       isSubmitting: false,
       isLoadingSession: false,
-      lastSubmittedText: null,
       lastSubmission: null,
-      isContextEnabled: true,
       selectedModelSelection: resolveInitialModelSelection(
         connectedConfigurations,
         config.modelsByProvider,
@@ -392,10 +375,6 @@ export function createLighthouseChatStore(
       setInput: (value) => set({ input: value }),
 
       dismissFeedback: () => set({ feedback: null }),
-
-      disableContext: () => set({ isContextEnabled: false }),
-
-      enableContext: () => set({ isContextEnabled: true }),
 
       selectModel: async (selection) => {
         // The selection drives the model used for the next message, so it stays
@@ -428,13 +407,7 @@ export function createLighthouseChatStore(
       retryLastMessage: async () => {
         const submission = get().lastSubmission;
         if (!submission) return;
-        await submitMessageInternal(
-          submission.displayText,
-          submission.context,
-          {
-            bypassContextGate: true,
-          },
-        );
+        await submitMessageInternal(submission.displayText, submission.context);
       },
 
       openSession: async (sessionId) => {
@@ -450,9 +423,7 @@ export function createLighthouseChatStore(
           blockedByConflict: false,
           isSubmitting: false,
           isLoadingSession: true,
-          lastSubmittedText: null,
           lastSubmission: null,
-          isContextEnabled: true,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(sessionId);
@@ -479,9 +450,7 @@ export function createLighthouseChatStore(
           blockedByConflict: false,
           isSubmitting: false,
           isLoadingSession: false,
-          lastSubmittedText: null,
           lastSubmission: null,
-          isContextEnabled: true,
           streamState: createInitialLighthouseV2StreamState(),
         });
         syncSessionUrl(null);
