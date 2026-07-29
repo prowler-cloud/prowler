@@ -231,6 +231,45 @@ class TestTenantAPIKeyAuthentication:
 
         assert str(exc_info.value.detail) == "This API Key has been revoked."
 
+    def test_authenticate_credentials_orphaned_api_key(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test credential validation fails when the owning user no longer exists."""
+        api_key = api_keys_fixture[0]
+        _, encrypted_key = api_key._raw_key.split(TenantAPIKey.objects.separator, 1)
+
+        # `entity` is what `on_delete=SET_NULL` leaves behind when the owner is deleted
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        request = request_factory.get("/")
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend._authenticate_credentials(request, encrypted_key)
+
+        assert str(exc_info.value.detail) == "No entity matching this api key."
+
+    def test_authenticate_orphaned_api_key(
+        self, auth_backend, api_keys_fixture, request_factory
+    ):
+        """Test authentication fails with a key whose owning user was deleted.
+
+        Regression test: this used to raise `AttributeError: 'NoneType' object has no
+        attribute 'id'` while building the auth dict, which DRF re-raises as
+        `WrappedAttributeError` and turns into a 500 instead of a 401.
+        """
+        api_key = api_keys_fixture[0]
+        raw_key = api_key._raw_key
+
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        request = request_factory.get("/")
+        request.META["HTTP_AUTHORIZATION"] = f"Api-Key {raw_key}"
+
+        with pytest.raises(AuthenticationFailed) as exc_info:
+            auth_backend.authenticate(request)
+
+        assert str(exc_info.value.detail) == "No entity matching this api key."
+
     def test_authenticate_expired_api_key(
         self, auth_backend, create_test_user, tenants_fixture, request_factory
     ):

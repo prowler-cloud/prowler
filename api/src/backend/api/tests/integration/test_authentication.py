@@ -4,8 +4,11 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import pytest
+from api.db_router import MainRouter
 from api.models import Membership, Role, TenantAPIKey, User, UserRoleRelationship
+from api.signals import revoke_membership_api_keys, revoke_user_api_keys
 from conftest import TEST_PASSWORD, get_api_tokens, get_authorization_header
+from django.db.utils import ConnectionDoesNotExist
 from django.urls import reverse
 from drf_simple_apikey.crypto import get_crypto
 from rest_framework.test import APIClient
@@ -625,6 +628,24 @@ class TestAPIKeyErrors:
         assert response.status_code == 401
         assert "API Key has been revoked." in response.json()["errors"][0]["detail"]
 
+    def test_orphaned_api_key_rejected(
+        self, create_test_user, tenants_fixture, api_keys_fixture
+    ):
+        """Key whose owning user was deleted returns 401 instead of 500."""
+        client = APIClient()
+
+        api_key = api_keys_fixture[0]
+        # `on_delete=SET_NULL` leaves the key behind with no entity when the owner goes
+        TenantAPIKey.objects.filter(id=api_key.id).update(entity=None)
+
+        api_key_headers = get_api_key_header(api_key._raw_key)
+        response = client.get(reverse("provider-list"), headers=api_key_headers)
+
+        assert response.status_code == 401
+        assert (
+            "No entity matching this api key." in response.json()["errors"][0]["detail"]
+        )
+
     def test_non_existent_api_key(self, create_test_user, tenants_fixture):
         """Key UUID doesn't exist in database."""
         client = APIClient()
@@ -816,6 +837,93 @@ class TestAPIKeyTenantIsolation:
         assert "errors" in response_json
         error_detail = response_json["errors"][0]["detail"]
         assert "revoked" in error_detail.lower()
+
+    def test_deleting_user_revokes_api_keys_in_every_tenant(self, tenants_fixture):
+        """Deleting a user revokes their keys in all their tenants, not just one."""
+        first_tenant, second_tenant = tenants_fixture[0], tenants_fixture[1]
+
+        test_user = User.objects.create_user(
+            name="multi_tenant_user",
+            email="multi_tenant_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        for tenant in (first_tenant, second_tenant):
+            Membership.objects.create(
+                user=test_user, tenant=tenant, role=Membership.RoleChoices.OWNER
+            )
+
+        first_key, _ = TenantAPIKey.objects.create_api_key(
+            name="Key in first tenant", tenant_id=first_tenant.id, entity=test_user
+        )
+        second_key, _ = TenantAPIKey.objects.create_api_key(
+            name="Key in second tenant", tenant_id=second_tenant.id, entity=test_user
+        )
+
+        test_user.delete()
+
+        first_key.refresh_from_db()
+        second_key.refresh_from_db()
+        assert first_key.revoked is True
+        assert second_key.revoked is True
+        # `on_delete=SET_NULL` orphans the keys, so revoking them is what keeps them
+        # from authenticating
+        assert first_key.entity_id is None
+        assert second_key.entity_id is None
+
+    def test_revoke_user_api_keys_uses_the_admin_connection(
+        self, monkeypatch, tenants_fixture
+    ):
+        """The revocation must not go through the default connection.
+
+        `api_keys` is RLS protected and its policy denies every row when `api.tenant_id`
+        is unset, which is the case while a user is deleted through the admin
+        connection: the update would silently revoke nothing and leave usable orphaned
+        keys behind.
+
+        Pointing `admin_db` at a missing alias is the only way to assert the connection
+        here, because the test suite runs on a single superuser database with
+        `MainRouter.admin_db` patched to "default" (see `conftest.py`), so RLS never
+        applies and both connections are otherwise indistinguishable.
+        """
+        test_user = User.objects.create_user(
+            name="admin_connection_user",
+            email="admin_connection_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        Membership.objects.create(user=test_user, tenant=tenants_fixture[0])
+        TenantAPIKey.objects.create_api_key(
+            name="Key for admin connection check",
+            tenant_id=tenants_fixture[0].id,
+            entity=test_user,
+        )
+
+        monkeypatch.setattr(MainRouter, "admin_db", "missing_admin_alias")
+
+        with pytest.raises(ConnectionDoesNotExist):
+            revoke_user_api_keys(sender=User, instance=test_user)
+
+    def test_revoke_membership_api_keys_uses_the_admin_connection(
+        self, monkeypatch, tenants_fixture
+    ):
+        """Same as the user deletion case: this receiver also runs as its cascade."""
+        test_user = User.objects.create_user(
+            name="admin_connection_membership_user",
+            email="admin_connection_membership_user@prowler.com",
+            password=TEST_PASSWORD,
+        )
+        membership = Membership.objects.create(
+            user=test_user, tenant=tenants_fixture[0]
+        )
+        TenantAPIKey.objects.create_api_key(
+            name="Key for membership admin connection check",
+            tenant_id=tenants_fixture[0].id,
+            entity=test_user,
+        )
+
+        monkeypatch.setattr(MainRouter, "admin_db", "missing_admin_alias")
+
+        with pytest.raises(ConnectionDoesNotExist):
+            revoke_membership_api_keys(sender=Membership, instance=membership)
 
 
 @pytest.mark.django_db

@@ -1,3 +1,4 @@
+import logging
 from math import isfinite
 from uuid import UUID
 
@@ -13,6 +14,8 @@ from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.request import Request
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+logger = logging.getLogger(__name__)
 
 
 class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
@@ -59,6 +62,18 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         if api_key.revoked:
             raise AuthenticationFailed("This API Key has been revoked.")
 
+        # `entity` is nullable and `on_delete=SET_NULL` leaves the key behind when its
+        # owner is deleted, so a key can outlive its user. Reject it here: further down
+        # the authentication would return `None` as the authenticated user, which blows
+        # up while building the auth dict and surfaces as a 500 instead of a 401.
+        if api_key.entity_id is None:
+            logger.warning(
+                "Rejected orphaned API key: prefix=%s tenant=%s",
+                api_key.prefix,
+                api_key.tenant_id,
+            )
+            raise AuthenticationFailed("No entity matching this api key.")
+
         client_ip = request.META.get(package_settings.IP_ADDRESS_HEADER)
         if api_key.blacklisted_ips and client_ip in api_key.blacklisted_ips:
             raise AuthenticationFailed("Access denied from blacklisted IP.")
@@ -102,9 +117,13 @@ class TenantAPIKeyAuthentication(BaseAPIKeyAuth):
         api_key_instance.last_used_at = timezone.now()
         api_key_instance.save(update_fields=["last_used_at"], using=MainRouter.admin_db)
 
+        # `sub` comes from the entity already validated as non-None by
+        # `_authenticate_credentials`, not from the re-fetched instance: the owning user
+        # could be deleted between both lookups, and the auth dict must describe the
+        # entity this request actually authenticated as.
         return entity, {
             "tenant_id": str(api_key_instance.tenant_id),
-            "sub": str(api_key_instance.entity.id),
+            "sub": str(entity.id),
             "api_key_prefix": prefix,
         }
 
