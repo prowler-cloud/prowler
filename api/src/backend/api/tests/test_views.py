@@ -14793,6 +14793,11 @@ class TestTenantFinishACSView:
         # Verify no new role was created
         assert Role.objects.using(MainRouter.admin_db).count() == roles_before
 
+    @pytest.mark.parametrize(
+        "preexisting_read_only_role",
+        [False, True],
+        ids=["creates-role", "reuses-role"],
+    )
     def test_dispatch_assigns_read_only_role_when_usertype_missing(
         self,
         create_test_user,
@@ -14800,11 +14805,19 @@ class TestTenantFinishACSView:
         saml_setup,
         settings,
         monkeypatch,
+        preexisting_read_only_role,
     ):
         """Test that a user without roles gets read_only when userType is missing"""
         monkeypatch.setenv("SAML_SSO_CALLBACK_URL", "http://localhost/sso-complete")
         user = create_test_user
         tenant = tenants_fixture[0]
+        existing_role = None
+        if preexisting_read_only_role:
+            existing_role = Role.objects.using(MainRouter.admin_db).create(
+                name="read_only",
+                tenant=tenant,
+                unlimited_visibility=True,
+            )
         roles_before = Role.objects.using(MainRouter.admin_db).count()
 
         social_account = SocialAccount(
@@ -14858,11 +14871,14 @@ class TestTenantFinishACSView:
 
         assert response.status_code == 302
 
-        # Verify the fallback role was created with read-only access and assigned
-        assert Role.objects.using(MainRouter.admin_db).count() == roles_before + 1
+        # Verify the fallback role was created or reused with read-only access
+        expected_role_count = roles_before + (not preexisting_read_only_role)
+        assert Role.objects.using(MainRouter.admin_db).count() == expected_role_count
         role = Role.objects.using(MainRouter.admin_db).get(
             name="read_only", tenant=tenant
         )
+        if existing_role:
+            assert role == existing_role
         assert not role.manage_users
         assert not role.manage_account
         assert not role.manage_billing

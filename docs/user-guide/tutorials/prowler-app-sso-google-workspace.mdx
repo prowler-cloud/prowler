@@ -113,7 +113,7 @@ The `userType` attribute controls which Prowler role is assigned to the user:
 
 - If `userType` matches an existing Prowler role name, the user receives that role automatically.
 - If `userType` does not match any existing role, Prowler Cloud creates a new role with that name **with read-only access** (visibility over all providers, no management permissions). A Prowler administrator can adjust its permissions afterward through the [RBAC Management](/user-guide/tutorials/prowler-app-rbac) tab.
-- If `userType` is not set, the user's existing roles are left unchanged. Users without an existing role receive the `read_only` role until a Prowler administrator assigns another role.
+- If `userType` is not set, the user's existing roles are left unchanged. Users without an existing role in that tenant receive the `read_only` role until a Prowler administrator assigns another role.
 
 The `userType` value is **case-sensitive** - for example, `Backend` and `backend` are treated as different roles.
 
