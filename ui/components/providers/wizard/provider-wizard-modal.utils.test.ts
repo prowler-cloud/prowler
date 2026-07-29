@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
+import { getProviderHelpText } from "@/lib/external-urls";
 import { ORG_SETUP_PHASE, ORG_WIZARD_STEP } from "@/types/organizations";
-import { PROVIDER_WIZARD_MODE } from "@/types/provider-wizard";
+import {
+  PROVIDER_WIZARD_MODE,
+  PROVIDER_WIZARD_STEP,
+} from "@/types/provider-wizard";
+import { type KnownProviderType, PROVIDER_TYPES } from "@/types/providers";
 
 import {
   getOrganizationsStepperOffset,
@@ -119,5 +124,59 @@ describe("getProviderWizardDocsDestination", () => {
     );
 
     expect(destination).toBe("AWS Organizations");
+  });
+});
+
+// The URL maps in `ui/lib/external-urls.ts` and the `destinationLabelMap` in
+// this file share the same set of providers but use different keys (wizard
+// slug vs. docs path slug — e.g. `oraclecloud` vs `oci`, `m365` vs
+// `microsoft365`). Nothing structural stops a provider from being added to
+// one file and forgotten in the other, which would silently render the
+// title-cased URL segment (e.g. "Getting Started Aws") in the modal header
+// instead of the intended label.
+//
+// This suite locks the end-to-end contract: for every provider in
+// `PROVIDER_TYPES`, on every wizard step, the URL emitted by
+// `getProviderHelpText` must round-trip through the parser into the expected
+// label. `Record<KnownProviderType, ...>` also gives compile-time coverage —
+// adding a provider to `PROVIDER_TYPES` requires updating this table.
+const EXPECTED_MODAL_HEADER_LABEL: Record<KnownProviderType, string> = {
+  aws: "AWS",
+  azure: "Azure",
+  m365: "Microsoft 365",
+  gcp: "GCP",
+  kubernetes: "Kubernetes",
+  github: "GitHub",
+  iac: "IaC",
+  image: "Image",
+  oraclecloud: "Oracle Cloud",
+  mongodbatlas: "MongoDB Atlas",
+  alibabacloud: "Alibaba Cloud",
+  cloudflare: "Cloudflare",
+  openstack: "OpenStack",
+  googleworkspace: "Google Workspace",
+  vercel: "Vercel",
+  okta: "Okta",
+};
+
+describe("provider label parity", () => {
+  const STEPS = [
+    PROVIDER_WIZARD_STEP.CONNECT,
+    PROVIDER_WIZARD_STEP.CREDENTIALS,
+    PROVIDER_WIZARD_STEP.TEST,
+    PROVIDER_WIZARD_STEP.LAUNCH,
+  ] as const;
+
+  it("resolves the expected modal header label for every provider on every wizard step", () => {
+    for (const provider of PROVIDER_TYPES) {
+      for (const step of STEPS) {
+        const { link } = getProviderHelpText(provider, step);
+        const label = getProviderWizardDocsDestination(link);
+        expect(
+          label,
+          `Modal header label drift for provider="${provider}" step=${step}: getProviderHelpText returned "${link}" which the parser resolved to "${label}" instead of "${EXPECTED_MODAL_HEADER_LABEL[provider]}". Check destinationLabelMap in provider-wizard-modal.utils.ts.`,
+        ).toBe(EXPECTED_MODAL_HEADER_LABEL[provider]);
+      }
+    }
   });
 });
