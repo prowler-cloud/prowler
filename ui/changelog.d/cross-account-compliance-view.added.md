@@ -1,0 +1,1 @@
+Cross-account compliance view in the Multiple Scans tab: an "Across providers" section listing single-provider frameworks aggregatable across every account of the same provider type, with a per-account detail, findings drill-down and combined PDF report (Prowler Cloud only)

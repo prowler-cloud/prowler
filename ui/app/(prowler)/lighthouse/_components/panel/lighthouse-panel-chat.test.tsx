@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { resetPanelChatStoreForTests } from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
+import {
+  requestPanelChatMessage,
+  resetPanelChatStoreForTests,
+} from "@/app/(prowler)/lighthouse/_lib/panel-chat-store";
 import { notifyLighthouseV2ConfigurationsChanged } from "@/app/(prowler)/lighthouse/_lib/session-events";
 import { stubEventSource } from "@/app/(prowler)/lighthouse/_lib/testing/event-source-mock";
 import type {
@@ -11,6 +14,13 @@ import type {
   LighthouseV2Session,
   LighthouseV2SupportedModel,
 } from "@/app/(prowler)/lighthouse/_types";
+import {
+  buildAttackPathContext,
+  buildFocusedFindingContext,
+} from "@/lib/lighthouse/context/contributions";
+import { useLighthouseContextStore } from "@/store/lighthouse-context/store";
+import { resetLighthouseContextStore } from "@/store/lighthouse-context/store.test-utils";
+import type { LighthouseContextEnvelope } from "@/types/lighthouse-context";
 
 import {
   LighthousePanelChat,
@@ -50,6 +60,11 @@ vi.mock("@/app/(prowler)/lighthouse/_actions", () => ({
   getLighthouseV2Messages: getMessagesMock,
   sendLighthouseV2Message: sendMessageMock,
   updateLighthouseV2Configuration: updateConfigurationMock,
+}));
+
+vi.mock("next/navigation", () => ({
+  usePathname: () => window.location.pathname,
+  useSearchParams: () => new URLSearchParams(window.location.search),
 }));
 
 // Streamdown pulls in shiki/wasm syntax highlighting that doesn't run under
@@ -96,6 +111,7 @@ describe("LighthousePanelChat", () => {
     stubEventSource();
     resetPanelChatStoreForTests();
     resetPanelChatConfigCacheForTests();
+    resetLighthouseContextStore();
 
     getConfigurationsMock.mockResolvedValue({ data: configurations });
     getSupportedProvidersMock.mockResolvedValue({
@@ -108,6 +124,11 @@ describe("LighthousePanelChat", () => {
     getSupportedModelsMock.mockResolvedValue({ data: [model("gpt-5.1")] });
     getSessionsMock.mockResolvedValue({ data: [] });
     getMessagesMock.mockResolvedValue({ data: [] });
+    window.history.replaceState(
+      null,
+      "",
+      "/findings?filter%5Bseverity__in%5D=critical",
+    );
   });
 
   afterEach(() => {
@@ -179,6 +200,136 @@ describe("LighthousePanelChat", () => {
     expect(
       await screen.findByText("Counting critical findings"),
     ).toBeInTheDocument();
+  });
+
+  it("submits a queued contextual analysis when the panel chat becomes ready", async () => {
+    // Given
+    const context = {
+      schemaVersion: 1,
+      transport: "inline",
+      items: [
+        buildFocusedFindingContext({
+          pathname: "/findings",
+          findingId: "finding-1",
+          checkId: "aws_s3_bucket_public_access",
+          severity: "critical",
+          status: "FAIL",
+          providerUid: "123456789012",
+          resourceUid: "arn:aws:s3:::example",
+          region: "eu-west-1",
+        }),
+      ],
+    } satisfies LighthouseContextEnvelope;
+    createSessionMock.mockResolvedValue({
+      data: session("session-context", "Analyze this finding"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    requestPanelChatMessage("Analyze this finding", context);
+
+    // When
+    render(<LighthousePanelChat />);
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayText: "Analyze this finding",
+          context: expect.objectContaining({
+            items: [
+              expect.objectContaining({
+                kind: "finding",
+                id: "finding-1",
+                source: "focused",
+              }),
+            ],
+          }),
+        }),
+      ),
+    );
+  });
+
+  it("sends page, focused finding, and parent Attack Path context together", async () => {
+    // Given
+    const user = userEvent.setup();
+    window.history.replaceState(null, "", "/attack-paths?scanId=scan-1");
+    const contextStore = useLighthouseContextStore.getState();
+    contextStore.registerContribution(
+      "attack-path-current",
+      buildAttackPathContext({
+        pathname: "/attack-paths",
+        scanId: "scan-1",
+        queryId: "query-1",
+        queryLabel: "Internet-exposed resources",
+      }),
+    );
+    contextStore.setFocusedContext(
+      1,
+      buildFocusedFindingContext({
+        pathname: "/attack-paths",
+        findingId: "finding-1",
+        checkId: "aws_s3_bucket_public_access",
+        severity: "critical",
+        status: "FAIL",
+        providerUid: "123456789012",
+        resourceUid: "arn:aws:s3:::example",
+        region: "eu-west-1",
+      }),
+    );
+    createSessionMock.mockResolvedValue({
+      data: session("session-context", "Explain this finding"),
+    });
+    sendMessageMock.mockResolvedValue({
+      data: {
+        task: {
+          id: "task-context",
+          name: "lighthouse-run",
+          state: "executing",
+        },
+      },
+    });
+    render(<LighthousePanelChat />);
+    const input = await screen.findByRole("textbox", { name: "Message" });
+    expect(screen.getByText("@ Attack Paths · Detail")).toBeInTheDocument();
+
+    // When
+    await user.type(input, "Explain this finding{Enter}");
+
+    // Then
+    await waitFor(() =>
+      expect(sendMessageMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          displayText: "Explain this finding",
+          context: expect.objectContaining({
+            items: [
+              expect.objectContaining({
+                kind: "page",
+                id: "attack-paths",
+                filters: { scanId: ["scan-1"] },
+              }),
+              expect.objectContaining({
+                kind: "finding",
+                id: "finding-1",
+                source: "focused",
+              }),
+              expect.objectContaining({
+                kind: "attack_path",
+                id: "current-query",
+                scanId: "scan-1",
+                queryId: "query-1",
+              }),
+            ],
+          }),
+        }),
+      ),
+    );
   });
 
   it("opens a recent chat in place without navigating", async () => {

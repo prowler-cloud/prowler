@@ -87,7 +87,7 @@ ENV HOSTNAME="0.0.0.0"
 #     NEXT_PUBLIC_GOOGLE_TAG_MANAGER_ID, POSTHOG_KEY/HOST) still work:
 #       UI_SENTRY_ENABLED + UI_SENTRY_DSN (+ optional UI_SENTRY_ENVIRONMENT)
 #       UI_GOOGLE_TAG_MANAGER_ENABLED + UI_GOOGLE_TAG_MANAGER_ID
-#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (no consumer yet)
+#       UI_POSTHOG_ENABLED + UI_POSTHOG_KEY + UI_POSTHOG_HOST (feedback survey)
 #   - reserved: REO_DEV_CLIENT_ID (no consumer yet)
 # server.js is created by next build from the standalone output
 # https://nextjs.org/docs/pages/api-reference/next-config-js/output
